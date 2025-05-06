@@ -8,6 +8,9 @@ public class DungeonManager : MonoBehaviour
     void Start()
     {
         
+        
+        
+        
     }
 
     private void Initialize()
