@@ -12,6 +12,7 @@ public class DungeonManager : MonoBehaviour
 
     private void Initialize()
     {
+        if (!dungeonPrefab) return;
         
     }
 
