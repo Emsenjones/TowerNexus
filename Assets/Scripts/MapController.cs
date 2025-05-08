@@ -12,10 +12,7 @@ public class MapController : MonoBehaviour
     {
         [SerializeField]
         private int index;
-        public int Index
-        {
-            get { return index; }
-        }
+        public int Index => index;
 
         [SerializeField]
         Sprite sprite;
@@ -40,7 +37,6 @@ public class MapController : MonoBehaviour
         Debug.LogWarning($"No sprite found for road index {index}");
         return null;
     }
-    
 
     void UpdateNodeList()
     {
@@ -67,7 +63,7 @@ public class MapController : MonoBehaviour
             }
             if (!node.IsWalkable)
             {
-                spriteRenderer.sprite = GetRoadSprite(0);
+                spriteRenderer.sprite = null;
                 continue;
             }
 
@@ -109,7 +105,7 @@ public class MapController : MonoBehaviour
             spriteRenderer.sprite = GetRoadSprite(code);
         }
     }
-    private float GetGridSpacing()
+    float GetGridSpacing()
     {
         var nodeList = GetComponentsInChildren<NodeBehaviour>().ToList();
         if (nodeList.Count < 2)
@@ -130,11 +126,7 @@ public class MapController : MonoBehaviour
 
         return 0f;
     } //计算nodeList中node之间的间距。
-
-    void Start()
-    {
-       UpdateNodeList();
-    }
+    
 }
 
 
