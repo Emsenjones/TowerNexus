@@ -202,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  type: 0
   isWalkable: 1
 --- !u!1 &652571834009617060
 GameObject:
@@ -814,7 +814,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  type: 0
   isWalkable: 1
 --- !u!1 &3779789156995817131
 GameObject:
@@ -1018,7 +1018,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  type: 0
   isWalkable: 1
 --- !u!1 &3986461612827927339
 GameObject:
@@ -1285,7 +1285,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 202177ef5487e46ab98aa5b8b66f3725, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GridInfoList:
+  gridInfoList:
   - index: 1
     sprite: {fileID: 21300000, guid: 511b116dc7efd4dcda4fc3f0c72d5354, type: 3}
     description: "\u4E0A\u65B9\u8FDE\u901A"
@@ -1331,6 +1331,7 @@ MonoBehaviour:
   - index: 15
     sprite: {fileID: 21300000, guid: 5c46f0394938449f8bfae86053af6d9e, type: 3}
     description: "\u4E0A\u4E0B\u5DE6\u53F3\u5168\u901A"
+  enemyTrans: {fileID: 0}
 --- !u!1 &6338632465682826542
 GameObject:
   m_ObjectHideFlags: 0
@@ -1728,7 +1729,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  type: 0
   isWalkable: 1
 --- !u!1 &8500759277226111219
 GameObject:

@@ -471,6 +471,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: DungeonManager01
       objectReference: {fileID: 0}
+    - target: {fileID: 8155722206661247497, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8756982106370735977, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: enemyTrans
+      value: 
+      objectReference: {fileID: 1490518440}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -578,7 +586,7 @@ Transform:
   m_GameObject: {fileID: 1490518436}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 311.02, y: 392.33, z: 0}
+  m_LocalPosition: {x: -7.77, y: -0.66, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
