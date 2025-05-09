@@ -20,27 +20,21 @@ public class RecyclePoolController : MonoBehaviour
         }
     }
     
-    Transform _sceneTransform;
-    
-    RectTransform _uiTransform;
 
     [InfoBox("Maximum poolCount")]
     [SerializeField] int maxPoolCount = 100;
-    [ShowInInspector, PropertyRange(0, "maxPoolCount")]
+    [ShowInInspector, PropertyRange(0, 1)]
     [SerializeField][InfoBox("This is how many items will be deleted when poolCount is out of range.")]
-    int onceRemovedCount;
-    
+    float onceRemovedCountPercentage = 0.5f;
     
     List<RecycleItemBehaviour> _recycleItemBehaviourList;
 
-    public void Initialize(RectTransform uiTransform)
+    public void Initialize()
     {
         _recycleItemBehaviourList = new List<RecycleItemBehaviour>();
-        _uiTransform = uiTransform;
-        _sceneTransform = transform;
     }
 
-    public GameObject GenerateOneObject(GameObject sourcePrefab, bool isUi)
+    public GameObject GenerateOneObject(GameObject sourcePrefab, Transform parentTransform = null)
     {
         GameObject returnedObject = null;
         foreach (var recycleBehaviour in _recycleItemBehaviourList)
@@ -50,39 +44,39 @@ public class RecyclePoolController : MonoBehaviour
                 returnedObject = recycleBehaviour.gameObject;
                 _recycleItemBehaviourList.Remove(recycleBehaviour);
                 returnedObject.SetActive(true);
+                returnedObject.transform.SetParent(parentTransform);
                 return returnedObject;
             }
         }
         
-        returnedObject = Instantiate(sourcePrefab, isUi ? _uiTransform : _sceneTransform);
+        returnedObject = Instantiate(sourcePrefab, parentTransform);
         returnedObject.AddComponent<RecycleItemBehaviour>().Initialize(sourcePrefab);
-        OrganizeItself();
         return returnedObject;
     }
 
     public void RecycleOneObject(GameObject recycledObject)
     {
         var recycledObjectBehaviour = recycledObject.GetComponent<RecycleItemBehaviour>();
-        if (recycledObjectBehaviour)
-        {
-            _recycleItemBehaviourList.Add(recycledObjectBehaviour);
-            OrganizeItself();
-        }
-        recycledObject.SetActive(false);
+        if (!recycledObjectBehaviour) return;
         
-    }
+        _recycleItemBehaviourList.Add(recycledObjectBehaviour);
+        recycledObjectBehaviour.transform.SetParent(transform);
+        recycledObject.SetActive(false);
 
-    void OrganizeItself()
-    {
-        if (_recycleItemBehaviourList.Count <= maxPoolCount) return;
-
-        for (var i = 0; i < onceRemovedCount; i++)
+        #region To limite _recycleItemBehaviourList.Count.
+        int removedCount = Mathf.RoundToInt(_recycleItemBehaviourList.Count * onceRemovedCountPercentage);
+        if (_recycleItemBehaviourList.Count > maxPoolCount)
         {
-            var willDestroyedBehaviour = _recycleItemBehaviourList[0];
-            _recycleItemBehaviourList.Remove(willDestroyedBehaviour);
-            Destroy(willDestroyedBehaviour.gameObject);
+            for (var i = 0; i <= removedCount; i++)
+            {
+                var willDestroyedBehaviour = _recycleItemBehaviourList[0];
+                _recycleItemBehaviourList.Remove(willDestroyedBehaviour);
+                Destroy(willDestroyedBehaviour.gameObject);
+            }
         }
-    }
 
+        #endregion
+
+    }
 
 }

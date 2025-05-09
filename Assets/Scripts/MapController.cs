@@ -8,7 +8,7 @@ using UnityEngine.Serialization;
 
 public class MapController : MonoBehaviour
 {
-    [Serializable]private class RoadSpriteIndex
+    [Serializable]private class GridInfo
     {
         [SerializeField]
         private int index;
@@ -24,11 +24,11 @@ public class MapController : MonoBehaviour
         [SerializeField] string description;
     }
     [InfoBox("The road sprite and its relevant index.")]
-    [SerializeField] List<RoadSpriteIndex> roadSpriteIndex;
+    [SerializeField] List<GridInfo> GridInfoList;
 
-    Sprite GetRoadSprite(int index)
+    Sprite GetGridSprite(int index)
     {
-        var match = roadSpriteIndex.FirstOrDefault(item => item.Index == index);
+        var match = GridInfoList.FirstOrDefault(item => item.Index == index);
         if (match != null)
         {
             return match.Sprite;
@@ -102,7 +102,7 @@ public class MapController : MonoBehaviour
                 }
             }
 
-            spriteRenderer.sprite = GetRoadSprite(code);
+            spriteRenderer.sprite = GetGridSprite(code);
         }
     }
     float GetGridSpacing()
@@ -126,7 +126,11 @@ public class MapController : MonoBehaviour
 
         return 0f;
     } //计算nodeList中node之间的间距。
-    
+
+    void Start()
+    {
+        UpdateNodeList();
+    }
 }
 
 
