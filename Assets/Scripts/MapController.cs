@@ -283,12 +283,6 @@ public class MapController : MonoBehaviour
 #endif
     #endregion
 
-    [SerializeField]
-    Transform enemyTrans;
-    void Start()
-    {
-        FindPath(enemyTrans);
-    }
 }
 
 

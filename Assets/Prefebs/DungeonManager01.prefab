@@ -1331,7 +1331,6 @@ MonoBehaviour:
   - index: 15
     sprite: {fileID: 21300000, guid: 5c46f0394938449f8bfae86053af6d9e, type: 3}
     description: "\u4E0A\u4E0B\u5DE6\u53F3\u5168\u901A"
-  enemyTrans: {fileID: 0}
 --- !u!1 &6338632465682826542
 GameObject:
   m_ObjectHideFlags: 0
@@ -1481,6 +1480,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   recyclePoolController: {fileID: 5038106764475423236}
+  mapController: {fileID: 8756982106370735977}
+  enemyBehaviour: {fileID: 0}
 --- !u!1 &8373760962806981042
 GameObject:
   m_ObjectHideFlags: 0
