@@ -252,6 +252,7 @@ public class MapController : MonoBehaviour
             path.Insert(0, current);
         }
 
+        
         return path;
     }
 
@@ -285,7 +286,7 @@ public class MapController : MonoBehaviour
         
         if (targets.Count > 1)
         {
-            Debug.LogWarning($"[MapController] detected multiple target, Current target count：{targets.Count}.");
+            Debug.LogWarning($"[MapController] detected multiple target type, multiple count：{targets.Count}.");
         }
     }
 #endif

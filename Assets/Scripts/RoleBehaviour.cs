@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -39,7 +40,7 @@ public class RoleBehaviour : MonoBehaviour
       get { return _levelIndex + 1; }
    }
    /// <summary>
-   /// Call this method when the role get exp.
+   /// Call this method when the role gets exp.
    /// </summary>
    public void GainExp(int gainedExp)
    {
@@ -91,44 +92,13 @@ public class RoleBehaviour : MonoBehaviour
    
    float moveSpeed;
 
-   interface IAttack
-   {
-      int BasicDamage { get; }
-
-      public void Do(Transform targetTtrTransform)
-      {
-      }
-   }
-   [InfoBox("Launch projectiles to attack monsters.")]
-   [Serializable] class RangeAttack:IAttack
-   {
-      [SerializeField]
-      int basicDamage;
-
-      public int BasicDamage
-      {
-         get { return basicDamage; }
-      }
-   }
-
-   [Serializable][InfoBox("Wave Weapons to attack monster around it.")]
-   class MeleeAttack : IAttack
-   {
-      [SerializeField]
-      int basicDamage;
-      public int BasicDamage
-      {
-         get { return basicDamage; }
-      }
-   }
-
-   [ShowInInspector][SerializeReference]
-   IAttack iAttack;
-
    Rigidbody2D _rigidbody2D;
    Animator _animator;
    SpriteRenderer _spriteRenderer;
-
+   /// <summary>
+   /// Check if the role can attack enemies. 
+   /// </summary>
+   bool _isMoving;
    public void Initialize()
    {
       _levelIndex = 0;
@@ -136,7 +106,21 @@ public class RoleBehaviour : MonoBehaviour
       _rigidbody2D = GetComponent<Rigidbody2D>();
       _animator = GetComponent<Animator>();
       _spriteRenderer = GetComponent<SpriteRenderer>();
+      _isMoving = false;
+      _timmer = 0f;
+      if (monsterDetectorTransform != null)
+      {
+         _monsterDetector = monsterDetectorTransform.AddComponent<MonsterDetector>();
+         _monsterDetector.Initiate();
+      }
+     
+      else
+         Debug.LogError($"{gameObject.name} is missing a Transform!");
+      
    }
+   /// <summary>
+   /// To control  movement of the role.
+   /// </summary>
    void FixedUpdate()
    {
       if (_rigidbody2D == null)
@@ -151,35 +135,149 @@ public class RoleBehaviour : MonoBehaviour
       // move roleBehaviour.
       _rigidbody2D.MovePosition(_rigidbody2D.position + moveDelta);
 
-      // Check if role has moved in this frame.
-      bool isMoving = moveDelta.sqrMagnitude > 0.001f;
+      // Check if the role has moved in this frame.
+      _isMoving = moveDelta.sqrMagnitude > 0.001f;
 
       // 设置动画状态
       if (_animator != null)
-         _animator.SetBool(AnimatorParams.IsMoving, isMoving);
+         _animator.SetBool(AnimatorParams.IsMoving, _isMoving);
       else
          Debug.LogError($"{gameObject.name} is missing Animator!");
-      
+
       // 设置朝向（左右翻转）
-      if (_spriteRenderer != null && isMoving)
+      if (_spriteRenderer != null && _isMoving)
          _spriteRenderer.flipX = moveDelta.x < 0;
-      
+
       else if (_spriteRenderer == null)
          Debug.LogError($"{gameObject.name} is missing SpriteRenderer!");
    }
 
+   float _timmer;
 
-
-   
-
-   void OnTriggerEnter2D(Collider2D other)
+   [Serializable]
+   class MonsterDetector : MonoBehaviour
    {
-      throw new NotImplementedException();
+      List<MonsterBehaviour> _monsterList = new List<MonsterBehaviour>();
+      Collider2D _detectTrigger;
+
+      /// <summary>
+      /// Get the nearest monster.
+      /// </summary>
+      public MonsterBehaviour GetNearestMonster()
+      {
+         _monsterList.RemoveAll(m => m == null);//To clean empty references.
+         if (_monsterList.Count <= 0) return null;
+         else
+         {
+            MonsterBehaviour nearestMonster = null;
+            var minDistance = float.MaxValue;
+
+            foreach (var monster in _monsterList)
+            {
+               if (monster == null) continue;
+               float dist = Vector3.Distance(monster.transform.position, transform.position);
+               if (dist < minDistance)
+               {
+                  minDistance = dist;
+                  nearestMonster = monster;
+               }
+            }
+
+            return nearestMonster;
+         }
+      }
+      
+      public void Initiate()
+      {
+         _monsterList = new List<MonsterBehaviour>();
+         _detectTrigger = GetComponent<Collider2D>();
+         if(_detectTrigger != null)
+            _detectTrigger.isTrigger = true;
+         else
+            Debug.LogError($"{gameObject.name} is missing Collider2D!");
+         
+      }
+
+      void OnTriggerEnter2D(Collider2D other)
+      {
+         _monsterList.RemoveAll(m => m == null); //To clean empty monsters.
+         
+         var monster = other.GetComponent<MonsterBehaviour>();
+         if (monster != null && !_monsterList.Contains(monster))
+         {
+            _monsterList.Add(monster);
+            Debug.Log($"Find a monster：{monster.name}");
+         }
+      }
+
+      void OnTriggerExit2D(Collider2D other)
+         {
+            _monsterList.RemoveAll(m => m == null);//To clean empty monsters.
+            
+            var monsterBehaviour = other.GetComponent<MonsterBehaviour>();
+            if (monsterBehaviour != null && _monsterList.Contains(monsterBehaviour))
+            {
+               _monsterList.Remove(monsterBehaviour);
+               Debug.Log($"A monster has leaved the range：{monsterBehaviour.name}");
+            }
+         }
+      void OnDrawGizmosSelected()
+      {
+         if (_detectTrigger is CircleCollider2D circle)
+         {
+            Gizmos.color = Color.green;
+            Gizmos.DrawWireSphere(circle.transform.position, circle.radius);
+         }
+      }
    }
 
+   MonsterDetector _monsterDetector;
 
-   void Start()
+   [InfoBox("The child object to detect monsters.")]
+   [SerializeField]
+   Transform monsterDetectorTransform;
+
+   [SerializeField][InfoBox("The fire speed of the role.")]
+   float fireSpeed = 1f;
+
+   [InfoBox("Choose an attack strategy.")]
+   [SerializeReference]
+   IAttack iAttack;
+
+   void Update()
    {
-      Initialize();
+      // To get the nearest enemy.
+      MonsterBehaviour nearestMonster = _monsterDetector.GetNearestMonster();
+      
+      // To check if RoleBehaviour can attack: 
+      // 1. _timmer <= 0f;
+      // 2. _isMoving = false;
+      // 3. nearestMonster != null;
+      bool canAttack = _timmer <= 0f && !_isMoving && nearestMonster != null;
+
+      if (canAttack)
+      {
+         _timmer = fireSpeed;
+
+         // Flip the roleBehaviour base on the transform of nearestMonster.
+         if (_spriteRenderer == null)
+         {
+            Debug.LogError($"{gameObject.name} is missing a SpriteRenderer!");
+            return;
+         }
+
+         float deltaX = nearestMonster.transform.position.x - transform.position.x;
+         if (Mathf.Abs(deltaX) > 0.01f)
+            _spriteRenderer.flipX = deltaX < 0;
+         
+
+         if (_animator)
+            _animator.SetTrigger(AnimatorParams.Attack);
+         else Debug.LogError($"{gameObject.name} is missing an Animator!");
+         
+         // Attack(nearestMonster);
+      }
+      else _timmer -= Time.deltaTime;
+      
    }
 }

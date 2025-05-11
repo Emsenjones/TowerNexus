@@ -11,7 +11,7 @@ public class AssetPrefixReplacer : EditorWindow
     [MenuItem("Tools/Batch replace the prefix of resources")]
     public static void ShowWindow()
     {
-        GetWindow<AssetPrefixReplacer>("前缀批量重命名");
+        GetWindow<AssetPrefixReplacer>("Batch replace the prefix of resources.");
     }
 
     private void OnGUI()
