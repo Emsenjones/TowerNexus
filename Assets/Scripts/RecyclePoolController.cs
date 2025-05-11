@@ -57,7 +57,7 @@ public class RecyclePoolController : MonoBehaviour
     public void RecycleOneObject(GameObject recycledObject)
     {
         var recycledObjectBehaviour = recycledObject.GetComponent<RecycleItemBehaviour>();
-        if (!recycledObjectBehaviour) return;
+        if (recycledObjectBehaviour == null) return;
         
         _recycleItemBehaviourList.Add(recycledObjectBehaviour);
         recycledObjectBehaviour.transform.SetParent(transform);

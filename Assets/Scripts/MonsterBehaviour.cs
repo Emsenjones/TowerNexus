@@ -51,7 +51,7 @@ public class MonsterBehaviour : MonoBehaviour
     public void Initialize(float healthCoefficient, List<Transform> pathTransformList)
     {
         _detectTrigger = GetComponent<BoxCollider2D>();
-        if(_detectTrigger) _detectTrigger.isTrigger = true;
+        if(_detectTrigger != null) _detectTrigger.isTrigger = true;
         _maxHealth = Mathf.RoundToInt(healthCoefficient*defaultHealth);
         _health = _maxHealth;
         _animator = GetComponent<Animator>();
@@ -67,7 +67,8 @@ public class MonsterBehaviour : MonoBehaviour
     public void FollowPath(List<Transform> pathTransformList)
     {
         DOTween.Kill(this); // 自动清理旧 tween
-        if (_animator) _animator.SetTrigger(AnimatorParams.Walk);
+        if (_animator != null) _animator.SetBool(AnimatorParams.IsMoving,true);
+        else Debug.LogError(gameObject.name + " cannot find animator!");
 
         Sequence seq = DOTween.Sequence().SetId(this); // 加上 ID 更保险
 
@@ -82,9 +83,9 @@ public class MonsterBehaviour : MonoBehaviour
             Vector3 dir = nextPos - currentPos;
             seq.AppendCallback(() =>
             {
-                if (_spriteRenderer && dir.x < 0)
+                if (_spriteRenderer != null && dir.x < 0)
                     _spriteRenderer.flipX = true;  // 向左
-                else if (_spriteRenderer && dir.x > 0)
+                else if (_spriteRenderer != null && dir.x > 0)
                     _spriteRenderer.flipX = false ; // 向右
                 // 如果 dir.x == 0，则不翻转
             });
@@ -103,6 +104,8 @@ public class MonsterBehaviour : MonoBehaviour
     /// </summary>
     void PathComplete()
     {
+        if (_animator != null) _animator.SetBool(AnimatorParams.IsMoving,false);
+        else Debug.LogError(gameObject.name + "cannot find animator!");
         Debug.Log("Path movement complete!");
     }
 

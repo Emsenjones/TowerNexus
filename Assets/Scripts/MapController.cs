@@ -23,42 +23,7 @@ public class MapController : MonoBehaviour
     }
     [InfoBox("The road sprite and its relevant index.")]
     [SerializeField] List<GridInfo> gridInfoList;
-
-    Sprite GetGridSprite(int index)
-    {
-        var match = gridInfoList.FirstOrDefault(item => item.Index == index);
-        if (match != null)
-            return match.Sprite;
-
-        Debug.LogWarning($"No sprite found for road index {index}");
-        return null;
-    }
-
-    /// <summary>
-    /// if nodeBehaviours have changed, call this function to update their sprites.
-    /// </summary>
     
-    float GetGridSpacing()
-    {
-        var nodeList = GetComponentsInChildren<NodeBehaviour>().ToList();
-        if (nodeList.Count < 2)
-            return 0f;
-
-        // 找到两个不同位置的节点
-        for (int i = 0; i < nodeList.Count - 1; i++)
-        {
-            for (int j = i + 1; j < nodeList.Count; j++)
-            {
-                float dist = Vector3.Distance(nodeList[i].Transform.position, nodeList[j].Transform.position);
-                if (dist > 0.01f)
-                {
-                    return Mathf.Round(dist * 100f) / 100f; // 保留两位小数
-                }
-            }
-        }
-
-        return 0f;
-    } 
     /// <summary>
     /// Generate a path for the enemy.
     /// </summary>
@@ -66,34 +31,35 @@ public class MapController : MonoBehaviour
     /// <returns>a list of transform.The count of this list will be 0 if enemy cannot find the path.</returns>
     public List<Transform> FindPath(Transform enemyTransform)
     {
-        List<NodeBehaviour> allNodes = GetComponentsInChildren<NodeBehaviour>().ToList();
-        NodeBehaviour targetNode = allNodes.FirstOrDefault(n => n.ThisType == NodeBehaviour.Type.Target);
+        List<GridBehaviour> allNodes = GetComponentsInChildren<GridBehaviour>().ToList();
+        GridBehaviour targetGrid = allNodes.FirstOrDefault(n => n.ThisType == GridBehaviour.Type.Target);
 
-        if (targetNode == null)
+        if (targetGrid == null)
         {
             Debug.LogError("No Target Node found in map.");
             return null;
         }
 
-        NodeBehaviour startNode = allNodes
+        GridBehaviour startGrid = allNodes
             .Where(n => n.IsWalkable)
             .OrderBy(n => Vector3.Distance(enemyTransform.position, n.Transform.position))
             .FirstOrDefault();
 
-        if (startNode == null)
+        if (startGrid == null)
         {
             Debug.LogError("No valid start node found.");
             return null;
         }
-        _debugPathList = AStar(startNode, targetNode, allNodes)
+        _debugPathList = AStar(startGrid, targetGrid, allNodes)
             .Select(n => n.Transform)
             .ToList();
 
         return _debugPathList;
     } 
-    
-    #region Support methods.
-    void UpdateGridsInfo()
+    /// <summary>
+    /// if nodeBehaviours have changed, call this function to update their sprites.
+    /// </summary>
+    void UpdateGrids()
     {
         float gridSpacing = GetGridSpacing();
         if (gridSpacing <= 0f)
@@ -101,7 +67,7 @@ public class MapController : MonoBehaviour
             Debug.LogError("Grid spacing is invalid.");
             return;
         }
-        var nodeList = GetComponentsInChildren<NodeBehaviour>().ToList();
+        var nodeList = GetComponentsInChildren<GridBehaviour>().ToList();
         if (!nodeList.Any())
         {
             Debug.LogError("Cannot find any NodeBehaviour in " + gameObject.name+" .");
@@ -111,7 +77,7 @@ public class MapController : MonoBehaviour
         foreach (var node in nodeList)
         {
             var spriteRenderer = node.Transform.GetComponent<SpriteRenderer>();
-            if (!spriteRenderer)
+            if (spriteRenderer == null)
             {
                 Debug.LogWarning($"No SpriteRenderer found on Node at {node.gameObject.name} .");
                 continue;
@@ -159,14 +125,56 @@ public class MapController : MonoBehaviour
 
             spriteRenderer.sprite = GetGridSprite(index);
         }
+    }
+        
+
+
+    #region Support methods.
+    /// <summary>
+    /// Get Grid sprite via the index.
+    /// </summary>
+    /// <param name="index">the index number</param>
+    /// <returns></returns>
+    Sprite GetGridSprite(int index)
+    {
+        var match = gridInfoList.FirstOrDefault(item => item.Index == index);
+        if (match != null)
+            return match.Sprite;
+
+        Debug.LogWarning($"No sprite found for road index {index}");
+        return null;
+    }
+
+
+    
+    float GetGridSpacing()
+    {
+        var nodeList = GetComponentsInChildren<GridBehaviour>().ToList();
+        if (nodeList.Count < 2)
+            return 0f;
+
+        // 找到两个不同位置的节点
+        for (int i = 0; i < nodeList.Count - 1; i++)
+        {
+            for (int j = i + 1; j < nodeList.Count; j++)
+            {
+                float dist = Vector3.Distance(nodeList[i].Transform.position, nodeList[j].Transform.position);
+                if (dist > 0.01f)
+                {
+                    return Mathf.Round(dist * 100f) / 100f; // 保留两位小数
+                }
+            }
+        }
+
+        return 0f;
     } 
 
-    List<NodeBehaviour> AStar(NodeBehaviour start, NodeBehaviour goal, List<NodeBehaviour> allNodes)
+    List<GridBehaviour> AStar(GridBehaviour start, GridBehaviour goal, List<GridBehaviour> allNodes)
     {
-        var openSet = new List<NodeBehaviour> { start };
-        var cameFrom = new Dictionary<NodeBehaviour, NodeBehaviour>();
-        var gScore = new Dictionary<NodeBehaviour, float>();
-        var fScore = new Dictionary<NodeBehaviour, float>();
+        var openSet = new List<GridBehaviour> { start };
+        var cameFrom = new Dictionary<GridBehaviour, GridBehaviour>();
+        var gScore = new Dictionary<GridBehaviour, float>();
+        var fScore = new Dictionary<GridBehaviour, float>();
 
         foreach (var node in allNodes)
         {
@@ -179,7 +187,7 @@ public class MapController : MonoBehaviour
 
         while (openSet.Count > 0)
         {
-            NodeBehaviour current = openSet.OrderBy(n => fScore[n]).First();
+            GridBehaviour current = openSet.OrderBy(n => fScore[n]).First();
 
             if (current == goal)
             {
@@ -207,18 +215,18 @@ public class MapController : MonoBehaviour
         }
 
         Debug.LogWarning("No path found.");
-        return new List<NodeBehaviour>(); // 找不到路径时返回空列表
+        return new List<GridBehaviour>(); // 找不到路径时返回空列表
     }
 
-    List<NodeBehaviour> GetNeighbors(NodeBehaviour node, List<NodeBehaviour> allNodes)
+    List<GridBehaviour> GetNeighbors(GridBehaviour grid, List<GridBehaviour> allNodes)
     {
-        List<NodeBehaviour> neighbors = new List<NodeBehaviour>();
+        List<GridBehaviour> neighbors = new List<GridBehaviour>();
         float gridSpacing = GetGridSpacing();
-        Vector3 pos = node.Transform.position;
+        Vector3 pos = grid.Transform.position;
 
         foreach (var other in allNodes)
         {
-            if (other == node || !other.IsWalkable) continue;
+            if (other == grid || !other.IsWalkable) continue;
 
             Vector3 dir = other.Transform.position - pos;
 
@@ -234,9 +242,9 @@ public class MapController : MonoBehaviour
 
         return neighbors;
     }
-    private List<NodeBehaviour> ReconstructPath(Dictionary<NodeBehaviour, NodeBehaviour> cameFrom, NodeBehaviour current)
+    private List<GridBehaviour> ReconstructPath(Dictionary<GridBehaviour, GridBehaviour> cameFrom, GridBehaviour current)
     {
-        List<NodeBehaviour> path = new List<NodeBehaviour> { current };
+        List<GridBehaviour> path = new List<GridBehaviour> { current };
 
         while (cameFrom.ContainsKey(current))
         {
@@ -270,8 +278,8 @@ public class MapController : MonoBehaviour
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        var targets = GetComponentsInChildren<NodeBehaviour>()
-            .Where(n => n.ThisType == NodeBehaviour.Type.Target)
+        var targets = GetComponentsInChildren<GridBehaviour>()
+            .Where(n => n.ThisType == GridBehaviour.Type.Target)
             .ToList();
 
         
