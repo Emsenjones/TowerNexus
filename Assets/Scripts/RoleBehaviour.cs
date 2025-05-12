@@ -7,24 +7,6 @@ using UnityEngine.Serialization;
 
 public class RoleBehaviour : MonoBehaviour
 {
-   /// <summary>
-   /// Return exp slider bar value.
-   /// </summary>
-   /// <returns></returns>
-   public float GetExpProgress()
-   {
-      var expInLevelIndex = _exp;
-      foreach (LevelConfig levelInfo in levelConfigList)
-      {
-         var requiredExp = levelInfo.RequiredExp;
-         if (expInLevelIndex >= requiredExp)
-            expInLevelIndex -= requiredExp;
-         else
-            return Mathf.Round(expInLevelIndex)/Mathf.Round(requiredExp);
-      }
-      Debug.LogWarning("Cannot Get Exp progress");
-      return 0;
-   }
    [Title("Configs")]
    [SerializeField]float moveSpeed;
    [Serializable]
@@ -54,17 +36,37 @@ public class RoleBehaviour : MonoBehaviour
    /// </summary>
    public int GetLevel()
    {
-      int tempExp = _exp;
-      foreach (LevelConfig levelInfo in levelConfigList)
+      int exp = _exp;
+      foreach (LevelConfig levelConfig in levelConfigList)
       {
-         if (tempExp >= levelInfo.RequiredExp)
-            tempExp -= levelInfo.RequiredExp;
+         if (exp >= levelConfig.RequiredExp)
+            exp -= levelConfig.RequiredExp;
          else
-            return levelInfo.Level;
+            return levelConfig.Level;
       }
       return levelConfigList[^1].Level;
    }
-   
+   /// <summary>
+   /// Call this method to get the Level ratio of exp.
+   /// </summary>
+   /// <returns>LevelRatio, which is between 0 and 1.</returns>
+   public float LevelRatio()
+   {
+      int exp = _exp;
+      foreach (LevelConfig levelConfig in levelConfigList)
+      {
+         if(exp>= levelConfig.RequiredExp)
+            exp -= levelConfig.RequiredExp;
+         else
+         {
+            return Mathf.Round(exp)/Mathf.Round(levelConfig.RequiredExp);
+            
+         }
+      }
+      Debug.LogError($"{this.gameObject.name} cannot get LevelRatio!");
+      return 0f;
+   }
+
    [FormerlySerializedAs("levelInfoList")]
    [SerializeField]
    List<LevelConfig> levelConfigList;
@@ -268,7 +270,7 @@ public class RoleBehaviour : MonoBehaviour
    {
       if (levelConfigList.Count > 0)
       {
-         int attackPower = levelConfigList[GetLevel()-1].AttackPower;
+         int attackPower = levelConfigList[GetLevel()].AttackPower;
          iAttack.Do(_nearestMonster, attackPower);
       }
       else

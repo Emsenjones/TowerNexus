@@ -7,21 +7,21 @@ public class HealthBarBehaviour : MonoBehaviour
     Slider _slider;
     RectTransform _rectTransform;
     Canvas _mainCanvas;
-    MonsterBehaviour _pairedMonster;
+    MonsterBehaviour _boundedMonster;
     [SerializeField]
     Vector2 screenOffset;
     Camera _camera;
     
     public void Initialize(MonsterBehaviour pairedMonster, Camera mainCamera)
     {
-        _pairedMonster = pairedMonster;
+        _boundedMonster = pairedMonster;
         _slider = GetComponent<Slider>();
         _camera = mainCamera;
         _rectTransform = GetComponent<RectTransform>();
         _mainCanvas = GetComponentInParent<Canvas>();
         #region To registrate event actions.
-        if (_pairedMonster != null)
-            _pairedMonster.OnIsDamaged += SetValue;
+        if (_boundedMonster != null)
+            _boundedMonster.OnIsDamaged += SetValue;
         else
             Debug.LogError($" is missing MonsterBehaviour!");
         MonsterBehaviour.OnDead += DestroyItself;
@@ -30,30 +30,30 @@ public class HealthBarBehaviour : MonoBehaviour
     }
     void SetValue()
     {
-        if (_pairedMonster == null)
+        if (_boundedMonster == null)
             Debug.LogError($" is missing _pairedMonster!");
         else if (_slider == null)
             Debug.LogError($" is missing _slider!");
         else
-            _slider.value = _pairedMonster.HealthRatio;
+            _slider.value = _boundedMonster.HealthRatio;
     }
     void DestroyItself(MonsterBehaviour destroyedMonster)
     {
-        if (_pairedMonster == null)
+        if (_boundedMonster == null)
             Debug.LogError($"{gameObject.name} is missing _pairedMonster!");
-        else if (_pairedMonster == destroyedMonster)
+        else if (_boundedMonster == destroyedMonster)
             DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
     }
     void OnDisable()
     {
-        _pairedMonster.OnIsDamaged -= SetValue;
+        _boundedMonster.OnIsDamaged -= SetValue;
         MonsterBehaviour.OnDead -= DestroyItself;
     }
     private void LateUpdate()
     {
         if(_camera == null)
             Debug.LogError($"{gameObject.name} is missing _camera!");
-        else if (_pairedMonster ==null)
+        else if (_boundedMonster ==null)
             Debug.LogError($"{gameObject.name} is missing _pairedMonster!");
         else if (_rectTransform == null)
             Debug.LogError($"{gameObject.name} is missing _rectTransform!");
@@ -61,7 +61,7 @@ public class HealthBarBehaviour : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing _mainCanvas!");
         else
         {
-            Vector2 screenPosition = _camera.WorldToScreenPoint(_pairedMonster.transform.position) + (Vector3)screenOffset;
+            Vector2 screenPosition = _camera.WorldToScreenPoint(_boundedMonster.transform.position) + (Vector3)screenOffset;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
                 _mainCanvas.transform as RectTransform,
                 screenPosition,
