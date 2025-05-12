@@ -1824,7 +1824,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  type: 0
   isWalkable: 1
 --- !u!1 &5455562068479821384
 GameObject:
@@ -2099,7 +2099,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 202177ef5487e46ab98aa5b8b66f3725, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  gridInfoList:
+  gridConfigList:
   - index: 1
     sprite: {fileID: 21300000, guid: 511b116dc7efd4dcda4fc3f0c72d5354, type: 3}
     description: "\u4E0A\u65B9\u8FDE\u901A"
@@ -2502,6 +2502,11 @@ MonoBehaviour:
   recyclePoolController: {fileID: 5038106764475423236}
   mapController: {fileID: 8756982106370735977}
   uiController: {fileID: 8294450841629907111}
+  rolePrefab: {fileID: 8140021183545022926, guid: 0cf9d54ba75d64d179ff2d0af6c1586c, type: 3}
+  spawnList:
+  - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
+    gridTransform: {fileID: 6999998057956095079}
+    healthCoefficient: 1
 --- !u!1 &7363720525768978939
 GameObject:
   m_ObjectHideFlags: 0
@@ -2908,7 +2913,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  type: 0
   isWalkable: 1
 --- !u!1 &7739645486854844897
 GameObject:
@@ -3158,7 +3163,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 2
+  type: 1
   isWalkable: 1
 --- !u!1 &8509021177258771255
 GameObject:

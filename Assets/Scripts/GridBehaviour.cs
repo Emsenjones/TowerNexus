@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class GridBehaviour : MonoBehaviour
 {
-    [Serializable] public enum Type {Normal, Spawn, Target};
+    [Serializable] public enum Type {Normal, Target};
 
     [SerializeField]
     Type type;
@@ -13,11 +13,6 @@ public class GridBehaviour : MonoBehaviour
     }
 
     [SerializeField] bool isWalkable = true;
-    public Transform Transform
-    {
-        get { return transform; }
-    }
-
     public bool IsWalkable
     {
         get { return isWalkable; }

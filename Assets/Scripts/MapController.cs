@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class MapController : MonoBehaviour
 {
-    [Serializable]private class GridInfo
+    [Serializable]public class GridConfig
     {
         [SerializeField]
         private int index;
@@ -21,18 +22,26 @@ public class MapController : MonoBehaviour
 
         [SerializeField] string description;
     }
-    [InfoBox("The road sprite and its relevant index.")]
-    [SerializeField] List<GridInfo> gridInfoList;
-    
+    [FormerlySerializedAs("gridList")]
+    [FormerlySerializedAs("gridInfoList")]
+    [Title("Configs")]
+    [SerializeField] List<GridConfig> gridConfigList;
+    List<GridBehaviour> _gridList;
+    public void Initialize()
+    {
+        _gridList = GetComponentsInChildren<GridBehaviour>().ToList();
+        UpdateGrids();
+    }
+
     /// <summary>
     /// Generate a path for the enemy.
     /// </summary>
-    /// <param name="enemyTransform">Enemy's transform</param>
-    /// <returns>a list of transform.The count of this list will be 0 if enemy cannot find the path.</returns>
-    public List<Transform> FindPath(Transform enemyTransform)
+    /// <param name="monsterTransform">The monster's transform</param>
+    /// <returns> A list of transform. Will return an empty list if the monster cannot find a path.</returns>
+    public List<Transform> FindOnePath(Transform monsterTransform)
     {
-        List<GridBehaviour> allNodes = GetComponentsInChildren<GridBehaviour>().ToList();
-        GridBehaviour targetGrid = allNodes.FirstOrDefault(n => n.ThisType == GridBehaviour.Type.Target);
+        if(_gridList == null) return null;
+        GridBehaviour targetGrid = GetTargetGrid();
 
         if (targetGrid == null)
         {
@@ -40,9 +49,9 @@ public class MapController : MonoBehaviour
             return null;
         }
 
-        GridBehaviour startGrid = allNodes
+        GridBehaviour startGrid = _gridList
             .Where(n => n.IsWalkable)
-            .OrderBy(n => Vector3.Distance(enemyTransform.position, n.Transform.position))
+            .OrderBy(n => Vector3.Distance(monsterTransform.position, n.transform.position))
             .FirstOrDefault();
 
         if (startGrid == null)
@@ -50,8 +59,8 @@ public class MapController : MonoBehaviour
             Debug.LogError("No valid start node found.");
             return null;
         }
-        _debugPathList = AStar(startGrid, targetGrid, allNodes)
-            .Select(n => n.Transform)
+        _debugPathList = AStar(startGrid, targetGrid, _gridList)
+            .Select(n => n.transform)
             .ToList();
 
         return _debugPathList;
@@ -76,7 +85,7 @@ public class MapController : MonoBehaviour
 
         foreach (var node in nodeList)
         {
-            var spriteRenderer = node.Transform.GetComponent<SpriteRenderer>();
+            var spriteRenderer = node.transform.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
             {
                 Debug.LogWarning($"No SpriteRenderer found on Node at {node.gameObject.name} .");
@@ -88,14 +97,14 @@ public class MapController : MonoBehaviour
                 continue;
             }
 
-            Vector3 pos = node.Transform.position;
+            Vector3 pos = node.transform.position;
             int index = 0;
             foreach (var neighbor in nodeList)
             {
                 if (!neighbor.IsWalkable || neighbor == node)
                     continue;
 
-                Vector3 dir = neighbor.Transform.position - pos;
+                Vector3 dir = neighbor.transform.position - pos;
 
                 // 排除非正交方向（如斜对角）
                 if (Mathf.Abs(dir.x) > 0.1f && Mathf.Abs(dir.y) > 0.1f)
@@ -126,8 +135,10 @@ public class MapController : MonoBehaviour
             spriteRenderer.sprite = GetGridSprite(index);
         }
     }
-        
-
+    public GridBehaviour GetTargetGrid()
+    {
+        return _gridList?.FirstOrDefault(n => n.ThisType == GridBehaviour.Type.Target);
+    }
 
     #region Support methods.
     /// <summary>
@@ -137,7 +148,7 @@ public class MapController : MonoBehaviour
     /// <returns></returns>
     Sprite GetGridSprite(int index)
     {
-        var match = gridInfoList.FirstOrDefault(item => item.Index == index);
+        var match = gridConfigList.FirstOrDefault(item => item.Index == index);
         if (match != null)
             return match.Sprite;
 
@@ -158,7 +169,7 @@ public class MapController : MonoBehaviour
         {
             for (int j = i + 1; j < nodeList.Count; j++)
             {
-                float dist = Vector3.Distance(nodeList[i].Transform.position, nodeList[j].Transform.position);
+                float dist = Vector3.Distance(nodeList[i].transform.position, nodeList[j].transform.position);
                 if (dist > 0.01f)
                 {
                     return Mathf.Round(dist * 100f) / 100f; // 保留两位小数
@@ -183,7 +194,7 @@ public class MapController : MonoBehaviour
         }
 
         gScore[start] = 0;
-        fScore[start] = Vector3.Distance(start.Transform.position, goal.Transform.position);
+        fScore[start] = Vector3.Distance(start.transform.position, goal.transform.position);
 
         while (openSet.Count > 0)
         {
@@ -200,13 +211,13 @@ public class MapController : MonoBehaviour
             {
                 if (!neighbor.IsWalkable) continue;
 
-                float tentativeGScore = gScore[current] + Vector3.Distance(current.Transform.position, neighbor.Transform.position);
+                float tentativeGScore = gScore[current] + Vector3.Distance(current.transform.position, neighbor.transform.position);
 
                 if (tentativeGScore < gScore[neighbor])
                 {
                     cameFrom[neighbor] = current;
                     gScore[neighbor] = tentativeGScore;
-                    fScore[neighbor] = tentativeGScore + Vector3.Distance(neighbor.Transform.position, goal.Transform.position);
+                    fScore[neighbor] = tentativeGScore + Vector3.Distance(neighbor.transform.position, goal.transform.position);
 
                     if (!openSet.Contains(neighbor))
                         openSet.Add(neighbor);
@@ -222,13 +233,13 @@ public class MapController : MonoBehaviour
     {
         List<GridBehaviour> neighbors = new List<GridBehaviour>();
         float gridSpacing = GetGridSpacing();
-        Vector3 pos = grid.Transform.position;
+        Vector3 pos = grid.transform.position;
 
         foreach (var other in allNodes)
         {
             if (other == grid || !other.IsWalkable) continue;
 
-            Vector3 dir = other.Transform.position - pos;
+            Vector3 dir = other.transform.position - pos;
 
             // 仅支持 4 向（上下左右），非对角
             if ((Mathf.Abs(dir.x - gridSpacing) < 0.1f && Mathf.Abs(dir.y) < 0.1f) ||

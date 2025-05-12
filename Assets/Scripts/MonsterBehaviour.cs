@@ -4,41 +4,29 @@ using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using DG.Tweening;
+using Unity.VisualScripting;
 using UnityEngine.Serialization;
+using Sequence = DG.Tweening.Sequence;
 
 public class MonsterBehaviour : MonoBehaviour
 {
-
-    [InfoBox("The unite id of Enemy.")] [SerializeField]
-    string id;
-
-    public string Id
-    {
-        get { return id; }
-    }
-
+    [Title("Configs")]
     [SerializeField]int defaultHealth;
     int _maxHealth;
-    [FormerlySerializedAs("speed")]
-    [InfoBox("The moving speed of the Enemy")] [SerializeField] float moveSpeed;
-    [InfoBox("The exp will get when the role kills this Enemy")][SerializeField]int exp;
+    [SerializeField] float moveSpeed;
+    [SerializeField]int exp;
     public int Exp
     {
         get { return exp; }
     }
 
-    [InfoBox("The money will get when this enemy dead.")][SerializeField]
-    int money;
+    [SerializeField] int money;
     public int Money
     {
         get { return money; }
     }
 
-    [InfoBox("The dungeon will get this amount of damage.")] [SerializeField]int damage;
-    public int Damage
-    {
-        get { return damage; }
-    }
+    [SerializeField]int damage;
     int _health;
     BoxCollider2D _detectTrigger;
     Animator _animator;
@@ -47,23 +35,45 @@ public class MonsterBehaviour : MonoBehaviour
     /// Must call this method when instantiating this object.
     /// </summary>
     /// <param name="healthCoefficient">health coefficient parameter.</param>
-    /// <param name="pathTransformList">the path of enemy to the target node.</param>
+    /// <param name="pathTransformList">the path of the monster to the target node.</param>
     public void Initialize(float healthCoefficient, List<Transform> pathTransformList)
     {
         _detectTrigger = GetComponent<BoxCollider2D>();
-        if(_detectTrigger != null) _detectTrigger.isTrigger = true;
+        if (_detectTrigger == null)
+        {
+            Debug.LogError($"{this.gameObject.name} is missing BoxCollider2D!");
+            return;
+        }
+        _detectTrigger.isTrigger = true;
         _maxHealth = Mathf.RoundToInt(healthCoefficient*defaultHealth);
         _health = _maxHealth;
         _animator = GetComponent<Animator>();
+        if (_animator == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing animator!");
+            return;
+        }
         _spriteRenderer = GetComponent<SpriteRenderer>();
-
+        if (_spriteRenderer == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing spriteRenderer!");
+            return;
+        }
+        OnInitialize?.Invoke(this);
         FollowPath(pathTransformList);
     }
 
+    public float HealthRatio
+    {
+        get {
+            return Mathf.Round(_health) / Mathf.Round(_maxHealth);
+        }
+    }
+
     /// <summary>
-    /// make enemy move to the target node.
+    /// make the monster move to the target node.
     /// </summary>
-    /// <param name="pathTransformList">the path of enemy to the target node.</param>
+    /// <param name="pathTransformList">the path of the monster to the target node.</param>
     public void FollowPath(List<Transform> pathTransformList)
     {
         DOTween.Kill(this); // 自动清理旧 tween
@@ -72,8 +82,13 @@ public class MonsterBehaviour : MonoBehaviour
 
         Sequence seq = DOTween.Sequence().SetId(this); // 加上 ID 更保险
 
-        Vector3 currentPos = transform.position;
+        if (pathTransformList == null || pathTransformList.Count == 0)
+        {
+            Debug.LogError($"{gameObject.name} cannot find any paths!");
+            return;
+        }
 
+        Vector3 currentPos = transform.position;
         foreach (Transform node in pathTransformList)
         {
             Vector3 nextPos = node.position;
@@ -109,4 +124,18 @@ public class MonsterBehaviour : MonoBehaviour
         Debug.Log("Path movement complete!");
     }
 
+    public static event Action<MonsterBehaviour> OnInitialize; 
+    public event Action OnIsDamaged;
+    /// <summary>
+    /// Call this method when the monster is damaged.
+    /// </summary>
+    /// <param name="_attackPower">The damage monster will be taken.</param>
+    public void IsDamaged(int _attackPower)
+    {
+        _health -= _attackPower;
+        OnIsDamaged?.Invoke();
+        if(_health <= 0)
+            OnDead?.Invoke(this);
+    }
+    public static event Action<MonsterBehaviour> OnDead;
 }

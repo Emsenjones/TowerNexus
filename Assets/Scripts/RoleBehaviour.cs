@@ -7,68 +7,6 @@ using UnityEngine.Serialization;
 
 public class RoleBehaviour : MonoBehaviour
 {
-   [Serializable]
-   class LevelInfo
-   {
-      [InfoBox("Required exp to the next level.")]
-      [SerializeField]int requiredExp;
-
-      public int RequiredExp
-      {
-         get { return requiredExp; }
-      }
-
-      [SerializeField][InfoBox("Attack power coefficient in this level")]
-      float attackPowerCoefficient;
-
-      public float AttackPowerCoefficient
-      {
-         get { return attackPowerCoefficient; }
-      }
-   }
-   
-   [SerializeField]
-   List<LevelInfo> levelInfoList;
-
-   int _levelIndex;
-   int _exp;
-   /// <summary>
-   /// Get level of this role.
-   /// </summary>
-   public int Level
-   {
-      get { return _levelIndex + 1; }
-   }
-   /// <summary>
-   /// Call this method when the role gets exp.
-   /// </summary>
-   public void GainExp(int gainedExp)
-   {
-      _exp += gainedExp;
-      int tempExp = _exp;
-      int levelIndex = 0;
-
-      foreach (var levelInfo in levelInfoList)
-      {
-         int requiredExp = levelInfo.RequiredExp;
-         if (tempExp >= requiredExp)
-         {
-            tempExp -= requiredExp;
-            levelIndex++;
-         }
-         else
-            break;
-      }
-
-      if (levelIndex > _levelIndex)
-      {
-         _levelIndex = levelIndex;
-         //
-         // 触发升级效果
-         //
-      }
-   }
-
    /// <summary>
    /// Return exp slider bar value.
    /// </summary>
@@ -76,7 +14,7 @@ public class RoleBehaviour : MonoBehaviour
    public float GetExpProgress()
    {
       var expInLevelIndex = _exp;
-      foreach (LevelInfo levelInfo in levelInfoList)
+      foreach (LevelConfig levelInfo in levelConfigList)
       {
          var requiredExp = levelInfo.RequiredExp;
          if (expInLevelIndex >= requiredExp)
@@ -87,11 +25,63 @@ public class RoleBehaviour : MonoBehaviour
       Debug.LogWarning("Cannot Get Exp progress");
       return 0;
    }
+   [Title("Configs")]
+   [SerializeField]float moveSpeed;
+   [Serializable]
+   class LevelConfig
+   {
+      [SerializeField]
+      int level;
+      public int Level
+      {
+         get {
+            return level;
+         }
+      }
+      [SerializeField] int requiredExp;
 
-   [SerializeField] [InfoBox("The move speed of this role.")]
+      public int RequiredExp
+      {
+         get { return requiredExp; }
+      }
+      
+      [SerializeField] int attackPower;
+      public int AttackPower { get { return attackPower; } }
+   }
+   int _exp;
+   /// <summary>
+   /// Get level of this role.
+   /// </summary>
+   public int GetLevel()
+   {
+      int tempExp = _exp;
+      foreach (LevelConfig levelInfo in levelConfigList)
+      {
+         if (tempExp >= levelInfo.RequiredExp)
+            tempExp -= levelInfo.RequiredExp;
+         else
+            return levelInfo.Level;
+      }
+      return levelConfigList[^1].Level;
+   }
    
-   float moveSpeed;
+   [FormerlySerializedAs("levelInfoList")]
+   [SerializeField]
+   List<LevelConfig> levelConfigList;
+   /// <summary>
+   /// Call this method when the role gets exp.
+   /// </summary>
+   public void GainExp(int gainedExp)
+   {
+      int level = GetLevel();
+      _exp += gainedExp;
+      int newLevel = GetLevel();
+      if (newLevel> level)
+      {
+         //触发升级效果。
+      }
 
+   }
    Rigidbody2D _rigidbody2D;
    Animator _animator;
    SpriteRenderer _spriteRenderer;
@@ -101,7 +91,6 @@ public class RoleBehaviour : MonoBehaviour
    bool _isMoving;
    public void Initialize()
    {
-      _levelIndex = 0;
       _exp = 0;
       _rigidbody2D = GetComponent<Rigidbody2D>();
       _animator = GetComponent<Animator>();
@@ -111,15 +100,14 @@ public class RoleBehaviour : MonoBehaviour
       if (monsterDetectorTransform != null)
       {
          _monsterDetector = monsterDetectorTransform.AddComponent<MonsterDetector>();
-         _monsterDetector.Initiate();
+         _monsterDetector.Initialize();
       }
-     
       else
          Debug.LogError($"{gameObject.name} is missing a Transform!");
       
    }
    /// <summary>
-   /// To control  movement of the role.
+   /// Moved by the Joystick.
    /// </summary>
    void FixedUpdate()
    {
@@ -129,7 +117,7 @@ public class RoleBehaviour : MonoBehaviour
          return;
       }
 
-      Vector2 directionInput = DungeonManager.Instance.GetDirectionInput();
+      Vector2 directionInput = DungeonManager.Instance.GetJoystickInput();
       Vector2 moveDelta = directionInput.normalized * moveSpeed * Time.fixedDeltaTime;
 
       // move roleBehaviour.
@@ -166,28 +154,27 @@ public class RoleBehaviour : MonoBehaviour
       public MonsterBehaviour GetNearestMonster()
       {
          _monsterList.RemoveAll(m => m == null);//To clean empty references.
+         
          if (_monsterList.Count <= 0) return null;
-         else
+         
+         MonsterBehaviour nearestMonster = null;
+         var minDistance = float.MaxValue;
+
+         foreach (var monster in _monsterList)
          {
-            MonsterBehaviour nearestMonster = null;
-            var minDistance = float.MaxValue;
-
-            foreach (var monster in _monsterList)
+            if (monster == null) continue;
+            float dist = Vector3.Distance(monster.transform.position, this.transform.position);
+            if (dist < minDistance)
             {
-               if (monster == null) continue;
-               float dist = Vector3.Distance(monster.transform.position, transform.position);
-               if (dist < minDistance)
-               {
-                  minDistance = dist;
-                  nearestMonster = monster;
-               }
+               minDistance = dist;
+               nearestMonster = monster;
             }
-
-            return nearestMonster;
          }
+
+         return nearestMonster;
       }
       
-      public void Initiate()
+      public void Initialize()
       {
          _monsterList = new List<MonsterBehaviour>();
          _detectTrigger = GetComponent<Collider2D>();
@@ -200,8 +187,6 @@ public class RoleBehaviour : MonoBehaviour
 
       void OnTriggerEnter2D(Collider2D other)
       {
-         _monsterList.RemoveAll(m => m == null); //To clean empty monsters.
-         
          var monster = other.GetComponent<MonsterBehaviour>();
          if (monster != null && !_monsterList.Contains(monster))
          {
@@ -212,8 +197,6 @@ public class RoleBehaviour : MonoBehaviour
 
       void OnTriggerExit2D(Collider2D other)
          {
-            _monsterList.RemoveAll(m => m == null);//To clean empty monsters.
-            
             var monsterBehaviour = other.GetComponent<MonsterBehaviour>();
             if (monsterBehaviour != null && _monsterList.Contains(monsterBehaviour))
             {
@@ -221,39 +204,40 @@ public class RoleBehaviour : MonoBehaviour
                Debug.Log($"A monster has leaved the range：{monsterBehaviour.name}");
             }
          }
-      void OnDrawGizmosSelected()
-      {
-         if (_detectTrigger is CircleCollider2D circle)
-         {
-            Gizmos.color = Color.green;
-            Gizmos.DrawWireSphere(circle.transform.position, circle.radius);
-         }
-      }
+      // void OnDrawGizmosSelected()
+      // {
+      //    if (_detectTrigger is CircleCollider2D circle)
+      //    {
+      //       // 设置颜色：绿色 + 半透明
+      //       Gizmos.color = new Color(1f, 0f, 0f, .5f); // RGBA
+      //       Gizmos.DrawWireSphere(circle.bounds.center, circle.radius);
+      //    }
+      // }
    }
 
    MonsterDetector _monsterDetector;
-
-   [InfoBox("The child object to detect monsters.")]
+   
    [SerializeField]
    Transform monsterDetectorTransform;
-
-   [SerializeField][InfoBox("The fire speed of the role.")]
-   float fireSpeed = 1f;
+   [SerializeField] float fireSpeed = 1f;
 
    [InfoBox("Choose an attack strategy.")]
    [SerializeReference]
    IAttack iAttack;
-
+   MonsterBehaviour _nearestMonster;
+   /// <summary>
+   /// Attack monsters.
+   /// </summary>
    void Update()
    {
       // To get the nearest enemy.
-      MonsterBehaviour nearestMonster = _monsterDetector.GetNearestMonster();
+      _nearestMonster = _monsterDetector.GetNearestMonster();
       
       // To check if RoleBehaviour can attack: 
       // 1. _timmer <= 0f;
       // 2. _isMoving = false;
       // 3. nearestMonster != null;
-      bool canAttack = _timmer <= 0f && !_isMoving && nearestMonster != null;
+      bool canAttack = _timmer <= 0f && !_isMoving && _nearestMonster != null;
 
       if (canAttack)
       {
@@ -266,7 +250,7 @@ public class RoleBehaviour : MonoBehaviour
             return;
          }
 
-         float deltaX = nearestMonster.transform.position.x - transform.position.x;
+         float deltaX = _nearestMonster.transform.position.x - transform.position.x;
          if (Mathf.Abs(deltaX) > 0.01f)
             _spriteRenderer.flipX = deltaX < 0;
          
@@ -278,6 +262,17 @@ public class RoleBehaviour : MonoBehaviour
          // Attack(nearestMonster);
       }
       else _timmer -= Time.deltaTime;
+      
+   }
+   void Attack()
+   {
+      if (levelConfigList.Count > 0)
+      {
+         int attackPower = levelConfigList[GetLevel()-1].AttackPower;
+         iAttack.Do(_nearestMonster, attackPower);
+      }
+      else
+         Debug.LogError($"{this.gameObject.name} is missing levelInfoList!");
       
    }
 }

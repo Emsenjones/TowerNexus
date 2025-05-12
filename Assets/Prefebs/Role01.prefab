@@ -67,7 +67,7 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.65}
-  m_Radius: 1
+  m_Radius: 1.25
 --- !u!1 &8140021183545022926
 GameObject:
   m_ObjectHideFlags: 0
@@ -213,7 +213,7 @@ BoxCollider2D:
   m_CallbackLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
@@ -241,10 +241,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 870c159410df44e59a5d9b01566823be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelInfoList: []
   moveSpeed: 4
+  levelInfoList:
+  - index: 0
+    requiredExp: 0
+    attackPower: 5
+  - index: 1
+    requiredExp: 10
+    attackPower: 6
+  - index: 2
+    requiredExp: 15
+    attackPower: 7
+  - index: 3
+    requiredExp: 20
+    attackPower: 8
   monsterDetectorTransform: {fileID: 1425968586723452298}
-  fireSpeed: 1
   iAttack:
     rid: 6888079960661033388
   references:

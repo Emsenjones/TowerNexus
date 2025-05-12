@@ -171,12 +171,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14b9d4d40dbec4c6b8c06edb692f57ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  id: 
-  defaultHealth: 0
-  moveSpeed: 0
-  exp: 0
-  money: 0
-  damage: 0
+  id: Monster
+  defaultHealth: 10
+  moveSpeed: 2
+  exp: 1
+  money: 1
+  damage: 1
 --- !u!1 &8563766089563090114
 GameObject:
   m_ObjectHideFlags: 0

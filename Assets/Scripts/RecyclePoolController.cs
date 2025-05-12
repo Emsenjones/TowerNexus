@@ -33,7 +33,12 @@ public class RecyclePoolController : MonoBehaviour
     {
         _recycleItemBehaviourList = new List<RecycleItemBehaviour>();
     }
-
+    /// <summary>
+    /// Generate a gameObject via sourcePrefab.
+    /// </summary>
+    /// <param name="sourcePrefab">The source prefab.</param>
+    /// <param name="parentTransform">The parent transform.</param>
+    /// <returns></returns>
     public GameObject GenerateOneObject(GameObject sourcePrefab, Transform parentTransform = null)
     {
         GameObject returnedObject = null;
@@ -54,16 +59,21 @@ public class RecyclePoolController : MonoBehaviour
         return returnedObject;
     }
 
-    public void RecycleOneObject(GameObject recycledObject)
+    /// <summary>
+    /// Temporary disable targetObject. 
+    /// </summary>
+    /// <param name="targetObject">The object to disable.</param>
+    public void RecycleOneObject(GameObject targetObject)
     {
-        var recycledObjectBehaviour = recycledObject.GetComponent<RecycleItemBehaviour>();
+        var recycledObjectBehaviour = targetObject.GetComponent<RecycleItemBehaviour>();
         if (recycledObjectBehaviour == null) return;
-        
+
         _recycleItemBehaviourList.Add(recycledObjectBehaviour);
         recycledObjectBehaviour.transform.SetParent(transform);
-        recycledObject.SetActive(false);
+        targetObject.SetActive(false);
 
         #region To limite _recycleItemBehaviourList.Count.
+
         int removedCount = Mathf.RoundToInt(_recycleItemBehaviourList.Count * onceRemovedCountPercentage);
         if (_recycleItemBehaviourList.Count > maxPoolCount)
         {
