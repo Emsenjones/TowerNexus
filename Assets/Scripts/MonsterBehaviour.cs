@@ -115,13 +115,14 @@ public class MonsterBehaviour : MonoBehaviour
     }
 
     /// <summary>
-    /// will call this method when the enemy achieves the target node.
+    /// will call this method when the monster achieves the target.
     /// </summary>
     void PathComplete()
     {
         if (_animator != null) _animator.SetBool(AnimatorParams.IsMoving,false);
         else Debug.LogError(gameObject.name + "cannot find animator!");
-        Debug.Log("Path movement complete!");
+        Debug.Log($"{gameObject.name} has arrived target...");
+        OnArrived?.Invoke(this);
     }
 
     public static event Action<MonsterBehaviour> OnInitialize; 
@@ -129,13 +130,19 @@ public class MonsterBehaviour : MonoBehaviour
     /// <summary>
     /// Call this method when the monster is damaged.
     /// </summary>
-    /// <param name="_attackPower">The damage monster will be taken.</param>
-    public void IsDamaged(int _attackPower)
+    /// <param name="attackPower">The damage monster will take.</param>
+    /// <param name="isByRole">Is damaged by the Role?</param>
+    public void IsDamaged(int attackPower, bool isByRole)
     {
-        _health -= _attackPower;
+        _health -= attackPower;
         OnIsDamaged?.Invoke();
-        if(_health <= 0)
-            OnDead?.Invoke(this);
+        if (_health <= 0)
+        {
+            OnDead?.Invoke(this,isByRole);
+            DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+        }
+        
     }
-    public static event Action<MonsterBehaviour> OnDead;
+    public static event Action<MonsterBehaviour,bool> OnDead;
+    public static event Action<MonsterBehaviour> OnArrived;
 }

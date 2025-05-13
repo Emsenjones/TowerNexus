@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -28,10 +29,12 @@ public class RecyclePoolController : MonoBehaviour
     float onceRemovedCountPercentage = 0.5f;
     
     List<RecycleItemBehaviour> _recycleItemBehaviourList;
+    List<RecycleItemBehaviour> _willBeDestroyedBehaviourList;
 
     public void Initialize()
     {
         _recycleItemBehaviourList = new List<RecycleItemBehaviour>();
+        _willBeDestroyedBehaviourList = new List<RecycleItemBehaviour>();
     }
     /// <summary>
     /// Generate a gameObject via sourcePrefab.
@@ -81,12 +84,22 @@ public class RecyclePoolController : MonoBehaviour
             {
                 var willDestroyedBehaviour = _recycleItemBehaviourList[0];
                 _recycleItemBehaviourList.Remove(willDestroyedBehaviour);
-                Destroy(willDestroyedBehaviour.gameObject);
+                _willBeDestroyedBehaviourList.Add(willDestroyedBehaviour);
             }
         }
 
         #endregion
-
+        
+    }
+    void LateUpdate()
+    {
+        if (_willBeDestroyedBehaviourList.Count > 0)
+        {
+            foreach (RecycleItemBehaviour willBeDestroyedBehaviour in _willBeDestroyedBehaviourList)
+                Destroy(willBeDestroyedBehaviour.gameObject);
+            
+            _willBeDestroyedBehaviourList.Clear();
+        }
     }
 
 }

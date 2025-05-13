@@ -37,7 +37,7 @@ public class HealthBarBehaviour : MonoBehaviour
         else
             _slider.value = _boundedMonster.HealthRatio;
     }
-    void DestroyItself(MonsterBehaviour destroyedMonster)
+    void DestroyItself(MonsterBehaviour destroyedMonster, bool isByRole)
     {
         if (_boundedMonster == null)
             Debug.LogError($"{gameObject.name} is missing _pairedMonster!");

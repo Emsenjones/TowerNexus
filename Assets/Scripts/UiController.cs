@@ -15,6 +15,7 @@ public class UiController : MonoBehaviour
     [Title("Health bar")]
     [SerializeField] GameObject healthBarPrefab;
     [SerializeField] RectTransform healthBarContainer;
+    public void Initialize() { MonsterBehaviour.OnInitialize += GenerateOneHealthBar;}
     void GenerateOneHealthBar(MonsterBehaviour monster)
     {
         HealthBarBehaviour healthBar = DungeonManager.Instance.RecyclePoolController
@@ -22,10 +23,6 @@ public class UiController : MonoBehaviour
         if (healthBar != null) healthBar.Initialize(monster, mainCamera);
         else
             Debug.LogError($"{healthBar.gameObject.name} is missing the HealthBarBehaviour!");
-    }
-    void OnEnable()
-    {
-        MonsterBehaviour.OnInitialize += GenerateOneHealthBar;
     }
     void OnDisable()
     {

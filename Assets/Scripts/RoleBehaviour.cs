@@ -59,8 +59,8 @@ public class RoleBehaviour : MonoBehaviour
             exp -= levelConfig.RequiredExp;
          else
          {
-            return Mathf.Round(exp)/Mathf.Round(levelConfig.RequiredExp);
-            
+            float levelRatio = Mathf.Round(exp) / Mathf.Round(levelConfig.RequiredExp);
+            return Mathf.Clamp01(levelRatio);
          }
       }
       Debug.LogError($"{this.gameObject.name} cannot get LevelRatio!");

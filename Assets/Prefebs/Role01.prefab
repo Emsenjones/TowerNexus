@@ -242,20 +242,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 4
-  levelInfoList:
-  - index: 0
+  levelConfigList:
+  - level: 1
     requiredExp: 0
     attackPower: 5
-  - index: 1
+  - level: 2
     requiredExp: 10
     attackPower: 6
-  - index: 2
+  - level: 3
     requiredExp: 15
     attackPower: 7
-  - index: 3
+  - level: 4
     requiredExp: 20
     attackPower: 8
   monsterDetectorTransform: {fileID: 1425968586723452298}
+  fireSpeed: 1
   iAttack:
     rid: 6888079960661033388
   references:
