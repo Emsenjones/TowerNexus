@@ -330,96 +330,27 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 923206328212778188, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+    - target: {fileID: 2747909247361392003, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 923206328212778188, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+    - target: {fileID: 2747909247361392003, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 923206328212778188, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1303672561918597901, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2241149710637341212, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2241149710637341212, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3743142268235204717, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4131038331688539767, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4131038331688539767, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4131038331688539767, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4540371508542629265, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 4598440218756289114, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
+    - target: {fileID: 6470673669150216216, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 110
       objectReference: {fileID: 0}
     - target: {fileID: 7109167317086931620, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_Name
       value: DungeonManager01
-      objectReference: {fileID: 0}
-    - target: {fileID: 7420142701365223455, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7723833442626424415, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_FillAmount
-      value: 0.73
-      objectReference: {fileID: 0}
-    - target: {fileID: 8294450841629907111, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: mainCamera
-      value: 
-      objectReference: {fileID: 1842882179}
-    - target: {fileID: 8294450841629907111, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: healthBarPrefab
-      value: 
-      objectReference: {fileID: 2530039200397032229, guid: a6cf20d2c84934a7b89a8f560772301f, type: 3}
-    - target: {fileID: 8529620942654444252, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8529620942654444252, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8909588242962055391, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
---- !u!20 &1842882179 stripped
-Camera:
-  m_CorrespondingSourceObject: {fileID: 64266990292615994, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-  m_PrefabInstance: {fileID: 788920703}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

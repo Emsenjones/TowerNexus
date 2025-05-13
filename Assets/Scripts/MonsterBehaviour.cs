@@ -28,7 +28,13 @@ public class MonsterBehaviour : MonoBehaviour
 
     [SerializeField]int damage;
     int _health;
-    BoxCollider2D _detectTrigger;
+    public int Health
+    {
+        get {
+            return _health;
+        }
+    }
+    BoxCollider2D _trigger;
     Animator _animator;
     SpriteRenderer _spriteRenderer;
     /// <summary>
@@ -38,16 +44,18 @@ public class MonsterBehaviour : MonoBehaviour
     /// <param name="pathTransformList">the path of the monster to the target node.</param>
     public void Initialize(float healthCoefficient, List<Transform> pathTransformList)
     {
-        _detectTrigger = GetComponent<BoxCollider2D>();
-        if (_detectTrigger == null)
+        _trigger = GetComponent<BoxCollider2D>();
+        if (_trigger == null)
         {
             Debug.LogError($"{this.gameObject.name} is missing BoxCollider2D!");
             return;
         }
-        _detectTrigger.isTrigger = true;
+        _trigger.isTrigger = true;
+
         _maxHealth = Mathf.RoundToInt(healthCoefficient*defaultHealth);
         _health = _maxHealth;
         _animator = GetComponent<Animator>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
         if (_animator == null)
         {
             Debug.LogError($"{gameObject.name} is missing animator!");
@@ -122,26 +130,42 @@ public class MonsterBehaviour : MonoBehaviour
         if (_animator != null) _animator.SetBool(AnimatorParams.IsMoving,false);
         else Debug.LogError(gameObject.name + "cannot find animator!");
         Debug.Log($"{gameObject.name} has arrived target...");
-        OnArrived?.Invoke(this);
+        //OnArrived?.Invoke(this);
+        //DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
     }
 
     public static event Action<MonsterBehaviour> OnInitialize; 
     public event Action OnIsDamaged;
+    [SerializeField] float hitFlashDuration = 0.2f;
     /// <summary>
     /// Call this method when the monster is damaged.
     /// </summary>
     /// <param name="attackPower">The damage monster will take.</param>
     /// <param name="isByRole">Is damaged by the Role?</param>
-    public void IsDamaged(int attackPower, bool isByRole)
+    public void TakeDamage(int attackPower, bool isByRole)
     {
         _health -= attackPower;
+        if (_spriteRenderer != null)
+        {
+            _spriteRenderer.DOKill(); // To kill the color animation.
+            _spriteRenderer.color = Color.red; // Set its color to red.
+            _spriteRenderer.DOColor(Color.white, hitFlashDuration); // Then reset to default.
+        }
+        else
+            Debug.LogError($"{gameObject.name} is missing SpriteRenderer!");
+        
         OnIsDamaged?.Invoke();
         if (_health <= 0)
         {
-            OnDead?.Invoke(this,isByRole);
-            DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+            DOTween.Kill(this); //To kill all animations.
+            _animator.SetTrigger(AnimatorParams.Die);
+            OnDead?.Invoke(this,isByRole); 
         }
         
+    }
+    void DestroyItself() //Called by the animation event.
+    {
+        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(this.gameObject);
     }
     public static event Action<MonsterBehaviour,bool> OnDead;
     public static event Action<MonsterBehaviour> OnArrived;

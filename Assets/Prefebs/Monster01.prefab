@@ -147,7 +147,7 @@ BoxCollider2D:
   m_UsedByEffector: 0
   m_CompositeOperation: 0
   m_CompositeOrder: 0
-  m_Offset: {x: 0, y: 0.75}
+  m_Offset: {x: 0, y: 0.625}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.41, y: 0.092}
@@ -157,7 +157,7 @@ BoxCollider2D:
     drawMode: 0
     adaptiveTiling: 0
   m_AutoTiling: 0
-  m_Size: {x: 1, y: 1.5}
+  m_Size: {x: 0.75, y: 1.25}
   m_EdgeRadius: 0
 --- !u!114 &2686842474841809463
 MonoBehaviour:
@@ -173,9 +173,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultHealth: 20
   moveSpeed: 2
-  exp: 1
+  exp: 4
   money: 1
   damage: 1
+  hitFlashDuration: 0.2
 --- !u!1 &8563766089563090114
 GameObject:
   m_ObjectHideFlags: 0

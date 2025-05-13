@@ -22,8 +22,6 @@ public class MapController : MonoBehaviour
 
         [SerializeField] string description;
     }
-    [FormerlySerializedAs("gridList")]
-    [FormerlySerializedAs("gridInfoList")]
     [Title("Configs")]
     [SerializeField] List<GridConfig> gridConfigList;
     List<GridBehaviour> _gridList;

@@ -1,6 +1,8 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class UiController : MonoBehaviour
 {
@@ -15,7 +17,21 @@ public class UiController : MonoBehaviour
     [Title("Health bar")]
     [SerializeField] GameObject healthBarPrefab;
     [SerializeField] RectTransform healthBarContainer;
-    public void Initialize() { MonsterBehaviour.OnInitialize += GenerateOneHealthBar;}
+    [Title("Level & Exp Slider")]
+    [SerializeField] Slider expSlider;
+    [SerializeField] TextMeshProUGUI levelText;
+    public void Initialize(RoleBehaviour role)
+    {
+        OnRoleGetExp(role);
+        
+        MonsterBehaviour.OnInitialize += GenerateOneHealthBar;
+        RoleBehaviour.OnGetExp += OnRoleGetExp;
+    }
+    void OnRoleGetExp(RoleBehaviour role)
+    {
+        expSlider.value = role.GetLevelRatio();
+        levelText.text = role.GetLevel().ToString();
+    }
     void GenerateOneHealthBar(MonsterBehaviour monster)
     {
         HealthBarBehaviour healthBar = DungeonManager.Instance.RecyclePoolController
@@ -27,6 +43,7 @@ public class UiController : MonoBehaviour
     void OnDisable()
     {
         MonsterBehaviour.OnInitialize -= GenerateOneHealthBar;
+        RoleBehaviour.OnGetExp -= OnRoleGetExp;
     }
 
 }

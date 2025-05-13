@@ -25,6 +25,7 @@ public class HealthBarBehaviour : MonoBehaviour
         else
             Debug.LogError($" is missing MonsterBehaviour!");
         MonsterBehaviour.OnDead += DestroyItself;
+        MonsterBehaviour.OnArrived += DestroyItself;
         #endregion
         SetValue();
     }
@@ -37,12 +38,16 @@ public class HealthBarBehaviour : MonoBehaviour
         else
             _slider.value = _boundedMonster.HealthRatio;
     }
-    void DestroyItself(MonsterBehaviour destroyedMonster, bool isByRole)
+    void DestroyItself(MonsterBehaviour destroyedMonster)
     {
         if (_boundedMonster == null)
             Debug.LogError($"{gameObject.name} is missing _pairedMonster!");
         else if (_boundedMonster == destroyedMonster)
             DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+    }
+    void DestroyItself(MonsterBehaviour destroyedMonster, bool isByRole)
+    {
+        DestroyItself(destroyedMonster);
     }
     void OnDisable()
     {
