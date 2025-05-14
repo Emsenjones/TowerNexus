@@ -176,7 +176,7 @@ MonoBehaviour:
   exp: 4
   money: 1
   damage: 1
-  hitFlashDuration: 0.2
+  hitFlashDuration: 0.5
 --- !u!1 &8563766089563090114
 GameObject:
   m_ObjectHideFlags: 0

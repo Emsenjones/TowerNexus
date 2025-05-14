@@ -1,23 +1,23 @@
-using System;
+
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
+
 
 public class RecyclePoolController : MonoBehaviour
 {
     private class RecycleItemBehaviour : MonoBehaviour
     {
-        GameObject _sourcePrefab;
+        GameObject sourcePrefab;
 
-        public void Initialize(GameObject sourcePrefab)
+        public void Initialize(GameObject prefab)
         {
-            _sourcePrefab = sourcePrefab;
+            this.sourcePrefab = prefab;
         }
 
         public bool IsFromTheSameSource(GameObject comparedPrefab)
         {
-            return _sourcePrefab == comparedPrefab;
+            return sourcePrefab == comparedPrefab;
         }
     }
     
@@ -28,13 +28,13 @@ public class RecyclePoolController : MonoBehaviour
     [SerializeField][InfoBox("This is how many items will be deleted when poolCount is out of range.")]
     float onceRemovedCountPercentage = 0.5f;
     
-    List<RecycleItemBehaviour> _recycleItemBehaviourList;
-    List<RecycleItemBehaviour> _willBeDestroyedBehaviourList;
+    List<RecycleItemBehaviour> recycleItemBehaviourList;
+    List<RecycleItemBehaviour> willBeDestroyedBehaviourList;
 
     public void Initialize()
     {
-        _recycleItemBehaviourList = new List<RecycleItemBehaviour>();
-        _willBeDestroyedBehaviourList = new List<RecycleItemBehaviour>();
+        recycleItemBehaviourList = new List<RecycleItemBehaviour>();
+        willBeDestroyedBehaviourList = new List<RecycleItemBehaviour>();
     }
     /// <summary>
     /// Generate a gameObject via sourcePrefab.
@@ -45,12 +45,12 @@ public class RecyclePoolController : MonoBehaviour
     public GameObject GenerateOneObject(GameObject sourcePrefab, Transform parentTransform = null)
     {
         GameObject returnedObject = null;
-        foreach (var recycleBehaviour in _recycleItemBehaviourList)
+        foreach (var recycleBehaviour in recycleItemBehaviourList)
         {
             if (recycleBehaviour.IsFromTheSameSource(sourcePrefab))
             {
                 returnedObject = recycleBehaviour.gameObject;
-                _recycleItemBehaviourList.Remove(recycleBehaviour);
+                recycleItemBehaviourList.Remove(recycleBehaviour);
                 returnedObject.SetActive(true);
                 returnedObject.transform.SetParent(parentTransform);
                 return returnedObject;
@@ -63,7 +63,7 @@ public class RecyclePoolController : MonoBehaviour
     }
 
     /// <summary>
-    /// Temporary disable targetObject. 
+    /// To disable targetObject. 
     /// </summary>
     /// <param name="targetObject">The object to disable.</param>
     public void RecycleOneObject(GameObject targetObject)
@@ -71,20 +71,20 @@ public class RecyclePoolController : MonoBehaviour
         var recycledObjectBehaviour = targetObject.GetComponent<RecycleItemBehaviour>();
         if (recycledObjectBehaviour == null) return;
 
-        _recycleItemBehaviourList.Add(recycledObjectBehaviour);
+        recycleItemBehaviourList.Add(recycledObjectBehaviour);
         recycledObjectBehaviour.transform.SetParent(transform);
         targetObject.SetActive(false);
 
         #region To limite _recycleItemBehaviourList.Count.
 
-        int removedCount = Mathf.RoundToInt(_recycleItemBehaviourList.Count * onceRemovedCountPercentage);
-        if (_recycleItemBehaviourList.Count > maxPoolCount)
+        int removedCount = Mathf.RoundToInt(recycleItemBehaviourList.Count * onceRemovedCountPercentage);
+        if (recycleItemBehaviourList.Count > maxPoolCount)
         {
             for (var i = 0; i <= removedCount; i++)
             {
-                var willDestroyedBehaviour = _recycleItemBehaviourList[0];
-                _recycleItemBehaviourList.Remove(willDestroyedBehaviour);
-                _willBeDestroyedBehaviourList.Add(willDestroyedBehaviour);
+                var willDestroyedBehaviour = recycleItemBehaviourList[0];
+                recycleItemBehaviourList.Remove(willDestroyedBehaviour);
+                willBeDestroyedBehaviourList.Add(willDestroyedBehaviour);
             }
         }
 
@@ -93,12 +93,12 @@ public class RecyclePoolController : MonoBehaviour
     }
     void LateUpdate()
     {
-        if (_willBeDestroyedBehaviourList.Count > 0)
+        if (willBeDestroyedBehaviourList.Count > 0)
         {
-            foreach (RecycleItemBehaviour willBeDestroyedBehaviour in _willBeDestroyedBehaviourList)
+            foreach (RecycleItemBehaviour willBeDestroyedBehaviour in willBeDestroyedBehaviourList)
                 Destroy(willBeDestroyedBehaviour.gameObject);
             
-            _willBeDestroyedBehaviourList.Clear();
+            willBeDestroyedBehaviourList.Clear();
         }
     }
 

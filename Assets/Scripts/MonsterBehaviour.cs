@@ -1,18 +1,15 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using DG.Tweening;
-using Unity.VisualScripting;
-using UnityEngine.Serialization;
 using Sequence = DG.Tweening.Sequence;
 
 public class MonsterBehaviour : MonoBehaviour
 {
     [Title("Configs")]
     [SerializeField]int defaultHealth;
-    int _maxHealth;
+    int maxHealth;
     [SerializeField] float moveSpeed;
     [SerializeField]int exp;
     public int Exp
@@ -27,16 +24,16 @@ public class MonsterBehaviour : MonoBehaviour
     }
 
     [SerializeField]int damage;
-    int _health;
+    int health;
     public int Health
     {
         get {
-            return _health;
+            return health;
         }
     }
-    BoxCollider2D _trigger;
-    Animator _animator;
-    SpriteRenderer _spriteRenderer;
+    BoxCollider2D trigger;
+    Animator animator;
+    SpriteRenderer spriteRenderer;
     /// <summary>
     /// Must call this method when instantiating this object.
     /// </summary>
@@ -44,25 +41,25 @@ public class MonsterBehaviour : MonoBehaviour
     /// <param name="pathTransformList">the path of the monster to the target node.</param>
     public void Initialize(float healthCoefficient, List<Transform> pathTransformList)
     {
-        _trigger = GetComponent<BoxCollider2D>();
-        if (_trigger == null)
+        trigger = GetComponent<BoxCollider2D>();
+        if (trigger == null)
         {
             Debug.LogError($"{this.gameObject.name} is missing BoxCollider2D!");
             return;
         }
-        _trigger.isTrigger = true;
+        trigger.isTrigger = true;
 
-        _maxHealth = Mathf.RoundToInt(healthCoefficient*defaultHealth);
-        _health = _maxHealth;
-        _animator = GetComponent<Animator>();
-        _spriteRenderer = GetComponent<SpriteRenderer>();
-        if (_animator == null)
+        maxHealth = Mathf.RoundToInt(healthCoefficient*defaultHealth);
+        health = maxHealth;
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (animator == null)
         {
             Debug.LogError($"{gameObject.name} is missing animator!");
             return;
         }
-        _spriteRenderer = GetComponent<SpriteRenderer>();
-        if (_spriteRenderer == null)
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
         {
             Debug.LogError($"{gameObject.name} is missing spriteRenderer!");
             return;
@@ -74,7 +71,7 @@ public class MonsterBehaviour : MonoBehaviour
     public float HealthRatio
     {
         get {
-            return Mathf.Round(_health) / Mathf.Round(_maxHealth);
+            return Mathf.Round(health) / Mathf.Round(maxHealth);
         }
     }
 
@@ -82,10 +79,10 @@ public class MonsterBehaviour : MonoBehaviour
     /// make the monster move to the target node.
     /// </summary>
     /// <param name="pathTransformList">the path of the monster to the target node.</param>
-    public void FollowPath(List<Transform> pathTransformList)
+    void FollowPath(List<Transform> pathTransformList)
     {
         DOTween.Kill(this); // 自动清理旧 tween
-        if (_animator != null) _animator.SetBool(AnimatorParams.IsMoving,true);
+        if (animator != null) animator.SetBool(AnimatorParams.IsMoving,true);
         else Debug.LogError(gameObject.name + " cannot find animator!");
 
         Sequence seq = DOTween.Sequence().SetId(this); // 加上 ID 更保险
@@ -106,10 +103,10 @@ public class MonsterBehaviour : MonoBehaviour
             Vector3 dir = nextPos - currentPos;
             seq.AppendCallback(() =>
             {
-                if (_spriteRenderer != null && dir.x < 0)
-                    _spriteRenderer.flipX = true;  // 向左
-                else if (_spriteRenderer != null && dir.x > 0)
-                    _spriteRenderer.flipX = false ; // 向右
+                if (spriteRenderer != null && dir.x < 0)
+                    spriteRenderer.flipX = true;  // 向左
+                else if (spriteRenderer != null && dir.x > 0)
+                    spriteRenderer.flipX = false ; // 向右
                 // 如果 dir.x == 0，则不翻转
             });
 
@@ -127,38 +124,38 @@ public class MonsterBehaviour : MonoBehaviour
     /// </summary>
     void PathComplete()
     {
-        if (_animator != null) _animator.SetBool(AnimatorParams.IsMoving,false);
+        if (animator != null) animator.SetBool(AnimatorParams.IsMoving,false);
         else Debug.LogError(gameObject.name + "cannot find animator!");
         Debug.Log($"{gameObject.name} has arrived target...");
-        //OnArrived?.Invoke(this);
-        //DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+        OnArrived?.Invoke(this);
+        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
     }
 
     public static event Action<MonsterBehaviour> OnInitialize; 
     public event Action OnIsDamaged;
     [SerializeField] float hitFlashDuration = 0.2f;
     /// <summary>
-    /// Call this method when the monster is damaged.
+    /// Call this method when the monster is attacked.
     /// </summary>
     /// <param name="attackPower">The damage monster will take.</param>
     /// <param name="isByRole">Is damaged by the Role?</param>
     public void TakeDamage(int attackPower, bool isByRole)
     {
-        _health -= attackPower;
-        if (_spriteRenderer != null)
+        health -= attackPower;
+        if (spriteRenderer != null)
         {
-            _spriteRenderer.DOKill(); // To kill the color animation.
-            _spriteRenderer.color = Color.red; // Set its color to red.
-            _spriteRenderer.DOColor(Color.white, hitFlashDuration); // Then reset to default.
+            spriteRenderer.DOKill(); // To kill the color animation.
+            spriteRenderer.color = Color.red; // Set its color to red.
+            spriteRenderer.DOColor(Color.white, hitFlashDuration); // Then reset to default.
         }
         else
             Debug.LogError($"{gameObject.name} is missing SpriteRenderer!");
         
         OnIsDamaged?.Invoke();
-        if (_health <= 0)
+        if (health <= 0)
         {
             DOTween.Kill(this); //To kill all animations.
-            _animator.SetTrigger(AnimatorParams.Die);
+            animator.SetTrigger(AnimatorParams.Die);
             OnDead?.Invoke(this,isByRole); 
         }
         

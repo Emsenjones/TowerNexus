@@ -1,4 +1,3 @@
-using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,9 +9,14 @@ public class UiController : MonoBehaviour
     [SerializeField] Camera mainCamera;
     [SerializeField] Joystick joystick;
 
-    public Vector2 JoystickInput => joystick != null
-        ? new Vector2(joystick.Horizontal, joystick.Vertical)
-        : Vector2.zero;
+    public Vector2 JoystickInput
+    {
+        get {
+            return joystick is not null
+                ? new Vector2(joystick.Horizontal, joystick.Vertical)
+                : Vector2.zero;
+        }
+    }
 
     [Title("Health bar")]
     [SerializeField] GameObject healthBarPrefab;

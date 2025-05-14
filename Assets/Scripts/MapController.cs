@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class MapController : MonoBehaviour
 {
@@ -24,10 +24,10 @@ public class MapController : MonoBehaviour
     }
     [Title("Configs")]
     [SerializeField] List<GridConfig> gridConfigList;
-    List<GridBehaviour> _gridList;
+    List<GridBehaviour> gridList;
     public void Initialize()
     {
-        _gridList = GetComponentsInChildren<GridBehaviour>().ToList();
+        gridList = GetComponentsInChildren<GridBehaviour>().ToList();
         UpdateGrids();
     }
 
@@ -38,7 +38,16 @@ public class MapController : MonoBehaviour
     /// <returns> A list of transform. Will return an empty list if the monster cannot find a path.</returns>
     public List<Transform> FindOnePath(Transform monsterTransform)
     {
-        if(_gridList == null) return null;
+        if (monsterTransform == null)
+        {
+            Debug.LogError($"{gameObject.name} cannot find the transform of {monsterTransform.name}.");
+            return null;
+        }
+        if (gridList == null)
+        {
+            Debug.LogError($"{gameObject.name} cannot find GridBehaviour in its children.");
+            return null;
+        }
         GridBehaviour targetGrid = GetTargetGrid();
 
         if (targetGrid == null)
@@ -47,7 +56,7 @@ public class MapController : MonoBehaviour
             return null;
         }
 
-        GridBehaviour startGrid = _gridList
+        GridBehaviour startGrid = gridList
             .Where(n => n.IsWalkable)
             .OrderBy(n => Vector3.Distance(monsterTransform.position, n.transform.position))
             .FirstOrDefault();
@@ -57,11 +66,11 @@ public class MapController : MonoBehaviour
             Debug.LogError("No valid start node found.");
             return null;
         }
-        _debugPathList = AStar(startGrid, targetGrid, _gridList)
+        debugPathList = AStar(startGrid, targetGrid, gridList)
             .Select(n => n.transform)
             .ToList();
 
-        return _debugPathList;
+        return debugPathList;
     } 
     /// <summary>
     /// if nodeBehaviours have changed, call this function to update their sprites.
@@ -135,7 +144,7 @@ public class MapController : MonoBehaviour
     }
     public GridBehaviour GetTargetGrid()
     {
-        return _gridList?.FirstOrDefault(n => n.ThisType == GridBehaviour.Type.Target);
+        return gridList?.FirstOrDefault(n => n.ThisType == GridBehaviour.Type.Target);
     }
 
     #region Support methods.
@@ -265,22 +274,22 @@ public class MapController : MonoBehaviour
         return path;
     }
 
-    List<Transform> _debugPathList; //For drawing Gizmos.
+    List<Transform> debugPathList; //For drawing Gizmos.
 
     void OnDrawGizmosSelected()
     {
-        if (_debugPathList == null || _debugPathList.Count == 0) return;
+        if (debugPathList == null || debugPathList.Count == 0) return;
 
         Gizmos.color = Color.green;
-        for (int i = 0; i < _debugPathList.Count; i++)
+        for (int i = 0; i < debugPathList.Count; i++)
         {
-            if (_debugPathList[i] != null)
+            if (debugPathList[i] != null)
             {
-                Gizmos.DrawSphere(_debugPathList[i].position, 0.15f);
+                Gizmos.DrawSphere(debugPathList[i].position, 0.15f);
 
-                if (i < _debugPathList.Count - 1 && _debugPathList[i + 1] != null)
+                if (i < debugPathList.Count - 1 && debugPathList[i + 1] != null)
                 {
-                    Gizmos.DrawLine(_debugPathList[i].position, _debugPathList[i + 1].position);
+                    Gizmos.DrawLine(debugPathList[i].position, debugPathList[i + 1].position);
                 }
             }
         }
