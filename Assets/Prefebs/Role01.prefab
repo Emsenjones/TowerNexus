@@ -256,7 +256,7 @@ MonoBehaviour:
     requiredExp: 20
     attackPower: 8
   monsterDetectorTransform: {fileID: 1425968586723452298}
-  fireSpeed: 1
+  fireSpeed: 0.6
   iAttack:
     rid: 6888079960661033388
   references:

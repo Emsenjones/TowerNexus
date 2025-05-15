@@ -172,6 +172,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   defaultHealth: 20
+  maxHealth: 10
   moveSpeed: 2
   exp: 4
   money: 1

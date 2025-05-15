@@ -9,7 +9,7 @@ public class MonsterBehaviour : MonoBehaviour
 {
     [Title("Configs")]
     [SerializeField]int defaultHealth;
-    int maxHealth;
+    [SerializeField]int maxHealth;
     [SerializeField] float moveSpeed;
     [SerializeField]int exp;
     public int Exp
@@ -24,13 +24,14 @@ public class MonsterBehaviour : MonoBehaviour
     }
 
     [SerializeField]int damage;
-    int health;
-    public int Health
+    public int Damage
     {
         get {
-            return health;
+            return damage;
         }
     }
+    public int Health { get; private set; }
+
     BoxCollider2D trigger;
     Animator animator;
     SpriteRenderer spriteRenderer;
@@ -50,7 +51,7 @@ public class MonsterBehaviour : MonoBehaviour
         trigger.isTrigger = true;
 
         maxHealth = Mathf.RoundToInt(healthCoefficient*defaultHealth);
-        health = maxHealth;
+        Health = maxHealth;
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         if (animator == null)
@@ -71,7 +72,7 @@ public class MonsterBehaviour : MonoBehaviour
     public float HealthRatio
     {
         get {
-            return Mathf.Round(health) / Mathf.Round(maxHealth);
+            return Mathf.Round(Health) / Mathf.Round(maxHealth);
         }
     }
 
@@ -141,7 +142,7 @@ public class MonsterBehaviour : MonoBehaviour
     /// <param name="isByRole">Is damaged by the Role?</param>
     public void TakeDamage(int attackPower, bool isByRole)
     {
-        health -= attackPower;
+        Health -= attackPower;
         if (spriteRenderer != null)
         {
             spriteRenderer.DOKill(); // To kill the color animation.
@@ -152,7 +153,7 @@ public class MonsterBehaviour : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing SpriteRenderer!");
         
         OnIsDamaged?.Invoke();
-        if (health <= 0)
+        if (Health <= 0)
         {
             DOTween.Kill(this); //To kill all animations.
             animator.SetTrigger(AnimatorParams.Die);
