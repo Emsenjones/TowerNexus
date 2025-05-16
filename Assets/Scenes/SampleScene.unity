@@ -330,12 +330,32 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 339872709470863238, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: isWalkable
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1261289490872099787, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: isWalkable
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1296643793051825929, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: isWalkable
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2747909247361392003, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2747909247361392003, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2977635331189780638, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: isWalkable
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5726702580038736158, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: isWalkable
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7109167317086931620, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}

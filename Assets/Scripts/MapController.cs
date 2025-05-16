@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -83,10 +82,11 @@ public class MapController : MonoBehaviour
             Debug.LogError("Grid spacing is invalid.");
             return;
         }
+
         var nodeList = GetComponentsInChildren<GridBehaviour>().ToList();
         if (!nodeList.Any())
         {
-            Debug.LogError("Cannot find any NodeBehaviour in " + gameObject.name+" .");
+            Debug.LogError("Cannot find any GridBehaviour in " + gameObject.name + ".");
             return;
         }
 
@@ -95,21 +95,16 @@ public class MapController : MonoBehaviour
             var spriteRenderer = node.transform.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
             {
-                Debug.LogWarning($"No SpriteRenderer found on Node at {node.gameObject.name} .");
-                continue;
-            }
-            if (!node.IsWalkable)
-            {
-                spriteRenderer.sprite = null;
+                Debug.LogWarning($"No SpriteRenderer found on Grid at {node.gameObject.name}.");
                 continue;
             }
 
             Vector3 pos = node.transform.position;
             int index = 0;
+
             foreach (var neighbor in nodeList)
             {
-                if (!neighbor.IsWalkable || neighbor == node)
-                    continue;
+                if (neighbor == node) continue;
 
                 Vector3 dir = neighbor.transform.position - pos;
 
@@ -117,31 +112,30 @@ public class MapController : MonoBehaviour
                 if (Mathf.Abs(dir.x) > 0.1f && Mathf.Abs(dir.y) > 0.1f)
                     continue;
 
-                // 判断上（y+）
+                // ✅ 只与“同类节点”建立连接（即都 Walkable 或都非 Walkable）
+                if (neighbor.IsWalkable != node.IsWalkable) continue;
+
+                // 上（y+）
                 if (Mathf.Abs(dir.x) < 0.1f && Mathf.Abs(dir.y - gridSpacing) < 0.1f)
-                {
                     index += 1;
-                }
-                // 判断下（y-）
+
+                // 下（y-）
                 else if (Mathf.Abs(dir.x) < 0.1f && Mathf.Abs(dir.y + gridSpacing) < 0.1f)
-                {
                     index += 2;
-                }
-                // 判断左（x-）
+
+                // 左（x-）
                 else if (Mathf.Abs(dir.y) < 0.1f && Mathf.Abs(dir.x + gridSpacing) < 0.1f)
-                {
                     index += 4;
-                }
-                // 判断右（x+）
+
+                // 右（x+）
                 else if (Mathf.Abs(dir.y) < 0.1f && Mathf.Abs(dir.x - gridSpacing) < 0.1f)
-                {
                     index += 8;
-                }
             }
 
             spriteRenderer.sprite = GetGridSprite(index);
         }
     }
+
     public GridBehaviour GetTargetGrid()
     {
         return gridList?.FirstOrDefault(n => n.ThisType == GridBehaviour.Type.Target);
