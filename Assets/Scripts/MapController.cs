@@ -10,7 +10,12 @@ public class MapController : MonoBehaviour
     {
         [SerializeField]
         private int index;
-        public int Index => index;
+        public int Index
+        {
+            get {
+                return index;
+            }
+        }
 
         [SerializeField]
         Sprite sprite;

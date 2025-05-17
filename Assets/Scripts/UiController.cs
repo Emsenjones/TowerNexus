@@ -26,7 +26,9 @@ public class UiController : MonoBehaviour
 
         }
     }
-
+    [Title("Currency")]
+    [SerializeField] TextMeshProUGUI coinText;
+    [SerializeField] TextMeshProUGUI shredText;
     [FormerlySerializedAs("healthBarPrefab")]
     [Title("Monster Health bar")]
     [SerializeField] GameObject monsterHealthBarPrefab;
@@ -35,30 +37,63 @@ public class UiController : MonoBehaviour
     [Title("Level & Exp Slider")]
     [SerializeField] Slider expSlider;
     [SerializeField] TextMeshProUGUI levelText;
-    [Title("Health Progress Bar")]
-    [SerializeField] Slider healthSlider;
-    public void Initialize(RoleBehaviour role)
+    [Title("Roll Towers")]
+    [SerializeField] Button summonTowerButton;
+    [SerializeField] TextMeshProUGUI summonTowerButtonText;
+    [Title("TowerSlot")]
+    [SerializeField] GameObject towerSlotPrefab;
+    /// <summary>
+    /// To initialize UiController.
+    /// </summary>
+    /// <param name="role">The RoleBehaviour.</param>
+    /// <param name="coin">The coin amount.</param>
+    /// <param name="shred">The shred amount.</param>
+    /// <param name="towerPrice">The price to summon a tower.</param>
+    public void Initialize(RoleBehaviour role, int coin, int shred, int towerPrice)
     {
         if (expSlider is not null)
             expSlider.value = role.GetLevelRatio();
         else
         {
-            Debug.LogError($"{gameObject.name} is missing an ExpSlider.");
+            Debug.LogError($"{gameObject.name} is missing the ExpSlider.");
             return;
         }
         if (levelText is not null)
             levelText.text = role.GetLevel().ToString();
         else
         {
-            Debug.LogError($"{gameObject.name} is missing a LevelText.");
+            Debug.LogError($"{gameObject.name} is missing the LevelText.");
             return;
         }
-        if (healthSlider != null)
-            healthSlider.value = 1f;
+        if (coinText != null)
+            coinText.text = coin.ToString();
         else
         {
-            Debug.LogError($"{gameObject.name} is missing a HealthSlider.");
+            Debug.LogError($"{gameObject.name} is missing the CoinText.");
             return;
+        }
+        if (shredText != null)
+            shredText.text = shred.ToString();
+        else
+        {
+            Debug.LogError($"{gameObject.name} is missing the ShredText.");
+            return;
+        }
+        if (summonTowerButton != null)
+        {
+            summonTowerButton.onClick.AddListener(()=>OnClickSummonTowerButton?.Invoke());
+            //To add the listener.
+        }
+        else
+        {
+            Debug.LogError($"{gameObject.name} is missing the towerButton.");
+            return;
+        }
+        if(summonTowerButtonText is not null)
+            summonTowerButtonText.text = string.Format(GameTexts.SummonOneTower, towerPrice);
+        else
+        {
+            Debug.LogError($"{gameObject.name} is missing the summonTowerButton.");
         }
 
         enableJoystick = true;
@@ -66,9 +101,10 @@ public class UiController : MonoBehaviour
         RoleBehaviour.OnGetExp += OnRoleGetExp;
 
     }
-    public void SetHealthProgressBar(float value)
+    public static event Action OnClickSummonTowerButton;
+    public void UpdateCoin(int coin)
     {
-        healthSlider.value = value;
+        coinText.text = coin.ToString();
     }
     void OnRoleGetExp(RoleBehaviour role)
     {
@@ -77,7 +113,7 @@ public class UiController : MonoBehaviour
     }
     void GenerateOneHealthBar(MonsterBehaviour monster)
     {
-        HealthBarBehaviour healthBar = DungeonManager.Instance.RecyclePoolController
+        HealthBarBehaviour healthBar = RecyclePoolController.Instance
             .GenerateOneObject(monsterHealthBarPrefab, monsterHealthBarContainer).GetComponent<HealthBarBehaviour>();
         if (healthBar != null) healthBar.Initialize(monster, mainCamera);
         else

@@ -330,18 +330,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 339872709470863238, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: isWalkable
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1261289490872099787, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: isWalkable
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1296643793051825929, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: isWalkable
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 2747909247361392003, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -350,25 +338,57 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2977635331189780638, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: isWalkable
-      value: 1
+    - target: {fileID: 3369065148270114731, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 5726702580038736158, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: isWalkable
+    - target: {fileID: 3369065148270114731, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3369065148270114731, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3369065148270114731, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7109167317086931620, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_Name
       value: DungeonManager01
       objectReference: {fileID: 0}
-    - target: {fileID: 8507954882969931782, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.x
+    - target: {fileID: 8294450841629907111, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: towerSlotPrefab
+      value: 
+      objectReference: {fileID: 2142669926089614461, guid: e290b4ca875e249888c642f6567c64b1, type: 3}
+    - target: {fileID: 8973634712731477387, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_Type
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8973634712731477387, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 419520470, guid: bd7cc678ca01b4a4b9f7b99b52a213a7, type: 3}
+    - target: {fileID: 8973634712731477387, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8973634712731477387, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_FillCenter
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8973634712731477387, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_UseSpriteMesh
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 8507954882969931782, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
+    - target: {fileID: 8973634712731477387, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_PreserveAspect
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8973634712731477387, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: m_PixelsPerUnitMultiplier
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

@@ -175,6 +175,7 @@ MonoBehaviour:
   maxHealth: 10
   moveSpeed: 2
   exp: 4
+  coin: 2
   money: 1
   damage: 1
   hitFlashDuration: 0.5

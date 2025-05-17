@@ -1,4 +1,3 @@
-
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -6,6 +5,7 @@ using UnityEngine;
 
 public class RecyclePoolController : MonoBehaviour
 {
+    public static RecyclePoolController Instance { get; set; }
     private class RecycleItemBehaviour : MonoBehaviour
     {
         GameObject sourcePrefab;
@@ -30,7 +30,6 @@ public class RecyclePoolController : MonoBehaviour
     
     List<RecycleItemBehaviour> recycleItemBehaviourList;
     List<RecycleItemBehaviour> willBeDestroyedBehaviourList;
-
     public void Initialize()
     {
         recycleItemBehaviourList = new List<RecycleItemBehaviour>();

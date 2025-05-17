@@ -166,7 +166,6 @@ public class RoleBehaviour : MonoBehaviour
         {
             get { 
                 monsterList.RemoveAll(m => m is null|| m.Health<=0);
-                foreach (var monster in monsterList) Debug.Log(monster.gameObject.name);
                 return monsterList;
             }
         }

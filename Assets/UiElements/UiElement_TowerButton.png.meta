@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: d6edaaa0c42754f329df51702fc77259
+guid: bd7cc678ca01b4a4b9f7b99b52a213a7
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 5245495447438560125
-    second: UiElements_Sprite_HealthBar_Fill_0
+      213: 257597111393475923
+    second: UiElements_Sprite_TowerButton_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -48,11 +48,11 @@ TextureImporter:
   compressionQuality: 50
   spriteMode: 2
   spriteExtrude: 0
-  spriteMeshType: 1
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
-  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteBorder: {x: 80, y: 80, z: 80, w: 30}
   spriteGenerateFallbackPhysicsShape: 1
   alphaUsage: 1
   alphaIsTransparency: 1
@@ -75,7 +75,7 @@ TextureImporter:
     maxTextureSize: 128
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -113,23 +113,23 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: UiElements_Sprite_HealthBar_Fill_0
+      name: UiElement_TowerButton_0
       rect:
         serializedVersion: 2
-        x: 35
-        y: 30
-        width: 59
-        height: 59
+        x: 27
+        y: 20
+        width: 412
+        height: 176
       alignment: 0
       pivot: {x: 0.5, y: 0.5}
-      border: {x: 20, y: 20, z: 20, w: 20}
+      border: {x: 50, y: 115, z: 50, w: 40}
       customData: 
       outline: []
       physicsShape: []
-      tessellationDetail: -1
+      tessellationDetail: 0
       bones: []
-      spriteID: d7b018f415ebbc840800000000000000
-      internalID: 5245495447438560125
+      spriteID: 5481182fc02094ed5b532a83a3a0cc96
+      internalID: 419520470
       vertices: []
       indices: 
       edges: []
@@ -138,8 +138,8 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 5a53e818cdb1040bb9cfadf39c2d805a
-    internalID: 0
+    spriteID: 5e97eb03825dee720800000000000000
+    internalID: 1537655665
     vertices: []
     indices: 
     edges: []
@@ -148,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      UiElements_Sprite_HealthBar_Fill_0: 5245495447438560125
+      UiElement_TowerButton_0: 419520470
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

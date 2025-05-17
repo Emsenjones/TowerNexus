@@ -8,22 +8,21 @@ using Sequence = DG.Tweening.Sequence;
 public class MonsterBehaviour : MonoBehaviour
 {
     [Title("Configs")]
-    [SerializeField]int defaultHealth;
-    [SerializeField]int maxHealth;
+    [SerializeField] int defaultHealth;
+    [SerializeField] int maxHealth;
     [SerializeField] float moveSpeed;
-    [SerializeField]int exp;
+    [SerializeField] int exp;
+    [SerializeField] int coin;
     public int Exp
     {
         get { return exp; }
     }
-
-    [SerializeField] int money;
-    public int Money
+    public int Coin
     {
-        get { return money; }
+        get { return coin; }
     }
 
-    [SerializeField]int damage;
+    [SerializeField] int damage;
     public int Damage
     {
         get {
@@ -50,7 +49,7 @@ public class MonsterBehaviour : MonoBehaviour
         }
         trigger.isTrigger = true;
 
-        maxHealth = Mathf.RoundToInt(healthCoefficient*defaultHealth);
+        maxHealth = Mathf.RoundToInt(healthCoefficient * defaultHealth);
         Health = maxHealth;
         animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
@@ -83,7 +82,7 @@ public class MonsterBehaviour : MonoBehaviour
     void FollowPath(List<Transform> pathTransformList)
     {
         DOTween.Kill(this); // 自动清理旧 tween
-        if (animator != null) animator.SetBool(AnimatorParams.IsMoving,true);
+        if (animator != null) animator.SetBool(AnimatorParams.IsMoving, true);
         else Debug.LogError(gameObject.name + " cannot find animator!");
 
         Sequence seq = DOTween.Sequence().SetId(this); // 加上 ID 更保险
@@ -105,9 +104,9 @@ public class MonsterBehaviour : MonoBehaviour
             seq.AppendCallback(() =>
             {
                 if (spriteRenderer != null && dir.x < 0)
-                    spriteRenderer.flipX = true;  // 向左
+                    spriteRenderer.flipX = true; // 向左
                 else if (spriteRenderer != null && dir.x > 0)
-                    spriteRenderer.flipX = false ; // 向右
+                    spriteRenderer.flipX = false; // 向右
                 // 如果 dir.x == 0，则不翻转
             });
 
@@ -125,14 +124,13 @@ public class MonsterBehaviour : MonoBehaviour
     /// </summary>
     void PathComplete()
     {
-        if (animator != null) animator.SetBool(AnimatorParams.IsMoving,false);
+        if (animator != null) animator.SetBool(AnimatorParams.IsMoving, false);
         else Debug.LogError(gameObject.name + "cannot find animator!");
-        Debug.Log($"{gameObject.name} has arrived target...");
         OnArrived?.Invoke(this);
-        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+        RecyclePoolController.Instance.RecycleOneObject(gameObject);
     }
 
-    public static event Action<MonsterBehaviour> OnInitialize; 
+    public static event Action<MonsterBehaviour> OnInitialize;
     public event Action OnIsDamaged;
     [SerializeField] float hitFlashDuration = 0.2f;
     /// <summary>
@@ -151,20 +149,20 @@ public class MonsterBehaviour : MonoBehaviour
         }
         else
             Debug.LogError($"{gameObject.name} is missing SpriteRenderer!");
-        
+
         OnIsDamaged?.Invoke();
         if (Health <= 0)
         {
             DOTween.Kill(this); //To kill all animations.
             animator.SetTrigger(AnimatorParams.Die);
-            OnDead?.Invoke(this,isByRole); 
+            OnDead?.Invoke(this, isByRole);
         }
-        
+
     }
     void DestroyItself() //Called by the animation event.
     {
-        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(this.gameObject);
+        RecyclePoolController.Instance.RecycleOneObject(this.gameObject);
     }
-    public static event Action<MonsterBehaviour,bool> OnDead;
+    public static event Action<MonsterBehaviour, bool> OnDead;
     public static event Action<MonsterBehaviour> OnArrived;
 }
