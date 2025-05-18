@@ -130,7 +130,7 @@ public class RoleBehaviour : MonoBehaviour
         if (rigidbody2D == null)
         {
             Debug.LogError($"{gameObject.name} is missing Rigidbody2D!");
-            return;
+            Debug.Break();
         }
 
         Vector2 directionInput = DungeonManager.Instance.GetJoystickInput();
@@ -146,14 +146,19 @@ public class RoleBehaviour : MonoBehaviour
         if (animator != null)
             animator.SetBool(AnimatorParams.IsMoving, isMoving);
         else
+        {
             Debug.LogError($"{gameObject.name} is missing Animator!");
+            Debug.Break();}
 
         // 设置朝向（左右翻转）
         if (spriteRenderer != null && isMoving)
             spriteRenderer.flipX = moveDelta.x < 0;
 
         else if (spriteRenderer == null)
+        {
             Debug.LogError($"{gameObject.name} is missing SpriteRenderer!");
+            Debug.Break();
+        }
     }
 
     float timmer;
@@ -198,6 +203,7 @@ public class RoleBehaviour : MonoBehaviour
                 detectTrigger.isTrigger = true;
             else
                 Debug.LogError($"{gameObject.name} is missing Collider2D!");
+            
 
         }
 
@@ -222,9 +228,10 @@ public class RoleBehaviour : MonoBehaviour
     Transform monsterDetectorTransform;
     [SerializeField] float fireSpeed = 1f;
 
+    [FormerlySerializedAs("iAttack")]
     [InfoBox("Choose an attack strategy.")]
     [SerializeReference]
-    IAttack iAttack;
+    IRoleAttack iRoleAttack;
     /// <summary>
     /// The method is about detecting monsters.
     /// </summary>
@@ -303,7 +310,7 @@ public class RoleBehaviour : MonoBehaviour
         if (level >= 0 && level < levelConfigList.Count)
         {
             int attackPower = levelConfigList[GetLevel()].AttackPower;
-            iAttack.Do(targetMonsterList, attackPower);
+            iRoleAttack.Do(targetMonsterList, attackPower);
         }
 
         #endregion

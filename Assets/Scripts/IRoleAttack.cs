@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-interface IAttack
+interface IRoleAttack
 {
     public void Do(List<MonsterBehaviour> targetMonsterList, int attackPower);
 }
-class MeleeAttack:IAttack
+class MeleeRoleAttack:IRoleAttack
 {
     public void Do(List<MonsterBehaviour> targetMonsterList, int attackPower)
     {
@@ -14,7 +14,7 @@ class MeleeAttack:IAttack
     }
 
 }
-class RangeAttack : IAttack
+class RangeRoleAttack : IRoleAttack
 {
     public void Do(List<MonsterBehaviour> targetMonsterList, int attackPower)
     {
