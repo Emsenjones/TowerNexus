@@ -175,7 +175,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 5
   isWalkable: 1
 --- !u!1 &64544854804004046
 GameObject:
@@ -354,7 +354,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 6
   isWalkable: 1
 --- !u!1 &1086910047708863153
 GameObject:
@@ -456,7 +456,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 2
   isWalkable: 1
 --- !u!1 &1145604434660314804
 GameObject:
@@ -770,7 +770,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 11
   isWalkable: 1
 --- !u!1 &1937941982853341208
 GameObject:
@@ -840,7 +840,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_Sprite: {fileID: 419520470, guid: bd7cc678ca01b4a4b9f7b99b52a213a7, type: 3}
-  m_Type: 0
+  m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -993,7 +993,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 14
   isWalkable: 0
 --- !u!1 &2440343541818051596
 GameObject:
@@ -1342,7 +1342,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 4
   isWalkable: 1
 --- !u!1 &3387620903026233796
 GameObject:
@@ -1533,7 +1533,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 10
   isWalkable: 1
 --- !u!1 &3959977598780072166
 GameObject:
@@ -1635,7 +1635,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 7
   isWalkable: 1
 --- !u!1 &3972531504553319857
 GameObject:
@@ -1770,6 +1770,8 @@ MonoBehaviour:
   levelText: {fileID: 2438053220756897945}
   summonTowerButton: {fileID: 8098165326920394568}
   summonTowerButtonText: {fileID: 7566023330155428017}
+  towerPanel: {fileID: 7741336121740833982}
+  towerSlotPrefab: {fileID: 2142669926089614461, guid: e290b4ca875e249888c642f6567c64b1, type: 3}
 --- !u!1 &4207165835229067764
 GameObject:
   m_ObjectHideFlags: 0
@@ -2006,7 +2008,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 13
   isWalkable: 0
 --- !u!1 &4378461279333997948
 GameObject:
@@ -2108,7 +2110,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 3
   isWalkable: 1
 --- !u!1 &4656255589166748909
 GameObject:
@@ -2459,7 +2461,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 12
   isWalkable: 1
 --- !u!1 &5414159035372152998
 GameObject:
@@ -2561,7 +2563,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 16
   isWalkable: 1
 --- !u!1 &5534325105935383032
 GameObject:
@@ -2663,7 +2665,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 9
   isWalkable: 1
 --- !u!1 &5844596983567313234
 GameObject:
@@ -2911,6 +2913,7 @@ MonoBehaviour:
   - index: 0
     sprite: {fileID: 21300000, guid: 20b7d4c21109249de9e3bdba6ded265e, type: 3}
     description: "\u5168\u4E0D\u540C"
+  targetGrid: {fileID: 339872709470863238}
 --- !u!1 &6157626545636499084
 GameObject:
   m_ObjectHideFlags: 0
@@ -3011,7 +3014,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 8
   isWalkable: 1
 --- !u!1 &6383132570318401245
 GameObject:
@@ -3319,17 +3322,19 @@ MonoBehaviour:
   rolePrefab: {fileID: 8140021183545022926, guid: 0cf9d54ba75d64d179ff2d0af6c1586c, type: 3}
   spawnList:
   - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
-    gridTransform: {fileID: 402204640614832562}
+    spawnGridId: 16
     healthCoefficient: 1
     delay: 1
   - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
-    gridTransform: {fileID: 5066284648190936437}
+    spawnGridId: 17
     healthCoefficient: 1
     delay: 1
   coin: 10
   shred: 0
   towerPrice: 4
-  towerPrefabList: []
+  towerPoolItemList:
+  - towerPrefab: {fileID: 7692521103422011066, guid: 7b88b32ebf486419abc110367629a4e8, type: 3}
+    weight: 1
 --- !u!1 &7153814686814400622
 GameObject:
   m_ObjectHideFlags: 0
@@ -3580,7 +3585,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 15
   isWalkable: 1
 --- !u!1 &7697074564757753404
 GameObject:
@@ -3754,7 +3759,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -60, y: -122.099976}
+  m_AnchoredPosition: {x: -60, y: -122.1001}
   m_SizeDelta: {x: 150, y: 75}
   m_Pivot: {x: 1, y: 1}
 --- !u!222 &2067519193543314896
@@ -3941,7 +3946,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 1
+  id: 1
   isWalkable: 1
 --- !u!1 &8869580249053159696
 GameObject:
@@ -4043,7 +4048,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9d2bb706c3ddc499e89f311e52780f15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  type: 0
+  id: 17
   isWalkable: 1
 --- !u!1 &8907005371548191483
 GameObject:

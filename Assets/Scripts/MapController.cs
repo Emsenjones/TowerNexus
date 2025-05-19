@@ -28,11 +28,38 @@ public class MapController : MonoBehaviour
     }
     [Title("Configs")]
     [SerializeField] List<GridConfig> gridConfigList;
+    [SerializeField] GridBehaviour targetGrid;
+    public GridBehaviour TargetGrid
+    {
+        get {
+            return targetGrid;
+        }
+    }
+    List<GridBehaviour> spawnGridList;
     List<GridBehaviour> gridList;
-    public void Initialize()
+    public void Initialize(List<int> spawnGridIdList)
     {
         gridList = GetComponentsInChildren<GridBehaviour>().ToList();
+        if (gridList == null || gridList.Count <= 0)
+            Debug.LogError($"{gameObject.name} cannot find GridBehaviour in its children.");
+        #region Add spawnGrid to spawnGridList.
+
+        spawnGridList = new List<GridBehaviour>();
+        foreach (GridBehaviour grid in spawnGridIdList
+            .SelectMany(id => gridList.Where(grid => id == grid.Id)))
+            spawnGridList.Add(grid);
+
+        #endregion
+
+        
         UpdateGrids();
+    }
+    public GridBehaviour GetGrid(int id)
+    {
+        foreach (GridBehaviour grid in gridList.Where(grid => id == grid.Id))
+            return grid;
+        Debug.LogError($"{gameObject.name}: Grid with id = {id} doesn't exist");
+        return null;
     }
 
     /// <summary>
@@ -47,12 +74,11 @@ public class MapController : MonoBehaviour
             Debug.LogError($"{gameObject.name} cannot find the transform of {monsterTransform.name}.");
             return null;
         }
-        if (gridList == null)
+        if (gridList == null ||gridList.Count <= 0)
         {
             Debug.LogError($"{gameObject.name} cannot find GridBehaviour in its children.");
             return null;
         }
-        GridBehaviour targetGrid = GetTargetGrid();
 
         if (targetGrid == null)
         {
@@ -140,11 +166,107 @@ public class MapController : MonoBehaviour
             spriteRenderer.sprite = GetGridSprite(index);
         }
     }
-
-    public GridBehaviour GetTargetGrid()
+    public GridBehaviour GetClosestGrid(Vector2 targetPosition)
     {
-        return gridList?.FirstOrDefault(n => n.ThisType == GridBehaviour.Type.Target);
+        float closestDistance = float.MaxValue;
+        GridBehaviour closestGrid = null; 
+        foreach (GridBehaviour grid in gridList)
+        {
+            float distance = Vector2.Distance(targetPosition, grid.transform.position);
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closestGrid = grid;
+            }
+        }
+        return closestGrid;
     }
+    public bool CanDeployTower(List<Transform> towerTransformList)
+    {
+        if (towerTransformList is not { Count: > 0 })
+        {
+            Debug.LogError($"cannot find any tower transforms in {towerTransformList.GetType()}!");
+            return true;
+        }
+       
+
+        // To get the relevant GridBehaviour via towerTransformList.
+        List<GridBehaviour> occupiedGridList = new List<GridBehaviour>();
+        foreach (Transform tf in towerTransformList)
+        {
+            GridBehaviour grid = GetClosestGrid(tf.position);
+        
+            // Return false if it cannot find the relevant GridBehaviour.
+            if (grid == null)
+                return false;
+
+            // Return false if the relevant GridBehaviour's IsWalkable = false.
+            if (!grid.IsWalkable)
+                return false;
+
+            if (!occupiedGridList.Contains(grid))
+                occupiedGridList.Add(grid);
+        }
+
+        // To back up the data of IsWalkable in each GridBehaviour.
+        Dictionary<GridBehaviour, bool> originalState = new Dictionary<GridBehaviour, bool>();
+        foreach (GridBehaviour grid in occupiedGridList)
+        {
+            originalState[grid] = grid.IsWalkable;
+            grid.IsWalkable = false;
+        }
+
+        // To check if all paths which are from SpawnGrids to TargetGrids is accessible.
+        bool allReachable = true;
+        foreach (GridBehaviour spawn in spawnGridList)
+        {
+            if (spawn == null || !spawn.IsWalkable) continue;
+
+            List<GridBehaviour> path = AStar(spawn, targetGrid, gridList);
+            if (path == null || path.Count == 0)
+            {
+                allReachable = false;
+                break;
+            }
+        }
+
+        // To reset the data of IsWalkable in each GridBehaviour.
+        foreach (var kv in originalState)
+            kv.Key.IsWalkable = kv.Value;
+
+        return allReachable;
+    }
+    public void Deploy(List<Transform> towerTransformList)
+    {
+        if (towerTransformList is not { Count: > 0 })
+        {
+            Debug.LogError($"cannot find any tower transforms in {towerTransformList.GetType()}!");
+            return;
+        }
+
+        foreach (Transform tf in towerTransformList)
+        {
+            GridBehaviour grid = GetClosestGrid(tf.position);
+
+            if (grid == null)
+            {
+                Debug.LogError($"[MapController] No Grid found near position {tf.position}, cannot deploy here.");
+                continue;
+            }
+
+            if (!grid.IsWalkable)
+            {
+                Debug.LogError($"[MapController] Grid at {grid.transform.position} is already occupied.");
+                continue;
+            }
+
+            grid.IsWalkable = false;
+        }
+        UpdateGrids();
+
+    }
+
+
 
     #region Support methods.
     /// <summary>
@@ -273,8 +395,11 @@ public class MapController : MonoBehaviour
         return path;
     }
 
-    List<Transform> debugPathList; //For drawing Gizmos.
+    List<Transform> debugPathList; 
 
+    /// <summary>
+    /// This method is to draw Gizmos of the path.
+    /// </summary>
     void OnDrawGizmosSelected()
     {
         if (debugPathList == null || debugPathList.Count == 0) return;
@@ -292,21 +417,7 @@ public class MapController : MonoBehaviour
                 }
             }
         }
-    } //The function of drawing Gizmos.
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        var targets = GetComponentsInChildren<GridBehaviour>()
-            .Where(n => n.ThisType == GridBehaviour.Type.Target)
-            .ToList();
-
-        
-        if (targets.Count > 1)
-        {
-            Debug.LogWarning($"[MapController] detected multiple target type, multiple count：{targets.Count}.");
-        }
-    }
-#endif
+    } //
     #endregion
 
 }

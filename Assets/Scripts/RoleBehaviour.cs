@@ -227,8 +227,7 @@ public class RoleBehaviour : MonoBehaviour
     [SerializeField]
     Transform monsterDetectorTransform;
     [SerializeField] float fireSpeed = 1f;
-
-    [FormerlySerializedAs("iAttack")]
+    
     [InfoBox("Choose an attack strategy.")]
     [SerializeReference]
     IRoleAttack iRoleAttack;

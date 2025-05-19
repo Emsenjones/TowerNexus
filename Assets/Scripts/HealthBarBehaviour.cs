@@ -43,7 +43,7 @@ public class HealthBarBehaviour : MonoBehaviour
         if (boundedMonster == null)
             Debug.LogError($"{gameObject.name} is missing _pairedMonster!");
         else if (boundedMonster == destroyedMonster)
-            RecyclePoolController.Instance.RecycleOneObject(gameObject);
+            DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
     }
     void DestroyItself(MonsterBehaviour destroyedMonster, bool isByRole)
     {

@@ -5,7 +5,6 @@ using UnityEngine;
 
 public class RecyclePoolController : MonoBehaviour
 {
-    public static RecyclePoolController Instance { get; set; }
     private class RecycleItemBehaviour : MonoBehaviour
     {
         GameObject sourcePrefab;
@@ -50,14 +49,15 @@ public class RecyclePoolController : MonoBehaviour
             {
                 returnedObject = recycleBehaviour.gameObject;
                 recycleItemBehaviourList.Remove(recycleBehaviour);
-                returnedObject.SetActive(true);
                 returnedObject.transform.SetParent(parentTransform);
+                returnedObject.SetActive(true);
                 return returnedObject;
             }
         }
         
         returnedObject = Instantiate(sourcePrefab, parentTransform);
         returnedObject.AddComponent<RecycleItemBehaviour>().Initialize(sourcePrefab);
+        returnedObject.SetActive(true);
         return returnedObject;
     }
 

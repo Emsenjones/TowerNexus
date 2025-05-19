@@ -257,13 +257,13 @@ MonoBehaviour:
     attackPower: 8
   monsterDetectorTransform: {fileID: 1425968586723452298}
   fireSpeed: 0.6
-  iAttack:
-    rid: 6888079960661033388
+  iRoleAttack:
+    rid: 6888080142083031119
   references:
     version: 2
     RefIds:
-    - rid: 6888079960661033388
-      type: {class: MeleeAttack, ns: , asm: Assembly-CSharp}
+    - rid: 6888080142083031119
+      type: {class: MeleeRoleAttack, ns: , asm: Assembly-CSharp}
       data: 
 --- !u!50 &8727211790829386175
 Rigidbody2D:

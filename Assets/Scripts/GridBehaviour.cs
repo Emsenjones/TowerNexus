@@ -3,18 +3,18 @@ using UnityEngine;
 
 public class GridBehaviour : MonoBehaviour
 {
-    [Serializable] public enum Type {Normal, Target};
-
-    [SerializeField]
-    Type type;
-    public Type ThisType
+    [SerializeField] int id;
+    public int Id
     {
-        get { return type; }
+        get { return id; }
     }
 
     [SerializeField] bool isWalkable = true;
     public bool IsWalkable
     {
         get { return isWalkable; }
+        set {
+            isWalkable = value;
+        }
     }
 }

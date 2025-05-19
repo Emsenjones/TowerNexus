@@ -37,10 +37,11 @@ public class UiController : MonoBehaviour
     [Title("Level & Exp Slider")]
     [SerializeField] Slider expSlider;
     [SerializeField] TextMeshProUGUI levelText;
-    [Title("Roll Towers")]
+    [Title("Roll Tower Button")]
     [SerializeField] Button summonTowerButton;
     [SerializeField] TextMeshProUGUI summonTowerButtonText;
-    [Title("TowerSlot")]
+    [Title("Tower Panel")]
+    [SerializeField] RectTransform towerPanel;
     [SerializeField] GameObject towerSlotPrefab;
     /// <summary>
     /// To initialize UiController.
@@ -81,7 +82,7 @@ public class UiController : MonoBehaviour
         }
         if (summonTowerButton != null)
         {
-            summonTowerButton.onClick.AddListener(()=>OnClickSummonTowerButton?.Invoke());
+            summonTowerButton.onClick.AddListener(() => OnClickSummonTowerButton?.Invoke());
             //To add the listener.
         }
         else
@@ -89,7 +90,7 @@ public class UiController : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing the towerButton.");
             return;
         }
-        if(summonTowerButtonText is not null)
+        if (summonTowerButtonText is not null)
             summonTowerButtonText.text = string.Format(GameTexts.SummonOneTower, towerPrice);
         else
         {
@@ -113,11 +114,36 @@ public class UiController : MonoBehaviour
     }
     void GenerateOneHealthBar(MonsterBehaviour monster)
     {
-        HealthBarBehaviour healthBar = RecyclePoolController.Instance
-            .GenerateOneObject(monsterHealthBarPrefab, monsterHealthBarContainer).GetComponent<HealthBarBehaviour>();
+        HealthBarBehaviour healthBar = DungeonManager.Instance.RecyclePoolController
+            .GenerateOneObject(monsterHealthBarPrefab, monsterHealthBarContainer)
+            .GetComponent<HealthBarBehaviour>();
         if (healthBar != null) healthBar.Initialize(monster, mainCamera);
         else
             Debug.LogError($"{healthBar.gameObject.name} is missing the HealthBarBehaviour!");
+    }
+    public void GenerateOneTowerSlot(GameObject towerPrefab)
+    {
+        if (towerSlotPrefab == null)
+        {
+            Debug.LogError(gameObject.name + " is missing the towerSlotPrefab.");
+            return;
+        }
+        if (towerPanel == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing the towerPanel.");
+            return;
+        }
+        TowerSlotBehaviour towerSlot = DungeonManager.Instance.RecyclePoolController
+            .GenerateOneObject(towerSlotPrefab, towerPanel)
+            .GetComponent<TowerSlotBehaviour>();
+        
+        if (towerSlot is null)
+        {
+            // ReSharper disable once PossibleNullReferenceException
+            Debug.LogError($"{towerSlot.gameObject.name} is missing the TowerSlotBehaviour!");
+            return;
+        }
+        towerSlot.Initialize(towerPrefab, mainCamera);
     }
     void OnDisable()
     {

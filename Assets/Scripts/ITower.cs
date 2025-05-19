@@ -6,93 +6,55 @@ using UnityEngine.Serialization;
 
 public interface ITower
 {
-    [Serializable] class LevelConfig
-    {
-        [FormerlySerializedAs("index")]
-        [SerializeField] int level;
-        public int Level { get { return level; } }
-        
-        [SerializeField] int requiredShard;
-        public int RequiredShard
-        {
-            get {
-                return requiredShard;
-            }
-        }
-        [SerializeField] int attackPower;
-        [SerializeField] int projectilePerAttack;
-        [SerializeField] List<Animator> archerAnimatorList;
-    }
+    public void Initialize();
+    /// <summary>
+    /// Will return true if the level up is successful.
+    /// </summary>
+    /// <param name="shard">shard amount which the player has.</param>
+    /// <param name="requiredShard">the shard amount which the player need.</param>
+    /// <returns></returns>
+    public bool TryLevelUp(ref int shard, out int requiredShard);
+
 }
 class ArcherTower : ITower
 {
     [Title("Configs")]
-    [SerializeField] Sprite iconSprite;
-    public Sprite IconSprite
-    {
-        get {
-            return iconSprite;
-        }
-    }
     [SerializeField] Transform firePoint;
-    //[SerializeField] List<Animator> 
+    [SerializeField] List<Animator> archerAnimatorList;
     [SerializeField] float fireSpeed;
     [SerializeField] GameObject projectilePrefab;
 
-    [SerializeField] List<ITower.LevelConfig> levelConfigList;
-    ITower.LevelConfig levelConfig;
-
-    public void Initialize()
+    public void Initialize() { }
+    public List<Transform> GetGridTransformList()
     {
-        if (levelConfigList.Count <= 0)
+        throw new NotImplementedException();
+    }
+    public bool TryLevelUp(ref int shard, out int requiredShard)
+    {
+        throw new NotImplementedException();
+    }
+    class MagitTower : ITower
+    {
+        public void Initialize()
         {
-            Debug.LogError($"{GetType()}'s LevelConfigList is empty");
-            return;
+            throw new NotImplementedException();
         }
-        levelConfig = levelConfigList[0];
-    }
-    /// <summary>
-    /// Return the required Shard to level up.
-    /// </summary>
-    /// <returns>Will return int.MaxValue if it has reached the maximum level.</returns>
-    public int GetLevelUpShard()
-    {
-        int requiredShard = 0;
-        if (levelConfigList.Count <= 0)
-            Debug.LogError($"{GetType()}'s LevelConfigList is empty");
-        else if (levelConfig == levelConfigList[^1])
+        public bool TryLevelUp(ref int shard, out int requiredShard)
         {
-            Debug.Log($"{GetType()} has reached the maximum level.");
-            requiredShard = int.MaxValue;
+            throw new NotImplementedException();
         }
-        else
-            for (int i = 0; i < levelConfigList.Count; i++)
-                if (levelConfig == levelConfigList[i])
-                {
-                    requiredShard = levelConfigList[i + 1].RequiredShard;
-                    break;
-                }
-        return requiredShard;
+   
     }
-    public void LevelUp()
+    class StoneTower : ITower
     {
-        if (levelConfigList.Count <= 0)
-            Debug.LogError($"{GetType()}'s LevelConfigList is empty");
-        else if (levelConfig == levelConfigList[^1])
-            Debug.Log($"{GetType()} has reached the maximum level.");
-        else
-            for (int i = 0; i < levelConfigList.Count; i++)
-                if (levelConfig == levelConfigList[i])
-                {
-                    levelConfig = levelConfigList[i + 1];
-                    break;
-                }
+        public void Initialize()
+        {
+            throw new NotImplementedException();
+        }
+        public bool TryLevelUp(ref int shard, out int requiredShard)
+        {
+            throw new NotImplementedException();
+        }
+
     }
-
-
-
-
-
 }
-class MagitTower : ITower { }
-class StoneTower : ITower { }

@@ -127,7 +127,7 @@ public class MonsterBehaviour : MonoBehaviour
         if (animator != null) animator.SetBool(AnimatorParams.IsMoving, false);
         else Debug.LogError(gameObject.name + "cannot find animator!");
         OnArrived?.Invoke(this);
-        RecyclePoolController.Instance.RecycleOneObject(gameObject);
+        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
     }
 
     public static event Action<MonsterBehaviour> OnInitialize;
@@ -161,7 +161,7 @@ public class MonsterBehaviour : MonoBehaviour
     }
     void DestroyItself() //Called by the animation event.
     {
-        RecyclePoolController.Instance.RecycleOneObject(this.gameObject);
+        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(this.gameObject);
     }
     public static event Action<MonsterBehaviour, bool> OnDead;
     public static event Action<MonsterBehaviour> OnArrived;
