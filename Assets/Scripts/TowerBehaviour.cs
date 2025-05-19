@@ -18,16 +18,17 @@ public class TowerBehaviour : MonoBehaviour
             return iconSprite;
         }
     }
-    [SerializeField]  List<Transform> gridTransformList;
-    [SerializeField] Vector4 deployableGridColor;
-    [SerializeField] Vector4 notDeployableGridColor;
-    
+    [SerializeField] List<Transform> gridTransformList;
     public List<Transform> GridTransformList
     {
         get {
             return gridTransformList;
         }
     }
+    [SerializeField] Vector4 deployableGridColor;
+    [SerializeField] Vector4 notDeployableGridColor;
+
+
     public void Deploying(bool isDeployable)
     {
         if (gridTransformList.Count <= 0)
@@ -43,6 +44,11 @@ public class TowerBehaviour : MonoBehaviour
                 Debug.LogError($"{gridTransform.name} is missing SpriteRenderer!");
             else
                 spriteRenderer.color = deployColor;
+            Collider2D gridCollider = gridTransform.GetComponent<Collider2D>();
+            if(gridCollider == null)
+                Debug.LogError($"{gridTransform.name} is missing Collider2D!");
+            else if(gridCollider.enabled)
+                gridCollider.enabled = false;
         }
     }
     public void Initialize()
@@ -54,6 +60,13 @@ public class TowerBehaviour : MonoBehaviour
                 Debug.LogError($"{gridTransform.name} is missing SpriteRenderer!");
             else
                 spriteRenderer.color = Vector4.zero;
+            Collider2D gridCollider = gridTransform.GetComponent<Collider2D>();
+            if(gridCollider == null)
+                Debug.LogError($"{gridTransform.name} is missing Collider2D!");
+            else if(!gridCollider.enabled)
+                gridCollider.enabled = true;
+            else if (gridCollider.isTrigger)
+                gridCollider.isTrigger = false;
         }
     }
     void OnMouseDown()
@@ -61,5 +74,5 @@ public class TowerBehaviour : MonoBehaviour
         Debug.Log($"{gameObject.name} is clicked.");
     }
     [SerializeReference] ITower iTower;
-    
+
 }

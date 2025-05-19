@@ -29,10 +29,12 @@ public class MapController : MonoBehaviour
     [Title("Configs")]
     [SerializeField] List<GridConfig> gridConfigList;
     [SerializeField] GridBehaviour targetGrid;
-    public GridBehaviour TargetGrid
+    [SerializeField] GameObject housePrefab;
+    [SerializeField] Transform roleTransform;
+    public Transform RoleTransform
     {
         get {
-            return targetGrid;
+            return roleTransform;
         }
     }
     List<GridBehaviour> spawnGridList;
@@ -51,7 +53,17 @@ public class MapController : MonoBehaviour
 
         #endregion
 
-        
+        #region Generate a house as to mark the targetGrid.
+
+        if (housePrefab == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing the housePrefab.");
+            return;
+        }
+        DungeonManager.Instance.RecyclePoolController
+            .GenerateOneObject(housePrefab, targetGrid.transform);
+
+        #endregion
         UpdateGrids();
     }
     public GridBehaviour GetGrid(int id)
