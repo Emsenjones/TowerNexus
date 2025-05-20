@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1425968586723452298}
   - component: {fileID: 247774631734902163}
+  - component: {fileID: 3677764968677834808}
   m_Layer: 0
   m_Name: MonsterDetector
   m_TagString: Untagged
@@ -68,6 +69,18 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0.65}
   m_Radius: 1
+--- !u!114 &3677764968677834808
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 60320194392482162}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b5742a2991c9c4e97a503fb139bbaf06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8140021183545022926
 GameObject:
   m_ObjectHideFlags: 0
@@ -255,7 +268,7 @@ MonoBehaviour:
   - level: 4
     requiredExp: 20
     attackPower: 8
-  monsterDetectorTransform: {fileID: 1425968586723452298}
+  monsterDetector: {fileID: 3677764968677834808}
   fireSpeed: 0.6
   iRoleAttack:
     rid: 6888080142083031119

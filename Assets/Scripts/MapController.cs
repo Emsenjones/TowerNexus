@@ -274,11 +274,11 @@ public class MapController : MonoBehaviour
 
             grid.IsWalkable = false;
         }
+        
         UpdateGrids();
-
+        OnDeployOneTower?.Invoke();
     }
-
-
+    public static event Action OnDeployOneTower;
 
     #region Support methods.
     /// <summary>

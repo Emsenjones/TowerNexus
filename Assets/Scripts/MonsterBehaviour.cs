@@ -38,8 +38,7 @@ public class MonsterBehaviour : MonoBehaviour
     /// Must call this method when instantiating this object.
     /// </summary>
     /// <param name="healthCoefficient">health coefficient parameter.</param>
-    /// <param name="pathTransformList">the path of the monster to the target node.</param>
-    public void Initialize(float healthCoefficient, List<Transform> pathTransformList)
+    public void Initialize(float healthCoefficient)
     {
         trigger = GetComponent<BoxCollider2D>();
         if (trigger == null)
@@ -65,9 +64,14 @@ public class MonsterBehaviour : MonoBehaviour
             return;
         }
         OnInitialize?.Invoke(this);
-        FollowPath(pathTransformList);
-    }
+        FollowOnePath();
 
+        MapController.OnDeployOneTower += FollowOnePath;
+    }
+    void OnDisable()
+    {
+        MapController.OnDeployOneTower -= FollowOnePath;
+    }
     public float HealthRatio
     {
         get {
@@ -78,8 +82,7 @@ public class MonsterBehaviour : MonoBehaviour
     /// <summary>
     /// make the monster move to the target node.
     /// </summary>
-    /// <param name="pathTransformList">the path of the monster to the target node.</param>
-    void FollowPath(List<Transform> pathTransformList)
+    void FollowOnePath()
     {
         DOTween.Kill(this); // 自动清理旧 tween
         if (animator != null) animator.SetBool(AnimatorParams.IsMoving, true);
@@ -87,14 +90,15 @@ public class MonsterBehaviour : MonoBehaviour
 
         Sequence seq = DOTween.Sequence().SetId(this); // 加上 ID 更保险
 
-        if (pathTransformList == null || pathTransformList.Count == 0)
+        List<Transform> pathList = DungeonManager.Instance.MapController.FindOnePath(transform);
+        if (pathList == null || pathList.Count == 0)
         {
             Debug.LogError($"{gameObject.name} cannot find any paths!");
             return;
         }
 
         Vector3 currentPos = transform.position;
-        foreach (Transform node in pathTransformList)
+        foreach (Transform node in pathList)
         {
             Vector3 nextPos = node.position;
             float duration = Vector3.Distance(currentPos, nextPos) / moveSpeed;
@@ -136,7 +140,7 @@ public class MonsterBehaviour : MonoBehaviour
     /// <summary>
     /// Call this method when the monster is attacked.
     /// </summary>
-    /// <param name="attackPower">The damage monster will take.</param>
+    /// <param name="attackPower">The damage which the monster will be taken.</param>
     /// <param name="isByRole">Is damaged by the Role?</param>
     public void TakeDamage(int attackPower, bool isByRole)
     {

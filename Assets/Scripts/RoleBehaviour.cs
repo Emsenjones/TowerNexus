@@ -85,17 +85,12 @@ public class RoleBehaviour : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         isMoving = false;
         timmer = 0f;
-        #region Add MonsterDetector component.
 
-        if (monsterDetectorTransform != null)
-        {
-            monsterDetector = monsterDetectorTransform.AddComponent<MonsterDetector>();
-            monsterDetector.Initialize();
-        }
+        if (monsterDetector == null)
+            Debug.Log($"{gameObject.name} is missing a monsterDetector!");
         else
-            Debug.Log($"{gameObject.name} is missing a detector Transform!");
+            monsterDetector.Initialize();
 
-        #endregion
         MonsterBehaviour.OnDead += OnOneMonsterDead;
 
     }
@@ -148,7 +143,8 @@ public class RoleBehaviour : MonoBehaviour
         else
         {
             Debug.LogError($"{gameObject.name} is missing Animator!");
-            Debug.Break();}
+            Debug.Break();
+        }
 
         // 设置朝向（左右翻转）
         if (spriteRenderer != null && isMoving)
@@ -163,71 +159,10 @@ public class RoleBehaviour : MonoBehaviour
 
     float timmer;
 
-    [Serializable]
-    class MonsterDetector : MonoBehaviour
-    {
-        List<MonsterBehaviour> monsterList = new List<MonsterBehaviour>();
-        public List<MonsterBehaviour> MonsterList
-        {
-            get { 
-                monsterList.RemoveAll(m => m is null|| m.Health<=0);
-                return monsterList;
-            }
-        }
-        public MonsterBehaviour GetTheNearestMonster()
-        {
-            if (MonsterList.Count <= 0) return null;
-            
-            MonsterBehaviour nearestMonster = null;
-            float minDistance = float.MaxValue;
 
-            foreach (MonsterBehaviour monster in MonsterList)
-            {
-                float dist = Vector3.Distance(monster.transform.position, this.transform.position);
-                if (dist < minDistance)
-                {
-                    minDistance = dist;
-                    nearestMonster = monster;
-                }
-            }
-
-            return nearestMonster;
-        }
-        Collider2D detectTrigger;
-
-        public void Initialize()
-        {
-            monsterList = new List<MonsterBehaviour>();
-            detectTrigger = GetComponent<Collider2D>();
-            if (detectTrigger != null)
-                detectTrigger.isTrigger = true;
-            else
-                Debug.LogError($"{gameObject.name} is missing Collider2D!");
-            
-
-        }
-
-        void OnTriggerEnter2D(Collider2D other)
-        {
-            var monster = other.GetComponent<MonsterBehaviour>();
-            if (monster != null && !monsterList.Contains(monster))
-                monsterList.Add(monster);
-        }
-
-        void OnTriggerExit2D(Collider2D other)
-        {
-            var monsterBehaviour = other.GetComponent<MonsterBehaviour>();
-            if (monsterBehaviour != null && monsterList.Contains(monsterBehaviour))
-                monsterList.Remove(monsterBehaviour);
-        }
-    }
-
-    MonsterDetector monsterDetector;
-
-    [SerializeField]
-    Transform monsterDetectorTransform;
+    [SerializeField] MonsterDetector monsterDetector;
     [SerializeField] float fireSpeed = 1f;
-    
+
     [InfoBox("Choose an attack strategy.")]
     [SerializeReference]
     IRoleAttack iRoleAttack;
@@ -262,8 +197,8 @@ public class RoleBehaviour : MonoBehaviour
                 spriteRenderer.flipX = deltaX < 0;
 
             #endregion
-            
-            #region  Play attack animation.
+
+            #region Play attack animation.
 
             if (animator)
                 animator.SetTrigger(AnimatorParams.Attack);
@@ -315,6 +250,6 @@ public class RoleBehaviour : MonoBehaviour
         #endregion
 
     }
-    
+
 
 }
