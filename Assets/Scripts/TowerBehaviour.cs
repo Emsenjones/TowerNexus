@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 public class TowerBehaviour : MonoBehaviour
 {
     [Title("Configs")]
@@ -29,9 +30,14 @@ public class TowerBehaviour : MonoBehaviour
     [SerializeField] Vector4 deployableGridColor;
     [SerializeField] Vector4 notDeployableGridColor;
     [SerializeField] MonsterDetector monsterDetector;
+    [SerializeField] float fireSpeed;
+    [FormerlySerializedAs("firePoint")]
+    [SerializeField] Transform shootPoint;
+    float timmer;
     Collider2D collider2d;
     void Awake()
     {
+        timmer = 0f;
         collider2d = GetComponent<Collider2D>();
     }
 
@@ -78,21 +84,40 @@ public class TowerBehaviour : MonoBehaviour
         else
         {
             collider2d.enabled = true;
-            collider2d.isTrigger = true;
+            collider2d.isTrigger = false;
         }
-            
-        
+
+        timmer = fireSpeed;
         if (monsterDetector == null)
         {
             Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
             return;
         }
         monsterDetector.Initialize();
+        
+        if (shootPoint == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing the firePoint!");
+            return;
+        }
+        iTower.Initialize(shootPoint);
     }
     void OnMouseDown()
     {
         Debug.Log($"{gameObject.name} is clicked.");
     }
     [SerializeReference] ITower iTower;
+
+    
+    void Update()
+    {
+        if (timmer > 0f)
+            timmer -= Time.deltaTime;
+        else if(monsterDetector.GetTheNearestMonster() is null)
+        {
+            iTower.Attack(monsterDetector.MonsterList);
+            timmer = fireSpeed;
+        }
+    }
 
 }

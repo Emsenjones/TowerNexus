@@ -1,60 +1,80 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
 
 public interface ITower
 {
-    public void Initialize();
+    [Serializable] class LevelConfig { }
+    public void Initialize(Transform shootPointTransform);
     /// <summary>
     /// Will return true if the level up is successful.
     /// </summary>
     /// <param name="shard">shard amount which the player has.</param>
-    /// <param name="requiredShard">the shard amount which the player need.</param>
+    /// <param name="requiredShard">the shard amount which the player needs.</param>
     /// <returns></returns>
     public bool TryLevelUp(ref int shard, out int requiredShard);
+    /// <summary>
+    /// To attack monsters.
+    /// </summary>
+    /// <param name="monsterList">Attackable monsters.</param>
+    public void Attack(List<MonsterBehaviour> monsterList);
 
 }
 class ArcherTower : ITower
 {
     [Title("Configs")]
-    [SerializeField] Transform firePoint;
     [SerializeField] List<Animator> archerAnimatorList;
     [SerializeField] float fireSpeed;
+    [SerializeField] int projectilesPerAttack;
     [SerializeField] GameObject projectilePrefab;
+    Transform shootPoint;
 
-    public void Initialize() { }
-    public List<Transform> GetGridTransformList()
+    public void Initialize(Transform shootPointTransform)
     {
-        throw new NotImplementedException();
+        shootPoint = shootPointTransform;
     }
     public bool TryLevelUp(ref int shard, out int requiredShard)
     {
         throw new NotImplementedException();
     }
-    class MagitTower : ITower
+    public void Attack(List<MonsterBehaviour> monsterList)
     {
-        public void Initialize()
+        if (shootPoint == null)
         {
-            throw new NotImplementedException();
+            Debug.LogError($"{GetType()} is missing the shootPoint!");
+            return;
         }
-        public bool TryLevelUp(ref int shard, out int requiredShard)
+        if (projectilePrefab == null)
         {
-            throw new NotImplementedException();
+            Debug.Log($"{GetType()} is missing the projectilePrefab!");
+            return;
         }
-   
-    }
-    class StoneTower : ITower
-    {
-        public void Initialize()
+        if (monsterList == null || monsterList.Count == 0)
         {
-            throw new NotImplementedException();
+            Debug.Log($"{GetType()} doesn't have monsters to attack...");
+            return;
         }
-        public bool TryLevelUp(ref int shard, out int requiredShard)
+        var selectedMonsterList = monsterList
+            .OrderBy(m => Vector3.Distance(shootPoint.transform.position,
+                m.transform.position))
+            .Take(projectilesPerAttack)
+            .ToList();
+        if (selectedMonsterList.Count <= 0) return;
+        foreach (MonsterBehaviour monster in selectedMonsterList)
         {
-            throw new NotImplementedException();
-        }
+            ProjectileBehaviour projectile = DungeonManager.Instance.RecyclePoolController
+                .GenerateOneObject(projectilePrefab).GetComponent<ProjectileBehaviour>();
+            if (projectile == null)
+                Debug.LogError($"{projectilePrefab.name} is missing the ProjectileBehaviour!");
+            else
+                projectile.Initialize(monster.transform);
 
+        }
     }
 }
+class MagicTower { }
+class StoneTower { }
+class SupportTower { }
