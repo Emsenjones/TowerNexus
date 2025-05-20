@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class MonsterDetector : MonoBehaviour
 {
     List<MonsterBehaviour> monsterList = new List<MonsterBehaviour>();
+    [ShowInInspector, ReadOnly]
     public List<MonsterBehaviour> MonsterList
     {
         get {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -72,6 +73,9 @@ public class RecyclePoolController : MonoBehaviour
 
         recycleItemBehaviourList.Add(recycledObjectBehaviour);
         recycledObjectBehaviour.transform.SetParent(transform);
+        DOTween.Kill(targetObject);
+        Rigidbody2D rigidBody = targetObject.GetComponent<Rigidbody2D>();
+        if (rigidBody != null) rigidBody.linearVelocity = Vector2.zero;
         targetObject.SetActive(false);
 
         #region To limite _recycleItemBehaviourList.Count.

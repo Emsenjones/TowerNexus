@@ -9,7 +9,7 @@ public class MonsterBehaviour : MonoBehaviour
 {
     [Title("Configs")]
     [SerializeField] int defaultHealth;
-    [SerializeField] int maxHealth;
+    int maxHealth;
     [SerializeField] float moveSpeed;
     [SerializeField] int exp;
     [SerializeField] int coin;
@@ -140,11 +140,11 @@ public class MonsterBehaviour : MonoBehaviour
     /// <summary>
     /// Call this method when the monster is attacked.
     /// </summary>
-    /// <param name="attackPower">The damage which the monster will be taken.</param>
+    /// <param name="theDamage">The damage which the monster will be taken.</param>
     /// <param name="isByRole">Is damaged by the Role?</param>
-    public void TakeDamage(int attackPower, bool isByRole)
+    public void TakeDamage(int theDamage, bool isByRole)
     {
-        Health -= attackPower;
+        Health -= theDamage;
         if (spriteRenderer != null)
         {
             spriteRenderer.DOKill(); // To kill the color animation.

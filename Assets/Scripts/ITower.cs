@@ -8,7 +8,7 @@ using UnityEngine.Serialization;
 public interface ITower
 {
     [Serializable] class LevelConfig { }
-    public void Initialize(Transform shootPointTransform);
+    public void Initialize(Transform shootPointTransform, GameObject projectilePrefab);
     /// <summary>
     /// Will return true if the level up is successful.
     /// </summary>
@@ -23,18 +23,18 @@ public interface ITower
     public void Attack(List<MonsterBehaviour> monsterList);
 
 }
-class ArcherTower : ITower
+[Serializable] class ArcherTower : ITower
 {
     [Title("Configs")]
     [SerializeField] List<Animator> archerAnimatorList;
-    [SerializeField] float fireSpeed;
     [SerializeField] int projectilesPerAttack;
-    [SerializeField] GameObject projectilePrefab;
+    GameObject projectilePrefab;
     Transform shootPoint;
 
-    public void Initialize(Transform shootPointTransform)
+    public void Initialize(Transform shootPointTransform, GameObject theProjectilePrefab)
     {
         shootPoint = shootPointTransform;
+        projectilePrefab = theProjectilePrefab;
     }
     public bool TryLevelUp(ref int shard, out int requiredShard)
     {
@@ -49,12 +49,7 @@ class ArcherTower : ITower
         }
         if (projectilePrefab == null)
         {
-            Debug.Log($"{GetType()} is missing the projectilePrefab!");
-            return;
-        }
-        if (monsterList == null || monsterList.Count == 0)
-        {
-            Debug.Log($"{GetType()} doesn't have monsters to attack...");
+            Debug.LogError($"{GetType()} is missing the projectilePrefab!");
             return;
         }
         var selectedMonsterList = monsterList
@@ -70,7 +65,11 @@ class ArcherTower : ITower
             if (projectile == null)
                 Debug.LogError($"{projectilePrefab.name} is missing the ProjectileBehaviour!");
             else
+            {
+                projectile.transform.position = shootPoint.position;
                 projectile.Initialize(monster.transform);
+            }
+            
 
         }
     }

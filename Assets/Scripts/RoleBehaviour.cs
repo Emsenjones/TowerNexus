@@ -27,8 +27,9 @@ public class RoleBehaviour : MonoBehaviour
             get { return requiredExp; }
         }
 
-        [SerializeField] int attackPower;
-        public int AttackPower { get { return attackPower; } }
+        [FormerlySerializedAs("attackPower")]
+        [SerializeField] int damage;
+        public int Damage { get { return damage; } }
     }
     int exp;
     /// <summary>
@@ -212,7 +213,7 @@ public class RoleBehaviour : MonoBehaviour
 
     }
     /// <summary>
-    /// is Called by the animation event. 
+    /// This method is Called by the animation event. 
     /// </summary>
     void Attack()
     {
@@ -243,8 +244,8 @@ public class RoleBehaviour : MonoBehaviour
         int level = GetLevel();
         if (level >= 0 && level < levelConfigList.Count)
         {
-            int attackPower = levelConfigList[GetLevel()].AttackPower;
-            iRoleAttack.Do(targetMonsterList, attackPower);
+            int damage = levelConfigList[GetLevel()].Damage;
+            iRoleAttack.Do(targetMonsterList, damage);
         }
 
         #endregion

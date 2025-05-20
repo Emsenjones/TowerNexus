@@ -35,10 +35,17 @@ public class TowerBehaviour : MonoBehaviour
     [SerializeField] Transform shootPoint;
     float timmer;
     Collider2D collider2d;
+    [SerializeField] GameObject projectilePrefab;
     void Awake()
     {
         timmer = 0f;
         collider2d = GetComponent<Collider2D>();
+        if (collider2d == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing Collider2D!");
+            return;
+        }
+        collider2d.enabled = false;
     }
 
     public void Deploying(bool isDeployable)
@@ -97,23 +104,30 @@ public class TowerBehaviour : MonoBehaviour
         
         if (shootPoint == null)
         {
-            Debug.LogError($"{gameObject.name} is missing the firePoint!");
+            Debug.LogError($"{gameObject.name} is missing the shootPoint!");
             return;
         }
-        iTower.Initialize(shootPoint);
+        if (projectilePrefab == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing the projectilePrefab!");
+            return;
+        }
+        iTower.Initialize(shootPoint,projectilePrefab);
     }
     void OnMouseDown()
     {
         Debug.Log($"{gameObject.name} is clicked.");
     }
+    [InfoBox("Selecting the type of the tower.")]
     [SerializeReference] ITower iTower;
+  
 
     
     void Update()
     {
         if (timmer > 0f)
             timmer -= Time.deltaTime;
-        else if(monsterDetector.GetTheNearestMonster() is null)
+        else if(monsterDetector.GetTheNearestMonster() is not null)
         {
             iTower.Attack(monsterDetector.MonsterList);
             timmer = fireSpeed;

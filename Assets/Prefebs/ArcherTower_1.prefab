@@ -319,6 +319,7 @@ GameObject:
   - component: {fileID: 421885128538100085}
   - component: {fileID: 4971939902698352547}
   - component: {fileID: 2364623662716563867}
+  - component: {fileID: 8374741025243954451}
   m_Layer: 0
   m_Name: Tower
   m_TagString: Untagged
@@ -342,6 +343,7 @@ Transform:
   - {fileID: 5091973531712907898}
   - {fileID: 5171863053832619928}
   - {fileID: 2440925199194294944}
+  - {fileID: 6991876628382032189}
   m_Father: {fileID: 8187248513088875414}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!212 &421885128538100085
@@ -447,6 +449,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5742a2991c9c4e97a503fb139bbaf06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!50 &8374741025243954451
+Rigidbody2D:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4538050103623128578}
+  m_BodyType: 1
+  m_Simulated: 1
+  m_UseFullKinematicContacts: 0
+  m_UseAutoMass: 0
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_GravityScale: 1
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_Interpolate: 0
+  m_SleepingMode: 1
+  m_CollisionDetection: 0
+  m_Constraints: 4
 --- !u!1 &5669979627789132119
 GameObject:
   m_ObjectHideFlags: 0
@@ -656,7 +685,7 @@ GameObject:
   - component: {fileID: 6241461293778005499}
   - component: {fileID: 6047474909351700292}
   m_Layer: 0
-  m_Name: ArcherTower
+  m_Name: ArcherTower_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -700,18 +729,22 @@ MonoBehaviour:
   deployableGridColor: {x: 0, y: 1, z: 0, w: 0.5}
   notDeployableGridColor: {x: 1, y: 0, z: 0, w: 0.5}
   monsterDetector: {fileID: 2364623662716563867}
+  fireSpeed: 0.5
+  shootPoint: {fileID: 6991876628382032189}
+  projectilePrefab: {fileID: 9090783462591722252, guid: 4ea42a04eec7b4ea49958bea93ff886f, type: 3}
   iTower:
-    rid: 6888080142083031126
+    rid: 6888080164887986295
   references:
     version: 2
     RefIds:
-    - rid: 6888080142083031126
+    - rid: 6888080164887986295
       type: {class: ArcherTower, ns: , asm: Assembly-CSharp}
       data:
-        firePoint: {fileID: 0}
-        archerAnimatorList: []
-        fireSpeed: 0
-        projectilePrefab: {fileID: 0}
+        archerAnimatorList:
+        - {fileID: 6086077039986447772}
+        - {fileID: 7314838244148435023}
+        - {fileID: 663628522328110764}
+        projectilesPerAttack: 1
 --- !u!61 &6047474909351700292
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -758,3 +791,34 @@ BoxCollider2D:
   m_AutoTiling: 0
   m_Size: {x: 5.12, y: 2.56}
   m_EdgeRadius: 0
+--- !u!1 &7697220391411881307
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6991876628382032189}
+  m_Layer: 0
+  m_Name: ShootPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6991876628382032189
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7697220391411881307}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 1.35, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1440070124129829269}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
