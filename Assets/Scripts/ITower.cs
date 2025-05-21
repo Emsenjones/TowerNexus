@@ -28,8 +28,9 @@ public interface ITower
 /// </summary>
 [Serializable] class ProjectileTower : ITower
 {
+    [FormerlySerializedAs("archerAnimatorList")]
     [Title("Configs")]
-    [SerializeField] List<Animator> archerAnimatorList;
+    [SerializeField] List<Animator> animatorList;
     [SerializeField] int projectilesPerAttack;
     GameObject projectilePrefab;
     Transform shootPoint;
@@ -77,7 +78,7 @@ public interface ITower
                 projectile.Initialize(monster.transform);
             }
         }
-        foreach (Animator animator in archerAnimatorList)
+        foreach (Animator animator in animatorList)
         {
             if(animator == null)
                 Debug.LogError($"{GetType()}'s archerAnimatorList is missing an animator!");

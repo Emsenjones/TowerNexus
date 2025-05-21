@@ -6276,11 +6276,21 @@ MonoBehaviour:
     spawnGridId: 37
     healthCoefficient: 1
     delay: 1
-  coin: 10
+  - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
+    spawnGridId: 36
+    healthCoefficient: 1
+    delay: 1
+  - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
+    spawnGridId: 36
+    healthCoefficient: 1
+    delay: 1
+  coin: 20
   shred: 0
   towerPrice: 4
   towerPoolItemList:
   - towerPrefab: {fileID: 7692521103422011066, guid: 7b88b32ebf486419abc110367629a4e8, type: 3}
+    weight: 1
+  - towerPrefab: {fileID: 7692521103422011066, guid: 5b4168f1c764c474fbf5b42261fb38dc, type: 3}
     weight: 1
 --- !u!1 &7153814686814400622
 GameObject:

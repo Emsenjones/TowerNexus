@@ -52,6 +52,7 @@ public class StraightProjectile : IProjectile
 [Serializable] public class ArcProjectile : IProjectile
 {
     [SerializeField] float distanceAndHeightRatio = 0.25f;
+    [SerializeField] float rotateSpeed = 1f;
     public void Launch(GameObject projectile, float speed, Transform targetTransform)
     {
         #region To reset the Collider2D.
@@ -68,11 +69,18 @@ public class StraightProjectile : IProjectile
 
         float distance = Vector2.Distance
             (projectile.transform.position, targetTransform.position);
-        float duration = distance * speed;
+        float duration = distance / speed;
         float arcHeight = distance*distanceAndHeightRatio;
         DOTween.Kill(projectile.transform);
+        //The projectile moves with a parabola.
         projectile.transform.DOJump(targetTransform.position,
             arcHeight, 1, duration).SetEase(Ease.Linear);
+        //The projectile rotates by itself.
+        projectile.transform.DORotate(
+            new Vector3(0, 0, 360f * duration * rotateSpeed), // 旋转角度取决于飞行时长
+            duration,
+            RotateMode.FastBeyond360
+        ).SetEase(Ease.Linear);
     }
 }
 /// <summary>

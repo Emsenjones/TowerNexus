@@ -721,8 +721,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fd36bb0f90448948f5004cdd963810d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  theName: FuckingTower
-  iconSprite: {fileID: -5099292496197868168, guid: b1b7701111d7e4bd0be9a0a413d23d1f, type: 3}
+  theName: ArcherTower_1
+  iconSprite: {fileID: 21300000, guid: 9cb369a58b0a64d149d725067100feff, type: 3}
   gridTransformList:
   - {fileID: 2794744030622679938}
   - {fileID: 463008476526501645}
@@ -740,7 +740,7 @@ MonoBehaviour:
     - rid: 6888080188099526753
       type: {class: ProjectileTower, ns: , asm: Assembly-CSharp}
       data:
-        archerAnimatorList:
+        animatorList:
         - {fileID: 6086077039986447772}
         - {fileID: 7314838244148435023}
         - {fileID: 663628522328110764}

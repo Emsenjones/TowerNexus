@@ -70,4 +70,40 @@ public class MonsterDetector : MonoBehaviour
 
         return nearestMonster;
     }
+    void OnDrawGizmos()
+    {
+        if (trigger == null) return;
+
+        Gizmos.color = Color.yellow;
+
+        if (trigger is CircleCollider2D circle)
+        {
+            Gizmos.DrawWireSphere(circle.transform.position + (Vector3)circle.offset, circle.radius);
+        }
+        else if (trigger is BoxCollider2D box)
+        {
+            Gizmos.matrix = box.transform.localToWorldMatrix;
+            Gizmos.DrawWireCube(box.offset, box.size);
+        }
+        else if (trigger is CapsuleCollider2D capsule)
+        {
+            // Unity 没有内置 Gizmo 绘制 Capsule2D，你可以近似为椭圆 + Box
+            Gizmos.DrawWireCube(capsule.transform.position + (Vector3)capsule.offset, capsule.size);
+        }
+        else if (trigger is PolygonCollider2D polygon)
+        {
+            Gizmos.matrix = polygon.transform.localToWorldMatrix;
+            for (int i = 0; i < polygon.pathCount; i++)
+            {
+                var path = polygon.GetPath(i);
+                for (int j = 0; j < path.Length; j++)
+                {
+                    Vector2 current = path[j];
+                    Vector2 next = path[(j + 1) % path.Length];
+                    Gizmos.DrawLine(current, next);
+                }
+            }
+        }
+    }
+
 }
