@@ -23,7 +23,10 @@ public interface ITower
     public void Attack(List<MonsterBehaviour> monsterList);
 
 }
-[Serializable] class ArcherTower : ITower
+/// <summary>
+/// Launching projectiles to attack monsters.
+/// </summary>
+[Serializable] class ProjectileTower : ITower
 {
     [Title("Configs")]
     [SerializeField] List<Animator> archerAnimatorList;
@@ -52,12 +55,16 @@ public interface ITower
             Debug.LogError($"{GetType()} is missing the projectilePrefab!");
             return;
         }
+        #region Select and save monsters in monsterList to a list, the list.Count = projectilesPerAttack.
+
         var selectedMonsterList = monsterList
             .OrderBy(m => Vector3.Distance(shootPoint.transform.position,
                 m.transform.position))
             .Take(projectilesPerAttack)
             .ToList();
         if (selectedMonsterList.Count <= 0) return;
+
+        #endregion
         foreach (MonsterBehaviour monster in selectedMonsterList)
         {
             ProjectileBehaviour projectile = DungeonManager.Instance.RecyclePoolController
@@ -69,11 +76,18 @@ public interface ITower
                 projectile.transform.position = shootPoint.position;
                 projectile.Initialize(monster.transform);
             }
-            
-
+        }
+        foreach (Animator animator in archerAnimatorList)
+        {
+            if(animator == null)
+                Debug.LogError($"{GetType()}'s archerAnimatorList is missing an animator!");
+            else
+                animator.SetTrigger(AnimatorParams.Attack);
         }
     }
 }
-class MagicTower { }
-class StoneTower { }
+/// <summary>
+/// Attacking all monsters that are in the range.
+/// </summary>
+class AoeTower { }
 class SupportTower { }

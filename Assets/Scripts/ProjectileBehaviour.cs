@@ -37,7 +37,7 @@ public class ProjectileBehaviour : MonoBehaviour
         if (rigidbody2d == null)
             Debug.LogError($"{gameObject.name} is missing the rigidbody2D");
         else
-            iProjectile.Launch(rigidbody2d, speed, targetTransform);
+            iProjectile.Launch(gameObject, speed, targetTransform);
     }
     [InfoBox("Selecting the effect of hitting monsters.")]
     [SerializeReference] IProjectileEffect iProjectileEffect;
@@ -54,8 +54,10 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         //Destroying itself and apply the effect if the projectile has reached the target.
         float distance = Vector2.Distance(transform.position,targetPosition);
-        Debug.Log(distance);
-        if (distance <= 0f)
+        if (distance <= 0.1f)
+        {
+            iProjectileEffect.Apply(transform);
             DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+        }
     }
 }

@@ -13,7 +13,7 @@ public class DefaultEffect : IProjectileEffect
     /// <param name="centerTransform">The current transform of the projectile. </param>
     public void Apply(Transform centerTransform) { }
 }
-[Serializable] public class ExplodeEffect : IProjectileEffect
+[Serializable] public class ExplosionEffect : IProjectileEffect
 {
     [SerializeField] float radius;
     [SerializeField] int explodeDamage;
@@ -43,3 +43,6 @@ public class DefaultEffect : IProjectileEffect
     }
 
 }
+public class PoisonEffect { }
+public class SlowEffect { }
+public class WeakenedEffect { }
