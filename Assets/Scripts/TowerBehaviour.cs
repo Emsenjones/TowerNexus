@@ -30,22 +30,30 @@ public class TowerBehaviour : MonoBehaviour
     [SerializeField] Vector4 deployableGridColor;
     [SerializeField] Vector4 notDeployableGridColor;
     [SerializeField] MonsterDetector monsterDetector;
-    [SerializeField] float fireSpeed;
+    [FormerlySerializedAs("fireSpeed")]
+    [SerializeField] float attackSpeed;
     [FormerlySerializedAs("firePoint")]
-    [SerializeField] Transform shootPoint;
+
     float timmer;
-    Collider2D collider2d;
     [SerializeField] GameObject projectilePrefab;
     void Awake()
     {
         timmer = 0f;
-        collider2d = GetComponent<Collider2D>();
-        if (collider2d == null)
+        if (gridTransformList.Count <= 0)
         {
-            Debug.LogError($"{gameObject.name} is missing Collider2D!");
+            Debug.LogError($"{gameObject.name} is missing gridTransformList!");
             return;
         }
-        collider2d.enabled = false;
+        foreach (Transform gridTransform in gridTransformList)
+        {
+            Collider2D collider2d = gridTransform.GetComponent<Collider2D>();
+            if (collider2d == null)
+            {
+                Debug.Log($"{gridTransform.name} is missing a Collider2D!");
+                continue;
+            }
+            collider2d.enabled = false;
+        }
     }
 
     public void Deploying(bool isDeployable)
@@ -65,10 +73,12 @@ public class TowerBehaviour : MonoBehaviour
                 spriteRenderer.color = deployColor;
         }
         
-        if(collider2d == null)
-            Debug.LogError($"{gameObject.name} is missing Collider2D!");
-        else if(collider2d.enabled)
-            collider2d.enabled = false;
+        if (monsterDetector == null)
+            Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
+        else monsterDetector.SetVisible();
+        
+        
+        
     }
     public void Initialize()
     {
@@ -79,40 +89,33 @@ public class TowerBehaviour : MonoBehaviour
         }
         foreach (Transform gridTransform in gridTransformList)
         {
+            #region To set a blank color.
+
             SpriteRenderer spriteRenderer = gridTransform.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
                 Debug.LogError($"{gridTransform.name} is missing SpriteRenderer!");
             else
                 spriteRenderer.color = Vector4.zero;
-        }
-        
-        if(collider2d == null)
-            Debug.LogError($"{gameObject.name} is missing Collider2D!");
-        else
-        {
+
+            #endregion
+            Collider2D collider2d = gridTransform.GetComponent<Collider2D>();
+            if (collider2d == null)
+            {
+                Debug.Log($"{gridTransform.name} is missing a Collider2D!");
+                continue;
+            }
             collider2d.enabled = true;
             collider2d.isTrigger = false;
         }
 
-        timmer = fireSpeed;
+        timmer = attackSpeed;
         if (monsterDetector == null)
         {
             Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
             return;
         }
         monsterDetector.Initialize();
-        
-        if (shootPoint == null)
-        {
-            Debug.LogError($"{gameObject.name} is missing the shootPoint!");
-            return;
-        }
-        if (projectilePrefab == null)
-        {
-            Debug.LogError($"{gameObject.name} is missing the projectilePrefab!");
-            return;
-        }
-        iTower.Initialize(shootPoint,projectilePrefab);
+        iTower.Initialize();
     }
     void OnMouseDown()
     {
@@ -130,7 +133,7 @@ public class TowerBehaviour : MonoBehaviour
         else if(monsterDetector.GetTheNearestMonster() is not null)
         {
             iTower.Attack(monsterDetector.MonsterList);
-            timmer = fireSpeed;
+            timmer = attackSpeed;
         }
     }
 

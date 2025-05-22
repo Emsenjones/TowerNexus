@@ -342,10 +342,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: DungeonManager01
       objectReference: {fileID: 0}
-    - target: {fileID: 7109167317086931620, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_IsActive
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

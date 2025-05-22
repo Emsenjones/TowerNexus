@@ -71,6 +71,7 @@ public class RoleBehaviour : MonoBehaviour
     [FormerlySerializedAs("levelInfoList")]
     [SerializeField]
     List<LevelConfig> levelConfigList;
+    [SerializeField] AnimationEventController animationEventController;
     new Rigidbody2D rigidbody2D;
     Animator animator;
     SpriteRenderer spriteRenderer;
@@ -78,7 +79,7 @@ public class RoleBehaviour : MonoBehaviour
     /// Check if the role can attack enemies. 
     /// </summary>
     bool isMoving;
-    public void Initialize()
+    public void Initialize(Transform startTransform)
     {
         exp = 0;
         rigidbody2D = GetComponent<Rigidbody2D>();
@@ -86,13 +87,22 @@ public class RoleBehaviour : MonoBehaviour
         spriteRenderer = GetComponent<SpriteRenderer>();
         isMoving = false;
         timmer = 0f;
+        
+        transform.position = startTransform.position;
 
         if (monsterDetector == null)
             Debug.Log($"{gameObject.name} is missing a monsterDetector!");
         else
             monsterDetector.Initialize();
 
-        MonsterBehaviour.OnDead += OnOneMonsterDead;
+        MonsterBehaviour.OnDead += CheckIfGainExp;
+
+        if (animationEventController == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing an AnimationEventController!");
+            return;
+        }
+        animationEventController.OnTriggerEvent01 += Attack;
 
     }
     /// <summary>
@@ -100,7 +110,7 @@ public class RoleBehaviour : MonoBehaviour
     /// </summary>
     /// <param name="monster">The dead monster.</param>
     /// <param name="isKilledByRole">is killed by the role? </param>
-    void OnOneMonsterDead(MonsterBehaviour monster, bool isKilledByRole)
+    void CheckIfGainExp(MonsterBehaviour monster, bool isKilledByRole)
     {
         if (!isKilledByRole) return;
 
@@ -116,7 +126,13 @@ public class RoleBehaviour : MonoBehaviour
     public static event Action<RoleBehaviour> OnGetExp;
     void OnDisable()
     {
-        MonsterBehaviour.OnDead -= OnOneMonsterDead;
+        MonsterBehaviour.OnDead -= CheckIfGainExp;
+        if (animationEventController == null)
+        {
+            Debug.LogError($"{gameObject.name} is missing an AnimationEventController!");
+            return;
+        }
+        animationEventController.OnTriggerEvent01 -= Attack;
     }
     /// <summary>
     /// Moved by the Joystick.
@@ -173,6 +189,11 @@ public class RoleBehaviour : MonoBehaviour
     void Update()
     {
         // To get the nearest enemy.
+        if (monsterDetector == null)
+        {
+            Debug.Log($"{gameObject.name} is missing a monsterDetector!");
+            return;
+        }
         MonsterBehaviour theNearestMonster = monsterDetector.GetTheNearestMonster();
 
         // To check if RoleBehaviour can attack: 
@@ -212,9 +233,6 @@ public class RoleBehaviour : MonoBehaviour
         else timmer -= Time.deltaTime;
 
     }
-    /// <summary>
-    /// This method is Called by the animation event. 
-    /// </summary>
     void Attack()
     {
         if (levelConfigList.Count <= 0)
@@ -233,6 +251,11 @@ public class RoleBehaviour : MonoBehaviour
         var targetMonsterList = new List<MonsterBehaviour>();
         Vector2 forward = spriteRenderer.flipX ? Vector2.left : Vector2.right;
 
+        if (monsterDetector == null)
+        {
+            Debug.Log($"{gameObject.name} is missing a monsterDetector!");
+            return;
+        }
         foreach (MonsterBehaviour monster in monsterDetector.MonsterList)
         {
             if (monster == null || monster.Health <= 0) continue;

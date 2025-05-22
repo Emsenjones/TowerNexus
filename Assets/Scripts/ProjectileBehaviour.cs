@@ -44,7 +44,7 @@ public class ProjectileBehaviour : MonoBehaviour
     void OnTriggerEnter2D(Collider2D other)
     {
         MonsterBehaviour monster = other.GetComponent<MonsterBehaviour>();
-        if (monster == null) return;
+        if (monster == null||monster.Health<=0) return;
         
         monster.TakeDamage(damage,false);
         iProjectileEffect.Apply(transform);

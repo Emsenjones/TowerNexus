@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1425968586723452298}
   - component: {fileID: 247774631734902163}
   - component: {fileID: 3677764968677834808}
+  - component: {fileID: 3653512572387440465}
   m_Layer: 0
   m_Name: MonsterDetector
   m_TagString: Untagged
@@ -81,6 +82,65 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b5742a2991c9c4e97a503fb139bbaf06, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  visibleArea:
+    spriteRenderer: {fileID: 3653512572387440465}
+    circleSprite: {fileID: 21300000, guid: e82dac1198b864c9fb59190176caf424, type: 3}
+    squareSprite: {fileID: 21300000, guid: 5bbab5882c57d4595b386c506bee4e12, type: 3}
+--- !u!212 &3653512572387440465
+SpriteRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 60320194392482162}
+  m_Enabled: 1
+  m_CastShadows: 0
+  m_ReceiveShadows: 0
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 0
+  m_RayTraceProcedural: 0
+  m_RayTracingAccelStructBuildFlagsOverride: 0
+  m_RayTracingAccelStructBuildFlags: 1
+  m_SmallMeshCulling: 1
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: a97c105638bdf8b4a8650670310a4cd3, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 0
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 1
+  m_Sprite: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_FlipX: 0
+  m_FlipY: 0
+  m_DrawMode: 0
+  m_Size: {x: 1, y: 1}
+  m_AdaptiveModeThreshold: 0.5
+  m_SpriteTileMode: 0
+  m_WasSpriteAssigned: 0
+  m_MaskInteraction: 0
+  m_SpriteSortPoint: 0
 --- !u!1 &8140021183545022926
 GameObject:
   m_ObjectHideFlags: 0
@@ -95,6 +155,7 @@ GameObject:
   - component: {fileID: 8321872615147351990}
   - component: {fileID: -3424903963197673226}
   - component: {fileID: 8727211790829386175}
+  - component: {fileID: 1879308485912527267}
   m_Layer: 0
   m_Name: Role01
   m_TagString: Untagged
@@ -258,16 +319,17 @@ MonoBehaviour:
   levelConfigList:
   - level: 1
     requiredExp: 0
-    attackPower: 5
+    damage: 5
   - level: 2
     requiredExp: 10
-    attackPower: 6
+    damage: 6
   - level: 3
     requiredExp: 15
-    attackPower: 7
+    damage: 7
   - level: 4
     requiredExp: 20
-    attackPower: 8
+    damage: 8
+  animationEventController: {fileID: 1879308485912527267}
   monsterDetector: {fileID: 3677764968677834808}
   fireSpeed: 0.6
   iRoleAttack:
@@ -305,6 +367,18 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 1
   m_Constraints: 4
+--- !u!114 &1879308485912527267
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8140021183545022926}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcf97e04ef2e6490d8e79cdce95c0b0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &8563766089563090114
 GameObject:
   m_ObjectHideFlags: 0

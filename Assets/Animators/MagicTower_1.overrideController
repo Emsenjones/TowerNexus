@@ -6,10 +6,10 @@ AnimatorOverrideController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: StoneTower
+  m_Name: MagicTower_1
   m_Controller: {fileID: 9100000, guid: 69dc21dbfe5884115a0a61f27c2aa6d0, type: 2}
   m_Clips:
   - m_OriginalClip: {fileID: 7400000, guid: cc64a060c61a54a4084e9920bd2c0964, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: 3073ff763e3684e0fa05c2cbc1076b80, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: d5d823234321b4486ba1f9dff2ec6913, type: 2}
   - m_OriginalClip: {fileID: 7400000, guid: 681a6e432651e44b2875b255db15d944, type: 2}
-    m_OverrideClip: {fileID: 7400000, guid: fa850ad34cc414a13bc3e230084bb1e3, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 5851798bf53c3437db86e4fa8878e754, type: 2}

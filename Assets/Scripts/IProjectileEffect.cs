@@ -18,6 +18,7 @@ public class DefaultEffect : IProjectileEffect
     [SerializeField] float radius;
     [SerializeField] int explodeDamage;
     [SerializeField] LayerMask monsterLayer;
+    [SerializeField] GameObject explosionEffectPrefab;
     /// <summary>
     /// "new Collider2D[20]" can be changed base on the maximum count of monsters.
     /// </summary>
@@ -28,18 +29,34 @@ public class DefaultEffect : IProjectileEffect
         contactFilter.SetLayerMask(monsterLayer);
         contactFilter.useTriggers = true;
 
-        int hitCount = Physics2D.OverlapCircle(centerTransform.position, radius, contactFilter, HitBuffer);
+        #region playing an explode effect.
 
+        if (explosionEffectPrefab == null)
+        {
+            Debug.LogError($"{GetType().Name} is missing an explosionEffectPrefab!");
+            return;
+        }
+        RecyclePoolController recyclePoolController = DungeonManager.Instance.RecyclePoolController;
+        GameObject explosionEffect = recyclePoolController.GenerateOneObject(explosionEffectPrefab);
+        explosionEffect.transform.position = centerTransform.position;
+        var animationEventController = explosionEffect.GetComponent<AnimationEventController>();
+        if (animationEventController == null)
+        {
+            Debug.LogError($"{explosionEffect.name} is missing an animationEventController!");
+            return;
+        }
+        animationEventController.OnTriggerEvent01 += () => 
+            recyclePoolController.RecycleOneObject(explosionEffect);
+
+        #endregion
+
+        int hitCount = Physics2D.OverlapCircle(centerTransform.position, radius, contactFilter, HitBuffer);
         for (int i = 0; i < hitCount; i++)
         {
             MonsterBehaviour monster = HitBuffer[i].GetComponent<MonsterBehaviour>();
             if (monster != null)
                 monster.TakeDamage(explodeDamage, false);
         }
-
-        // Trigger an explode effect...
-
-
     }
 
 }

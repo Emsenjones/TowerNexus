@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 1.6, z: 0}
-  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -130,7 +130,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 6
-  damage: 4
+  damage: 10
   iProjectile:
     rid: 6888080188099526775
   iProjectileEffect:
@@ -147,10 +147,11 @@ MonoBehaviour:
       type: {class: ExplosionEffect, ns: , asm: Assembly-CSharp}
       data:
         radius: 2
-        explodeDamage: 2
+        explodeDamage: 5
         monsterLayer:
           serializedVersion: 2
           m_Bits: 1024
+        explosionEffectPrefab: {fileID: 2178734190407353776, guid: b32553ff1f2e14343b3a57e703192d13, type: 3}
 --- !u!58 &2721647846455398247
 CircleCollider2D:
   m_ObjectHideFlags: 0
@@ -186,4 +187,4 @@ CircleCollider2D:
   m_CompositeOperation: 0
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
-  m_Radius: 1
+  m_Radius: 0.4

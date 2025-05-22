@@ -23,14 +23,11 @@ public class StraightProjectile : IProjectile
         #region To reset the Collider2D.
 
         Collider2D trigger = projectile.GetComponent<Collider2D>();
-        if (trigger == null)
+        if (trigger is not null)
         {
-            Debug.LogError($"{projectile.name} is missing a Collider2D");
-            return;
+            trigger.enabled = true;
+            trigger.isTrigger = true;
         }
-        trigger.enabled = true;
-        trigger.isTrigger = true;
-
         #endregion
         //To get the direction between the projectile and the target.
         Vector3 direction = (targetTransform.position - projectile.transform.position).normalized;
@@ -58,12 +55,7 @@ public class StraightProjectile : IProjectile
         #region To reset the Collider2D.
 
         Collider2D trigger = projectile.GetComponent<Collider2D>();
-        if (trigger == null)
-        {
-            Debug.LogError($"{projectile.name} is missing a Collider2D");
-            return;
-        }
-        trigger.enabled = false;
+        if (trigger != null) trigger.enabled = false;
 
         #endregion
 

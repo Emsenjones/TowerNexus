@@ -8,7 +8,7 @@ using UnityEngine.Serialization;
 public interface ITower
 {
     [Serializable] class LevelConfig { }
-    public void Initialize(Transform shootPointTransform, GameObject projectilePrefab);
+    public void Initialize();
     /// <summary>
     /// Will return true if the level up is successful.
     /// </summary>
@@ -30,16 +30,12 @@ public interface ITower
 {
     [FormerlySerializedAs("archerAnimatorList")]
     [Title("Configs")]
+    [SerializeField] Transform shootPoint;
     [SerializeField] List<Animator> animatorList;
     [SerializeField] int projectilesPerAttack;
-    GameObject projectilePrefab;
-    Transform shootPoint;
+    [SerializeField] GameObject projectilePrefab;
 
-    public void Initialize(Transform shootPointTransform, GameObject theProjectilePrefab)
-    {
-        shootPoint = shootPointTransform;
-        projectilePrefab = theProjectilePrefab;
-    }
+    public void Initialize() { }
     public bool TryLevelUp(ref int shard, out int requiredShard)
     {
         throw new NotImplementedException();
@@ -56,7 +52,7 @@ public interface ITower
             Debug.LogError($"{GetType()} is missing the projectilePrefab!");
             return;
         }
-        #region Select and save monsters in monsterList to a list, the list.Count = projectilesPerAttack.
+        #region To launch projectiles to attack the nearest monsters, the count of projectiles is projectilesPerAttack.
 
         var selectedMonsterList = monsterList
             .OrderBy(m => Vector3.Distance(shootPoint.transform.position,
@@ -78,17 +74,53 @@ public interface ITower
                 projectile.Initialize(monster.transform);
             }
         }
-        foreach (Animator animator in animatorList)
+        #region Play the animation.
+
+        if (animatorList.Count <= 0)
         {
-            if(animator == null)
+            Debug.LogError($"{GetType()} is missing the animatorList!");
+            return;
+        }
+        foreach (Animator animator in animatorList)
+            if (animator == null)
                 Debug.LogError($"{GetType()}'s archerAnimatorList is missing an animator!");
             else
                 animator.SetTrigger(AnimatorParams.Attack);
-        }
+
+        #endregion
+
     }
 }
 /// <summary>
 /// Attacking all monsters that are in the range.
 /// </summary>
-class AoeTower { }
+[Serializable] class AoeTower : ITower
+{
+    [SerializeField] int damage;
+    [SerializeField] List<Animator> animatorList;
+    public void Initialize() { }
+    public bool TryLevelUp(ref int shard, out int requiredShard)
+    {
+        throw new NotImplementedException();
+    }
+    public void Attack(List<MonsterBehaviour> monsterList)
+    {
+        foreach (MonsterBehaviour monster in monsterList)
+            monster.TakeDamage(damage, false);
+        #region Play the animation.
+
+        if (animatorList.Count <= 0)
+        {
+            Debug.LogError($"{GetType()} is missing the animatorList!");
+            return;
+        }
+        foreach (Animator animator in animatorList)
+            if (animator == null)
+                Debug.LogError($"{GetType()}'s archerAnimatorList is missing an animator!");
+            else
+                animator.SetTrigger(AnimatorParams.Attack);
+
+        #endregion
+    }
+}
 class SupportTower { }

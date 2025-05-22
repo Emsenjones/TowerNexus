@@ -21,14 +21,6 @@ public class MonsterBehaviour : MonoBehaviour
     {
         get { return coin; }
     }
-
-    [SerializeField] int damage;
-    public int Damage
-    {
-        get {
-            return damage;
-        }
-    }
     public int Health { get; private set; }
 
     BoxCollider2D trigger;

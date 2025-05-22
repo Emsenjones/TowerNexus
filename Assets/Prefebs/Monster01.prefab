@@ -174,7 +174,7 @@ MonoBehaviour:
   defaultHealth: 20
   moveSpeed: 1
   exp: 4
-  coin: 2
+  coin: 1
   damage: 1
   hitFlashDuration: 0.5
 --- !u!1 &8563766089563090114

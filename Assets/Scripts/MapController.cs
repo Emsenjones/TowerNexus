@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class MapController : MonoBehaviour
 {
-    [Serializable]public class GridConfig
+    [Serializable] public class GridConfig
     {
         [SerializeField]
         private int index;
@@ -28,50 +29,14 @@ public class MapController : MonoBehaviour
     }
     [Title("Configs")]
     [SerializeField] List<GridConfig> gridConfigList;
-    [SerializeField] GridBehaviour targetGrid;
-    [SerializeField] GameObject housePrefab;
-    [SerializeField] Transform roleTransform;
-    public Transform RoleTransform
-    {
-        get {
-            return roleTransform;
-        }
-    }
+    [SerializeField] GridBehaviour destinationGrid;
     List<GridBehaviour> spawnGridList;
     List<GridBehaviour> gridList;
-    public void Initialize(List<int> spawnGridIdList)
+    public void Initialize(List<GridBehaviour> spawnGridBehaviourList)
     {
         gridList = GetComponentsInChildren<GridBehaviour>().ToList();
-        if (gridList == null || gridList.Count <= 0)
-            Debug.LogError($"{gameObject.name} cannot find GridBehaviour in its children.");
-        #region Add spawnGrid to spawnGridList.
-
-        spawnGridList = new List<GridBehaviour>();
-        foreach (GridBehaviour grid in spawnGridIdList
-            .SelectMany(id => gridList.Where(grid => id == grid.Id)))
-            spawnGridList.Add(grid);
-
-        #endregion
-
-        #region Generate a house as to mark the targetGrid.
-
-        if (housePrefab == null)
-        {
-            Debug.LogError($"{gameObject.name} is missing the housePrefab.");
-            return;
-        }
-        DungeonManager.Instance.RecyclePoolController
-            .GenerateOneObject(housePrefab, targetGrid.transform);
-
-        #endregion
-        UpdateGrids();
-    }
-    public GridBehaviour GetGrid(int id)
-    {
-        foreach (GridBehaviour grid in gridList.Where(grid => id == grid.Id))
-            return grid;
-        Debug.LogError($"{gameObject.name}: Grid with id = {id} doesn't exist");
-        return null;
+        spawnGridList = spawnGridBehaviourList;
+        SyncGridStates();
     }
 
     /// <summary>
@@ -86,13 +51,13 @@ public class MapController : MonoBehaviour
             Debug.LogError($"{gameObject.name} cannot find the transform of {monsterTransform.name}.");
             return null;
         }
-        if (gridList == null ||gridList.Count <= 0)
+        if (gridList == null || gridList.Count <= 0)
         {
             Debug.LogError($"{gameObject.name} cannot find GridBehaviour in its children.");
             return null;
         }
 
-        if (targetGrid == null)
+        if (destinationGrid == null)
         {
             Debug.LogError("No Target Node found in map.");
             return null;
@@ -108,17 +73,23 @@ public class MapController : MonoBehaviour
             Debug.LogError("No valid start node found.");
             return null;
         }
-        debugPathList = AStar(startGrid, targetGrid, gridList)
+        debugPathList = AStar(startGrid, destinationGrid, gridList)
             .Select(n => n.transform)
             .ToList();
 
         return debugPathList;
-    } 
+    }
     /// <summary>
     /// if nodeBehaviours have changed, call this function to update their sprites.
     /// </summary>
-    void UpdateGrids()
+    void SyncGridStates()
     {
+        if (!gridList.Any())
+        {
+            Debug.LogError($"{gameObject.name} does's has any children who attach GridBehaviour!");
+            return;
+        }
+
         float gridSpacing = GetGridSpacing();
         if (gridSpacing <= 0f)
         {
@@ -126,28 +97,35 @@ public class MapController : MonoBehaviour
             return;
         }
 
-        var nodeList = GetComponentsInChildren<GridBehaviour>().ToList();
-        if (!nodeList.Any())
+        foreach (GridBehaviour grid in gridList)
         {
-            Debug.LogError("Cannot find any GridBehaviour in " + gameObject.name + ".");
-            return;
-        }
+            #region Set grid's collider.
 
-        foreach (var node in nodeList)
-        {
-            var spriteRenderer = node.transform.GetComponent<SpriteRenderer>();
+            Collider2D collider2d = grid.GetComponent<Collider2D>();
+            if (collider2d == null)
+            {
+                Debug.LogError($"{collider2d.gameObject.name} is missing a Collider2D!");
+                continue;
+            }
+            collider2d.isTrigger = false;
+            collider2d.enabled = !grid.IsWalkable;
+
+            #endregion
+            #region Set grid's visual.
+
+            var spriteRenderer = grid.transform.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
             {
-                Debug.LogWarning($"No SpriteRenderer found on Grid at {node.gameObject.name}.");
+                Debug.LogWarning($"No SpriteRenderer found on Grid at {grid.gameObject.name}.");
                 continue;
             }
 
-            Vector3 pos = node.transform.position;
+            Vector3 pos = grid.transform.position;
             int index = 0;
 
-            foreach (var neighbor in nodeList)
+            foreach (var neighbor in gridList)
             {
-                if (neighbor == node) continue;
+                if (neighbor == grid) continue;
 
                 Vector3 dir = neighbor.transform.position - pos;
 
@@ -156,7 +134,7 @@ public class MapController : MonoBehaviour
                     continue;
 
                 // ✅ 只与“同类节点”建立连接（即都 Walkable 或都非 Walkable）
-                if (neighbor.IsWalkable != node.IsWalkable) continue;
+                if (neighbor.IsWalkable != grid.IsWalkable) continue;
 
                 // 上（y+）
                 if (Mathf.Abs(dir.x) < 0.1f && Mathf.Abs(dir.y - gridSpacing) < 0.1f)
@@ -176,12 +154,16 @@ public class MapController : MonoBehaviour
             }
 
             spriteRenderer.sprite = GetGridSprite(index);
+
+            #endregion
         }
+
+
     }
     public GridBehaviour GetClosestGrid(Vector2 targetPosition)
     {
         float closestDistance = float.MaxValue;
-        GridBehaviour closestGrid = null; 
+        GridBehaviour closestGrid = null;
         foreach (GridBehaviour grid in gridList)
         {
             float distance = Vector2.Distance(targetPosition, grid.transform.position);
@@ -200,14 +182,14 @@ public class MapController : MonoBehaviour
             Debug.LogError($"cannot find any tower transforms in {towerTransformList.GetType()}!");
             return true;
         }
-       
+
 
         // To get the relevant GridBehaviour via towerTransformList.
         List<GridBehaviour> occupiedGridList = new List<GridBehaviour>();
         foreach (Transform tf in towerTransformList)
         {
             GridBehaviour grid = GetClosestGrid(tf.position);
-        
+
             // Return false if it cannot find the relevant GridBehaviour.
             if (grid == null)
                 return false;
@@ -228,13 +210,13 @@ public class MapController : MonoBehaviour
             grid.IsWalkable = false;
         }
 
-        // To check if all paths which are from SpawnGrids to TargetGrids is accessible.
+        // To check if all paths that are from SpawnGrids to TargetGrids are accessible.
         bool allReachable = true;
         foreach (GridBehaviour spawn in spawnGridList)
         {
             if (spawn == null || !spawn.IsWalkable) continue;
 
-            List<GridBehaviour> path = AStar(spawn, targetGrid, gridList);
+            List<GridBehaviour> path = AStar(spawn, destinationGrid, gridList);
             if (path == null || path.Count == 0)
             {
                 allReachable = false;
@@ -274,13 +256,14 @@ public class MapController : MonoBehaviour
 
             grid.IsWalkable = false;
         }
-        
-        UpdateGrids();
+
+        SyncGridStates();
         OnDeployOneTower?.Invoke();
     }
     public static event Action OnDeployOneTower;
 
     #region Support methods.
+
     /// <summary>
     /// Get Grid sprite via the index.
     /// </summary>
@@ -297,7 +280,7 @@ public class MapController : MonoBehaviour
     }
 
 
-    
+
     float GetGridSpacing()
     {
         var nodeList = GetComponentsInChildren<GridBehaviour>().ToList();
@@ -318,7 +301,7 @@ public class MapController : MonoBehaviour
         }
 
         return 0f;
-    } 
+    }
 
     List<GridBehaviour> AStar(GridBehaviour start, GridBehaviour goal, List<GridBehaviour> allNodes)
     {
@@ -403,11 +386,11 @@ public class MapController : MonoBehaviour
             path.Insert(0, current);
         }
 
-        
+
         return path;
     }
 
-    List<Transform> debugPathList; 
+    List<Transform> debugPathList;
 
     /// <summary>
     /// This method is to draw Gizmos of the path.
@@ -430,8 +413,7 @@ public class MapController : MonoBehaviour
             }
         }
     } //
+
     #endregion
 
 }
-
-
