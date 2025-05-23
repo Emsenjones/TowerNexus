@@ -119,12 +119,12 @@ public class MonsterDetector : MonoBehaviour
         }
     }
     [SerializeField] VisibleArea visibleArea;
-    public void SetVisible()
+    public void SetVisible(bool isVisible)
     {
         if (trigger == null)
             Debug.LogError($"{gameObject.name} is missing trigger!");
         else
-            visibleArea.SetVisible(trigger, true);
+            visibleArea.SetVisible(trigger, isVisible);
     }
     // void OnDrawGizmos()
     // {

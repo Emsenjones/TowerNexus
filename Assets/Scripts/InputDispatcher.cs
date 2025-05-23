@@ -1,3 +1,4 @@
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -8,6 +9,7 @@ public class InputDispatcher : MonoBehaviour
     [SerializeField] float joystickTransparency = 0.5f;
     [SerializeField] new Camera camera;
 
+    MonoBehaviour mouseDownMonoBehaviour;
     void Update()
     {
         if (joystick == null)
@@ -20,34 +22,55 @@ public class InputDispatcher : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing a camera!");
             return;
         }
-
-        if (Input.GetMouseButton(0))
+        if (Input.GetMouseButtonDown(0))
         {
             Vector2 screenPos = Input.mousePosition;
             Vector2 worldPos = camera.ScreenToWorldPoint(screenPos);
 
             RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
             MonoBehaviour monoBehaviour = hit.collider?.GetComponent<MonoBehaviour>();
-            if (monoBehaviour is TowerBehaviour)
+            if (monoBehaviour is TowerBehaviour tower)
             {
-                Debug.Log("Hit Tower!");
+                if(mouseDownMonoBehaviour == null)
+                    mouseDownMonoBehaviour = monoBehaviour;
+                
+                SwitchJoystick(false);
+                tower.OnMouse(true);
             }
-
-
-
-
-            bool isOverBehaviour = monoBehaviour is TowerBehaviour;
-            //bool isOverTower = monoBehaviour is TowerBehaviour || monoBehaviour is MonsterBehaviour;
-            SwitchJoystick(!isOverBehaviour);
+            // else if (monoBehaviour is RoleBehaviour role)
+            // {
+            //     //Click roleBehaviour...
+            //     if(selectedMonoBehaviour == null)
+            //         selectedMonoBehaviour = monoBehaviour;
+            // }
+            // ...
+            // ...
+            
+            else
+                SwitchJoystick(true);
+        }
+        if (Input.GetMouseButtonUp(0))
+        {
+            if (mouseDownMonoBehaviour is TowerBehaviour tower)
+            {
+                mouseDownMonoBehaviour = null;
+                
+                tower.OnMouse(false);
+            }
+            // else if (selectedMonoBehaviour is RoleBehaviour role)
+            // {
+            //     selectedMonoBehaviour = null;
+            //     //
+            // }
         }
 
-        
-      
 
-        
-        
+
+
+
+
     }
-    void SwitchJoystick(bool isOn)
+    void SwitchJoystick(bool isVisible)
     {
         if (joystick == null)
         {
@@ -58,15 +81,15 @@ public class InputDispatcher : MonoBehaviour
         Image[] images = joystick.GetComponentsInChildren<Image>(true);
         foreach (Image img in images)
         {
-            if(img.gameObject ==joystick.gameObject) continue;
-            
+            if (img.gameObject == joystick.gameObject) continue;
+
             Color color = img.color;
-            color.a = isOn ? joystickTransparency : 0f;
+            color.a = isVisible ? joystickTransparency : 0f;
             img.color = color;
-            Debug.Log($"Color alpha: {color.a}");
+            //Debug.Log($"Color alpha: {color.a}");
         }
     }
-    
+
     /// <summary>
     /// Call this function to get Joystick input.
     /// </summary>
@@ -76,7 +99,7 @@ public class InputDispatcher : MonoBehaviour
         return joystick is not null
             ? new Vector2(joystick.Horizontal, joystick.Vertical)
             : Vector2.zero;
-    } 
+    }
 
     bool IsClickOnUI()
     {

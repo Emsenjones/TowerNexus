@@ -65,7 +65,7 @@ public class TowerBehaviour : MonoBehaviour
 
         if (monsterDetector == null)
             Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
-        else monsterDetector.SetVisible();
+        else monsterDetector.SetVisible(true);
 
 
 
@@ -112,10 +112,14 @@ public class TowerBehaviour : MonoBehaviour
         #endregion
         iTower.Initialize();
     }
-    void OnMouseDown()
+
+    public void OnMouse(bool isDown)
     {
-        //Debug.Log($"{gameObject.name} is clicked.");
+        if (monsterDetector == null)
+            Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
+        else monsterDetector.SetVisible(isDown);
     }
+
     [InfoBox("Selecting the type of the tower.")]
     [SerializeReference] ITower iTower;
 
