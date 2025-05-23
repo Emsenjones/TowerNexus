@@ -99,18 +99,6 @@ public class MapController : MonoBehaviour
 
         foreach (GridBehaviour grid in gridList)
         {
-            #region Set grid's collider.
-
-            Collider2D collider2d = grid.GetComponent<Collider2D>();
-            if (collider2d == null)
-            {
-                Debug.LogError($"{collider2d.gameObject.name} is missing a Collider2D!");
-                continue;
-            }
-            collider2d.isTrigger = false;
-            collider2d.enabled = !grid.IsWalkable;
-
-            #endregion
             #region Set grid's visual.
 
             var spriteRenderer = grid.transform.GetComponent<SpriteRenderer>();

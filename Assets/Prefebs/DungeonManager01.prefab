@@ -1348,6 +1348,7 @@ GameObject:
   - component: {fileID: 64266990292615994}
   - component: {fileID: 7223235142470173257}
   - component: {fileID: 8326654176245432356}
+  - component: {fileID: 6421775689900711759}
   m_Layer: 0
   m_Name: Camera
   m_TagString: Untagged
@@ -1405,7 +1406,7 @@ Camera:
   far clip plane: 10
   field of view: 60
   orthographic: 1
-  orthographic size: 24
+  orthographic size: 20
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -1473,6 +1474,22 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &6421775689900711759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1145604434660314804}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56666c5a40171f54783dd416a44f42bf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_EventMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_MaxRayIntersections: 0
 --- !u!1 &1168673232208946616
 GameObject:
   m_ObjectHideFlags: 0
@@ -5089,7 +5106,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 64266990292615994}
-  joystick: {fileID: 2440343541818051592}
   coinText: {fileID: 9095152942579771711}
   shredText: {fileID: 6988076118046595374}
   monsterHealthBarPrefab: {fileID: 2530039200397032229, guid: a6cf20d2c84934a7b89a8f560772301f, type: 3}
@@ -6476,6 +6492,53 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &4769454045601827590
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3159416177255040699}
+  - component: {fileID: 6347548456035702799}
+  m_Layer: 0
+  m_Name: InputDispatcher
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3159416177255040699
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4769454045601827590}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 103070796170922571}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6347548456035702799
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4769454045601827590}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 658ac2f83a6cd4e4d835c162abd7eb3d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  joystick: {fileID: 2440343541818051592}
+  joystickTransparency: 0.5
+  camera: {fileID: 64266990292615994}
 --- !u!1 &4954793850048370832
 GameObject:
   m_ObjectHideFlags: 0
@@ -9350,6 +9413,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 3159416177255040699}
   - {fileID: 518603609561894851}
   - {fileID: 1501237877163049857}
   - {fileID: 460508681830139787}
@@ -9371,6 +9435,7 @@ MonoBehaviour:
   recyclePoolController: {fileID: 5038106764475423236}
   mapController: {fileID: 8756982106370735977}
   uiController: {fileID: 8294450841629907111}
+  inputDispatcher: {fileID: 6347548456035702799}
   rolePrefab: {fileID: 8140021183545022926, guid: 0cf9d54ba75d64d179ff2d0af6c1586c, type: 3}
   roleSpawnGrid: {fileID: 339872709470863238}
   monsterSpawnConfigList:

@@ -9,23 +9,6 @@ public class UiController : MonoBehaviour
 {
     [Title("References")]
     [SerializeField] Camera mainCamera;
-    [SerializeField] Joystick joystick;
-    bool enableJoystick;
-    void Awake()
-    {
-        enableJoystick = false;
-    }
-    public Vector2 JoystickInput
-    {
-        get {
-            if (enableJoystick)
-                return joystick is not null
-                    ? new Vector2(joystick.Horizontal, joystick.Vertical)
-                    : Vector2.zero;
-            return Vector2.zero;
-
-        }
-    }
     [Title("Currency")]
     [SerializeField] TextMeshProUGUI coinText;
     [SerializeField] TextMeshProUGUI shredText;
@@ -96,8 +79,7 @@ public class UiController : MonoBehaviour
         {
             Debug.LogError($"{gameObject.name} is missing the summonTowerButton.");
         }
-
-        enableJoystick = true;
+        
         MonsterBehaviour.OnInitialize += GenerateOneHealthBar;
         RoleBehaviour.OnGetExp += OnRoleGetExp;
 
