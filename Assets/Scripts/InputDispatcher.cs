@@ -1,6 +1,7 @@
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class InputDispatcher : MonoBehaviour
@@ -24,30 +25,34 @@ public class InputDispatcher : MonoBehaviour
         }
         if (Input.GetMouseButtonDown(0))
         {
+            bool isVisible = true;
+            
             Vector2 screenPos = Input.mousePosition;
             Vector2 worldPos = camera.ScreenToWorldPoint(screenPos);
-
-            RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
-            MonoBehaviour monoBehaviour = hit.collider?.GetComponent<MonoBehaviour>();
-            if (monoBehaviour is TowerBehaviour tower)
+            RaycastHit2D[] hits = Physics2D.RaycastAll(worldPos, Vector2.zero);
+            foreach (RaycastHit2D hit in hits)
             {
-                if(mouseDownMonoBehaviour == null)
-                    mouseDownMonoBehaviour = monoBehaviour;
-                
-                SwitchJoystick(false);
-                tower.OnMouse(true);
+                MonoBehaviour monoBehaviour = hit.collider?.GetComponent<MonoBehaviour>();
+                if (monoBehaviour is TowerBehaviour tower)
+                {
+                    if(mouseDownMonoBehaviour == null)
+                        mouseDownMonoBehaviour = monoBehaviour;
+
+                    isVisible = false;
+                    tower.OnClick(true);
+                }
+                // else if (monoBehaviour is RoleBehaviour role)
+                // {
+                //     if(selectedMonoBehaviour == null)
+                //         selectedMonoBehaviour = monoBehaviour;
+                //     isVisible = false;
+                //     Click roleBehaviour...
+                // }
+                // ...
+                // ...
+                    
             }
-            // else if (monoBehaviour is RoleBehaviour role)
-            // {
-            //     //Click roleBehaviour...
-            //     if(selectedMonoBehaviour == null)
-            //         selectedMonoBehaviour = monoBehaviour;
-            // }
-            // ...
-            // ...
-            
-            else
-                SwitchJoystick(true);
+            SwitchJoystick(isVisible);
         }
         if (Input.GetMouseButtonUp(0))
         {
@@ -55,7 +60,7 @@ public class InputDispatcher : MonoBehaviour
             {
                 mouseDownMonoBehaviour = null;
                 
-                tower.OnMouse(false);
+                tower.OnClick(false);
             }
             // else if (selectedMonoBehaviour is RoleBehaviour role)
             // {

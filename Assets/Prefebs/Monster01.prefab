@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 1195253852433762251}
   - component: {fileID: 8321872615147351990}
   - component: {fileID: 2686842474841809463}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Monster01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -175,7 +175,6 @@ MonoBehaviour:
   moveSpeed: 1
   exp: 4
   coin: 1
-  damage: 1
   hitFlashDuration: 0.5
 --- !u!1 &8563766089563090114
 GameObject:
@@ -187,7 +186,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3258768151879115697}
   - component: {fileID: 6965350756178776816}
-  m_Layer: 10
+  m_Layer: 0
   m_Name: Shadow
   m_TagString: Untagged
   m_Icon: {fileID: 0}

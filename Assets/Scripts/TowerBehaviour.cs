@@ -113,7 +113,7 @@ public class TowerBehaviour : MonoBehaviour
         iTower.Initialize();
     }
 
-    public void OnMouse(bool isDown)
+    public void OnClick(bool isDown)
     {
         if (monsterDetector == null)
             Debug.LogError($"{gameObject.name} is missing a monsterDetector!");

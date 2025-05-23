@@ -641,7 +641,7 @@ GameObject:
   - component: {fileID: 8187248513088875414}
   - component: {fileID: 6241461293778005499}
   - component: {fileID: 1843476399615384807}
-  m_Layer: 0
+  m_Layer: 10
   m_Name: StoneTower_1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
