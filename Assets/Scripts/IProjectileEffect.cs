@@ -35,7 +35,8 @@ public class DefaultEffect : IProjectileEffect
         RecyclePoolController recyclePoolController = DungeonManager.Instance.RecyclePoolController;
         GameObject explosionEffect = recyclePoolController.GenerateOneObject(explosionEffectPrefab);
         explosionEffect.transform.position = centerTransform.position;
-        var animationEventController = explosionEffect.GetComponent<AnimationEventController>();
+        AnimationEventController animationEventController
+            = explosionEffect.GetComponent<AnimationEventController>();
         if (animationEventController == null)
         {
             Debug.LogError($"{explosionEffect.name} is missing an animationEventController!");

@@ -1,4 +1,5 @@
 
+using System;
 using UnityEngine.UI;
 using UnityEngine;
 
@@ -11,23 +12,32 @@ public class HealthBarBehaviour : MonoBehaviour
     [SerializeField]
     Vector2 screenOffset;
     Camera mainCamera;
-    
+    void Awake()
+    {
+        slider = GetComponent<Slider>();
+        rectTransform = GetComponent<RectTransform>();
+        mainCanvas = GetComponentInParent<Canvas>();
+    }
+
     public void Initialize(MonsterBehaviour pairedMonster, Camera passedCamera)
     {
         boundedMonster = pairedMonster;
-        slider = GetComponent<Slider>();
         this.mainCamera = passedCamera;
-        rectTransform = GetComponent<RectTransform>();
-        mainCanvas = GetComponentInParent<Canvas>();
-        #region To registrate event actions.
-        if (boundedMonster != null)
-            boundedMonster.OnIsDamaged += SetValue;
-        else
-            Debug.LogError($" is missing MonsterBehaviour!");
-        MonsterBehaviour.OnDead += DestroyItself;
-        MonsterBehaviour.OnArrived += DestroyItself;
-        #endregion
         SetValue();
+        
+        #region To registrate event actions.
+
+        if (boundedMonster == null)
+        {
+            Debug.LogError($" is missing MonsterBehaviour!");
+            return;
+        }
+        boundedMonster.OnIsDamaged += SetValue;
+        
+        boundedMonster.OnIsDamaged += SetValue;
+        MonsterBehaviour.OnIsKilled += RecycleItself;
+        #endregion
+        
     }
     void SetValue()
     {
@@ -38,21 +48,22 @@ public class HealthBarBehaviour : MonoBehaviour
         else
             slider.value = boundedMonster.HealthRatio;
     }
-    void DestroyItself(MonsterBehaviour destroyedMonster)
+    void RecycleItself(MonsterBehaviour destroyedMonster)
     {
         if (boundedMonster == null)
             Debug.LogError($"{gameObject.name} is missing _pairedMonster!");
         else if (boundedMonster == destroyedMonster)
             DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
     }
-    void DestroyItself(MonsterBehaviour destroyedMonster, bool isByRole)
+    void RecycleItself(MonsterBehaviour destroyedMonster, bool isByRole)
     {
-        DestroyItself(destroyedMonster);
+        RecycleItself(destroyedMonster);
     }
     void OnDisable()
     {
         boundedMonster.OnIsDamaged -= SetValue;
-        MonsterBehaviour.OnDead -= DestroyItself;
+        MonsterBehaviour.OnIsKilled -= RecycleItself;
+        MonsterBehaviour.OnArrivedDestination -= RecycleItself;
     }
     private void LateUpdate()
     {

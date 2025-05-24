@@ -86,6 +86,7 @@ MonoBehaviour:
     spriteRenderer: {fileID: 3653512572387440465}
     circleSprite: {fileID: 21300000, guid: e82dac1198b864c9fb59190176caf424, type: 3}
     squareSprite: {fileID: 21300000, guid: 5bbab5882c57d4595b386c506bee4e12, type: 3}
+    color: {r: 1, g: 1, b: 1, a: 0.39215687}
 --- !u!212 &3653512572387440465
 SpriteRenderer:
   m_ObjectHideFlags: 0

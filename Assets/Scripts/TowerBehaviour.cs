@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
+using UnityEditor.Build.Content;
 using UnityEngine;
 using UnityEngine.Serialization;
 public class TowerBehaviour : MonoBehaviour
@@ -67,8 +68,6 @@ public class TowerBehaviour : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
         else monsterDetector.SetVisible(true);
 
-
-
     }
     public void Initialize()
     {
@@ -111,9 +110,19 @@ public class TowerBehaviour : MonoBehaviour
 
         #endregion
         iTower.Initialize();
+
+        MonsterBehaviour.OnArrivedDestination += RecycleAllTowers;
+    }
+    void OnDisable()
+    {
+        MonsterBehaviour.OnArrivedDestination -= RecycleAllTowers;
+    }
+    void RecycleAllTowers(MonsterBehaviour achievedDestinationMonster)
+    {
+        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
     }
 
-    public void OnClick(bool isDown)
+    public void IsClicked(bool isDown)
     {
         if (monsterDetector == null)
             Debug.LogError($"{gameObject.name} is missing a monsterDetector!");

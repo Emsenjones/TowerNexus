@@ -2242,7 +2242,7 @@ GameObject:
   - component: {fileID: 5583624638349860546}
   - component: {fileID: 1433070568892814163}
   m_Layer: 0
-  m_Name: Energy_Icon
+  m_Name: Shred_Icon
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3496,10 +3496,10 @@ RectTransform:
   - {fileID: 2440343542929754515}
   m_Father: {fileID: 460508681830139787}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 1920, y: 1920}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &2440343541818051599
 CanvasRenderer:
@@ -3666,8 +3666,8 @@ RectTransform:
   - {fileID: 2440343542044570505}
   m_Father: {fileID: 2440343541818051597}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 256, y: 256}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -4390,6 +4390,41 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &3508136921931015075
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6682807582987893570}
+  m_Layer: 0
+  m_Name: WindowContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &6682807582987893570
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3508136921931015075}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 460508681830139787}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &3601019884271978264
 GameObject:
   m_ObjectHideFlags: 0
@@ -5023,6 +5058,7 @@ RectTransform:
   - {fileID: 6680955669946436507}
   - {fileID: 3163000575729803537}
   - {fileID: 7741336121740833982}
+  - {fileID: 6682807582987893570}
   m_Father: {fileID: 103070796170922571}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -5116,6 +5152,9 @@ MonoBehaviour:
   summonTowerButtonText: {fileID: 7566023330155428017}
   towerPanel: {fileID: 7741336121740833982}
   towerSlotPrefab: {fileID: 2142669926089614461, guid: e290b4ca875e249888c642f6567c64b1, type: 3}
+  windowPrefabList:
+  - {fileID: 1598506968670621616, guid: fa234dc12837244128c5560781f2d173, type: 3}
+  windowContainer: {fileID: 6682807582987893570}
 --- !u!1 &3981179234756260606
 GameObject:
   m_ObjectHideFlags: 0
@@ -6537,7 +6576,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   joystick: {fileID: 2440343541818051592}
-  joystickTransparency: 0.5
   camera: {fileID: 64266990292615994}
 --- !u!1 &4954793850048370832
 GameObject:
@@ -7515,7 +7553,7 @@ GameObject:
   - component: {fileID: 4269460111833716378}
   - component: {fileID: 6988076118046595374}
   m_Layer: 0
-  m_Name: Energy_Text
+  m_Name: Shard_Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9442,7 +9480,7 @@ MonoBehaviour:
   - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
     grid: {fileID: 2886871292850735916}
     healthCoefficient: 1
-    count: 10
+    count: 100
     delay: 1
   coin: 10
   shred: 0

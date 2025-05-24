@@ -35,6 +35,11 @@ public class RecyclePoolController : MonoBehaviour
         recycleItemBehaviourList = new List<RecycleItemBehaviour>();
         willBeDestroyedBehaviourList = new List<RecycleItemBehaviour>();
     }
+    public void Dispose()
+    {
+        recycleItemBehaviourList.ForEach(item => Destroy(item.gameObject));
+        willBeDestroyedBehaviourList.ForEach(item => Destroy(item.gameObject));
+    }
     /// <summary>
     /// Generate a gameObject via sourcePrefab.
     /// </summary>

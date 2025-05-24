@@ -1,10 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Serialization;
-
 public class RoleBehaviour : MonoBehaviour
 {
     [Title("Configs")]
@@ -33,11 +31,11 @@ public class RoleBehaviour : MonoBehaviour
     }
     int exp;
     /// <summary>
-    /// Get level of this role.
+    ///     Get level of this role.
     /// </summary>
     public int GetLevel()
     {
-        int tempExp = this.exp;
+        int tempExp = exp;
         foreach (LevelConfig levelConfig in levelConfigList)
         {
             if (tempExp > levelConfig.RequiredExp)
@@ -48,12 +46,12 @@ public class RoleBehaviour : MonoBehaviour
         return levelConfigList[^1].Level;
     }
     /// <summary>
-    /// Call this method to get the Level ratio of exp.
+    ///     Call this method to get the Level ratio of exp.
     /// </summary>
     /// <returns>LevelRatio, which is between 0 and 1.</returns>
     public float GetLevelRatio()
     {
-        int tempExp = this.exp;
+        int tempExp = exp;
         foreach (LevelConfig levelConfig in levelConfigList)
         {
             if (tempExp >= levelConfig.RequiredExp)
@@ -64,7 +62,7 @@ public class RoleBehaviour : MonoBehaviour
                 return Mathf.Clamp01(levelRatio);
             }
         }
-        Debug.LogError($"{this.gameObject.name} cannot get LevelRatio!");
+        Debug.LogError($"{gameObject.name} cannot get LevelRatio!");
         return 0f;
     }
 
@@ -75,19 +73,22 @@ public class RoleBehaviour : MonoBehaviour
     new Rigidbody2D rigidbody2D;
     Animator animator;
     SpriteRenderer spriteRenderer;
-    /// <summary>
-    /// Check if the role can attack enemies. 
-    /// </summary>
     bool isMoving;
+    /// <summary>
+    ///     Check if the role can attack enemies.
+    /// </summary>
+    void Awake()
+    {
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        rigidbody2D = GetComponent<Rigidbody2D>();
+    }
     public void Initialize(Transform startTransform)
     {
         exp = 0;
-        rigidbody2D = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
         isMoving = false;
         timmer = 0f;
-        
+
         transform.position = startTransform.position;
 
         if (monsterDetector == null)
@@ -95,7 +96,7 @@ public class RoleBehaviour : MonoBehaviour
         else
             monsterDetector.Initialize();
 
-        MonsterBehaviour.OnDead += CheckIfGainExp;
+        MonsterBehaviour.OnIsKilled += CheckIfGainExp;
 
         if (animationEventController == null)
         {
@@ -103,10 +104,9 @@ public class RoleBehaviour : MonoBehaviour
             return;
         }
         animationEventController.OnTriggerEvent01 += Attack;
-
     }
     /// <summary>
-    /// Call this method when one monster is dead.
+    ///     Call this method when one monster is dead.
     /// </summary>
     /// <param name="monster">The dead monster.</param>
     /// <param name="isKilledByRole">is killed by the role? </param>
@@ -126,7 +126,7 @@ public class RoleBehaviour : MonoBehaviour
     public static event Action<RoleBehaviour> OnGetExp;
     void OnDisable()
     {
-        MonsterBehaviour.OnDead -= CheckIfGainExp;
+        MonsterBehaviour.OnIsKilled -= CheckIfGainExp;
         if (animationEventController == null)
         {
             Debug.LogError($"{gameObject.name} is missing an AnimationEventController!");
@@ -135,7 +135,7 @@ public class RoleBehaviour : MonoBehaviour
         animationEventController.OnTriggerEvent01 -= Attack;
     }
     /// <summary>
-    /// Moved by the Joystick.
+    ///     Moved by the Joystick.
     /// </summary>
     void FixedUpdate()
     {
@@ -145,7 +145,7 @@ public class RoleBehaviour : MonoBehaviour
             Debug.Break();
         }
 
-        Vector2 directionInput = DungeonManager.Instance.GetJoystickInput();
+        Vector2 directionInput = DungeonManager.Instance.InputDispatcher.GetJoystickInput();
         Vector2 moveDelta = directionInput.normalized * (moveSpeed * Time.fixedDeltaTime);
 
         // move roleBehaviour.
@@ -154,7 +154,7 @@ public class RoleBehaviour : MonoBehaviour
         // Check if the role has moved in this frame.
         isMoving = moveDelta.sqrMagnitude > 0.001f;
 
-        // 设置动画状态
+        // Set the animation state.
         if (animator != null)
             animator.SetBool(AnimatorParams.IsMoving, isMoving);
         else
@@ -163,7 +163,7 @@ public class RoleBehaviour : MonoBehaviour
             Debug.Break();
         }
 
-        // 设置朝向（左右翻转）
+        // Set facing
         if (spriteRenderer != null && isMoving)
             spriteRenderer.flipX = moveDelta.x < 0;
 
@@ -178,13 +178,19 @@ public class RoleBehaviour : MonoBehaviour
 
 
     [SerializeField] MonsterDetector monsterDetector;
+    public void IsClicked(bool isDown)
+    {
+        if (monsterDetector == null)
+            Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
+        else monsterDetector.SetVisible(isDown);
+    }
     [SerializeField] float fireSpeed = 1f;
 
     [InfoBox("Choose an attack strategy.")]
     [SerializeReference]
     IRoleAttack iRoleAttack;
     /// <summary>
-    /// The method is about detecting monsters.
+    ///     The method is about detecting monsters.
     /// </summary>
     void Update()
     {
@@ -237,7 +243,7 @@ public class RoleBehaviour : MonoBehaviour
     {
         if (levelConfigList.Count <= 0)
         {
-            Debug.LogError($"{this.gameObject.name} is missing levelInfoList!");
+            Debug.LogError($"{gameObject.name} is missing levelInfoList!");
             return;
         }
         if (spriteRenderer == null)

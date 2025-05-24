@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using DG.Tweening;
 using Sequence = DG.Tweening.Sequence;
 
 public class MonsterBehaviour : MonoBehaviour
@@ -26,43 +26,39 @@ public class MonsterBehaviour : MonoBehaviour
     BoxCollider2D trigger;
     Animator animator;
     SpriteRenderer spriteRenderer;
+    void Awake()
+    {
+        trigger = GetComponent<BoxCollider2D>();
+
+
+        animator = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
+    }
     /// <summary>
-    /// Must call this method when instantiating this object.
+    ///     Must call this method to initialize this object.
     /// </summary>
     /// <param name="healthCoefficient">health coefficient parameter.</param>
     public void Initialize(float healthCoefficient)
     {
-        trigger = GetComponent<BoxCollider2D>();
         if (trigger == null)
         {
-            Debug.LogError($"{this.gameObject.name} is missing BoxCollider2D!");
+            Debug.LogError($"{gameObject.name} is missing BoxCollider2D!");
             return;
         }
         trigger.isTrigger = true;
 
         maxHealth = Mathf.RoundToInt(healthCoefficient * defaultHealth);
         Health = maxHealth;
-        animator = GetComponent<Animator>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        if (animator == null)
-        {
-            Debug.LogError($"{gameObject.name} is missing animator!");
-            return;
-        }
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
-        {
-            Debug.LogError($"{gameObject.name} is missing spriteRenderer!");
-            return;
-        }
         OnInitialize?.Invoke(this);
         FollowOnePath();
 
         MapController.OnDeployOneTower += FollowOnePath;
+        OnArrivedDestination += RecycleAllMonsters;
     }
     void OnDisable()
     {
         MapController.OnDeployOneTower -= FollowOnePath;
+        OnArrivedDestination -= RecycleAllMonsters;
     }
     public float HealthRatio
     {
@@ -72,7 +68,7 @@ public class MonsterBehaviour : MonoBehaviour
     }
 
     /// <summary>
-    /// make the monster move to the target node.
+    ///     make the monster move to the target node.
     /// </summary>
     void FollowOnePath()
     {
@@ -85,7 +81,7 @@ public class MonsterBehaviour : MonoBehaviour
         List<Transform> pathList = DungeonManager.Instance.MapController.FindOnePath(transform);
         if (pathList == null || pathList.Count == 0)
         {
-            Debug.LogError($"{gameObject.name} cannot find any paths!");
+            Debug.LogWarning($"{gameObject.name} cannot find any paths.");
             return;
         }
 
@@ -116,21 +112,21 @@ public class MonsterBehaviour : MonoBehaviour
     }
 
     /// <summary>
-    /// will call this method when the monster achieves the target.
+    ///     will call this method when the monster achieves the target.
     /// </summary>
     void PathComplete()
     {
         if (animator != null) animator.SetBool(AnimatorParams.IsMoving, false);
         else Debug.LogError(gameObject.name + "cannot find animator!");
-        OnArrived?.Invoke(this);
-        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+        OnArrivedDestination?.Invoke(this);
     }
+
 
     public static event Action<MonsterBehaviour> OnInitialize;
     public event Action OnIsDamaged;
     [SerializeField] float hitFlashDuration = 0.2f;
     /// <summary>
-    /// Call this method when the monster is attacked.
+    ///     Call this method when the monster is attacked.
     /// </summary>
     /// <param name="theDamage">The damage which the monster will be taken.</param>
     /// <param name="isByRole">Is damaged by the Role?</param>
@@ -147,18 +143,32 @@ public class MonsterBehaviour : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing SpriteRenderer!");
 
         OnIsDamaged?.Invoke();
-        if (Health <= 0)
-        {
-            DOTween.Kill(this); //To kill all animations.
-            animator.SetTrigger(AnimatorParams.Die);
-            OnDead?.Invoke(this, isByRole);
-        }
+        if (Health > 0) return;
 
+        DOTween.Kill(this); //To kill its Tween.
+
+        if (animator == null)
+        {
+            Debug.Log($"{gameObject.name} is missing an animator!");
+            return;
+        }
+        animator.SetTrigger(AnimatorParams.Die);
+        OnIsKilled?.Invoke(this, isByRole);
     }
-    void DestroyItself() //Called by the animation event.
+    void RecycleAllMonsters(MonsterBehaviour achievedDestinationMonster)
     {
-        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(this.gameObject);
+        RecycleItself();
+        OnIsKilled?.Invoke(this,false);
     }
-    public static event Action<MonsterBehaviour, bool> OnDead;
-    public static event Action<MonsterBehaviour> OnArrived;
+
+    /// <summary>
+    /// It is called by the animation event.
+    /// </summary>
+    void RecycleItself()
+    {
+        DOTween.Kill(this);
+        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject);
+    }
+    public static event Action<MonsterBehaviour, bool> OnIsKilled;
+    public static event Action<MonsterBehaviour> OnArrivedDestination;
 }

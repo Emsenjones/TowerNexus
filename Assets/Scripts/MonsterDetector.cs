@@ -26,7 +26,6 @@ public class MonsterDetector : MonoBehaviour
         }
         if (trigger.enabled) trigger.enabled = false;
         visibleArea.SetVisible(trigger, false);
-
     }
 
     public void Initialize()
@@ -40,7 +39,6 @@ public class MonsterDetector : MonoBehaviour
             trigger.isTrigger = true;
             visibleArea.SetVisible(trigger, false);
         }
-
     }
 
     void OnTriggerEnter2D(Collider2D other)

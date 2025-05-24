@@ -3,14 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
-
 public class MapController : MonoBehaviour
 {
     [Serializable] public class GridConfig
     {
         [SerializeField]
-        private int index;
+        int index;
         public int Index
         {
             get {
@@ -35,12 +33,30 @@ public class MapController : MonoBehaviour
     public void Initialize(List<GridBehaviour> spawnGridBehaviourList)
     {
         gridList = GetComponentsInChildren<GridBehaviour>().ToList();
+        if (!gridList.Any())
+        {
+            Debug.Log($"{gameObject.name} doesn't have any gridBehaviours!");
+            return;
+        }
+        gridList.ForEach(grid => grid.Initialize());
         spawnGridList = spawnGridBehaviourList;
-        SyncGridStates();
+        SynchronizeGridStates();
+    }
+    public void Dispose()
+    {
+        if (!gridList.Any())
+        {
+            Debug.Log($"{gameObject.name} doesn't have any gridBehaviours!");
+            return;
+        }
+        gridList.ForEach(grid => grid.Dispose());
+        gridList.Clear();
+        
+        spawnGridList.Clear();
     }
 
     /// <summary>
-    /// Generate a path for the enemy.
+    ///     Generate a path for the enemy.
     /// </summary>
     /// <param name="monsterTransform">The monster's transform</param>
     /// <returns> A list of transform. Will return an empty list if the monster cannot find a path.</returns>
@@ -80,9 +96,9 @@ public class MapController : MonoBehaviour
         return debugPathList;
     }
     /// <summary>
-    /// if nodeBehaviours have changed, call this function to update their sprites.
+    ///     if nodeBehaviours have changed, call this function to update their sprites.
     /// </summary>
-    void SyncGridStates()
+    void SynchronizeGridStates()
     {
         if (!gridList.Any())
         {
@@ -101,7 +117,7 @@ public class MapController : MonoBehaviour
         {
             #region Set grid's visual.
 
-            var spriteRenderer = grid.transform.GetComponent<SpriteRenderer>();
+            SpriteRenderer spriteRenderer = grid.transform.GetComponent<SpriteRenderer>();
             if (spriteRenderer == null)
             {
                 Debug.LogWarning($"No SpriteRenderer found on Grid at {grid.gameObject.name}.");
@@ -111,7 +127,7 @@ public class MapController : MonoBehaviour
             Vector3 pos = grid.transform.position;
             int index = 0;
 
-            foreach (var neighbor in gridList)
+            foreach (GridBehaviour neighbor in gridList)
             {
                 if (neighbor == grid) continue;
 
@@ -173,7 +189,7 @@ public class MapController : MonoBehaviour
 
 
         // To get the relevant GridBehaviour via towerTransformList.
-        List<GridBehaviour> occupiedGridList = new List<GridBehaviour>();
+        var occupiedGridList = new List<GridBehaviour>();
         foreach (Transform tf in towerTransformList)
         {
             GridBehaviour grid = GetClosestGrid(tf.position);
@@ -191,7 +207,7 @@ public class MapController : MonoBehaviour
         }
 
         // To back up the data of IsWalkable in each GridBehaviour.
-        Dictionary<GridBehaviour, bool> originalState = new Dictionary<GridBehaviour, bool>();
+        var originalState = new Dictionary<GridBehaviour, bool>();
         foreach (GridBehaviour grid in occupiedGridList)
         {
             originalState[grid] = grid.IsWalkable;
@@ -213,7 +229,7 @@ public class MapController : MonoBehaviour
         }
 
         // To reset the data of IsWalkable in each GridBehaviour.
-        foreach (var kv in originalState)
+        foreach (KeyValuePair<GridBehaviour, bool> kv in originalState)
             kv.Key.IsWalkable = kv.Value;
 
         return allReachable;
@@ -245,7 +261,7 @@ public class MapController : MonoBehaviour
             grid.IsWalkable = false;
         }
 
-        SyncGridStates();
+        SynchronizeGridStates();
         OnDeployOneTower?.Invoke();
     }
     public static event Action OnDeployOneTower;
@@ -253,13 +269,13 @@ public class MapController : MonoBehaviour
     #region Support methods.
 
     /// <summary>
-    /// Get Grid sprite via the index.
+    ///     Get Grid sprite via the index.
     /// </summary>
     /// <param name="index">the index number</param>
     /// <returns></returns>
     Sprite GetGridSprite(int index)
     {
-        var match = gridConfigList.FirstOrDefault(item => item.Index == index);
+        GridConfig match = gridConfigList.FirstOrDefault(item => item.Index == index);
         if (match != null)
             return match.Sprite;
 
@@ -298,7 +314,7 @@ public class MapController : MonoBehaviour
         var gScore = new Dictionary<GridBehaviour, float>();
         var fScore = new Dictionary<GridBehaviour, float>();
 
-        foreach (var node in allNodes)
+        foreach (GridBehaviour node in allNodes)
         {
             gScore[node] = float.MaxValue;
             fScore[node] = float.MaxValue;
@@ -318,7 +334,7 @@ public class MapController : MonoBehaviour
 
             openSet.Remove(current);
 
-            foreach (var neighbor in GetNeighbors(current, allNodes))
+            foreach (GridBehaviour neighbor in GetNeighbors(current, allNodes))
             {
                 if (!neighbor.IsWalkable) continue;
 
@@ -342,21 +358,21 @@ public class MapController : MonoBehaviour
 
     List<GridBehaviour> GetNeighbors(GridBehaviour grid, List<GridBehaviour> allNodes)
     {
-        List<GridBehaviour> neighbors = new List<GridBehaviour>();
+        var neighbors = new List<GridBehaviour>();
         float gridSpacing = GetGridSpacing();
         Vector3 pos = grid.transform.position;
 
-        foreach (var other in allNodes)
+        foreach (GridBehaviour other in allNodes)
         {
             if (other == grid || !other.IsWalkable) continue;
 
             Vector3 dir = other.transform.position - pos;
 
             // 仅支持 4 向（上下左右），非对角
-            if ((Mathf.Abs(dir.x - gridSpacing) < 0.1f && Mathf.Abs(dir.y) < 0.1f) ||
-                (Mathf.Abs(dir.x + gridSpacing) < 0.1f && Mathf.Abs(dir.y) < 0.1f) ||
-                (Mathf.Abs(dir.y - gridSpacing) < 0.1f && Mathf.Abs(dir.x) < 0.1f) ||
-                (Mathf.Abs(dir.y + gridSpacing) < 0.1f && Mathf.Abs(dir.x) < 0.1f))
+            if (Mathf.Abs(dir.x - gridSpacing) < 0.1f && Mathf.Abs(dir.y) < 0.1f ||
+                Mathf.Abs(dir.x + gridSpacing) < 0.1f && Mathf.Abs(dir.y) < 0.1f ||
+                Mathf.Abs(dir.y - gridSpacing) < 0.1f && Mathf.Abs(dir.x) < 0.1f ||
+                Mathf.Abs(dir.y + gridSpacing) < 0.1f && Mathf.Abs(dir.x) < 0.1f)
             {
                 neighbors.Add(other);
             }
@@ -364,9 +380,9 @@ public class MapController : MonoBehaviour
 
         return neighbors;
     }
-    private List<GridBehaviour> ReconstructPath(Dictionary<GridBehaviour, GridBehaviour> cameFrom, GridBehaviour current)
+    List<GridBehaviour> ReconstructPath(Dictionary<GridBehaviour, GridBehaviour> cameFrom, GridBehaviour current)
     {
-        List<GridBehaviour> path = new List<GridBehaviour> { current };
+        var path = new List<GridBehaviour> { current };
 
         while (cameFrom.ContainsKey(current))
         {
@@ -381,7 +397,7 @@ public class MapController : MonoBehaviour
     List<Transform> debugPathList;
 
     /// <summary>
-    /// This method is to draw Gizmos of the path.
+    ///     This method is to draw Gizmos of the path.
     /// </summary>
     void OnDrawGizmosSelected()
     {

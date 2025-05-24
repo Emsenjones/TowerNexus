@@ -1,16 +1,29 @@
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
-using UnityEngine.EventSystems;
-using UnityEngine.Serialization;
-using UnityEngine.UI;
-
 public class InputDispatcher : MonoBehaviour
 {
-    [SerializeField] Joystick joystick;
-    [SerializeField] float joystickTransparency = 0.5f;
+    [SerializeField] FloatingJoystick joystick;
     [SerializeField] new Camera camera;
 
     MonoBehaviour mouseDownMonoBehaviour;
+    void Awake()
+    {
+        joystick.enabled = false;
+    }
+    public void Initialize()
+    {
+        if (joystick == null)
+            Debug.LogError($"{gameObject.name} is missing a Joystick!");
+        else
+            joystick.enabled = true;
+    }
+    public void Dispose()
+    {
+        if (joystick == null)
+            Debug.LogError($"{gameObject.name} is missing a Joystick!");
+        else
+            joystick.enabled = false;
+
+    }
     void Update()
     {
         if (joystick == null)
@@ -18,6 +31,7 @@ public class InputDispatcher : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing a Joystick!");
             return;
         }
+        if (!joystick.enabled) return;
         if (camera == null)
         {
             Debug.LogError($"{gameObject.name} is missing a camera!");
@@ -25,8 +39,8 @@ public class InputDispatcher : MonoBehaviour
         }
         if (Input.GetMouseButtonDown(0))
         {
-            bool isVisible = true;
-            
+            bool isJoystickVisible = true;
+
             Vector2 screenPos = Input.mousePosition;
             Vector2 worldPos = camera.ScreenToWorldPoint(screenPos);
             RaycastHit2D[] hits = Physics2D.RaycastAll(worldPos, Vector2.zero);
@@ -35,32 +49,36 @@ public class InputDispatcher : MonoBehaviour
                 MonoBehaviour monoBehaviour = hit.collider?.GetComponent<MonoBehaviour>();
                 if (monoBehaviour is TowerBehaviour tower)
                 {
-                    if(mouseDownMonoBehaviour == null)
-                        mouseDownMonoBehaviour = monoBehaviour;
+                    mouseDownMonoBehaviour = monoBehaviour;
 
-                    isVisible = false;
-                    tower.OnClick(true);
+                    isJoystickVisible = false;
+                    tower.IsClicked(true);
                 }
-                // else if (monoBehaviour is RoleBehaviour role)
-                // {
-                //     if(selectedMonoBehaviour == null)
-                //         selectedMonoBehaviour = monoBehaviour;
-                //     isVisible = false;
-                //     Click roleBehaviour...
-                // }
+                else if (monoBehaviour is RoleBehaviour role)
+                {
+                    mouseDownMonoBehaviour = monoBehaviour;
+                    isJoystickVisible = false;
+                    role.IsClicked(true);
+                }
                 // ...
                 // ...
-                    
+
             }
-            SwitchJoystick(isVisible);
+            joystick.SetVisible(isJoystickVisible);
         }
         if (Input.GetMouseButtonUp(0))
         {
             if (mouseDownMonoBehaviour is TowerBehaviour tower)
             {
                 mouseDownMonoBehaviour = null;
-                
-                tower.OnClick(false);
+
+                tower.IsClicked(false);
+            }
+            else if (mouseDownMonoBehaviour is RoleBehaviour role)
+            {
+                mouseDownMonoBehaviour = null;
+
+                role.IsClicked(false);
             }
             // else if (selectedMonoBehaviour is RoleBehaviour role)
             // {
@@ -75,43 +93,23 @@ public class InputDispatcher : MonoBehaviour
 
 
     }
-    void SwitchJoystick(bool isVisible)
-    {
-        if (joystick == null)
-        {
-            Debug.LogError($"{gameObject.name} is missing a Joystick!");
-            return;
-        }
-
-        Image[] images = joystick.GetComponentsInChildren<Image>(true);
-        foreach (Image img in images)
-        {
-            if (img.gameObject == joystick.gameObject) continue;
-
-            Color color = img.color;
-            color.a = isVisible ? joystickTransparency : 0f;
-            img.color = color;
-            //Debug.Log($"Color alpha: {color.a}");
-        }
-    }
 
     /// <summary>
-    /// Call this function to get Joystick input.
+    ///     Call this function to get Joystick input.
     /// </summary>
     /// <returns>return a Vector2.</returns>
     public Vector2 GetJoystickInput()
     {
-        return joystick is not null
-            ? new Vector2(joystick.Horizontal, joystick.Vertical)
-            : Vector2.zero;
+        if (joystick is null || !joystick.enabled) return Vector2.zero;
+        return joystick.Direction;
     }
 
-    bool IsClickOnUI()
-    {
-#if UNITY_ANDROID || UNITY_IOS
-        if (Input.touchCount > 0)
-            return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
-#endif
-        return EventSystem.current.IsPointerOverGameObject();
-    }
+//     bool IsClickOnUI()
+//     {
+// #if UNITY_ANDROID || UNITY_IOS
+//         if (Input.touchCount > 0)
+//             return EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId);
+// #endif
+//         return EventSystem.current.IsPointerOverGameObject();
+//     }
 }
