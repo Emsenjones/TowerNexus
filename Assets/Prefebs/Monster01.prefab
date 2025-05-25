@@ -171,7 +171,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 14b9d4d40dbec4c6b8c06edb692f57ef, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultHealth: 20
+  defaultHealth: 10
   moveSpeed: 1
   exp: 4
   coin: 1

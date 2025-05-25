@@ -9480,11 +9480,26 @@ MonoBehaviour:
   - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
     grid: {fileID: 2886871292850735916}
     healthCoefficient: 1
-    count: 100
-    delay: 1
+    count: 10
+    delay: 1.5
+  - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
+    grid: {fileID: 3133957865358892474}
+    healthCoefficient: 1.5
+    count: 10
+    delay: 1.5
+  - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
+    grid: {fileID: 2886871292850735916}
+    healthCoefficient: 2
+    count: 10
+    delay: 1.5
+  - monsterPrefab: {fileID: 8140021183545022926, guid: 7115ba20e29a34ef1b7e56eb18b43ba1, type: 3}
+    grid: {fileID: 3133957865358892474}
+    healthCoefficient: 3
+    count: 10
+    delay: 2
   coin: 10
   shred: 0
-  towerPrice: 4
+  towerPrice: 5
   towerPoolItemList:
   - towerPrefab: {fileID: 7692521103422011066, guid: 7b88b32ebf486419abc110367629a4e8, type: 3}
     weight: 1

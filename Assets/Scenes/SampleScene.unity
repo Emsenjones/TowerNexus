@@ -330,42 +330,6 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 2440343541818051597, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: -200
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343541818051597, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: -200
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343541818051597, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343541818051597, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343541818051598, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_Color.a
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343542929754515, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343542929754515, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343542929754515, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2440343542929754515, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0.5
-      objectReference: {fileID: 0}
     - target: {fileID: 2747909247361392003, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0
@@ -373,6 +337,22 @@ PrefabInstance:
     - target: {fileID: 2747909247361392003, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3978995066317392416, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: coin
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 3978995066317392416, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: monsterSpawnConfigList.Array.data[1].healthCoefficient
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 3978995066317392416, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: monsterSpawnConfigList.Array.data[2].healthCoefficient
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3978995066317392416, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
+      propertyPath: monsterSpawnConfigList.Array.data[3].healthCoefficient
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7109167317086931620, guid: c9236be02ba8943f4a1d7456c3c0c101, type: 3}
       propertyPath: m_Name
