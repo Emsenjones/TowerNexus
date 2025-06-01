@@ -330,6 +330,9 @@ MonoBehaviour:
   - level: 4
     requiredExp: 20
     damage: 8
+  - level: 5
+    requiredExp: 30
+    damage: 9
   animationEventController: {fileID: 1879308485912527267}
   monsterDetector: {fileID: 3677764968677834808}
   fireSpeed: 0.6

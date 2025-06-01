@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -38,6 +39,17 @@ public class ProjectileBehaviour : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing the rigidbody2D");
         else
             iProjectile.Launch(gameObject, speed, targetTransform);
+        
+        MonsterBehaviour.OnArrivedDestination += DestroyingItself; //To add listener.
+    }
+    void OnDisable()
+    {
+        MonsterBehaviour.OnArrivedDestination -= DestroyingItself;
+    }
+    void DestroyingItself(MonsterBehaviour monster)
+    {
+        DOTween.Kill(gameObject);
+        DungeonManager.Instance.RecyclePoolController.RecycleOneObject(gameObject); 
     }
     [InfoBox("Selecting the effect of hitting monsters.")]
     [SerializeReference] IProjectileEffect iProjectileEffect;

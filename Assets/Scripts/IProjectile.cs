@@ -62,7 +62,7 @@ public class StraightProjectile : IProjectile
         float distance = Vector2.Distance
             (projectile.transform.position, targetTransform.position);
         float duration = distance / speed;
-        float arcHeight = distance*distanceAndHeightRatio;
+        float arcHeight = distance * distanceAndHeightRatio;
         DOTween.Kill(projectile.transform);
         //The projectile moves with a parabola.
         projectile.transform.DOJump(targetTransform.position,

@@ -46,7 +46,7 @@ public class RoleBehaviour : MonoBehaviour
         return levelConfigList[^1].Level;
     }
     /// <summary>
-    ///     Call this method to get the Level ratio of exp.
+    /// Call this method to get the Level ratio of exp.
     /// </summary>
     /// <returns>LevelRatio, which is between 0 and 1.</returns>
     public float GetLevelRatio()
@@ -106,21 +106,15 @@ public class RoleBehaviour : MonoBehaviour
         animationEventController.OnTriggerEvent01 += Attack;
     }
     /// <summary>
-    ///     Call this method when one monster is dead.
+    /// Call this method when one monster is dead.
     /// </summary>
     /// <param name="monster">The dead monster.</param>
     /// <param name="isKilledByRole">is killed by the role? </param>
     void CheckIfGainExp(MonsterBehaviour monster, bool isKilledByRole)
     {
         if (!isKilledByRole) return;
-
-        // int level = GetLevel();
+        
         exp += monster.Exp;
-        // int newLevel = GetLevel();
-        // if (newLevel > level)
-        // {
-        //    
-        // }
         OnGetExp?.Invoke(this);
     }
     public static event Action<RoleBehaviour> OnGetExp;
