@@ -1,17 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Sirenix.OdinInspector;
-using UnityEditor.Build.Content;
 using UnityEngine;
 using UnityEngine.Serialization;
 public class TowerBehaviour : MonoBehaviour
 {
+    [FormerlySerializedAs("name")]
+    [FormerlySerializedAs("theName")]
     [Title("Configs")]
-    [SerializeField] string theName;
-    public string TheName
+    [SerializeField] string nameString;
+    public string NameString
     {
         get {
-            return theName;
+            return nameString;
         }
     }
     [SerializeField] Sprite iconSprite;
@@ -33,7 +35,6 @@ public class TowerBehaviour : MonoBehaviour
     [SerializeField] MonsterDetector monsterDetector;
     [FormerlySerializedAs("fireSpeed")]
     [SerializeField] float attackSpeed;
-    [FormerlySerializedAs("firePoint")]
     float timmer;
     [SerializeField] GameObject projectilePrefab;
     Collider2D collider2d;
@@ -69,8 +70,10 @@ public class TowerBehaviour : MonoBehaviour
         else monsterDetector.SetVisible(true);
 
     }
+    int shard;
     public void Initialize()
     {
+        shard = 0;
         #region Set grids' color to blank.
 
         if (gridTransformList.Count <= 0)
@@ -109,7 +112,6 @@ public class TowerBehaviour : MonoBehaviour
         monsterDetector.Initialize();
 
         #endregion
-        iTower.Initialize();
 
         MonsterBehaviour.OnArrivedDestination += RecycleAllTowers;
     }
@@ -124,9 +126,101 @@ public class TowerBehaviour : MonoBehaviour
 
     public void IsClicked(bool isDown)
     {
+        #region Show the detecting area of the tower.
+
         if (monsterDetector == null)
             Debug.LogError($"{gameObject.name} is missing a monsterDetector!");
         else monsterDetector.SetVisible(isDown);
+
+        #endregion
+
+        //Open the upgradeWindow.
+        OpenUpgradeWindow();
+
+    }
+    void OpenUpgradeWindow()
+    {
+        LevelConfig levelConfig = GetLevelConfig();
+        int level = levelConfig.Level;
+        int maxLevel = levelConfigList.Max(lvConfig => lvConfig.Level);
+        bool hasReachedMaxLevel = level >= maxLevel;
+        LevelConfig nextLevelConfig = levelConfigList.FirstOrDefault(cfg => cfg.Level == level + 1);
+        int requiredShard;
+        if (nextLevelConfig == null) requiredShard = 0;
+        else requiredShard = nextLevelConfig.RequiredShard;
+
+        bool canUpgrade = !hasReachedMaxLevel && shard >= requiredShard;
+        string upgradeButtonString = hasReachedMaxLevel ? GameTexts.Max
+            : string.Format(GameTexts.UpgradeTower,requiredShard.ToString());
+        var data = new TowerWindowBehaviour.Data(
+            nameString,
+            level.ToString(),
+            iconSprite,
+            levelConfig.Damage.ToString(),
+            canUpgrade,
+            upgradeButtonString,
+            UpgradeLevel
+        );
+        DungeonManager.Instance.uiController.OpenOneWindow<TowerWindowBehaviour>(data);
+    }
+    void UpgradeLevel()
+    {
+        int level = GetLevelConfig().Level;
+        LevelConfig nextLevelConfig = levelConfigList.FirstOrDefault(cfg => cfg.Level == level + 1);
+        if (nextLevelConfig == null)
+        {
+            Debug.Log($"{gameObject.name} has reached the max level.");
+        }
+        else if (shard < nextLevelConfig.RequiredShard)
+            Debug.Log($"Insufficient shard to upgrade the {gameObject.name}");
+        else
+        {
+            shard -= nextLevelConfig.RequiredShard;
+            OpenUpgradeWindow();
+        }
+    }
+    [Serializable] class LevelConfig
+    {
+        [SerializeField] int level;
+        public int Level
+        {
+            get {
+                return level;
+            }
+        }
+        [SerializeField] int requiredShard;
+        public int RequiredShard
+        {
+            get {
+                return requiredShard;
+            }
+        }
+        [SerializeField] int damage;
+        public int Damage
+        {
+            get {
+                return damage;
+            }
+        }
+        [SerializeField] int attackSpeed;
+        public int AttackSpeed
+        {
+            get {
+                return attackSpeed;
+            }
+        }
+
+    }
+    [SerializeField] List<LevelConfig> levelConfigList;
+    LevelConfig GetLevelConfig()
+    {
+        int tempShard = shard;
+        foreach (LevelConfig levelConfig in levelConfigList)
+            if (tempShard >= levelConfig.RequiredShard)
+                tempShard -= levelConfig.RequiredShard;
+            else return levelConfig;
+
+        return levelConfigList[^1];
     }
 
     [InfoBox("Selecting the type of the tower.")]
@@ -138,7 +232,7 @@ public class TowerBehaviour : MonoBehaviour
             timmer -= Time.deltaTime;
         else if (monsterDetector.GetTheNearestMonster() is not null)
         {
-            iTower.Attack(monsterDetector.MonsterList);
+            iTower.Attack(monsterDetector.MonsterList, GetLevelConfig().Damage);
             timmer = attackSpeed;
         }
     }

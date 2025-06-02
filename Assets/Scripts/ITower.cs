@@ -3,24 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public interface ITower
 {
-    public void Initialize();
-    public void OnUpdate();
     /// <summary>
-    /// Will return true if the level up is successful.
-    /// </summary>
-    /// <param name="shardPlayerHas">shard amount which the player has.</param>
-    /// <param name="requiredShard">the shard amount which the player needs.</param>
-    /// <returns></returns>
-    public bool TryLevelUp(ref int shardPlayerHas, out int requiredShard);
-    /// <summary>
-    /// To attack monsters.
+    /// The method to attack monsters.
     /// </summary>
     /// <param name="monsterList">Attackable monsters.</param>
-    public void Attack(List<MonsterBehaviour> monsterList);
+    /// <param name="damage"></param>
+    public void Attack(List<MonsterBehaviour> monsterList,int damage);
 
 }
 /// <summary>
@@ -28,71 +19,12 @@ public interface ITower
 /// </summary>
 [Serializable] class ProjectileTower : ITower
 {
-    float timmer;
-    int shard;
     [Title("Configs")]
     [SerializeField] Transform shootPoint;
     [SerializeField] List<Animator> animatorList;
     [SerializeField] int projectilesPerAttack;
     [SerializeField] GameObject projectilePrefab;
-
-    [Serializable] class LevelConfig
-    {
-        [SerializeField] int level;
-        public int Level
-        {
-            get {
-                return level;
-            }
-        }
-        [SerializeField] int requiredShard;
-        public int RequiredShard
-        {
-            get {
-                return requiredShard;
-            }
-        }
-        [SerializeField] int damage;
-        public int Damage
-        {
-            get {
-                return damage;
-            }
-        }
-        [SerializeField] int attackSpeed;
-        public int AttackSpeed
-        {
-            get {
-                return attackSpeed;
-            }
-        }
-
-    }
-    [SerializeField] List<LevelConfig> levelConfigList;
-    LevelConfig GetLevelConfig()
-    {
-        int tempShard = shard;
-        foreach (LevelConfig levelConfig in levelConfigList)
-            if(tempShard >= levelConfig.RequiredShard)
-                tempShard -= levelConfig.RequiredShard;
-            else return levelConfig;
-        
-        return levelConfigList[^1];
-    }
-
-    public void Initialize()
-    {
-        timmer = 0f;
-        shard = 0;
-    }
-    public void OnUpdate()
-    {
-    }
-    public bool TryLevelUp(ref int shardPlayerHas, out int requiredShard)
-    {
-        throw new NotImplementedException();
-    }
-    public void Attack(List<MonsterBehaviour> monsterList)
+    public void Attack(List<MonsterBehaviour> monsterList, int damage)
     {
         if (shootPoint == null)
         {
@@ -123,7 +55,7 @@ public interface ITower
             else
             {
                 projectile.transform.position = shootPoint.position;
-                projectile.Initialize(monster.transform);
+                projectile.Initialize(monster.transform, damage);;
             }
         }
         #region Play the animation.
@@ -148,18 +80,13 @@ public interface ITower
 /// </summary>
 [Serializable] class AoeTower : ITower
 {
-    [SerializeField] int damage;
     [SerializeField] List<Animator> animatorList;
     public void Initialize() { }
     public void OnUpdate()
     {
         throw new NotImplementedException();
     }
-    public bool TryLevelUp(ref int shardPlayerHas, out int requiredShard)
-    {
-        throw new NotImplementedException();
-    }
-    public void Attack(List<MonsterBehaviour> monsterList)
+    public void Attack(List<MonsterBehaviour> monsterList, int damage)
     {
         foreach (MonsterBehaviour monster in monsterList)
             monster.TakeDamage(damage, false);

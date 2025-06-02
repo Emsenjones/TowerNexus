@@ -7,7 +7,6 @@ public class ProjectileBehaviour : MonoBehaviour
 {
     [Title("Config")]
     [SerializeField] float speed;
-    [SerializeField] int damage;
     [InfoBox("Selecting the way to launch the projectile.")]
     [SerializeReference] IProjectile iProjectile;
     Collider2D trigger;
@@ -22,7 +21,12 @@ public class ProjectileBehaviour : MonoBehaviour
         }
         trigger.enabled = false;
     }
-    public void Initialize(Transform targetTransform)
+    int damage;
+    /// <summary>
+    /// Call this method to start this script.
+    /// </summary>
+    /// <param name="targetTransform"></param>
+    public void Initialize(Transform targetTransform, int damage)   
     {
         if (trigger == null)
         {
@@ -32,6 +36,7 @@ public class ProjectileBehaviour : MonoBehaviour
         trigger.enabled = true;
         trigger.isTrigger = true;
         
+        this.damage = damage;
         targetPosition = targetTransform.position;
         
         Rigidbody2D rigidbody2d = GetComponent<Rigidbody2D>();

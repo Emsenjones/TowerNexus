@@ -9,8 +9,9 @@ public interface IProjectile
     /// </summary>
     /// <param name="projectile">The projectile.</param>
     /// <param name="speed">The speed of the projectile. </param>
+    /// <param name="damage"></param>
     /// <param name="targetTransform">The target transform.</param>
-    public void Launch(GameObject projectile, float speed, Transform targetTransform);
+    public void Launch(GameObject projectile, float speed,Transform targetTransform);
     //如果是抛射的话，通过rigidbody2d找到collider2d然后把collider2.enable = false。
 }
 /// <summary>
@@ -18,7 +19,7 @@ public interface IProjectile
 /// </summary>
 public class StraightProjectile : IProjectile
 {
-    public void Launch(GameObject projectile, float speed, Transform targetTransform)
+    public void Launch(GameObject projectile, float speed,Transform targetTransform)
     {
         #region To reset the Collider2D.
 

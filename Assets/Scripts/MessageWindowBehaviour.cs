@@ -6,14 +6,13 @@ using UnityEngine.UI;
 public class MessageWindowBehaviour : WindowBehaviour
 {
     [SerializeField] TextMeshProUGUI contentText;
-    [SerializeField] Button closeButton;
     public class Data
     {
         public readonly string ContentString;
         event Action OnClose;
-        public Data(string contentString, Action onClose)
+        public Data(string contentString, Action onClose = null)
         {
-            ContentString = contentString;
+            this.ContentString = contentString;
             OnClose += onClose;
         }
         public void InvokeOnClose() => OnClose?.Invoke();
@@ -23,6 +22,7 @@ public class MessageWindowBehaviour : WindowBehaviour
         if (data is Data messageWindowData)
         {
             contentText.text = messageWindowData.ContentString;
+            closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(() =>
             {
                 messageWindowData.InvokeOnClose();

@@ -76,7 +76,7 @@ public class UiController : MonoBehaviour
             Debug.LogError($"{gameObject.name} is missing the summonTowerButton.");
             return;
         }
-        summonTowerButtonText.text = string.Format(GameTexts.SummonOneTower, towerPrice);
+        summonTowerButtonText.text = string.Format(GameTexts.SummonOneTower, towerPrice.ToString());
 
         MonsterBehaviour.OnInitialize += GenerateOneHealthBar;
         RoleBehaviour.OnGetExp += OnRoleGetExp;
@@ -131,18 +131,25 @@ public class UiController : MonoBehaviour
         if (windowContainer == null)
         {
             Debug.LogError($"{gameObject.name} is missing the windowContainer.");
+            return ;
+        }
+        T existingWindow = windowContainer.GetComponentsInChildren<T>(true).FirstOrDefault();
+        if (existingWindow != null)
+        {
+            existingWindow.Initialize(data);
             return;
         }
         GameObject windowPrefab = windowPrefabList.FirstOrDefault(go => go.GetComponent<T>() != null);
         if (windowPrefab == null)
         {
-            Debug.LogError($"{gameObject.name} is missing {typeof(T)} type of  windowPrefab in the windowPrefabList.");
+            Debug.LogError($"{gameObject.name} is missing {typeof(T)} type of windowPrefab in the windowPrefabList.");
             return;
         }
         T window = DungeonManager.Instance.RecyclePoolController
             .GenerateOneObject(windowPrefab,windowContainer).GetComponent<T>();
         window.Initialize(data);
     }
+   
 
     void OnDisable()
     {

@@ -36,7 +36,7 @@ public class TowerSlotBehaviour : MonoBehaviour,IBeginDragHandler,IEndDragHandle
             Debug.LogWarning($"{gameObject.name} is missing nameText!");
             return;
         }
-        nameText.text = tower.TheName;
+        nameText.text = tower.NameString;
         
         //Set others ui info via tower.
     }
