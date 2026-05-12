@@ -99,7 +99,9 @@ When generation happens:
 
 - Create a full rectangular grid
 - Width controls X axis count
-- Height controls Y axis count
+- Height controls Z axis count
+- Map grid is generated on the XZ plane
+- Unity world Y axis is reserved for height
 - All generated nodes should default to:
     - `isWalkable = true`
 

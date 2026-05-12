@@ -38,7 +38,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
                 Vector2Int gridPosition = new Vector2Int(x, y);
                 GridNodeBehaviour node = Instantiate(nodePrefab, parent);
 
-                node.transform.position = new Vector3(x * nodeSize, y * nodeSize, 0f);
+                node.transform.position = new Vector3(x * nodeSize, 0f, y * nodeSize);
                 node.name = $"Node_{x}_{y}";
                 node.Initialize(gridPosition, true);
 

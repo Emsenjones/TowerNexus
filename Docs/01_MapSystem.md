@@ -89,11 +89,28 @@ Gameplay logic should never directly depend on visual presentation.
 
 ---
 
-## 2.4 Grid Scale Convention
+## 2.4 Grid Scale and Axis Convention
 
 Current project convention:
 
 - 1 Grid Node = 1 Unity World Unit
+- The map grid is placed on the XZ plane
+- X axis represents grid width / horizontal direction
+- Z axis represents grid height / vertical battlefield direction
+- Y axis represents world height / elevation
+
+This convention is used because Tower Nexus uses 3D tower models and 3D scene objects.
+
+Map tiles, monsters, towers, obstacles, and placement logic should use XZ coordinates for ground positioning.
+
+Y should only be used for:
+
+- Object height
+- Model vertical offset
+- Visual layering
+- Projectile height
+- VFX positioning
+- Future terrain elevation
 
 This convention is used to simplify:
 
@@ -104,8 +121,6 @@ This convention is used to simplify:
 - Range calculation
 - Mouse interaction
 - Visual alignment
-
-All map-related gameplay systems should follow this scale convention unless explicitly overridden in future systems.
 
 ---
 
@@ -118,7 +133,22 @@ Each node contains the following information:
 | Field | Type | Description |
 |---|---|---|
 | Grid Position | Vector2Int | Position index inside the grid |
-| World Position | Vector3 | World position used for gameplay |
+| World Position | Vector3 | World position on the XZ ground plane, using Y as height |
+## 3.1 Grid Position to World Position Mapping
+
+Grid coordinates should be converted to world coordinates using the following convention:
+
+```csharp
+worldPosition = new Vector3(gridX * nodeSize, 0f, gridY * nodeSize);
+```
+
+This means:
+
+- Grid X maps to Unity world X
+- Grid Y maps to Unity world Z
+- Unity world Y remains height
+
+The Map System should avoid using Unity world Y as a ground-plane coordinate.
 | Is Walkable | bool | Whether monsters can move through the node |
 | Visual Object Reference | GameObject / SpriteRenderer | Visual tile object reference |
 
@@ -278,6 +308,7 @@ Current movement rules:
 - Horizontal movement allowed
 - Vertical movement allowed
 - Diagonal movement disabled
+- Movement is calculated on the XZ ground plane
 
 The pathfinding system will search for valid paths from:
 
