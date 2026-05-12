@@ -89,6 +89,26 @@ Gameplay logic should never directly depend on visual presentation.
 
 ---
 
+## 2.4 Grid Scale Convention
+
+Current project convention:
+
+- 1 Grid Node = 1 Unity World Unit
+
+This convention is used to simplify:
+
+- Grid positioning
+- Runtime coordinate calculation
+- Pathfinding
+- Tower placement
+- Range calculation
+- Mouse interaction
+- Visual alignment
+
+All map-related gameplay systems should follow this scale convention unless explicitly overridden in future systems.
+
+---
+
 # 3. Node Structure
 
 Each map tile is represented by a Grid Node.
