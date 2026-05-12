@@ -55,7 +55,7 @@ The gameplay loop of Tower Nexus is structured as follows:
     - The run fails
 
 10. If all monster waves are eliminated:
-- The run succeeds
+    - The run succeeds
 
 ---
 
@@ -174,5 +174,23 @@ Players are expected to constantly evaluate:
 - How to adapt against different enemy types
 
 The ultimate goal is to create a tower defense experience where every run feels strategically unique.
+
+---
+
+# 5. Core Systems Overview
+
+## 5.1 Map System
+
+The Map System provides the grid-based battlefield foundation of Tower Nexus.
+
+It manages:
+
+- Grid nodes
+- Walkable and unwalkable states
+- Runtime battlefield modification
+- Map visual refresh
+- Prefab-based map creation workflow
+
+The Map System does not directly handle tower placement rules, monster AI, combat logic, or draft logic. Other systems interact with the Map System through node query and walkability update APIs.
 
 ---
