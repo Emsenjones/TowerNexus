@@ -92,6 +92,8 @@ At the beginning of the game, the player receives an initial 3-choice tower draf
 
 Each time the player levels up, another draft selection becomes available.
 
+When the player selects a tower from the Tower Draft window, the selected tower is added to the Tower Pending Deployment Area instead of being deployed immediately. The player may then drag a pending tower from this area onto the map for placement.
+
 Draft options are currently divided into two major categories:
 
 ### Tower Draft
@@ -99,7 +101,8 @@ Draft options are currently divided into two major categories:
 Allows players to:
 
 - Obtain a new tower from a configured Tower Pool
-- Deploy the selected tower onto the battlefield
+- Add the selected tower into the Tower Pending Deployment Area
+- Deploy pending towers onto the battlefield by dragging them from the pending area to the map
 - Reposition deployed towers through a recycle or redeployment flow
 - Merge the tower with an existing identical tower for upgrading
 
@@ -205,13 +208,15 @@ The Tower Deployment System manages the process of selecting, previewing, valida
 
 It is responsible for:
 
+- Battle HUD display for level and EXP progress
 - Tower draft selection flow
 - Tower pool based draft generation
+- Tower pending deployment area
 - Tower prefab footprint definition
-- Tower drag and snap placement
+- Tower drag and snap placement from the pending deployment area
 - Placement validity preview
 - Grid node walkability occupation and release
-- Path-blocking validation before final deployment
+- Future path-blocking validation before final deployment
 - Future tower recycle and redeployment flow
 
 The first implementation focuses on the core deployment loop:
@@ -220,11 +225,12 @@ The first implementation focuses on the core deployment loop:
 2. The player levels up when enough experience is accumulated.
 3. A 3-choice tower draft UI is opened.
 4. The player selects one tower from the draft options.
-5. The selected tower enters drag placement mode.
-6. The tower preview snaps to grid nodes based on its center anchor.
-7. The system validates all occupied anchors and monster path availability.
-8. If placement is valid, the tower is deployed and occupied grid nodes become unwalkable.
-9. If placement is invalid, the tower returns to the draft selection flow.
+5. The selected tower is added to the Tower Pending Deployment Area.
+6. The player drags a pending tower from the pending deployment area onto the map.
+7. The tower preview snaps to grid nodes based on its center anchor.
+8. The system validates all occupied anchors.
+9. If placement is valid, the tower is deployed and occupied grid nodes become unwalkable.
+10. If placement is invalid, the tower returns to the pending deployment area.
 
 Tower recycling and redeployment are planned as future extensions. When implemented, removed towers should release their occupied grid nodes and enter a UI-based recycle area, allowing players to drag them back onto the battlefield later.
 
