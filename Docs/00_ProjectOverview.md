@@ -38,6 +38,7 @@ The gameplay loop of Tower Nexus is structured as follows:
 
 4. Players deploy towers onto the grid map to:
     - Attack and eliminate monsters
+    - Occupy grid nodes
     - Block and alter monster movement paths
 
 5. Eliminating monsters grants experience points to the player.
@@ -46,7 +47,7 @@ The gameplay loop of Tower Nexus is structured as follows:
     - The player levels up
     - A new Draft selection is triggered
 
-7. Through repeated drafting, deployment, upgrading, and path manipulation, the player gradually strengthens their build and survives increasingly difficult monster waves.
+7. Through repeated drafting, deployment, repositioning, upgrading, and path manipulation, the player gradually strengthens their build and survives increasingly difficult monster waves.
 
 8. If monsters reach the target point:
     - Player HP is reduced
@@ -79,6 +80,8 @@ This creates a gameplay experience where players are not only building offensive
 
 To prevent invalid gameplay states, the system prevents players from deploying towers in positions that would completely block all valid paths between the monster spawn point and target point.
 
+Tower placement is validated based on tower footprint anchors. Each tower prefab defines a center anchor and multiple occupied anchors. During placement, the center anchor snaps to a target grid node, while all occupied anchors must match valid walkable grid nodes. If any occupied anchor cannot find a corresponding grid node, overlaps an unwalkable node, or causes the monster path to become fully blocked, the tower cannot be deployed.
+
 ---
 
 ## 3.2 Draft-Based Build System
@@ -95,8 +98,9 @@ Draft options are currently divided into two major categories:
 
 Allows players to:
 
-- Obtain a new tower
-- Deploy the tower onto the battlefield
+- Obtain a new tower from a configured Tower Pool
+- Deploy the selected tower onto the battlefield
+- Reposition deployed towers through a recycle or redeployment flow
 - Merge the tower with an existing identical tower for upgrading
 
 ### Upgrade Draft
@@ -192,5 +196,36 @@ It manages:
 - Prefab-based map creation workflow
 
 The Map System does not directly handle tower placement rules, monster AI, combat logic, or draft logic. Other systems interact with the Map System through node query and walkability update APIs.
+
+---
+
+## 5.2 Tower Deployment System
+
+The Tower Deployment System manages the process of selecting, previewing, validating, deploying, and later repositioning towers on the grid map.
+
+It is responsible for:
+
+- Tower draft selection flow
+- Tower pool based draft generation
+- Tower prefab footprint definition
+- Tower drag and snap placement
+- Placement validity preview
+- Grid node walkability occupation and release
+- Path-blocking validation before final deployment
+- Future tower recycle and redeployment flow
+
+The first implementation focuses on the core deployment loop:
+
+1. The player gains experience.
+2. The player levels up when enough experience is accumulated.
+3. A 3-choice tower draft UI is opened.
+4. The player selects one tower from the draft options.
+5. The selected tower enters drag placement mode.
+6. The tower preview snaps to grid nodes based on its center anchor.
+7. The system validates all occupied anchors and monster path availability.
+8. If placement is valid, the tower is deployed and occupied grid nodes become unwalkable.
+9. If placement is invalid, the tower returns to the draft selection flow.
+
+Tower recycling and redeployment are planned as future extensions. When implemented, removed towers should release their occupied grid nodes and enter a UI-based recycle area, allowing players to drag them back onto the battlefield later.
 
 ---
