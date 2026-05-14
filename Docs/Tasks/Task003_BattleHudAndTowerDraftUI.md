@@ -326,22 +326,6 @@ public void Initialize(TowerDefinition towerDefinition)
 ```
 
 Equivalent implementations are acceptable if they better match the existing project architecture.
-# 14. Acceptance Criteria
-
-This task is complete when:
-
-- Battle HUD displays current level
-- Battle HUD displays EXP progress
-- Battle HUD displays pending tower entries
-- Tower Draft Window can open
-- Tower Draft Window displays 3 tower choices
-- Tower Draft Item displays icon, name, and description
-- Selecting a tower closes the draft window
-- Selected tower enters pending deployment area
-- Unity Console has no compile errors
-- No tower placement logic is implemented
-
----
 
 # 14. Implementation Planning Requirement
 
@@ -433,11 +417,7 @@ This task only prepares the UI flow.
 
 ---
 
-# 15. Acceptance Criteria
-
----
-
-# 16. Testing Checklist
+# 14. Testing Checklist
 
 Use temporary runtime buttons or test methods to validate:
 
