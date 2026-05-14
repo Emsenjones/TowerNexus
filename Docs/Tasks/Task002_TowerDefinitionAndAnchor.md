@@ -75,16 +75,36 @@ This task excludes:
 
 ---
 
-# 5. Required Scripts
+# 5. Suggested Runtime Responsibilities
 
-Create the following scripts:
+This task should provide the following runtime responsibilities:
+
+- Tower definition data configuration
+- Tower prefab reference management
+- Tower icon reference management
+- Tower anchor structure exposure
+- Occupied anchor query support
+- Runtime validation support for tower definitions and anchor data
+
+Codex should first inspect the existing project structure before implementation.
+
+The implementation may:
+
+- extend existing scripts
+- reuse existing tower/config systems
+- create new scripts if necessary
+
+Avoid creating duplicate systems if equivalent runtime responsibilities already exist.
+
+Recommended script names:
 
 ```text
-Assets/Scripts/TowerDeployment/TowerDefinition/TowerDefinition.cs
-Assets/Scripts/TowerDeployment/TowerDefinition/TowerAnchorSet.cs
+TowerDefinition
+TowerAnchorSet
 ```
 
-If the project already has a different folder convention, follow the existing project structure while keeping the same logical separation.
+These names are recommendations only.
+If a different architecture fits the existing project better, explain the reasoning before implementation.
 
 ---
 
@@ -117,9 +137,17 @@ Recommended asset menu path:
 
 ---
 
-## 6.3 Required Properties
+## 6.3 Required Runtime Capability
 
-Expose read-only public properties:
+The implementation must provide a way to:
+
+- access tower id data
+- access display name and description data
+- access tower icon references
+- access tower prefab references
+- expose runtime-safe read access to tower definition data
+
+Recommended API:
 
 ```csharp
 public string TowerId { get; }
@@ -128,6 +156,8 @@ public string Description { get; }
 public Sprite Icon { get; }
 public GameObject TowerPrefab { get; }
 ```
+
+Equivalent implementations are acceptable if they better match the existing project architecture.
 
 ---
 
@@ -187,14 +217,22 @@ TowerPrefab
 
 ---
 
-## 7.3 Required Properties
+## 7.3 Required Runtime Capability
 
-Expose read-only public properties:
+The implementation must provide a way to:
+
+- access the center anchor transform
+- access occupied anchor collections
+- expose anchor data safely to future placement systems
+
+Recommended API:
 
 ```csharp
 public Transform CenterAnchor { get; }
 public IReadOnlyList<Transform> OccupiedAnchors { get; }
 ```
+
+Equivalent implementations are acceptable if they better match the existing project architecture.
 
 ---
 
@@ -214,7 +252,9 @@ Tower anchors must follow these rules:
 
 # 9. Anchor Validation
 
-Implement the following method in `TowerAnchorSet`:
+The implementation should provide runtime validation support for tower anchor data.
+
+Recommended API:
 
 ```csharp
 public bool IsValid()
@@ -232,7 +272,7 @@ Expected behavior:
 
 ## 9.1 Optional Anchor Offset Helper
 
-Implement:
+Recommended helper API:
 
 ```csharp
 public IReadOnlyList<Vector3> GetOccupiedAnchorLocalPositions()
@@ -245,6 +285,27 @@ Expected behavior:
 - Do not modify anchor transforms
 
 This method will be used by future placement validation tasks.
+# 10. Runtime Usage Notes
+# 11. Implementation Planning Requirement
+
+Before implementation, Codex should:
+
+1. Inspect the current project structure
+2. Identify existing tower/config/runtime systems
+3. Decide whether to:
+   - extend existing scripts
+   - create new scripts
+   - refactor small existing structures
+4. Explain the implementation plan before writing code
+
+The implementation plan should include:
+
+- scripts expected to change
+- new scripts expected to be created
+- responsibilities of each modified script
+- reasoning for any newly created runtime systems
+
+Do not start implementation before presenting the plan.
 
 ---
 
@@ -264,7 +325,7 @@ Do not implement any of the above placement logic in this task.
 
 ---
 
-# 11. Acceptance Criteria
+# 12. Acceptance Criteria
 
 This task is complete when:
 
@@ -280,7 +341,7 @@ This task is complete when:
 
 ---
 
-# 12. Testing Checklist
+# 13. Testing Checklist
 
 Create a temporary tower prefab and test the following cases:
 
@@ -319,7 +380,7 @@ Create a temporary tower prefab and test the following cases:
 
 ---
 
-# 13. Out of Scope
+# 14. Out of Scope
 
 Do not implement:
 
@@ -348,3 +409,4 @@ Do not implement:
 - Defined tower center anchor and occupied anchor rules.
 - Defined validation requirements.
 - Defined first-version testing checklist.
+- Refactored task structure to support architecture-driven AI workflow.

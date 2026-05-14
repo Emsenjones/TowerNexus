@@ -73,16 +73,35 @@ This task excludes:
 
 ---
 
-# 5. Required Scripts
+# 5. Suggested Runtime Responsibilities
 
-Create the following scripts:
+This task should provide the following runtime responsibilities:
+
+- Player level configuration
+- Runtime player EXP tracking
+- Runtime level-up handling
+- Level-up event dispatching
+- Debug EXP testing support
+
+Codex should first inspect the existing project structure before implementation.
+
+The implementation may:
+
+- extend existing scripts
+- reuse existing progression systems
+- create new scripts if necessary
+
+Avoid creating duplicate systems if equivalent runtime responsibilities already exist.
+
+Recommended script names:
 
 ```text
-Assets/Scripts/TowerDeployment/PlayerLevel/PlayerLevelConfig.cs
-Assets/Scripts/TowerDeployment/PlayerLevel/PlayerLevelSystem.cs
+PlayerLevelConfig
+PlayerLevelSystem
 ```
 
-If the project already has a different folder convention, follow the existing project structure while keeping the same logical separation.
+These names are recommendations only.
+If a different architecture fits the existing project better, explain the reasoning before implementation.
 
 ---
 
@@ -119,23 +138,21 @@ Example:
 
 ---
 
-## 6.3 Required Methods
+## 6.3 Required Runtime Capability
 
-Implement:
+The implementation must provide a way to:
+
+- query required EXP for a given level
+- prevent invalid level access
+- prevent leveling beyond configured data
+
+Recommended API:
 
 ```csharp
 public int GetRequiredExpForLevel(int currentLevel)
 ```
 
-Expected behavior:
-
-- `currentLevel` starts from 1
-- Level 1 uses index 0
-- Level 2 uses index 1
-- If currentLevel is invalid, return `int.MaxValue`
-- If currentLevel exceeds configured data, return `int.MaxValue`
-
-This prevents level-up beyond configured level data.
+Equivalent implementations are acceptable if they better match the existing project architecture.
 
 ---
 
@@ -237,25 +254,43 @@ Level 3 reached, remaining EXP depends on Level 2 requirement
 
 # 9. Level-Up Logic
 
-Implement an internal method:
+Recommended internal handling:
+
+- repeatedly checks whether current EXP reaches level-up requirement
+- supports multiple level-ups
+- dispatches level-up events in correct order
+
+A dedicated internal method such as:
 
 ```csharp
 private void TryLevelUp()
 ```
 
-Expected behavior:
+is recommended but not mandatory.
+# 13. Acceptance Criteria
 
-- Repeatedly checks whether currentExp is enough for next level
-- Handles multiple level-ups in one call
-- Triggers events in correct order
+# 13. Implementation Planning Requirement
 
-Recommended event order when level-up happens:
+Before implementation, Codex should:
 
-1. `OnLevelUp`
-2. `OnLevelChanged`
-3. `OnExpChanged`
+1. Inspect the current project structure
+2. Identify existing progression or player-related systems
+3. Decide whether to:
+   - extend existing scripts
+   - create new scripts
+   - refactor small existing structures
+4. Explain the implementation plan before writing code
 
-This allows future systems such as Tower Draft UI to listen to `OnLevelUp`.
+The implementation plan should include:
+
+- scripts expected to change
+- new scripts expected to be created
+- responsibilities of each modified script
+- reasoning for any newly created runtime systems
+
+Do not start implementation before presenting the plan.
+
+# 14. Acceptance Criteria
 
 ---
 
@@ -327,7 +362,7 @@ This task is complete when:
 
 ---
 
-# 14. Testing Checklist
+# 15. Testing Checklist
 
 Use a temporary scene object with `PlayerLevelSystem`.
 
@@ -362,7 +397,7 @@ Test the following cases:
 
 ---
 
-# 15. Out of Scope
+# 16. Out of Scope
 
 Do not implement:
 
@@ -389,3 +424,4 @@ Do not implement:
 - Defined EXP add and level-up logic.
 - Defined level-up event requirements.
 - Defined first-version testing checklist.
+- Refactored task structure to support architecture-driven AI workflow.

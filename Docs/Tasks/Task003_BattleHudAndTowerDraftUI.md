@@ -86,18 +86,40 @@ This task excludes:
 
 ---
 
-# 5. Required Scripts
+# 5. Suggested Runtime Responsibilities
 
-Create the following scripts:
+This task should provide the following runtime responsibilities:
+
+- Battle HUD runtime UI management
+- Player level and EXP display handling
+- Tower Pending Deployment Area UI management
+- Tower Draft Window UI management
+- Draft item generation and cleanup
+- Draft selection flow handling
+- Pending tower entry creation and removal
+- Runtime-safe UI validation handling
+
+Codex should first inspect the existing project structure before implementation.
+
+The implementation may:
+
+- extend existing UI scripts
+- reuse existing HUD/runtime systems
+- create new scripts if necessary
+
+Avoid creating duplicate UI managers or window systems if equivalent responsibilities already exist.
+
+Recommended script names:
 
 ```text
-Assets/Scripts/TowerDeploy/UI/BattleHUDUI.cs
-Assets/Scripts/TowerDeploy/UI/TowerDraftUI.cs
-Assets/Scripts/TowerDeploy/UI/TowerDraftItemUI.cs
-Assets/Scripts/TowerDeploy/UI/PendingTowerItemUI.cs
+BattleHUDUI
+TowerDraftUI
+TowerDraftItemUI
+PendingTowerItemUI
 ```
 
-If the project already has a different folder convention, follow the existing project structure while keeping the same logical separation.
+These names are recommendations only.
+If a different architecture fits the existing project better, explain the reasoning before implementation.
 
 ---
 
@@ -130,9 +152,17 @@ The first version should include:
 
 ---
 
-## 6.3 Required Methods
+## 6.3 Required Runtime Capability
 
-Implement:
+The implementation must provide a way to:
+
+- update displayed player level
+- update EXP progress display
+- add pending tower UI entries
+- remove pending tower UI entries
+- expose runtime-safe HUD update behavior
+
+Recommended API:
 
 ```csharp
 public void UpdateLevel(int level)
@@ -141,12 +171,7 @@ public void AddPendingTower(TowerDefinition towerDefinition)
 public void RemovePendingTower(PendingTowerItemUI item)
 ```
 
-Expected behavior:
-
-- Level UI updates correctly
-- EXP progress updates correctly
-- Pending tower entries appear in the pending deployment area
-- Pending tower entries can later be removed by future systems
+Equivalent implementations are acceptable if they better match the existing project architecture.
 
 ---
 
@@ -190,21 +215,23 @@ TowerDraftWindow
 
 ---
 
-## 7.4 Required Methods
+## 7.4 Required Runtime Capability
 
-Implement:
+The implementation must provide a way to:
+
+- open the draft UI with runtime tower data
+- clear previous draft entries before regeneration
+- close and hide the draft UI safely
+- block gameplay interaction while the draft UI is open
+
+Recommended API:
 
 ```csharp
 public void OpenDraft(List<TowerDefinition> towerDefinitions)
 public void CloseDraft()
 ```
 
-Expected behavior:
-
-- OpenDraft generates 3 draft items
-- Existing draft items are cleared before generating new ones
-- CloseDraft hides the draft window
-- Draft window blocks gameplay interaction while visible
+Equivalent implementations are acceptable if they better match the existing project architecture.
 
 ---
 
@@ -235,9 +262,15 @@ Each item displays:
 
 ---
 
-## 8.3 Required Methods
+## 8.3 Required Runtime Capability
 
-Implement:
+The implementation must provide a way to:
+
+- initialize draft item UI using tower data
+- bind selection callback behavior
+- return selected tower data to parent systems
+
+Recommended API:
 
 ```csharp
 public void Initialize(
@@ -246,11 +279,7 @@ public void Initialize(
 )
 ```
 
-Expected behavior:
-
-- UI updates according to tower data
-- Button click triggers selection callback
-- Selected tower data is returned to parent UI
+Equivalent implementations are acceptable if they better match the existing project architecture.
 
 ---
 
@@ -282,19 +311,58 @@ Future versions will support:
 
 ---
 
-## 9.3 Required Methods
+## 9.3 Required Runtime Capability
 
-Implement:
+The implementation must provide a way to:
+
+- initialize pending tower UI entries
+- display tower icon and name safely
+- retain runtime tower data for future systems
+
+Recommended API:
 
 ```csharp
 public void Initialize(TowerDefinition towerDefinition)
 ```
 
-Expected behavior:
+Equivalent implementations are acceptable if they better match the existing project architecture.
+# 14. Acceptance Criteria
 
-- Displays tower icon
-- Displays tower name
-- Stores tower definition reference for future placement systems
+This task is complete when:
+
+- Battle HUD displays current level
+- Battle HUD displays EXP progress
+- Battle HUD displays pending tower entries
+- Tower Draft Window can open
+- Tower Draft Window displays 3 tower choices
+- Tower Draft Item displays icon, name, and description
+- Selecting a tower closes the draft window
+- Selected tower enters pending deployment area
+- Unity Console has no compile errors
+- No tower placement logic is implemented
+
+---
+
+# 14. Implementation Planning Requirement
+
+Before implementation, Codex should:
+
+1. Inspect the current project structure
+2. Identify existing UI, HUD, runtime, or draft-related systems
+3. Decide whether to:
+   - extend existing scripts
+   - create new scripts
+   - refactor small existing structures
+4. Explain the implementation plan before writing code
+
+The implementation plan should include:
+
+- scripts expected to change
+- new scripts expected to be created
+- responsibilities of each modified script
+- reasoning for any newly created runtime systems
+
+Do not start implementation before presenting the plan.
 
 ---
 
@@ -365,24 +433,11 @@ This task only prepares the UI flow.
 
 ---
 
-# 14. Acceptance Criteria
-
-This task is complete when:
-
-- Battle HUD displays current level
-- Battle HUD displays EXP progress
-- Battle HUD displays pending tower entries
-- Tower Draft Window can open
-- Tower Draft Window displays 3 tower choices
-- Tower Draft Item displays icon, name, and description
-- Selecting a tower closes the draft window
-- Selected tower enters pending deployment area
-- Unity Console has no compile errors
-- No tower placement logic is implemented
+# 15. Acceptance Criteria
 
 ---
 
-# 15. Testing Checklist
+# 16. Testing Checklist
 
 Use temporary runtime buttons or test methods to validate:
 
@@ -422,7 +477,7 @@ Use temporary runtime buttons or test methods to validate:
 
 ---
 
-# 16. Out of Scope
+# 17. Out of Scope
 
 Do not implement:
 
@@ -452,3 +507,4 @@ Do not implement:
 - Defined Tower Pending Deployment Area workflow.
 - Defined first-version draft selection flow.
 - Reserved drag placement for future tasks.
+- Refactored task structure to support architecture-driven AI workflow.
