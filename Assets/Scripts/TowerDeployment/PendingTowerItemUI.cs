@@ -1,19 +1,27 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class PendingTowerItemUI : MonoBehaviour
+public class PendingTowerItemUI : MonoBehaviour, IPointerDownHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text nameText;
 
     private TowerDefinition towerDefinition;
+    private TowerPlacementController placementController;
 
     public TowerDefinition TowerDefinition => towerDefinition;
 
     public void Initialize(TowerDefinition towerDefinition)
     {
+        Initialize(towerDefinition, placementController);
+    }
+
+    public void Initialize(TowerDefinition towerDefinition, TowerPlacementController placementController)
+    {
         this.towerDefinition = towerDefinition;
+        this.placementController = placementController;
 
         if (towerDefinition == null)
         {
@@ -23,6 +31,33 @@ public class PendingTowerItemUI : MonoBehaviour
 
         UpdateIcon(towerDefinition.Icon);
         UpdateName(towerDefinition);
+    }
+
+    public void SetPlacementController(TowerPlacementController placementController)
+    {
+        this.placementController = placementController;
+    }
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        if (eventData != null && eventData.button != PointerEventData.InputButton.Left)
+        {
+            return;
+        }
+
+        if (placementController == null)
+        {
+            Debug.LogWarning("Pending tower item UI cannot begin placement: placement controller is not assigned.", this);
+            return;
+        }
+
+        if (towerDefinition == null)
+        {
+            Debug.LogWarning("Pending tower item UI cannot begin placement: tower definition is null.", this);
+            return;
+        }
+
+        placementController.BeginPlacement(towerDefinition);
     }
 
     private void UpdateIcon(Sprite icon)

@@ -326,6 +326,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6351706705078842111}
+  - component: {fileID: -2246935729598943287}
   m_Layer: 0
   m_Name: prefab_TrippleTower
   m_TagString: Untagged
@@ -350,6 +351,23 @@ Transform:
   - {fileID: 760672203543634288}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-2246935729598943287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6027618472494872927}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbb8ae80a17748e5a4d9c3c28c7b89f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerAnchorSet
+  centerAnchor: {fileID: 8871015237948340929}
+  occupiedAnchors:
+  - {fileID: 8871015237948340929}
+  - {fileID: 7576997680809522226}
+  - {fileID: 7209108367652429358}
 --- !u!1 &6773845977550633390
 GameObject:
   m_ObjectHideFlags: 0

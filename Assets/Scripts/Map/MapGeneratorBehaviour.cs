@@ -86,6 +86,25 @@ public class MapGeneratorBehaviour : MonoBehaviour
         return GetNode(new Vector2Int(x, y));
     }
 
+    public bool TryGetNodeByWorldPosition(Vector3 worldPosition, out GridNodeBehaviour node)
+    {
+        node = null;
+
+        if (nodeSize <= 0f)
+        {
+            Debug.LogWarning("Map query failed: node size must be greater than zero.", this);
+            return false;
+        }
+
+        Vector2Int gridPosition = new Vector2Int(
+            Mathf.RoundToInt(worldPosition.x / nodeSize),
+            Mathf.RoundToInt(worldPosition.z / nodeSize)
+        );
+
+        node = GetNode(gridPosition);
+        return node != null;
+    }
+
     public bool HasNode(Vector2Int gridPosition)
     {
         return nodeDictionary.ContainsKey(gridPosition);

@@ -6,6 +6,9 @@
 
 This task implements the drag placement and grid snapping workflow for the Tower Deploy System.
 
+This task starts after a tower has already been added to the Tower Pending Deployment Area.
+Tower draft generation and draft selection are handled by `TowerDraftSystem` and are not part of this task.
+
 The system is responsible for:
 
 - Selecting a pending tower from the Tower Pending Deployment Area
@@ -31,6 +34,7 @@ Docs/02_TowerDeploySystem.md
 
 Relevant sections:
 
+- `# 5. Tower Draft System`
 - `# 7. Tower Pending Deployment Area`
 - `# 8. Tower Placement Workflow`
 - `# 9. Placement Validation`
@@ -59,6 +63,7 @@ After this task is completed:
 This task includes:
 
 - Pending tower drag interaction
+- Starting placement preview from an existing pending tower item
 - Runtime tower preview creation
 - Placement preview movement
 - Grid snapping
@@ -77,6 +82,10 @@ This task excludes:
 - Tower combat logic
 - Tower recycle system
 - Save/load system
+- Tower draft generation
+- Tower draft selection logic
+- Player level-up logic
+- Changes to TowerDraftSystem unless strictly required for integration
 
 ---
 
@@ -85,6 +94,7 @@ This task excludes:
 This task should provide the following runtime responsibilities:
 
 - Pending tower placement start flow
+- PendingTowerItemUI to TowerPlacementController integration
 - Runtime placement preview creation and cleanup
 - Placement input tracking
 - Screen-to-world position conversion
@@ -103,6 +113,14 @@ The implementation may:
 
 Avoid creating duplicate placement controllers, input handlers, or preview systems if equivalent responsibilities already exist.
 
+Important boundary after Task006:
+
+- `TowerDraftSystem` creates draft choices and sends selected towers to the pending deployment area.
+- `BattleHUDUI` displays pending tower entries.
+- `PendingTowerItemUI` should initiate placement preview when the player interacts with a pending tower entry.
+- `TowerPlacementController` should own drag state, preview creation, snapping, and preview cleanup.
+- `TowerDraftSystem` should not directly control placement preview behavior.
+
 Recommended script names:
 
 ```text
@@ -119,13 +137,15 @@ If a different architecture fits the existing project better, explain the reason
 
 The first version placement workflow is:
 
-1. Player selects or drags a tower from the Tower Pending Deployment Area
-2. A runtime placement preview object is created
-3. The preview follows cursor or touch position
-4. The preview snaps to nearest GridNode
-5. Placement validity state is updated continuously
-6. Player releases input
-7. Placement preview state is exposed for future deployment validation
+1. TowerDraftSystem or another system has already added a tower to the Tower Pending Deployment Area
+2. Player selects or drags a pending tower entry from the Tower Pending Deployment Area
+3. PendingTowerItemUI requests TowerPlacementController to begin placement preview
+4. A runtime placement preview object is created
+5. The preview follows cursor or touch position
+6. The preview snaps to nearest GridNode
+7. Placement validity state is updated continuously
+8. Player releases input
+9. Placement preview state is exposed for future deployment validation
 
 This task does not deploy towers onto the battlefield.
 
@@ -174,6 +194,8 @@ Recommended API:
 public void BeginPlacement(TowerDefinition towerDefinition)
 public void CancelPlacement()
 ```
+
+`BeginPlacement` should be called by the pending tower UI flow, such as `PendingTowerItemUI` or `BattleHUDUI`, not by `TowerDraftSystem` directly.
 
 Expected behavior:
 
@@ -342,11 +364,12 @@ Before implementation, Codex should:
 
 1. Inspect the current project structure
 2. Identify existing placement, input, UI, tower, and map query systems
-3. Decide whether to:
+3. Inspect the current Task006 refactor result, especially `TowerDraftSystem`, `BattleHUDUI`, `TowerDraftUI`, and `PendingTowerItemUI`
+4. Decide whether to:
    - extend existing scripts
    - create new scripts
    - refactor small existing structures
-4. Explain the implementation plan before writing code
+5. Explain the implementation plan before writing code
 
 The implementation plan should include:
 
@@ -355,6 +378,8 @@ The implementation plan should include:
 - responsibilities of each modified script
 - reasoning for any newly created runtime systems
 - how the placement preview will integrate with existing map query behavior
+- how pending tower UI entries will call into the placement controller
+- confirmation that TowerDraftSystem will remain outside placement preview control
 
 Do not start implementation before presenting the plan.
 
@@ -407,6 +432,7 @@ The placement system should follow these rules:
 - Only one preview object may exist at a time
 - Placement preview only exists during dragging
 - Draft Window cannot remain open during placement
+- TowerDraftSystem should not own placement preview state
 - Cancelling placement destroys preview object
 - Releasing input exits placement preview state
 - Placement preview does not modify gameplay data
@@ -439,9 +465,14 @@ This task integrates with:
 
 - BattleHUDUI
 - PendingTowerItemUI
+- TowerPlacementController
+- TowerPlacementPreview
 - TowerDefinition
 - TowerAnchorSet
 - MapSystem
+
+This task should treat `TowerDraftSystem` as an upstream system only.
+It may rely on towers already appearing in the pending deployment area, but it should not modify draft generation or selection logic.
 
 However:
 
@@ -527,6 +558,13 @@ Do not implement:
 ---
 
 # Change Log
+
+## 2026-05-15
+- Updated task boundaries after Task006 TowerDraftSystem refactor.
+- Clarified that Task004 starts from existing pending tower entries, not draft generation.
+- Added PendingTowerItemUI to TowerPlacementController integration boundary.
+- Clarified that TowerDraftSystem is upstream only and should not own placement preview state.
+- Updated implementation planning requirements to inspect Task006-related scripts before implementation.
 
 ## 2026-05-13
 - Initial Tower Drag and Snap Placement task document created.

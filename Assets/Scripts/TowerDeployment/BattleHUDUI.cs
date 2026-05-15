@@ -8,6 +8,7 @@ public class BattleHUDUI : MonoBehaviour
 {
     [SerializeField] private PlayerLevelSystem playerLevelSystem;
     [SerializeField] private TowerDraftUI towerDraftUI;
+    [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private Slider expSlider;
     [SerializeField] private Transform pendingTowerContainer;
@@ -89,7 +90,7 @@ public class BattleHUDUI : MonoBehaviour
             return;
         }
 
-        item.Initialize(towerDefinition);
+        item.Initialize(towerDefinition, towerPlacementController);
         pendingTowerItems.Add(item);
     }
 
