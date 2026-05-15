@@ -8,10 +8,6 @@ The Tower Deploy System is one of the core gameplay systems in Tower Nexus.
 
 The system is responsible for:
 
-- Managing player level progression
-- Managing experience accumulation
-- Triggering tower draft selection
-- Managing Battle HUD level and EXP display
 - Managing Tower Pending Deployment Area
 - Managing tower deploy workflow
 - Managing tower footprint occupation
@@ -22,6 +18,9 @@ The system is responsible for:
 
 The Tower Deploy System works closely with:
 
+- Player Level System
+- Tower Draft System
+- Battle HUD System
 - Map System
 - Future Pathfinding System
 - Future Combat System
@@ -30,6 +29,15 @@ The Tower Deploy System works closely with:
 The system is designed around dynamic battlefield manipulation.
 
 Players continuously reshape the battlefield by deploying towers that occupy GridNodes and alter monster movement paths.
+
+Important responsibility boundary:
+
+- Player Level System is responsible for EXP accumulation and level-up events.
+- Tower Draft System is responsible for generating tower draft choices and handling draft selection results.
+- Battle HUD System is responsible for displaying runtime battle UI and pending tower entries.
+- Tower Deploy System is responsible for converting pending tower entries into placed battlefield towers.
+
+The Tower Deploy System should not directly own tower draft data, random draft generation, or player level-up logic.
 
 ---
 
@@ -43,11 +51,11 @@ Players do not freely build towers from a static build menu.
 
 Instead:
 
-- Players gain experience during gameplay
-- Players level up
-- Level-ups trigger randomized tower draft selections
+- Players gain experience during gameplay through the Player Level System
+- Player level-up events notify the Tower Draft System
+- The Tower Draft System generates randomized tower draft selections
 - Players choose one tower from multiple options
-- The selected tower is added to the Tower Pending Deployment Area
+- The selected tower is sent to the Battle HUD Pending Deployment Area
 - Players manually drag pending towers from the pending area onto the map
 
 This creates:
@@ -175,6 +183,17 @@ private void TryLevelUp();
 
 The Player Level System should expose events for future UI and draft systems.
 
+Recommended event boundary:
+
+```csharp
+public event Action<int> OnLevelChanged;
+public event Action<int, int> OnExpChanged;
+public event Action<int> OnLevelUp;
+```
+
+The Player Level System should not directly open UI windows or generate tower draft choices.
+Instead, systems such as TowerDraftSystem or BattleHUDUI may subscribe to its events.
+
 ---
 
 # 4. Battle HUD System
@@ -195,28 +214,52 @@ The Tower Pending Deployment Area stores deployable tower entries selected from 
 
 Future systems may add more always-visible battle information into the Battle HUD.
 
+Recommended responsibility boundary:
+
+- BattleHUDUI may expose methods such as `SetLevel`, `SetExpProgress`, `OpenDraftWindow`, and `AddPendingTower`.
+- BattleHUDUI should not directly own Tower Pool data.
+- BattleHUDUI should not generate random draft choices.
+- BattleHUDUI should not decide which towers are available in draft.
+- BattleHUDUI should only receive already-generated draft choices from TowerDraftSystem.
+
+Temporary debug fields may be used during early development, but they should be clearly marked as debug-only and should not represent the final data flow.
+
 ---
 
 # 5. Tower Draft System
 
-The Tower Draft System provides randomized tower choices during gameplay progression.
+The Tower Draft System is responsible for generating randomized tower choices during gameplay progression.
 
-Each level-up triggers a new draft selection.
+Each player level-up should notify the Tower Draft System.
+The Tower Draft System then generates draft choices and asks the Battle HUD to display the Tower Draft Window.
 
-After the player chooses one tower, the selected tower is added to the Tower Pending Deployment Area instead of entering placement mode immediately.
+The Tower Draft System is separate from the Tower Deploy System.
+It decides what the player may choose, but it does not perform battlefield placement.
 
 The first implementation uses:
 
 - 3-choice tower draft
-- Random selection from Tower Pool
+- Random selection from Tower Definition Database or Tower Pool
+- Selection result sent to the Battle HUD Pending Deployment Area
 
 ---
 
-## 5.1 Tower Pool
+## 5.1 Tower Definition Database / Tower Pool
 
-The Tower Pool defines which towers may appear in draft selections.
+The Tower Definition Database or Tower Pool defines which towers may appear in draft selections.
 
-Example structure:
+Recommended first-version structure:
+
+```csharp
+public class TowerDefinitionDatabase : MonoBehaviour
+{
+    [SerializeField] private List<TowerDefinition> towerDefinitions;
+
+    public IReadOnlyList<TowerDefinition> GetAllTowers();
+}
+```
+
+Alternative future structure:
 
 ```csharp
 public class TowerPool : ScriptableObject
@@ -224,6 +267,8 @@ public class TowerPool : ScriptableObject
     public List<TowerDefinition> towerList;
 }
 ```
+
+For the first playable version, a MonoBehaviour database under the GameManager prefab is acceptable because it keeps scene references simple and Inspector-friendly.
 
 Future versions may support:
 
@@ -234,23 +279,99 @@ Future versions may support:
 
 ---
 
-## 5.2 Draft Workflow
+## 5.2 Draft System Runtime Responsibility
+
+Recommended first-version runtime structure:
+
+```text
+GameManager
+├── PlayerLevelSystem
+├── TowerDefinitionDatabase
+├── TowerDraftSystem
+├── BattleHUDUI
+└── MapGenerator
+```
+
+TowerDraftSystem should reference:
+
+| Reference | Purpose |
+|---|---|
+| PlayerLevelSystem | Subscribe to level-up events |
+| TowerDefinitionDatabase / TowerPool | Read available tower definitions |
+| BattleHUDUI | Request draft UI display and pending tower update |
+
+TowerDraftSystem should be responsible for:
+
+- Listening to player level-up events
+- Generating up to 3 draft choices
+- Passing generated choices to BattleHUDUI
+- Receiving the selected TowerDefinition callback
+- Adding the selected tower to the Pending Deployment Area through BattleHUDUI or a future PendingTowerSystem
+
+TowerDraftSystem should not be responsible for:
+
+- UI layout
+- Button creation
+- Drag placement
+- Grid snapping
+- Placement validation
+- Runtime walkability updates
+
+---
+
+## 5.3 Draft Data Flow
+
+Recommended data flow:
+
+```text
+PlayerLevelSystem
+    ↓ OnLevelUp
+TowerDraftSystem
+    ↓ Generate draft choices from TowerDefinitionDatabase / TowerPool
+BattleHUDUI
+    ↓ OpenDraftWindow(choices, onSelected)
+TowerDraftUI
+    ↓ Player selects one TowerDefinition
+TowerDraftSystem
+    ↓ Handles selected TowerDefinition
+BattleHUDUI / Pending Tower Area
+    ↓ AddPendingTower(selectedTower)
+Tower Placement System
+    ↓ Player drags pending tower onto map
+Tower Deploy System
+    ↓ Validates and deploys tower
+```
+
+This keeps the main responsibilities clear:
+
+- PlayerLevelSystem owns progression.
+- TowerDraftSystem owns draft generation and draft result handling.
+- BattleHUDUI owns display.
+- TowerDeploySystem owns map placement.
+
+---
+
+## 5.4 Draft Workflow
 
 The draft workflow is:
 
 1. Player gains enough EXP
-2. Player levels up
-3. Tower Draft Window opens
-4. System generates 3 tower choices from Tower Pool
-5. Player selects one tower
-6. Tower Draft Window closes
-7. Selected tower is added to the Tower Pending Deployment Area
+2. PlayerLevelSystem levels up
+3. PlayerLevelSystem raises level-up event
+4. TowerDraftSystem receives the level-up event
+5. TowerDraftSystem generates 3 tower choices from TowerDefinitionDatabase or Tower Pool
+6. TowerDraftSystem asks BattleHUDUI to open the Tower Draft Window
+7. Player selects one tower
+8. TowerDraftUI returns the selected TowerDefinition through callback
+9. TowerDraftSystem handles the selection result
+10. Selected tower is added to the Tower Pending Deployment Area
+11. Tower Draft Window closes
 
 The Tower Draft Window should temporarily block normal gameplay interaction while it is open.
 
 ---
 
-## 5.3 Tower Draft Window Structure
+## 5.5 Tower Draft Window Structure
 
 The Tower Draft Window is shown when the player levels up.
 
@@ -265,11 +386,21 @@ Recommended UI structure:
 | Tower Name | Displays the tower name |
 | Tower Description | Displays a short tower description |
 
-When the player selects a Tower Draft Item:
+TowerDraftUI should be responsible for:
 
-- The selected tower is added to the Tower Pending Deployment Area
-- The Tower Draft Window closes
-- The player does not immediately enter placement mode
+- Displaying draft choices
+- Creating or refreshing draft item UI
+- Handling player click input
+- Returning the selected TowerDefinition through callback
+- Closing or hiding the draft window after selection
+
+TowerDraftUI should not be responsible for:
+
+- Reading Tower Pool data directly
+- Generating random draft choices
+- Subscribing to PlayerLevelSystem level-up events
+- Adding pending towers directly unless explicitly routed through BattleHUDUI in the first version
+- Performing tower placement validation
 
 ---
 
@@ -582,9 +713,10 @@ Included features:
 - Player EXP gain
 - Player level-up logic
 - Battle HUD with current level and EXP progress display
-- 3-choice tower draft
-- Tower Pool
+- TowerDraftSystem with 3-choice tower draft
+- TowerDefinitionDatabase or Tower Pool as the draft data source
 - Draft selection adds tower to Tower Pending Deployment Area
+- Clear data flow from PlayerLevelSystem to TowerDraftSystem to BattleHUDUI
 - Tower Pending Deployment Area
 - Tower anchor structure
 - Tower drag placement from pending deployment area
@@ -628,6 +760,14 @@ These features are not required for the first playable version.
 ---
 
 # Change Log
+
+## 2026-05-15
+
+- Clarified responsibility boundaries between Player Level System, Tower Draft System, Battle HUD System, and Tower Deploy System.
+- Added TowerDefinitionDatabase as the recommended first-version source of tower draft data.
+- Clarified that BattleHUDUI should not directly own Tower Pool data or generate draft choices.
+- Added recommended TowerDraftSystem runtime structure and draft data flow.
+- Clarified TowerDraftUI responsibility as display and selection callback only.
 
 ## 2026-05-13
 

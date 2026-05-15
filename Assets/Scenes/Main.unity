@@ -246,12 +246,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.CanvasScaler
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
-  m_ReferenceResolution: {x: 800, y: 600}
+  m_ReferenceResolution: {x: 1080, y: 1920}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0
+  m_MatchWidthOrHeight: 0.5
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -445,6 +445,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 954294072}
     m_Modifications:
+    - target: {fileID: 202699124017898225, guid: d336196aa7ada42b7a3a276b0714678c, type: 3}
+      propertyPath: playerLevelSystem
+      value: 
+      objectReference: {fileID: 7811906250627789305}
+    - target: {fileID: 202699124017898225, guid: d336196aa7ada42b7a3a276b0714678c, type: 3}
+      propertyPath: debugDraftTowerDefinitions.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 1580294284573971798, guid: d336196aa7ada42b7a3a276b0714678c, type: 3}
       propertyPath: m_Name
       value: BattleHUDUI
@@ -539,6 +547,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 1708503358792903245, guid: d336196aa7ada42b7a3a276b0714678c, type: 3}
   m_PrefabInstance: {fileID: 6014160388155963372}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &6014160388155963374 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 202699124017898225, guid: d336196aa7ada42b7a3a276b0714678c, type: 3}
+  m_PrefabInstance: {fileID: 6014160388155963372}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39e48d23299542c89a6459ba4d208c3f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleHUDUI
 --- !u!1001 &7811906250627789304
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -547,13 +566,13 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 1088497973884877206, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
-      propertyPath: generatedNodesParent
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: battleHUDUI
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 6014160388155963374}
     - target: {fileID: 3261855449354590494, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 4.35506
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3261855449354590494, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: m_LocalPosition.y
@@ -561,7 +580,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 3261855449354590494, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.12974
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3261855449354590494, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: m_LocalRotation.w
@@ -600,6 +619,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+--- !u!114 &7811906250627789305 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8439368486033747447, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+  m_PrefabInstance: {fileID: 7811906250627789304}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2576880cd6cf4c1aacbfdf6d153b0fa7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerLevelSystem
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
