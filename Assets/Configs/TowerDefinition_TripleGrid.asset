@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TowerDefinition_TripleGrid
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerId: 103
-  displayName: "\u4E09\u683C\u5854"
-  description: "\u8FD9\u662F\u4E00\u4E2A\u4E09\u683C\u5854"
+  displayName: Tripple Tower
+  description: This is a Tripple Tower
   icon: {fileID: 1687356685278129447, guid: 9b8ccf0882bbe4a38836b2714c6462ab, type: 3}
   towerPrefab: {fileID: 6027618472494872927, guid: 5b7ed8402f4fc4e9bbbfc43e6ae17d24, type: 3}

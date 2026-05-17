@@ -37,7 +37,7 @@ public class BattleHUDUI : MonoBehaviour
             return;
         }
 
-        levelText.text = $"Level {level}";
+        levelText.text = level.ToString();
     }
 
     public void UpdateExp(float currentExp, float requiredExp)

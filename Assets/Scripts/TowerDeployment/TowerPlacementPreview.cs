@@ -2,14 +2,14 @@ using UnityEngine;
 
 public class TowerPlacementPreview : MonoBehaviour
 {
-    [SerializeField] private Color validColor = new Color(0.35f, 1f, 0.35f, 0.65f);
-    [SerializeField] private Color invalidColor = new Color(1f, 0.25f, 0.25f, 0.65f);
+    [SerializeField] private Color validColor = new Color(1f, 1f, 1f, 0.5f);
+    [SerializeField] private Color invalidColor = new Color(1f, 0f, 0f, 0.5f);
+    [SerializeField] private Transform previewRendererRoot;
 
+    private Renderer[] previewRenderers;
     private TowerDefinition towerDefinition;
     private TowerAnchorSet towerAnchorSet;
     private bool isPlacementValid;
-    private SpriteRenderer[] spriteRenderers;
-    private Renderer[] renderers;
 
     public TowerDefinition TowerDefinition => towerDefinition;
     public TowerAnchorSet TowerAnchorSet => towerAnchorSet;
@@ -19,8 +19,7 @@ public class TowerPlacementPreview : MonoBehaviour
     {
         this.towerDefinition = towerDefinition;
         towerAnchorSet = GetComponent<TowerAnchorSet>();
-        spriteRenderers = GetComponentsInChildren<SpriteRenderer>(true);
-        renderers = GetComponentsInChildren<Renderer>(true);
+        CachePreviewRenderers();
 
         if (towerDefinition == null)
         {
@@ -66,27 +65,17 @@ public class TowerPlacementPreview : MonoBehaviour
 
     private void ApplyPreviewColor(Color color)
     {
-        if (spriteRenderers != null)
+        if (previewRenderers == null || previewRenderers.Length == 0)
         {
-            for (int i = 0; i < spriteRenderers.Length; i++)
-            {
-                if (spriteRenderers[i] != null)
-                {
-                    spriteRenderers[i].color = color;
-                }
-            }
-        }
-
-        if (renderers == null)
-        {
+            Debug.Log("Tower placement preview renderers are null or empty.", this);
             return;
         }
 
-        for (int i = 0; i < renderers.Length; i++)
+        for (int i = 0; i < previewRenderers.Length; i++)
         {
-            Renderer targetRenderer = renderers[i];
+            Renderer targetRenderer = previewRenderers[i];
 
-            if (targetRenderer == null || targetRenderer is SpriteRenderer)
+            if (targetRenderer == null)
             {
                 continue;
             }
@@ -107,5 +96,17 @@ public class TowerPlacementPreview : MonoBehaviour
                 material.SetColor("_Color", color);
             }
         }
+    }
+
+    private void CachePreviewRenderers()
+    {
+        if (previewRendererRoot == null)
+        {
+            Debug.LogWarning("Tower placement preview renderer root is null.", this);
+            previewRenderers = null;
+            return;
+        }
+
+        previewRenderers = previewRendererRoot.GetComponentsInChildren<Renderer>(true);
     }
 }

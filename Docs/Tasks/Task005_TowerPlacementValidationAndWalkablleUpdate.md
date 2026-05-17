@@ -16,8 +16,8 @@ The system is responsible for:
 - Confirming final placement on input release
 - Spawning the final tower instance
 - Updating occupied GridNodes to unwalkable
-- Removing the deployed tower from the Tower Pending Deployment Area
-- Returning the tower to the pending area if placement fails
+- Removing the deployed tower from the Tower Draft Area
+- Returning the tower to the Tower Draft Area if placement fails
 - Preparing future support for tower removal and redeployment
 
 This task does not implement pathfinding-based placement validation.
@@ -48,13 +48,13 @@ The goal of this task is to complete the first playable Tower Deploy loop.
 
 After this task is completed:
 
-- The player can drag a pending tower onto the map
+- The player can drag a drafted tower onto the map
 - The system can validate all occupied anchors
 - The system can check whether all occupied GridNodes are walkable
 - A valid tower placement creates a final tower instance
 - Occupied GridNodes become unwalkable
-- The pending tower entry is removed after successful deployment
-- Invalid placement cancels deployment and keeps the tower pending
+- The drafted tower entry is removed after successful deployment
+- Invalid placement cancels deployment and keeps the drafted tower available
 - Future tower removal and redeployment can reuse occupied node data
 
 ---
@@ -68,7 +68,7 @@ This task includes:
 - Walkability validation
 - Final tower instance spawning
 - GridNode walkability update
-- Pending tower entry removal on success
+- Drafted tower entry removal on success
 - Placement failure handling
 - Tower instance occupied node cache
 - Future path blocking validation hook
@@ -96,7 +96,7 @@ This task should provide the following runtime responsibilities:
 - Final tower deployment execution
 - Runtime deployed tower data storage
 - GridNode walkability state update
-- Pending tower entry removal on successful deployment
+- Drafted tower entry removal on successful deployment
 - Placement failure handling
 - Runtime occupied node caching for future recycle systems
 - Future path blocking validation hook support
@@ -129,7 +129,7 @@ If a different architecture fits the existing project better, explain the reason
 
 The final deployment workflow is:
 
-1. Player drags a pending tower from the Tower Pending Deployment Area
+1. Player drags a drafted tower from the Tower Draft Area
 2. Tower placement preview snaps to a GridNode
 3. Player releases input
 4. System resolves all occupied anchors to GridNodes
@@ -137,11 +137,11 @@ The final deployment workflow is:
 6. If validation succeeds:
     - Spawn final tower instance
     - Mark occupied GridNodes as unwalkable
-    - Remove pending tower entry
+    - Remove drafted tower entry
     - Destroy placement preview
 7. If validation fails:
     - Destroy placement preview
-    - Keep tower in Tower Pending Deployment Area
+    - Keep tower in Tower Draft Area
 
 This completes the first playable deployment loop.
 
@@ -259,14 +259,14 @@ The implementation must provide a way to:
 - validate deployment before tower creation
 - update occupied GridNode walkability state
 - create or initialize runtime tower instance data
-- remove pending tower entries only after successful deployment
+- remove drafted tower entries only after successful deployment
 
 Recommended API:
 
 ```csharp
 public bool TryDeployTower(
     TowerPlacementPreview preview,
-    PendingTowerItemUI pendingItem
+    TowerDraftItemUI draftItem
 )
 ```
 
@@ -277,14 +277,14 @@ Expected behavior:
 3. If validation fails:
     - Return false
     - Do not modify GridNodes
-    - Do not remove pending item
+    - Do not remove drafted item
 4. If validation succeeds:
     - Instantiate final tower prefab
     - Align final tower to preview position
     - Add or initialize `TowerInstance`
     - Store occupied GridNodes in `TowerInstance`
     - Mark occupied GridNodes as unwalkable
-    - Remove pending tower item from Battle HUD
+    - Remove drafted tower item from the Tower Draft System
     - Return true
 
 Equivalent implementations are acceptable if they better match the existing project architecture.
@@ -383,33 +383,33 @@ This task should connect final release behavior to deployment.
 Expected integration:
 
 - `TowerPlacementController` detects input release
-- It passes current preview and pending item to `TowerDeployController`
+- It passes current preview and drafted item to `TowerDeployController`
 - `TowerDeployController` attempts final deployment
 - If successful:
-    - Pending item is removed
+    - Drafted item is removed
     - Preview is destroyed
 - If failed:
-    - Pending item remains
+    - Drafted item remains
     - Preview is destroyed
-    - Player may drag the pending tower again
+    - Player may drag the drafted tower again
 
 Do not make `TowerPlacementController` directly update GridNode walkability.
 
 ---
 
-# 12. Pending Tower Item Handling
+# 12. Drafted Tower Item Handling
 
-Pending tower entries should only be removed after successful deployment.
+Drafted tower entries should only be removed after successful deployment.
 
 Rules:
 
 | Case | Result |
 |---|---|
-| Valid deployment | Remove pending tower item |
-| Invalid deployment | Keep pending tower item |
-| Cancel placement | Keep pending tower item |
+| Valid deployment | Remove drafted tower entry |
+| Invalid deployment | Keep drafted tower entry |
+| Cancel placement | Keep drafted tower entry |
 
-This ensures failed placement does not consume the player's selected tower.
+This ensures failed placement does not consume the player's drafted tower.
 
 ---
 
@@ -433,36 +433,30 @@ The deployment system should follow these rules:
 
 - Only deployed towers modify GridNode walkability
 - Preview towers never modify GridNode walkability
-- Pending tower entries are removed only after successful deployment
-- Invalid placement does not consume pending tower entries
+- Drafted tower entries are removed only after successful deployment
+- Invalid placement does not consume drafted tower entries
 - Deployment validation should be executed again on input release
 - Successful deployment destroys the preview object
-- Failed deployment destroys the preview object and keeps the pending item
+- Failed deployment destroys the preview object and keeps the drafted item
 - Pathfinding validation remains disabled in this task
 
 ---
 
 # 15. Validation Rules
 
-The implementation must handle:
+## 15.1 Integration With TowerDraftSystem
 
-- Null preview
-- Null pending item
-- Null TowerDefinition
-- Missing tower prefab
-- Missing TowerAnchorSet
-- Missing occupied anchors
-- Invalid occupied anchor position
-- Duplicate occupied GridNodes
-- Occupied GridNode is not walkable
-- Missing validator reference
-- Missing deployed tower root
+This task assumes drafted towers are managed by the runtime `TowerDraftSystem`.
 
-If data is invalid:
+Expected integration behavior:
 
-- Do not crash
-- Log warnings where appropriate
-- Prevent deployment
+- Tower draft entries are generated by the Tower Draft workflow
+- Dragging begins from a `TowerDraftItemUI`
+- Successful deployment removes the drafted tower entry from the draft system
+- Failed deployment keeps the drafted tower entry available
+- Deployment logic should not directly manage draft generation logic
+
+The deployment system should only consume drafted tower entries after successful placement.
 
 ---
 
@@ -475,8 +469,8 @@ This task integrates with:
 - TowerPlacementValidator
 - TowerDeployController
 - TowerInstance
-- BattleHUDUI
-- PendingTowerItemUI
+- TowerDraftSystem
+- TowerDraftItemUI
 - TowerDefinition
 - TowerAnchorSet
 - MapSystem
@@ -527,9 +521,9 @@ This task is complete when:
 - All occupied GridNodes must be walkable
 - Valid placement spawns final tower instance
 - Valid placement marks occupied GridNodes as unwalkable
-- Valid placement removes pending tower entry
+- Valid placement removes drafted tower entry
 - Invalid placement does not modify GridNodes
-- Invalid placement keeps pending tower entry
+- Invalid placement keeps drafted tower entry
 - Preview object is destroyed after release
 - `TowerInstance` stores occupied node data
 - Path blocking validation exists only as a placeholder
@@ -544,16 +538,16 @@ Use temporary runtime setup to validate:
 1. Valid placement
     - Tower is spawned
     - Occupied GridNodes become unwalkable
-    - Pending item is removed
+    - Drafted item is removed
 
 2. Invalid placement outside map
     - Tower is not spawned
-    - Pending item remains
+    - Drafted item remains
     - No GridNodes are modified
 
 3. Invalid placement on unwalkable node
     - Tower is not spawned
-    - Pending item remains
+    - Drafted item remains
 
 4. Multi-anchor tower placement
     - All occupied nodes are detected
@@ -575,7 +569,7 @@ Use temporary runtime setup to validate:
     - Deployment fails
 
 9. Cancel placement
-    - Pending item remains
+    - Drafted item remains
     - No GridNodes are modified
 
 10. Multiple placements
@@ -612,3 +606,4 @@ Do not implement:
 - Defined pending tower item removal rules.
 - Added placeholder future path blocking validation hook.
 - Refactored task structure to support architecture-driven AI workflow.
+

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TowerDefinition_SingleGrid
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerId: 101
-  displayName: "\u5355\u683C\u5854"
-  description: "\u8FD9\u662F\u4E00\u4E2A\u5355\u683C\u5854"
+  displayName: Single Tower
+  description: This is a Single Tower
   icon: {fileID: -8627652178134794878, guid: 48902436d5fe340feb0da315672b5b04, type: 3}
   towerPrefab: {fileID: 8270491640636788401, guid: b41b585d975044e40aed1799db9297fb, type: 3}

@@ -57,7 +57,7 @@ public class PendingTowerItemUI : MonoBehaviour, IPointerDownHandler
             return;
         }
 
-        placementController.BeginPlacement(towerDefinition);
+        placementController.BeginPlacement(towerDefinition, this);
     }
 
     private void UpdateIcon(Sprite icon)

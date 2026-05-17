@@ -25,6 +25,7 @@ public class TowerDraftUI : MonoBehaviour
 
     public void OpenDraft(List<TowerDefinition> towerDefinitions, Action<TowerDefinition> onSelected)
     {
+        Debug.Log("Opening draft UI...");
         ClearDraftItems();
         onTowerSelected = onSelected;
 

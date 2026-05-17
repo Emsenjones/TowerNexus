@@ -2,13 +2,17 @@ using UnityEngine;
 
 public class TowerPlacementController : MonoBehaviour
 {
-    [SerializeField] private Camera placementCamera;
+    private Camera placementCamera;
     [SerializeField] private MapGeneratorBehaviour mapGenerator;
     [SerializeField] private Transform previewParent;
+    [SerializeField] private TowerPlacementValidator placementValidator;
+    [SerializeField] private TowerDeployController deployController;
+    [SerializeField] private BattleHUDUI battleHUDUI;
 
     private TowerPlacementPreview currentPreview;
     private TowerDefinition currentTowerDefinition;
     private GridNodeBehaviour currentTargetNode;
+    private PendingTowerItemUI currentDraftedTowerEntry;
     private bool isDragging;
     private bool missingCameraWarningLogged;
     private bool missingMapGeneratorWarningLogged;
@@ -22,6 +26,8 @@ public class TowerPlacementController : MonoBehaviour
     {
         if (placementCamera == null) 
             placementCamera = Camera.main;
+
+        EnsureRuntimeDependencies();
     }
 
     private void Update()
@@ -41,13 +47,19 @@ public class TowerPlacementController : MonoBehaviour
 
         if (Input.GetMouseButtonUp(0))
         {
-            CancelPlacement();
+            CompletePlacement();
         }
     }
 
     public void BeginPlacement(TowerDefinition towerDefinition)
     {
+        BeginPlacement(towerDefinition, null);
+    }
+
+    public void BeginPlacement(TowerDefinition towerDefinition, PendingTowerItemUI draftedTowerEntry)
+    {
         CancelPlacement();
+        EnsureRuntimeDependencies();
 
         if (towerDefinition == null)
         {
@@ -82,6 +94,7 @@ public class TowerPlacementController : MonoBehaviour
 
         currentPreview.Initialize(towerDefinition);
         currentTowerDefinition = towerDefinition;
+        currentDraftedTowerEntry = draftedTowerEntry;
         currentTargetNode = null;
         isDragging = true;
 
@@ -98,7 +111,18 @@ public class TowerPlacementController : MonoBehaviour
         currentPreview = null;
         currentTowerDefinition = null;
         currentTargetNode = null;
+        currentDraftedTowerEntry = null;
         isDragging = false;
+    }
+
+    private void CompletePlacement()
+    {
+        if (currentPreview != null && deployController != null)
+        {
+            deployController.TryDeployTower(currentPreview, currentDraftedTowerEntry);
+        }
+
+        CancelPlacement();
     }
 
     private void UpdatePreviewPosition(Vector3 screenPosition)
@@ -134,7 +158,10 @@ public class TowerPlacementController : MonoBehaviour
         {
             currentTargetNode = targetNode;
             currentPreview.SetWorldPosition(targetNode.WorldPosition);
-            currentPreview.SetPlacementState(true);
+            currentPreview.SetPlacementState(
+                placementValidator != null &&
+                placementValidator.CanPlaceTower(currentPreview, out _)
+            );
             return;
         }
 
@@ -168,5 +195,42 @@ public class TowerPlacementController : MonoBehaviour
 
         worldPosition = ray.GetPoint(enter);
         return true;
+    }
+
+    private void EnsureRuntimeDependencies()
+    {
+        if (mapGenerator == null)
+        {
+            mapGenerator = FindFirstObjectByType<MapGeneratorBehaviour>();
+        }
+
+        if (battleHUDUI == null)
+        {
+            battleHUDUI = FindFirstObjectByType<BattleHUDUI>();
+        }
+
+        if (placementValidator == null)
+        {
+            placementValidator = GetComponent<TowerPlacementValidator>();
+        }
+
+        if (placementValidator == null)
+        {
+            placementValidator = gameObject.AddComponent<TowerPlacementValidator>();
+        }
+
+        placementValidator.Initialize(mapGenerator);
+
+        if (deployController == null)
+        {
+            deployController = GetComponent<TowerDeployController>();
+        }
+
+        if (deployController == null)
+        {
+            deployController = gameObject.AddComponent<TowerDeployController>();
+        }
+
+        deployController.Initialize(placementValidator, mapGenerator, battleHUDUI);
     }
 }
