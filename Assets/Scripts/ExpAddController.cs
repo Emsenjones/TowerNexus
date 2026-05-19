@@ -7,10 +7,7 @@ public class ExpAddController : MonoBehaviour
         [SerializeField] private MapGeneratorBehaviour mapGenerator;
         [SerializeField]
         int addedExp;
-        void Start()
-        {
-                mapGenerator.GenerateMap();
-        }
+ 
         void Update()
         {
                 //Debug.Log("Updating...");

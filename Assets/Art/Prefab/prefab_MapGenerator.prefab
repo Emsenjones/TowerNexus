@@ -1,0 +1,95 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1656426083892135153
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3331492299143697098}
+  m_Layer: 0
+  m_Name: Nodes
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3331492299143697098
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1656426083892135153}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7152336949188375003}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &3273336904907436118
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7152336949188375003}
+  - component: {fileID: 274921356860905782}
+  m_Layer: 0
+  m_Name: prefab_MapGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7152336949188375003
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3273336904907436118}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 3331492299143697098}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &274921356860905782
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3273336904907436118}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 462e385edf4241c0aec7c9bf64b7940d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapGeneratorBehaviour
+  width: 5
+  height: 5
+  nodeSize: 1
+  nodePrefab: {fileID: 628654884526389982, guid: dd92d14a581c64396b06738480dd696b, type: 3}
+  generatedNodesParent: {fileID: 7152336949188375003}
+  allDirectionsTilePrefab: {fileID: 6248266414432938754, guid: 3cb05722b66ae454f9dfaeacc3a0c3ee, type: 3}
+  noDirectionsTilePrefab: {fileID: 4833171539518596605, guid: 7ce069848e6ef4e8da1b46d995803043, type: 3}
+  upDownTilePrefab: {fileID: 572791497747611730, guid: b39553c1147ae447ba985c780394af71, type: 3}
+  leftRightTilePrefab: {fileID: 3381491262653434013, guid: a35c32f79b83f43309a6eaa213ed61e1, type: 3}
+  upLeftTilePrefab: {fileID: 4495542783347127306, guid: 8f582bad8c59141bf96fbc71f5c1ebb0, type: 3}
+  upRightTilePrefab: {fileID: 2479843565422030850, guid: ab84eeaaff6854b15902f59622fee43d, type: 3}
+  downLeftTilePrefab: {fileID: 8552104603263621091, guid: c6d8924a82687494090cc3ebc7ee06d5, type: 3}
+  downRightTilePrefab: {fileID: 1761870836814924657, guid: dd81e7aeff2ee4a07b29b215ca105008, type: 3}
+  downLeftRightTilePrefab: {fileID: 8239182823658141738, guid: 30aeeb9417f1d4cf798fa20265e0d5c0, type: 3}
+  upLeftRightTilePrefab: {fileID: 8244670171229859059, guid: fe4efff3e868b43cc8d407738ba3499c, type: 3}
+  upDownRightTilePrefab: {fileID: 6120906901435857719, guid: 8a9d1d90f9410470792cd7254d03ca12, type: 3}
+  upDownLeftTilePrefab: {fileID: 4069340670300807731, guid: fbcc06f8e710b4517ab57dcd9311871e, type: 3}

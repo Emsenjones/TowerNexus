@@ -122,57 +122,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDeployController
   deployedTowerRoot: {fileID: 164484144082982332}
---- !u!1 &2424786209739903222
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 8037126706080321915}
-  - component: {fileID: 1088497973884877206}
-  m_Layer: 0
-  m_Name: MapGenerator
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &8037126706080321915
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2424786209739903222}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 3261855449354590494}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1088497973884877206
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2424786209739903222}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 462e385edf4241c0aec7c9bf64b7940d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MapGeneratorBehaviour
-  width: 10
-  height: 15
-  nodeSize: 1
-  nodePrefab: {fileID: 628654884526389982, guid: dd92d14a581c64396b06738480dd696b, type: 3}
-  generatedNodesParent: {fileID: 8037126706080321915}
-  walkableSprite: {fileID: 21300000, guid: 9b344ee59f60844789311560ad94fd85, type: 3}
-  unwalkableSprite: {fileID: 21300000, guid: 81ed369d0dc634eceaa534ff8a9fadc3, type: 3}
 --- !u!1 &3177765559474825686
 GameObject:
   m_ObjectHideFlags: 0
@@ -627,7 +576,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8f1e61edd8a475e9ab22151f5d1b6b8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerPlacementController
-  mapGenerator: {fileID: 1088497973884877206}
+  mapGenerator: {fileID: 8263608822962197460}
   previewParent: {fileID: 5016857861841176031}
   placementValidator: {fileID: 1248973704826299345}
   deployController: {fileID: 1542925268267888326}
@@ -1610,10 +1559,10 @@ Transform:
   m_Children:
   - {fileID: 8017504436740523961}
   - {fileID: 4965496710270445145}
-  - {fileID: 8037126706080321915}
   - {fileID: 2233529894891031527}
   - {fileID: 164484144082982332}
   - {fileID: 5016857861841176031}
+  - {fileID: 1314135725715290937}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &2046345648947699159
@@ -1629,5 +1578,78 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExpAddController
   playerLevelSystem: {fileID: 8439368486033747447}
-  mapGenerator: {fileID: 1088497973884877206}
+  mapGenerator: {fileID: 8263608822962197460}
   addedExp: 60
+--- !u!1001 &8178127859339938530
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3261855449354590494}
+    m_Modifications:
+    - target: {fileID: 3273336904907436118, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_Name
+      value: MapGenerator
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 2.36697
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 2.429
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+--- !u!4 &1314135725715290937 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7152336949188375003, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+  m_PrefabInstance: {fileID: 8178127859339938530}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &8263608822962197460 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 274921356860905782, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+  m_PrefabInstance: {fileID: 8178127859339938530}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 462e385edf4241c0aec7c9bf64b7940d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapGeneratorBehaviour

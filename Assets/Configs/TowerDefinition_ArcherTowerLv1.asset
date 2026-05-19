@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
+  m_Name: TowerDefinition_ArcherTowerLv1
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
+  towerId: 101
+  displayName: Archer Tower
+  description: This is an archer tower
+  icon: {fileID: -8627652178134794878, guid: 48902436d5fe340feb0da315672b5b04, type: 3}
+  towerPrefab: {fileID: 8270491640636788401, guid: b41b585d975044e40aed1799db9297fb, type: 3}

@@ -10,6 +10,10 @@ The core gameplay inspiration comes from games such as Underdark: Defence and Wi
 
 Unlike traditional tower defense games where towers are only used for combat, towers in Tower Nexus also function as physical obstacles that directly affect monster pathfinding and battlefield structure.
 
+The battlefield is not static. Players continuously reshape navigable space during runtime through tower deployment, tower repositioning, and terrain occupation changes.
+
+In Tower Nexus, towers are not only combat units, but also runtime battlefield editing tools that dynamically influence map topology and monster movement behavior.
+
 Players are expected to continuously make strategic decisions during gameplay, including:
 
 - Tower placement positioning
@@ -27,14 +31,14 @@ The core experience of the game is to allow players to gradually reshape the bat
 
 The gameplay loop of Tower Nexus is structured as follows:
 
-1. The level starts with:
+1. The level starts by loading a configured map prefab containing:
     - A Monster Spawn Point
     - A Monster Target Point
     - A grid-based map composed of multiple tiles
 
 2. Monsters continuously spawn from the spawn point based on wave configuration.
 
-3. Monsters use pathfinding logic similar to A* Pathfinding and move toward the target point using horizontal and vertical movement directions.
+3. Monsters use grid-based pathfinding logic similar to A* pathfinding and move toward the target point using horizontal and vertical movement directions.
 
 4. Players deploy towers onto the grid map to:
     - Attack and eliminate monsters
@@ -67,6 +71,8 @@ The gameplay loop of Tower Nexus is structured as follows:
 One of the core mechanics of Tower Nexus is that towers physically occupy map tiles and influence monster movement routes.
 
 Each tower has a unique footprint shape similar to Tetromino shapes from Tetris.
+
+Different tower prefabs may contain different occupied anchor layouts, allowing highly asymmetric deployment patterns.
 
 Different towers may occupy different tile patterns, such as:
 
@@ -150,9 +156,24 @@ Examples may include:
 - Flying enemies
 - Anti-projectile enemies
 - Split-type enemies
-- Path-breaking bosses
+- Path-breaking or terrain-modifying bosses
 
 The purpose of this system is to continuously encourage strategic adaptation and prevent static gameplay solutions.
+
+---
+
+## 3.5 Level and Stage Configuration Pipeline (Planned)
+
+Future versions of Tower Nexus will include a LevelConfig or StageConfig driven level pipeline.
+
+Current direction:
+
+- Maps are authored as handcrafted map prefabs
+- LevelConfig or StageConfig ScriptableObjects store map prefab references
+- Future monster wave configurations will also be stored in level-related configuration assets
+- Runtime gameplay loads and initializes configured map prefabs directly
+
+This pipeline is intended to separate map authoring, level configuration, and runtime gameplay initialization.
 
 ---
 
@@ -195,16 +216,19 @@ It manages:
 - Grid nodes
 - Walkable and unwalkable states
 - Runtime battlefield modification
-- Map visual refresh
-- Prefab-based map creation workflow
+- MeshRenderer-based tile visual refresh
+- Direction-based tile connection visuals
+- Handcrafted map prefab authoring workflow
 
 The Map System does not directly handle tower placement rules, monster AI, combat logic, or draft logic. Other systems interact with the Map System through node query and walkability update APIs.
 
+The Map System also acts as the runtime foundation for future LevelConfig or StageConfig driven gameplay loading workflows.
+
 ---
 
-## 5.2 Tower Deployment System
+## 5.2 Tower Deployment and Runtime Battlefield Manipulation System
 
-The Tower Deployment System manages the process of selecting, previewing, validating, deploying, and later repositioning towers on the grid map.
+The Tower Deployment System manages the process of selecting, previewing, validating, deploying, repositioning, recycling, and runtime battlefield reshaping through tower interaction on the grid map.
 
 It is responsible for:
 
@@ -212,10 +236,13 @@ It is responsible for:
 - Tower draft selection flow
 - Tower pool based draft generation
 - Tower pending deployment area
-- Tower prefab footprint definition
+- Tower prefab footprint anchor definition
 - Tower drag and snap placement from the pending deployment area
 - Placement validity preview
 - Grid node walkability occupation and release
+- Runtime walkability state management
+- Runtime battlefield topology modification
+- Runtime monster path reshaping
 - Future path-blocking validation before final deployment
 - Future tower recycle and redeployment flow
 
@@ -234,4 +261,8 @@ The first implementation focuses on the core deployment loop:
 
 Tower recycling and redeployment are planned as future extensions. When implemented, removed towers should release their occupied grid nodes and enter a UI-based recycle area, allowing players to drag them back onto the battlefield later.
 
----
+This system is intended to transform tower placement from a one-time build action into a continuous runtime tactical battlefield editing process.
+
+Tower deployment is fundamentally treated as runtime map topology editing rather than traditional static tower placement.
+
+Runtime walkability states may differ from the original authored map walkability states due to tower occupation, future temporary obstacles, or future gameplay mechanics.

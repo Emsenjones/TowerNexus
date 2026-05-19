@@ -17,6 +17,7 @@ The Map System is responsible for:
 - Supporting tower deployment validation
 - Refreshing map visual tiles
 - Supporting prefab-based map editing workflow
+- Supporting handcrafted map prefab workflow
 
 The Map System is designed as a reusable and gameplay-neutral system.
 
@@ -81,8 +82,9 @@ Responsible for:
 
 Responsible for:
 
-- Tile sprites
-- RuleTile visual refresh
+- Prefab-based tile visuals
+- MeshRenderer-based tile presentation
+- Direction-based tile connection refresh
 - Tile appearance updates
 
 Gameplay logic should never directly depend on visual presentation.
@@ -134,6 +136,9 @@ Each node contains the following information:
 |---|---|---|
 | Grid Position | Vector2Int | Position index inside the grid |
 | World Position | Vector3 | World position on the XZ ground plane, using Y as height |
+| Is Walkable | bool | Whether monsters can move through the node |
+| Visual Object Reference | GameObject / MeshRenderer Tile Visual | Visual tile object reference |
+
 ## 3.1 Grid Position to World Position Mapping
 
 Grid coordinates should be converted to world coordinates using the following convention:
@@ -149,8 +154,6 @@ This means:
 - Unity world Y remains height
 
 The Map System should avoid using Unity world Y as a ground-plane coordinate.
-| Is Walkable | bool | Whether monsters can move through the node |
-| Visual Object Reference | GameObject / SpriteRenderer | Visual tile object reference |
 
 ---
 
@@ -179,17 +182,37 @@ The system should support runtime state switching.
 
 # 5. Map Visual System
 
-The map visual layer is composed of 2D sprite tiles.
+The map visual layer is composed of prefab-based 3D tile visuals.
 
-The visual tile system follows Rule Tile style connection rules.
+Each visual tile is a prefab containing MeshRenderer-based presentation assets.
 
-A predefined tile sprite set will be used to automatically determine tile appearance based on neighboring node states.
+The visual tile system follows direction-based connection rules.
+
+A predefined tile prefab set is used to automatically determine tile appearance based on neighboring node walkable states.
 
 Current plan:
 
-- Approximately 13 tile sprites
-- Automatic edge/corner connection visuals
+- 12 tile visual prefabs
+- MeshRenderer-based ground tile presentation
+- Automatic direction connection visuals
 - Runtime visual refresh support
+
+The 12 tile visual prefabs are defined by walkable directions around the current node:
+
+| Walkable Directions | Prefab Meaning |
+|---|---|
+| Up + Down + Left + Right | Four-direction connected tile |
+| None | No-direction connected tile |
+| Up + Down | Vertical connected tile |
+| Left + Right | Horizontal connected tile |
+| Up + Left | Corner connected tile |
+| Up + Right | Corner connected tile |
+| Down + Left | Corner connected tile |
+| Down + Right | Corner connected tile |
+| Down + Left + Right | Three-direction connected tile |
+| Up + Left + Right | Three-direction connected tile |
+| Up + Down + Right | Three-direction connected tile |
+| Up + Down + Left | Three-direction connected tile |
 
 ---
 
@@ -198,13 +221,14 @@ Current plan:
 Whenever node walkability changes:
 
 - The map visual system should refresh tile visuals
-- Tile sprites should update according to neighboring node states
+- Tile prefabs should update according to neighboring node walkable states
+- Each node should contain one generated tile visual child object
 
-Initial implementation strategy:
+Current implementation strategy:
 
 ## Full Map Refresh
 
-The first version of the system may refresh the entire map whenever node states change.
+The first version of the system refreshes the entire map whenever node states change.
 
 Reason:
 
@@ -213,13 +237,44 @@ Reason:
 - Current map scale is small
 - Gameplay validation is prioritized over optimization
 
+During refresh:
+
+1. The system clears the old generated tile visual child object under each node.
+2. The system checks whether the neighboring Up, Down, Left, and Right nodes are walkable.
+3. The system selects one of the 12 tile visual prefabs based on the walkable direction combination.
+4. The selected tile visual prefab is instantiated as a child object of the current node.
+5. The generated tile visual is reset to local position zero, local rotation identity, and local scale one.
+
+Direction judgment rule:
+
+- Neighboring node exists and `IsWalkable == true`: this direction is considered walkable
+- Neighboring node does not exist: this direction is considered unwalkable
+- Neighboring node exists but `IsWalkable == false`: this direction is considered unwalkable
+- Map boundary is therefore treated as an unwalkable direction
+
+Current limitation:
+
+- The current 12-prefab set does not include single-direction dead-end tile visuals.
+- Map layout should avoid single-direction walkable connection cases for now.
+- Future versions may add 4 additional dead-end tile prefabs for Up-only, Down-only, Left-only, and Right-only cases.
+
 Future versions may optimize this into partial local refresh.
 
 ---
 
-# 7. Map Generation Workflow
+# 7. Map Authoring Workflow
 
-Maps are created using a prefab-based workflow.
+The current version of Tower Nexus uses a prefab-based handcrafted map workflow.
+
+Maps are manually authored inside the Unity Editor and then saved as reusable map prefabs.
+
+The runtime system loads and uses these map prefabs directly.
+
+The Map System itself does not serialize or generate gameplay map data through ScriptableObjects.
+
+ScriptableObjects are only intended to store references to map prefabs and future level-related metadata.
+
+---
 
 ## Step 1
 
@@ -229,7 +284,7 @@ Create an empty GameObject in Unity Scene.
 
 ## Step 2
 
-Attach Map Generator script.
+Attach Map Editor Behaviour script.
 
 ---
 
@@ -240,7 +295,7 @@ Input:
 - Width
 - Height
 
-Click Generate button.
+Click Generate Map button.
 
 ---
 
@@ -249,10 +304,14 @@ Click Generate button.
 The system automatically generates:
 
 - Grid Nodes
-- Tile visuals
+- MeshRenderer-based tile visual prefab instances
 - Node child objects
 
 Each node becomes a child object of the map root object.
+
+The generated map root GameObject acts as the runtime map entity.
+
+Each GridNodeBehaviour stores gameplay node state data, while visual tile prefabs are generated as child objects under each node.
 
 ---
 
@@ -272,6 +331,8 @@ Occupied nodes are manually marked as unwalkable.
 ## Step 6
 
 The completed map GameObject is saved as a Prefab.
+
+Future LevelConfig or StageConfig ScriptableObjects may reference these map prefabs for runtime level loading.
 
 ---
 
@@ -353,6 +414,7 @@ The Map System is responsible for:
 - Supporting runtime occupancy updates
 - Managing map visual refresh
 - Supporting prefab-based map workflow
+- Supporting handcrafted map prefab workflow
 
 The Map System is NOT responsible for:
 
@@ -373,6 +435,9 @@ Potential future features include:
 - Damage zones
 - Dynamic terrain destruction
 - Runtime generated maps
+- LevelConfig / StageConfig based level loading
+- Custom map editor tooling
+- Partial local visual refresh optimization
 - Multi-layer terrain
 - Interactive environment mechanics
 - Advanced visual optimization
@@ -382,6 +447,23 @@ These features are not required for the first playable version.
 ---
 
 # Change Log
+
+## 2026-05-19 (Workflow Update)
+
+- Updated map workflow terminology from Map Generation Workflow to Map Authoring Workflow.
+- Clarified that maps are stored as handcrafted map prefabs.
+- Clarified that ScriptableObjects only store map prefab references and future level metadata.
+- Added runtime map entity description.
+- Added future LevelConfig / StageConfig expansion direction.
+
+## 2026-05-19
+
+- Updated map visual system from sprite-based visual refresh to MeshRenderer prefab-based tile visuals.
+- Defined 12 tile visual prefabs based on Up, Down, Left, and Right walkable direction combinations.
+- Updated visual refresh rules to instantiate tile prefab instances under each node.
+- Clarified boundary and missing-node handling as unwalkable directions.
+- Documented the current limitation that single-direction dead-end tile visuals are not supported yet.
+- Fixed Node Structure table formatting.
 
 ## 2026-05-10
 
