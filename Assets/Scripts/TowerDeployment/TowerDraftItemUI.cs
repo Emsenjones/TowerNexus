@@ -7,7 +7,6 @@ public class TowerDraftItemUI : MonoBehaviour
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text nameText;
-    [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private Button button;
 
     private TowerDefinition towerDefinition;
@@ -65,15 +64,6 @@ public class TowerDraftItemUI : MonoBehaviour
         else
         {
             nameText.text = GetTowerName(towerDefinition);
-        }
-
-        if (descriptionText == null)
-        {
-            Debug.LogWarning("Tower draft item UI cannot update description: description text is not assigned.", this);
-        }
-        else
-        {
-            descriptionText.text = towerDefinition.Description ?? string.Empty;
         }
     }
 

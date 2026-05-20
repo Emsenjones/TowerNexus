@@ -61,7 +61,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
                 Vector2Int gridPosition = new Vector2Int(x, y);
                 GridNodeBehaviour node = Instantiate(nodePrefab, parent);
 
-                node.transform.position = new Vector3(x * nodeSize, 0f, y * nodeSize);
+                node.transform.localPosition = new Vector3(x * nodeSize, 0f, y * nodeSize);
                 node.name = $"Node_{x}_{y}";
                 node.Initialize(gridPosition, true);
 
@@ -151,15 +151,23 @@ public class MapGeneratorBehaviour : MonoBehaviour
     {
         node = null;
 
+        if (nodeDictionary.Count == 0)
+        {
+            RebuildNodeDictionary();
+        }
+
         if (nodeSize <= 0f)
         {
             Debug.LogWarning("Map query failed: node size must be greater than zero.", this);
             return false;
         }
 
+        Transform gridSpace = GetGridSpaceTransform();
+        Vector3 localPosition = gridSpace.InverseTransformPoint(worldPosition) - GetGridOriginLocalPosition(gridSpace);
+
         Vector2Int gridPosition = new Vector2Int(
-            Mathf.RoundToInt(worldPosition.x / nodeSize),
-            Mathf.RoundToInt(worldPosition.z / nodeSize)
+            Mathf.RoundToInt(localPosition.x / nodeSize),
+            Mathf.RoundToInt(localPosition.z / nodeSize)
         );
 
         node = GetNode(gridPosition);
@@ -340,6 +348,34 @@ public class MapGeneratorBehaviour : MonoBehaviour
     {
         GridNodeBehaviour node = GetNode(gridPosition);
         return node != null && node.IsWalkable;
+    }
+
+    private Transform GetGridSpaceTransform()
+    {
+        Transform parent = GetGeneratedNodesParent();
+        return parent != null ? parent : transform;
+    }
+
+    private Vector3 GetGridOriginLocalPosition(Transform gridSpace)
+    {
+        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> nodeEntry in nodeDictionary)
+        {
+            GridNodeBehaviour node = nodeEntry.Value;
+
+            if (node == null)
+            {
+                continue;
+            }
+
+            Vector3 nodeLocalPosition = gridSpace.InverseTransformPoint(node.WorldPosition);
+            return nodeLocalPosition - new Vector3(
+                nodeEntry.Key.x * nodeSize,
+                0f,
+                nodeEntry.Key.y * nodeSize
+            );
+        }
+
+        return Vector3.zero;
     }
 
     private void ClearNodeTileVisual(Transform nodeTransform)

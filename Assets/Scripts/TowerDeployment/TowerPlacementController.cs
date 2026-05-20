@@ -8,6 +8,8 @@ public class TowerPlacementController : MonoBehaviour
     [SerializeField] private TowerPlacementValidator placementValidator;
     [SerializeField] private TowerDeployController deployController;
     [SerializeField] private BattleHUDUI battleHUDUI;
+    [SerializeField] private LayerMask placementRaycastMask = ~0;
+    [SerializeField] private float placementRaycastDistance = 500f;
 
     private TowerPlacementPreview currentPreview;
     private TowerDefinition currentTowerDefinition;
@@ -186,7 +188,15 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         Ray ray = placementCamera.ScreenPointToRay(screenPosition);
-        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+
+        if (TryGetPlacementRaycastHit(ray, out RaycastHit hit))
+        {
+            worldPosition = hit.point;
+            return true;
+        }
+
+        float fallbackGroundHeight = mapGenerator != null ? mapGenerator.transform.position.y : 0f;
+        Plane groundPlane = new Plane(Vector3.up, new Vector3(0f, fallbackGroundHeight, 0f));
 
         if (!groundPlane.Raycast(ray, out float enter))
         {
@@ -195,6 +205,47 @@ public class TowerPlacementController : MonoBehaviour
 
         worldPosition = ray.GetPoint(enter);
         return true;
+    }
+
+    private bool TryGetPlacementRaycastHit(Ray ray, out RaycastHit placementHit)
+    {
+        placementHit = default;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            ray,
+            placementRaycastDistance,
+            placementRaycastMask,
+            QueryTriggerInteraction.Ignore
+        );
+
+        if (hits.Length == 0)
+        {
+            return false;
+        }
+
+        System.Array.Sort(hits, (left, right) => left.distance.CompareTo(right.distance));
+
+        for (int i = 0; i < hits.Length; i++)
+        {
+            RaycastHit hit = hits[i];
+
+            if (IsCurrentPreviewHit(hit))
+            {
+                continue;
+            }
+
+            placementHit = hit;
+            return true;
+        }
+
+        return false;
+    }
+
+    private bool IsCurrentPreviewHit(RaycastHit hit)
+    {
+        return currentPreview != null &&
+               hit.collider != null &&
+               hit.collider.transform.IsChildOf(currentPreview.transform);
     }
 
     private void EnsureRuntimeDependencies()
