@@ -37,3 +37,50 @@ Important constraints:
 - Keep the scope strictly within xxx.md
 
 After I approve your plan, I will ask you to proceed with implementation.
+
+
+
+## Temp
+
+Please review the following Monster System task documents together:
+
+Docs/Tasks/Task_001_MonsterDefinition.md
+Docs/Tasks/Task_002_MonsterWaveSpawner.md
+Docs/Tasks/Task_003_AStarPathfinding.md
+Docs/Tasks/Task_004_MonsterMovement.md
+Docs/Tasks/Task_005_DynamicPathRecalculation.md
+Docs/Tasks/Task_006_PathBlockingValidation.md
+Docs/Tasks/Task_007_MonsterDeathAndReward.md
+
+Also review the source documents:
+
+Docs/00_ProjectOverview.md
+Docs/03_MonsterSystem.md
+Docs/01_MapSystem.md
+Docs/02_TowerDeploySystem.md
+
+Before writing any code, inspect the current project structure and provide one overall implementation plan for the full Monster System.
+
+Do not implement anything yet.
+
+Your plan must include:
+
+1. Existing scripts/classes related to these tasks
+2. Proposed runtime architecture
+3. Expected new scripts/classes
+4. Expected files to modify
+5. Dependency order between Task_001 to Task_007
+6. Shared APIs that should stay stable across tasks
+7. How Monster System integrates with MapSystem and TowerDeploySystem
+8. Risks, assumptions, and possible conflicts
+9. Suggested implementation order
+10. Verification plan after all tasks are implemented
+
+Important constraints:
+
+- Do not write code yet
+- Do not implement anything yet
+- Do not modify unrelated systems
+- Do not over-engineer future monster features
+- Keep the implementation aligned with the task documents
+- Keep each task scope isolated, but make sure APIs are compatible across all seven tasks
