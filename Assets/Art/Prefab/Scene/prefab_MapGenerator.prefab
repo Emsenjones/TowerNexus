@@ -18729,7 +18729,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GridNodeBehaviour
   gridPosition: {x: 7, y: 0}
   isWalkable: 1
-  nodeType: 0
+  nodeType: 1
 --- !u!1 &4146368844117495320
 GameObject:
   m_ObjectHideFlags: 0
@@ -37125,7 +37125,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GridNodeBehaviour
   gridPosition: {x: 0, y: 19}
   isWalkable: 1
-  nodeType: 0
+  nodeType: 2
 --- !u!1 &8149461307581755139
 GameObject:
   m_ObjectHideFlags: 0
