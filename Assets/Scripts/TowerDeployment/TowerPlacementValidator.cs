@@ -132,7 +132,7 @@ public class TowerPlacementValidator : MonoBehaviour
         {
             MonsterBehaviour monster = aliveMonsters[i];
 
-            if (monster == null)
+            if (monster == null || monster.IsDead())
             {
                 continue;
             }

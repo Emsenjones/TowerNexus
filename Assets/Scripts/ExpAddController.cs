@@ -4,7 +4,6 @@ using UnityEngine;
 public class ExpAddController : MonoBehaviour
 {
         [SerializeField] private PlayerLevelSystem playerLevelSystem;
-        [SerializeField] private MapGeneratorBehaviour mapGenerator;
         [SerializeField]
         int addedExp;
  

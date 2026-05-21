@@ -8,6 +8,7 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private MapGeneratorBehaviour mapGenerator;
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterManager monsterManager;
+    [SerializeField] private PlayerLevelSystem playerLevelSystem;
     [SerializeField] private Transform monsterRoot;
     [SerializeField] private bool playOnStart;
 
@@ -96,7 +97,11 @@ public class MonsterSpawner : MonoBehaviour
                 {
                     SpawnMonster(spawnEntry.MonsterDefinition);
 
-                    if (countIndex < spawnEntry.Count - 1 && spawnEntry.SpawnInterval > 0f)
+                    bool hasMoreMonstersInEntry = countIndex < spawnEntry.Count - 1;
+                    bool hasMoreEntriesInWave = entryIndex < spawnEntries.Count - 1;
+                    bool hasMoreWaves = waveIndex < waves.Count - 1;
+
+                    if ((hasMoreMonstersInEntry || hasMoreEntriesInWave || hasMoreWaves) && spawnEntry.SpawnInterval > 0f)
                     {
                         yield return new WaitForSeconds(spawnEntry.SpawnInterval);
                     }
@@ -145,6 +150,7 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         monsterBehaviour.Initialize(monsterDefinition);
+        monsterBehaviour.SetRuntimeReferences(monsterManager, playerLevelSystem);
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
 

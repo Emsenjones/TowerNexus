@@ -15,11 +15,11 @@ MonoBehaviour:
   monsterId: 2
   displayName: Spider
   monsterPrefab: {fileID: 2179103727158641011, guid: 62fd2f6db0c024c02a5b236fc72ec53e, type: 3}
-  moveSpeed: 1
+  moveSpeed: 0.5
   maxHealth: 1
   expReward: 0
   damageToPlayer: 0
-  isWalkingParameterName: IsWalking
-  getHitAnimationName: GetHit
-  deadAnimationName: Dead
-  deathDelay: 1
+  walkingBoolParameterName: IsWalking
+  getHitTriggerName: GetHit
+  dieTriggerName: Die
+  deathDelay: 2

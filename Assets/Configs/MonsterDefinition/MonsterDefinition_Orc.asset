@@ -15,11 +15,11 @@ MonoBehaviour:
   monsterId: 8
   displayName: Orc
   monsterPrefab: {fileID: 7885271453143739113, guid: ef8b8f95e97d742a5a4982c0e73bb673, type: 3}
-  moveSpeed: 1
+  moveSpeed: 0.5
   maxHealth: 1
   expReward: 0
   damageToPlayer: 0
-  isWalkingParameterName: IsWalking
-  getHitAnimationName: GetHit
-  deadAnimationName: IsWalking
-  deathDelay: 1
+  walkingBoolParameterName: IsWalking
+  getHitTriggerName: GetHit
+  dieTriggerName: Die
+  deathDelay: 2

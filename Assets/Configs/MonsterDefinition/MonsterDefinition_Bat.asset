@@ -15,11 +15,11 @@ MonoBehaviour:
   monsterId: 3
   displayName: Bat
   monsterPrefab: {fileID: 3866999361384652794, guid: fea114b78b71741fa89ac0ed135e6a17, type: 3}
-  moveSpeed: 1
+  moveSpeed: 0.5
   maxHealth: 1
   expReward: 0
   damageToPlayer: 0
-  isWalkingParameterName: IsWalking
-  getHitAnimationName: GetHit
-  deadAnimationName: Dead
-  deathDelay: 1
+  walkingBoolParameterName: IsWalking
+  getHitTriggerName: GetHit
+  dieTriggerName: Die
+  deathDelay: 2

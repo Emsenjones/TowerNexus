@@ -6,6 +6,8 @@ using Sirenix.OdinInspector;
 public class MonsterBehaviour : MonoBehaviour
 {
     [SerializeField] private MonsterDefinition definition;
+    [SerializeField] private MonsterManager monsterManager;
+    [SerializeField] private PlayerLevelSystem playerLevelSystem;
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
     [SerializeField] private Animator animator;
@@ -14,6 +16,8 @@ public class MonsterBehaviour : MonoBehaviour
     [ShowInInspector, ReadOnly] private GridNodeBehaviour currentNode;
     [ShowInInspector, ReadOnly] private GridNodeBehaviour targetNode;
     [ShowInInspector, ReadOnly] private bool isMoving;
+    [ShowInInspector, ReadOnly] private bool isDead;
+    [ShowInInspector, ReadOnly] private bool isCleaningUp;
 
     private readonly List<GridNodeBehaviour> currentPath = new List<GridNodeBehaviour>();
     private int pathIndex;
@@ -29,6 +33,7 @@ public class MonsterBehaviour : MonoBehaviour
     public bool IsMoving => isMoving;
 
     public event Action<MonsterBehaviour> OnTargetReached;
+    public event Action<MonsterBehaviour> OnDied;
 
     public void Initialize(MonsterDefinition definition)
     {
@@ -41,7 +46,17 @@ public class MonsterBehaviour : MonoBehaviour
         this.definition = definition;
         currentHealth = definition.MaxHealth;
         currentMoveSpeed = definition.MoveSpeed;
+        isDead = false;
+        isCleaningUp = false;
         CacheAnimator();
+    }
+
+    public void SetRuntimeReferences(
+        MonsterManager monsterManager,
+        PlayerLevelSystem playerLevelSystem)
+    {
+        this.monsterManager = monsterManager;
+        this.playerLevelSystem = playerLevelSystem;
     }
 
     public void SetCurrentNode(GridNodeBehaviour currentNode)
@@ -66,6 +81,11 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void SetPath(List<GridNodeBehaviour> path)
     {
+        if (isDead || isCleaningUp)
+        {
+            return;
+        }
+
         currentPath.Clear();
 
         if (path == null || path.Count == 0)
@@ -114,6 +134,48 @@ public class MonsterBehaviour : MonoBehaviour
         SetWalkingAnimation(false);
     }
 
+    public void TakeDamage(int damage)
+    {
+        if (damage <= 0 || isDead || isCleaningUp)
+        {
+            return;
+        }
+
+        currentHealth = Mathf.Max(0, currentHealth - damage);
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+    }
+
+    public void Die()
+    {
+        if (isDead || isCleaningUp)
+        {
+            return;
+        }
+
+        isDead = true;
+        StopMovement();
+        currentPath.Clear();
+        OnDied?.Invoke(this);
+
+        if (monsterManager != null)
+        {
+            monsterManager.UnregisterMonster(this);
+        }
+
+        PlayDeathAnimation();
+        RewardExp();
+        Destroy(gameObject, GetDeathDelay());
+    }
+
+    public bool IsDead()
+    {
+        return isDead;
+    }
+
     private void Awake()
     {
         CacheAnimator();
@@ -121,7 +183,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (!isMoving)
+        if (!isMoving || isDead || isCleaningUp)
         {
             return;
         }
@@ -156,6 +218,14 @@ public class MonsterBehaviour : MonoBehaviour
         Vector3 targetPosition = nextNode.WorldPosition;
         targetPosition.y = transform.position.y;
 
+        Vector3 moveDirection = targetPosition - transform.position;
+        moveDirection.y = 0f;
+
+        if (moveDirection.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = Quaternion.LookRotation(moveDirection.normalized, Vector3.up);
+        }
+
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
@@ -179,17 +249,56 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void HandleTargetReached()
     {
-        StopMovement();
-        OnTargetReached?.Invoke(this);
-    }
-
-    private void SetWalkingAnimation(bool walking)
-    {
-        if (animator == null || definition == null || string.IsNullOrEmpty(definition.IsWalkingParameterName))
+        if (isDead || isCleaningUp)
         {
             return;
         }
 
-        animator.SetBool(definition.IsWalkingParameterName, walking);
+        isCleaningUp = true;
+        StopMovement();
+        currentPath.Clear();
+        OnTargetReached?.Invoke(this);
+
+        if (monsterManager != null)
+        {
+            monsterManager.UnregisterMonster(this);
+        }
+
+        Destroy(gameObject);
+    }
+
+    private void SetWalkingAnimation(bool walking)
+    {
+        if (animator == null || definition == null || string.IsNullOrEmpty(definition.WalkingBoolParameterName))
+        {
+            return;
+        }
+
+        animator.SetBool(definition.WalkingBoolParameterName, walking);
+    }
+
+    private void PlayDeathAnimation()
+    {
+        if (animator == null || definition == null || string.IsNullOrEmpty(definition.DieTriggerName))
+        {
+            return;
+        }
+
+        animator.SetTrigger(definition.DieTriggerName);
+    }
+
+    private void RewardExp()
+    {
+        if (playerLevelSystem == null || definition == null)
+        {
+            return;
+        }
+
+        playerLevelSystem.AddExp(definition.ExpReward);
+    }
+
+    private float GetDeathDelay()
+    {
+        return definition != null ? Mathf.Max(0f, definition.DeathDelay) : 0f;
     }
 }

@@ -1,9 +1,6 @@
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
-
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 [ExecuteAlways]
 public class MapGeneratorBehaviour : MonoBehaviour
@@ -41,7 +38,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
         RebuildNodeDictionary();
     }
 
-    [ContextMenu("Generate Map")]
+    [Button("Generate Map")]
     public void GenerateMap()
     {
         if (nodePrefab == null)
@@ -72,7 +69,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
         RefreshMapVisual();
     }
 
-    [ContextMenu("Clear Map")]
+    [Button("Clear Map")]
     public void ClearMap()
     {
         nodeDictionary.Clear();
@@ -104,7 +101,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
         }
     }
 
-    [ContextMenu("Rebuild Node Dictionary")]
+    [Button("Rebuild Node Dictionary")]
     public void RebuildNodeDictionary()
     {
         nodeDictionary.Clear();
@@ -277,7 +274,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
     {
         return SetNodeWalkable(new Vector2Int(x, y), value);
     }
-    [ContextMenu("Refresh Map Visual")]
+    [Button("Refresh Map Visual")]
     public void RefreshMapVisual()
     {
         if (nodeDictionary.Count == 0)
@@ -506,30 +503,3 @@ public class MapGeneratorBehaviour : MonoBehaviour
     }
 }
 
-#if UNITY_EDITOR
-[CustomEditor(typeof(MapGeneratorBehaviour))]
-public class MapGeneratorBehaviourEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        DrawDefaultInspector();
-
-        MapGeneratorBehaviour mapGenerator = (MapGeneratorBehaviour)target;
-
-        EditorGUILayout.Space();
-        EditorGUILayout.LabelField("Map Authoring Tools", EditorStyles.boldLabel);
-
-        if (GUILayout.Button("Generate Map"))
-        {
-            mapGenerator.GenerateMap();
-            EditorUtility.SetDirty(mapGenerator);
-        }
-
-        if (GUILayout.Button("Refresh Map Visual"))
-        {
-            mapGenerator.RefreshMapVisual();
-            EditorUtility.SetDirty(mapGenerator);
-        }
-    }
-}
-#endif

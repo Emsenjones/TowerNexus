@@ -21,6 +21,7 @@ public class MonsterManager : MonoBehaviour
 
         aliveMonsters.Add(monster);
         monster.OnTargetReached += HandleMonsterTargetReached;
+        monster.OnDied += HandleMonsterDied;
     }
 
     public void UnregisterMonster(MonsterBehaviour monster)
@@ -31,6 +32,7 @@ public class MonsterManager : MonoBehaviour
         }
 
         monster.OnTargetReached -= HandleMonsterTargetReached;
+        monster.OnDied -= HandleMonsterDied;
         aliveMonsters.Remove(monster);
     }
 
@@ -40,7 +42,7 @@ public class MonsterManager : MonoBehaviour
         {
             MonsterBehaviour monster = aliveMonsters[i];
 
-            if (monster == null)
+            if (monster == null || monster.IsDead())
             {
                 aliveMonsters.RemoveAt(i);
                 continue;
@@ -52,7 +54,7 @@ public class MonsterManager : MonoBehaviour
 
     public void RequestPathRecalculation(MonsterBehaviour monster)
     {
-        if (monster == null)
+        if (monster == null || monster.IsDead())
         {
             return;
         }
@@ -98,6 +100,7 @@ public class MonsterManager : MonoBehaviour
             if (monster != null)
             {
                 monster.OnTargetReached -= HandleMonsterTargetReached;
+                monster.OnDied -= HandleMonsterDied;
             }
         }
 
@@ -105,6 +108,11 @@ public class MonsterManager : MonoBehaviour
     }
 
     private void HandleMonsterTargetReached(MonsterBehaviour monster)
+    {
+        UnregisterMonster(monster);
+    }
+
+    private void HandleMonsterDied(MonsterBehaviour monster)
     {
         UnregisterMonster(monster);
     }

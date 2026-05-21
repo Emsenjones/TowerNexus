@@ -15,11 +15,11 @@ MonoBehaviour:
   monsterId: 6
   displayName: Skeleton
   monsterPrefab: {fileID: 2382199090356143332, guid: 11ae00977065c425f8298ca0e5e60680, type: 3}
-  moveSpeed: 1
+  moveSpeed: 0.5
   maxHealth: 1
   expReward: 0
   damageToPlayer: 0
-  isWalkingParameterName: IsWalking
-  getHitAnimationName: GetHit
-  deadAnimationName: IsWalking
-  deathDelay: 1
+  walkingBoolParameterName: IsWalking
+  getHitTriggerName: GetHit
+  dieTriggerName: Die
+  deathDelay: 2
