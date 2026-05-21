@@ -12,4 +12,40 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0f2fb3445f9f4d3582926a18171d1379, type: 3}
   m_Name: MonsterWaveConfig
   m_EditorClassIdentifier: Assembly-CSharp::MonsterWaveConfig
-  waves: []
+  waves:
+  - waveId: 1
+    waveDelay: 4
+    spawnEntries:
+    - monsterDefinition: {fileID: 11400000, guid: db8d70b2ee8114d0f99b92710a526ca7, type: 2}
+      count: 5
+      spawnInterval: 1
+    - monsterDefinition: {fileID: 11400000, guid: 161fe01e8671842009e0d613b0a7b9da, type: 2}
+      count: 5
+      spawnInterval: 1
+    - monsterDefinition: {fileID: 11400000, guid: ac0dd61ab1e094ab2970e9e64a9eff79, type: 2}
+      count: 5
+      spawnInterval: 1
+  - waveId: 2
+    waveDelay: 4
+    spawnEntries:
+    - monsterDefinition: {fileID: 11400000, guid: 5ffd181566bc444e7b7942a0aeebdb44, type: 2}
+      count: 5
+      spawnInterval: 1
+    - monsterDefinition: {fileID: 11400000, guid: b761deff0969f465981d947df888786e, type: 2}
+      count: 5
+      spawnInterval: 1
+    - monsterDefinition: {fileID: 11400000, guid: bc23fca48772e43708767f0c1a3c4c90, type: 2}
+      count: 5
+      spawnInterval: 1
+  - waveId: 3
+    waveDelay: 4
+    spawnEntries:
+    - monsterDefinition: {fileID: 11400000, guid: d2993ab2f86f64a8eabd36088246867d, type: 2}
+      count: 5
+      spawnInterval: 1
+    - monsterDefinition: {fileID: 11400000, guid: d865b995ba1b74b0b8985767141709f8, type: 2}
+      count: 5
+      spawnInterval: 1
+    - monsterDefinition: {fileID: 11400000, guid: d1eec0e85cdc04f7583c3ec303854e0b, type: 2}
+      count: 5
+      spawnInterval: 1
