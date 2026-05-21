@@ -5,6 +5,7 @@ public class TowerDeployController : MonoBehaviour
 {
     private TowerPlacementValidator placementValidator;
     [SerializeField] private Transform deployedTowerRoot;
+    [SerializeField] private MonsterManager monsterManager;
     private BattleHUDUI battleHUDUI;
     private MapGeneratorBehaviour mapGenerator;
 
@@ -16,6 +17,18 @@ public class TowerDeployController : MonoBehaviour
         this.placementValidator = placementValidator;
         this.mapGenerator = mapGenerator;
         this.battleHUDUI = battleHUDUI;
+    }
+
+    public void Initialize(
+        TowerPlacementValidator placementValidator,
+        MapGeneratorBehaviour mapGenerator,
+        BattleHUDUI battleHUDUI,
+        MonsterManager monsterManager)
+    {
+        this.placementValidator = placementValidator;
+        this.mapGenerator = mapGenerator;
+        this.battleHUDUI = battleHUDUI;
+        this.monsterManager = monsterManager;
     }
 
     public bool TryDeployTower(TowerPlacementPreview preview, PendingTowerItemUI draftedTowerEntry)
@@ -81,6 +94,11 @@ public class TowerDeployController : MonoBehaviour
         if (mapGenerator != null)
         {
             mapGenerator.RefreshMapVisual();
+        }
+
+        if (monsterManager != null)
+        {
+            monsterManager.RecalculateAllMonsterPaths();
         }
 
         if (battleHUDUI != null && draftedTowerEntry != null)

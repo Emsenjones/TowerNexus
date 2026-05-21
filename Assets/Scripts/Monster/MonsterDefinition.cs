@@ -14,7 +14,7 @@ public class MonsterDefinition : ScriptableObject
     [SerializeField] private int maxHealth = 1;
     [SerializeField] private int expReward;
     [SerializeField] private int damageToPlayer;
-    [SerializeField] private string isWalkingParameterName;
+    [SerializeField] private string isWalkingParameterName = "IsWalking";
     [SerializeField] private string getHitAnimationName;
     [SerializeField] private string deadAnimationName;
     [SerializeField] private float deathDelay = 1f;

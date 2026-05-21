@@ -122,6 +122,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerDeployController
   deployedTowerRoot: {fileID: 164484144082982332}
+  monsterManager: {fileID: 8246104796970957583}
 --- !u!1 &3177765559474825686
 GameObject:
   m_ObjectHideFlags: 0
@@ -581,6 +582,8 @@ MonoBehaviour:
   placementValidator: {fileID: 1248973704826299345}
   deployController: {fileID: 1542925268267888326}
   battleHUDUI: {fileID: 4430054556091105857}
+  pathfindingService: {fileID: 4731439007408284308}
+  monsterManager: {fileID: 8246104796970957583}
   placementRaycastMask:
     serializedVersion: 2
     m_Bits: 1079
@@ -597,6 +600,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bf02a93e1bbf4d998b1bfc488b49bee2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerPlacementValidator
+  pathfindingService: {fileID: 4731439007408284308}
+  monsterManager: {fileID: 8246104796970957583}
 --- !u!1 &4626631840141391872
 GameObject:
   m_ObjectHideFlags: 0
@@ -818,6 +823,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterSpawner
   waveConfig: {fileID: 11400000, guid: 2d14da0049f6b4deb9d0ed1185670759, type: 2}
   mapGenerator: {fileID: 8263608822962197460}
+  pathfindingService: {fileID: 4731439007408284308}
+  monsterManager: {fileID: 8246104796970957583}
   monsterRoot: {fileID: 806339692037077095}
   playOnStart: 0
 --- !u!1 &5725809147306122853
@@ -1187,6 +1194,51 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &7229776445374390782
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4895884920261448120}
+  - component: {fileID: 8246104796970957583}
+  m_Layer: 0
+  m_Name: MonsterManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4895884920261448120
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7229776445374390782}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.07913, y: 0, z: 0.37007}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3261855449354590494}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8246104796970957583
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7229776445374390782}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: faa1674eabd7482ea3d82430cdfdd07e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterManager
+  pathfindingService: {fileID: 4731439007408284308}
 --- !u!1 &7368206356976370088
 GameObject:
   m_ObjectHideFlags: 0
@@ -1732,6 +1784,7 @@ Transform:
   - {fileID: 5016857861841176031}
   - {fileID: 1314135725715290937}
   - {fileID: 806339692037077095}
+  - {fileID: 4895884920261448120}
   - {fileID: 1395324058105231352}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1775,7 +1828,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9144787478559733843}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0

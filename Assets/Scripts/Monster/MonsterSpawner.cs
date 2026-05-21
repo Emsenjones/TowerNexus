@@ -7,6 +7,7 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private MonsterWaveConfig waveConfig;
     [SerializeField] private MapGeneratorBehaviour mapGenerator;
     [SerializeField] private AStarPathfindingService pathfindingService;
+    [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private Transform monsterRoot;
     [SerializeField] private bool playOnStart;
 
@@ -146,6 +147,15 @@ public class MonsterSpawner : MonoBehaviour
         monsterBehaviour.Initialize(monsterDefinition);
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
+
+        if (monsterManager != null)
+        {
+            monsterManager.RegisterMonster(monsterBehaviour);
+        }
+        else
+        {
+            Debug.LogWarning("Monster spawner cannot register monster: monster manager is not assigned.", this);
+        }
 
         if (pathfindingService != null && targetNode != null)
         {

@@ -19,7 +19,7 @@ MonoBehaviour:
   maxHealth: 1
   expReward: 0
   damageToPlayer: 0
-  walkAnimationName: Walk
-  hitAnimationName: GetHit
-  deathAnimationName: Death
+  isWalkingParameterName: IsWalking
+  getHitAnimationName: GetHit
+  deadAnimationName: Dead
   deathDelay: 1

@@ -8,6 +8,8 @@ public class TowerPlacementController : MonoBehaviour
     [SerializeField] private TowerPlacementValidator placementValidator;
     [SerializeField] private TowerDeployController deployController;
     [SerializeField] private BattleHUDUI battleHUDUI;
+    [SerializeField] private AStarPathfindingService pathfindingService;
+    [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private LayerMask placementRaycastMask = ~0;
     [SerializeField] private float placementRaycastDistance = 500f;
 
@@ -260,6 +262,16 @@ public class TowerPlacementController : MonoBehaviour
             battleHUDUI = FindFirstObjectByType<BattleHUDUI>();
         }
 
+        if (pathfindingService == null)
+        {
+            pathfindingService = FindFirstObjectByType<AStarPathfindingService>();
+        }
+
+        if (monsterManager == null)
+        {
+            monsterManager = FindFirstObjectByType<MonsterManager>();
+        }
+
         if (placementValidator == null)
         {
             placementValidator = GetComponent<TowerPlacementValidator>();
@@ -270,7 +282,7 @@ public class TowerPlacementController : MonoBehaviour
             placementValidator = gameObject.AddComponent<TowerPlacementValidator>();
         }
 
-        placementValidator.Initialize(mapGenerator);
+        placementValidator.Initialize(mapGenerator, pathfindingService, monsterManager);
 
         if (deployController == null)
         {
@@ -282,6 +294,6 @@ public class TowerPlacementController : MonoBehaviour
             deployController = gameObject.AddComponent<TowerDeployController>();
         }
 
-        deployController.Initialize(placementValidator, mapGenerator, battleHUDUI);
+        deployController.Initialize(placementValidator, mapGenerator, battleHUDUI, monsterManager);
     }
 }

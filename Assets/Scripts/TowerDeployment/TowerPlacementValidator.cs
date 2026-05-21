@@ -3,11 +3,24 @@ using UnityEngine;
 
 public class TowerPlacementValidator : MonoBehaviour
 {
+    [SerializeField] private AStarPathfindingService pathfindingService;
+    [SerializeField] private MonsterManager monsterManager;
+
     private MapGeneratorBehaviour mapGenerator;
 
     public void Initialize(MapGeneratorBehaviour mapGenerator)
     {
         this.mapGenerator = mapGenerator;
+    }
+
+    public void Initialize(
+        MapGeneratorBehaviour mapGenerator,
+        AStarPathfindingService pathfindingService,
+        MonsterManager monsterManager)
+    {
+        this.mapGenerator = mapGenerator;
+        this.pathfindingService = pathfindingService;
+        this.monsterManager = monsterManager;
     }
 
     public bool TryGetOccupiedNodes(TowerPlacementPreview preview, out List<GridNodeBehaviour> occupiedNodes)
@@ -76,6 +89,72 @@ public class TowerPlacementValidator : MonoBehaviour
 
     private bool ValidatePathBlocking(List<GridNodeBehaviour> occupiedNodes)
     {
+        if (pathfindingService == null || mapGenerator == null)
+        {
+            return false;
+        }
+
+        GridNodeBehaviour spawnNode = mapGenerator.GetSpawnNode();
+        GridNodeBehaviour targetNode = mapGenerator.GetTargetNode();
+
+        if (spawnNode == null || targetNode == null)
+        {
+            return false;
+        }
+
+        HashSet<GridNodeBehaviour> temporaryBlockedNodes = new HashSet<GridNodeBehaviour>();
+
+        for (int i = 0; i < occupiedNodes.Count; i++)
+        {
+            GridNodeBehaviour occupiedNode = occupiedNodes[i];
+
+            if (occupiedNode == null)
+            {
+                return false;
+            }
+
+            temporaryBlockedNodes.Add(occupiedNode);
+        }
+
+        if (!pathfindingService.HasValidPath(spawnNode, targetNode, temporaryBlockedNodes))
+        {
+            return false;
+        }
+
+        if (monsterManager == null)
+        {
+            return true;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            MonsterBehaviour monster = aliveMonsters[i];
+
+            if (monster == null)
+            {
+                continue;
+            }
+
+            GridNodeBehaviour monsterCurrentNode = monster.GetCurrentNode();
+
+            if (monsterCurrentNode == null)
+            {
+                continue;
+            }
+
+            if (temporaryBlockedNodes.Contains(monsterCurrentNode))
+            {
+                return false;
+            }
+
+            if (!pathfindingService.HasValidPath(monsterCurrentNode, targetNode, temporaryBlockedNodes))
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 }
