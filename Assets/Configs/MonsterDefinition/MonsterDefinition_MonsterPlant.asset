@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
   m_Name: MonsterDefinition_MonsterPlant
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 
-  displayName: 
-  monsterPrefab: {fileID: 0}
+  monsterId: 4
+  displayName: Monster Plant
+  monsterPrefab: {fileID: 2198626025461408082, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
   moveSpeed: 1
   maxHealth: 1
   expReward: 0
   damageToPlayer: 0
-  walkAnimationName: 
-  hitAnimationName: 
-  deathAnimationName: 
+  walkAnimationName: Walk
+  hitAnimationName: GetHit
+  deathAnimationName: Death
   deathDelay: 1

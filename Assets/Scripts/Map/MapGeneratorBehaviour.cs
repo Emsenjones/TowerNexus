@@ -147,6 +147,26 @@ public class MapGeneratorBehaviour : MonoBehaviour
         return GetNode(new Vector2Int(x, y));
     }
 
+    public GridNodeBehaviour GetSpawnNode()
+    {
+        if (nodeDictionary.Count == 0)
+        {
+            RebuildNodeDictionary();
+        }
+
+        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> nodeEntry in nodeDictionary)
+        {
+            GridNodeBehaviour node = nodeEntry.Value;
+
+            if (node != null && node.NodeType == GridNodeType.Spawn)
+            {
+                return node;
+            }
+        }
+
+        return null;
+    }
+
     public bool TryGetNodeByWorldPosition(Vector3 worldPosition, out GridNodeBehaviour node)
     {
         node = null;

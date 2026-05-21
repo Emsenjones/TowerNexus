@@ -12,14 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
   m_Name: MonsterDefinition_Golem
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 
-  displayName: 
-  monsterPrefab: {fileID: 0}
+  monsterId: 9
+  displayName: Golem
+  monsterPrefab: {fileID: 3333681211596321960, guid: 6973816234f2b4f3a9ee8c30c3053911, type: 3}
   moveSpeed: 1
   maxHealth: 1
   expReward: 0
   damageToPlayer: 0
-  walkAnimationName: 
-  hitAnimationName: 
-  deathAnimationName: 
+  walkAnimationName: Walk
+  hitAnimationName: GetHit
+  deathAnimationName: Death
   deathDelay: 1
