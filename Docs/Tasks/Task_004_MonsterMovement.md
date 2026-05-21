@@ -1,5 +1,3 @@
-
-
 # Task 004 - Monster Movement
 
 ## 1. Overview
@@ -201,7 +199,7 @@ Map walkability changes
 ```
 
 ---
-
+ 
 # 11. Target Arrival
 
 When a monster reaches the final target node:
@@ -216,16 +214,35 @@ This task may expose a simple callback/event for future integration, but should 
 
 # 12. Animation Rules
 
-Monster movement should support basic walk animation triggering.
+Monster movement should support basic Idle and Walk animation control.
 
-Recommended behavior:
+The current version uses an Animator bool parameter to switch between Idle and Walk.
 
-- Use walkAnimationName from MonsterDefinition
-- Avoid hardcoded animation state names
-- Play walk animation when movement starts
-- Stop or leave animation handling open when movement stops
+Recommended Animator parameter:
 
-This task does not implement hit animation or death animation behavior.
+```text
+IsWalking
+```
+
+Recommended runtime behavior:
+
+```text
+Monster starts moving
+→ Animator.SetBool("IsWalking", true)
+
+Monster stops moving
+→ Animator.SetBool("IsWalking", false)
+```
+
+The exact Animator parameter name should be read from MonsterDefinition, such as:
+
+```text
+isWalkingParameterName
+```
+
+MonsterBehaviour should avoid hardcoding Animator parameter names when possible.
+
+This task does not implement hit animation, HitLayer logic, or death animation behavior.
 
 ---
 
@@ -271,5 +288,5 @@ This task is considered complete when:
 6. Monster can detect reaching the final target node.
 7. Monster can stop movement safely.
 8. MonsterBehaviour exposes currentNode for future dynamic path recalculation.
-9. Basic walk animation can be triggered without hardcoded animation names.
+9. Basic Idle and Walk animation can be controlled through an Animator bool parameter, preferably using the parameter name configured in MonsterDefinition.
 10. No pathfinding algorithm, death logic, or player damage logic is implemented in this task.

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "MonsterDefinition",
@@ -13,9 +14,9 @@ public class MonsterDefinition : ScriptableObject
     [SerializeField] private int maxHealth = 1;
     [SerializeField] private int expReward;
     [SerializeField] private int damageToPlayer;
-    [SerializeField] private string walkAnimationName;
-    [SerializeField] private string hitAnimationName;
-    [SerializeField] private string deathAnimationName;
+    [SerializeField] private string isWalkingParameterName;
+    [SerializeField] private string getHitAnimationName;
+    [SerializeField] private string deadAnimationName;
     [SerializeField] private float deathDelay = 1f;
 
     public string MonsterId => monsterId;
@@ -25,9 +26,9 @@ public class MonsterDefinition : ScriptableObject
     public int MaxHealth => maxHealth;
     public int ExpReward => expReward;
     public int DamageToPlayer => damageToPlayer;
-    public string WalkAnimationName => walkAnimationName;
-    public string HitAnimationName => hitAnimationName;
-    public string DeathAnimationName => deathAnimationName;
+    public string IsWalkingParameterName => isWalkingParameterName;
+    public string GetHitAnimationName => getHitAnimationName;
+    public string DeathAnimationName => deadAnimationName;
     public float DeathDelay => deathDelay;
 
     public bool IsValid()

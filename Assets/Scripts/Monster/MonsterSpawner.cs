@@ -6,6 +6,7 @@ public class MonsterSpawner : MonoBehaviour
 {
     [SerializeField] private MonsterWaveConfig waveConfig;
     [SerializeField] private MapGeneratorBehaviour mapGenerator;
+    [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private Transform monsterRoot;
     [SerializeField] private bool playOnStart;
 
@@ -121,6 +122,13 @@ public class MonsterSpawner : MonoBehaviour
             return null;
         }
 
+        GridNodeBehaviour targetNode = mapGenerator.GetTargetNode();
+
+        if (targetNode == null)
+        {
+            Debug.LogWarning("Monster spawner cannot assign movement path: map has no target node.", mapGenerator);
+        }
+
         GameObject monsterObject = Instantiate(
             monsterDefinition.MonsterPrefab,
             spawnNode.WorldPosition,
@@ -136,6 +144,19 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         monsterBehaviour.Initialize(monsterDefinition);
+        monsterBehaviour.SetCurrentNode(spawnNode);
+        monsterBehaviour.SetTargetNode(targetNode);
+
+        if (pathfindingService != null && targetNode != null)
+        {
+            List<GridNodeBehaviour> path = pathfindingService.FindPath(spawnNode, targetNode);
+            monsterBehaviour.SetPath(path);
+        }
+        else if (pathfindingService == null)
+        {
+            Debug.LogWarning("Monster spawner cannot assign movement path: pathfinding service is not assigned.", this);
+        }
+
         return monsterBehaviour;
     }
 }

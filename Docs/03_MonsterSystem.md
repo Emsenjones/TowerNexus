@@ -48,8 +48,8 @@ Each monster should support the following configurable fields:
 | maxHealth | Monster maximum health |
 | expReward | EXP rewarded to player after death |
 | damageToPlayer | Damage dealt to player when reaching target |
-| walkAnimationName | Walk animation state name |
-| hitAnimationName | Hit animation state name |
+| isWalkingParameterName | Animator bool parameter name used to switch between Idle and Walk |
+| hitAnimationName | Hit animation state name, reserved for future hit reaction implementation |
 | deathAnimationName | Death animation state name |
 | deathDelay | Delay before monster object is destroyed |
 
@@ -159,15 +159,104 @@ Behavior:
 
 ---
 
-# 6. Hit Reaction
+# 6. Monster Animation Rules
+
+The first version of the Monster System uses a simple Animator setup.
+
+## 6.1 Idle and Walk
+
+Monster Idle and Walk animations should be controlled by an Animator bool parameter.
+
+Recommended parameter:
+
+```text
+IsWalking
+```
+
+Runtime behavior:
+
+```text
+Monster starts moving
+→ Animator.SetBool("IsWalking", true)
+
+Monster stops moving
+→ Animator.SetBool("IsWalking", false)
+```
+
+The exact Animator parameter name should be configurable through MonsterDefinition.
+
+This avoids hardcoding Animator parameter names inside MonsterBehaviour.
+
+## 6.2 Death
+
+Death animation should be triggered when the monster enters the Dead state.
+
+The first version may use a simple Animator trigger for death animation.
+
+Recommended parameter:
+
+```text
+Dead
+```
+
+Death animation behavior is handled by the monster death flow.
+
+## 6.3 Hit Reaction
 
 Hit reactions should not be treated as a standalone monster state in the first version.
 
-Instead:
+The current implementation does not need to play GetHit animation yet.
 
-- Monsters can continue moving while receiving damage
-- Hit animations can be triggered independently through Animator
-- Visual feedback such as hit flash, floating damage numbers, or additive hit animation layers can be added later
+Future versions may support hit reaction through a separated Animator layer:
+
+```text
+Base Layer
+- Idle
+- Walk
+- Death
+
+Hit Layer
+- GetHit
+```
+
+In that future setup, GetHit can be triggered independently while the Base Layer continues controlling Idle or Walk.
+
+This allows monsters to keep moving while showing hit reaction feedback.
+
+For the current version, hit reaction can be postponed or replaced with simple visual feedback such as:
+
+- Hit flash (recommended first-version solution)
+- Floating damage numbers
+- Sound effect
+
+## 6.4 Hit Flash
+
+The first version of the Monster System may use a simple hit flash effect instead of a full GetHit animation.
+
+Recommended runtime behavior:
+
+```text
+Monster receives damage
+→ Briefly change monster material color to white
+→ Restore original material color after a short delay
+```
+
+Advantages of hit flash:
+
+- Lightweight implementation
+- Easy to combine with movement animation
+- Does not interrupt Walk animation
+- Does not require Animator layer setup
+- Provides immediate visual hit feedback
+
+The exact implementation method is not restricted yet.
+
+Possible future implementations:
+
+- Material color lerp
+- Shader flash parameter
+- Emission intensity flash
+- Renderer overlay effect
 
 ---
 
