@@ -18,7 +18,7 @@ The system is responsible for:
 
 The Tower Deploy System works closely with:
 
-- Player Level System
+- Player System
 - Tower Draft System
 - Battle HUD System
 - Map System
@@ -32,12 +32,12 @@ Players continuously reshape the battlefield by deploying towers that occupy Gri
 
 Important responsibility boundary:
 
-- Player Level System is responsible for EXP accumulation and level-up events.
+- Player System is responsible for player level, EXP accumulation, player health, and battle failure conditions.
 - Tower Draft System is responsible for generating tower draft choices and handling draft selection results.
 - Battle HUD System is responsible for displaying runtime battle UI and pending tower entries.
 - Tower Deploy System is responsible for converting pending tower entries into placed battlefield towers.
 
-The Tower Deploy System should not directly own tower draft data, random draft generation, or player level-up logic.
+The Tower Deploy System should not directly own tower draft data, random draft generation, player level-up logic, player health, or battle failure logic.
 
 ---
 
@@ -51,7 +51,7 @@ Players do not freely build towers from a static build menu.
 
 Instead:
 
-- Players gain experience during gameplay through the Player Level System
+- Players gain experience during gameplay through the Player System
 - Player level-up events notify the Tower Draft System
 - The Tower Draft System generates randomized tower draft selections
 - Players choose one tower from multiple options
@@ -121,82 +121,7 @@ This ensures:
 
 ---
 
-# 3. Player Level System
-
-The Player Level System controls player progression during gameplay.
-
-Players gain experience by eliminating monsters or through other future gameplay rewards.
-
-When accumulated experience reaches the required threshold:
-
-- The player levels up
-- The Tower Draft Window is opened
-
----
-
-## 3.1 Experience Configuration
-
-The first implementation uses Unity-based configuration instead of external configuration tables.
-
-Recommended implementation methods:
-
-- ScriptableObject
-- Serialized Inspector configuration
-
-Example structure:
-
-```csharp
-public class PlayerLevelConfig : ScriptableObject
-{
-    public List<int> expRequiredPerLevel;
-}
-```
-
-Example:
-
-| Level | Required EXP |
-|---|---|
-| 1 → 2 | 10 |
-| 2 → 3 | 20 |
-| 3 → 4 | 40 |
-
----
-
-## 3.2 Runtime Data
-
-Example runtime data:
-
-```csharp
-public class PlayerLevelSystem : MonoBehaviour
-{
-    private int currentLevel;
-    private int currentExp;
-}
-```
-
-Core functionality:
-
-```csharp
-public void AddExp(int amount);
-private void TryLevelUp();
-```
-
-The Player Level System should expose events for future UI and draft systems.
-
-Recommended event boundary:
-
-```csharp
-public event Action<int> OnLevelChanged;
-public event Action<int, int> OnExpChanged;
-public event Action<int> OnLevelUp;
-```
-
-The Player Level System should not directly open UI windows or generate tower draft choices.
-Instead, systems such as TowerDraftSystem or BattleHUDUI may subscribe to its events.
-
----
-
-# 4. Battle HUD System
+# 3. Battle HUD System
 
 The Battle HUD is the always-visible UI shown during tower defense gameplay.
 
@@ -204,8 +129,8 @@ The first version should include:
 
 | UI Element | Description |
 |---|---|
-| Current Level Text | Displays the current player level |
-| EXP Progress Bar | Displays current EXP progress toward the next level |
+| Current Level Text | Displays the current player level from Player System |
+| EXP Progress Bar | Displays current EXP progress from Player System toward the next level |
 | Tower Pending Deployment Area | Stores towers that have been selected from draft but not yet deployed |
 
 The Battle HUD displays runtime information but should not own gameplay validation logic.
@@ -226,7 +151,7 @@ Temporary debug fields may be used during early development, but they should be 
 
 ---
 
-# 5. Tower Draft System
+# 4. Tower Draft System
 
 The Tower Draft System is responsible for generating randomized tower choices during gameplay progression.
 
@@ -244,7 +169,7 @@ The first implementation uses:
 
 ---
 
-## 5.1 Tower Definition Database / Tower Pool
+## 4.1 Tower Definition Database / Tower Pool
 
 The Tower Definition Database or Tower Pool defines which towers may appear in draft selections.
 
@@ -279,13 +204,13 @@ Future versions may support:
 
 ---
 
-## 5.2 Draft System Runtime Responsibility
+## 4.2 Draft System Runtime Responsibility
 
 Recommended first-version runtime structure:
 
 ```text
 GameManager
-├── PlayerLevelSystem
+├── PlayerSystem
 ├── TowerDefinitionDatabase
 ├── TowerDraftSystem
 ├── BattleHUDUI
@@ -296,7 +221,7 @@ TowerDraftSystem should reference:
 
 | Reference | Purpose |
 |---|---|
-| PlayerLevelSystem | Subscribe to level-up events |
+| Player System | Subscribe to player level-up events |
 | TowerDefinitionDatabase / TowerPool | Read available tower definitions |
 | BattleHUDUI | Request draft UI display and pending tower update |
 
@@ -319,13 +244,13 @@ TowerDraftSystem should not be responsible for:
 
 ---
 
-## 5.3 Draft Data Flow
+## 4.3 Draft Data Flow
 
 Recommended data flow:
 
 ```text
-PlayerLevelSystem
-    ↓ OnLevelUp
+PlayerSystem
+    ↓ OnPlayerLevelUp
 TowerDraftSystem
     ↓ Generate draft choices from TowerDefinitionDatabase / TowerPool
 BattleHUDUI
@@ -344,20 +269,20 @@ Tower Deploy System
 
 This keeps the main responsibilities clear:
 
-- PlayerLevelSystem owns progression.
+- Player System owns player progression.
 - TowerDraftSystem owns draft generation and draft result handling.
 - BattleHUDUI owns display.
 - TowerDeploySystem owns map placement.
 
 ---
 
-## 5.4 Draft Workflow
+## 4.4 Draft Workflow
 
 The draft workflow is:
 
 1. Player gains enough EXP
-2. PlayerLevelSystem levels up
-3. PlayerLevelSystem raises level-up event
+2. Player System levels up
+3. Player System raises level-up event
 4. TowerDraftSystem receives the level-up event
 5. TowerDraftSystem generates 3 tower choices from TowerDefinitionDatabase or Tower Pool
 6. TowerDraftSystem asks BattleHUDUI to open the Tower Draft Window
@@ -371,7 +296,7 @@ The Tower Draft Window should temporarily block normal gameplay interaction whil
 
 ---
 
-## 5.5 Tower Draft Window Structure
+## 4.5 Tower Draft Window Structure
 
 The Tower Draft Window is shown when the player levels up.
 
@@ -404,7 +329,7 @@ TowerDraftUI should not be responsible for:
 
 ---
 
-# 6. Tower Structure
+# 5. Tower Structure
 
 Each tower is represented by:
 
@@ -420,7 +345,7 @@ The tower footprint determines:
 
 ---
 
-## 6.1 Tower Definition
+## 5.1 Tower Definition
 
 A TowerDefinition represents the basic data required by draft and deploy systems.
 
@@ -438,7 +363,7 @@ The field list may be simplified later if some data is not needed in the first v
 
 ---
 
-## 6.2 Tower Prefab Structure
+## 5.2 Tower Prefab Structure
 
 Recommended prefab structure:
 
@@ -456,7 +381,7 @@ TowerPrefab
 
 ---
 
-## 6.3 Center Anchor
+## 5.3 Center Anchor
 
 Each tower contains one Center Anchor.
 
@@ -472,7 +397,7 @@ During placement:
 
 ---
 
-## 6.4 Occupied Anchors
+## 5.4 Occupied Anchors
 
 Occupied Anchors define which GridNodes the tower occupies.
 
@@ -495,7 +420,7 @@ Different towers may have different footprint shapes.
 
 ---
 
-# 7. Tower Pending Deployment Area
+# 6. Tower Pending Deployment Area
 
 The Tower Pending Deployment Area is part of the Battle HUD.
 
@@ -518,13 +443,13 @@ The Pending Deployment Area is not responsible for:
 
 ---
 
-# 8. Tower Placement Workflow
+# 7. Tower Placement Workflow
 
 The Tower Placement System handles drag placement and deployment validation.
 
 ---
 
-## 8.1 Placement Flow
+## 7.1 Placement Flow
 
 The placement workflow is:
 
@@ -540,7 +465,7 @@ The placement workflow is:
 
 ---
 
-## 8.2 Grid Snap Rules
+## 7.2 Grid Snap Rules
 
 The placement preview continuously snaps to the nearest GridNode.
 
@@ -563,7 +488,7 @@ GridNode Lookup
 
 ---
 
-## 8.3 Placement Preview
+## 7.3 Placement Preview
 
 During placement:
 
@@ -579,13 +504,13 @@ Recommended examples:
 
 ---
 
-# 9. Placement Validation
+# 8. Placement Validation
 
 Placement validation ensures gameplay integrity and prevents invalid tower deployment.
 
 ---
 
-## 9.1 Validation Rules
+## 8.1 Validation Rules
 
 A tower can only be deployed if:
 
@@ -598,7 +523,7 @@ If any rule fails:
 
 ---
 
-## 9.2 Occupied Node Validation
+## 8.2 Occupied Node Validation
 
 Validation process:
 
@@ -613,7 +538,7 @@ If any occupied node is invalid:
 
 ---
 
-## 9.3 Path Blocking Validation (Future)
+## 8.3 Path Blocking Validation (Future)
 
 Tower placement should eventually prevent players from completely blocking all valid monster paths.
 
@@ -642,7 +567,7 @@ This prevents deadlock gameplay situations in future versions.
 
 ---
 
-# 10. Runtime Occupancy
+# 9. Runtime Occupancy
 
 During gameplay:
 
@@ -659,7 +584,7 @@ The Tower Deploy System interacts with the Map System through runtime occupancy 
 
 ---
 
-# 11. Future Tower Recycle System
+# 10. Future Tower Recycle System
 
 Future versions of the system will support tower recycling and redeployment.
 
@@ -669,7 +594,7 @@ The stored towers may later be dragged back onto the battlefield.
 
 ---
 
-## 11.1 Planned Workflow
+## 10.1 Planned Workflow
 
 Future recycle workflow:
 
@@ -682,7 +607,7 @@ This allows dynamic battlefield restructuring during gameplay.
 
 ---
 
-# 12. Runtime State Management
+# 11. Runtime State Management
 
 Recommended runtime states:
 
@@ -704,19 +629,16 @@ Explicit runtime states help prevent:
 
 ---
 
-# 13. First Version Scope
+# 12. First Version Scope
 
 The first implementation focuses on the core deploy loop.
 
 Included features:
 
-- Player EXP gain
-- Player level-up logic
-- Battle HUD with current level and EXP progress display
 - TowerDraftSystem with 3-choice tower draft
 - TowerDefinitionDatabase or Tower Pool as the draft data source
 - Draft selection adds tower to Tower Pending Deployment Area
-- Clear data flow from PlayerLevelSystem to TowerDraftSystem to BattleHUDUI
+- Clear data flow from Player System to TowerDraftSystem to BattleHUDUI
 - Tower Pending Deployment Area
 - Tower anchor structure
 - Tower drag placement from pending deployment area
@@ -739,7 +661,7 @@ Excluded from first implementation:
 
 ---
 
-# 14. Future Expansion Possibilities
+# 13. Future Expansion Possibilities
 
 Potential future features include:
 
@@ -759,7 +681,34 @@ These features are not required for the first playable version.
 
 ---
 
+---
+
+# Related System: Player System
+
+Player level, player experience, player health, and player battle failure conditions are defined in `01_PlayerSystem.md`.
+
+Tower Deploy System may be triggered indirectly after the player levels up and receives a drafted tower, but Tower Deploy System itself does not manage player progression or player health.
+
+Tower Deploy System only handles deployment-related responsibilities:
+
+- Tower dragging
+- Tower preview display
+- Node snapping
+- Placement validation
+- Walkability update
+- Path blocking validation
+- Final deployment confirmation
+
+---
+
 # Change Log
+
+## 2026-05-22
+
+- Moved Player Level System ownership out of Tower Deploy System and into Player System.
+- Updated Tower Deploy System responsibility boundaries.
+- Updated references from PlayerLevelSystem to Player System where the deploy flow depends on player progression events.
+- Clarified that Tower Deploy System does not own player level, EXP, health, or battle failure logic.
 
 ## 2026-05-15
 

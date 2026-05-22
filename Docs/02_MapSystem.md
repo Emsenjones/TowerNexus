@@ -391,6 +391,12 @@ Monster spawn position.
 
 Monster destination position.
 
+The Target Node only defines the destination position on the map.
+
+The Map System does not handle player HP damage, battle failure, or monster arrival consequences.
+
+When a monster reaches the Target Node, the Monster System should detect the arrival result and notify the Player System if player HP damage needs to be applied.
+
 The current version supports:
 
 - Single Spawn Node
@@ -419,6 +425,9 @@ The Map System is responsible for:
 The Map System is NOT responsible for:
 
 - Monster AI
+- Monster arrival consequence handling
+- Player HP damage
+- Battle failure logic
 - Tower gameplay logic
 - Combat logic
 - Pathfinding algorithm implementation
@@ -442,11 +451,19 @@ Potential future features include:
 - Interactive environment mechanics
 - Advanced visual optimization
 
+Future features that depend on player state should still be owned by Player System or other gameplay systems. Map System should only provide map data, node queries, walkability state, and spatial references.
+
 These features are not required for the first playable version.
 
 ---
 
 # Change Log
+
+## 2026-05-22
+
+- Clarified that Target Node only defines map destination position.
+- Clarified that monster arrival consequences should be handled by Monster System and Player System, not Map System.
+- Added Player HP damage and battle failure logic to Map System non-responsibilities.
 
 ## 2026-05-19 (Workflow Update)
 
@@ -472,5 +489,3 @@ These features are not required for the first playable version.
 - Defined walkable state workflow.
 - Defined RuleTile visual refresh workflow.
 - Defined prefab-based map editing pipeline.
-
-```

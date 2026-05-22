@@ -228,15 +228,47 @@ The Map System also acts as the runtime foundation for future LevelConfig or Sta
 
 ---
 
-## 5.2 Tower Deployment and Runtime Battlefield Manipulation System
+
+## 5.2 Player System
+
+The Player System manages player runtime progression state and player battle survival state.
+
+It is responsible for:
+
+- Player level
+- Player EXP accumulation
+- Player level-up events
+- Player HP management
+- Player death and battle failure conditions
+- Runtime player state events
+
+The first implementation phase focuses on:
+
+1. EXP gain from monster elimination.
+2. Player level-up logic.
+3. Player HP management.
+4. Monster damage interaction when monsters reach the target node.
+5. Battle failure handling when player HP reaches zero.
+6. Runtime event broadcasting for level-up and HP changes.
+
+The Player System acts as the owner of player runtime data.
+
+Other systems may react to player state changes through events:
+
+- Tower Draft System may listen to player level-up events.
+- Battle HUD System may display player EXP and HP.
+- Monster System may notify Player System when monsters reach the target node.
+
+The Player System should not directly manage tower deployment, draft generation, monster movement, or UI implementation.
+
+---
+
+## 5.3 Tower Deployment and Runtime Battlefield Manipulation System
 
 The Tower Deployment System manages the process of selecting, previewing, validating, deploying, repositioning, recycling, and runtime battlefield reshaping through tower interaction on the grid map.
 
 It is responsible for:
 
-- Battle HUD display for level and EXP progress
-- Tower draft selection flow
-- Tower pool based draft generation
 - Tower pending deployment area
 - Tower prefab footprint anchor definition
 - Tower drag and snap placement from the pending deployment area
@@ -248,18 +280,23 @@ It is responsible for:
 - Future path-blocking validation before final deployment
 - Future tower recycle and redeployment flow
 
+The Tower Deployment System is only responsible for deployment-related battlefield interaction and runtime map topology modification.
+
+It does not own player progression, player HP, battle failure logic, or tower draft generation.
+
 The first implementation focuses on the core deployment loop:
 
-1. The player gains experience.
-2. The player levels up when enough experience is accumulated.
-3. A 3-choice tower draft UI is opened.
-4. The player selects one tower from the draft options.
-5. The selected tower is added to the Tower Pending Deployment Area.
-6. The player drags a pending tower from the pending deployment area onto the map.
-7. The tower preview snaps to grid nodes based on its center anchor.
-8. The system validates all occupied anchors.
-9. If placement is valid, the tower is deployed and occupied grid nodes become unwalkable.
-10. If placement is invalid, the tower returns to the pending deployment area.
+1. The player gains EXP through gameplay.
+2. The Player System levels up the player.
+3. The Tower Draft System receives the level-up event.
+4. A 3-choice tower draft UI is opened.
+5. The player selects one tower from the draft options.
+6. The selected tower is added to the Tower Pending Deployment Area.
+7. The player drags a pending tower from the pending deployment area onto the map.
+8. The tower preview snaps to grid nodes based on its center anchor.
+9. The system validates all occupied anchors.
+10. If placement is valid, the tower is deployed and occupied grid nodes become unwalkable.
+11. If placement is invalid, the tower returns to the pending deployment area.
 
 Tower recycling and redeployment are planned as future extensions. When implemented, removed towers should release their occupied grid nodes and enter a UI-based recycle area, allowing players to drag them back onto the battlefield later.
 
@@ -271,7 +308,7 @@ Runtime walkability states may differ from the original authored map walkability
 
 ---
 
-## 5.3 Monster System
+## 5.4 Monster System
 
 The Monster System manages monster spawning, runtime movement, pathfinding, death handling, and battlefield pressure generation.
 
@@ -287,6 +324,7 @@ It is responsible for:
 - Monster death handling
 - EXP reward generation
 - Future monster behavior expansion
+ - Player damage interaction when monsters reach the target node
 
 The first implementation phase focuses on:
 
@@ -301,6 +339,7 @@ The Monster System is tightly integrated with the Map System and Tower Deploymen
 
 - The Map System provides runtime walkability and node query support.
 - The Tower Deployment System modifies battlefield topology through tower occupation.
+- The Player System receives player damage events when monsters reach the target node.
 - The Monster System continuously reacts to runtime battlefield changes and updates movement paths accordingly.
 
 Future versions may extend the Monster System with:
@@ -312,3 +351,33 @@ Future versions may extend the Monster System with:
 - Special AI behaviors
 - Terrain interaction mechanics
 - Advanced combat mechanics
+
+---
+
+# 6. Current Runtime Architecture Direction
+
+The current first-version runtime architecture direction is:
+
+```text
+PlayerSystem
+    ↓ OnPlayerLevelUp
+TowerDraftSystem
+    ↓ Selected Tower
+BattleHUDUI / Pending Tower Area
+    ↓ Drag & Deploy
+TowerDeploymentSystem
+    ↓ Modify Walkability
+MapSystem
+    ↓ Recalculate Path
+MonsterSystem
+```
+
+Player progression, drafting, deployment, battlefield topology modification, and monster pathfinding are intentionally separated into independent runtime systems.
+
+This separation is intended to:
+
+- Improve long-term maintainability
+- Reduce system coupling
+- Clarify responsibility ownership
+- Simplify future feature expansion
+- Improve AI-assisted development workflows
