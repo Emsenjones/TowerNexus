@@ -18,7 +18,7 @@ MonoBehaviour:
   moveSpeed: 0.5
   maxHealth: 1
   expReward: 0
-  damageToPlayer: 0
+  damageToPlayer: 1
   walkingBoolParameterName: IsWalking
   getHitTriggerName: GetHit
   dieTriggerName: Die

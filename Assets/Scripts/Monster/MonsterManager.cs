@@ -4,6 +4,7 @@ using UnityEngine;
 public class MonsterManager : MonoBehaviour
 {
     [SerializeField] private AStarPathfindingService pathfindingService;
+    [SerializeField] private PlayerSystem playerSystem;
 
     private readonly List<MonsterBehaviour> aliveMonsters = new List<MonsterBehaviour>();
 
@@ -109,6 +110,11 @@ public class MonsterManager : MonoBehaviour
 
     private void HandleMonsterTargetReached(MonsterBehaviour monster)
     {
+        if (playerSystem != null && monster != null && monster.Definition != null)
+        {
+            playerSystem.ApplyDamage(monster.Definition.DamageToPlayer);
+        }
+
         UnregisterMonster(monster);
     }
 

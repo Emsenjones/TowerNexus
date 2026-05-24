@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class TowerDraftSystem : MonoBehaviour
 {
-    [SerializeField] private PlayerLevelSystem playerLevelSystem;
+    [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private TowerDefinitionDatabase towerDefinitionDatabase;
     [SerializeField] private BattleHUDUI battleHUDUI;
     [SerializeField] private int draftChoiceCount = 3;
@@ -13,17 +13,17 @@ public class TowerDraftSystem : MonoBehaviour
 
     private void OnEnable()
     {
-        if (playerLevelSystem != null)
-        {
-            playerLevelSystem.OnLevelUp += HandleLevelUp;
-        }
+        if (playerSystem != null)
+            playerSystem.OnLevelUp += HandleLevelUp;
+        else
+            Debug.LogWarning("playerSystem is not assigned.", this);
     }
 
     private void OnDisable()
     {
-        if (playerLevelSystem != null)
+        if (playerSystem != null)
         {
-            playerLevelSystem.OnLevelUp -= HandleLevelUp;
+            playerSystem.OnLevelUp -= HandleLevelUp;
         }
     }
 

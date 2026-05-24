@@ -8,7 +8,7 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private MapGeneratorBehaviour mapGenerator;
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterManager monsterManager;
-    [SerializeField] private PlayerLevelSystem playerLevelSystem;
+    [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private Transform monsterRoot;
     [SerializeField] private bool playOnStart;
 
@@ -150,7 +150,7 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         monsterBehaviour.Initialize(monsterDefinition);
-        monsterBehaviour.SetRuntimeReferences(monsterManager, playerLevelSystem);
+        monsterBehaviour.SetRuntimeReferences(monsterManager, playerSystem);
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
 

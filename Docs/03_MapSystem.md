@@ -14,7 +14,7 @@ The Map System is responsible for:
 - Managing walkable states
 - Providing runtime occupancy updates
 - Supporting monster pathfinding
-- Supporting tower deployment validation
+- Supporting tower placement validation
 - Refreshing map visual tiles
 - Supporting prefab-based map editing workflow
 - Supporting handcrafted map prefab workflow
@@ -173,7 +173,7 @@ Unwalkable nodes may be caused by:
 
 - Static obstacles
 - Decorative map objects
-- Tower deployment
+- Tower placement
 - Runtime gameplay mechanics
 
 The system should support runtime state switching.
@@ -458,6 +458,11 @@ These features are not required for the first playable version.
 ---
 
 # Change Log
+
+## 2026-05-24 (Naming Sync)
+
+- Updated deployment terminology to placement terminology.
+- Synced naming with Tower Placement System.
 
 ## 2026-05-22
 

@@ -4,7 +4,10 @@
 
 ## 1. Overview
 
+
 Player System defines the player's core runtime state in battle.
+
+Player System acts as the runtime player state authority.
 
 This system is responsible for player level, player experience, player health, and battle failure conditions related to the player.
 
@@ -13,8 +16,8 @@ Player System should be treated as an independent core system. Other systems may
 ## 2. Design Goals
 
 1. Provide a clear runtime data structure for player level, experience, and health.
-2. Separate player-related logic from Tower Deploy System.
-3. Allow Tower Draft System to react to player level-up events.
+2. Separate player-related logic from Tower Placement System.
+3. Allow Draft System to react to player level-up events.
 4. Allow Monster System to damage the player when monsters reach the target node.
 5. Provide a clean foundation for future player-related features.
 
@@ -36,6 +39,7 @@ Player System is not responsible for:
 2. Tower draft UI selection logic.
 3. Monster pathfinding, movement, or spawning.
 4. Battle HUD layout and visual implementation.
+5. Tower draft generation.
 
 ## 4. Runtime Data
 
@@ -135,21 +139,26 @@ Suggested events:
 | OnPlayerHealthChanged | Triggered when player health changes. |
 | OnPlayerDead | Triggered when player health reaches zero. |
 
+These events are intended for runtime observation by systems such as BattleHUDUISystem, DraftSystem, and future gameplay systems.
+
+Player System should remain the owner of runtime player state.
+
 ## 10. Related Systems
 
-### 10.1 Tower Draft System
+### 10.1 Draft System
 
-Tower Draft System may listen to OnPlayerLevelUp.
+Draft System may subscribe to OnPlayerLevelUp.
 
-When the player levels up, Tower Draft System can open the tower draft workflow and allow the player to choose a new tower.
+When the player levels up, Draft System can open the draft workflow and allow the player to choose a new tower.
 
 Player System only sends the level-up event. It does not decide which tower options are generated or how the draft UI is displayed.
+Draft generation ownership belongs to Draft System.
 
-### 10.2 Tower Deploy System
+### 10.2 Tower Placement System
 
-Tower Deploy System should not own player level, experience, or health data.
+Tower Placement System should not own player level, experience, or health data.
 
-Tower Deploy System is only responsible for deployment-related logic, including tower dragging, snapping, placement validation, walkability update, path blocking validation, and successful deployment handling.
+Tower Placement System is only responsible for placement-related logic, including tower dragging, snapping, placement validation, walkability update, path blocking validation, and successful placement handling.
 
 ### 10.3 Monster System
 
@@ -157,9 +166,9 @@ Monster System should notify Player System when a monster reaches the target nod
 
 Monster System should not directly decide battle failure. Battle failure should be triggered by Player System after health calculation.
 
-### 10.4 Battle HUD System
+### 10.4 Battle HUD UI System
 
-Battle HUD System may listen to player events and update UI display.
+Battle HUD UI System may subscribe to player runtime events and update runtime battle UI.
 
 Example UI elements:
 
@@ -167,8 +176,30 @@ Example UI elements:
 2. Player experience bar.
 3. Player health display.
 4. Battle failure panel.
+5. Runtime draft window.
+6. Pending tower deployment area.
 
-## 11. Future Extensions
+Battle HUD UI System is responsible only for display and interaction.
+
+Player runtime data ownership still belongs to Player System.
+
+## 11. Runtime Ownership Boundary
+
+Recommended runtime ownership:
+
+| System | Owns |
+|---|---|
+| Player System | Level, EXP, HP, death state |
+| Draft System | Draft generation and draft workflow |
+| Battle HUD UI System | Runtime UI display and interaction |
+| Tower Placement System | Placement validation and placement |
+| Monster System | Monster runtime behavior |
+
+The purpose of this ownership separation is to reduce system coupling and improve long-term maintainability.
+
+Player System should remain the single owner of runtime player progression and survival state.
+
+## 12. Future Extensions
 
 Future player-related features should be extended in this document.
 
@@ -180,3 +211,21 @@ Possible future extensions:
 4. Player base upgrade system.
 5. Player talent system.
 6. Player damage resistance or shield system.
+
+---
+
+# Change Log
+
+## 2026-05-24 (Naming Sync)
+
+- Updated references from Tower Draft System to Draft System.
+- Updated references from Tower Deploy System to Tower Placement System.
+- Updated runtime observer references to BattleHUDUISystem.
+- Clarified Player System as the runtime player state authority.
+
+## 2026-05-24
+
+- Clarified ownership boundaries between Player System, Tower Draft System, Battle HUD UI System, Tower Deploy System, and Monster System.
+- Updated Battle HUD references to the independent Battle HUD UI System.
+- Clarified that Tower Draft generation belongs to Tower Draft System.
+- Added runtime ownership boundary section.

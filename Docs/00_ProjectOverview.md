@@ -10,7 +10,7 @@ The core gameplay inspiration comes from games such as Underdark: Defence and Wi
 
 Unlike traditional tower defense games where towers are only used for combat, towers in Tower Nexus also function as physical obstacles that directly affect monster pathfinding and battlefield structure.
 
-The battlefield is not static. Players continuously reshape navigable space during runtime through tower deployment, tower repositioning, and terrain occupation changes.
+The battlefield is not static. Players continuously reshape navigable space during runtime through tower placement, tower repositioning, and terrain occupation changes.
 
 In Tower Nexus, towers are not only combat units, but also runtime battlefield editing tools that dynamically influence map topology and monster movement behavior.
 
@@ -40,7 +40,7 @@ The gameplay loop of Tower Nexus is structured as follows:
 
 3. Monsters use grid-based A* pathfinding to calculate valid paths from Spawn Nodes to the Target Node and dynamically recalculate paths whenever battlefield walkability changes.
 
-4. Players deploy towers onto the grid map to:
+4. Players place towers onto the grid map to:
     - Attack and eliminate monsters
     - Occupy grid nodes
     - Block and alter monster movement paths
@@ -51,7 +51,7 @@ The gameplay loop of Tower Nexus is structured as follows:
     - The player levels up
     - A new Draft selection is triggered
 
-7. Through repeated drafting, deployment, repositioning, upgrading, and path manipulation, the player gradually strengthens their build and survives increasingly difficult monster waves.
+7. Through repeated drafting, placement, repositioning, upgrading, and path manipulation, the player gradually strengthens their build and survives increasingly difficult monster waves.
 
 8. If monsters reach the target point:
     - Player HP is reduced
@@ -72,7 +72,7 @@ One of the core mechanics of Tower Nexus is that towers physically occupy map ti
 
 Each tower has a unique footprint shape similar to Tetromino shapes from Tetris.
 
-Different tower prefabs may contain different occupied anchor layouts, allowing highly asymmetric deployment patterns.
+Different tower prefabs may contain different occupied anchor layouts, allowing highly asymmetric placement patterns.
 
 Different towers may occupy different tile patterns, such as:
 
@@ -84,11 +84,11 @@ Different towers may occupy different tile patterns, such as:
 
 This creates a gameplay experience where players are not only building offensive structures, but are also dynamically reshaping the battlefield itself.
 
-To prevent invalid gameplay states, the system prevents players from deploying towers in positions that would completely block all valid monster paths between Spawn Nodes and the Target Node.
+To prevent invalid gameplay states, the system prevents players from placing towers in positions that would completely block all valid monster paths between Spawn Nodes and the Target Node.
 
-Tower placement is validated based on tower footprint anchors. Each tower prefab defines a center anchor and multiple occupied anchors. During placement, the center anchor snaps to a target grid node, while all occupied anchors must match valid walkable grid nodes. If any occupied anchor cannot find a corresponding grid node, overlaps an unwalkable node, or causes the monster path to become fully blocked, the tower cannot be deployed.
+Tower placement is validated based on tower footprint anchors. Each tower prefab defines a center anchor and multiple occupied anchors. During placement, the center anchor snaps to a target grid node, while all occupied anchors must match valid walkable grid nodes. If any occupied anchor cannot find a corresponding grid node, overlaps an unwalkable node, or causes the monster path to become fully blocked, the tower cannot be placed.
 
-When tower deployment or removal changes map walkability, all alive monsters dynamically recalculate their paths from their current nodes toward the Target Node.
+When tower placement or removal changes map walkability, all alive monsters dynamically recalculate their paths from their current nodes toward the Target Node.
 
 ---
 
@@ -96,11 +96,11 @@ When tower deployment or removal changes map walkability, all alive monsters dyn
 
 The Draft System is the core progression mechanic of Tower Nexus.
 
-At the beginning of the game, the player receives an initial 3-choice tower draft.
+At the beginning of the game, the player may receive an initial 3-choice tower draft.
 
 Each time the player levels up, another draft selection becomes available.
 
-When the player selects a tower from the Tower Draft window, the selected tower is added to the Tower Pending Deployment Area instead of being deployed immediately. The player may then drag a pending tower from this area onto the map for placement.
+When the player selects a tower from the Draft Window, the selected tower is added to the Pending Tower Deployment Area instead of being placed immediately. The player may then drag a pending tower from this area onto the map for placement.
 
 Draft options are currently divided into two major categories:
 
@@ -109,9 +109,9 @@ Draft options are currently divided into two major categories:
 Allows players to:
 
 - Obtain a new tower from a configured Tower Pool
-- Add the selected tower into the Tower Pending Deployment Area
-- Deploy pending towers onto the battlefield by dragging them from the pending area to the map
-- Reposition deployed towers through a recycle or redeployment flow
+- Add the selected tower into the Pending Tower Deployment Area
+- Place pending towers onto the battlefield by dragging them from the pending area to the map
+- Reposition placed towers through a recycle or redeployment flow
 - Merge the tower with an existing identical tower for upgrading
 
 ### Upgrade Draft
@@ -255,62 +255,112 @@ The Player System acts as the owner of player runtime data.
 
 Other systems may react to player state changes through events:
 
-- Tower Draft System may listen to player level-up events.
-- Battle HUD System may display player EXP and HP.
+- Draft System may listen to player level-up events.
+- Battle HUD UI System may display player EXP and HP.
 - Monster System may notify Player System when monsters reach the target node.
 
-The Player System should not directly manage tower deployment, draft generation, monster movement, or UI implementation.
+The Player System should not directly manage tower placement, draft generation, monster movement, or UI implementation.
 
 ---
 
-## 5.3 Tower Deployment and Runtime Battlefield Manipulation System
+## 5.3 Battle HUD UI System
 
-The Tower Deployment System manages the process of selecting, previewing, validating, deploying, repositioning, recycling, and runtime battlefield reshaping through tower interaction on the grid map.
+The Battle HUD UI System is responsible for displaying runtime battle UI during gameplay.
 
 It is responsible for:
 
-- Tower pending deployment area
+- Displaying player level
+- Displaying player EXP progress
+- Displaying player HP
+- Opening and closing the Draft Window
+- Displaying draft choices
+- Displaying the Pending Tower Deployment Area
+- Providing pending tower drag interaction entry points
+- Displaying placement feedback
+- Displaying future battle failure UI
+
+The Battle HUD UI System does not own player progression, player HP calculation, draft generation, tower placement validation, monster runtime logic, or map walkability updates.
+
+It acts as the runtime gameplay presentation layer.
+
+---
+
+## 5.4 Draft System
+
+The Draft System manages runtime player choice generation during battle progression.
+
+The first version focuses on tower drafting.
+
+It is responsible for:
+
+- Listening to player level-up events
+- Generating draft choices
+- Managing draft result workflow
+- Providing draft choice data to Battle HUD UI System
+- Processing player draft selection results
+- Creating pending tower entries for later placement
+
+The Draft System does not own player EXP calculation, player level-up logic, Draft Window UI layout, tower placement validation, GridNode occupation, or map walkability updates.
+
+Future versions may extend Draft System to support:
+
+- Tower Buff Draft
+- Global Buff Draft
+- Temporary Buff Draft
+- Curse Draft
+- Utility Draft
+- Weighted rarity or synergy-based draft rules
+
+---
+
+## 5.5 Tower Placement System
+
+The Tower Placement System manages the process of previewing, validating, placing, repositioning, recycling, and runtime battlefield reshaping through tower interaction on the grid map.
+
+It is responsible for:
+
 - Tower prefab footprint anchor definition
 - Tower drag and snap placement from the pending deployment area
-- Placement validity preview
+- Placement preview
+- Placement validity checking
 - Grid node walkability occupation and release
 - Runtime walkability state management
 - Runtime battlefield topology modification
-- Runtime monster path reshaping
-- Future path-blocking validation before final deployment
+- Runtime monster path reshaping through walkability changes
+- Future path-blocking validation before final placement
 - Future tower recycle and redeployment flow
 
-The Tower Deployment System is only responsible for deployment-related battlefield interaction and runtime map topology modification.
+The Tower Placement System is only responsible for placement-related battlefield interaction and runtime map topology modification.
 
-It does not own player progression, player HP, battle failure logic, or tower draft generation.
+It does not own player progression, player HP, battle failure logic, draft generation, Draft Window UI, or Battle HUD UI layout.
 
-The first implementation focuses on the core deployment loop:
+The first implementation focuses on the core placement loop:
 
 1. The player gains EXP through gameplay.
 2. The Player System levels up the player.
-3. The Tower Draft System receives the level-up event.
-4. A 3-choice tower draft UI is opened.
+3. The Draft System receives the level-up event.
+4. A 3-choice draft UI is opened through Battle HUD UI System.
 5. The player selects one tower from the draft options.
-6. The selected tower is added to the Tower Pending Deployment Area.
+6. The selected tower is added to the Pending Tower Deployment Area.
 7. The player drags a pending tower from the pending deployment area onto the map.
 8. The tower preview snaps to grid nodes based on its center anchor.
 9. The system validates all occupied anchors.
-10. If placement is valid, the tower is deployed and occupied grid nodes become unwalkable.
-11. If placement is invalid, the tower returns to the pending deployment area.
+10. If placement is valid, the tower is placed and occupied grid nodes become unwalkable.
+11. If placement is invalid, the tower remains in the pending deployment area.
 
 Tower recycling and redeployment are planned as future extensions. When implemented, removed towers should release their occupied grid nodes and enter a UI-based recycle area, allowing players to drag them back onto the battlefield later.
 
-This system is intended to transform tower placement from a one-time build action into a continuous runtime tactical battlefield editing process.
+This system transforms tower placement from a one-time build action into a continuous runtime tactical battlefield editing process.
 
-Tower deployment is fundamentally treated as runtime map topology editing rather than traditional static tower placement.
+Tower placement is fundamentally treated as runtime map topology editing rather than traditional static tower placement.
 
 Runtime walkability states may differ from the original authored map walkability states due to tower occupation, future temporary obstacles, or future gameplay mechanics.
 
 ---
 
-## 5.4 Monster System
+## 5.6 Monster System
 
-The Monster System manages monster spawning, runtime movement, pathfinding, death handling, and battlefield pressure generation.
+The Monster System manages monster spawning, runtime movement, pathfinding, death handling, target arrival reporting, and battlefield pressure generation.
 
 It is responsible for:
 
@@ -323,8 +373,8 @@ It is responsible for:
 - Monster movement along node paths
 - Monster death handling
 - EXP reward generation
+- Player damage interaction reporting when monsters reach the target node
 - Future monster behavior expansion
- - Player damage interaction when monsters reach the target node
 
 The first implementation phase focuses on:
 
@@ -333,12 +383,13 @@ The first implementation phase focuses on:
 3. Dynamic path recalculation when runtime walkability changes.
 4. Monster movement toward the Target Node.
 5. Monster death and EXP reward flow.
-6. Runtime tower placement validation against path blocking.
+6. Monster target arrival notification to Player System.
+7. Runtime tower placement validation against path blocking.
 
-The Monster System is tightly integrated with the Map System and Tower Deployment System.
+The Monster System is tightly integrated with the Map System and Tower Placement System.
 
 - The Map System provides runtime walkability and node query support.
-- The Tower Deployment System modifies battlefield topology through tower occupation.
+- The Tower Placement System modifies battlefield topology through tower occupation.
 - The Player System receives player damage events when monsters reach the target node.
 - The Monster System continuously reacts to runtime battlefield changes and updates movement paths accordingly.
 
@@ -356,23 +407,21 @@ Future versions may extend the Monster System with:
 
 # 6. Current Runtime Architecture Direction
 
-The current first-version runtime architecture direction is:
-
 ```text
 PlayerSystem
     ↓ OnPlayerLevelUp
-TowerDraftSystem
-    ↓ Selected Tower
-BattleHUDUI / Pending Tower Area
-    ↓ Drag & Deploy
-TowerDeploymentSystem
+DraftSystem
+    ↓ Draft Result
+BattleHUDUISystem
+    ↓ Pending Tower Entry
+TowerPlacementSystem
     ↓ Modify Walkability
 MapSystem
     ↓ Recalculate Path
 MonsterSystem
 ```
 
-Player progression, drafting, deployment, battlefield topology modification, and monster pathfinding are intentionally separated into independent runtime systems.
+Player progression, drafting, UI interaction, placement, battlefield topology modification, and monster pathfinding are intentionally separated into independent runtime systems.
 
 This separation is intended to:
 
@@ -381,3 +430,15 @@ This separation is intended to:
 - Clarify responsibility ownership
 - Simplify future feature expansion
 - Improve AI-assisted development workflows
+
+---
+
+# Change Log
+
+## 2026-05-24
+
+- Synced system names after splitting Draft System, Battle HUD UI System, and Tower Placement System into independent documents.
+- Replaced Tower Deployment System references with Tower Placement System.
+- Replaced Tower Draft System references with Draft System.
+- Added Battle HUD UI System and Draft System to Core Systems Overview.
+- Updated runtime architecture flow.

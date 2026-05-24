@@ -1,6 +1,5 @@
 
-
-# 03 - Monster System
+# 04 - Monster System
 
 ## 1. Overview
 
@@ -17,6 +16,7 @@ This system currently focuses on the following core gameplay loop:
 - Dynamic path recalculation
 - Monster death handling
 - Rewarding player EXP after monster elimination
+- Notifying Player System when monsters reach the target node
 - Preventing invalid tower placements that fully block monster paths
 
 The first version of the Monster System is intentionally kept simple and extensible.
@@ -66,6 +66,14 @@ The current map structure already contains:
 - GridNodeBehaviour.IsWalkable
 
 Therefore, monster spawn points and target points should directly use GridNodeBehaviour.
+
+The Target Node only defines the monster destination position.
+
+Monster System is responsible for detecting when a monster reaches the Target Node.
+
+After target arrival, Monster System should notify Player System so Player System can apply player HP damage and handle battle failure if needed.
+
+Monster System should not directly modify player HP or decide battle failure.
 
 ## 3.1 Node Types
 
@@ -144,6 +152,21 @@ Behavior:
 - Move along current path
 - Play walk animation
 - Receive damage from towers
+
+### Arrived
+
+Monster has reached the target node.
+
+Behavior:
+
+- Stop movement immediately
+- Notify Player System that this monster has reached the target
+- Pass target arrival damage information if required
+- Remove or destroy the monster after arrival handling
+
+Monster System should not directly reduce player HP.
+
+Player HP calculation and battle failure logic belong to Player System.
 
 ### Dead
 
@@ -266,6 +289,8 @@ Monster pathfinding is one of the core systems of TowerNexus.
 
 The first version should use A* pathfinding.
 
+Monster System owns runtime pathfinding behavior, while Map System only provides spatial and walkability data.
+
 ## 7.1 Pathfinding Rules
 
 ### Rule 1
@@ -314,7 +339,7 @@ Instead:
 
 Tower placement must never completely block all valid monster paths.
 
-Before a tower is successfully deployed:
+Before a tower is successfully placed:
 
 1. Temporarily evaluate the nodes occupied by the tower
 2. Simulate those nodes as blocked
@@ -340,9 +365,37 @@ Monster HP <= 0
 → Destroy monster object
 ```
 
+EXP reward should be sent to Player System.
+
+Monster System may provide the reward value from MonsterDefinition, but Player System should own EXP accumulation and level-up logic.
+
 ---
 
-# 11. Current Scope
+# 11. Monster Target Arrival Flow
+
+When a monster reaches the Target Node:
+
+```text
+Monster reaches Target Node
+→ Monster enters Arrived state
+→ Monster System notifies Player System
+→ Player System applies HP damage
+→ BattleHUDUISystem updates HP display through Player System events
+→ Monster is removed from battlefield
+```
+
+Monster target arrival should follow these ownership rules:
+
+- Monster System detects arrival.
+- Monster System reports arrival damage information.
+- Player System owns player HP damage calculation.
+- Player System owns battle failure state.
+- Battle HUD UI System displays updated HP and battle failure UI.
+- Map System only provides the Target Node spatial reference.
+
+---
+
+# 12. Current Scope
 
 The first implementation phase of the Monster System focuses only on:
 
@@ -352,6 +405,7 @@ The first implementation phase of the Monster System focuses only on:
 - Dynamic path recalculation
 - Death handling
 - EXP reward flow
+- Monster target arrival notification to Player System
 - Tower placement path validation
 
 The following features are intentionally postponed:
@@ -364,3 +418,48 @@ The following features are intentionally postponed:
 - Threat systems
 - Skill systems
 - Advanced combat logic
+
+---
+
+# 13. Related Systems
+
+## Player System
+
+Player System owns player EXP, level-up logic, player HP, and battle failure state.
+
+Monster System may notify Player System when:
+
+- A monster dies and provides EXP reward
+- A monster reaches the target node and provides player damage information
+
+Monster System should not directly own player progression or player HP.
+
+## Battle HUD UI System
+
+Battle HUD UI System displays player EXP, player HP, and battle failure UI through Player System events.
+
+Monster System should not directly control Battle HUD UI.
+
+## Map System
+
+Map System provides Spawn Nodes, Target Node, walkability state, and node query support.
+
+Map System does not handle monster arrival consequences.
+  
+---
+
+# Change Log
+
+## 2026-05-24 (Naming Sync)
+
+- Updated deployment terminology to placement terminology.
+- Updated BattleHUDUI references to BattleHUDUISystem.
+- Clarified ownership boundary between Monster System pathfinding behavior and Map System spatial data.
+
+## 2026-05-24
+
+- Clarified Monster System relationship with Player System.
+- Added monster target arrival flow.
+- Clarified that Monster System detects target arrival but does not directly modify player HP.
+- Clarified that EXP reward should be sent to Player System.
+- Added Battle HUD UI System and Map System ownership boundaries.

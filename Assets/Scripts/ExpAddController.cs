@@ -3,17 +3,17 @@ using UnityEngine;
 
 public class ExpAddController : MonoBehaviour
 {
-        [SerializeField] private PlayerLevelSystem playerLevelSystem;
+        [SerializeField] private PlayerSystem playerSystem;
         [SerializeField]
         int addedExp;
  
         void Update()
         {
                 //Debug.Log("Updating...");
-                if (Input.GetKeyDown(KeyCode.Space)&& playerLevelSystem !=null)
+                if (Input.GetKeyDown(KeyCode.Space)&& playerSystem !=null)
                 {
                         Debug.Log("Add Exp!");
-                        playerLevelSystem.AddExp(addedExp);
+                        playerSystem.AddExp(addedExp);
                 }
         }
 }

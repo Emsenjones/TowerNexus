@@ -7,7 +7,7 @@ public class MonsterBehaviour : MonoBehaviour
 {
     [SerializeField] private MonsterDefinition definition;
     [SerializeField] private MonsterManager monsterManager;
-    [SerializeField] private PlayerLevelSystem playerLevelSystem;
+    [SerializeField] private PlayerSystem playerSystem;
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
     [SerializeField] private Animator animator;
@@ -53,10 +53,10 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void SetRuntimeReferences(
         MonsterManager monsterManager,
-        PlayerLevelSystem playerLevelSystem)
+        PlayerSystem playerSystem)
     {
         this.monsterManager = monsterManager;
-        this.playerLevelSystem = playerLevelSystem;
+        this.playerSystem = playerSystem;
     }
 
     public void SetCurrentNode(GridNodeBehaviour currentNode)
@@ -241,10 +241,7 @@ public class MonsterBehaviour : MonoBehaviour
         currentNode = nextNode;
         pathIndex++;
 
-        if (currentNode == targetNode || pathIndex >= currentPath.Count)
-        {
-            HandleTargetReached();
-        }
+        if (currentNode == targetNode || pathIndex >= currentPath.Count) HandleTargetReached();
     }
 
     private void HandleTargetReached()
@@ -289,12 +286,12 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void RewardExp()
     {
-        if (playerLevelSystem == null || definition == null)
+        if (playerSystem == null || definition == null)
         {
             return;
         }
 
-        playerLevelSystem.AddExp(definition.ExpReward);
+        playerSystem.AddExp(definition.ExpReward);
     }
 
     private float GetDeathDelay()
