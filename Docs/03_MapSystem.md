@@ -13,7 +13,7 @@ The Map System is responsible for:
 - Managing grid nodes
 - Managing walkable states
 - Providing runtime occupancy updates
-- Supporting monster pathfinding
+- Providing pathfinding-related map queries
 - Supporting tower placement validation
 - Refreshing map visual tiles
 - Supporting prefab-based map editing workflow
@@ -76,7 +76,7 @@ Responsible for:
 - Walkability
 - Occupancy
 - Runtime queries
-- Pathfinding support
+- Pathfinding-related spatial queries
 
 ### Visual Layer
 
@@ -354,7 +354,7 @@ The Map System itself only handles node state changes.
 Gameplay systems such as:
 
 - Tower Placement System
-- Pathfinding System
+- Monster System
 
 will use the Map System APIs.
 
@@ -362,7 +362,17 @@ will use the Map System APIs.
 
 # 9. Monster Movement Rules
 
-Monsters move using grid-based pathfinding.
+Monsters move using pathfinding systems that query Map System data.
+
+The Map System does not own pathfinding algorithms.
+
+The Map System only provides:
+
+- Node data
+- Walkability data
+- Spawn node references
+- Target node references
+- Spatial queries required by pathfinding systems
 
 Current movement rules:
 
@@ -417,6 +427,7 @@ The Map System is responsible for:
 - Managing node data
 - Managing walkability
 - Providing node queries
+- Providing pathfinding-related map queries
 - Supporting runtime occupancy updates
 - Managing map visual refresh
 - Supporting prefab-based map workflow
@@ -430,7 +441,7 @@ The Map System is NOT responsible for:
 - Battle failure logic
 - Tower gameplay logic
 - Combat logic
-- Pathfinding algorithm implementation
+- Pathfinding algorithm ownership
 - Draft system logic
 
 ---
@@ -451,7 +462,7 @@ Potential future features include:
 - Interactive environment mechanics
 - Advanced visual optimization
 
-Future features that depend on player state should still be owned by Player System or other gameplay systems. Map System should only provide map data, node queries, walkability state, and spatial references.
+Future features that depend on player state should still be owned by Player System or other gameplay systems. Map System should only provide map data, node queries, walkability state, pathfinding-related map queries, and spatial references.
 
 These features are not required for the first playable version.
 
@@ -463,6 +474,7 @@ These features are not required for the first playable version.
 
 - Updated deployment terminology to placement terminology.
 - Synced naming with Tower Placement System.
+- Clarified ownership boundary between Map System, Monster System, and pathfinding-related functionality.
 
 ## 2026-05-22
 

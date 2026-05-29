@@ -38,7 +38,7 @@ The gameplay loop of Tower Nexus is structured as follows:
 
 2. Monsters continuously spawn from the spawn point based on wave configuration.
 
-3. Monsters use grid-based A* pathfinding to calculate valid paths from Spawn Nodes to the Target Node and dynamically recalculate paths whenever battlefield walkability changes.
+3. Monsters use Monster System pathfinding functionality together with Map System data to calculate valid paths from Spawn Nodes to the Target Node and dynamically recalculate paths whenever battlefield walkability changes.
 
 4. Players place towers onto the grid map to:
     - Attack and eliminate monsters
@@ -102,7 +102,7 @@ Each time the player levels up, another draft selection becomes available.
 
 When the player selects a tower from the Draft Window, the selected tower is added to the Pending Tower Deployment Area instead of being placed immediately. The player may then drag a pending tower from this area onto the map for placement.
 
-Draft options are currently divided into two major categories:
+The first version currently supports two draft categories:
 
 ### Tower Draft
 
@@ -289,7 +289,7 @@ It acts as the runtime gameplay presentation layer.
 
 The Draft System manages runtime player choice generation during battle progression.
 
-The first version focuses on tower drafting.
+The first version focuses on tower-related drafting, including New Tower Draft and Tower Upgrade Draft.
 
 It is responsible for:
 
@@ -304,7 +304,7 @@ The Draft System does not own player EXP calculation, player level-up logic, Dra
 
 Future versions may extend Draft System to support:
 
-- Tower Buff Draft
+- Additional tower-related draft types
 - Global Buff Draft
 - Temporary Buff Draft
 - Curse Draft
@@ -319,7 +319,6 @@ The Tower Placement System manages the process of previewing, validating, placin
 
 It is responsible for:
 
-- Tower prefab footprint anchor definition
 - Tower drag and snap placement from the pending deployment area
 - Placement preview
 - Placement validity checking
@@ -327,7 +326,7 @@ It is responsible for:
 - Runtime walkability state management
 - Runtime battlefield topology modification
 - Runtime monster path reshaping through walkability changes
-- Future path-blocking validation before final placement
+- Path-blocking validation before final placement
 - Future tower recycle and redeployment flow
 
 The Tower Placement System is only responsible for placement-related battlefield interaction and runtime map topology modification.
@@ -358,6 +357,29 @@ Runtime walkability states may differ from the original authored map walkability
 
 ---
 
+## 5.5.1 Tower Framework System
+
+The Tower Framework System defines the shared tower architecture used by gameplay systems.
+
+It is responsible for:
+
+- TowerDefinition
+- Tower categories
+- Attack archetypes
+- Target selection types
+- Tower prefab structure
+- TowerAnchorSet
+- Center Anchor
+- Occupied Anchors
+
+The Tower Framework System defines what a tower is.
+
+Runtime placement, combat, and upgrade behavior are owned by their respective systems.
+
+---
+
+---
+
 ## 5.6 Monster System
 
 The Monster System manages monster spawning, runtime movement, pathfinding, death handling, target arrival reporting, and battlefield pressure generation.
@@ -367,7 +389,7 @@ It is responsible for:
 - Monster wave spawning
 - MonsterDefinition driven monster configuration
 - Spawn Node and Target Node integration
-- A* pathfinding
+- Runtime pathfinding functionality
 - Runtime path recalculation
 - Monster state management
 - Monster movement along node paths
@@ -384,9 +406,9 @@ The first implementation phase focuses on:
 4. Monster movement toward the Target Node.
 5. Monster death and EXP reward flow.
 6. Monster target arrival notification to Player System.
-7. Runtime tower placement validation against path blocking.
+7. Providing pathfinding functionality that can be reused by tower placement validation.
 
-The Monster System is tightly integrated with the Map System and Tower Placement System.
+The Monster System interacts closely with the Map System and Tower Placement System.
 
 - The Map System provides runtime walkability and node query support.
 - The Tower Placement System modifies battlefield topology through tower occupation.
@@ -412,13 +434,26 @@ PlayerSystem
     ↓ OnPlayerLevelUp
 DraftSystem
     ↓ Draft Result
+
+New Tower Draft
+    ↓
 BattleHUDUISystem
     ↓ Pending Tower Entry
 TowerPlacementSystem
+
+or
+
+Tower Upgrade Draft
+    ↓
+TowerUpgradeSystem
+
+TowerPlacementSystem
     ↓ Modify Walkability
 MapSystem
-    ↓ Recalculate Path
+
 MonsterSystem
+    ↓ Pathfinding Queries
+MapSystem
 ```
 
 Player progression, drafting, UI interaction, placement, battlefield topology modification, and monster pathfinding are intentionally separated into independent runtime systems.
@@ -442,3 +477,4 @@ This separation is intended to:
 - Replaced Tower Draft System references with Draft System.
 - Added Battle HUD UI System and Draft System to Core Systems Overview.
 - Updated runtime architecture flow.
+- Synced Project Overview with Tower Framework System, Tower Upgrade System, and updated ownership boundaries.

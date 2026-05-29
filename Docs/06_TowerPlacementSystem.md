@@ -132,9 +132,9 @@ Tower Placement System should not read or modify player progression data directl
 
 Draft System owns draft generation and draft result handling.
 
-For the first version, Draft System may generate tower draft results.
+For the first version, Draft System may generate New Tower Draft results.
 
-After the player selects a tower draft result, the selected tower becomes a pending deployable tower entry.
+After the player selects a New Tower Draft result, the selected tower becomes a pending deployable tower entry.
 
 Tower Placement System only handles placement after a tower has already become a pending deployable entry.
 
@@ -143,7 +143,7 @@ Tower Placement System should not:
 - Generate draft choices.
 - Read tower pools for draft logic.
 - Decide tower draft availability.
-- Handle future tower buff draft rules.
+- Handle future draft type rules.
 
 ---
 
@@ -193,96 +193,65 @@ Tower Placement System should not directly control monster state, movement, or d
 
 ---
 
-# 5. Tower Structure
+# 5. Tower Structure Reference
 
-Each tower is represented by:
+Tower structure ownership belongs to Tower Framework System.
 
-- Tower configuration data
-- Tower prefab
-- Footprint anchor definitions
+Tower Placement System does not define the full TowerDefinition or the complete tower framework structure.
 
-The tower footprint determines:
+Instead, Tower Placement System only consumes the placement-related structure provided by Tower Framework System.
+
+During placement, Tower Placement System reads:
+
+- Tower prefab reference from TowerDefinition
+- TowerAnchorSet from the tower prefab
+- Center Anchor from TowerAnchorSet
+- Occupied Anchors from TowerAnchorSet
+
+The placement-related anchor data determines:
 
 - Which GridNodes are occupied
 - Which nodes become unwalkable
 - Which shape the tower occupies on the battlefield
+- Which point should snap to the target GridNode
 
 ---
 
-## 5.1 Tower Definition
+## 5.1 Placement Anchor Usage
 
-A TowerDefinition represents the basic data required by draft and placement systems.
+Tower Placement System uses placement anchors only for placement workflow and validation.
 
-Recommended fields:
+| Anchor Type | Placement Usage |
+|---|---|
+| Center Anchor | Used as the snap reference point |
+| Occupied Anchors | Used to calculate occupied GridNodes |
+| TowerAnchorSet | Provides anchor references to placement logic |
 
-| Field | Type | Description |
-|---|---|---|
-| towerId | string | Unique tower identifier |
-| displayName | string | Display name shown in UI |
-| description | string | Short description shown in UI |
-| icon | Sprite | Icon used by draft UI and pending deployment UI |
-| towerPrefab | GameObject | Runtime tower prefab used for placement |
-
-TowerDefinition may be referenced by Draft System, Battle HUD UI System, and Tower Placement System.
-
-Tower Placement System should only use the placement-related data needed to instantiate and validate the tower.
+The full definition of TowerDefinition, TowerPrefab structure, Center Anchor, Occupied Anchors, and TowerAnchorSet belongs to Tower Framework System.
 
 ---
 
-## 5.2 Tower Prefab Structure
+## 5.2 Footprint Calculation
 
-Recommended prefab structure:
+During placement, the system calculates the tower footprint based on the target GridNode and the occupied anchor offsets.
+
+Recommended workflow:
 
 ```text
-TowerPrefab
-├── VisualRoot
-├── Collider
-├── Anchors
-│   ├── CenterAnchor
-│   ├── OccupyAnchor_01
-│   ├── OccupyAnchor_02
-│   └── OccupyAnchor_03
-└── TowerAnchorSet
+Target GridNode
+    ↓
+Center Anchor Snap
+    ↓
+Occupied Anchor World Positions
+    ↓
+Corresponding GridNode Lookup
+    ↓
+Placement Validation
 ```
 
----
+Different towers may have different footprint shapes, but Tower Placement System should treat all footprint data generically.
 
-## 5.3 Center Anchor
-
-Each tower contains one Center Anchor.
-
-The Center Anchor is responsible for:
-
-- Snap positioning
-- Grid alignment
-- Placement reference point
-
-During placement:
-
-- The Center Anchor snaps onto a target GridNode center position.
-
----
-
-## 5.4 Occupied Anchors
-
-Occupied Anchors define which GridNodes the tower occupies.
-
-Requirements:
-
-- Anchor Y position should normally remain 0.
-- Anchor X/Z offsets should use integer grid offsets.
-- All occupied anchors must correspond to valid GridNodes during placement.
-- Center Anchor may also be included in Occupied Anchors.
-- Tower rotation is not supported in the first version.
-
-Example footprint:
-
-```text
-[X][X]
-[ ][X]
-```
-
-Different towers may have different footprint shapes.
+Tower Placement System should not hardcode tower-specific footprint rules.
 
 ---
 
@@ -419,17 +388,17 @@ Tower placement should prevent players from completely blocking all valid monste
 
 Path blocking validation may already exist or may be refined in future versions depending on current implementation state.
 
-This feature depends on Map System and pathfinding support, including:
+This feature depends on Map System data and Monster System pathfinding functionality, including:
 
 - Monster Spawn Nodes
 - Monster Target Node
-- Runtime pathfinding query API
+- Monster System pathfinding queries
 - Temporary walkability simulation
 
 Recommended validation workflow:
 
 1. Temporarily mark occupied nodes as unwalkable.
-2. Run pathfinding validation from each Monster Spawn Node to the Monster Target Node.
+2. Request path validation using Monster System pathfinding functionality.
 3. Check whether at least one valid path remains for every spawn path requirement.
 4. Restore temporary state.
 5. Return validation result.
@@ -532,7 +501,7 @@ Excluded from first implementation:
 - Tower upgrading.
 - Weighted draft system.
 - Tower rarity.
-- Tower buff draft system.
+- Additional draft types beyond New Tower Draft and Tower Upgrade Draft.
 - Tower recycle system.
 - Redeployment inventory.
 - Tower rotation.
@@ -544,8 +513,6 @@ Excluded from first implementation:
 
 Potential future features include:
 
-- Tower upgrade branching
-- Tower evolution
 - Redeployment inventory
 - Tower rotation
 - Dynamic footprint changes
@@ -602,7 +569,9 @@ MapSystem
 - Clarified that Draft System owns draft generation and draft result workflow.
 - Clarified that Battle HUD UI System owns runtime UI display and pending tower UI.
 - Refocused this document on tower placement, preview, snapping, validation, GridNode occupation, and walkability updates.
+- Moved TowerDefinition and tower prefab structure ownership to Tower Framework System.
 - Updated first-version scope to exclude draft, player progression, and battle HUD ownership.
+- Clarified that path blocking validation depends on Map System data and Monster System pathfinding functionality rather than Map System owning pathfinding.
 
 ## 2026-05-22
 

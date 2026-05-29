@@ -5,7 +5,7 @@
 
 Monster System is one of the core runtime systems in TowerNexus.
 
-Monsters are generated from map spawn nodes and automatically move toward the target node through the map pathfinding system.
+Monsters are generated from map spawn nodes and automatically move toward the target node using Monster System pathfinding functionality and Map System data.
 
 Players must strategically deploy and upgrade towers to eliminate monsters before they reach the target point.
 
@@ -17,7 +17,7 @@ This system currently focuses on the following core gameplay loop:
 - Monster death handling
 - Rewarding player EXP after monster elimination
 - Notifying Player System when monsters reach the target node
-- Preventing invalid tower placements that fully block monster paths
+- Providing path validation functionality used by Tower Placement System
 
 The first version of the Monster System is intentionally kept simple and extensible.
 Future features such as Boss mechanics, elite monsters, flying enemies, abnormal states, and advanced AI behaviors will be added in later phases.
@@ -65,7 +65,7 @@ The current map structure already contains:
 - GridNodeBehaviour
 - GridNodeBehaviour.IsWalkable
 
-Therefore, monster spawn points and target points should directly use GridNodeBehaviour.
+Therefore, monster spawn points and target points should reference GridNodeBehaviour data provided by Map System.
 
 The Target Node only defines the monster destination position.
 
@@ -291,6 +291,10 @@ The first version should use A* pathfinding.
 
 Monster System owns runtime pathfinding behavior, while Map System only provides spatial and walkability data.
 
+```markdown
+Tower Placement System may reuse Monster System pathfinding functionality when validating whether a placement would completely block all monster routes.
+```
+
 ## 7.1 Pathfinding Rules
 
 ### Rule 1
@@ -338,6 +342,10 @@ Instead:
 # 9. Tower Placement Path Validation
 
 Tower placement must never completely block all valid monster paths.
+
+This feature is owned by Tower Placement System.
+
+Monster System only provides pathfinding functionality that may be reused by placement validation.
 
 Before a tower is successfully placed:
 
@@ -406,7 +414,7 @@ The first implementation phase of the Monster System focuses only on:
 - Death handling
 - EXP reward flow
 - Monster target arrival notification to Player System
-- Tower placement path validation
+- Pathfinding functionality that can be reused by tower placement validation
 
 The following features are intentionally postponed:
 
@@ -442,9 +450,19 @@ Monster System should not directly control Battle HUD UI.
 
 ## Map System
 
-Map System provides Spawn Nodes, Target Node, walkability state, and node query support.
+Map System provides Spawn Nodes, Target Node, walkability state, node queries, and pathfinding-related map data.
 
 Map System does not handle monster arrival consequences.
+
+## Tower Placement System
+
+Tower Placement System owns:
+
+- Placement validation
+- Occupancy simulation
+- Path blocking validation decisions
+
+Monster System may provide pathfinding functionality used during placement validation.
   
 ---
 
@@ -455,6 +473,7 @@ Map System does not handle monster arrival consequences.
 - Updated deployment terminology to placement terminology.
 - Updated BattleHUDUI references to BattleHUDUISystem.
 - Clarified ownership boundary between Monster System pathfinding behavior and Map System spatial data.
+- Clarified ownership boundary between Monster System pathfinding functionality and Tower Placement System path validation.
 
 ## 2026-05-24
 

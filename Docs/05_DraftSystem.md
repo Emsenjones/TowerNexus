@@ -6,9 +6,16 @@
 
 The Draft System is responsible for generating runtime player choices during battle progression.
 
-The first version of the Draft System focuses on tower drafting.
+The first version of the Draft System focuses on tower-related drafting.
 
-When the player levels up during battle, the Draft System generates multiple tower choices and allows the player to select one result.
+Current supported draft types:
+
+- New Tower Draft
+- Tower Upgrade Draft
+
+Additional draft types may be added in future versions.
+
+When the player levels up during battle, the Draft System generates multiple draft choices and allows the player to select one result.
 
 The selected result is then forwarded to other gameplay systems.
 
@@ -48,7 +55,8 @@ The Draft System owns only:
 | Player System | Level, EXP, HP, battle failure |
 | Draft System | Draft generation and draft result workflow |
 | Battle HUD UI System | Draft window display and player interaction |
-| Tower Deploy System | Tower deployment and placement validation |
+| Tower Placement System | Tower deployment and placement validation |
+| Tower Upgrade System | Tower upgrade progression and upgrade application |
 | Map System | GridNode data and walkability |
 | Monster System | Monster runtime behavior |
 
@@ -58,7 +66,7 @@ The Draft System should not directly own player progression, deployment validati
 
 ## 4. Current First-Version Draft Flow
 
-Current first-version gameplay flow:
+Current gameplay flow:
 
 ```text
 MonsterSystem
@@ -75,31 +83,57 @@ Player Selects Draft Choice
     ↓
 DraftSystem
     ↓ Process Selection Result
+```
+
+If the selected result is a New Tower Draft:
+
+```text
+DraftSystem
+    ↓ Process New Tower Draft
 BattleHUDUISystem
     ↓ Add Pending Tower Entry
-TowerDeploySystem
+TowerPlacementSystem
+```
+
+If the selected result is a Tower Upgrade Draft:
+
+```text
+DraftSystem
+    ↓ Process Tower Upgrade Draft
+TowerUpgradeSystem
 ```
 
 ---
 
-## 5. Tower Draft System
+## 5. Current Draft Types
 
-The first version of the Draft System uses tower drafting.
+### 5.1 New Tower Draft
 
-When the player levels up:
+A New Tower Draft gives the player a new deployable tower.
 
-1. Draft System receives the level-up event.
-2. Draft System generates draft choices.
-3. Battle HUD UI System opens the draft window.
-4. Player selects one draft choice.
-5. Draft System processes the selected result.
-6. The selected tower becomes a pending deployable tower.
+The selected tower becomes a pending deployable tower entry handled later by Battle HUD UI System and Tower Placement System.
+
+---
+
+### 5.2 Tower Upgrade Draft
+
+A Tower Upgrade Draft gives the player an upgrade option for an existing tower type.
+
+Tower Upgrade Drafts may affect:
+
+- Basic Layer upgrades
+- Behaviour Layer upgrades
+- Synergy Layer upgrades
+
+Draft System only generates the choice.
+
+Tower Upgrade System is responsible for applying the selected upgrade.
 
 ---
 
 ## 6. Draft Choice Generation
 
-### 6.1 Tower Pool
+### 6.1 New Tower Pool
 
 The first version uses a Tower Definition Database or Tower Pool.
 
@@ -112,7 +146,22 @@ The Draft System may randomly generate draft choices from:
 
 The Draft System owns the draft generation rules.
 
-Tower Deploy System should not decide draft generation.
+Tower Placement System should not decide draft generation.
+
+---
+
+### 6.2 Tower Upgrade Pool
+
+Tower Upgrade Draft choices are generated from the player's current tower progression state.
+
+The upgrade pool may be constructed using:
+
+- Current tower types owned by the player
+- Current tower levels
+- Available upgrade layers
+- Upgrade definitions provided by Tower Upgrade System
+
+Detailed upgrade pool construction rules belong to Tower Upgrade System and may evolve in future versions.
 
 ---
 
@@ -152,10 +201,12 @@ Battle HUD UI System is responsible for:
 
 ## 8. Draft Result Types
 
-The first version only supports:
+The first version supports:
 
 ```text
-Tower Draft Result
+New Tower Draft Result
+
+Tower Upgrade Draft Result
 ```
 
 Future versions may support:
@@ -173,9 +224,9 @@ The Draft System should remain generic enough to support multiple future reward 
 
 ---
 
-## 9. Tower Draft Result Flow
+## 9. Draft Result Flow
 
-### 9.1 Current Tower Result Flow
+### 9.1 New Tower Draft Result Flow
 
 ```text
 Player selects tower
@@ -186,12 +237,24 @@ DraftSystem creates draft result
     ↓
 BattleHUDUISystem adds pending tower entry
     ↓
-TowerDeploySystem handles deployment later
+TowerPlacementSystem handles deployment later
 ```
 
 ---
 
-### 9.2 Ownership Rules
+### 9.2 Tower Upgrade Draft Result Flow
+
+```text
+Player selects tower upgrade
+    ↓
+DraftSystem validates selection
+    ↓
+DraftSystem creates draft result
+    ↓
+TowerUpgradeSystem applies upgrade
+```
+
+### 9.3 Ownership Rules
 
 Draft System owns:
 
@@ -205,7 +268,7 @@ Battle HUD UI System owns:
 - Draft interaction UI
 - Pending tower entry display
 
-Tower Deploy System owns:
+Tower Placement System owns:
 
 - Tower dragging
 - Placement validation
@@ -259,11 +322,23 @@ Draft System should not directly manage runtime UI layout.
 
 ---
 
-### Tower Deploy System
+### Tower Upgrade System
 
-Tower Deploy System only handles deployment after a tower has already become a pending deployable entry.
+Tower Upgrade System owns:
 
-Tower Deploy System should not generate draft choices.
+- Tower upgrade progression
+- Upgrade application
+- Upgrade layer definitions
+
+Draft System may generate Tower Upgrade Draft results and forward them to Tower Upgrade System.
+
+---
+
+### Tower Placement System
+
+Tower Placement System only handles deployment after a tower has already become a pending deployable entry.
+
+Tower Placement System should not generate draft choices.
 
 ---
 
@@ -280,19 +355,20 @@ Monster System should not directly interact with Draft System.
 Included features:
 
 - Player level-up draft trigger
-- 3-choice tower draft
+- 3-choice draft window
+- New Tower Draft
+- Tower Upgrade Draft
 - Random tower selection
-- Draft Window interaction flow
 - Pending tower entry creation
 - Event-driven draft flow
 
 Excluded features:
 
-- Tower Buff Draft
 - Global Buff Draft
+- Relic Draft
 - Reroll system
 - Weighted rarity
-- Synergy system
+- Advanced synergy drafting
 - Multiplayer drafting
 - Persistent progression drafting
 
@@ -306,3 +382,4 @@ Excluded features:
 - Moved tower draft ownership out of Tower Deploy System.
 - Clarified ownership boundaries between Draft System, Battle HUD UI System, Player System, and Tower Deploy System.
 - Added future support direction for buff drafting and generic reward drafting.
+- Expanded Draft System from tower-only drafting toward a generic drafting architecture supporting New Tower Draft and Tower Upgrade Draft.
