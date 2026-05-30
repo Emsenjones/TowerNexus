@@ -130,24 +130,7 @@ The goal of the Draft System is to create deep build diversity and encourage pla
 
 ---
 
-## 3.3 Synergy System (Planned)
-
-Future versions of the game will include a Synergy System.
-
-Specific tower combinations placed simultaneously on the battlefield may activate special bonuses or mechanic changes.
-
-Example:
-
-- If Tower A + Tower B + Tower C all exist on the battlefield:
-    - Additional passive bonuses may activate
-    - Unique mechanics may unlock
-    - Towers may gain special interactions
-
-This system is intended to further deepen strategic build creation.
-
----
-
-## 3.4 Monster Counter System (Planned)
+## 3.3 Monster Counter System (Planned)
 
 Future monster and boss designs may contain counter relationships against specific tower types or build strategies.
 
@@ -164,7 +147,7 @@ The purpose of this system is to continuously encourage strategic adaptation and
 
 ---
 
-## 3.5 Level and Stage Configuration Pipeline (Planned)
+## 3.4 Level and Stage Configuration Pipeline (Planned)
 
 Future versions of Tower Nexus will include a LevelConfig or StageConfig driven level pipeline.
 
@@ -179,7 +162,37 @@ This pipeline is intended to separate map authoring, level configuration, and ru
 
 ---
 
-# 4. Core Design Philosophy
+# 4. Configuration Strategy
+
+Tower Nexus uses Unity ScriptableObject assets as the primary configuration solution.
+
+All gameplay configuration data should follow this strategy.
+
+Current and planned configuration assets include:
+
+- TowerDefinition
+- TowerAttackConfig
+- MonsterDefinition
+- ProjectileConfig
+- EffectConfig
+- BuffConfig
+- LevelConfig
+- StageConfig
+
+Odin Inspector may be used to improve configuration editing workflows, validation, and editor usability.
+
+The first version does not use:
+
+- Excel export tools
+- CSV import pipelines
+- JSON configuration generation
+- External data table workflows
+
+The goal is to maximize iteration speed during prototype and early production phases.
+
+---
+
+# 5. Core Design Philosophy
 
 The core design philosophy of Tower Nexus is:
 
@@ -207,9 +220,9 @@ The ultimate goal is to create a tower defense experience where every run feels 
 
 ---
 
-# 5. Core Systems Overview
+# 6. Core Systems Overview
 
-## 5.1 Map System
+## 6.1 Map System
 
 The Map System provides the grid-based battlefield foundation of Tower Nexus.
 
@@ -229,7 +242,7 @@ The Map System also acts as the runtime foundation for future LevelConfig or Sta
 ---
 
 
-## 5.2 Player System
+## 6.2 Player System
 
 The Player System manages player runtime progression state and player battle survival state.
 
@@ -263,7 +276,7 @@ The Player System should not directly manage tower placement, draft generation, 
 
 ---
 
-## 5.3 Battle HUD UI System
+## 6.3 Battle HUD UI System
 
 The Battle HUD UI System is responsible for displaying runtime battle UI during gameplay.
 
@@ -285,7 +298,7 @@ It acts as the runtime gameplay presentation layer.
 
 ---
 
-## 5.4 Draft System
+## 6.4 Draft System
 
 The Draft System manages runtime player choice generation during battle progression.
 
@@ -313,7 +326,7 @@ Future versions may extend Draft System to support:
 
 ---
 
-## 5.5 Tower Placement System
+## 6.5 Tower Placement System
 
 The Tower Placement System manages the process of previewing, validating, placing, repositioning, recycling, and runtime battlefield reshaping through tower interaction on the grid map.
 
@@ -357,13 +370,14 @@ Runtime walkability states may differ from the original authored map walkability
 
 ---
 
-## 5.5.1 Tower Framework System
+## 6.5.1 Tower Framework System
 
 The Tower Framework System defines the shared tower architecture used by gameplay systems.
 
 It is responsible for:
 
 - TowerDefinition
+- TowerAttackConfig
 - Tower categories
 - Attack archetypes
 - Target selection types
@@ -371,6 +385,7 @@ It is responsible for:
 - TowerAnchorSet
 - Center Anchor
 - Occupied Anchors
+- Shared tower combat configuration references
 
 The Tower Framework System defines what a tower is.
 
@@ -378,9 +393,7 @@ Runtime placement, combat, and upgrade behavior are owned by their respective sy
 
 ---
 
----
-
-## 5.6 Monster System
+## 6.6 Monster System
 
 The Monster System manages monster spawning, runtime movement, pathfinding, death handling, target arrival reporting, and battlefield pressure generation.
 
@@ -427,7 +440,7 @@ Future versions may extend the Monster System with:
 
 ---
 
-# 6. Current Runtime Architecture Direction
+# 7. Current Runtime Architecture Direction
 
 ```text
 PlayerSystem
@@ -478,3 +491,12 @@ This separation is intended to:
 - Added Battle HUD UI System and Draft System to Core Systems Overview.
 - Updated runtime architecture flow.
 - Synced Project Overview with Tower Framework System, Tower Upgrade System, and updated ownership boundaries.
+
+## 2026-05-31
+
+- Added Configuration Strategy section as a project-level configuration guideline.
+- Standardized ScriptableObject assets as the primary configuration solution for the first version.
+- Documented Odin Inspector as the recommended configuration editing workflow.
+- Clarified that the first version does not use Excel export tools, CSV import pipelines, JSON generation workflows, or external data table systems.
+- Updated Tower Framework System overview to include TowerAttackConfig ownership.
+- Synced Project Overview with the latest Tower Framework System architecture.

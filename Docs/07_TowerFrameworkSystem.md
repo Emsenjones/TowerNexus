@@ -225,9 +225,10 @@ Current first-version tower categories:
 
 | Category | Description |
 |---|---|
-| ArcherTower | Fires arrows toward enemies |
-| CannonTower | Launches explosive projectiles |
-| LaserTower | Emits a continuous beam attack |
+| ArcherTower | Fires fast straight-line arrows toward enemies |
+| CannonTower | Launches arcing explosive shells toward enemy positions |
+| MagicTower | Locks onto one enemy and channels a continuous magic beam for a limited attack duration |
+| WatchTower | Periodically damages all enemies within its attack radius |
 
 Future categories may include:
 
@@ -246,16 +247,86 @@ Recommended first-version archetypes:
 
 | Archetype | Description |
 |---|---|
-| Projectile | Fires a projectile toward a target |
-| Beam | Continuously damages a target with a beam |
+| StraightProjectile | Fires a projectile in a straight trajectory toward a target |
+| ArcProjectile | Launches a projectile in an arcing trajectory toward a target position |
+| ChannelBeam | Locks onto one target and continuously damages it during a limited attack duration |
+| PeriodicArea | Periodically applies damage to all valid enemies within the tower attack radius |
 
 Examples:
 
-| Tower | Archetype |
-|---|---|
-| Archer Tower | Projectile |
-| Cannon Tower | Projectile |
-| Laser Tower | Beam |
+| Tower | Archetype | Core Behavior |
+|---|---|---|
+| Archer Tower | StraightProjectile | Fires low-damage arrows with short range and high attack speed |
+| Cannon Tower | ArcProjectile | Fires slow arcing shells with long range; shells explode on impact and deal area damage |
+| Magic Tower | ChannelBeam | After cooldown, selects one target and channels a beam for up to the configured attack duration; if the target dies early, the tower enters cooldown immediately |
+| Watch Tower | PeriodicArea | While enemies are within range, periodically damages all enemies inside its attack radius |
+
+---
+
+## 7.1 Archer Tower Attack Pattern
+
+Archer Tower uses straight projectile attacks.
+
+Design intent:
+
+- Low damage per projectile
+- Short attack range
+- High attack speed
+- Projectile has its own collider
+- Damage is applied when the projectile collides with a valid enemy
+
+Archer Tower does not require buff or effect configuration in the first version.
+
+---
+
+## 7.2 Cannon Tower Attack Pattern
+
+Cannon Tower uses arcing projectile attacks.
+
+Design intent:
+
+- Low attack speed
+- Long attack range
+- Projectile travels toward the selected enemy position
+- Projectile explodes when it reaches the target position or impact point
+- Explosion deals area damage to enemies within the explosion radius
+
+The cannon projectile itself should be handled by projectile runtime logic.
+
+The explosion may be represented as an impact effect or area damage effect, but it should not be treated as a buff in the first version because it does not persist on enemies over time.
+
+---
+
+## 7.3 Magic Tower Attack Pattern
+
+Magic Tower uses channel beam attacks.
+
+Design intent:
+
+- After cooldown ends, the tower selects one valid target
+- The tower locks onto that target and channels a magic beam
+- The beam deals continuous damage during the attack duration
+- Damage per second may increase the longer the same target is exposed to the beam
+- If the target dies before the attack duration ends, the tower immediately enters cooldown
+- If the attack duration ends and the target is still alive, the tower enters cooldown
+- After cooldown ends, the tower selects a target again
+
+Magic Tower does not require buff configuration in the first version. Its damage is owned by tower runtime attack logic.
+
+---
+
+## 7.4 Watch Tower Attack Pattern
+
+Watch Tower uses periodic area attacks.
+
+Design intent:
+
+- The tower checks for valid enemies inside its attack radius
+- If enemies are inside the radius, the tower periodically deals damage to all valid enemies in range
+- Example: if attack interval is 1 second, the tower deals damage once per second to all enemies currently within range
+- Enemies entering or leaving the radius are naturally included or excluded by the next periodic damage tick
+
+Watch Tower should not apply a damage-over-time buff in the first version. The damage source is the Watch Tower itself, not a buff attached to each enemy.
 
 ---
 
@@ -278,9 +349,43 @@ Future expansion:
 - LastInPath
 - HighestThreat
 
+Target selection may not be required by every attack archetype.
+
+Examples:
+
+| Tower | Target Selection Usage |
+|---|---|
+| Archer Tower | Selects one target before firing |
+| Cannon Tower | Selects one target or target position before firing |
+| Magic Tower | Selects one target before channeling |
+| Watch Tower | Does not need single-target selection; it damages all enemies within range |
+
 ---
 
-# 9. Related Systems
+# 9. Effect and Buff Relationship
+
+Tower attacks may reference effect or buff systems, but only when the tower behavior actually requires them.
+
+First-version recommendation:
+
+| Tower | Effect/Buff Usage |
+|---|---|
+| Archer Tower | No buff/effect required; projectile collision applies direct damage |
+| Cannon Tower | Explosion can be represented as an impact area damage effect; no buff required |
+| Magic Tower | No buff required; channel damage is owned by tower runtime combat logic |
+| Watch Tower | No buff required; periodic area damage is owned by tower runtime combat logic |
+
+Guideline:
+
+- Use Projectile runtime logic for projectile movement and collision.
+- Use Effect logic for instant gameplay events such as explosion damage, impact visuals, or area damage calculation.
+- Use Buff logic only when a gameplay state is attached to a unit over time, such as poison, slow, burn, weaken, or armor reduction.
+
+Cannon Tower explosion should be treated as an instant area damage effect rather than a buff.
+
+---
+
+# 10. Related Systems
 
 ## Draft System
 
@@ -306,13 +411,15 @@ Uses TowerDefinition and upgrade configuration references to define and apply to
 
 ---
 
-## Buff System
+## Buff and Effect System
 
-May be referenced by tower upgrade content and runtime combat systems to apply buff-related gameplay effects.
+May be referenced by tower upgrade content and runtime combat systems to apply effect or buff-related gameplay behavior.
+
+The first version should keep direct tower damage, projectile behavior, instant area damage effects, and persistent buffs clearly separated.
 
 ---
 
-# 10. First Version Scope
+# 11. First Version Scope
 
 Included:
 
@@ -321,6 +428,7 @@ Included:
 - Attack archetypes
 - Target selection types
 - Runtime system references
+- Basic relationship between tower attacks, effects, and buffs
 
 Excluded:
 
@@ -333,6 +441,15 @@ Excluded:
 ---
 
 # Change Log
+
+## 2026-05-30
+
+- Updated first-version tower categories to Archer Tower, Cannon Tower, Magic Tower, and Watch Tower.
+- Replaced generic Projectile/Beam archetype list with StraightProjectile, ArcProjectile, ChannelBeam, and PeriodicArea.
+- Added detailed attack pattern descriptions for Archer Tower, Cannon Tower, Magic Tower, and Watch Tower.
+- Added Effect and Buff Relationship section.
+- Clarified that Cannon Tower explosion may be represented as an instant area damage effect, not a buff.
+- Clarified that Watch Tower periodic area damage is owned by tower runtime combat logic rather than enemy-attached damage-over-time buffs.
 
 ## 2026-05-29
 
