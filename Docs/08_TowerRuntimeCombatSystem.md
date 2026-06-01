@@ -171,14 +171,6 @@ Examples:
 
 Select the nearest valid enemy.
 
-### First
-
-Select the enemy closest to the goal.
-
-### Last
-
-Select the enemy furthest from the goal.
-
 ### HighestHealth
 
 Select the enemy with the highest current health.

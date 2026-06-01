@@ -483,11 +483,12 @@ Target selection determines how towers choose enemies.
 
 Recommended first-version types:
 
-| Type | Description |
-|---|---|
-| Nearest | Closest enemy |
+| Type          | Description |
+|---------------|---|
+| Nearest       | Closest enemy |
 | HighestHealth | Enemy with highest HP |
-| Random | Random enemy within range |
+| LowestHealth  | Enemy with highest HP |
+| Random        | Random enemy within range |
 
 Future expansion:
 

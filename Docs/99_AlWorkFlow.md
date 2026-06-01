@@ -38,6 +38,3 @@ Important constraints:
 
 After I approve your plan, I will ask you to proceed with implementation.
 
-
-1.TowerFrameworkSystem: Archer Cannon design approved but need another two towers.
-2.DraftSystem: How to draft tower?
