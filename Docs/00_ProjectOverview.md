@@ -171,7 +171,7 @@ All gameplay configuration data should follow this strategy.
 Current and planned configuration assets include:
 
 - TowerDefinition
-- TowerAttackConfig
+- AttackConfig
 - MonsterDefinition
 - ProjectileConfig
 - EffectConfig
@@ -377,7 +377,7 @@ The Tower Framework System defines the shared tower architecture used by gamepla
 It is responsible for:
 
 - TowerDefinition
-- TowerAttackConfig
+- AttackConfig
 - Tower categories
 - Attack archetypes
 - Target selection types
@@ -387,9 +387,68 @@ It is responsible for:
 - Occupied Anchors
 - Shared tower combat configuration references
 
-The Tower Framework System defines what a tower is.
+The Tower Framework System defines what a tower is and what combat configuration data it references.
 
-Runtime placement, combat, and upgrade behavior are owned by their respective systems.
+Runtime placement, combat execution, projectile behavior, effect execution, and upgrade behavior are owned by their respective systems.
+
+---
+
+## 6.5.2 Tower Runtime Combat System
+
+The Tower Runtime Combat System consumes TowerDefinition and AttackConfig data provided by the Tower Framework System and converts them into runtime combat behavior.
+
+It is responsible for:
+
+- Runtime tower combat state
+- Enemy detection
+- Target selection
+- Attack cooldown management
+- Attack execution
+- Damage dispatch coordination
+- Communication with Projectile System and Buff And Effect System
+
+The Tower Runtime Combat System does not define tower configuration data, projectile movement logic, buff behavior, monster health logic, or tower upgrade rules.
+
+The first version focuses on enabling deployed towers to attack monsters through different attack archetypes, including StraightProjectile, ArcProjectile, ChannelBeam, and PeriodicArea.
+
+---
+
+## 6.5.3 Projectile System
+
+The Projectile System manages projectile lifecycle after a projectile has been spawned by the Tower Runtime Combat System.
+
+It is responsible for:
+
+- Projectile spawning support
+- Projectile movement
+- Projectile collision detection
+- Projectile lifetime management
+- Impact event triggering
+- Projectile destruction
+
+The Projectile System does not own tower target selection, attack cooldowns, area damage resolution, buff application, or monster health logic.
+
+The first version focuses on Straight Movement and Arc Movement projectiles.
+
+---
+
+## 6.5.4 Buff And Effect System
+
+The Buff And Effect System handles additional or complex combat results beyond direct single-target damage.
+
+It is responsible for:
+
+- Effect execution
+- AreaDamageEffect resolution
+- Future buff application support
+- Future buff lifecycle support
+- Future complex combat result extension points
+
+In the first version, direct projectile hit damage is not treated as an Effect.
+
+The first version only needs to support AreaDamageEffect for cannon-style projectile impact behavior.
+
+Buff runtime behavior is reserved for future versions.
 
 ---
 
@@ -461,6 +520,16 @@ Tower Upgrade Draft
 TowerUpgradeSystem
 
 TowerPlacementSystem
+    ↓ Place Tower
+TowerRuntimeCombatSystem
+    ↓ Spawn Projectile / Execute Attack
+ProjectileSystem
+    ↓ Direct Damage / Trigger Effect
+BuffAndEffectSystem
+    ↓ Area Damage Resolution
+MonsterSystem
+
+TowerPlacementSystem
     ↓ Modify Walkability
 MapSystem
 
@@ -469,7 +538,7 @@ MonsterSystem
 MapSystem
 ```
 
-Player progression, drafting, UI interaction, placement, battlefield topology modification, and monster pathfinding are intentionally separated into independent runtime systems.
+Player progression, drafting, UI interaction, placement, tower runtime combat, projectile lifecycle, effect execution, battlefield topology modification, and monster pathfinding are intentionally separated into independent runtime systems.
 
 This separation is intended to:
 
@@ -500,3 +569,7 @@ This separation is intended to:
 - Clarified that the first version does not use Excel export tools, CSV import pipelines, JSON generation workflows, or external data table systems.
 - Updated Tower Framework System overview to include TowerAttackConfig ownership.
 - Synced Project Overview with the latest Tower Framework System architecture.
+- Replaced TowerAttackConfig naming with AttackConfig in Project Overview.
+- Added Tower Runtime Combat System, Projectile System, and Buff And Effect System to Core Systems Overview.
+- Updated runtime architecture direction to include the tower combat chain from TowerPlacementSystem to TowerRuntimeCombatSystem, ProjectileSystem, BuffAndEffectSystem, and MonsterSystem.
+- Clarified that direct projectile hit damage is not treated as an Effect in the first version, while AreaDamageEffect belongs to Buff And Effect System.

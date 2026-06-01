@@ -328,9 +328,156 @@ Design intent:
 
 Watch Tower should not apply a damage-over-time buff in the first version. The damage source is the Watch Tower itself, not a buff attached to each enemy.
 
+# 8. Attack Configuration
+
+Attack Configuration defines the static combat-related data consumed by the Tower Runtime Combat System.
+
+TowerDefinition should not directly store combat parameters.
+
+Instead, TowerDefinition references an AttackConfig through attackConfigId.
+
+Example:
+
+```text
+TowerDefinition
+    ↓
+attackConfigId
+    ↓
+AttackConfig
+    ↓
+TowerRuntimeCombatSystem
+```
+
+This separation allows multiple towers to share the same attack configuration while keeping runtime combat logic independent from tower framework data.
+
 ---
 
-# 8. Target Selection Types
+## 8.1 AttackConfig Purpose
+
+AttackConfig defines:
+
+- Attack range
+- Attack interval
+- Damage values
+- Target selection rules
+- Projectile references
+- Area damage parameters
+- Channel attack parameters
+
+AttackConfig does not contain runtime state.
+
+Runtime state belongs to Tower Runtime Combat System.
+
+Examples of runtime state:
+
+- Current target
+- Cooldown timer
+- Channel timer
+- Detected enemies
+- Attack execution state
+
+---
+
+## 8.2 Recommended AttackConfig Fields
+
+Recommended first-version fields:
+
+| Field | Type | Description |
+|---|---|---|
+| attackConfigId | string | Unique attack configuration identifier |
+| attackArchetype | AttackArchetype | Attack behavior type |
+| attackRange | float | Maximum attack range |
+| attackInterval | float | Time between attacks |
+| targetSelectionType | TargetSelectionType | Target selection rule |
+| damage | float | Base damage value |
+| projectileConfigId | string | Projectile configuration reference |
+| explosionRadius | float | Explosion area radius |
+| damagePerSecond | float | Continuous damage value |
+| maxChannelDuration | float | Maximum channel duration |
+| areaTickInterval | float | Periodic area damage interval |
+
+Not every attack archetype requires every field.
+
+Unused fields may remain empty or use default values.
+
+---
+
+## 8.3 AttackConfig Usage By Archetype
+
+Different attack archetypes consume different AttackConfig fields.
+
+### StraightProjectile
+
+Typically uses:
+
+- attackRange
+- attackInterval
+- damage
+- projectileConfigId
+- targetSelectionType
+
+---
+
+### ArcProjectile
+
+Typically uses:
+
+- attackRange
+- attackInterval
+- damage
+- projectileConfigId
+- explosionRadius
+- targetSelectionType
+
+---
+
+### ChannelBeam
+
+Typically uses:
+
+- attackRange
+- damagePerSecond
+- maxChannelDuration
+- attackInterval
+- targetSelectionType
+
+---
+
+### PeriodicArea
+
+Typically uses:
+
+- attackRange
+- damage
+- areaTickInterval
+
+PeriodicArea attacks normally do not require projectile configuration or target selection.
+
+---
+
+## 8.4 Runtime Consumption
+
+The Tower Framework System only defines AttackConfig data.
+
+Runtime attack execution belongs to the Tower Runtime Combat System.
+
+Example:
+
+```text
+TowerDefinition
+    ↓
+AttackConfig
+    ↓
+TowerRuntimeCombatSystem
+    ↓
+Attack Execution
+```
+
+The Tower Runtime Combat System is responsible for consuming AttackConfig data and converting it into runtime combat behavior.
+
+---
+
+# 9. Target Selection Types
 
 Target selection determines how towers choose enemies.
 
@@ -362,7 +509,7 @@ Examples:
 
 ---
 
-# 9. Effect and Buff Relationship
+# 10. Effect and Buff Relationship
 
 Tower attacks may reference effect or buff systems, but only when the tower behavior actually requires them.
 
@@ -385,7 +532,7 @@ Cannon Tower explosion should be treated as an instant area damage effect rather
 
 ---
 
-# 10. Related Systems
+# 11. Related Systems
 
 ## Draft System
 
@@ -419,7 +566,7 @@ The first version should keep direct tower damage, projectile behavior, instant 
 
 ---
 
-# 11. First Version Scope
+# 12. First Version Scope
 
 Included:
 
