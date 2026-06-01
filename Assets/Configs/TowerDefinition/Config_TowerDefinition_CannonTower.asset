@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
-  m_Name: TowerDefinition_ArcherTower_Lv1
+  m_Name: Config_TowerDefinition_CannonTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
-  towerId: 101
-  displayName: Archer Tower
-  description: This is an archer tower
-  icon: {fileID: -8627652178134794878, guid: 48902436d5fe340feb0da315672b5b04, type: 3}
-  towerPrefab: {fileID: 8270491640636788401, guid: b41b585d975044e40aed1799db9297fb, type: 3}
+  towerId: 102
+  displayName: Cannon Tower
+  description: This is a cannon tower
+  icon: {fileID: 2760732576675317622, guid: c71c62cf77e164c06b82b60e4352ebad, type: 3}
+  towerPrefab: {fileID: 1820178305229058407, guid: 4c7d64644d5084801a44646a80d14567, type: 3}

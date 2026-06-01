@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: -54617899545386276}
   - component: {fileID: 1025514080300142389}
   m_Layer: 0
-  m_Name: prefab_CannonTower_Lv1
+  m_Name: prefab_CannonTower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

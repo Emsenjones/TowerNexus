@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
-  m_Name: MonsterDefinition_TurtuleShell
+  m_Name: Config_MonsterDefinition_Golem
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 1
-  displayName: Turtule Shell
-  monsterPrefab: {fileID: 2882519792444244193, guid: cbabe32a21d9843728ed0b40c5d4dd16, type: 3}
+  monsterId: 9
+  displayName: Golem
+  monsterPrefab: {fileID: 3333681211596321960, guid: 6973816234f2b4f3a9ee8c30c3053911, type: 3}
   moveSpeed: 0.5
   maxHealth: 1
   expReward: 0

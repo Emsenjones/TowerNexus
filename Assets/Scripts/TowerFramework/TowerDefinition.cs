@@ -1,3 +1,4 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 [CreateAssetMenu(
@@ -6,17 +7,35 @@ using UnityEngine;
 )]
 public class TowerDefinition : ScriptableObject
 {
+    [TitleGroup("Identity")]
+    [Required]
     [SerializeField] private string towerId;
+    [TitleGroup("Identity")]
     [SerializeField] private string displayName;
+    [TitleGroup("Identity")]
+    [TextArea]
     [SerializeField] private string description;
+    [TitleGroup("Identity")]
+    [SerializeField] private TowerCategory towerCategory;
+
+    [TitleGroup("Visuals")]
     [SerializeField] private Sprite icon;
+
+    [TitleGroup("Prefab")]
+    [Required]
     [SerializeField] private GameObject towerPrefab;
+
+    [TitleGroup("Combat Configuration")]
+    [Required]
+    [SerializeField] private AttackConfig attackConfig;
 
     public string TowerId => towerId;
     public string DisplayName => displayName;
     public string Description => description;
+    public TowerCategory TowerCategory => towerCategory;
     public Sprite Icon => icon;
     public GameObject TowerPrefab => towerPrefab;
+    public AttackConfig AttackConfig => attackConfig;
 
     public bool IsValid()
     {
@@ -29,6 +48,18 @@ public class TowerDefinition : ScriptableObject
         if (towerPrefab == null)
         {
             Debug.LogWarning($"Tower definition '{towerId}' is invalid: tower prefab is not assigned.", this);
+            return false;
+        }
+
+        if (attackConfig == null)
+        {
+            Debug.LogWarning($"Tower definition '{towerId}' is invalid: attack config is not assigned.", this);
+            return false;
+        }
+
+        if (!attackConfig.IsValid())
+        {
+            Debug.LogWarning($"Tower definition '{towerId}' is invalid: attack config is invalid.", attackConfig);
             return false;
         }
 

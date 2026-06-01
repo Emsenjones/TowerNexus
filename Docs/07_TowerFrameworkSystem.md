@@ -98,9 +98,9 @@ Recommended fields:
 | icon | Sprite | UI icon |
 | towerPrefab | GameObject | Runtime tower prefab |
 | towerCategory | TowerCategory | Tower category |
-| attackArchetype | AttackArchetype | Attack archetype |
-| attackConfigId | string | Attack configuration reference |
-| upgradeConfigId | string | Upgrade configuration reference |
+| attackConfig | AttackConfig | Attack configuration reference |
+
+Upgrade-related configuration references are reserved for the future Tower Upgrade System and are not required by the first-version Tower Framework data implementation.
 
 ---
 
@@ -225,10 +225,10 @@ Current first-version tower categories:
 
 | Category | Description |
 |---|---|
-| ArcherTower | Fires fast straight-line arrows toward enemies |
-| CannonTower | Launches arcing explosive shells toward enemy positions |
-| MagicTower | Locks onto one enemy and channels a continuous magic beam for a limited attack duration |
-| WatchTower | Periodically damages all enemies within its attack radius |
+| Archer | Fires fast straight-line arrows toward enemies |
+| Cannon | Launches arcing explosive shells toward enemy positions |
+| Magic | Locks onto one enemy and channels a continuous magic beam for a limited attack duration |
+| Watch | Periodically damages all enemies within its attack radius |
 
 Future categories may include:
 
@@ -334,14 +334,14 @@ Attack Configuration defines the static combat-related data consumed by the Towe
 
 TowerDefinition should not directly store combat parameters.
 
-Instead, TowerDefinition references an AttackConfig through attackConfigId.
+Instead, TowerDefinition references an AttackConfig through attackConfig.
 
 Example:
 
 ```text
 TowerDefinition
     ↓
-attackConfigId
+attackConfig
     ↓
 AttackConfig
     ↓
@@ -398,7 +398,9 @@ Recommended first-version fields:
 
 Not every attack archetype requires every field.
 
-Unused fields may remain empty or use default values.
+Unused fields should be hidden in the Inspector whenever practical.
+
+Editor tooling may use Odin Inspector conditional display features to show only fields relevant to the selected AttackArchetype.
 
 ---
 
@@ -487,7 +489,7 @@ Recommended first-version types:
 |---------------|---|
 | Nearest       | Closest enemy |
 | HighestHealth | Enemy with highest HP |
-| LowestHealth  | Enemy with highest HP |
+| LowestHealth  | Enemy with lowest HP |
 | Random        | Random enemy within range |
 
 Future expansion:
@@ -503,10 +505,10 @@ Examples:
 
 | Tower | Target Selection Usage |
 |---|---|
-| Archer Tower | Selects one target before firing |
-| Cannon Tower | Selects one target or target position before firing |
-| Magic Tower | Selects one target before channeling |
-| Watch Tower | Does not need single-target selection; it damages all enemies within range |
+| Archer | Selects one target before firing |
+| Cannon | Selects one target or target position before firing |
+| Magic | Selects one target before channeling |
+| Watch | Does not need single-target selection; it damages all enemies within range |
 
 ---
 
@@ -518,10 +520,10 @@ First-version recommendation:
 
 | Tower | Effect/Buff Usage |
 |---|---|
-| Archer Tower | No buff/effect required; projectile collision applies direct damage |
-| Cannon Tower | Explosion can be represented as an impact area damage effect; no buff required |
-| Magic Tower | No buff required; channel damage is owned by tower runtime combat logic |
-| Watch Tower | No buff required; periodic area damage is owned by tower runtime combat logic |
+| Archer | No buff/effect required; projectile collision applies direct damage |
+| Cannon | Explosion can be represented as an impact area damage effect; no buff required |
+| Magic | No buff required; channel damage is owned by tower runtime combat logic |
+| Watch | No buff required; periodic area damage is owned by tower runtime combat logic |
 
 Guideline:
 
@@ -549,7 +551,7 @@ Uses TowerDefinition to instantiate tower prefabs.
 
 ## Tower Runtime Combat System
 
-Uses TowerDefinition to determine attack archetypes and combat behavior.
+Uses TowerDefinition and AttackConfig to determine attack archetypes and combat behavior.
 
 ---
 
@@ -598,6 +600,9 @@ Excluded:
 - Added Effect and Buff Relationship section.
 - Clarified that Cannon Tower explosion may be represented as an instant area damage effect, not a buff.
 - Clarified that Watch Tower periodic area damage is owned by tower runtime combat logic rather than enemy-attached damage-over-time buffs.
+- Standardized TowerCategory values to Archer, Cannon, Magic, and Watch.
+- Removed upgradeConfigId from first-version TowerDefinition recommended fields and clarified that upgrade configuration references belong to future Tower Upgrade System work.
+- Clarified that unused AttackConfig fields should be hidden in the Inspector whenever practical.
 
 ## 2026-05-29
 

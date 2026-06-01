@@ -253,7 +253,7 @@ GameObject:
   - component: {fileID: 8354368066510959421}
   - component: {fileID: -5833469859241583986}
   m_Layer: 0
-  m_Name: prefab_ArcherTower_Lv1
+  m_Name: prefab_ArcherTower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

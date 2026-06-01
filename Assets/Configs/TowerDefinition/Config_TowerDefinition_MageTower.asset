@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
-  m_Name: TowerDefinition_MageTower_Lv1
+  m_Name: Config_TowerDefinition_MageTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerId: 103
   displayName: Mage Tower

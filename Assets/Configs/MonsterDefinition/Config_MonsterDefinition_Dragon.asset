@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
-  m_Name: MonsterDefinition_EvilMage
+  m_Name: Config_MonsterDefinition_Dragon
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 7
-  displayName: Evil Mage
-  monsterPrefab: {fileID: 3866999361384652794, guid: 23ee389ca1731497d91b2390db4e1745, type: 3}
+  monsterId: 5
+  displayName: Dragon
+  monsterPrefab: {fileID: 3866999361384652794, guid: 013fd63c6df284007a43fae2a2ab273e, type: 3}
   moveSpeed: 0.5
   maxHealth: 1
   expReward: 0
