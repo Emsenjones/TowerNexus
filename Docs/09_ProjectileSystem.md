@@ -8,7 +8,6 @@ The Projectile System is responsible for managing projectile lifecycle after a p
 
 The system manages:
 
-- Projectile spawning
 - Projectile movement
 - Projectile collision detection
 - Projectile lifetime
@@ -68,12 +67,16 @@ If Cannon Tower
 Good:
 
 ```text
-Read Projectile Config
+Read AttackConfig.attackArchetype
     ↓
-Read Movement Type
+Spawn Projectile
     ↓
 Execute Matching Projectile Behaviour
 ```
+
+Projectile movement style is determined by AttackConfig.attackArchetype.
+
+ProjectileConfig should not define duplicate movement types.
 
 The Projectile System should only care about projectile runtime execution.
 
@@ -135,9 +138,82 @@ Target Position
 Current Position
 Lifetime Timer
 Projectile Config
+Attack Config
+Attack Damage
 ```
 
 Runtime state should never be stored inside tower configuration.
+
+---
+
+## 7. ProjectileConfig (First Version)
+
+The first version introduces a lightweight ProjectileConfig.
+
+ProjectileConfig is responsible for projectile-specific runtime data and visual behavior.
+
+ProjectileConfig should not duplicate data already owned by AttackConfig.
+
+Examples of data that should remain in AttackConfig:
+
+- damage
+- attackRange
+- attackInterval
+- attackArchetype
+- arcHeight
+
+ProjectileConfig should focus on projectile-specific configuration.
+
+Recommended first-version fields:
+
+| Field | Type | Description |
+|---|---|---|
+| projectileConfigId | string | Unique projectile configuration identifier |
+| projectilePrefab | GameObject | Projectile prefab reference |
+| projectileSpeed | float | Projectile movement speed (Unity units per second) |
+| impactEffectConfig | EffectConfig | Optional effect triggered on impact |
+
+Notes:
+
+- projectileSpeed controls how quickly the projectile reaches its target.
+- impactEffectConfig is optional.
+- Direct single-target damage does not require an Effect.
+- AreaDamageEffect is an example of a valid impact effect.
+- The first version supports a single impact effect.
+- Future versions may support multiple impact effects.
+
+Example:
+
+```text
+Arrow
+    ↓
+Direct Damage
+```
+
+No impact effect required.
+
+```text
+Cannonball
+    ↓
+AreaDamageEffect
+```
+
+Impact effect required.
+
+Design Principle:
+
+```text
+AttackConfig
+    Owns attack behavior and damage
+
+ProjectileConfig
+    Owns projectile runtime data
+
+EffectConfig
+    Owns complex impact results
+```
+
+This separation prevents duplicate configuration and keeps responsibilities clear.
 
 ---
 
@@ -174,6 +250,8 @@ Travel Along Arc
     ↓
 Reach Target Position
 ```
+
+Arc height is provided by AttackConfig.arcHeight.
 
 ---
 
@@ -254,7 +332,9 @@ Instead, the Projectile System notifies the Effect System.
 Responsible for:
 
 - Creating projectiles
+- Initializing projectile runtime state
 - Providing target information
+- Providing AttackConfig data
 
 ---
 
@@ -303,11 +383,12 @@ These features may be added in future versions.
 
 ## 12. Summary
 
+Projectile creation is owned by the Tower Runtime Combat System. The Projectile System begins responsibility after a projectile has been initialized.
+
 The Projectile System manages projectile lifecycle after a projectile has been spawned by the Tower Runtime Combat System.
 
 The system is responsible for:
 
-- Spawning projectiles
 - Moving projectiles
 - Detecting hits
 - Triggering impact events

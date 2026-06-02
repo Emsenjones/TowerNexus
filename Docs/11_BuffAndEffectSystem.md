@@ -1,5 +1,3 @@
-
-
 # Buff And Effect System
 
 ## 1. System Overview
@@ -134,7 +132,7 @@ The first version only supports AreaDamageEffect.
 
 ### 5.1 AreaDamageEffect
 
-AreaDamageEffect applies damage to all valid monsters within a radius around an impact position.
+AreaDamageEffect applies attack damage to all valid monsters within a radius around an impact position.
 
 Typical source:
 
@@ -151,7 +149,7 @@ Trigger AreaDamageEffect
     ↓
 Find Monsters In Radius
     ↓
-Dispatch Damage To Each MonsterBehaviour
+Dispatch Attack Damage To Each MonsterBehaviour
 ```
 
 AreaDamageEffect data may include:
@@ -159,9 +157,23 @@ AreaDamageEffect data may include:
 | Field | Type | Description |
 |---|---|---|
 | effectId | string | Unique effect identifier |
-| effectType | EffectType | AreaDamage in the first version |
 | radius | float | Area damage radius |
-| damage | float | Damage applied to each valid monster |
+
+Attack damage is not owned by AreaDamageEffect.
+
+Attack damage is provided by the combat event that triggered the effect.
+
+For example:
+
+```text
+AttackConfig.damage
+    ↓
+Projectile Impact
+    ↓
+AreaDamageEffect
+    ↓
+Dispatch Damage To All Valid Monsters
+```
 
 The first version does not need advanced falloff rules.
 
@@ -209,6 +221,7 @@ Responsible for:
 - Detecting projectile hit or arrival
 - Dispatching direct damage for simple single-target hits
 - Triggering Effect execution for complex results
+- Providing impact position and attack damage when triggering an effect
 
 Example:
 
@@ -276,7 +289,7 @@ These features may be added in future versions.
 
 The Buff And Effect System handles additional or complex combat results beyond direct single-target damage.
 
-In the first version, the system only needs to support AreaDamageEffect.
+In the first version, the system only needs to support AreaDamageEffect and area damage resolution.
 
 Direct projectile hit damage remains part of the Projectile System and MonsterBehaviour damage flow.
 

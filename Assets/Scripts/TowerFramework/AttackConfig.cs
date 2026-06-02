@@ -20,6 +20,7 @@ public class AttackConfig : ScriptableObject
     [MinValue(0f)]
     [SerializeField] private float attackInterval = 1f;
     [TitleGroup("Core")]
+    [ShowIf(nameof(UsesTargetSelection))]
     [SerializeField] private TargetSelectionType targetSelectionType;
     [TitleGroup("Core")]
     [MinValue(0f)]
@@ -28,24 +29,19 @@ public class AttackConfig : ScriptableObject
     [TitleGroup("Projectile")]
     [ShowIf(nameof(UsesProjectile))]
     [SerializeField] private string projectileConfigId;
-
-    [TitleGroup("Effect Reference")]
-    [ShowIf(nameof(UsesEffectReference))]
-    [SerializeField] private string effectConfigId;
-
-    [TitleGroup("Area")]
-    [ShowIf(nameof(UsesExplosionRadius))]
+    [TitleGroup("Projectile")]
+    [ShowIf(nameof(IsArcProjectile))]
     [MinValue(0f)]
-    [SerializeField] private float explosionRadius;
-    [TitleGroup("Area")]
-    [ShowIf(nameof(UsesAreaTickInterval))]
-    [MinValue(0f)]
-    [SerializeField] private float areaTickInterval = 1f;
+    [SerializeField] private float arcHeight = 1f;
 
     [TitleGroup("Channel")]
     [ShowIf(nameof(IsChannelBeam))]
     [MinValue(0f)]
     [SerializeField] private float damagePerSecond;
+    [TitleGroup("Channel")]
+    [ShowIf(nameof(IsChannelBeam))]
+    [MinValue(0.01f)]
+    [SerializeField] private float channelDamageInterval = 0.1f;
     [TitleGroup("Channel")]
     [ShowIf(nameof(IsChannelBeam))]
     [MinValue(0f)]
@@ -58,11 +54,10 @@ public class AttackConfig : ScriptableObject
     public TargetSelectionType TargetSelectionType => targetSelectionType;
     public float Damage => damage;
     public string ProjectileConfigId => projectileConfigId;
-    public string EffectConfigId => effectConfigId;
-    public float ExplosionRadius => explosionRadius;
+    public float ArcHeight => arcHeight;
     public float DamagePerSecond => damagePerSecond;
+    public float ChannelDamageInterval => channelDamageInterval;
     public float MaxChannelDuration => maxChannelDuration;
-    public float AreaTickInterval => areaTickInterval;
 
     private bool UsesProjectile()
     {
@@ -70,21 +65,16 @@ public class AttackConfig : ScriptableObject
                attackArchetype == AttackArchetype.ArcProjectile;
     }
 
-    private bool UsesEffectReference()
+    private bool IsArcProjectile()
     {
         return attackArchetype == AttackArchetype.ArcProjectile;
     }
 
-    private bool UsesExplosionRadius()
+    private bool UsesTargetSelection()
     {
-        return attackArchetype == AttackArchetype.ArcProjectile ||
-               attackArchetype == AttackArchetype.PeriodicArea;
+        return attackArchetype != AttackArchetype.PeriodicArea;
     }
 
-    private bool UsesAreaTickInterval()
-    {
-        return attackArchetype == AttackArchetype.PeriodicArea;
-    }
 
     private bool IsChannelBeam()
     {
@@ -117,9 +107,9 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
-        if (explosionRadius < 0f)
+        if (arcHeight < 0f)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: explosion radius cannot be negative.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: arc height cannot be negative.", this);
             return false;
         }
 
@@ -129,17 +119,18 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
+        if (channelDamageInterval <= 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: channel damage interval must be greater than zero.", this);
+            return false;
+        }
+
         if (maxChannelDuration < 0f)
         {
             Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: max channel duration cannot be negative.", this);
             return false;
         }
 
-        if (areaTickInterval < 0f)
-        {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: area tick interval cannot be negative.", this);
-            return false;
-        }
 
         return true;
     }

@@ -37,4 +37,3 @@ Important constraints:
 - Keep the scope strictly within xxx.md
 
 After I approve your plan, I will ask you to proceed with implementation.
-

@@ -15,8 +15,6 @@ public class TowerDefinition : ScriptableObject
     [TitleGroup("Identity")]
     [TextArea]
     [SerializeField] private string description;
-    [TitleGroup("Identity")]
-    [SerializeField] private TowerCategory towerCategory;
 
     [TitleGroup("Visuals")]
     [SerializeField] private Sprite icon;
@@ -32,7 +30,6 @@ public class TowerDefinition : ScriptableObject
     public string TowerId => towerId;
     public string DisplayName => displayName;
     public string Description => description;
-    public TowerCategory TowerCategory => towerCategory;
     public Sprite Icon => icon;
     public GameObject TowerPrefab => towerPrefab;
     public AttackConfig AttackConfig => attackConfig;

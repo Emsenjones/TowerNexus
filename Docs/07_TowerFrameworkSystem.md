@@ -361,7 +361,7 @@ AttackConfig defines:
 - Damage values
 - Target selection rules
 - Projectile references
-- Area damage parameters
+- Projectile trajectory parameters
 - Channel attack parameters
 
 AttackConfig does not contain runtime state.
@@ -391,10 +391,10 @@ Recommended first-version fields:
 | targetSelectionType | TargetSelectionType | Target selection rule |
 | damage | float | Base damage value |
 | projectileConfigId | string | Projectile configuration reference |
-| explosionRadius | float | Explosion area radius |
+| arcHeight | float | Arc projectile trajectory height |
 | damagePerSecond | float | Continuous damage value |
+| channelDamageInterval | float | Damage application interval during channeling |
 | maxChannelDuration | float | Maximum channel duration |
-| areaTickInterval | float | Periodic area damage interval |
 
 Not every attack archetype requires every field.
 
@@ -428,8 +428,12 @@ Typically uses:
 - attackInterval
 - damage
 - projectileConfigId
-- explosionRadius
+- arcHeight
 - targetSelectionType
+
+Notes:
+
+- Explosion radius and area damage behavior belong to the Projectile System and Buff And Effect System, not AttackConfig.
 
 ---
 
@@ -438,10 +442,16 @@ Typically uses:
 Typically uses:
 
 - attackRange
-- damagePerSecond
-- maxChannelDuration
 - attackInterval
+- damagePerSecond
+- channelDamageInterval
+- maxChannelDuration
 - targetSelectionType
+
+Notes:
+
+- attackInterval controls how often the tower starts a new channel attack.
+- channelDamageInterval controls how frequently damage is applied while channeling.
 
 ---
 
@@ -450,10 +460,17 @@ Typically uses:
 Typically uses:
 
 - attackRange
+- attackInterval
 - damage
-- areaTickInterval
 
-PeriodicArea attacks normally do not require projectile configuration or target selection.
+PeriodicArea attacks do not require:
+
+- projectileConfigId
+- targetSelectionType
+
+TargetSelectionType is not used by PeriodicArea because the tower applies damage to all valid monsters within attackRange.
+
+attackInterval controls how often area damage is applied.
 
 ---
 
@@ -521,7 +538,7 @@ First-version recommendation:
 | Tower | Effect/Buff Usage |
 |---|---|
 | Archer | No buff/effect required; projectile collision applies direct damage |
-| Cannon | Explosion can be represented as an impact area damage effect; no buff required |
+| Cannon | Projectile impact may trigger an AreaDamageEffect; no buff required |
 | Magic | No buff required; channel damage is owned by tower runtime combat logic |
 | Watch | No buff required; periodic area damage is owned by tower runtime combat logic |
 
@@ -603,6 +620,11 @@ Excluded:
 - Standardized TowerCategory values to Archer, Cannon, Magic, and Watch.
 - Removed upgradeConfigId from first-version TowerDefinition recommended fields and clarified that upgrade configuration references belong to future Tower Upgrade System work.
 - Clarified that unused AttackConfig fields should be hidden in the Inspector whenever practical.
+- Removed explosionRadius and areaTickInterval from AttackConfig.
+- Added arcHeight for ArcProjectile configuration.
+- Added channelDamageInterval for ChannelBeam damage timing.
+- Clarified which AttackConfig fields are consumed by each AttackArchetype.
+- Clarified that PeriodicArea uses attackInterval and does not use TargetSelectionType.
 
 ## 2026-05-29
 
