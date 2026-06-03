@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8792335709140642974}
   - component: {fileID: 5597760210054024830}
   m_Layer: 0
-  m_Name: uiprefab_Slider
+  m_Name: Uiprefab_Slider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

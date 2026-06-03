@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8914626659840241841}
   m_Layer: 0
-  m_Name: prefab_Tile_UpLeftDirection
+  m_Name: Prefab_Tile_UpLeftDirection
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

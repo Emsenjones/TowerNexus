@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6543182570049720400}
   - component: {fileID: 628654884526389982}
   m_Layer: 0
-  m_Name: prefab_GridNode
+  m_Name: Prefab_GridNode
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

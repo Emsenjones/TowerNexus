@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: c71c62cf77e164c06b82b60e4352ebad
+guid: 48902436d5fe340feb0da315672b5b04
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2760732576675317622
-    second: icon_DoubleTower_0
+      213: -8627652178134794878
+    second: icon_SingleTower_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -46,9 +46,9 @@ TextureImporter:
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
-  spriteExtrude: 1
-  spriteMeshType: 1
+  spriteMode: 1
+  spriteExtrude: 0
+  spriteMeshType: 0
   alignment: 0
   spritePivot: {x: 0.5, y: 0.5}
   spritePixelsToUnits: 100
@@ -72,7 +72,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 2048
+    maxTextureSize: 256
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -100,7 +100,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: icon_DoubleTower_0
+      name: icon_SingleTower_0
       rect:
         serializedVersion: 2
         x: 0
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 677c498c6a7105620800000000000000
-      internalID: 2760732576675317622
+      spriteID: 28d76a42e0c644880800000000000000
+      internalID: -8627652178134794878
       vertices: []
       indices: 
       edges: []
@@ -125,7 +125,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      icon_DoubleTower_0: 2760732576675317622
+      icon_SingleTower_0: -8627652178134794878
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

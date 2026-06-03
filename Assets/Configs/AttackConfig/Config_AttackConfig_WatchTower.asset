@@ -12,15 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008a5cd59d0f643d39191b0690bfb938, type: 3}
   m_Name: Config_AttackConfig_WatchTower
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
-  attackConfigId: 
-  attackArchetype: 0
-  attackRange: 1
-  attackInterval: 1
+  attackConfigId: 104
+  attackArchetype: 3
+  attackRange: 2
+  attackInterval: 0.5
   targetSelectionType: 0
-  damage: 1
+  damage: 0.5
   projectileConfigId: 
-  effectConfigId: 
-  explosionRadius: 0
-  areaTickInterval: 1
+  arcHeight: 1
   damagePerSecond: 0
+  channelDamageInterval: 0.1
   maxChannelDuration: 1

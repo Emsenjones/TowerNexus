@@ -23,12 +23,13 @@ public class AttackConfig : ScriptableObject
     [ShowIf(nameof(UsesTargetSelection))]
     [SerializeField] private TargetSelectionType targetSelectionType;
     [TitleGroup("Core")]
-    [MinValue(0f)]
-    [SerializeField] private float damage = 1f;
+    [MinValue(0)]
+    [SerializeField] private int damage = 1;
 
     [TitleGroup("Projectile")]
     [ShowIf(nameof(UsesProjectile))]
-    [SerializeField] private string projectileConfigId;
+    [Required]
+    [SerializeField] private ProjectileConfig projectileConfig;
     [TitleGroup("Projectile")]
     [ShowIf(nameof(IsArcProjectile))]
     [MinValue(0f)]
@@ -52,8 +53,8 @@ public class AttackConfig : ScriptableObject
     public float AttackRange => attackRange;
     public float AttackInterval => attackInterval;
     public TargetSelectionType TargetSelectionType => targetSelectionType;
-    public float Damage => damage;
-    public string ProjectileConfigId => projectileConfigId;
+    public int Damage => damage;
+    public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
     public float DamagePerSecond => damagePerSecond;
     public float ChannelDamageInterval => channelDamageInterval;
@@ -101,9 +102,9 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
-        if (damage < 0f)
+        if (UsesProjectile() && projectileConfig == null)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: damage cannot be negative.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: projectile config is not assigned.", this);
             return false;
         }
 

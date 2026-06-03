@@ -89,7 +89,7 @@ GameObject:
   - component: {fileID: 3023790769789954002}
   - component: {fileID: 303228020853076201}
   m_Layer: 5
-  m_Name: uiPrefab_TowerDraftItem
+  m_Name: UiPrefab_TowerDraftItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

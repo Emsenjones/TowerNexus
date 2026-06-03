@@ -12,15 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008a5cd59d0f643d39191b0690bfb938, type: 3}
   m_Name: Config_AttackConfig_CannonTower
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
-  attackConfigId: 
-  attackArchetype: 0
-  attackRange: 1
-  attackInterval: 1
-  targetSelectionType: 0
-  damage: 1
-  projectileConfigId: 
-  effectConfigId: 
-  explosionRadius: 0
-  areaTickInterval: 1
+  attackConfigId: 102
+  attackArchetype: 1
+  attackRange: 3
+  attackInterval: 5
+  targetSelectionType: 3
+  damage: 5
+  projectileConfig: {fileID: 11400000, guid: 8f0e12318c23b49ab8f62ef06ffb01f7, type: 2}
+  arcHeight: 2
   damagePerSecond: 0
+  channelDamageInterval: 0.1
   maxChannelDuration: 1

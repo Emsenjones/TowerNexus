@@ -12,15 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008a5cd59d0f643d39191b0690bfb938, type: 3}
   m_Name: Config_AttackConfig_ArcherTower
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
-  attackConfigId: 
+  attackConfigId: 101
   attackArchetype: 0
   attackRange: 1
   attackInterval: 1
   targetSelectionType: 0
   damage: 1
-  projectileConfigId: 
-  effectConfigId: 
-  explosionRadius: 0
-  areaTickInterval: 1
+  projectileConfig: {fileID: 11400000, guid: 885d88fbd81784ed6998116a641079bc, type: 2}
+  arcHeight: 1
   damagePerSecond: 0
+  channelDamageInterval: 0.1
   maxChannelDuration: 1

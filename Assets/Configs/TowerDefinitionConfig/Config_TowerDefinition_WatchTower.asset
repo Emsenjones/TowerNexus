@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
-  m_Name: Config_TowerDefinition_MageTower
+  m_Name: Config_TowerDefinition_WatchTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
-  towerId: 103
-  displayName: Mage Tower
-  description: This is a mage tower
-  icon: {fileID: 1687356685278129447, guid: 9b8ccf0882bbe4a38836b2714c6462ab, type: 3}
-  towerPrefab: {fileID: 6027618472494872927, guid: 5b7ed8402f4fc4e9bbbfc43e6ae17d24, type: 3}
+  towerId: 104
+  displayName: Watch Tower
+  description: This is a watch tower
+  icon: {fileID: 21300000, guid: 3580ed0c0afbd47ab93d02417e0bffef, type: 3}
+  towerPrefab: {fileID: 8270491640636788401, guid: b41b585d975044e40aed1799db9297fb, type: 3}
+  attackConfig: {fileID: 11400000, guid: 325fdd5c6d3894adf9126f02b835cd35, type: 2}

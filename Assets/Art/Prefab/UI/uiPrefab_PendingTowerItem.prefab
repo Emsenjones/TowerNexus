@@ -225,7 +225,7 @@ GameObject:
   - component: {fileID: 992427334286846928}
   - component: {fileID: 6403476235240331277}
   m_Layer: 5
-  m_Name: uiPrefab_PendingTowerItem
+  m_Name: UiPrefab_PendingTowerItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6126959352770433283}
   - component: {fileID: 952937023508661463}
   m_Layer: 0
-  m_Name: prefab_Monster_Golem
+  m_Name: Prefab_Monster_Golem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

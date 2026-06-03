@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8583064042410314771}
   - component: {fileID: 3082340063008460101}
   m_Layer: 0
-  m_Name: prefab_Monster_TurtuleShell
+  m_Name: Prefab_Monster_TurtuleShell
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

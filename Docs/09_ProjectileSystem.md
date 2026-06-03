@@ -1,5 +1,3 @@
-
-
 # Projectile System
 
 ## 1. System Overview
@@ -10,13 +8,11 @@ The system manages:
 
 - Projectile movement
 - Projectile collision detection
-- Projectile lifetime
+- Projectile lifetime management
 - Impact event triggering
 - Projectile destruction
 
-The Projectile System does not calculate damage, apply buffs, or modify monster health.
-
-These responsibilities belong to the Buff and Effect System and Monster System.
+The Projectile System does not own tower combat logic, buff execution, area damage execution, or monster health.
 
 ---
 
@@ -31,6 +27,7 @@ The Projectile System owns:
 - Projectile collision detection
 - Projectile lifetime management
 - Impact event generation
+- Direct single-target hit dispatch for projectile-to-monster impacts
 - Projectile destruction
 
 ### Does Not Own
@@ -39,7 +36,8 @@ The Projectile System does not own:
 
 - Target selection
 - Attack cooldowns
-- Damage calculation
+- Damage formula calculation
+- Area damage execution
 - Buff application
 - Monster health
 - Tower combat logic
@@ -52,7 +50,7 @@ These responsibilities belong to other systems.
 
 The Projectile System should remain independent from tower-specific logic.
 
-Projectile behaviour should be determined by projectile configuration rather than tower type.
+Projectile behaviour should be determined by AttackConfig rather than tower type.
 
 Bad:
 
@@ -76,7 +74,9 @@ Execute Matching Projectile Behaviour
 
 Projectile movement style is determined by AttackConfig.attackArchetype.
 
-ProjectileConfig should not define duplicate movement types.
+ProjectileConfig should never contain a movement type field.
+
+Movement ownership belongs to AttackConfig.attackArchetype to avoid duplicate configuration and conflicting runtime behavior.
 
 The Projectile System should only care about projectile runtime execution.
 
@@ -142,7 +142,7 @@ Attack Config
 Attack Damage
 ```
 
-Runtime state should never be stored inside tower configuration.
+Runtime state should never be stored inside configuration assets.
 
 ---
 
@@ -166,9 +166,6 @@ ProjectileConfig should focus on projectile-specific configuration.
 
 Recommended first-version fields:
 
-| Field | Type | Description |
-|---|---|---|
-| projectileConfigId | string | Unique projectile configuration identifier |
 | projectilePrefab | GameObject | Projectile prefab reference |
 | projectileSpeed | float | Projectile movement speed (Unity units per second) |
 | impactEffectConfig | EffectConfig | Optional effect triggered on impact |
@@ -176,8 +173,12 @@ Recommended first-version fields:
 Notes:
 
 - projectileSpeed controls how quickly the projectile reaches its target.
+- Projectile prefabs are expected to face negative Y axis (-Y) in local space.
+- ProjectileBehaviour should rotate the projectile so its local -Y direction points toward the movement direction.
+- This orientation convention should be used consistently across all projectile prefabs to avoid per-projectile rotation fixes.
 - impactEffectConfig is optional.
-- Direct single-target damage does not require an Effect.
+- Direct single-target projectile hits may dispatch damage directly to MonsterBehaviour.
+- Complex combat results should still be represented as Effects.
 - AreaDamageEffect is an example of a valid impact effect.
 - The first version supports a single impact effect.
 - Future versions may support multiple impact effects.
@@ -217,7 +218,7 @@ This separation prevents duplicate configuration and keeps responsibilities clea
 
 ---
 
-## 7. Projectile Movement Types
+## 8. Projectile Movement Types
 
 The first version supports two movement types.
 
@@ -252,6 +253,22 @@ Reach Target Position
 ```
 
 Arc height is provided by AttackConfig.arcHeight.
+
+---
+
+### Projectile Orientation Convention
+
+Projectile visual orientation should follow a single project-wide convention:
+
+```text
+Projectile Head
+      ↓
+Local -Y Axis
+```
+
+When a projectile is moving, ProjectileBehaviour should align the projectile's local -Y axis with the current travel direction.
+
+This prevents projectile prefabs from appearing sideways, backwards, or requiring special-case rotation logic.
 
 ---
 
@@ -317,11 +334,29 @@ Impact Event
 Effect System
 ```
 
-The Projectile System should not directly apply damage.
+The Projectile System may directly dispatch single-target damage when a projectile successfully hits a monster.
+
+This exception exists to keep simple projectile attacks lightweight.
+
+Examples:
+
+Arrow
+    ↓
+Hit Monster
+    ↓
+MonsterBehaviour.TakeDamage(...)
+
+Cannonball
+    ↓
+Reach Target Position
+    ↓
+Impact Event
+    ↓
+AreaDamageEffect
 
 The Projectile System should not directly apply buffs.
 
-Instead, the Projectile System notifies the Effect System.
+For complex impact behavior such as area damage, buff application, chained effects, or future special mechanics, the Projectile System should generate an impact event and delegate execution to the Buff And Effect System.
 
 ---
 
@@ -342,7 +377,6 @@ Responsible for:
 
 Responsible for:
 
-- Direct damage effects
 - Area damage effects
 - Buff application effects
 - Visual impact effects
@@ -394,4 +428,4 @@ The system is responsible for:
 - Triggering impact events
 - Destroying projectiles
 
-The system should remain independent from tower-specific logic and should delegate combat results to the Buff and Effect System.
+The system should remain independent from tower-specific logic. Simple projectile-to-monster hits may dispatch direct single-target damage, while complex combat results should be delegated to the Buff And Effect System.

@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 8766574657308392045}
   - component: {fileID: 7699745774445016845}
   m_Layer: 0
-  m_Name: prefab_Monster_Spider
+  m_Name: Prefab_Monster_Spider
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

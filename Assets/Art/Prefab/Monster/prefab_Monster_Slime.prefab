@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 1451541534037270257}
   - component: {fileID: 2301366516664085335}
   m_Layer: 0
-  m_Name: prefab_Monster_Slime
+  m_Name: Prefab_Monster_Slime
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

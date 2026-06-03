@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 2465670421208695155}
   - component: {fileID: 5918628833992865121}
   m_Layer: 0
-  m_Name: prefab_Monster_EvilMage
+  m_Name: Prefab_Monster_EvilMage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
