@@ -26,6 +26,11 @@ public class AttackConfig : ScriptableObject
     [MinValue(0)]
     [SerializeField] private int damage = 1;
 
+    [TitleGroup("Animation")]
+    [SerializeField] private string attackAnimatorTriggerName = "Attack";
+    [TitleGroup("Animation")]
+    [SerializeField] private string attackingAnimatorBoolName = "IsAttacking";
+
     [TitleGroup("Projectile")]
     [ShowIf(nameof(UsesProjectile))]
     [Required]
@@ -54,6 +59,8 @@ public class AttackConfig : ScriptableObject
     public float AttackInterval => attackInterval;
     public TargetSelectionType TargetSelectionType => targetSelectionType;
     public int Damage => damage;
+    public string AttackAnimatorTriggerName => attackAnimatorTriggerName;
+    public string AttackingAnimatorBoolName => attackingAnimatorBoolName;
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
     public float DamagePerSecond => damagePerSecond;

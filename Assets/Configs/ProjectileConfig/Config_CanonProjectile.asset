@@ -16,4 +16,4 @@ MonoBehaviour:
   projectileSpeed: 1
   hitDistanceThreshold: 0.1
   maxLifetime: 10
-  impactEffectConfig: {fileID: 0}
+  impactEffectConfig: {fileID: 11400000, guid: 4a883e7be44054865adbdc9fc2a2d9f1, type: 2}

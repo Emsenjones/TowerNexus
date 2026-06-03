@@ -363,6 +363,7 @@ AttackConfig defines:
 - Projectile references
 - Projectile trajectory parameters
 - Channel attack parameters
+- Animator parameter names for attack presentation
 
 AttackConfig does not contain runtime state.
 
@@ -389,18 +390,33 @@ Recommended first-version fields:
 | attackRange | float | Maximum attack range |
 | attackInterval | float | Time between attacks |
 | targetSelectionType | TargetSelectionType | Target selection rule |
-| damage | float | Base damage value |
-| projectileConfigId | string | Projectile configuration reference |
+| damage | int | Base damage value |
+| projectileConfig | ProjectileConfig | Direct projectile configuration reference |
 | arcHeight | float | Arc projectile trajectory height |
 | damagePerSecond | float | Continuous damage value |
 | channelDamageInterval | float | Damage application interval during channeling |
 | maxChannelDuration | float | Maximum channel duration |
+| attackAnimatorTriggerName | string | Animator Trigger parameter used by projectile-based attacks |
+| attackingAnimatorBoolName | string | Animator Bool parameter used by continuous attack archetypes |
 
 Not every attack archetype requires every field.
 
 Unused fields should be hidden in the Inspector whenever practical.
 
 Editor tooling may use Odin Inspector conditional display features to show only fields relevant to the selected AttackArchetype.
+
+```md
+Animator parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat.
+
+Recommended defaults:
+
+| Field | Default Value | Usage |
+|---|---|---|
+| attackAnimatorTriggerName | Attack | Used by StraightProjectile and ArcProjectile when starting an attack animation |
+| attackingAnimatorBoolName | IsAttacking | Used by ChannelBeam and PeriodicArea to enter or exit continuous attack presentation |
+
+If a tower does not use an Animator, these fields may be ignored by runtime combat fallback logic.
+```
 
 ---
 
@@ -415,8 +431,9 @@ Typically uses:
 - attackRange
 - attackInterval
 - damage
-- projectileConfigId
+- projectileConfig
 - targetSelectionType
+- attackAnimatorTriggerName
 
 ---
 
@@ -427,9 +444,10 @@ Typically uses:
 - attackRange
 - attackInterval
 - damage
-- projectileConfigId
+- projectileConfig
 - arcHeight
 - targetSelectionType
+- attackAnimatorTriggerName
 
 Notes:
 
@@ -447,11 +465,13 @@ Typically uses:
 - channelDamageInterval
 - maxChannelDuration
 - targetSelectionType
+- attackingAnimatorBoolName
 
 Notes:
 
 - attackInterval controls how often the tower starts a new channel attack.
 - channelDamageInterval controls how frequently damage is applied while channeling.
+- attackingAnimatorBoolName controls the Animator Bool parameter used to enter and exit the channeling visual state.
 
 ---
 
@@ -462,6 +482,7 @@ Typically uses:
 - attackRange
 - attackInterval
 - damage
+- attackingAnimatorBoolName
 
 PeriodicArea attacks do not require:
 
@@ -471,6 +492,7 @@ PeriodicArea attacks do not require:
 TargetSelectionType is not used by PeriodicArea because the tower applies damage to all valid monsters within attackRange.
 
 attackInterval controls how often area damage is applied.
+attackingAnimatorBoolName controls the Animator Bool parameter used to enter and exit the periodic area attack visual state.
 
 ---
 
@@ -611,6 +633,9 @@ Excluded:
 
 ## 2026-05-30
 
+- Updated AttackConfig damage type from float to int to align with MonsterBehaviour.TakeDamage(int).
+- Replaced projectileConfigId with direct ProjectileConfig reference.
+- Added AttackConfig animator parameter name fields for attack Trigger and continuous attacking Bool presentation.
 - Updated first-version tower categories to Archer Tower, Cannon Tower, Magic Tower, and Watch Tower.
 - Replaced generic Projectile/Beam archetype list with StraightProjectile, ArcProjectile, ChannelBeam, and PeriodicArea.
 - Added detailed attack pattern descriptions for Archer Tower, Cannon Tower, Magic Tower, and Watch Tower.

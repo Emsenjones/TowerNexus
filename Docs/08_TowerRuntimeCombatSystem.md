@@ -1,5 +1,3 @@
-
-
 # Tower Runtime Combat System
 
 ## 1. System Overview
@@ -33,6 +31,8 @@ The Tower Runtime Combat System owns:
 - Attack cooldown management
 - Attack execution logic
 - Runtime attack flow
+- Animator parameter control for tower attack state
+- Runtime hooks for attack visual effects
 - Damage dispatch requests
 
 ### Does Not Own
@@ -47,6 +47,8 @@ The Tower Runtime Combat System does not own:
 - Tower placement
 - Projectile movement
 - Buff execution
+- Detailed VFX asset creation
+- Final VFX timing and art polish
 
 These responsibilities belong to their respective systems.
 
@@ -99,11 +101,15 @@ Detect Enemies
     ↓
 Select Target
     ↓
-Cooldown Ready
+Cooldown Ready / Attack State Ready
     ↓
-Execute Attack
+Read AttackConfig Animator Parameter Names
     ↓
-Dispatch Damage
+Trigger Attack Animation State
+    ↓
+Animation Event Or Runtime Tick Executes Attack Payload
+    ↓
+Dispatch Damage Or Spawn Projectile / Effect
     ↓
 Return To Detection Loop
 ```
@@ -123,6 +129,9 @@ CurrentTarget
 DetectedEnemies
 CooldownTimer
 AttackState
+IsAttacking
+CurrentChannelTarget
+ChannelTimer
 ```
 
 Runtime state should never be stored inside TowerDefinition or AttackConfig.
@@ -209,6 +218,72 @@ Attack execution is determined by AttackArchetype.
 
 The runtime system selects the correct execution path based on AttackConfig.
 
+### Animator-Driven Attack Control
+
+Tower attack presentation should be animation-driven where possible.
+
+Projectile-based attacks use the Trigger parameter configured by:
+
+```text
+AttackConfig.attackAnimatorTriggerName
+```
+
+Recommended default:
+
+```text
+Attack
+```
+
+Flow:
+
+```text
+Cooldown Ready
+    ↓
+Read AttackConfig.attackAnimatorTriggerName
+    ↓
+Animator.SetTrigger(attackAnimatorTriggerName)
+    ↓
+Attack Animation Event
+    ↓
+Release Projectile / Attack Payload
+```
+
+Continuous or stateful attacks use the Bool parameter configured by:
+
+```text
+AttackConfig.attackingAnimatorBoolName
+```
+
+Recommended default:
+
+```text
+IsAttacking
+```
+
+Examples:
+
+```text
+ChannelBeam: Animator.SetBool(attackingAnimatorBoolName, true / false)
+PeriodicArea: Animator.SetBool(attackingAnimatorBoolName, true / false)
+```
+
+For continuous attacks, the Animator controls whether the tower is visually in an attacking state, while runtime logic still owns target validation, damage ticks, cooldown timing, and attack stop conditions.
+
+If no Animator is configured, the runtime may fall back to logic-only attack execution for prototype safety.
+
+### Attack Visual Effect Hooks
+
+Tower Runtime Combat should leave runtime hooks for attack visual effects, but detailed VFX assets and polish are not part of the first implementation.
+
+Examples of future visual hooks:
+
+- Muzzle flash or fire burst when a projectile is released
+- ChannelBeam laser connection from tower attack point to target
+- PeriodicArea field effect centered on the tower attack point
+- Impact effect triggered by projectile or effect execution
+
+Task005 should expose clear extension points for these effects without implementing final VFX behavior.
+
 ---
 
 ### 9.1 StraightProjectile
@@ -219,6 +294,10 @@ Flow:
 
 ```text
 Select Target
+    ↓
+Animator.SetTrigger(attackAnimatorTriggerName)
+    ↓
+Animation Event
     ↓
 Spawn Projectile
     ↓
@@ -238,11 +317,15 @@ Flow:
 ```text
 Select Target Position
     ↓
+Animator.SetTrigger(attackAnimatorTriggerName)
+    ↓
+Animation Event
+    ↓
 Spawn Arc Projectile
     ↓
 Projectile Lands
     ↓
-Area Damage
+Impact Effect / Area Damage
 ```
 
 Explosion logic belongs to Projectile System or Effect System.
@@ -258,12 +341,18 @@ Flow:
 ```text
 Select Target
     ↓
-Create Beam Connection
+Animator.SetBool(attackingAnimatorBoolName, true)
     ↓
-Apply Continuous Damage
+Start Beam Runtime State
+    ↓
+Apply Continuous Damage Ticks
+    ↓
+Animator.SetBool(attackingAnimatorBoolName, false) When Channel Ends
 ```
 
 The tower remains connected to the target while channeling.
+
+ChannelBeam should reserve a visual hook for a future beam or laser effect from the tower attack point to the current target.
 
 Channel duration rules are defined by AttackConfig.
 
@@ -278,32 +367,58 @@ Flow:
 ```text
 Detect Enemies In Area
     ↓
-Periodic Tick
+Animator.SetBool(attackingAnimatorBoolName, true)
+    ↓
+Periodic Runtime Tick
     ↓
 Apply Damage To All Valid Targets
+    ↓
+Animator.SetBool(attackingAnimatorBoolName, false) When No Valid Attack State Remains
 ```
 
 This archetype does not require projectiles.
+
+PeriodicArea should reserve a visual hook for a future area field effect centered on the tower attack point or tower origin.
 
 ---
 
 ## 10. Damage Dispatch
 
-The Tower Runtime Combat System does not directly modify monster health.
+Damage dispatch depends on attack archetype.
 
-Instead, it dispatches damage requests.
-
-Example:
+Simple projectile-to-monster hits may be dispatched by the Projectile System:
 
 ```text
-Tower Runtime Combat
+Straight Projectile
     ↓
-Damage Request
+ProjectileBehaviour
     ↓
-Monster System
+MonsterBehaviour.TakeDamage(...)
 ```
 
-Monster health calculation belongs to Monster System.
+Projectile impact area damage is delegated through the Buff And Effect System:
+
+```text
+Arc Projectile Impact
+    ↓
+ProjectileImpactContext
+    ↓
+AreaDamageEffectExecutor
+    ↓
+MonsterBehaviour.TakeDamage(...)
+```
+
+Non-projectile tower attacks are dispatched by Tower Runtime Combat:
+
+```text
+ChannelBeam / PeriodicArea
+    ↓
+Tower Runtime Combat Damage Tick
+    ↓
+MonsterBehaviour.TakeDamage(...)
+```
+
+Monster health, death state, and death handling remain owned by the Monster System.
 
 ---
 
@@ -317,6 +432,8 @@ Provides:
 - AttackConfig
 - AttackArchetype
 - TargetSelectionType
+- attackAnimatorTriggerName
+- attackingAnimatorBoolName
 
 ---
 
@@ -328,17 +445,33 @@ Responsible for:
 - Projectile movement
 - Projectile collision
 - Projectile lifetime
+- Simple single-target projectile hit damage
+- Projectile impact context generation
 
 ---
 
-### Buff System
+### Visual Effect System / Art Assets
+
+Future responsibility:
+
+- Projectile muzzle flash
+- Beam or laser visuals
+- Periodic area field visuals
+- Impact visuals
+
+Task005 should only reserve runtime hooks and references for these effects. Final VFX asset creation and polish are outside the first Tower Runtime Combat implementation.
+
+---
+
+### Buff And Effect System
 
 Responsible for:
 
-- Buff creation
-- Buff stacking
-- Buff duration
-- Buff removal
+- AreaDamageEffect execution
+- Future buff creation
+- Future buff stacking
+- Future buff duration
+- Future buff removal
 
 ---
 
@@ -361,6 +494,9 @@ The first version supports:
 - ArcProjectile
 - ChannelBeam
 - PeriodicArea
+- Animator Trigger control for projectile attack release using `AttackConfig.attackAnimatorTriggerName`
+- Animator Bool control for continuous attack states using `AttackConfig.attackingAnimatorBoolName`
+- Placeholder hooks for attack visual effects
 
 Supported target selection:
 
@@ -377,6 +513,10 @@ Advanced features are intentionally excluded:
 - Smart targeting priorities
 - Attack prediction
 - Dynamic threat evaluation
+- Final VFX asset implementation
+- Advanced VFX timing and polish
+- Beam rendering implementation details
+- Periodic area field rendering implementation details
 
 These may be added in future versions.
 
@@ -392,6 +532,8 @@ The system is responsible for:
 - Selecting targets
 - Managing cooldowns
 - Executing attacks
+- Driving attack animation parameters configured by AttackConfig
+- Providing extension hooks for attack visual effects
 - Dispatching damage
 
 The system should remain fully data-driven and independent from tower-specific implementations.

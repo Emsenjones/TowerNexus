@@ -56,6 +56,18 @@ Current first-version configuration assets include:
 - ProjectileConfig
 - EffectConfig
 
+Current combat configuration dependency flow:
+
+```text
+TowerDefinition
+    ↓
+AttackConfig
+    ↓
+ProjectileConfig
+    ↓
+EffectConfig
+```
+
 Future versions may additionally introduce:
 
 - BuffConfig
@@ -179,6 +191,7 @@ Responsible for:
 - AttackConfig
 - Attack archetypes
 - Target selection types
+- Animator parameter configuration for attack presentation
 - Tower prefab structure
 - TowerAnchorSet
 - Center Anchor
@@ -199,6 +212,8 @@ Responsible for:
 - Target selection
 - Attack cooldown management
 - Attack execution
+- Attack animation state control
+- Attack visual effect hook triggering
 - Projectile creation and initialization
 - Damage dispatch coordination
 
@@ -215,7 +230,8 @@ Responsible for:
 - Projectile movement
 - Projectile collision detection
 - Projectile lifetime management
-- Impact event triggering
+- Impact event generation
+- Simple single-target projectile damage dispatch
 - Projectile destruction
 
 Does not own tower targeting, attack cooldowns, area damage resolution, buff application, or monster health logic.
@@ -224,11 +240,12 @@ Does not own tower targeting, attack cooldowns, area damage resolution, buff app
 
 ## 5.9 Buff And Effect System
 
-Handles additional or complex combat results beyond direct single-target damage.
+Handles projectile impact effects and future buff-based combat behaviors.
 
 First version responsibility:
 
-- AreaDamageEffect
+- EffectConfig
+- AreaDamageEffectExecutor
 - Area damage resolution for cannon-style projectile impacts
 
 Direct projectile hit damage is not treated as an Effect in the first version.
@@ -267,11 +284,11 @@ BattleHUDUISystem
 TowerPlacementSystem
     ↓ Place Tower
 TowerRuntimeCombatSystem
-    ↓ Create Projectile / Execute Attack
+    ↓ Attack Execution / Projectile Creation
 ProjectileSystem
-    ↓ Direct Damage / Trigger AreaDamageEffect
+    ↓ Direct Hit Damage / Impact Context
 BuffAndEffectSystem
-    ↓ Resolve Area Damage
+    ↓ AreaDamageEffect
 MonsterSystem
 
 TowerPlacementSystem
@@ -324,30 +341,15 @@ Tower Runtime Combat Foundation
 Combat Integration Verification
 ```
 
+Current implementation status:
+
+```text
+✓ Projectile Foundation
+✓ Buff And Effect Foundation
+□ Tower Runtime Combat Foundation
+□ Combat Integration Verification
+```
+
 Tower Upgrade System is planned but not part of the current combat foundation implementation pass.
 
 ---
-
-# Change Log
-
-## 2026-05-24
-
-- Synced system names after splitting Draft System, Battle HUD UI System, and Tower Placement System into independent documents.
-- Replaced Tower Deployment System references with Tower Placement System.
-- Replaced Tower Draft System references with Draft System.
-- Added Battle HUD UI System and Draft System to Core Systems Overview.
-- Updated runtime architecture flow.
-- Synced Project Overview with Tower Framework System, Tower Upgrade System, and updated ownership boundaries.
-
-## 2026-05-31
-
-- Added Configuration Strategy section as a project-level configuration guideline.
-- Standardized ScriptableObject assets as the primary configuration solution for the first version.
-- Documented Odin Inspector as the recommended configuration editing workflow.
-- Replaced TowerAttackConfig naming with AttackConfig.
-- Added Tower Runtime Combat System, Projectile System, and Buff And Effect System to Core Systems Overview.
-- Clarified that direct projectile hit damage is not treated as an Effect in the first version.
-- Clarified that projectile creation belongs to Tower Runtime Combat System while projectile lifecycle execution belongs to Projectile System.
-- Synced Buff And Effect System to AreaDamageEffect and area damage resolution responsibilities.
-- Moved BuffConfig, LevelConfig, and StageConfig to future planned configuration assets.
-- Simplified Project Overview to act as a high-level project map rather than duplicating detailed system documents.

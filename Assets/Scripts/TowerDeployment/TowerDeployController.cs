@@ -81,6 +81,13 @@ public class TowerDeployController : MonoBehaviour
 
         towerInstance.Initialize(towerDefinition, occupiedNodes);
 
+        if (!towerObject.TryGetComponent(out TowerCombatBehaviour towerCombatBehaviour))
+        {
+            towerCombatBehaviour = towerObject.AddComponent<TowerCombatBehaviour>();
+        }
+
+        towerCombatBehaviour.Initialize(towerInstance, monsterManager);
+
         for (int i = 0; i < occupiedNodes.Count; i++)
         {
             GridNodeBehaviour node = occupiedNodes[i];

@@ -1,5 +1,3 @@
-
-
 # Task 005: Tower Runtime Combat Foundation
 
 ## 1. Task Overview
@@ -18,15 +16,15 @@
 Refer to `08_TowerRuntimeCombatSystem.md` for detailed requirements and architecture.
 
 ## 3. Implementation Goal
-Support the following:
+Support the following first-version runtime combat foundation:
 - Runtime tower combat state
-- Enemy detection
-- Target selection
-- Cooldown management
-- Attack execution
-- Animator-driven attack release timing
-- Projectile creation and initialization
+- Enemy detection and target selection
+- Cooldown and attack state management
+- Attack execution for all first-version AttackArchetypes
+- Projectile creation and initialization for projectile-based attacks
 - Direct damage dispatch for non-projectile archetypes
+- Animator-driven attack presentation based on AttackConfig fields
+- Placeholder runtime hooks for future attack visual effects
 
 ## 4. Core Architecture Rules
 - **Tower Runtime Combat owns projectile creation.**
@@ -39,12 +37,14 @@ Support the following:
 Implement a recommended runtime component: **TowerCombatBehaviour**
 
 Responsibilities:
-- Detect enemies
-- Select targets
-- Manage cooldowns
-- Trigger tower attack animations
-- Receive animation event callbacks for attack release
-- Execute attack archetypes
+- Maintain tower combat runtime state
+- Detect enemies in attack range
+- Select targets according to AttackConfig
+- Manage cooldown and attack state transitions
+- Execute the configured AttackArchetype
+- Coordinate with Projectile System, Buff And Effect System, and Monster System
+- Drive attack animation parameters using AttackConfig
+- Reserve extension points for future attack visual effects
 
 ## 6. Runtime Combat State
 Maintain the following runtime state:
@@ -52,6 +52,7 @@ Maintain the following runtime state:
 - `DetectedEnemies`
 - `CooldownTimer`
 - `AttackState`
+- `IsAttacking`
 - `CurrentChannelTarget`
 - `ChannelTimer`
 
@@ -70,46 +71,32 @@ Note: `PeriodicArea` archetype does **not** use `TargetSelectionType`.
 
 ## 9. Attack Execution
 
-### Animator-Driven Attack Flow
-- Tower attacks should be animation-driven when an Animator is configured.
-- Each attack-capable tower can have an `Animator` component.
-- The Animator should use a Trigger parameter named `Attack`.
-- When `TowerCombatBehaviour` decides an attack can start, it should call `animator.SetTrigger("Attack")` instead of immediately releasing the attack payload.
-- The attack payload release should happen through an Animation Event on the tower attack animation clip.
-- The Animation Event should call a method on `TowerCombatBehaviour`, such as `OnAttackAnimationRelease()`.
-- `OnAttackAnimationRelease()` should execute the already-selected attack payload, such as projectile creation, beam damage tick, or periodic area damage, depending on the attack archetype.
-- If no Animator is configured, `TowerCombatBehaviour` may fall back to immediate attack execution for prototype safety.
-- Cooldown and attack state logic should still be owned by `TowerCombatBehaviour`; the animation only controls the visual timing of the release moment.
+TowerCombatBehaviour must support the first-version AttackArchetypes defined by the Tower Framework System:
 
-### StraightProjectile
-- On cooldown expiry and valid target, trigger the tower attack animation.
-- On the attack animation release event, create and launch a straight projectile.
+- StraightProjectile
+- ArcProjectile
+- ChannelBeam
+- PeriodicArea
 
-### ArcProjectile
-- On cooldown expiry and valid target, trigger the tower attack animation.
-- On the attack animation release event, create and launch an arc projectile.
+Detailed execution rules, animator parameter behavior, damage dispatch ownership, and visual-effect hook expectations should follow:
 
-### ChannelBeam
-- On valid target, begin channel.
-- Channel start may trigger the tower attack animation.
-- Damage ticks may be executed by timer logic or by animation events, depending on the final animation setup.
-- Apply damage every `channelDamageInterval` seconds.
-- End channel on target exit or interruption.
+- `07_TowerFrameworkSystem.md`
+- `08_TowerRuntimeCombatSystem.md`
+- `09_ProjectileSystem.md`
+- `11_BuffAndEffectSystem.md`
 
-### PeriodicArea
-- On cooldown expiry, trigger the tower attack animation.
-- On the attack animation release event, apply area damage to all detected enemies.
-- Repeat this flow every `attackInterval`.
-- Does not require target selection.
+Task005 should not duplicate full system-level rules. Codex must inspect the related system documents and propose the concrete implementation plan before coding.
 
 ## 10. Projectile Creation
-- Tower Runtime Combat creates and initializes `ProjectileBehaviour` instances.
-- Conceptual flow:
-  - `TowerCombatBehaviour` decides attack start → `Animator.SetTrigger("Attack")` → Animation Event → `TowerCombatBehaviour.OnAttackAnimationRelease()` → `ProjectileConfig` → `ProjectileBehaviour.Initialize(...)`
+
+- Tower Runtime Combat creates and initializes `ProjectileBehaviour` instances for projectile-based attacks.
+- Concrete initialization details should follow the current Projectile System implementation from Task003.
+- Animator-driven projectile release timing should follow `08_TowerRuntimeCombatSystem.md`.
 
 ## 11. Direct Damage Dispatch
-- `ChannelBeam` and `PeriodicArea` archetypes dispatch damage directly to enemies without projectiles.
-- Direct damage dispatch should also respect animator-driven release timing when an Animator is configured.
+
+- `ChannelBeam` and `PeriodicArea` dispatch damage without spawning projectiles.
+- Damage dispatch ownership must follow `08_TowerRuntimeCombatSystem.md`.
 - Monster health and death remain owned by the Monster System.
 
 ## 12. Relationship With Other Systems
@@ -134,6 +121,9 @@ Do **not** implement the following in this task:
 - Monster death visuals
 - Detailed tower animation clip creation
 - Advanced animation state machine design
+- Beam visual implementation
+- Area field visual implementation
+- Final attack VFX assets and polish
 
 ## 14. Expected Output
 Deliverables:
@@ -141,21 +131,22 @@ Deliverables:
   - Enemy detection
   - Target selection
   - Cooldown and attack state management
-  - Projectile creation and initialization
-  - Animator trigger support for attack animation
-  - Animation Event callback support for attack payload release
-  - Direct damage dispatch for channel and area archetypes
+  - First-version AttackArchetype execution
+  - Projectile creation and initialization coordination
+  - Direct damage dispatch for non-projectile archetypes
+  - AttackConfig-driven animator parameter support
+  - Placeholder runtime hooks for future attack visual effects
 
 ## 15. Verification Checklist
-- [ ] Enemy detection within range
-- [ ] Target selection per selection type
-- [ ] Cooldown and attack state transitions
-- [ ] Animator `Attack` trigger is called when a tower attack starts
-- [ ] Animation Event callback releases the attack payload
-- [ ] Immediate attack fallback works when no Animator is assigned
-- [ ] Projectile creation on attack
-- [ ] ChannelBeam damage applied at `channelDamageInterval`
-- [ ] PeriodicArea damage applied at `attackInterval`
+- [ ] Enemy detection works within AttackConfig attack range
+- [ ] Target selection works for supported TargetSelectionTypes
+- [ ] Cooldown and attack state transitions work
+- [ ] Projectile-based attacks create and initialize ProjectileBehaviour correctly
+- [ ] ChannelBeam damage tick works according to AttackConfig
+- [ ] PeriodicArea damage tick works according to AttackConfig
+- [ ] Animator parameters are driven from AttackConfig when Animator is configured
+- [ ] Logic-only fallback works when no Animator is assigned
+- [ ] Task005 does not implement tower upgrades, advanced buffs, projectile movement, final VFX, or monster death logic
 
 ## 16. Implementation Plan Requirement
 Before implementation, **Codex must inspect the project and provide a plan**:
@@ -166,5 +157,6 @@ Before implementation, **Codex must inspect the project and provide a plan**:
 
 ## 17. Notes
 - This task consumes outputs from Task001, Task003, and Task004.
-- Tower Runtime Combat serves as the orchestration layer between tower data, projectile runtime, effects, and monster damage.
-- Tower attack visuals should be driven by tower animation where possible. Runtime combat decides when an attack starts, while Animation Events decide the exact frame when the attack payload is released.
+- `08_TowerRuntimeCombatSystem.md` is the primary source of truth for runtime combat architecture.
+- This task document defines scope, not full implementation details.
+- Codex must use the related system documents as the reference when preparing the implementation plan.

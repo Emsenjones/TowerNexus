@@ -252,6 +252,7 @@ GameObject:
   - component: {fileID: 2403711927867169016}
   - component: {fileID: 8354368066510959421}
   - component: {fileID: -5833469859241583986}
+  - component: {fileID: -4831914119387582302}
   m_Layer: 0
   m_Name: Prefab_WatchTower
   m_TagString: Untagged
@@ -319,6 +320,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7c582a9015b44be2a99cd7c0128ebb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerInstance
+--- !u!114 &-4831914119387582302
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8270491640636788401}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 622c4a1faaa434bf08af843ac4b86746, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerCombatBehaviour
+  towerInstance: {fileID: 1025514080300142389, guid: 4c7d64644d5084801a44646a80d14567, type: 3}
+  monsterManager: {fileID: 0}
+  animator: {fileID: 0}
+  attackOrigin: {fileID: 0}
+  projectileSpawnPoint: {fileID: 0}
 --- !u!1001 &373072977117518530
 PrefabInstance:
   m_ObjectHideFlags: 0
