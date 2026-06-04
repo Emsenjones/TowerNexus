@@ -9,7 +9,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private MonsterManager monsterManager;
     [SerializeField] private Animator animator;
     [SerializeField] private Transform attackOrigin;
-    [SerializeField] private Transform projectileSpawnPoint;
+    //[SerializeField] private Transform projectileSpawnPoint;
 
     private readonly List<MonsterBehaviour> detectedEnemies = new List<MonsterBehaviour>();
 
@@ -55,7 +55,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         currentChannelTarget = null;
         pendingProjectileTarget = null;
         attackState = TowerAttackState.Idle;
-        SetAttackingAnimatorBool(false);
+        ResetAttackingAnimatorBoolIfUsed();
     }
 
     public void OnAttackAnimationRelease()
@@ -139,11 +139,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         {
             attackOrigin = transform;
         }
-
-        if (projectileSpawnPoint == null)
-        {
-            projectileSpawnPoint = attackOrigin != null ? attackOrigin : transform;
-        }
+        
     }
 
     private void UpdateCooldown()
@@ -209,9 +205,8 @@ public class TowerCombatBehaviour : MonoBehaviour
         attackState = TowerAttackState.WaitingForAnimationRelease;
         cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
 
-        if (animator != null)
+        if (SetAttackAnimatorTrigger())
         {
-            SetAttackAnimatorTrigger();
             return;
         }
 
@@ -240,7 +235,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        Vector3 spawnPosition = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position;
+        Vector3 spawnPosition = attackOrigin != null ? attackOrigin.position : transform.position;
         GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, spawnPosition, Quaternion.identity);
 
         if (!projectileObject.TryGetComponent(out ProjectileBehaviour projectileBehaviour))
@@ -451,24 +446,81 @@ public class TowerCombatBehaviour : MonoBehaviour
         return Vector3.Distance(originPosition, monster.transform.position) <= attackRange;
     }
 
-    private void SetAttackAnimatorTrigger()
+    private bool SetAttackAnimatorTrigger()
     {
-        if (animator == null || string.IsNullOrEmpty(attackConfig.AttackAnimatorTriggerName))
+        if (animator == null || attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackAnimatorTriggerName))
+        {
+            return false;
+        }
+
+        if (!HasAnimatorParameter(attackConfig.AttackAnimatorTriggerName, AnimatorControllerParameterType.Trigger))
+        {
+            Debug.LogWarning($"Tower combat cannot play attack animation: trigger parameter '{attackConfig.AttackAnimatorTriggerName}' does not exist on animator '{animator.name}'. Projectile will be released immediately.", this);
+            return false;
+        }
+
+        animator.SetTrigger(attackConfig.AttackAnimatorTriggerName);
+        return true;
+    }
+
+    private void ResetAttackingAnimatorBoolIfUsed()
+    {
+        if (!UsesAttackingAnimatorBool())
         {
             return;
         }
 
-        animator.SetTrigger(attackConfig.AttackAnimatorTriggerName);
+        SetAttackingAnimatorBool(false);
     }
 
     private void SetAttackingAnimatorBool(bool isAttacking)
     {
+        if (!UsesAttackingAnimatorBool())
+        {
+            return;
+        }
+
         if (animator == null || attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackingAnimatorBoolName))
         {
             return;
         }
 
+        if (!HasAnimatorParameter(attackConfig.AttackingAnimatorBoolName, AnimatorControllerParameterType.Bool))
+        {
+            Debug.LogWarning($"Tower combat cannot set attacking animation bool: bool parameter '{attackConfig.AttackingAnimatorBoolName}' does not exist on animator '{animator.name}'.", this);
+            return;
+        }
+
         animator.SetBool(attackConfig.AttackingAnimatorBoolName, isAttacking);
+    }
+
+    private bool UsesAttackingAnimatorBool()
+    {
+        return attackConfig != null &&
+               (attackConfig.AttackArchetype == AttackArchetype.ChannelBeam ||
+                attackConfig.AttackArchetype == AttackArchetype.PeriodicArea);
+    }
+
+    private bool HasAnimatorParameter(string parameterName, AnimatorControllerParameterType parameterType)
+    {
+        if (animator == null || string.IsNullOrEmpty(parameterName))
+        {
+            return false;
+        }
+
+        AnimatorControllerParameter[] parameters = animator.parameters;
+
+        for (int i = 0; i < parameters.Length; i++)
+        {
+            AnimatorControllerParameter parameter = parameters[i];
+
+            if (parameter.type == parameterType && parameter.name == parameterName)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsValidTarget(MonsterBehaviour monster)

@@ -14,11 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
   attackConfigId: 103
   attackArchetype: 2
-  attackRange: 2
+  attackRange: 3
   attackInterval: 0.5
   targetSelectionType: 1
   damage: 1
-  projectileConfigId: 
+  attackAnimatorTriggerName: Attack
+  attackingAnimatorBoolName: IsAttacking
+  projectileConfig: {fileID: 0}
   arcHeight: 1
   damagePerSecond: 2
   channelDamageInterval: 0.1
