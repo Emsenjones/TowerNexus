@@ -15,13 +15,12 @@ MonoBehaviour:
   attackConfigId: 103
   attackArchetype: 2
   attackRange: 3
-  attackInterval: 0.5
+  attackInterval: 3
   targetSelectionType: 1
   damage: 1
   attackAnimatorTriggerName: Attack
   attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 0}
   arcHeight: 1
-  damagePerSecond: 2
-  channelDamageInterval: 0.1
-  maxChannelDuration: 1
+  channelDamageInterval: 0.5
+  maxChannelDuration: 3

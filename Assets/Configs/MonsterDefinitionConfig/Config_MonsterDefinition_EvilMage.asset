@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Evil Mage
   monsterPrefab: {fileID: 3866999361384652794, guid: 23ee389ca1731497d91b2390db4e1745, type: 3}
   moveSpeed: 0.5
-  maxHealth: 1
+  maxHealth: 20
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking

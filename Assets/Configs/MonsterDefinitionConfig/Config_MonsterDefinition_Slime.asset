@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Slime
   monsterPrefab: {fileID: 6597115842058522919, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
   moveSpeed: 0.5
-  maxHealth: 1
+  maxHealth: 20
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking
