@@ -39,19 +39,15 @@ public class AttackConfig : ScriptableObject
     [ShowIf(nameof(IsArcProjectile))]
     [MinValue(0f)]
     [SerializeField] private float arcHeight = 1f;
-
-    [TitleGroup("Channel")]
-    [ShowIf(nameof(IsChannelBeam))]
-    [MinValue(0f)]
-    [SerializeField] private float damagePerSecond;
+    
     [TitleGroup("Channel")]
     [ShowIf(nameof(IsChannelBeam))]
     [MinValue(0.01f)]
-    [SerializeField] private float channelDamageInterval = 0.1f;
+    [SerializeField] private float channelDamageInterval = 0.5f;
     [TitleGroup("Channel")]
     [ShowIf(nameof(IsChannelBeam))]
     [MinValue(0f)]
-    [SerializeField] private float maxChannelDuration = 1f;
+    [SerializeField] private float maxChannelDuration = 5f;
 
     public string AttackConfigId => attackConfigId;
     public AttackArchetype AttackArchetype => attackArchetype;
@@ -63,7 +59,6 @@ public class AttackConfig : ScriptableObject
     public string AttackingAnimatorBoolName => attackingAnimatorBoolName;
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
-    public float DamagePerSecond => damagePerSecond;
     public float ChannelDamageInterval => channelDamageInterval;
     public float MaxChannelDuration => maxChannelDuration;
 
@@ -118,12 +113,6 @@ public class AttackConfig : ScriptableObject
         if (arcHeight < 0f)
         {
             Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: arc height cannot be negative.", this);
-            return false;
-        }
-
-        if (damagePerSecond < 0f)
-        {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: damage per second cannot be negative.", this);
             return false;
         }
 

@@ -103,7 +103,7 @@ Select Target
     ↓
 Cooldown Ready / Attack State Ready
     ↓
-Read AttackConfig Animator Parameter Names
+Read AttackConfig Animator Presentation Parameters
     ↓
 Trigger Attack Animation State
     ↓
@@ -222,7 +222,7 @@ The runtime system selects the correct execution path based on AttackConfig.
 
 Tower attack presentation should be animation-driven where possible.
 
-Projectile-based attacks use the Trigger parameter configured by:
+Projectile-based attacks typically use the Trigger parameter configured by:
 
 ```text
 AttackConfig.attackAnimatorTriggerName
@@ -248,7 +248,7 @@ Attack Animation Event
 Release Projectile / Attack Payload
 ```
 
-Continuous or stateful attacks use the Bool parameter configured by:
+Continuous or stateful attacks typically use the Bool parameter configured by:
 
 ```text
 AttackConfig.attackingAnimatorBoolName
@@ -343,11 +343,21 @@ Select Target
     ↓
 Animator.SetBool(attackingAnimatorBoolName, true)
     ↓
-Start Beam Runtime State
+Start Channel State
     ↓
-Apply Continuous Damage Ticks
+Every channelDamageInterval
+Apply Damage
     ↓
-Animator.SetBool(attackingAnimatorBoolName, false) When Channel Ends
+Channel Duration Reaches maxChannelDuration
+OR Target Becomes Invalid
+    ↓
+Animator.SetBool(attackingAnimatorBoolName, false)
+    ↓
+Enter Cooldown
+    ↓
+Cooldown Reaches attackInterval
+    ↓
+Search For Target Again
 ```
 
 The tower remains connected to the target while channeling.
@@ -355,6 +365,8 @@ The tower remains connected to the target while channeling.
 ChannelBeam should reserve a visual hook for a future beam or laser effect from the tower attack point to the current target.
 
 Channel duration rules are defined by AttackConfig.
+
+ChannelBeam damage is applied in discrete damage ticks. The first version uses AttackConfig.damage together with AttackConfig.channelDamageInterval. A separate damagePerSecond runtime calculation is not required.
 
 ---
 
@@ -365,15 +377,16 @@ Used by Watch Tower.
 Flow:
 
 ```text
-Detect Enemies In Area
+One Or More Valid Enemies In Range
     ↓
 Animator.SetBool(attackingAnimatorBoolName, true)
     ↓
-Periodic Runtime Tick
-    ↓
+Every attackInterval
 Apply Damage To All Valid Targets
     ↓
-Animator.SetBool(attackingAnimatorBoolName, false) When No Valid Attack State Remains
+No Valid Enemies Remain
+    ↓
+Animator.SetBool(attackingAnimatorBoolName, false)
 ```
 
 This archetype does not require projectiles.
@@ -505,6 +518,8 @@ Supported target selection:
 - Last
 - HighestHealth
 - LowestHealth
+
+TargetSelectionType is ignored by PeriodicArea because the archetype applies damage to all valid enemies inside attackRange.
 
 Advanced features are intentionally excluded:
 

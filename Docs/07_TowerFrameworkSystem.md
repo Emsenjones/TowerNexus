@@ -408,14 +408,16 @@ Editor tooling may use Odin Inspector conditional display features to show only 
 ```md
 Animator parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat.
 
-Recommended defaults:
+Recommended naming convention:
 
-| Field | Default Value | Usage |
-|---|---|---|
-| attackAnimatorTriggerName | Attack | Used by StraightProjectile and ArcProjectile when starting an attack animation |
-| attackingAnimatorBoolName | IsAttacking | Used by ChannelBeam and PeriodicArea to enter or exit continuous attack presentation |
+| Field | Recommended Value |
+|---|---|
+| attackAnimatorTriggerName | Attack |
+| attackingAnimatorBoolName | IsAttacking |
 
-If a tower does not use an Animator, these fields may be ignored by runtime combat fallback logic.
+Most towers should follow the same naming convention to simplify animator setup and runtime combat implementation.
+
+However, animator parameter names remain configurable through AttackConfig.
 ```
 
 ---
@@ -469,9 +471,11 @@ Typically uses:
 
 Notes:
 
-- attackInterval controls how often the tower starts a new channel attack.
 - channelDamageInterval controls how frequently damage is applied while channeling.
-- attackingAnimatorBoolName controls the Animator Bool parameter used to enter and exit the channeling visual state.
+- maxChannelDuration controls the maximum duration of a single channel attack.
+- attackInterval controls the cooldown duration after a channel attack ends.
+- When a channel attack ends because the duration expires or the target becomes invalid, the tower enters cooldown.
+- After cooldown ends, the tower may begin a new channel attack if a valid target exists.
 
 ---
 
@@ -492,6 +496,10 @@ PeriodicArea attacks do not require:
 TargetSelectionType is not used by PeriodicArea because the tower applies damage to all valid monsters within attackRange.
 
 attackInterval controls how often area damage is applied.
+
+When one or more valid enemies exist within attackRange, the tower remains in its active attack state.
+When no valid enemies exist within attackRange, the tower returns to its idle state.
+
 attackingAnimatorBoolName controls the Animator Bool parameter used to enter and exit the periodic area attack visual state.
 
 ---
@@ -539,6 +547,15 @@ Future expansion:
 - HighestThreat
 
 Target selection may not be required by every attack archetype.
+
+Archetype usage:
+
+| AttackArchetype | Uses TargetSelectionType |
+|---|---|
+| StraightProjectile | Yes |
+| ArcProjectile | Yes |
+| ChannelBeam | Yes |
+| PeriodicArea | No |
 
 Examples:
 

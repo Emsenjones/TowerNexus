@@ -191,7 +191,8 @@ Responsible for:
 - AttackConfig
 - Attack archetypes
 - Target selection types
-- Animator parameter configuration for attack presentation
+- Attack presentation configuration
+- Animator presentation parameter definitions
 - Tower prefab structure
 - TowerAnchorSet
 - Center Anchor
@@ -211,6 +212,8 @@ Responsible for:
 - Enemy detection
 - Target selection
 - Attack cooldown management
+- Channel attack state management
+- Periodic area attack state management
 - Attack execution
 - Attack animation state control
 - Attack visual effect hook triggering
@@ -346,7 +349,7 @@ Current implementation status:
 ```text
 ✓ Projectile Foundation
 ✓ Buff And Effect Foundation
-□ Tower Runtime Combat Foundation
+✓ Tower Runtime Combat Foundation
 □ Combat Integration Verification
 ```
 
