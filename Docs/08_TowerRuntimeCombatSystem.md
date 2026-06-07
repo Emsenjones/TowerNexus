@@ -188,6 +188,10 @@ Select the enemy with the highest current health.
 
 Select the enemy with the lowest current health.
 
+### Random
+
+Select a random valid enemy.
+
 The runtime system only executes the selected rule.
 
 ---
@@ -282,7 +286,7 @@ Examples of future visual hooks:
 - PeriodicArea field effect centered on the tower attack point
 - Impact effect triggered by projectile or effect execution
 
-Task005 should expose clear extension points for these effects without implementing final VFX behavior.
+The runtime combat implementation should expose clear extension points for these effects without implementing final VFX behavior.
 
 ---
 
@@ -366,7 +370,7 @@ ChannelBeam should reserve a visual hook for a future beam or laser effect from 
 
 Channel duration rules are defined by AttackConfig.
 
-ChannelBeam damage is applied in discrete damage ticks. The first version uses AttackConfig.damage together with AttackConfig.channelDamageInterval. A separate damagePerSecond runtime calculation is not required.
+ChannelBeam damage is applied in discrete damage ticks. The first version uses AttackConfig.damage together with AttackConfig.channelDamageInterval. A separate continuous damage field is not required.
 
 ---
 
@@ -472,7 +476,7 @@ Future responsibility:
 - Periodic area field visuals
 - Impact visuals
 
-Task005 should only reserve runtime hooks and references for these effects. Final VFX asset creation and polish are outside the first Tower Runtime Combat implementation.
+The runtime combat implementation should only reserve runtime hooks and references for these effects. Final VFX asset creation and polish are outside the first Tower Runtime Combat implementation.
 
 ---
 
@@ -514,10 +518,9 @@ The first version supports:
 Supported target selection:
 
 - Nearest
-- First
-- Last
 - HighestHealth
 - LowestHealth
+- Random
 
 TargetSelectionType is ignored by PeriodicArea because the archetype applies damage to all valid enemies inside attackRange.
 

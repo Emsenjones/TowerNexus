@@ -37,7 +37,7 @@ Key runtime rules:
 - Towers can attack monsters.
 - Towers occupy grid nodes.
 - Tower placement can change monster paths.
-- Path-blocking validation prevents fully blocking all valid monster routes.
+- Path-blocking validation is part of the intended placement rule set and prevents fully blocking all valid monster routes when enabled.
 - Alive monsters recalculate paths when battlefield walkability changes.
 - Monster death grants EXP.
 - Player level-up triggers draft selection.
@@ -175,7 +175,7 @@ Responsible for:
 - Placement validation
 - Occupied node detection
 - Walkability updates
-- Path-blocking validation
+- Path-blocking validation integration with Monster System pathfinding
 
 Does not own tower combat, projectile behavior, effects, buffs, or upgrade logic.
 
@@ -272,6 +272,8 @@ Responsible for:
 - Death handling
 - EXP reward generation
 - Player damage reporting when monsters reach the target
+- Monster health bar runtime presentation
+- Monster hit feedback presentation
 
 ---
 
@@ -315,44 +317,28 @@ This separation is intended to:
 
 # 7. Current Development Focus
 
-Current combat foundation goal:
+ProjectOverview is intended to provide general project context and system relationship references.
 
-```text
-Deployable towers can attack monsters using four first-version attack archetypes.
-```
+Detailed behavior, current scope, and task-level implementation notes should live in the dedicated System Documents and Task Documents.
 
-First-version tower attack archetypes:
+Use the System Documents as the source of truth for each area:
 
-- StraightProjectile
-- ArcProjectile
-- ChannelBeam
-- PeriodicArea
+| Area | System Document |
+|---|---|
+| Runtime player progression and survival | `01_PlayerSystem.md` |
+| Battle UI presentation | `02_BattleHUDUISystem.md` |
+| Grid, walkability, and map visuals | `03_MapSystem.md` |
+| Monster spawning, movement, pathfinding, health, and feedback | `04_MonsterSystem.md` |
+| Runtime draft generation and draft results | `05_DraftSystem.md` |
+| Tower placement and battlefield topology updates | `06_TowerPlacementSystem.md` |
+| Tower data, tower structure, attack configuration, and target selection types | `07_TowerFrameworkSystem.md` |
+| Runtime tower combat behavior | `08_TowerRuntimeCombatSystem.md` |
+| Projectile lifecycle and impact handling | `09_ProjectileSystem.md` |
+| Tower growth and upgrade concepts | `10_TowerUpgradeSystem.md` |
+| Area effects and future buff behavior | `11_BuffAndEffectSystem.md` |
 
-Immediate implementation order:
+Task Documents under `Docs/Tasks/` are temporary implementation references.
 
-```text
-Tower Framework Data Definitions
-    ↓
-Tower Prefab Structure Calibration
-    ↓
-Projectile Foundation
-    ↓
-Buff And Effect Foundation
-    ↓
-Tower Runtime Combat Foundation
-    ↓
-Combat Integration Verification
-```
-
-Current implementation status:
-
-```text
-✓ Projectile Foundation
-✓ Buff And Effect Foundation
-✓ Tower Runtime Combat Foundation
-□ Combat Integration Verification
-```
-
-Tower Upgrade System is planned but not part of the current combat foundation implementation pass.
+After a Task implementation is completed, its Task Document may be removed while the corresponding System Document remains as the long-term reference.
 
 ---

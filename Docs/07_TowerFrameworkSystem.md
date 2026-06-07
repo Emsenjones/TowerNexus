@@ -305,8 +305,8 @@ Design intent:
 
 - After cooldown ends, the tower selects one valid target
 - The tower locks onto that target and channels a magic beam
-- The beam deals continuous damage during the attack duration
-- Damage per second may increase the longer the same target is exposed to the beam
+- The beam applies damage in discrete ticks during the attack duration
+- Damage timing is controlled by channelDamageInterval
 - If the target dies before the attack duration ends, the tower immediately enters cooldown
 - If the attack duration ends and the target is still alive, the tower enters cooldown
 - After cooldown ends, the tower selects a target again
@@ -393,7 +393,6 @@ Recommended first-version fields:
 | damage | int | Base damage value |
 | projectileConfig | ProjectileConfig | Direct projectile configuration reference |
 | arcHeight | float | Arc projectile trajectory height |
-| damagePerSecond | float | Continuous damage value |
 | channelDamageInterval | float | Damage application interval during channeling |
 | maxChannelDuration | float | Maximum channel duration |
 | attackAnimatorTriggerName | string | Animator Trigger parameter used by projectile-based attacks |
@@ -463,7 +462,7 @@ Typically uses:
 
 - attackRange
 - attackInterval
-- damagePerSecond
+- damage
 - channelDamageInterval
 - maxChannelDuration
 - targetSelectionType
@@ -541,7 +540,6 @@ Recommended first-version types:
 
 Future expansion:
 
-- LowestHealth
 - FirstInPath
 - LastInPath
 - HighestThreat
@@ -651,6 +649,7 @@ Excluded:
 ## 2026-05-30
 
 - Updated AttackConfig damage type from float to int to align with MonsterBehaviour.TakeDamage(int).
+- Removed damagePerSecond from first-version AttackConfig documentation and clarified that ChannelBeam uses damage with channelDamageInterval.
 - Replaced projectileConfigId with direct ProjectileConfig reference.
 - Added AttackConfig animator parameter name fields for attack Trigger and continuous attacking Bool presentation.
 - Updated first-version tower categories to Archer Tower, Cannon Tower, Magic Tower, and Watch Tower.

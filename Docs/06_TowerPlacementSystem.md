@@ -17,7 +17,7 @@ The Tower Placement System focuses only on tower placement-related responsibilit
 - Placement legality checking
 - Runtime GridNode occupation
 - Runtime walkability update
-- Reserved support for future path blocking validation
+- Path-blocking validation integration with Monster System pathfinding
 - Reserved support for future tower recycle and redeployment
 
 The Tower Placement System is designed around dynamic battlefield manipulation.
@@ -359,7 +359,7 @@ A tower can only be placed if:
 
 1. All occupied anchors can find corresponding GridNodes.
 2. All corresponding GridNodes are walkable.
-3. Future path blocking validation passes if enabled.
+3. Path-blocking validation passes if enabled by the current implementation stage.
 
 If any rule fails:
 
@@ -386,7 +386,9 @@ If any occupied node is invalid:
 
 Tower placement should prevent players from completely blocking all valid monster paths.
 
-Path blocking validation may already exist or may be refined in future versions depending on current implementation state.
+Path blocking validation is part of the intended placement rule set.
+
+The validation depends on Monster System pathfinding functionality. If the current implementation stage has not enabled this validation inside the placement loop yet, the placement system should still keep its validation structure ready for this rule.
 
 This feature depends on Map System data and Monster System pathfinding functionality, including:
 
@@ -487,7 +489,7 @@ Included features:
 - Placement preview object.
 - Grid snapping.
 - Placement validation based on occupied anchors and walkable nodes.
-- Path blocking validation if already supported by current runtime pathfinding implementation.
+- Path-blocking validation integration point, enabled when current runtime pathfinding support is connected.
 - Runtime walkability updates.
 - Valid / invalid placement feedback.
 - Pending tower entry removal after successful placement.
@@ -560,6 +562,11 @@ MapSystem
 ---
 
 # Change Log
+
+## 2026-06-07
+
+- Synchronized path-blocking validation wording with ProjectOverview and Monster System.
+- Clarified that path-blocking validation is part of the intended placement rule set and depends on Monster System pathfinding.
 
 ## 2026-05-24
 

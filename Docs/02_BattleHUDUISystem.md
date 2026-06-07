@@ -156,7 +156,7 @@ Example feedback:
 |---|---|
 | Valid Placement Highlight | Placement is valid |
 | Invalid Placement Highlight | Placement is invalid |
-| Future Path Blocking Warning | Placement blocks monster path |
+| Path Blocking Warning | Placement blocks monster path |
 
 The actual validation logic should still belong to Tower Placement System.
 

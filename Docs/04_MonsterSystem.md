@@ -9,12 +9,14 @@ Monsters are generated from map spawn nodes and automatically move toward the ta
 
 Players must strategically deploy and upgrade towers to eliminate monsters before they reach the target point.
 
-This system currently focuses on the following core gameplay loop:
+This system focuses on the following core gameplay loop and current Monster-related implementation direction:
 
 - Monster wave spawning
 - Monster movement and pathfinding
 - Dynamic path recalculation
 - Monster death handling
+- Monster health bar display through current Task implementation scope
+- Monster hit feedback through current Task implementation scope
 - Rewarding player EXP after monster elimination
 - Notifying Player System when monsters reach the target node
 - Providing path validation functionality used by Tower Placement System
@@ -39,6 +41,8 @@ Recommended structure:
 
 Each monster should support the following configurable fields:
 
+Health bar and hit feedback fields are current Task design targets. They may be added to code during the corresponding Task implementation.
+
 | Field | Description |
 |---|---|
 | monsterId | Unique monster id |
@@ -50,8 +54,14 @@ Each monster should support the following configurable fields:
 | damageToPlayer | Damage dealt to player when reaching target |
 | isWalkingParameterName | Animator bool parameter name used to switch between Idle and Walk |
 | hitAnimationName | Hit animation state name, reserved for future hit reaction implementation |
+| hitAnimatorTriggerName | Animator trigger parameter name used to play hit reaction animation |
 | deathAnimationName | Death animation state name |
 | deathDelay | Delay before monster object is destroyed |
+| healthBarOffset | World-space offset between monster transform and monster health bar position |
+| hitFlashColor | Temporary color used by monster hit flash effect, recommended red |
+| hitFlashDuration | Total duration of monster hit flash effect |
+| hitFlashRestoreDuration | Duration used to restore monster color back to normal |
+| hitFlashRendererRoot | Optional root transform used to collect monster renderers for hit flash |
 
 ---
 
@@ -226,9 +236,35 @@ Death animation behavior is handled by the monster death flow.
 
 ## 6.3 Hit Reaction
 
-Hit reactions should not be treated as a standalone monster state in the first version.
+Hit reaction should provide immediate feedback when a monster receives damage.
 
-The current implementation does not need to play GetHit animation yet.
+For the current Task implementation scope, monster hit feedback contains two parts:
+
+1. Play hit animation
+2. Play hit flash visual feedback
+
+Hit reaction should not become a standalone monster state in the first version.
+
+Monster should continue using the existing movement/death state flow.
+
+Recommended Animator parameter:
+
+```text
+GetHit
+```
+
+Runtime behavior:
+
+```text
+Monster receives damage
+→ Animator.SetTrigger("GetHit")
+→ Play hit flash
+→ Continue current movement/death flow according to monster state
+```
+
+The exact hit trigger parameter name should be configurable through MonsterDefinition.
+
+If the monster Animator does not contain a hit animation yet, the system may still play hit flash only.
 
 Future versions may support hit reaction through a separated Animator layer:
 
@@ -244,35 +280,40 @@ Hit Layer
 
 In that future setup, GetHit can be triggered independently while the Base Layer continues controlling Idle or Walk.
 
-This allows monsters to keep moving while showing hit reaction feedback.
-
-For the current version, hit reaction can be postponed or replaced with simple visual feedback such as:
-
-- Hit flash (recommended first-version solution)
-- Floating damage numbers
-- Sound effect
-
 ## 6.4 Hit Flash
 
-The first version of the Monster System may use a simple hit flash effect instead of a full GetHit animation.
+The first version of the Monster System should support a simple hit flash effect.
 
 Recommended runtime behavior:
 
 ```text
 Monster receives damage
-→ Briefly change monster material color to white
-→ Restore original material color after a short delay
+→ Briefly change monster model color to hitFlashColor
+→ Restore original material color after hitFlashDuration / hitFlashRestoreDuration
 ```
 
-Advantages of hit flash:
+Default visual direction:
 
-- Lightweight implementation
-- Easy to combine with movement animation
-- Does not interrupt Walk animation
-- Does not require Animator layer setup
-- Provides immediate visual hit feedback
+```text
+hitFlashColor = Red
+```
 
-The exact implementation method is not restricted yet.
+The following values should be configurable through MonsterDefinition or a dedicated monster visual configuration structure:
+
+| Field | Description |
+|---|---|
+| hitFlashColor | Temporary color used when the monster is hit |
+| hitFlashDuration | How long the monster stays in the flash color |
+| hitFlashRestoreDuration | How long the monster takes to restore its original color |
+| hitFlashRendererRoot | Optional renderer root used to find monster model renderers |
+
+Implementation notes:
+
+- Hit flash should be lightweight and should not interrupt movement.
+- Hit flash should be safe to replay when the monster is hit repeatedly.
+- Runtime should cache original renderer material colors during initialization.
+- If a monster dies, hit flash should not block the death flow.
+- Shared materials should not be modified directly. Runtime should use instance materials or MaterialPropertyBlock.
 
 Possible future implementations:
 
@@ -283,7 +324,94 @@ Possible future implementations:
 
 ---
 
-# 7. Monster Pathfinding
+# 7. Monster Health Bar System
+
+Monster Health Bar is a runtime UI feedback feature owned by Monster System.
+
+When a monster is instantiated into the scene, the system should automatically create a corresponding health bar UI item.
+
+The health bar UI item should follow the monster's transform position during runtime.
+
+## 7.1 Health Bar Creation Flow
+
+Recommended flow:
+
+```text
+Monster instantiated
+→ MonsterBehaviour.Initialize(...)
+→ Create health bar UI item
+→ Bind health bar to monster transform
+→ Apply healthBarOffset
+→ Update health bar value when monster HP changes
+→ Destroy or recycle health bar when monster dies / arrives / is removed
+```
+
+## 7.2 Health Bar Position Binding
+
+Health bar position should be calculated from monster world position plus a configurable offset.
+
+```text
+healthBarWorldPosition = monster.transform.position + healthBarOffset
+```
+
+The health bar UI system should convert this world position into screen/UI position.
+
+The exact offset should be configurable because different monster models may have different heights and visual centers.
+
+Recommended configurable field:
+
+| Field | Description |
+|---|---|
+| healthBarOffset | World-space offset from monster transform to health bar anchor position |
+
+Example:
+
+```text
+healthBarOffset = (0, 2.0, 0)
+```
+
+## 7.3 Health Bar Ownership Rules
+
+Monster System owns:
+
+- Creating the monster health bar item
+- Binding the health bar to the monster
+- Updating health bar value when monster HP changes
+- Removing the health bar when the monster leaves the battlefield
+
+Battle HUD UI System should not own individual monster health bars.
+
+Battle HUD UI System is responsible for global battle UI, such as player HP, player EXP, and battle failure UI.
+
+Monster health bars are battlefield unit UI and belong to Monster System.
+
+## 7.4 Health Bar Update Rules
+
+Recommended update behavior:
+
+```text
+Monster takes damage
+→ MonsterBehaviour updates currentHealth
+→ Monster health bar updates currentHealth / maxHealth
+```
+
+Health bar should be hidden or removed when:
+
+- Monster dies
+- Monster reaches target
+- Monster is destroyed or recycled
+
+For the first version, health bar can always be visible after monster spawn.
+
+Future versions may support:
+
+- Only show health bar after monster takes damage
+- Hide health bar after no damage for several seconds
+- Boss health bar
+- Elite monster health bar style
+---
+
+# 8. Monster Pathfinding
 
 Monster pathfinding is one of the core systems of TowerNexus.
 
@@ -295,7 +423,7 @@ Monster System owns runtime pathfinding behavior, while Map System only provides
 Tower Placement System may reuse Monster System pathfinding functionality when validating whether a placement would completely block all monster routes.
 ```
 
-## 7.1 Pathfinding Rules
+## 8.1 Pathfinding Rules
 
 ### Rule 1
 
@@ -320,7 +448,7 @@ Monsters should move along node center positions.
 
 ---
 
-# 8. Dynamic Path Recalculation
+# 9. Dynamic Path Recalculation
 
 When map walkability changes:
 
@@ -339,7 +467,7 @@ Instead:
 
 ---
 
-# 9. Tower Placement Path Validation
+# 10. Tower Placement Path Validation
 
 Tower placement must never completely block all valid monster paths.
 
@@ -359,7 +487,7 @@ This validation should reuse the same pathfinding system used by monsters.
 
 ---
 
-# 10. Monster Death Flow
+# 11. Monster Death Flow
 
 When monster HP reaches 0:
 
@@ -379,7 +507,7 @@ Monster System may provide the reward value from MonsterDefinition, but Player S
 
 ---
 
-# 11. Monster Target Arrival Flow
+# 12. Monster Target Arrival Flow
 
 When a monster reaches the Target Node:
 
@@ -403,15 +531,18 @@ Monster target arrival should follow these ownership rules:
 
 ---
 
-# 12. Current Scope
+# 13. Current Scope
 
-The first implementation phase of the Monster System focuses only on:
+The current and upcoming implementation scope of the Monster System focuses only on:
 
 - Wave spawning
 - Monster movement
 - A* pathfinding
 - Dynamic path recalculation
 - Death handling
+- Monster health bar display
+- Monster hit animation trigger
+- Monster hit flash feedback
 - EXP reward flow
 - Monster target arrival notification to Player System
 - Pathfinding functionality that can be reused by tower placement validation
@@ -426,10 +557,12 @@ The following features are intentionally postponed:
 - Threat systems
 - Skill systems
 - Advanced combat logic
+- Boss health bar
+- Floating damage numbers
 
 ---
 
-# 13. Related Systems
+# 14. Related Systems
 
 ## Player System
 
@@ -467,6 +600,16 @@ Monster System may provide pathfinding functionality used during placement valid
 ---
 
 # Change Log
+
+## 2026-06-07 (Monster Visual Feedback Sync)
+
+- Added Monster Health Bar System.
+- Added health bar creation, binding, offset, update, and removal rules.
+- Added configurable `healthBarOffset`.
+- Updated Hit Reaction to include hit animation trigger and hit flash feedback.
+- Added configurable hit flash fields: `hitFlashColor`, `hitFlashDuration`, `hitFlashRestoreDuration`, and `hitFlashRendererRoot`.
+- Clarified Monster System ownership of battlefield unit UI.
+- Clarified that Battle HUD UI System should not own individual monster health bars.
 
 ## 2026-05-24 (Naming Sync)
 
