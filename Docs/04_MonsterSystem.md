@@ -17,6 +17,7 @@ This system focuses on the following core gameplay loop and current Monster-rela
 - Monster death handling
 - Monster health bar display through current Task implementation scope
 - Monster hit feedback through current Task implementation scope
+- Monster damage number display through current Task implementation scope
 - Rewarding player EXP after monster elimination
 - Notifying Player System when monsters reach the target node
 - Providing path validation functionality used by Tower Placement System
@@ -41,7 +42,7 @@ Recommended structure:
 
 Each monster should support the following configurable fields:
 
-Health bar and hit feedback fields are current Task design targets. They may be added to code during the corresponding Task implementation.
+Health bar, hit feedback, and damage number fields are current Task design targets. They may be added to code during the corresponding Task implementation.
 
 | Field | Description |
 |---|---|
@@ -62,6 +63,8 @@ Health bar and hit feedback fields are current Task design targets. They may be 
 | hitFlashDuration | Total duration of monster hit flash effect |
 | hitFlashRestoreDuration | Duration used to restore monster color back to normal |
 | hitFlashRendererRoot | Optional root transform used to collect monster renderers for hit flash |
+| damageNumberOffset | World-space offset between monster transform and damage number spawn position |
+| damageNumberPrefab | Optional damage number UI prefab override used by this monster type |
 
 ---
 
@@ -192,11 +195,26 @@ Behavior:
 
 ---
 
-# 6. Monster Animation Rules
+# 6. Monster Visual Feedback
+
+Monster Visual Feedback contains all monster-related runtime presentation feedback.
+
+The first version of Monster Visual Feedback focuses on:
+
+- Idle and Walk animation switching
+- Death animation
+- Hit animation trigger
+- Hit flash feedback
+- Health bar display
+- Damage number display
+
+Monster Visual Feedback should remain lightweight and should not take ownership of monster combat calculation, pathfinding, or Player System logic.
+
+## 6.1 Monster Animation Rules
 
 The first version of the Monster System uses a simple Animator setup.
 
-## 6.1 Idle and Walk
+### Idle and Walk
 
 Monster Idle and Walk animations should be controlled by an Animator bool parameter.
 
@@ -220,7 +238,7 @@ The exact Animator parameter name should be configurable through MonsterDefiniti
 
 This avoids hardcoding Animator parameter names inside MonsterBehaviour.
 
-## 6.2 Death
+### Death
 
 Death animation should be triggered when the monster enters the Dead state.
 
@@ -234,7 +252,7 @@ Dead
 
 Death animation behavior is handled by the monster death flow.
 
-## 6.3 Hit Reaction
+### Hit Reaction
 
 Hit reaction should provide immediate feedback when a monster receives damage.
 
@@ -280,7 +298,7 @@ Hit Layer
 
 In that future setup, GetHit can be triggered independently while the Base Layer continues controlling Idle or Walk.
 
-## 6.4 Hit Flash
+## 6.2 Hit Flash
 
 The first version of the Monster System should support a simple hit flash effect.
 
@@ -322,9 +340,7 @@ Possible future implementations:
 - Emission intensity flash
 - Renderer overlay effect
 
----
-
-# 7. Monster Health Bar System
+## 6.3 Monster Health Bar System
 
 Monster Health Bar is a runtime UI feedback feature owned by Monster System.
 
@@ -332,7 +348,7 @@ When a monster is instantiated into the scene, the system should automatically c
 
 The health bar UI item should follow the monster's transform position during runtime.
 
-## 7.1 Health Bar Creation Flow
+### Health Bar Creation Flow
 
 Recommended flow:
 
@@ -346,7 +362,7 @@ Monster instantiated
 → Destroy or recycle health bar when monster dies / arrives / is removed
 ```
 
-## 7.2 Health Bar Position Binding
+### Health Bar Position Binding
 
 Health bar position should be calculated from monster world position plus a configurable offset.
 
@@ -370,7 +386,7 @@ Example:
 healthBarOffset = (0, 2.0, 0)
 ```
 
-## 7.3 Health Bar Ownership Rules
+### Health Bar Ownership Rules
 
 Monster System owns:
 
@@ -385,7 +401,7 @@ Battle HUD UI System is responsible for global battle UI, such as player HP, pla
 
 Monster health bars are battlefield unit UI and belong to Monster System.
 
-## 7.4 Health Bar Update Rules
+### Health Bar Update Rules
 
 Recommended update behavior:
 
@@ -409,9 +425,287 @@ Future versions may support:
 - Hide health bar after no damage for several seconds
 - Boss health bar
 - Elite monster health bar style
+
+## 6.4 Monster Damage Number System
+
+Monster Damage Number is a runtime UI feedback feature owned by Monster System.
+
+When a monster receives damage, the system should spawn a damage number UI item near the monster and display the damage amount.
+
+Damage number should be implemented as a UI prefab using TextMeshProUGUI and DOTween-based animation.
+
+Recommended runtime flow:
+
+```text
+Monster takes damage
+→ MonsterBehaviour updates currentHealth
+→ Monster hit feedback plays if available
+→ DamageNumberManager creates damage number UI item
+→ DamageNumberUI displays damage value
+→ DamageNumberUI plays configured tween steps
+→ DamageNumberUI is destroyed or recycled after animation completes
+```
+
+### Damage Number Position Binding
+
+Damage number spawn position should be calculated from monster world position plus a configurable offset.
+
+```text
+damageNumberWorldPosition = monster.transform.position + damageNumberOffset
+```
+
+The damage number UI system should convert this world position into screen/UI position.
+
+Recommended configurable fields:
+
+| Field | Description |
+|---|---|
+| damageNumberOffset | World-space offset from monster transform to damage number spawn position |
+| damageNumberPrefab | Optional UI prefab override used by this monster type |
+
+If no monster-specific prefab override is configured, DamageNumberManager should use its default damage number prefab.
+
+### Damage Number Ownership Rules
+
+Monster System owns:
+
+- Creating damage number UI items
+- Passing damage amount and world position to the damage number UI item
+- Removing or recycling damage number UI items after animation completion
+
+MonsterBehaviour should not directly own DOTween animation details.
+
+MonsterBehaviour should only report:
+
+```text
+Damage amount + monster world position + optional visual offset
+```
+
+DamageNumberManager and DamageNumberUI should own visual presentation.
+
+### Damage Number Tween Step List
+
+DamageNumberUI should use an Inspector-configurable tween step list.
+
+Each tween step represents one visual animation channel.
+
+All enabled tween steps should be played when DamageNumberUI.Play(...) is called.
+
+The first implementation should play all tween steps in parallel.
+
+Recommended base fields shared by all tween steps:
+
+| Field | Description |
+|---|---|
+| enabled | Whether this tween step is active |
+| tweenType | Type of tween behavior |
+| duration | Tween duration |
+| delay | Delay before this tween starts |
+| easeType | DOTween ease type |
+
+Recommended first-version tween types:
+
+| Tween Type | Purpose |
+|---|---|
+| Position | Move the damage number from current position to target offset or target position |
+| Scale | Scale the damage number from start scale to target scale |
+| Fade | Fade the damage number through CanvasGroup alpha |
+
+Future tween types may include:
+
+- Color
+- Rotation
+- ShakePosition
+- ShakeScale
+- PunchScale
+
+### Position Tween Step
+
+Position tween should support runtime spawn positions.
+
+Recommended fields:
+
+| Field | Description |
+|---|---|
+| startAnchoredPosition | Explicit start anchored position relative to the spawned damage number UI item |
+| targetAnchoredPosition | Optional explicit target anchored position |
+| targetOffset | Offset added to startAnchoredPosition |
+| useTargetOffset | If true, target position is startAnchoredPosition plus targetOffset |
+| duration | Tween duration |
+| delay | Delay before tween starts |
+| easeType | DOTween ease type |
+
+For damage number usage, the recommended default is:
+
+```text
+startAnchoredPosition = (0, 80)
+useTargetOffset = true
+targetOffset = (0, 80)
+duration = 0.6
+easeType = OutQuad
+```
+
+In this default setup, the damage number UI item is spawned at the monster's converted UI position, then the text starts above the monster through `startAnchoredPosition` instead of appearing from the monster's feet.
+
+### Scale Tween Step
+
+Scale tween should support simple scale transition.
+
+Recommended fields:
+
+| Field | Description |
+|---|---|
+| startScale | Initial local scale |
+| targetScale | Target local scale |
+| duration | Tween duration |
+| delay | Delay before tween starts |
+| easeType | DOTween ease type |
+
+For the first version, DamageNumberUI should not implement PunchScale as a separate tween type.
+
+A punch-like visual effect can be created by combining multiple Scale tween steps with proper delay and ease type.
+
+Example punch-like setup:
+
+```text
+Scale Step A
+startScale = (0.8, 0.8, 0.8)
+targetScale = (1.2, 1.2, 1.2)
+duration = 0.12
+delay = 0
+easeType = OutBack
+
+Scale Step B
+startScale = (1.2, 1.2, 1.2)
+targetScale = (1.0, 1.0, 1.0)
+duration = 0.12
+delay = 0.12
+easeType = OutQuad
+```
+
+Future versions may add PunchScale as an independent tween type if critical damage or stronger hit feedback requires more elastic animation.
+
+### Fade Tween Step
+
+Fade tween should use CanvasGroup alpha.
+
+Recommended fields:
+
+| Field | Description |
+|---|---|
+| startAlpha | Initial CanvasGroup alpha |
+| targetAlpha | Target CanvasGroup alpha |
+| duration | Tween duration |
+| delay | Delay before tween starts |
+| easeType | DOTween ease type |
+
+Recommended default fade behavior:
+
+```text
+startAlpha = 1
+targetAlpha = 0
+duration = 0.4
+delay = 0.2
+```
+
+
+### Recommended Default Damage Number Tween Setup
+
+Recommended first-version setup:
+
+```text
+Tween Steps
+  [0] Type: Position
+      startAnchoredPosition = (0, 80)
+      useTargetOffset = true
+      targetOffset = (0, 80)
+      duration = 0.6
+      delay = 0
+      easeType = OutQuad
+
+  [1] Type: Scale
+      startScale = (0.8, 0.8, 0.8)
+      targetScale = (1.2, 1.2, 1.2)
+      duration = 0.12
+      delay = 0
+      easeType = OutBack
+
+  [2] Type: Scale
+      startScale = (1.2, 1.2, 1.2)
+      targetScale = (1.0, 1.0, 1.0)
+      duration = 0.12
+      delay = 0.12
+      easeType = OutQuad
+
+  [3] Type: Fade
+      startAlpha = 1
+      targetAlpha = 0
+      duration = 0.4
+      delay = 0.2
+      easeType = InQuad
+```
+
+### Damage Number Preview
+
+DamageNumberUI should support an Inspector preview function.
+
+Recommended preview behavior:
+
+```text
+Designer selects DamageNumberUI prefab or scene instance
+→ Click Preview button in Inspector
+→ DamageNumberUI resets preview state
+→ DamageNumberUI plays the configured tween step list
+```
+
+Preview should allow visual tuning without entering full combat flow.
+
+Recommended preview requirements:
+
+- Preview should work in Play Mode.
+- Preview may optionally support Edit Mode if implementation remains simple and safe.
+- Preview should reset RectTransform position, scale, alpha, and text value before playing.
+- Preview should kill any existing preview tween before replaying.
+- Preview should use a configurable preview damage value.
+- Preview should not require MonsterBehaviour or DamageNumberManager.
+
+If Odin Inspector is available, DamageNumberUI should prefer Odin Inspector for editor usability.
+
+Recommended Odin usage:
+
+- Use `[Button]` to expose Preview in Inspector.
+- Use `[ShowIf]` or `[HideIf]` to show only fields related to the selected tween type.
+- Use `[LabelText]`, `[TitleGroup]`, or `[FoldoutGroup]` to keep tween step configuration readable.
+- Use `[ListDrawerSettings]` to make the tween step list easier to edit.
+
+If Odin Inspector is not used, Preview can be exposed through a custom editor or a ContextMenu method.
+
+### Damage Number Implementation Notes
+
+- DamageNumberUI should use TextMeshProUGUI for text display.
+- DamageNumberUI should use CanvasGroup for fade control.
+- DOTween should drive animation playback.
+- Tween values should be configurable in Inspector whenever possible.
+- First-version DamageNumberUI should keep tween types simple and only implement Position, Scale, and Fade.
+- Odin Inspector may be used to improve tween step list editing, conditional field display, and preview buttons.
+- Runtime should kill existing tweens before replaying the same UI item.
+- Animation completion should destroy or recycle the UI item.
+- The first version may destroy the item after completion.
+- Future Object Pool implementation may replace Destroy with return-to-pool behavior.
+- Damage numbers should not block monster death or target arrival flow.
+- Damage number display should still be safe if the monster dies immediately after taking damage.
+
+Future versions may support:
+
+- Critical damage number style
+- Healing number style
+- Shield damage number style
+- Elemental damage number style
+- Damage number pooling
+- Multiple damage number layout rules when many numbers appear at the same time
 ---
 
-# 8. Monster Pathfinding
+# 7. Monster Pathfinding
 
 Monster pathfinding is one of the core systems of TowerNexus.
 
@@ -448,7 +742,7 @@ Monsters should move along node center positions.
 
 ---
 
-# 9. Dynamic Path Recalculation
+# 8. Dynamic Path Recalculation
 
 When map walkability changes:
 
@@ -467,7 +761,7 @@ Instead:
 
 ---
 
-# 10. Tower Placement Path Validation
+# 9. Tower Placement Path Validation
 
 Tower placement must never completely block all valid monster paths.
 
@@ -487,7 +781,7 @@ This validation should reuse the same pathfinding system used by monsters.
 
 ---
 
-# 11. Monster Death Flow
+# 10. Monster Death Flow
 
 When monster HP reaches 0:
 
@@ -507,7 +801,7 @@ Monster System may provide the reward value from MonsterDefinition, but Player S
 
 ---
 
-# 12. Monster Target Arrival Flow
+# 11. Monster Target Arrival Flow
 
 When a monster reaches the Target Node:
 
@@ -531,7 +825,7 @@ Monster target arrival should follow these ownership rules:
 
 ---
 
-# 13. Current Scope
+# 12. Current Scope
 
 The current and upcoming implementation scope of the Monster System focuses only on:
 
@@ -543,6 +837,7 @@ The current and upcoming implementation scope of the Monster System focuses only
 - Monster health bar display
 - Monster hit animation trigger
 - Monster hit flash feedback
+- Monster damage number display
 - EXP reward flow
 - Monster target arrival notification to Player System
 - Pathfinding functionality that can be reused by tower placement validation
@@ -558,11 +853,10 @@ The following features are intentionally postponed:
 - Skill systems
 - Advanced combat logic
 - Boss health bar
-- Floating damage numbers
 
 ---
 
-# 14. Related Systems
+# 13. Related Systems
 
 ## Player System
 
@@ -600,6 +894,21 @@ Monster System may provide pathfinding functionality used during placement valid
 ---
 
 # Change Log
+
+## 2026-06-08 (Damage Number Visual Feedback Sync)
+
+- Reorganized Monster animation, hit flash, health bar, and damage number content under Monster Visual Feedback.
+- Added Monster Damage Number System.
+- Added damage number creation, position binding, ownership, tween step list, and preview rules.
+- Added configurable `damageNumberOffset` and `damageNumberPrefab` fields.
+- Clarified that DamageNumberUI should use TextMeshProUGUI, CanvasGroup, and DOTween.
+- Clarified that damage number tween parameters should be Inspector-configurable.
+- Clarified that DamageNumberUI should support preview playback for tuning animation without full combat flow.
+- Simplified first-version tween types to Position, Scale, and Fade.
+- Clarified that punch-like scale feedback should be created through multiple Scale tween steps with delay and ease type.
+- Added Odin Inspector recommendation for preview buttons and conditional tween step field display.
+
+- Removed `useCurrentAsStart` from Position tween and clarified explicit startAnchoredPosition usage.
 
 ## 2026-06-07 (Monster Visual Feedback Sync)
 

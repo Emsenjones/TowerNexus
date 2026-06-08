@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterId: 3
   displayName: Bat
   monsterPrefab: {fileID: 3866999361384652794, guid: fea114b78b71741fa89ac0ed135e6a17, type: 3}
-  moveSpeed: 0.5
+  moveSpeed: 0.4
   maxHealth: 20
   expReward: 0
   damageToPlayer: 1
@@ -24,3 +24,6 @@ MonoBehaviour:
   dieTriggerName: Die
   deathDelay: 2
   healthBarOffset: {x: 0, y: 0.8, z: 0}
+  enableHitFlash: 1
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
+  hitFlashDuration: 0.08

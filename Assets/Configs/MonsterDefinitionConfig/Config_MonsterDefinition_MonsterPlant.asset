@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterId: 4
   displayName: Monster Plant
   monsterPrefab: {fileID: 2198626025461408082, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
-  moveSpeed: 0.5
+  moveSpeed: 0.4
   maxHealth: 20
   expReward: 0
   damageToPlayer: 1
@@ -24,3 +24,6 @@ MonoBehaviour:
   dieTriggerName: Die
   deathDelay: 2
   healthBarOffset: {x: 0, y: 0.8, z: 0}
+  enableHitFlash: 1
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
+  hitFlashDuration: 0.08

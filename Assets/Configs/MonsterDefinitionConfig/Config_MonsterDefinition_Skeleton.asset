@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterId: 6
   displayName: Skeleton
   monsterPrefab: {fileID: 2382199090356143332, guid: 11ae00977065c425f8298ca0e5e60680, type: 3}
-  moveSpeed: 0.5
+  moveSpeed: 0.4
   maxHealth: 20
   expReward: 0
   damageToPlayer: 1
@@ -24,3 +24,6 @@ MonoBehaviour:
   dieTriggerName: Die
   deathDelay: 2
   healthBarOffset: {x: 0, y: 0.8, z: 0}
+  enableHitFlash: 1
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
+  hitFlashDuration: 0.08

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config_ArrowProjectile
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   projectilePrefab: {fileID: 8667284346000836136, guid: 1835c2457c5234c6b8c588eb9ebeaa9c, type: 3}
-  projectileSpeed: 2
-  hitDistanceThreshold: 0.1
-  maxLifetime: 10
+  projectileSpeed: 3
+  hitDistanceThreshold: 0.5
+  maxLifetime: 3
   impactEffectConfig: {fileID: 0}

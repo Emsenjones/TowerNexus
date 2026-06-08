@@ -22,6 +22,5 @@ MonoBehaviour:
   attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 11400000, guid: 885d88fbd81784ed6998116a641079bc, type: 2}
   arcHeight: 1
-  damagePerSecond: 0
   channelDamageInterval: 0.1
   maxChannelDuration: 1
