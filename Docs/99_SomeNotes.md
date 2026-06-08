@@ -42,6 +42,7 @@ After I approve your plan, I will ask you to proceed with implementation.
 ## Future Development
 1. Add Monster health bar.
 2. Add Monster hit effect.
-3. Tower and Projectile effect.
-4. Implement Tower upgrade system.
-5. Develop Monster & Projectile object pool.
+3. Add damage display.
+4. Tower and Projectile effect.
+5. Implement Tower upgrade system.
+6. Develop Monster & Projectile object pool.

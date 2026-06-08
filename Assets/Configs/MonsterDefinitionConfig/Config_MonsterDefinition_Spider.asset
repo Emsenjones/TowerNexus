@@ -23,3 +23,4 @@ MonoBehaviour:
   getHitTriggerName: GetHit
   dieTriggerName: Die
   deathDelay: 2
+  healthBarOffset: {x: 0, y: 0.8, z: 0}

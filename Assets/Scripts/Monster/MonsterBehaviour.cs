@@ -34,6 +34,8 @@ public class MonsterBehaviour : MonoBehaviour
 
     public event Action<MonsterBehaviour> OnTargetReached;
     public event Action<MonsterBehaviour> OnDied;
+    public event Action<MonsterBehaviour> OnDestroyed;
+    public event Action<MonsterBehaviour, int, int> OnHealthChanged;
 
     public void Initialize(MonsterDefinition definition)
     {
@@ -49,6 +51,7 @@ public class MonsterBehaviour : MonoBehaviour
         isDead = false;
         isCleaningUp = false;
         CacheAnimator();
+        NotifyHealthChanged();
     }
 
     public void SetRuntimeReferences(
@@ -142,6 +145,7 @@ public class MonsterBehaviour : MonoBehaviour
         }
 
         currentHealth = Mathf.Max(0, currentHealth - damage);
+        NotifyHealthChanged();
 
         if (currentHealth <= 0)
         {
@@ -189,6 +193,11 @@ public class MonsterBehaviour : MonoBehaviour
         }
 
         MoveAlongPath();
+    }
+
+    private void OnDestroy()
+    {
+        OnDestroyed?.Invoke(this);
     }
 
     private void CacheAnimator()
@@ -297,5 +306,15 @@ public class MonsterBehaviour : MonoBehaviour
     private float GetDeathDelay()
     {
         return definition != null ? Mathf.Max(0f, definition.DeathDelay) : 0f;
+    }
+
+    private void NotifyHealthChanged()
+    {
+        if (definition == null)
+        {
+            return;
+        }
+
+        OnHealthChanged?.Invoke(this, currentHealth, definition.MaxHealth);
     }
 }

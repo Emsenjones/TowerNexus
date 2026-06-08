@@ -9,6 +9,7 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
+    [SerializeField] private MonsterHealthBarManager healthBarManager;
     [SerializeField] private Transform monsterRoot;
     [SerializeField] private bool playOnStart;
 
@@ -150,6 +151,7 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         monsterBehaviour.Initialize(monsterDefinition);
+        CreateHealthBar(monsterBehaviour, monsterDefinition);
         monsterBehaviour.SetRuntimeReferences(monsterManager, playerSystem);
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
@@ -174,5 +176,41 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         return monsterBehaviour;
+    }
+
+    private void CreateHealthBar(MonsterBehaviour monsterBehaviour, MonsterDefinition monsterDefinition)
+    {
+        if (monsterBehaviour == null || monsterDefinition == null)
+        {
+            return;
+        }
+
+        MonsterHealthBarManager manager = ResolveHealthBarManager();
+
+        if (manager == null)
+        {
+            Debug.LogWarning("Monster spawner cannot create monster health bar: health bar manager is not assigned.", this);
+            return;
+        }
+
+        manager.CreateHealthBar(monsterBehaviour, monsterDefinition.HealthBarOffset);
+    }
+
+    private MonsterHealthBarManager ResolveHealthBarManager()
+    {
+        if (healthBarManager != null)
+        {
+            return healthBarManager;
+        }
+
+        healthBarManager = FindFirstObjectByType<MonsterHealthBarManager>();
+
+        if (healthBarManager != null)
+        {
+            return healthBarManager;
+        }
+
+        healthBarManager = gameObject.AddComponent<MonsterHealthBarManager>();
+        return healthBarManager;
     }
 }

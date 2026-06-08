@@ -18,6 +18,7 @@ public class MonsterDefinition : ScriptableObject
     [SerializeField] private string getHitTriggerName;
     [SerializeField] private string dieTriggerName;
     [SerializeField] private float deathDelay = 1f;
+    [SerializeField] private Vector3 healthBarOffset = new Vector3(0f, 1.5f, 0f);
 
     public string MonsterId => monsterId;
     public string DisplayName => displayName;
@@ -30,6 +31,7 @@ public class MonsterDefinition : ScriptableObject
     public string GetHitTriggerName => getHitTriggerName;
     public string DieTriggerName => dieTriggerName;
     public float DeathDelay => deathDelay;
+    public Vector3 HealthBarOffset => healthBarOffset;
 
     public bool IsValid()
     {
