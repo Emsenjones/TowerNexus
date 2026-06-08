@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4032835314630318200}
   - component: {fileID: 6147167272419788473}
+  - component: {fileID: 8915963629701623545}
   m_Layer: 0
   m_Name: Prefab_Monster_Skeleton
   m_TagString: Untagged
@@ -46,9 +47,28 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: d2993ab2f86f64a8eabd36088246867d, type: 2}
-  currentHealth: 0
-  currentMoveSpeed: 0
+  monsterManager: {fileID: 0}
+  playerSystem: {fileID: 0}
   animator: {fileID: 5331354385135851554}
+  hitFeedback: {fileID: 0}
+  arriveDistanceThreshold: 0.05
+--- !u!114 &8915963629701623545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382199090356143332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 5331354385135851554}
+  hitFlashRenderers:
+  - {fileID: 5875142078408363541}
+  - {fileID: 5331354385140131552}
+  - {fileID: 2701524019327245531}
 --- !u!1 &2599602136449305532
 GameObject:
   m_ObjectHideFlags: 0
@@ -147,11 +167,7 @@ PrefabInstance:
       objectReference: {fileID: 22100000, guid: 6023da323029f47a3a645436908ce2b9, type: 2}
     - target: {fileID: 9500000, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
       propertyPath: m_WarningMessage
-      value: "\nBinding warning: Some generic clip(s) animate transforms that are
-        already bound by a Humanoid avatar. These transforms can only be changed
-        by Humanoid clips.\n\tTransform 'Body'\n\tTransform 'Body'\n\tTransform 'Body'\n\tFrom
-        animation clip 'IdleNormal'\n\tFrom animation clip 'Die'\n\tFrom animation
-        clip 'GetHit'"
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 13700002, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
@@ -162,6 +178,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
+--- !u!23 &2701524019327245531 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -1404705985288654439, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
+  m_PrefabInstance: {fileID: 5331354385126436162}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5331354385126045662 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400028, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
@@ -170,5 +191,15 @@ Transform:
 --- !u!95 &5331354385135851554 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
+  m_PrefabInstance: {fileID: 5331354385126436162}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &5331354385140131552 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700002, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
+  m_PrefabInstance: {fileID: 5331354385126436162}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &5875142078408363541 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -7461211110753590441, guid: 51b62abcc35145468d38a72a80bd584f, type: 3}
   m_PrefabInstance: {fileID: 5331354385126436162}
   m_PrefabAsset: {fileID: 0}

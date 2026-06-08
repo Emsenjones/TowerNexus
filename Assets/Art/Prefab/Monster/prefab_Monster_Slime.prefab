@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1451541534037270257}
   - component: {fileID: 2301366516664085335}
+  - component: {fileID: 8672949094008729190}
   m_Layer: 0
   m_Name: Prefab_Monster_Slime
   m_TagString: Untagged
@@ -46,9 +47,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: db8d70b2ee8114d0f99b92710a526ca7, type: 2}
-  currentHealth: 0
-  currentMoveSpeed: 0
+  monsterManager: {fileID: 0}
+  playerSystem: {fileID: 0}
   animator: {fileID: 6225491461590498992}
+  hitFeedback: {fileID: 0}
+  arriveDistanceThreshold: 0.05
+--- !u!114 &8672949094008729190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6597115842058522919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 6225491461590498992}
+  hitFlashRenderers:
+  - {fileID: 6225491461586403440}
 --- !u!1 &7521168832872363807
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,6 +164,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 7ba9a08a970c4ef5b191f47d4e860d15, type: 3}
+--- !u!137 &6225491461586403440 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700000, guid: 7ba9a08a970c4ef5b191f47d4e860d15, type: 3}
+  m_PrefabInstance: {fileID: 6225491461597875152}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &6225491461590498992 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: 7ba9a08a970c4ef5b191f47d4e860d15, type: 3}

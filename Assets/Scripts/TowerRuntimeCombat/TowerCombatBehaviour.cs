@@ -243,6 +243,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         projectileBehaviour.Initialize(
             towerInstance,
+            monsterManager,
             projectileConfig,
             attackConfig,
             pendingProjectileTarget,

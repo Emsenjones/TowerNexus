@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8583064042410314771}
   - component: {fileID: 3082340063008460101}
+  - component: {fileID: 5674193049052221641}
   m_Layer: 0
   m_Name: Prefab_Monster_TurtuleShell
   m_TagString: Untagged
@@ -46,9 +47,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: ac0dd61ab1e094ab2970e9e64a9eff79, type: 2}
-  currentHealth: 0
-  currentMoveSpeed: 0
+  monsterManager: {fileID: 0}
+  playerSystem: {fileID: 0}
   animator: {fileID: 7871114821477690268}
+  hitFeedback: {fileID: 0}
+  arriveDistanceThreshold: 0.05
+--- !u!114 &5674193049052221641
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2882519792444244193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 7871114821477690268}
+  hitFlashRenderers:
+  - {fileID: 7871114821473441116}
 --- !u!1 &5389211786643338703
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,6 +164,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 6c456c06323e4b21807fd8094049eeb4, type: 3}
+--- !u!137 &7871114821473441116 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700000, guid: 6c456c06323e4b21807fd8094049eeb4, type: 3}
+  m_PrefabInstance: {fileID: 7871114821485043452}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &7871114821477690268 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: 6c456c06323e4b21807fd8094049eeb4, type: 3}

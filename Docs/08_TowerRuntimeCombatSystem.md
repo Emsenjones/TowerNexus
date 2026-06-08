@@ -136,6 +136,24 @@ ChannelTimer
 
 Runtime state should never be stored inside TowerDefinition or AttackConfig.
 
+### Runtime State Ownership
+
+TowerCombatBehaviour owns all runtime combat state.
+
+Examples:
+
+```text
+CurrentTarget
+DetectedEnemies
+CooldownTimer
+AttackState
+ChannelTimer
+```
+
+TowerDefinition and AttackConfig are immutable runtime inputs.
+
+Runtime combat logic should never write state back into configuration assets.
+
 ---
 
 ## 6. Enemy Detection
@@ -149,6 +167,12 @@ Detection range comes from:
 ```text
 AttackConfig.attackRange
 ```
+
+Detection is measured from the tower attackOrigin.
+
+attackOrigin represents the actual attack launch point configured by the tower prefab.
+
+attackOrigin may be different from the tower root transform and should be used as the center point for runtime enemy detection and attack range validation.
 
 Detected enemies are stored in a runtime collection.
 
@@ -309,6 +333,15 @@ Projectile System Handles Flight
 ```
 
 Damage is applied when the projectile hits a valid target.
+
+Additional rules:
+
+- The selected target is used only to determine projectile launch direction.
+- After launch, the projectile travels independently.
+- StraightProjectile hit detection belongs to the Projectile System.
+- The projectile is not required to hit the originally selected target.
+- The projectile may hit any valid monster encountered during flight.
+- The projectile is automatically destroyed when its maximum lifetime expires.
 
 ---
 
@@ -549,6 +582,7 @@ The system is responsible for:
 - Detecting enemies
 - Selecting targets
 - Managing cooldowns
+- Owning runtime combat state
 - Executing attacks
 - Driving attack animation parameters configured by AttackConfig
 - Providing extension hooks for attack visual effects

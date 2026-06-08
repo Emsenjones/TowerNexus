@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2465670421208695155}
   - component: {fileID: 5918628833992865121}
+  - component: {fileID: -3073266323831009886}
   m_Layer: 0
   m_Name: Prefab_Monster_Dragon
   m_TagString: Untagged
@@ -46,9 +47,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: bc23fca48772e43708767f0c1a3c4c90, type: 2}
-  currentHealth: 0
-  currentMoveSpeed: 0
+  monsterManager: {fileID: 0}
+  playerSystem: {fileID: 0}
   animator: {fileID: 7917112324773444231}
+  hitFeedback: {fileID: 0}
+  arriveDistanceThreshold: 0.05
+--- !u!114 &-3073266323831009886
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3866999361384652794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 7917112324773444231}
+  hitFlashRenderers:
+  - {fileID: 7917112324769252421}
 --- !u!1 &7763474672389107081
 GameObject:
   m_ObjectHideFlags: 0
@@ -149,6 +167,11 @@ PrefabInstance:
 --- !u!4 &7917112324763817287 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400032, guid: f482386b370f4c14b9446f6d5672da2c, type: 3}
+  m_PrefabInstance: {fileID: 7917112324763946983}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &7917112324769252421 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700002, guid: f482386b370f4c14b9446f6d5672da2c, type: 3}
   m_PrefabInstance: {fileID: 7917112324763946983}
   m_PrefabAsset: {fileID: 0}
 --- !u!95 &7917112324773444231 stripped

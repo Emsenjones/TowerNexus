@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6126959352770433283}
   - component: {fileID: 952937023508661463}
+  - component: {fileID: 2367576008043052619}
   m_Layer: 0
   m_Name: Prefab_Monster_Golem
   m_TagString: Untagged
@@ -46,9 +47,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: f6fc3ea3e736144d697270b58aadcc22, type: 2}
-  currentHealth: 0
-  currentMoveSpeed: 0
+  monsterManager: {fileID: 0}
+  playerSystem: {fileID: 0}
   animator: {fileID: 6188540993782782868}
+  hitFeedback: {fileID: 0}
+  arriveDistanceThreshold: 0.05
+--- !u!114 &2367576008043052619
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3333681211596321960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 6188540993782782868}
+  hitFlashRenderers:
+  - {fileID: 6188540993778509140}
 --- !u!1 &7263505113590073721
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,6 +164,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ae7cfb380b06418f8959b85d7001baf9, type: 3}
+--- !u!137 &6188540993778509140 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700000, guid: ae7cfb380b06418f8959b85d7001baf9, type: 3}
+  m_PrefabInstance: {fileID: 6188540993790111476}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &6188540993782782868 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: ae7cfb380b06418f8959b85d7001baf9, type: 3}

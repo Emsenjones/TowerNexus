@@ -247,7 +247,7 @@ Recommended first-version archetypes:
 
 | Archetype | Description |
 |---|---|
-| StraightProjectile | Fires a projectile in a straight trajectory toward a target |
+| StraightProjectile | Fires a projectile in a straight trajectory toward the selected target direction. After launch, the projectile travels independently and applies damage when it hits any valid monster within its hit threshold |
 | ArcProjectile | Launches a projectile in an arcing trajectory toward a target position |
 | ChannelBeam | Locks onto one target and continuously damages it during a limited attack duration |
 | PeriodicArea | Periodically applies damage to all valid enemies within the tower attack radius |
@@ -272,8 +272,11 @@ Design intent:
 - Low damage per projectile
 - Short attack range
 - High attack speed
-- Projectile has its own collider
-- Damage is applied when the projectile collides with a valid enemy
+- The selected target is used to determine the projectile launch direction
+- After launch, the projectile travels independently and is not required to hit the originally selected target
+- During flight, the projectile continuously checks whether any valid monster is within its hit distance threshold
+- If one or more valid monsters are within the hit distance threshold, the projectile hits the nearest valid monster and applies damage
+- If no valid monster is hit before the projectile reaches its maximum lifetime, the projectile is destroyed automatically
 
 Archer Tower does not require buff or effect configuration in the first version.
 
@@ -435,6 +438,14 @@ Typically uses:
 - projectileConfig
 - targetSelectionType
 - attackAnimatorTriggerName
+
+Notes:
+
+- targetSelectionType is used by the tower to select an initial target before firing.
+- The selected target provides the launch direction for the projectile.
+- After launch, StraightProjectile hit detection belongs to the Projectile System.
+- The projectile may hit any valid monster encountered during flight, not only the originally selected target.
+- The projectile should be destroyed by projectile runtime logic when it exceeds its maximum lifetime.
 
 ---
 
@@ -644,7 +655,16 @@ Excluded:
 
 ---
 
+
 # Change Log
+
+## 2026-06-08
+
+- Clarified StraightProjectile behavior as direction-based independent projectile flight rather than guaranteed target locking or target-position snapshot impact.
+- Updated Archer Tower attack pattern to specify that the selected target only determines launch direction.
+- Clarified that StraightProjectile may hit any valid monster encountered during flight, not only the originally selected target.
+- Clarified that StraightProjectile hit detection belongs to the Projectile System and should use hit distance threshold plus maximum lifetime handling.
+
 
 ## 2026-05-30
 

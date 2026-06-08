@@ -1,13 +1,16 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ProjectileBehaviour : MonoBehaviour
 {
     private TowerInstance sourceTower;
+    private MonsterManager monsterManager;
     private ProjectileConfig projectileConfig;
     private AttackConfig attackConfig;
     private MonsterBehaviour targetMonster;
     private Vector3 targetPosition;
+    private Vector3 launchDirection;
     private Vector3 startPosition;
     private float elapsedLifetime;
     private float arcTravelTime;
@@ -25,12 +28,14 @@ public class ProjectileBehaviour : MonoBehaviour
 
     public void Initialize(
         TowerInstance sourceTower,
+        MonsterManager monsterManager,
         ProjectileConfig projectileConfig,
         AttackConfig attackConfig,
         MonsterBehaviour targetMonster,
         Vector3 targetPosition)
     {
         this.sourceTower = sourceTower;
+        this.monsterManager = monsterManager;
         this.projectileConfig = projectileConfig;
         this.attackConfig = attackConfig;
         this.targetMonster = targetMonster;
@@ -48,7 +53,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
         if (attackConfig.AttackArchetype == AttackArchetype.StraightProjectile)
         {
-            this.targetPosition = targetMonster.transform.position;
+            launchDirection = CalculateLaunchDirection(targetMonster.transform.position);
         }
 
         arcTravelTime = CalculateArcTravelTime();
@@ -77,6 +82,12 @@ public class ProjectileBehaviour : MonoBehaviour
 
         if (attackConfig.AttackArchetype == AttackArchetype.StraightProjectile)
         {
+            if (monsterManager == null)
+            {
+                Debug.LogWarning("Projectile behaviour cannot initialize straight projectile: monster manager is null.", this);
+                return false;
+            }
+
             if (!IsValidTarget(targetMonster))
             {
                 Debug.LogWarning("Projectile behaviour cannot initialize straight projectile: target monster is invalid.", this);
@@ -126,27 +137,16 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void UpdateStraightProjectile()
     {
-        transform.position = Vector3.MoveTowards(
-            transform.position,
-            targetPosition,
-            projectileConfig.ProjectileSpeed * Time.deltaTime
-        );
+        transform.position += launchDirection * projectileConfig.ProjectileSpeed * Time.deltaTime;
 
-        FaceMoveDirection(targetPosition - transform.position);
+        FaceMoveDirection(launchDirection);
 
-        if (Vector3.Distance(transform.position, targetPosition) > projectileConfig.HitDistanceThreshold)
+        if (!TryGetStraightProjectileHit(out MonsterBehaviour hitMonster))
         {
             return;
         }
 
-        if (IsValidTarget(targetMonster) &&
-            Vector3.Distance(targetMonster.transform.position, transform.position) <= projectileConfig.HitDistanceThreshold)
-        {
-            ImpactStraightProjectile(targetMonster);
-            return;
-        }
-
-        DestroyProjectile();
+        ImpactStraightProjectile(hitMonster);
     }
 
     private void UpdateArcProjectile()
@@ -209,7 +209,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
         MonsterBehaviour hitMonster = hitCollider.GetComponentInParent<MonsterBehaviour>();
 
-        if (!IsValidTarget(hitMonster))
+        if (!IsTrackedValidTarget(hitMonster))
         {
             return;
         }
@@ -236,7 +236,6 @@ public class ProjectileBehaviour : MonoBehaviour
         {
             return;
         }
-
         hasImpacted = true;
         RaiseImpact(null, targetPosition);
         DestroyProjectile();
@@ -256,6 +255,74 @@ public class ProjectileBehaviour : MonoBehaviour
 
         OnImpact?.Invoke(impactContext);
         AreaDamageEffectExecutor.Execute(impactContext);
+    }
+
+    private Vector3 CalculateLaunchDirection(Vector3 targetPosition)
+    {
+        Vector3 direction = targetPosition - transform.position;
+
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return transform.forward;
+        }
+
+        return direction.normalized;
+    }
+
+    private bool TryGetStraightProjectileHit(out MonsterBehaviour hitMonster)
+    {
+        hitMonster = null;
+
+        if (monsterManager == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        float hitDistanceThresholdSqr = projectileConfig.HitDistanceThreshold * projectileConfig.HitDistanceThreshold;
+        float nearestDistanceSqr = float.MaxValue;
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            MonsterBehaviour monster = aliveMonsters[i];
+
+            if (!IsValidTarget(monster))
+            {
+                continue;
+            }
+
+            float distanceSqr = (monster.transform.position - transform.position).sqrMagnitude;
+
+            if (distanceSqr > hitDistanceThresholdSqr || distanceSqr >= nearestDistanceSqr)
+            {
+                continue;
+            }
+
+            hitMonster = monster;
+            nearestDistanceSqr = distanceSqr;
+        }
+
+        return hitMonster != null;
+    }
+
+    private bool IsTrackedValidTarget(MonsterBehaviour monster)
+    {
+        if (!IsValidTarget(monster) || monsterManager == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            if (aliveMonsters[i] == monster)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static bool IsValidTarget(MonsterBehaviour monster)

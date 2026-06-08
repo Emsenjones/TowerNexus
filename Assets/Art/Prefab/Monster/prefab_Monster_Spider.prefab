@@ -42,6 +42,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8766574657308392045}
   - component: {fileID: 7699745774445016845}
+  - component: {fileID: 8689119560299646045}
   m_Layer: 0
   m_Name: Prefab_Monster_Spider
   m_TagString: Untagged
@@ -78,9 +79,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: 161fe01e8671842009e0d613b0a7b9da, type: 2}
-  currentHealth: 0
-  currentMoveSpeed: 0
+  monsterManager: {fileID: 0}
+  playerSystem: {fileID: 0}
   animator: {fileID: 4669571535966229616}
+  hitFeedback: {fileID: 0}
+  arriveDistanceThreshold: 0.05
+--- !u!114 &8689119560299646045
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2179103727158641011}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 4669571535966229616}
+  hitFlashRenderers:
+  - {fileID: 4669571535970446000}
 --- !u!1001 &4669571535958843664
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -154,5 +172,10 @@ Transform:
 --- !u!95 &4669571535966229616 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: 0517684e42b746d3b6749762cee91d3b, type: 3}
+  m_PrefabInstance: {fileID: 4669571535958843664}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &4669571535970446000 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700000, guid: 0517684e42b746d3b6749762cee91d3b, type: 3}
   m_PrefabInstance: {fileID: 4669571535958843664}
   m_PrefabAsset: {fileID: 0}

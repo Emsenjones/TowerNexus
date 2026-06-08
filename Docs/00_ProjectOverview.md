@@ -231,7 +231,7 @@ Manages projectile lifecycle after a projectile has been created and initialized
 Responsible for:
 
 - Projectile movement
-- Projectile collision detection
+- Projectile hit detection
 - Projectile lifetime management
 - Impact event generation
 - Simple single-target projectile damage dispatch
@@ -291,9 +291,9 @@ TowerPlacementSystem
 TowerRuntimeCombatSystem
     ↓ Attack Execution / Projectile Creation
 ProjectileSystem
-    ↓ Direct Hit Damage / Impact Context
+    ↓ Hit Detection / Impact Event
 BuffAndEffectSystem
-    ↓ AreaDamageEffect
+    ↓ AreaDamageEffect Resolution
 MonsterSystem
 
 TowerPlacementSystem

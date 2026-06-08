@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2465670421208695155}
   - component: {fileID: 5918628833992865121}
+  - component: {fileID: 1349096134698084787}
   m_Layer: 0
   m_Name: Prefab_Monster_EvilMage
   m_TagString: Untagged
@@ -46,9 +47,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: d865b995ba1b74b0b8985767141709f8, type: 2}
-  currentHealth: 0
-  currentMoveSpeed: 0
+  monsterManager: {fileID: 0}
+  playerSystem: {fileID: 0}
   animator: {fileID: 6769584518680280948}
+  hitFeedback: {fileID: 0}
+  arriveDistanceThreshold: 0.05
+--- !u!114 &1349096134698084787
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3866999361384652794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 6769584518680280948}
+  hitFlashRenderers:
+  - {fileID: 6769584518675956148}
+  - {fileID: 3023192330157716363}
 --- !u!1 &7763474672389107081
 GameObject:
   m_ObjectHideFlags: 0
@@ -150,9 +169,19 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8753e01ab9c64bbbb4c6ffba9f37f4e2, type: 3}
+--- !u!23 &3023192330157716363 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: -862742618314409569, guid: 8753e01ab9c64bbbb4c6ffba9f37f4e2, type: 3}
+  m_PrefabInstance: {fileID: 6769584518672878100}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &6769584518673010826 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400030, guid: 8753e01ab9c64bbbb4c6ffba9f37f4e2, type: 3}
+  m_PrefabInstance: {fileID: 6769584518672878100}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &6769584518675956148 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700000, guid: 8753e01ab9c64bbbb4c6ffba9f37f4e2, type: 3}
   m_PrefabInstance: {fileID: 6769584518672878100}
   m_PrefabAsset: {fileID: 0}
 --- !u!95 &6769584518680280948 stripped

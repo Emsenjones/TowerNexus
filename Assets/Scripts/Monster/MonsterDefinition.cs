@@ -19,6 +19,9 @@ public class MonsterDefinition : ScriptableObject
     [SerializeField] private string dieTriggerName;
     [SerializeField] private float deathDelay = 1f;
     [SerializeField] private Vector3 healthBarOffset = new Vector3(0f, 1.5f, 0f);
+    [SerializeField] private bool enableHitFlash = true;
+    [SerializeField] private Color hitFlashColor = Color.red;
+    [SerializeField] private float hitFlashDuration = 0.08f;
 
     public string MonsterId => monsterId;
     public string DisplayName => displayName;
@@ -32,6 +35,9 @@ public class MonsterDefinition : ScriptableObject
     public string DieTriggerName => dieTriggerName;
     public float DeathDelay => deathDelay;
     public Vector3 HealthBarOffset => healthBarOffset;
+    public bool EnableHitFlash => enableHitFlash;
+    public Color HitFlashColor => hitFlashColor;
+    public float HitFlashDuration => hitFlashDuration;
 
     public bool IsValid()
     {
@@ -74,6 +80,12 @@ public class MonsterDefinition : ScriptableObject
         if (deathDelay < 0f)
         {
             Debug.LogWarning($"Monster definition '{monsterId}' is invalid: death delay cannot be negative.", this);
+            return false;
+        }
+
+        if (hitFlashDuration < 0f)
+        {
+            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: hit flash duration cannot be negative.", this);
             return false;
         }
 

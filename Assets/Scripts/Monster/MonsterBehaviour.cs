@@ -11,6 +11,7 @@ public class MonsterBehaviour : MonoBehaviour
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
     [SerializeField] private Animator animator;
+    [SerializeField] private MonsterHitFeedback hitFeedback;
     [SerializeField] private float arriveDistanceThreshold = 0.05f;
 
     [ShowInInspector, ReadOnly] private GridNodeBehaviour currentNode;
@@ -51,6 +52,8 @@ public class MonsterBehaviour : MonoBehaviour
         isDead = false;
         isCleaningUp = false;
         CacheAnimator();
+        CacheHitFeedback();
+        hitFeedback?.Initialize(definition);
         NotifyHealthChanged();
     }
 
@@ -146,6 +149,7 @@ public class MonsterBehaviour : MonoBehaviour
 
         currentHealth = Mathf.Max(0, currentHealth - damage);
         NotifyHealthChanged();
+        hitFeedback?.PlayHitFeedback();
 
         if (currentHealth <= 0)
         {
@@ -163,6 +167,7 @@ public class MonsterBehaviour : MonoBehaviour
         isDead = true;
         StopMovement();
         currentPath.Clear();
+        hitFeedback?.StopFeedback();
         OnDied?.Invoke(this);
 
         if (monsterManager != null)
@@ -205,6 +210,19 @@ public class MonsterBehaviour : MonoBehaviour
         if (animator == null)
         {
             animator = GetComponentInChildren<Animator>();
+        }
+    }
+
+    private void CacheHitFeedback()
+    {
+        if (hitFeedback == null)
+        {
+            hitFeedback = GetComponentInChildren<MonsterHitFeedback>();
+        }
+
+        if (hitFeedback == null)
+        {
+            hitFeedback = gameObject.AddComponent<MonsterHitFeedback>();
         }
     }
 
@@ -263,6 +281,7 @@ public class MonsterBehaviour : MonoBehaviour
         isCleaningUp = true;
         StopMovement();
         currentPath.Clear();
+        hitFeedback?.StopFeedback();
         OnTargetReached?.Invoke(this);
 
         if (monsterManager != null)

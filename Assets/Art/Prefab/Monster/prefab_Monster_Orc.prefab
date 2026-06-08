@@ -42,6 +42,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7348894151084830342}
   - component: {fileID: 5389729251801513952}
+  - component: {fileID: -1253240442752861245}
   m_Layer: 0
   m_Name: Prefab_Monster_Orc
   m_TagString: Untagged
@@ -81,7 +82,24 @@ MonoBehaviour:
   monsterManager: {fileID: 0}
   playerSystem: {fileID: 0}
   animator: {fileID: 2971079900529067286}
+  hitFeedback: {fileID: 0}
   arriveDistanceThreshold: 0.05
+--- !u!114 &-1253240442752861245
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7885271453143739113}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 2971079900529067286}
+  hitFlashRenderers:
+  - {fileID: 6660552170839345031}
+  - {fileID: 2971079900524936148}
 --- !u!1001 &2971079900536402038
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -155,6 +173,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
+--- !u!137 &2971079900524936148 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 13700002, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
+  m_PrefabInstance: {fileID: 2971079900536402038}
+  m_PrefabAsset: {fileID: 0}
 --- !u!95 &2971079900529067286 stripped
 Animator:
   m_CorrespondingSourceObject: {fileID: 9500000, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
@@ -163,5 +186,10 @@ Animator:
 --- !u!4 &2971079900536007400 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 400030, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
+  m_PrefabInstance: {fileID: 2971079900536402038}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &6660552170839345031 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 8454502816601372657, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
   m_PrefabInstance: {fileID: 2971079900536402038}
   m_PrefabAsset: {fileID: 0}
