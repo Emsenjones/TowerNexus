@@ -8,6 +8,7 @@ public class MonsterBehaviour : MonoBehaviour
     [SerializeField] private MonsterDefinition definition;
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
+    [SerializeField] private DamageNumberManager damageNumberManager;
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
     [SerializeField] private Animator animator;
@@ -59,10 +60,12 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void SetRuntimeReferences(
         MonsterManager monsterManager,
-        PlayerSystem playerSystem)
+        PlayerSystem playerSystem,
+        DamageNumberManager damageNumberManager = null)
     {
         this.monsterManager = monsterManager;
         this.playerSystem = playerSystem;
+        this.damageNumberManager = damageNumberManager;
     }
 
     public void SetCurrentNode(GridNodeBehaviour currentNode)
@@ -150,6 +153,7 @@ public class MonsterBehaviour : MonoBehaviour
         currentHealth = Mathf.Max(0, currentHealth - damage);
         NotifyHealthChanged();
         hitFeedback?.PlayHitFeedback();
+        ShowDamageNumber(damage);
 
         if (currentHealth <= 0)
         {
@@ -335,5 +339,22 @@ public class MonsterBehaviour : MonoBehaviour
         }
 
         OnHealthChanged?.Invoke(this, currentHealth, definition.MaxHealth);
+    }
+
+    private void ShowDamageNumber(int damage)
+    {
+        if (definition == null)
+        {
+            return;
+        }
+
+        if (damageNumberManager == null)
+        {
+            Debug.LogWarning("Monster behaviour cannot show damage number: damage number manager is not assigned.", this);
+            return;
+        }
+
+        Vector3 damageNumberPosition = transform.position + definition.DamageNumberOffset;
+        damageNumberManager.ShowDamage(damage, damageNumberPosition);
     }
 }

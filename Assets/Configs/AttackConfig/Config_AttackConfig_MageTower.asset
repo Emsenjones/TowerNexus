@@ -17,10 +17,10 @@ MonoBehaviour:
   attackRange: 3
   attackInterval: 3
   targetSelectionType: 1
-  damage: 1
+  damage: 2
   attackAnimatorTriggerName: Attack
   attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 0}
   arcHeight: 1
-  channelDamageInterval: 0.5
-  maxChannelDuration: 3
+  channelDamageInterval: 0.2
+  maxChannelDuration: 4

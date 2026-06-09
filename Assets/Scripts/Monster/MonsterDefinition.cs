@@ -22,6 +22,7 @@ public class MonsterDefinition : ScriptableObject
     [SerializeField] private bool enableHitFlash = true;
     [SerializeField] private Color hitFlashColor = Color.red;
     [SerializeField] private float hitFlashDuration = 0.08f;
+    [SerializeField] private Vector3 damageNumberOffset = new Vector3(0f, 1.5f, 0f);
 
     public string MonsterId => monsterId;
     public string DisplayName => displayName;
@@ -38,6 +39,7 @@ public class MonsterDefinition : ScriptableObject
     public bool EnableHitFlash => enableHitFlash;
     public Color HitFlashColor => hitFlashColor;
     public float HitFlashDuration => hitFlashDuration;
+    public Vector3 DamageNumberOffset => damageNumberOffset;
 
     public bool IsValid()
     {

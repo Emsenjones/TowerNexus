@@ -27,3 +27,4 @@ MonoBehaviour:
   enableHitFlash: 1
   hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
   hitFlashDuration: 0.08
+  damageNumberOffset: {x: 0, y: 0, z: 0}

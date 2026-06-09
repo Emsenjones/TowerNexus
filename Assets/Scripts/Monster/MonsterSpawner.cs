@@ -10,6 +10,7 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private MonsterHealthBarManager healthBarManager;
+    [SerializeField] private DamageNumberManager damageNumberManager;
     [SerializeField] private Transform monsterRoot;
     [SerializeField] private bool playOnStart;
 
@@ -152,7 +153,7 @@ public class MonsterSpawner : MonoBehaviour
 
         monsterBehaviour.Initialize(monsterDefinition);
         CreateHealthBar(monsterBehaviour, monsterDefinition);
-        monsterBehaviour.SetRuntimeReferences(monsterManager, playerSystem);
+        monsterBehaviour.SetRuntimeReferences(monsterManager, playerSystem, ResolveDamageNumberManager());
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
 
@@ -212,5 +213,23 @@ public class MonsterSpawner : MonoBehaviour
 
         healthBarManager = gameObject.AddComponent<MonsterHealthBarManager>();
         return healthBarManager;
+    }
+
+    private DamageNumberManager ResolveDamageNumberManager()
+    {
+        if (damageNumberManager != null)
+        {
+            return damageNumberManager;
+        }
+
+        damageNumberManager = FindFirstObjectByType<DamageNumberManager>();
+
+        if (damageNumberManager != null)
+        {
+            return damageNumberManager;
+        }
+
+        damageNumberManager = gameObject.AddComponent<DamageNumberManager>();
+        return damageNumberManager;
     }
 }
