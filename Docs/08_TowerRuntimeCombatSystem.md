@@ -33,7 +33,8 @@ The Tower Runtime Combat System owns:
 - Runtime attack flow
 - Animator parameter control for tower attack state
 - Runtime hooks for attack visual effects
-- Damage dispatch requests
+- Runtime playback control for configured tower attack VFX
+- Runtime binding for continuous VFX such as beam and area effects
 
 ### Does Not Own
 
@@ -48,7 +49,8 @@ The Tower Runtime Combat System does not own:
 - Projectile movement
 - Buff execution
 - Detailed VFX asset creation
-- Final VFX timing and art polish
+- VFX prefab authoring
+- VFX material or shader setup
 
 These responsibilities belong to their respective systems.
 
@@ -299,18 +301,26 @@ For continuous attacks, the Animator controls whether the tower is visually in a
 
 If no Animator is configured, the runtime may fall back to logic-only attack execution for prototype safety.
 
-### Attack Visual Effect Hooks
+### Attack Visual Effect Runtime Hooks
 
-Tower Runtime Combat should leave runtime hooks for attack visual effects, but detailed VFX assets and polish are not part of the first implementation.
+Tower Runtime Combat should consume VFX references defined by AttackConfig and play them at the correct runtime timing.
 
-Examples of future visual hooks:
+The runtime system owns when and where configured attack VFX are spawned, attached, updated, stopped, or destroyed.
 
-- Muzzle flash or fire burst when a projectile is released
-- ChannelBeam laser connection from tower attack point to target
-- PeriodicArea field effect centered on the tower attack point
-- Impact effect triggered by projectile or effect execution
+The runtime system does not create final VFX assets or tune their materials, particles, shaders, colors, or timing polish.
 
-The runtime combat implementation should expose clear extension points for these effects without implementing final VFX behavior.
+Common runtime VFX hooks:
+
+- Projectile release VFX spawned at attackOrigin when a StraightProjectile or ArcProjectile is released
+- Projectile impact VFX triggered by projectile impact handling
+- ChannelBeam VFX spawned when channeling starts and updated while the target remains valid
+- PeriodicArea field VFX spawned when the area attack becomes active and stopped when no valid enemies remain
+
+One-shot VFX should usually be instantiated, played, and destroyed after completion.
+
+Looping VFX should be explicitly started, attached or positioned, and stopped when the corresponding runtime state ends.
+
+Continuous VFX must remain presentation-only. Damage timing, target validation, cooldowns, and hit logic remain owned by runtime combat logic.
 
 ---
 
@@ -332,7 +342,17 @@ Spawn Projectile
 Projectile System Handles Flight
 ```
 
-Damage is applied when the projectile hits a valid target.
+Runtime VFX behavior:
+
+```text
+Animation Event Releases Projectile
+    ↓
+Spawn projectileReleaseVfxPrefab at attackOrigin if configured
+```
+
+The release VFX is presentation-only and does not affect projectile launch direction, damage, or hit detection.
+
+Projectile travel visuals belong to the Projectile System and projectile prefab setup rather than Tower Runtime Combat.
 
 Additional rules:
 
@@ -364,6 +384,20 @@ Projectile Lands
     ↓
 Impact Effect / Area Damage
 ```
+
+Runtime VFX behavior:
+
+```text
+Animation Event Releases Projectile
+    ↓
+Spawn projectileReleaseVfxPrefab at attackOrigin if configured
+    ↓
+Projectile landing or impact handling spawns explosion / impact VFX if configured
+```
+
+The cannon explosion visual should be triggered by projectile impact or effect execution timing, not by an independent particle collision result.
+
+Projectile travel visuals belong to the Projectile System and projectile prefab setup rather than Tower Runtime Combat.
 
 Explosion logic belongs to Projectile System or Effect System.
 
@@ -399,11 +433,25 @@ Search For Target Again
 
 The tower remains connected to the target while channeling.
 
-ChannelBeam should reserve a visual hook for a future beam or laser effect from the tower attack point to the current target.
+Runtime VFX behavior:
 
-Channel duration rules are defined by AttackConfig.
+```text
+Channel State Starts
+    ↓
+Spawn channelBeamVfxPrefab if configured
+    ↓
+Bind beam start to attackOrigin
+    ↓
+Bind beam end to current target HitAnchor or fallback target transform
+    ↓
+Update beam start and end every frame while channeling
+    ↓
+Stop and destroy beam VFX when channeling ends
+```
 
-ChannelBeam damage is applied in discrete damage ticks. The first version uses AttackConfig.damage together with AttackConfig.channelDamageInterval. A separate continuous damage field is not required.
+ChannelBeam VFX should behave as a runtime visual controller rather than a one-shot particle effect.
+
+The beam visual should not apply damage, search for targets, or decide whether the attack hits.
 
 ---
 
@@ -426,9 +474,23 @@ No Valid Enemies Remain
 Animator.SetBool(attackingAnimatorBoolName, false)
 ```
 
-This archetype does not require projectiles.
+Runtime VFX behavior:
 
-PeriodicArea should reserve a visual hook for a future area field effect centered on the tower attack point or tower origin.
+```text
+One Or More Valid Enemies In Range
+    ↓
+Spawn periodicAreaVfxPrefab if configured and not already active
+    ↓
+Keep field VFX centered on attackOrigin or tower origin
+    ↓
+Use authored PeriodicArea VFX scale
+    ↓
+Stop and destroy field VFX when no valid enemies remain
+```
+
+PeriodicArea VFX should be looping presentation only. Periodic damage is still applied by Tower Runtime Combat using attackInterval and attackRange.
+
+This archetype does not require projectiles.
 
 ---
 
@@ -504,10 +566,12 @@ Responsible for:
 
 Future responsibility:
 
-- Projectile muzzle flash
-- Beam or laser visuals
-- Periodic area field visuals
-- Impact visuals
+- VFX prefab authoring
+- Projectile muzzle flash visuals
+- Beam or laser visual prefab authoring
+- Periodic area field visual prefab authoring
+- Impact visual prefab authoring
+- Particle, material, shader, color, and timing polish
 
 The runtime combat implementation should only reserve runtime hooks and references for these effects. Final VFX asset creation and polish are outside the first Tower Runtime Combat implementation.
 
@@ -546,7 +610,9 @@ The first version supports:
 - PeriodicArea
 - Animator Trigger control for projectile attack release using `AttackConfig.attackAnimatorTriggerName`
 - Animator Bool control for continuous attack states using `AttackConfig.attackingAnimatorBoolName`
-- Placeholder hooks for attack visual effects
+- Runtime hooks for configured projectile release VFX
+- Runtime hooks for configured ChannelBeam VFX
+- Runtime hooks for configured PeriodicArea VFX
 
 Supported target selection:
 
@@ -567,7 +633,9 @@ Advanced features are intentionally excluded:
 - Final VFX asset implementation
 - Advanced VFX timing and polish
 - Beam rendering implementation details
-- Periodic area field rendering implementation details
+- Final Beam VFX art quality
+- Final PeriodicArea VFX art quality
+- Particle collision driven damage or hit detection
 
 These may be added in future versions.
 
@@ -585,7 +653,7 @@ The system is responsible for:
 - Owning runtime combat state
 - Executing attacks
 - Driving attack animation parameters configured by AttackConfig
-- Providing extension hooks for attack visual effects
+- Providing runtime playback hooks for tower attack visual effects
 - Dispatching damage
 
 The system should remain fully data-driven and independent from tower-specific implementations.

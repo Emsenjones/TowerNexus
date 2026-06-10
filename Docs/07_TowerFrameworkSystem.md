@@ -36,6 +36,7 @@ The Tower Framework System owns:
 - Attack archetype definitions
 - Target selection definitions
 - Shared tower configuration references
+- Static attack VFX configuration references
 
 The Tower Framework System does not own:
 
@@ -45,6 +46,8 @@ The Tower Framework System does not own:
 - Runtime buff execution
 - Runtime draft generation
 - Runtime tower upgrades
+- Runtime VFX spawning, binding, playback, or cleanup
+- VFX prefab authoring, material setup, shader setup, or particle tuning
 
 ---
 
@@ -137,7 +140,6 @@ TowerPrefab
 │   ├── OccupyAnchor_01
 │   ├── OccupyAnchor_02
 │   └── OccupyAnchor_03
-├── ProjectileSpawnPoint
 └── AttackOrigin
 ```
 
@@ -278,7 +280,16 @@ Design intent:
 - If one or more valid monsters are within the hit distance threshold, the projectile hits the nearest valid monster and applies damage
 - If no valid monster is hit before the projectile reaches its maximum lifetime, the projectile is destroyed automatically
 
+
 Archer Tower does not require buff or effect configuration in the first version.
+
+VFX expectation:
+
+- May play a projectile release VFX at AttackOrigin when the arrow is released
+- May use optional projectile travel VFX on the projectile prefab, such as a trail or glow
+- May play optional impact VFX at the hit position when the projectile hits a monster
+
+These VFX are presentation-only and do not decide hit detection or damage.
 
 ---
 
@@ -296,7 +307,16 @@ Design intent:
 
 The cannon projectile itself should be handled by projectile runtime logic.
 
+
 The explosion may be represented as an impact effect or area damage effect, but it should not be treated as a buff in the first version because it does not persist on enemies over time.
+
+VFX expectation:
+
+- May play a projectile release VFX at AttackOrigin when the shell is released
+- May use optional projectile travel VFX on the projectile prefab, such as smoke, fire, sparks, or trail particles
+- Should play impact or explosion VFX when the projectile reaches its target position or impact point
+
+Explosion visuals should follow gameplay impact timing. Particle collision should not independently decide gameplay damage or projectile hit results.
 
 ---
 
@@ -314,7 +334,18 @@ Design intent:
 - If the attack duration ends and the target is still alive, the tower enters cooldown
 - After cooldown ends, the tower selects a target again
 
+
 Magic Tower does not require buff configuration in the first version. Its damage is owned by tower runtime attack logic.
+
+VFX expectation:
+
+- May use a ChannelBeam VFX prefab controlled by runtime logic. This prefab may be an empty GameObject with a dedicated Beam VFX control script and Inspector-configured visual references.
+- The beam start point should follow the tower AttackOrigin
+- The beam end point should follow the current target HitAnchor, or the target transform as a fallback
+- The beam VFX should be updated while the tower remains in channeling state
+- The beam VFX should stop when the channel ends, the target dies, or the target becomes invalid
+
+ChannelBeam VFX is presentation-only and must not apply damage, search targets, or determine hit results.
 
 ---
 
@@ -329,7 +360,16 @@ Design intent:
 - Example: if attack interval is 1 second, the tower deals damage once per second to all enemies currently within range
 - Enemies entering or leaving the radius are naturally included or excluded by the next periodic damage tick
 
+
 Watch Tower should not apply a damage-over-time buff in the first version. The damage source is the Watch Tower itself, not a buff attached to each enemy.
+
+VFX expectation:
+
+- May use a looping PeriodicArea VFX prefab centered on the tower or AttackOrigin
+- The area VFX may be active while one or more valid enemies are inside attackRange
+- The prefab's authored scale should visually match the tower's configured attackRange in the first version
+
+PeriodicArea VFX is presentation-only. Periodic damage is still controlled by attackInterval and attackRange.
 
 # 8. Attack Configuration
 
@@ -367,6 +407,7 @@ AttackConfig defines:
 - Projectile trajectory parameters
 - Channel attack parameters
 - Animator parameter names for attack presentation
+- Optional attack VFX prefab references
 
 AttackConfig does not contain runtime state.
 
@@ -400,12 +441,19 @@ Recommended first-version fields:
 | maxChannelDuration | float | Maximum channel duration |
 | attackAnimatorTriggerName | string | Animator Trigger parameter used by projectile-based attacks |
 | attackingAnimatorBoolName | string | Animator Bool parameter used by continuous attack archetypes |
+| projectileReleaseVfxPrefab | GameObject | Optional one-shot VFX prefab spawned at AttackOrigin when a projectile attack is released |
+| channelBeamVfxPrefab | GameObject | Optional continuous beam VFX prefab used by ChannelBeam attacks |
+| periodicAreaVfxPrefab | GameObject | Optional looping field VFX prefab used by PeriodicArea attacks |
 
 Not every attack archetype requires every field.
 
 Unused fields should be hidden in the Inspector whenever practical.
 
 Editor tooling may use Odin Inspector conditional display features to show only fields relevant to the selected AttackArchetype.
+
+Attack VFX fields are optional. Empty VFX references should not block combat execution.
+
+Attack VFX references are static presentation configuration only. They must not define gameplay damage, targeting rules, cooldown logic, projectile hit detection, or buff behavior.
 
 ```md
 Animator parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat.
@@ -438,6 +486,7 @@ Typically uses:
 - projectileConfig
 - targetSelectionType
 - attackAnimatorTriggerName
+- projectileReleaseVfxPrefab
 
 Notes:
 
@@ -446,6 +495,12 @@ Notes:
 - After launch, StraightProjectile hit detection belongs to the Projectile System.
 - The projectile may hit any valid monster encountered during flight, not only the originally selected target.
 - The projectile should be destroyed by projectile runtime logic when it exceeds its maximum lifetime.
+
+VFX notes:
+
+- projectileReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
+- Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
+- Projectile impact VFX should usually be handled by projectile impact logic.
 
 ---
 
@@ -460,10 +515,17 @@ Typically uses:
 - arcHeight
 - targetSelectionType
 - attackAnimatorTriggerName
+- projectileReleaseVfxPrefab
 
 Notes:
 
 - Explosion radius and area damage behavior belong to the Projectile System and Buff And Effect System, not AttackConfig.
+
+VFX notes:
+
+- projectileReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
+- Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
+- Explosion or impact VFX should follow projectile impact timing.
 
 ---
 
@@ -478,6 +540,7 @@ Typically uses:
 - maxChannelDuration
 - targetSelectionType
 - attackingAnimatorBoolName
+- channelBeamVfxPrefab
 
 Notes:
 
@@ -486,6 +549,12 @@ Notes:
 - attackInterval controls the cooldown duration after a channel attack ends.
 - When a channel attack ends because the duration expires or the target becomes invalid, the tower enters cooldown.
 - After cooldown ends, the tower may begin a new channel attack if a valid target exists.
+
+VFX notes:
+
+- channelBeamVfxPrefab should be controlled by runtime combat logic while channeling.
+- The beam visual should bind to AttackOrigin and the current target HitAnchor or target transform.
+- Beam VFX should not own damage, target search, or hit validation.
 
 ---
 
@@ -497,6 +566,7 @@ Typically uses:
 - attackInterval
 - damage
 - attackingAnimatorBoolName
+- periodicAreaVfxPrefab
 
 PeriodicArea attacks do not require:
 
@@ -511,6 +581,12 @@ When one or more valid enemies exist within attackRange, the tower remains in it
 When no valid enemies exist within attackRange, the tower returns to its idle state.
 
 attackingAnimatorBoolName controls the Animator Bool parameter used to enter and exit the periodic area attack visual state.
+
+VFX notes:
+
+- periodicAreaVfxPrefab may be used as a looping field effect while the tower is active.
+- The authored periodicAreaVfxPrefab scale should visually match the tower's configured attackRange in the first version.
+- PeriodicArea VFX should not own damage ticks or enemy detection.
 
 ---
 
@@ -644,6 +720,7 @@ Included:
 - Target selection types
 - Runtime system references
 - Basic relationship between tower attacks, effects, and buffs
+- Optional AttackConfig VFX references for projectile release, channel beam, and periodic area attacks
 
 Excluded:
 
@@ -652,11 +729,26 @@ Excluded:
 - Buff implementation
 - Upgrade application logic
 - Draft generation rules
+- Runtime VFX spawning, binding, playback, and cleanup
+- Final VFX prefab authoring and particle polish
+- Particle collision driven combat logic
 
 ---
 
 
+
 # Change Log
+
+## 2026-06-10
+
+- Added AttackConfig VFX reference fields for projectile release, ChannelBeam, and PeriodicArea attacks.
+- Clarified that AttackConfig VFX references are optional presentation data and must not own gameplay logic.
+- Added VFX expectations for Archer, Cannon, Magic, and Watch Tower attack patterns.
+- Clarified that projectile travel and impact VFX should follow projectile runtime and impact timing.
+- Clarified that ChannelBeam VFX should be runtime-controlled between AttackOrigin and the current target.
+- Clarified that PeriodicArea VFX should be authored at a scale that visually matches the tower's configured attackRange in the first version.
+- Clarified that particle collision should not drive combat hit detection or damage in the first version.
+
 
 ## 2026-06-08
 
