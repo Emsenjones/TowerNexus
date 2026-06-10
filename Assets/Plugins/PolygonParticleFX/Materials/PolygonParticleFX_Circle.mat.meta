@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: f3053f8556ff7cf4fb59de5cf109104e
+timeCreated: 1556850168
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Materials/PolygonParticleFX_Circle.mat
+  uploadId: 0

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 0796b331004a84744a609063dc845137
+timeCreated: 1588202177
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Money_Coins_Burst_01.prefab
+  uploadId: 0

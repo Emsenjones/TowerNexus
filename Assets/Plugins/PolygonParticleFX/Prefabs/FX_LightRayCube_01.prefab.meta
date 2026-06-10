@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 7ffd6822b816c9b428b2295eb5d7fa00
+timeCreated: 1588048910
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_LightRayCube_01.prefab
+  uploadId: 0

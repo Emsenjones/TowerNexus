@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 101d62f0a3e4fef4eab61adb79c845df
+timeCreated: 1585173533
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Impact_Large_01.prefab
+  uploadId: 0

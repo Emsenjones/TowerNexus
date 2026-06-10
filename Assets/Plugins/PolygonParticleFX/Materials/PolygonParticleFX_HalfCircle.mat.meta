@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 98c2cb3a48b9fc849ae1b47e397eaece
+timeCreated: 1576555502
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Materials/PolygonParticleFX_HalfCircle.mat
+  uploadId: 0

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 2ebe5f4397ab6f540a440c1b54e797bf
+timeCreated: 1527658087
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Materials/PolygonParticleFX_Flies.mat
+  uploadId: 0

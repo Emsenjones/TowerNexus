@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: c3039019fa1c65840b1b35eed158363c
+timeCreated: 1585018010
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Fire_Small_01.prefab
+  uploadId: 0

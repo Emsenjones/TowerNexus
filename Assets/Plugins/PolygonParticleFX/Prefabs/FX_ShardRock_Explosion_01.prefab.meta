@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 488f499c89c209944945fa5746dc175f
+timeCreated: 1587435315
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_ShardRock_Explosion_01.prefab
+  uploadId: 0

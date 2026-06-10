@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 1f8b293f4d55bbc418cffe1b7505d6ed
+timeCreated: 1588113037
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_SwordSlash_01.prefab
+  uploadId: 0
