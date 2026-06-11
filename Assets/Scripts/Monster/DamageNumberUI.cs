@@ -14,7 +14,7 @@ public class DamageNumberUI : MonoBehaviour
     // Small random offset to reduce overlap when multiple damage numbers appear simultaneously.
     [SerializeField] private Vector2 randomOffsetRangeX = new Vector2(-1f, 1f);
     [SerializeField] private Vector2 randomOffsetRangeY = new Vector2(-1f, 1f);
-    [ListDrawerSettings(Expanded = true)]
+    [ListDrawerSettings(ShowFoldout = true, DefaultExpandedState = true)]
     [SerializeField] private List<DamageNumberAnimationStep> animationSteps = new List<DamageNumberAnimationStep>
     {
         DamageNumberAnimationStep.CreatePositionStep(new Vector2(0f, 80f), new Vector2(0f, 80f), 0.6f, Ease.OutQuad),

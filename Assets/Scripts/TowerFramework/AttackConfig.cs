@@ -39,6 +39,9 @@ public class AttackConfig : ScriptableObject
     [ShowIf(nameof(IsArcProjectile))]
     [MinValue(0f)]
     [SerializeField] private float arcHeight = 1f;
+    [TitleGroup("Projectile VFX")]
+    [ShowIf(nameof(UsesProjectile))]
+    [SerializeField] private GameObject projectileReleaseVfxPrefab;
     
     [TitleGroup("Channel")]
     [ShowIf(nameof(IsChannelBeam))]
@@ -48,6 +51,13 @@ public class AttackConfig : ScriptableObject
     [ShowIf(nameof(IsChannelBeam))]
     [MinValue(0f)]
     [SerializeField] private float maxChannelDuration = 5f;
+    [TitleGroup("Channel VFX")]
+    [ShowIf(nameof(IsChannelBeam))]
+    [SerializeField] private GameObject channelBeamVfxPrefab;
+
+    [TitleGroup("Periodic Area VFX")]
+    [ShowIf(nameof(IsPeriodicArea))]
+    [SerializeField] private GameObject periodicAreaVfxPrefab;
 
     public string AttackConfigId => attackConfigId;
     public AttackArchetype AttackArchetype => attackArchetype;
@@ -59,8 +69,11 @@ public class AttackConfig : ScriptableObject
     public string AttackingAnimatorBoolName => attackingAnimatorBoolName;
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
+    public GameObject ProjectileReleaseVfxPrefab => projectileReleaseVfxPrefab;
     public float ChannelDamageInterval => channelDamageInterval;
     public float MaxChannelDuration => maxChannelDuration;
+    public GameObject ChannelBeamVfxPrefab => channelBeamVfxPrefab;
+    public GameObject PeriodicAreaVfxPrefab => periodicAreaVfxPrefab;
 
     private bool UsesProjectile()
     {
@@ -82,6 +95,11 @@ public class AttackConfig : ScriptableObject
     private bool IsChannelBeam()
     {
         return attackArchetype == AttackArchetype.ChannelBeam;
+    }
+
+    private bool IsPeriodicArea()
+    {
+        return attackArchetype == AttackArchetype.PeriodicArea;
     }
 
     public bool IsValid()

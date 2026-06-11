@@ -1,74 +1,108 @@
-# Tower Runtime Combat System
-
-## 1. System Overview
-
-The Tower Runtime Combat System is responsible for consuming TowerDefinition and AttackConfig data provided by the Tower Framework System and converting them into runtime combat behavior.
-
-The system manages:
-
-- Target detection
-- Target selection
-- Attack cooldowns
-- Runtime combat state
-- Attack execution
-- Damage dispatch
-
-The system does not define combat data.
-
-Combat-related configuration is defined by the Tower Framework System.
+# Tower Nexus - Tower Runtime Combat System
 
 ---
 
-## 2. Responsibility Boundary
+# 1. System Overview
 
-### Owns
+The Tower Runtime Combat System is responsible for converting static tower combat configuration into live battlefield attack behavior.
+
+This system answers:
+
+- When a placed tower can attack
+- Which monsters are valid targets
+- Which target should be selected
+- Which attack archetype should execute
+- When projectiles are created
+- When direct runtime damage is applied
+- When attack animation and presentation hooks are triggered
+
+The Tower Runtime Combat System consumes data from the Tower Framework System and coordinates downstream runtime systems such as Projectile System, Monster System, and Buff And Effect System.
+
+It does not define what a tower is.
+
+It does not own tower placement, projectile movement, buff state, monster health, or static tower configuration.
+
+---
+
+# 2. Responsibility Boundary
 
 The Tower Runtime Combat System owns:
 
-- Runtime combat state
-- Enemy detection
-- Target selection
+- Runtime tower combat state
+- Enemy detection within attack range
+- Target selection execution
 - Attack cooldown management
-- Attack execution logic
-- Runtime attack flow
-- Animator parameter control for tower attack state
-- Runtime hooks for attack visual effects
-- Runtime playback control for configured tower attack VFX
-- Runtime binding for continuous VFX such as beam and area effects
-
-### Does Not Own
+- Attack state transitions
+- Attack animation parameter control
+- Projectile creation and initialization
+- ChannelBeam damage timing
+- PeriodicArea damage timing
+- Direct damage dispatch coordination
+- Presentation hook triggering for attack VFX
 
 The Tower Runtime Combat System does not own:
 
-- TowerDefinition
-- AttackConfig
-- ProjectileConfig
-- BuffConfig
-- EffectConfig
-- Tower placement
-- Projectile movement
-- Buff execution
-- Detailed VFX asset creation
-- VFX prefab authoring
-- VFX material or shader setup
+- TowerDefinition structure
+- AttackConfig field definitions
+- Tower placement workflow
+- Runtime projectile movement
+- Projectile collision detection
+- Projectile lifetime management
+- Monster spawning
+- Monster movement
+- Monster health state
+- Buff lifetime state
+- Effect asset authoring
+- VFX prefab authoring, particle tuning, material tuning, or shader setup
 
-These responsibilities belong to their respective systems.
+Recommended ownership boundary:
+
+| System | Owns |
+|---|---|
+| Tower Framework System | TowerDefinition, AttackConfig, attack archetype definitions, target selection definitions |
+| Tower Placement System | Tower placement workflow, footprint validation, GridNode occupation |
+| Tower Runtime Combat System | Tower attack state, target selection execution, cooldowns, attack execution |
+| Projectile System | Projectile movement, hit detection, impact event triggering, projectile destruction |
+| Monster System | Monster lifecycle, movement, health, death handling |
+| Buff And Effect System | Buff application, buff lifetime, reusable effect execution |
 
 ---
 
-## 3. Core Design Philosophy
+# 3. Core Design Philosophy
 
-The Tower Runtime Combat System should be completely data-driven.
+## 3.1 Configuration Defines, Runtime Executes
 
-The runtime system should not contain tower-specific logic.
+Tower Framework data defines what a tower can do.
+
+Tower Runtime Combat executes that behavior at runtime.
 
 Example:
+
+```text
+TowerDefinition
+    ↓
+AttackConfig
+    ↓
+TowerCombatBehaviour
+    ↓
+Runtime Attack Execution
+```
+
+AttackConfig should not store runtime combat state.
+
+Runtime state belongs to the tower instance currently fighting in the battlefield.
+
+---
+
+## 3.2 Archetype-Based Runtime Behavior
+
+Runtime combat behavior should branch by AttackArchetype, not by tower category.
 
 Bad:
 
 ```text
 If Archer Tower
-    Shoot Arrow
+    Fire Arrow
 
 If Cannon Tower
     Fire Cannonball
@@ -77,583 +111,485 @@ If Cannon Tower
 Good:
 
 ```text
-Read AttackConfig
+Read AttackConfig.attackArchetype
     ↓
-Read AttackArchetype
-    ↓
-Execute Matching Runtime Logic
+Execute StraightProjectile, ArcProjectile, ChannelBeam, or PeriodicArea
 ```
 
-The runtime system only consumes configuration data.
+Tower categories describe design identity.
+
+Attack archetypes describe runtime execution behavior.
 
 ---
 
-## 4. Runtime Combat Flow
+## 3.3 Runtime Combat Coordinates, Downstream Systems Execute Their Domain
 
-Standard runtime flow:
-
-```text
-Tower Spawned
-    ↓
-Load TowerDefinition
-    ↓
-Load AttackConfig
-    ↓
-Detect Enemies
-    ↓
-Select Target
-    ↓
-Cooldown Ready / Attack State Ready
-    ↓
-Read AttackConfig Animator Presentation Parameters
-    ↓
-Trigger Attack Animation State
-    ↓
-Animation Event Or Runtime Tick Executes Attack Payload
-    ↓
-Dispatch Damage Or Spawn Projectile / Effect
-    ↓
-Return To Detection Loop
-```
-
-This loop continues until the tower is removed from the battlefield.
-
----
-
-## 5. Runtime Combat State
-
-Every deployed tower owns an independent runtime combat state.
-
-Example runtime data:
-
-```text
-CurrentTarget
-DetectedEnemies
-CooldownTimer
-AttackState
-IsAttacking
-CurrentChannelTarget
-ChannelTimer
-```
-
-Runtime state should never be stored inside TowerDefinition or AttackConfig.
-
-### Runtime State Ownership
-
-TowerCombatBehaviour owns all runtime combat state.
+Tower Runtime Combat may start downstream behavior, but it should not absorb downstream system responsibilities.
 
 Examples:
 
-```text
-CurrentTarget
-DetectedEnemies
-CooldownTimer
-AttackState
-ChannelTimer
-```
-
-TowerDefinition and AttackConfig are immutable runtime inputs.
-
-Runtime combat logic should never write state back into configuration assets.
+- It creates and initializes a projectile, then Projectile System moves and resolves that projectile.
+- It selects a ChannelBeam target, then applies channel damage according to channel timing.
+- It triggers PeriodicArea damage ticks, but persistent enemy-attached state belongs to Buff And Effect System.
+- It may trigger attack VFX hooks, but VFX components should own visual presentation only.
 
 ---
 
-## 6. Enemy Detection
+# 4. Runtime Entry Point
 
-Enemy detection determines which enemies are currently attackable by the tower.
-
-The first version uses a circular detection area.
-
-Detection range comes from:
+The recommended runtime entry point is:
 
 ```text
-AttackConfig.attackRange
+TowerCombatBehaviour
 ```
 
-Detection is measured from the tower attackOrigin.
+Each placed tower that can attack should have one TowerCombatBehaviour.
 
-attackOrigin represents the actual attack launch point configured by the tower prefab.
+TowerCombatBehaviour is initialized from:
 
-attackOrigin may be different from the tower root transform and should be used as the center point for runtime enemy detection and attack range validation.
-
-Detected enemies are stored in a runtime collection.
-
-Example:
-
-```text
-List<MonsterBehaviour>
-```
-
-Invalid targets should be removed automatically.
-
-Examples:
-
-- Dead monsters
-- Despawned monsters
-- Monsters leaving attack range
-
----
-
-## 7. Target Selection
-
-After enemies are detected, the system selects a target according to TargetSelectionType.
-
-Target selection rules are defined by the Tower Framework System.
-
-Examples:
-
-### Nearest
-
-Select the nearest valid enemy.
-
-### HighestHealth
-
-Select the enemy with the highest current health.
-
-### LowestHealth
-
-Select the enemy with the lowest current health.
-
-### Random
-
-Select a random valid enemy.
-
-The runtime system only executes the selected rule.
-
----
-
-## 8. Cooldown Management
-
-Attack intervals are controlled by:
-
-```text
-AttackConfig.attackInterval
-```
-
-Example:
-
-```text
-attackInterval = 1.0
-```
-
-The tower may execute one attack every second.
-
-The cooldown timer is runtime-only data.
-
----
-
-## 9. Attack Execution
-
-Attack execution is determined by AttackArchetype.
-
-The runtime system selects the correct execution path based on AttackConfig.
-
-### Animator-Driven Attack Control
-
-Tower attack presentation should be animation-driven where possible.
-
-Projectile-based attacks typically use the Trigger parameter configured by:
-
-```text
-AttackConfig.attackAnimatorTriggerName
-```
-
-Recommended default:
-
-```text
-Attack
-```
-
-Flow:
-
-```text
-Cooldown Ready
-    ↓
-Read AttackConfig.attackAnimatorTriggerName
-    ↓
-Animator.SetTrigger(attackAnimatorTriggerName)
-    ↓
-Attack Animation Event
-    ↓
-Release Projectile / Attack Payload
-```
-
-Continuous or stateful attacks typically use the Bool parameter configured by:
-
-```text
-AttackConfig.attackingAnimatorBoolName
-```
-
-Recommended default:
-
-```text
-IsAttacking
-```
-
-Examples:
-
-```text
-ChannelBeam: Animator.SetBool(attackingAnimatorBoolName, true / false)
-PeriodicArea: Animator.SetBool(attackingAnimatorBoolName, true / false)
-```
-
-For continuous attacks, the Animator controls whether the tower is visually in an attacking state, while runtime logic still owns target validation, damage ticks, cooldown timing, and attack stop conditions.
-
-If no Animator is configured, the runtime may fall back to logic-only attack execution for prototype safety.
-
-### Attack Visual Effect Runtime Hooks
-
-Tower Runtime Combat should consume VFX references defined by AttackConfig and play them at the correct runtime timing.
-
-The runtime system owns when and where configured attack VFX are spawned, attached, updated, stopped, or destroyed.
-
-The runtime system does not create final VFX assets or tune their materials, particles, shaders, colors, or timing polish.
-
-Common runtime VFX hooks:
-
-- Projectile release VFX spawned at attackOrigin when a StraightProjectile or ArcProjectile is released
-- Projectile impact VFX triggered by projectile impact handling
-- ChannelBeam VFX spawned when channeling starts and updated while the target remains valid
-- PeriodicArea field VFX spawned when the area attack becomes active and stopped when no valid enemies remain
-
-One-shot VFX should usually be instantiated, played, and destroyed after completion.
-
-Looping VFX should be explicitly started, attached or positioned, and stopped when the corresponding runtime state ends.
-
-Continuous VFX must remain presentation-only. Damage timing, target validation, cooldowns, and hit logic remain owned by runtime combat logic.
-
----
-
-### 9.1 StraightProjectile
-
-Used by Archer Tower.
-
-Flow:
-
-```text
-Select Target
-    ↓
-Animator.SetTrigger(attackAnimatorTriggerName)
-    ↓
-Animation Event
-    ↓
-Spawn Projectile
-    ↓
-Projectile System Handles Flight
-```
-
-Runtime VFX behavior:
-
-```text
-Animation Event Releases Projectile
-    ↓
-Spawn projectileReleaseVfxPrefab at attackOrigin if configured
-```
-
-The release VFX is presentation-only and does not affect projectile launch direction, damage, or hit detection.
-
-Projectile travel visuals belong to the Projectile System and projectile prefab setup rather than Tower Runtime Combat.
-
-Additional rules:
-
-- The selected target is used only to determine projectile launch direction.
-- After launch, the projectile travels independently.
-- StraightProjectile hit detection belongs to the Projectile System.
-- The projectile is not required to hit the originally selected target.
-- The projectile may hit any valid monster encountered during flight.
-- The projectile is automatically destroyed when its maximum lifetime expires.
-
----
-
-### 9.2 ArcProjectile
-
-Used by Cannon Tower.
-
-Flow:
-
-```text
-Select Target Position
-    ↓
-Animator.SetTrigger(attackAnimatorTriggerName)
-    ↓
-Animation Event
-    ↓
-Spawn Arc Projectile
-    ↓
-Projectile Lands
-    ↓
-Impact Effect / Area Damage
-```
-
-Runtime VFX behavior:
-
-```text
-Animation Event Releases Projectile
-    ↓
-Spawn projectileReleaseVfxPrefab at attackOrigin if configured
-    ↓
-Projectile landing or impact handling spawns explosion / impact VFX if configured
-```
-
-The cannon explosion visual should be triggered by projectile impact or effect execution timing, not by an independent particle collision result.
-
-Projectile travel visuals belong to the Projectile System and projectile prefab setup rather than Tower Runtime Combat.
-
-Explosion logic belongs to Projectile System or Effect System.
-
----
-
-### 9.3 ChannelBeam
-
-Used by Magic Tower.
-
-Flow:
-
-```text
-Select Target
-    ↓
-Animator.SetBool(attackingAnimatorBoolName, true)
-    ↓
-Start Channel State
-    ↓
-Every channelDamageInterval
-Apply Damage
-    ↓
-Channel Duration Reaches maxChannelDuration
-OR Target Becomes Invalid
-    ↓
-Animator.SetBool(attackingAnimatorBoolName, false)
-    ↓
-Enter Cooldown
-    ↓
-Cooldown Reaches attackInterval
-    ↓
-Search For Target Again
-```
-
-The tower remains connected to the target while channeling.
-
-Runtime VFX behavior:
-
-```text
-Channel State Starts
-    ↓
-Spawn channelBeamVfxPrefab if configured
-    ↓
-Bind beam start to attackOrigin
-    ↓
-Bind beam end to current target HitAnchor or fallback target transform
-    ↓
-Update beam start and end every frame while channeling
-    ↓
-Stop and destroy beam VFX when channeling ends
-```
-
-ChannelBeam VFX should behave as a runtime visual controller rather than a one-shot particle effect.
-
-The beam visual should not apply damage, search for targets, or decide whether the attack hits.
-
----
-
-### 9.4 PeriodicArea
-
-Used by Watch Tower.
-
-Flow:
-
-```text
-One Or More Valid Enemies In Range
-    ↓
-Animator.SetBool(attackingAnimatorBoolName, true)
-    ↓
-Every attackInterval
-Apply Damage To All Valid Targets
-    ↓
-No Valid Enemies Remain
-    ↓
-Animator.SetBool(attackingAnimatorBoolName, false)
-```
-
-Runtime VFX behavior:
-
-```text
-One Or More Valid Enemies In Range
-    ↓
-Spawn periodicAreaVfxPrefab if configured and not already active
-    ↓
-Keep field VFX centered on attackOrigin or tower origin
-    ↓
-Use authored PeriodicArea VFX scale
-    ↓
-Stop and destroy field VFX when no valid enemies remain
-```
-
-PeriodicArea VFX should be looping presentation only. Periodic damage is still applied by Tower Runtime Combat using attackInterval and attackRange.
-
-This archetype does not require projectiles.
-
----
-
-## 10. Damage Dispatch
-
-Damage dispatch depends on attack archetype.
-
-Simple projectile-to-monster hits may be dispatched by the Projectile System:
-
-```text
-Straight Projectile
-    ↓
-ProjectileBehaviour
-    ↓
-MonsterBehaviour.TakeDamage(...)
-```
-
-Projectile impact area damage is delegated through the Buff And Effect System:
-
-```text
-Arc Projectile Impact
-    ↓
-ProjectileImpactContext
-    ↓
-AreaDamageEffectExecutor
-    ↓
-MonsterBehaviour.TakeDamage(...)
-```
-
-Non-projectile tower attacks are dispatched by Tower Runtime Combat:
-
-```text
-ChannelBeam / PeriodicArea
-    ↓
-Tower Runtime Combat Damage Tick
-    ↓
-MonsterBehaviour.TakeDamage(...)
-```
-
-Monster health, death state, and death handling remain owned by the Monster System.
-
----
-
-## 11. Relationship With Other Systems
-
-### Tower Framework System
-
-Provides:
-
+- TowerInstance
 - TowerDefinition
 - AttackConfig
-- AttackArchetype
-- TargetSelectionType
-- attackAnimatorTriggerName
-- attackingAnimatorBoolName
+- MonsterManager
+- Optional Animator
+- Optional AttackOrigin transform
+
+Recommended runtime references:
+
+| Reference | Purpose |
+|---|---|
+| TowerInstance | Provides the placed tower instance and TowerDefinition |
+| TowerDefinition | Provides static tower data |
+| AttackConfig | Provides attack behavior configuration |
+| MonsterManager | Provides alive monsters for detection |
+| Animator | Receives attack presentation parameters |
+| AttackOrigin | Provides attack range origin and projectile spawn position |
+
+If AttackOrigin is not assigned, the tower transform may be used as the fallback origin.
 
 ---
 
-### Projectile System
+# 5. Runtime Combat State
 
-Responsible for:
+Tower Runtime Combat may maintain the following runtime state per tower:
 
-- Projectile spawning
-- Projectile movement
-- Projectile collision
-- Projectile lifetime
-- Simple single-target projectile hit damage
-- Projectile impact context generation
+- Detected enemies
+- Current target
+- Pending projectile target
+- Pending projectile target position
+- Current channel target
+- Cooldown timer
+- Channel timer
+- Channel tick timer
+- Channel damage accumulator
+- Current attack state
 
----
+This state should never be stored in TowerDefinition or AttackConfig.
 
-### Visual Effect System / Art Assets
+Recommended attack states:
 
-Future responsibility:
-
-- VFX prefab authoring
-- Projectile muzzle flash visuals
-- Beam or laser visual prefab authoring
-- Periodic area field visual prefab authoring
-- Impact visual prefab authoring
-- Particle, material, shader, color, and timing polish
-
-The runtime combat implementation should only reserve runtime hooks and references for these effects. Final VFX asset creation and polish are outside the first Tower Runtime Combat implementation.
-
----
-
-### Buff And Effect System
-
-Responsible for:
-
-- AreaDamageEffect execution
-- Future buff creation
-- Future buff stacking
-- Future buff duration
-- Future buff removal
+| State | Meaning |
+|---|---|
+| Idle | Tower is not currently executing an attack |
+| WaitingForAnimationRelease | Tower has selected a projectile target and is waiting for the attack release moment |
+| Channeling | Tower is actively channeling damage into one target |
+| PeriodicAreaActive | Tower has valid enemies in range and is running periodic area behavior |
 
 ---
 
-### Monster System
+# 6. Update Flow
 
-Responsible for:
+Recommended per-frame runtime flow:
 
-- Health
-- Damage processing
-- Death handling
-- Reward generation
+```text
+Validate runtime references
+    ↓
+Update cooldown timer
+    ↓
+Detect enemies within attackRange
+    ↓
+Read AttackConfig.attackArchetype
+    ↓
+Execute matching attack update
+```
+
+The attack archetype determines the update branch:
+
+| AttackArchetype | Runtime Branch |
+|---|---|
+| StraightProjectile | Projectile attack update |
+| ArcProjectile | Projectile attack update |
+| ChannelBeam | Channel attack update |
+| PeriodicArea | Periodic area update |
 
 ---
 
-## 12. First Version Scope
+# 7. Enemy Detection
 
-The first version supports:
+Tower Runtime Combat detects valid enemies by querying alive monsters from Monster System and filtering them by tower attack range.
+
+A valid target should be:
+
+- Not null
+- Active in the scene
+- Alive
+- Inside attackRange
+
+Range should be measured from AttackOrigin when available.
+
+If AttackOrigin is missing, the tower transform may be used.
+
+Tower Runtime Combat should not spawn monsters, move monsters, or own monster health.
+
+---
+
+# 8. Target Selection
+
+Target selection is executed by Tower Runtime Combat using TargetSelectionType from AttackConfig.
+
+Recommended first-version target selection rules:
+
+| TargetSelectionType | Runtime Meaning |
+|---|---|
+| Nearest | Select the valid enemy closest to the tower |
+| HighestHealth | Select the valid enemy with the highest current health |
+| LowestHealth | Select the valid enemy with the lowest current health |
+| Random | Select a random valid enemy |
+
+TargetSelectionType is used by:
 
 - StraightProjectile
 - ArcProjectile
 - ChannelBeam
-- PeriodicArea
-- Animator Trigger control for projectile attack release using `AttackConfig.attackAnimatorTriggerName`
-- Animator Bool control for continuous attack states using `AttackConfig.attackingAnimatorBoolName`
-- Runtime hooks for configured projectile release VFX
-- Runtime hooks for configured ChannelBeam VFX
-- Runtime hooks for configured PeriodicArea VFX
 
-Supported target selection:
-
-- Nearest
-- HighestHealth
-- LowestHealth
-- Random
-
-TargetSelectionType is ignored by PeriodicArea because the archetype applies damage to all valid enemies inside attackRange.
-
-Advanced features are intentionally excluded:
-
-- Multi-target chaining
-- Ricochet attacks
-- Smart targeting priorities
-- Attack prediction
-- Dynamic threat evaluation
-- Final VFX asset implementation
-- Advanced VFX timing and polish
-- Beam rendering implementation details
-- Final Beam VFX art quality
-- Final PeriodicArea VFX art quality
-- Particle collision driven damage or hit detection
-
-These may be added in future versions.
+TargetSelectionType is not used by PeriodicArea because PeriodicArea affects all valid enemies inside attackRange.
 
 ---
 
-## 13. Summary
+# 9. Projectile Attack Runtime
 
-The Tower Runtime Combat System consumes TowerDefinition and AttackConfig data defined by the Tower Framework System and converts those configurations into runtime combat behavior.
+Projectile attack runtime is used by:
 
-The system is responsible for:
+- StraightProjectile
+- ArcProjectile
 
-- Detecting enemies
-- Selecting targets
-- Managing cooldowns
-- Owning runtime combat state
-- Executing attacks
-- Driving attack animation parameters configured by AttackConfig
-- Providing runtime playback hooks for tower attack visual effects
-- Dispatching damage
+Recommended flow:
 
-The system should remain fully data-driven and independent from tower-specific implementations.
+```text
+Cooldown ready
+    ↓
+Select target
+    ↓
+Store pending projectile target
+    ↓
+Store pending projectile target position
+    ↓
+Enter WaitingForAnimationRelease
+    ↓
+Trigger attack animation if configured
+    ↓
+Release projectile from animation event or immediate fallback
+    ↓
+Create projectile
+    ↓
+Initialize ProjectileBehaviour
+    ↓
+Return to Idle
+```
+
+Projectile creation belongs to Tower Runtime Combat.
+
+Projectile movement, collision detection, impact handling, lifetime management, and destruction belong to Projectile System.
+
+---
+
+## 9.1 Animation Release
+
+Projectile attacks may wait for an animation release event before spawning the projectile.
+
+Recommended animation event method:
+
+```text
+OnAttackAnimationRelease
+```
+
+If no attack animation trigger is configured, Tower Runtime Combat may release the projectile immediately.
+
+If the pending target becomes invalid before the release moment, the pending attack should be canceled and the tower should return to Idle.
+
+---
+
+## 9.2 Projectile Initialization
+
+When releasing a projectile, Tower Runtime Combat provides:
+
+- Source TowerInstance
+- MonsterManager
+- ProjectileConfig
+- AttackConfig
+- Pending target
+- Pending target position
+
+ProjectileBehaviour then owns projectile runtime execution after initialization.
+
+StraightProjectile and ArcProjectile may use the same Tower Runtime Combat release flow while Projectile System handles their different movement behavior.
+
+---
+
+# 10. ChannelBeam Runtime
+
+ChannelBeam attacks select one valid target and continuously apply damage while the target remains valid and within range.
+
+Recommended channel start flow:
+
+```text
+Cooldown ready
+    ↓
+Select target
+    ↓
+Set current channel target
+    ↓
+Reset channel timers
+    ↓
+Enter Channeling
+    ↓
+Set attacking animator bool
+    ↓
+Trigger channel started hook
+```
+
+Recommended channel update flow:
+
+```text
+Validate current channel target
+    ↓
+Validate attack range
+    ↓
+Advance channel timer
+    ↓
+Advance channel tick timer
+    ↓
+Apply damage when tick interval is reached
+    ↓
+Stop channel when max duration is reached
+```
+
+Recommended channel end flow:
+
+```text
+Clear current channel target
+    ↓
+Reset channel timers
+    ↓
+Enter Idle
+    ↓
+Start cooldown
+    ↓
+Clear attacking animator bool
+    ↓
+Trigger channel ended hook
+```
+
+ChannelBeam damage is owned by Tower Runtime Combat in the first version.
+
+Persistent status effects applied by future channel attacks should be delegated to Buff And Effect System.
+
+---
+
+# 11. PeriodicArea Runtime
+
+PeriodicArea attacks damage all valid enemies inside attackRange at a fixed interval.
+
+Recommended flow:
+
+```text
+Detect enemies
+    ↓
+If no valid enemies exist, enter Idle
+    ↓
+If valid enemies exist, enter PeriodicAreaActive
+    ↓
+When cooldown reaches zero, damage each valid enemy
+    ↓
+Reset cooldown to attackInterval
+    ↓
+Trigger periodic area tick hook
+```
+
+PeriodicArea does not select one target.
+
+PeriodicArea does not use TargetSelectionType.
+
+PeriodicArea direct damage is owned by Tower Runtime Combat in the first version.
+
+If future PeriodicArea attacks apply persistent states such as slow, burn, poison, or armor reduction, those states should be owned by Buff And Effect System.
+
+---
+
+# 12. Animation Integration
+
+Tower Runtime Combat may control Animator parameters configured by AttackConfig.
+
+Recommended fields:
+
+| Field | Runtime Usage |
+|---|---|
+| attackAnimatorTriggerName | Triggered when a projectile attack starts |
+| attackingAnimatorBoolName | Set while continuous attacks are active |
+
+Recommended default values:
+
+| Field | Value |
+|---|---|
+| attackAnimatorTriggerName | Attack |
+| attackingAnimatorBoolName | IsAttacking |
+
+Animator parameter names should come from AttackConfig.
+
+Tower Runtime Combat should not hardcode tower-specific animation parameter names.
+
+---
+
+# 13. Runtime Presentation Hooks
+
+Tower Runtime Combat may expose attack lifecycle hooks for VFX and presentation systems.
+
+Recommended hooks:
+
+| Hook | Trigger Timing |
+|---|---|
+| OnProjectileReleased | After projectile release is confirmed |
+| OnChannelStarted | When ChannelBeam enters Channeling |
+| OnChannelEnded | When ChannelBeam exits Channeling |
+| OnPeriodicAreaTick | When PeriodicArea applies a damage tick |
+
+These hooks are presentation and integration points.
+
+They must not transfer combat authority to VFX components.
+
+VFX components must not own:
+
+- Damage
+- Target selection
+- Target searching
+- Range checks
+- Cooldown logic
+- Attack state transitions
+
+Optional VFX runtime spawning, binding, update, stop, and cleanup should remain presentation-only runtime behavior owned by Tower Runtime Combat or dedicated VFX presentation components.
+
+---
+
+# 14. Relationship With Projectile System
+
+Tower Runtime Combat owns projectile creation and initialization.
+
+Projectile System owns projectile runtime lifecycle after initialization.
+
+Boundary:
+
+```text
+Tower Runtime Combat
+    ↓
+Instantiate projectile prefab
+    ↓
+Initialize ProjectileBehaviour
+    ↓
+Projectile System
+    ↓
+Move, detect hit, trigger impact, destroy
+```
+
+Tower Runtime Combat should not update projectile movement after the projectile has been initialized.
+
+Projectile System should not select tower targets or manage tower cooldowns.
+
+---
+
+# 15. Relationship With Buff And Effect System
+
+Tower Runtime Combat may directly apply simple runtime damage for first-version non-projectile attacks.
+
+Examples:
+
+- ChannelBeam damage ticks
+- PeriodicArea damage ticks
+
+Buff And Effect System should own reusable effect and buff execution.
+
+Examples:
+
+- AreaDamageEffect triggered by a projectile impact
+- Buff application effects
+- Enemy-attached states such as poison, slow, burn, weaken, or armor reduction
+
+Tower Runtime Combat should delegate future complex effects instead of embedding buff-specific logic into tower combat code.
+
+---
+
+# 16. Relationship With Tower Placement System
+
+Tower Placement System creates or places the runtime tower object.
+
+After placement, the tower may receive or already contain TowerCombatBehaviour.
+
+Tower Placement System may initialize TowerCombatBehaviour with TowerInstance and MonsterManager references.
+
+Tower Placement System should not:
+
+- Select combat targets
+- Manage tower attack cooldowns
+- Execute damage
+- Spawn projectiles as combat behavior
+- Own attack animation state
+
+---
+
+# 17. First Version Scope
+
+Included:
+
+- TowerCombatBehaviour runtime entry point
+- AttackConfig consumption
+- Enemy detection
+- Target selection
+- Attack cooldowns
+- Projectile attack release flow
+- Projectile creation and initialization
+- ChannelBeam runtime damage
+- PeriodicArea runtime damage
+- Attack animation parameter control
+- Runtime presentation hooks
+
+Excluded:
+
+- Projectile movement implementation
+- Projectile hit detection implementation
+- Projectile impact VFX
+- Projectile travel VFX
+- Buff lifetime implementation
+- Tower upgrade modifiers
+- Object pooling
+- Final VFX prefab authoring and particle polish
+- Particle collision driven combat logic
+
+---
+
+# 18. Summary
+
+Tower Runtime Combat is the live execution layer for placed towers.
+
+It consumes TowerDefinition and AttackConfig, manages runtime combat state, selects targets, runs cooldowns, executes attack archetypes, creates projectiles, and coordinates simple damage dispatch.
+
+It should remain between Tower Framework data and downstream runtime systems without taking over placement, projectile lifecycle, monster lifecycle, or buff state ownership.
+
+---
+
+# Change Log
+
+## 2026-06-11
+
+- Reorganized the document as a full Tower Runtime Combat System design document.
+- Clarified runtime ownership boundaries against Tower Framework, Tower Placement, Projectile, Monster, and Buff And Effect systems.
+- Added sections for runtime state, update flow, enemy detection, target selection, projectile attacks, ChannelBeam, PeriodicArea, animation integration, and presentation hooks.
+- Clarified runtime VFX presentation ownership within the long-term system design.

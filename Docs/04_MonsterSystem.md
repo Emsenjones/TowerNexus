@@ -53,6 +53,7 @@ Health bar, hit feedback, and damage number fields are current Task design targe
 | maxHealth | Monster maximum health |
 | expReward | EXP rewarded to player after death |
 | damageToPlayer | Damage dealt to player when reaching target |
+| hitAnchor | Optional transform used as the visual target point for hit-related VFX, beam targeting, damage numbers, and other monster presentation feedback |
 | isWalkingParameterName | Animator bool parameter name used to switch between Idle and Walk |
 | hitAnimationName | Hit animation state name, reserved for future hit reaction implementation |
 | hitAnimatorTriggerName | Animator trigger parameter name used to play hit reaction animation |
@@ -210,7 +211,41 @@ The first version of Monster Visual Feedback focuses on:
 
 Monster Visual Feedback should remain lightweight and should not take ownership of monster combat calculation, pathfinding, or Player System logic.
 
-## 6.1 Monster Animation Rules
+### 6.1 Monster Visual Anchors
+
+Monster Visual Feedback may use optional visual anchors to provide stable presentation target points.
+
+The first shared visual anchor is:
+
+```text
+HitAnchor
+```
+
+HitAnchor is an optional Transform reference on MonsterBehaviour.
+
+Recommended runtime behavior:
+
+```csharp
+public Transform HitAnchor => hitAnchor != null ? hitAnchor : transform;
+```
+
+HitAnchor may be used by:
+
+- ChannelBeam VFX target binding
+- Monster hit VFX
+- Damage number spawn positioning if needed
+- Future projectile impact presentation
+- Future status effect attachment points
+
+HitAnchor should usually be placed around the monster's chest, body center, or visually readable hit point.
+
+If HitAnchor is not configured, runtime systems should safely fall back to the monster transform.
+
+HitAnchor is presentation-only. It must not define monster position, pathfinding position, collision size, damage logic, or target validity.
+
+---
+
+## 6.2 Monster Animation Rules
 
 The first version of the Monster System uses a simple Animator setup.
 
@@ -298,7 +333,7 @@ Hit Layer
 
 In that future setup, GetHit can be triggered independently while the Base Layer continues controlling Idle or Walk.
 
-## 6.2 Hit Flash
+## 6.3 Hit Flash
 
 The first version of the Monster System should support a simple hit flash effect.
 
@@ -340,7 +375,7 @@ Possible future implementations:
 - Emission intensity flash
 - Renderer overlay effect
 
-## 6.3 Monster Health Bar System
+## 6.4 Monster Health Bar System
 
 Monster Health Bar is a runtime UI feedback feature owned by Monster System.
 
@@ -426,7 +461,7 @@ Future versions may support:
 - Boss health bar
 - Elite monster health bar style
 
-## 6.4 Monster Damage Number System
+## 6.5 Monster Damage Number System
 
 Monster Damage Number is a runtime UI feedback feature owned by Monster System.
 
@@ -841,6 +876,7 @@ The current and upcoming implementation scope of the Monster System focuses only
 - EXP reward flow
 - Monster target arrival notification to Player System
 - Pathfinding functionality that can be reused by tower placement validation
+- Optional Monster HitAnchor for visual targeting and hit-related VFX binding
 
 The following features are intentionally postponed:
 
@@ -892,6 +928,13 @@ Tower Placement System owns:
 Monster System may provide pathfinding functionality used during placement validation.
   
 ---
+
+### 2026-06-11 (Monster HitAnchor Visual Anchor Sync)
+
+- Added optional Monster HitAnchor visual anchor.
+- Clarified that HitAnchor is a presentation-only Transform used for beam target binding, hit VFX, damage number positioning, and future visual attachment points.
+- Clarified that runtime systems should fall back to monster transform when HitAnchor is not configured.
+- Clarified that HitAnchor must not own monster position, pathfinding, collision, damage, or target validity logic.
 
 # Change Log
 

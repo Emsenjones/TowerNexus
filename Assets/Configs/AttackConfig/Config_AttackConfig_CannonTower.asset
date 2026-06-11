@@ -22,6 +22,8 @@ MonoBehaviour:
   attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 11400000, guid: 8f0e12318c23b49ab8f62ef06ffb01f7, type: 2}
   arcHeight: 2
-  damagePerSecond: 0
+  projectileReleaseVfxPrefab: {fileID: 1703296453783264684, guid: c322bec26b475401b9e70147095b03fb, type: 3}
   channelDamageInterval: 0.1
   maxChannelDuration: 1
+  channelBeamVfxPrefab: {fileID: 0}
+  periodicAreaVfxPrefab: {fileID: 0}

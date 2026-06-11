@@ -24,6 +24,10 @@ public class TowerCombatBehaviour : MonoBehaviour
     private float channelTickTimer;
     private float channelDamageAccumulator;
     private TowerAttackState attackState = TowerAttackState.Idle;
+    private BeamVfxBehaviour activeBeamVfx;
+    private GameObject activePeriodicAreaVfx;
+
+    private const string HitAnchorName = "HitAnchor";
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnChannelStarted;
@@ -40,6 +44,8 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     public void Initialize(TowerInstance towerInstance, MonsterManager monsterManager)
     {
+        CleanupActiveVfx();
+
         this.towerInstance = towerInstance;
         this.monsterManager = monsterManager;
         towerDefinition = towerInstance != null ? towerInstance.TowerDefinition : null;
@@ -73,15 +79,27 @@ public class TowerCombatBehaviour : MonoBehaviour
         CacheOptionalReferences();
     }
 
+    private void OnDisable()
+    {
+        CleanupActiveVfx();
+    }
+
+    private void OnDestroy()
+    {
+        CleanupActiveVfx();
+    }
+
     private void Update()
     {
         if (!CanRunCombat())
         {
+            CleanupActiveVfx();
             return;
         }
 
         UpdateCooldown();
         DetectEnemies();
+        CleanupVfxOutsideCurrentArchetype();
 
         switch (attackConfig.AttackArchetype)
         {
@@ -250,6 +268,11 @@ public class TowerCombatBehaviour : MonoBehaviour
             pendingProjectileTargetPosition
         );
 
+        if (projectileBehaviour.IsInitialized)
+        {
+            PlayProjectileReleaseVfx();
+        }
+
         OnProjectileReleased?.Invoke(this, pendingProjectileTarget);
         ResetProjectileAttackState();
     }
@@ -266,6 +289,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         if (attackState != TowerAttackState.Channeling)
         {
+            StopChannelBeamVfx();
             TryStartChannel();
             return;
         }
@@ -274,6 +298,11 @@ public class TowerCombatBehaviour : MonoBehaviour
         {
             StopChannel();
             return;
+        }
+
+        if (activeBeamVfx == null)
+        {
+            StartChannelBeamVfx();
         }
 
         channelTimer += Time.deltaTime;
@@ -320,12 +349,14 @@ public class TowerCombatBehaviour : MonoBehaviour
         channelDamageAccumulator = 0f;
         attackState = TowerAttackState.Channeling;
         SetAttackingAnimatorBool(true);
+        StartChannelBeamVfx();
         OnChannelStarted?.Invoke(this, currentChannelTarget);
     }
 
     private void StopChannel()
     {
         MonsterBehaviour endedTarget = currentChannelTarget;
+        StopChannelBeamVfx();
         currentChannelTarget = null;
         channelTimer = 0f;
         channelTickTimer = 0f;
@@ -341,6 +372,15 @@ public class TowerCombatBehaviour : MonoBehaviour
         bool hasTargets = detectedEnemies.Count > 0;
         attackState = hasTargets ? TowerAttackState.PeriodicAreaActive : TowerAttackState.Idle;
         SetAttackingAnimatorBool(hasTargets);
+
+        if (hasTargets)
+        {
+            StartPeriodicAreaVfx();
+        }
+        else
+        {
+            StopPeriodicAreaVfx();
+        }
 
         if (!hasTargets || cooldownTimer > 0f)
         {
@@ -443,8 +483,158 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool IsInAttackRange(MonsterBehaviour monster)
     {
         float attackRange = attackConfig.AttackRange;
-        Vector3 originPosition = attackOrigin != null ? attackOrigin.position : transform.position;
+        Vector3 originPosition = GetAttackOrigin().position;
         return Vector3.Distance(originPosition, monster.transform.position) <= attackRange;
+    }
+
+    private Transform GetAttackOrigin()
+    {
+        return attackOrigin != null ? attackOrigin : transform;
+    }
+
+    private void PlayProjectileReleaseVfx()
+    {
+        if (attackConfig == null || attackConfig.ProjectileReleaseVfxPrefab == null)
+        {
+            return;
+        }
+
+        Transform origin = GetAttackOrigin();
+        Quaternion rotation = GetProjectileReleaseVfxRotation(origin);
+        Instantiate(attackConfig.ProjectileReleaseVfxPrefab, origin.position, rotation);
+    }
+
+    private Quaternion GetProjectileReleaseVfxRotation(Transform origin)
+    {
+        if (origin == null)
+        {
+            return transform.rotation;
+        }
+
+        switch (attackConfig.AttackArchetype)
+        {
+            case AttackArchetype.StraightProjectile:
+                Vector3 direction = pendingProjectileTargetPosition - origin.position;
+
+                if (direction.sqrMagnitude > 0.0001f)
+                {
+                    return Quaternion.LookRotation(direction.normalized);
+                }
+
+                return origin.rotation;
+            case AttackArchetype.ArcProjectile:
+                return Quaternion.LookRotation(Vector3.up);
+            default:
+                return origin.rotation;
+        }
+    }
+
+    private void StartChannelBeamVfx()
+    {
+        if (activeBeamVfx != null || attackConfig == null || attackConfig.ChannelBeamVfxPrefab == null)
+        {
+            return;
+        }
+
+        Transform origin = GetAttackOrigin();
+        GameObject beamObject = Instantiate(attackConfig.ChannelBeamVfxPrefab, origin.position, origin.rotation);
+
+        if (!beamObject.TryGetComponent(out activeBeamVfx))
+        {
+            activeBeamVfx = beamObject.AddComponent<BeamVfxBehaviour>();
+        }
+
+        activeBeamVfx.Initialize(origin, ResolveTargetAnchor(currentChannelTarget));
+    }
+
+    private void StopChannelBeamVfx()
+    {
+        if (activeBeamVfx == null)
+        {
+            activeBeamVfx = null;
+            return;
+        }
+
+        BeamVfxBehaviour beamVfxToStop = activeBeamVfx;
+        activeBeamVfx = null;
+        beamVfxToStop.StopAndDestroy();
+    }
+
+    private void StartPeriodicAreaVfx()
+    {
+        if (activePeriodicAreaVfx != null || attackConfig == null || attackConfig.PeriodicAreaVfxPrefab == null)
+        {
+            return;
+        }
+
+        Transform origin = GetAttackOrigin();
+        activePeriodicAreaVfx = Instantiate(
+            attackConfig.PeriodicAreaVfxPrefab,
+            origin.position,
+            origin.rotation,
+            origin
+        );
+    }
+
+    private void StopPeriodicAreaVfx()
+    {
+        if (activePeriodicAreaVfx == null)
+        {
+            activePeriodicAreaVfx = null;
+            return;
+        }
+
+        GameObject periodicAreaVfxToStop = activePeriodicAreaVfx;
+        activePeriodicAreaVfx = null;
+        Destroy(periodicAreaVfxToStop);
+    }
+
+    private void CleanupActiveVfx()
+    {
+        StopChannelBeamVfx();
+        StopPeriodicAreaVfx();
+    }
+
+    private void CleanupVfxOutsideCurrentArchetype()
+    {
+        if (attackConfig == null)
+        {
+            CleanupActiveVfx();
+            return;
+        }
+
+        if (attackConfig.AttackArchetype != AttackArchetype.ChannelBeam)
+        {
+            StopChannelBeamVfx();
+        }
+
+        if (attackConfig.AttackArchetype != AttackArchetype.PeriodicArea)
+        {
+            StopPeriodicAreaVfx();
+        }
+    }
+
+    private static Transform ResolveTargetAnchor(MonsterBehaviour target)
+    {
+        if (target == null)
+        {
+            return null;
+        }
+
+        Transform targetTransform = target.transform;
+        Transform[] childTransforms = target.GetComponentsInChildren<Transform>(true);
+
+        for (int i = 0; i < childTransforms.Length; i++)
+        {
+            Transform childTransform = childTransforms[i];
+
+            if (childTransform != null && childTransform.name == HitAnchorName)
+            {
+                return childTransform;
+            }
+        }
+
+        return targetTransform;
     }
 
     private void ResetAttackingAnimatorBoolIfUsed()
