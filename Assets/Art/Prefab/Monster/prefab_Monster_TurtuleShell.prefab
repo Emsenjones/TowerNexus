@@ -32,6 +32,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 990762743399856288}
+  - {fileID: 3468453040755435803}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &3082340063008460101
@@ -47,10 +48,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   definition: {fileID: 11400000, guid: ac0dd61ab1e094ab2970e9e64a9eff79, type: 2}
-  monsterManager: {fileID: 0}
-  playerSystem: {fileID: 0}
   animator: {fileID: 7871114821477690268}
-  hitFeedback: {fileID: 0}
+  hitFeedback: {fileID: 5674193049052221641}
+  hitAnchor: {fileID: 3468453040755435803}
   arriveDistanceThreshold: 0.05
 --- !u!114 &5674193049052221641
 MonoBehaviour:
@@ -97,6 +97,37 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7871114821484905544}
+  m_Father: {fileID: 8583064042410314771}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8404460788184437467
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3468453040755435803}
+  m_Layer: 0
+  m_Name: HitAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3468453040755435803
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8404460788184437467}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.12, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 8583064042410314771}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &7871114821485043452

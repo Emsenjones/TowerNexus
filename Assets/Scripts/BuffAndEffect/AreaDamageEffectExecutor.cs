@@ -61,7 +61,7 @@ public static class AreaDamageEffectExecutor
                 continue;
             }
 
-            if (Vector3.Distance(impactPosition, monster.transform.position) > effectConfig.Radius)
+            if (Vector3.Distance(impactPosition, monster.HitAnchor.position) > effectConfig.Radius)
             {
                 continue;
             }

@@ -164,6 +164,7 @@ Recommended runtime references:
 | MonsterManager | Provides alive monsters for detection |
 | Animator | Receives attack presentation parameters |
 | AttackOrigin | Provides attack range origin and projectile spawn position |
+| MonsterBehaviour.HitAnchor | Provides the monster-side hit/reference position for targeting, range checks, projectile target snapshots, and beam binding |
 
 If AttackOrigin is not assigned, the tower transform may be used as the fallback origin.
 
@@ -176,7 +177,7 @@ Tower Runtime Combat may maintain the following runtime state per tower:
 - Detected enemies
 - Current target
 - Pending projectile target
-- Pending projectile target position
+- Pending projectile target position, usually captured from the target monster hit/reference anchor
 - Current channel target
 - Cooldown timer
 - Channel timer
@@ -238,6 +239,8 @@ A valid target should be:
 Range should be measured from AttackOrigin when available.
 
 If AttackOrigin is missing, the tower transform may be used.
+
+The monster-side reference point for range and target distance evaluation is provided by the Monster System through MonsterBehaviour.HitAnchor.
 
 Tower Runtime Combat should not spawn monsters, move monsters, or own monster health.
 
@@ -586,6 +589,10 @@ It should remain between Tower Framework data and downstream runtime systems wit
 ---
 
 # Change Log
+
+## 2026-06-12
+
+- Added MonsterBehaviour.HitAnchor as the monster-side hit/reference anchor consumed by tower targeting, range checks, projectile target snapshots, and beam binding.
 
 ## 2026-06-11
 

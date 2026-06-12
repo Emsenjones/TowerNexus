@@ -134,6 +134,8 @@ The first version only supports AreaDamageEffect.
 
 AreaDamageEffect applies attack damage to all valid monsters within a radius around an impact position.
 
+Monster inclusion in the radius should be evaluated using the monster-side hit/reference anchor provided by the Monster System.
+
 Typical source:
 
 ```text
@@ -178,6 +180,8 @@ Dispatch Damage To All Valid Monsters
 The first version does not need advanced falloff rules.
 
 All valid monsters inside the radius receive the same damage.
+
+AreaDamageEffect does not own monster positioning, collision shape, or target validity. It consumes monster references and dispatches damage to valid monsters selected by the effect query.
 
 ---
 
@@ -259,6 +263,7 @@ Responsible for:
 - Updating monster health
 - Handling monster death
 - Handling monster cleanup
+- Providing monster-side hit/reference anchors for effect queries
 
 ---
 

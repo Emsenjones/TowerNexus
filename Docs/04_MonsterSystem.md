@@ -53,7 +53,7 @@ Health bar, hit feedback, and damage number fields are current Task design targe
 | maxHealth | Monster maximum health |
 | expReward | EXP rewarded to player after death |
 | damageToPlayer | Damage dealt to player when reaching target |
-| hitAnchor | Optional transform used as the visual target point for hit-related VFX, beam targeting, damage numbers, and other monster presentation feedback |
+| hitAnchor | Optional transform used as the monster hit/reference anchor for combat targeting, hit checks, effects, and presentation binding |
 | isWalkingParameterName | Animator bool parameter name used to switch between Idle and Walk |
 | hitAnimationName | Hit animation state name, reserved for future hit reaction implementation |
 | hitAnimatorTriggerName | Animator trigger parameter name used to play hit reaction animation |
@@ -211,11 +211,11 @@ The first version of Monster Visual Feedback focuses on:
 
 Monster Visual Feedback should remain lightweight and should not take ownership of monster combat calculation, pathfinding, or Player System logic.
 
-### 6.1 Monster Visual Anchors
+### 6.1 Monster Hit Reference Anchor
 
-Monster Visual Feedback may use optional visual anchors to provide stable presentation target points.
+MonsterBehaviour may expose optional anchors that provide stable reference points for other runtime systems.
 
-The first shared visual anchor is:
+The first shared anchor is:
 
 ```text
 HitAnchor
@@ -223,25 +223,23 @@ HitAnchor
 
 HitAnchor is an optional Transform reference on MonsterBehaviour.
 
-Recommended runtime behavior:
+HitAnchor represents the monster-side reference point used when another system needs a readable target, hit, or attachment position for that monster.
 
-```csharp
-public Transform HitAnchor => hitAnchor != null ? hitAnchor : transform;
-```
+HitAnchor may be consumed by:
 
-HitAnchor may be used by:
-
+- Tower attack range and target distance evaluation
+- Projectile hit checks and target position snapshots
+- Area effect inclusion checks
 - ChannelBeam VFX target binding
 - Monster hit VFX
 - Damage number spawn positioning if needed
-- Future projectile impact presentation
 - Future status effect attachment points
 
 HitAnchor should usually be placed around the monster's chest, body center, or visually readable hit point.
 
-If HitAnchor is not configured, runtime systems should safely fall back to the monster transform.
+If HitAnchor is not configured, runtime systems should still have a safe monster-root fallback.
 
-HitAnchor is presentation-only. It must not define monster position, pathfinding position, collision size, damage logic, or target validity.
+HitAnchor does not own monster movement, pathfinding, collision shape, damage application, or target validity. It only provides the monster-side reference position consumed by those systems.
 
 ---
 
@@ -876,7 +874,7 @@ The current and upcoming implementation scope of the Monster System focuses only
 - EXP reward flow
 - Monster target arrival notification to Player System
 - Pathfinding functionality that can be reused by tower placement validation
-- Optional Monster HitAnchor for visual targeting and hit-related VFX binding
+- Optional Monster HitAnchor for shared combat, effect, and presentation reference positioning
 
 The following features are intentionally postponed:
 
@@ -929,10 +927,15 @@ Monster System may provide pathfinding functionality used during placement valid
   
 ---
 
-### 2026-06-11 (Monster HitAnchor Visual Anchor Sync)
+### 2026-06-12 (Monster Hit Reference Anchor Sync)
+
+- Clarified that Monster HitAnchor is the monster-side hit/reference anchor consumed by combat, projectile, effect, and presentation systems.
+- Clarified that HitAnchor provides a reference position but does not own movement, pathfinding, collision, damage application, or target validity.
+
+### 2026-06-11 (Monster HitAnchor Shared Anchor Sync)
 
 - Added optional Monster HitAnchor visual anchor.
-- Clarified that HitAnchor is a presentation-only Transform used for beam target binding, hit VFX, damage number positioning, and future visual attachment points.
+- Clarified that HitAnchor is a shared Transform reference used for beam target binding, hit VFX, damage number positioning, and future visual attachment points.
 - Clarified that runtime systems should fall back to monster transform when HitAnchor is not configured.
 - Clarified that HitAnchor must not own monster position, pathfinding, collision, damage, or target validity logic.
 

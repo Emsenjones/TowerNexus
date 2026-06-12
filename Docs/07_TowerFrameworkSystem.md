@@ -274,9 +274,9 @@ Design intent:
 - Low damage per projectile
 - Short attack range
 - High attack speed
-- The selected target is used to determine the projectile launch direction
+- The selected target's monster-side hit/reference anchor is used to determine the projectile launch direction
 - After launch, the projectile travels independently and is not required to hit the originally selected target
-- During flight, the projectile continuously checks whether any valid monster is within its hit distance threshold
+- During flight, the projectile continuously checks whether any valid monster's hit/reference anchor is within its hit distance threshold
 - If one or more valid monsters are within the hit distance threshold, the projectile hits the nearest valid monster and applies damage
 - If no valid monster is hit before the projectile reaches its maximum lifetime, the projectile is destroyed automatically
 
@@ -301,7 +301,7 @@ Design intent:
 
 - Low attack speed
 - Long attack range
-- Projectile travels toward the selected enemy position
+- Projectile travels toward a selected enemy reference position
 - Projectile explodes when it reaches the target position or impact point
 - Explosion deals area damage to enemies within the explosion radius
 
@@ -341,7 +341,7 @@ VFX expectation:
 
 - May use a ChannelBeam VFX prefab controlled by runtime logic. This prefab may be an empty GameObject with a dedicated Beam VFX control script and Inspector-configured visual references.
 - The beam start point should follow the tower AttackOrigin
-- The beam end point should follow the current target HitAnchor, or the target transform as a fallback
+- The beam end point should follow the current target's monster-side hit/reference anchor
 - The beam VFX should be updated while the tower remains in channeling state
 - The beam VFX should stop when the channel ends, the target dies, or the target becomes invalid
 
@@ -491,7 +491,7 @@ Typically uses:
 Notes:
 
 - targetSelectionType is used by the tower to select an initial target before firing.
-- The selected target provides the launch direction for the projectile.
+- The selected target's monster-side hit/reference anchor provides the launch direction for the projectile.
 - After launch, StraightProjectile hit detection belongs to the Projectile System.
 - The projectile may hit any valid monster encountered during flight, not only the originally selected target.
 - The projectile should be destroyed by projectile runtime logic when it exceeds its maximum lifetime.
@@ -519,6 +519,7 @@ Typically uses:
 
 Notes:
 
+- The selected target's monster-side hit/reference anchor provides the target position snapshot.
 - Explosion radius and area damage behavior belong to the Projectile System and Buff And Effect System, not AttackConfig.
 
 VFX notes:
@@ -553,7 +554,7 @@ Notes:
 VFX notes:
 
 - channelBeamVfxPrefab should be controlled by runtime combat logic while channeling.
-- The beam visual should bind to AttackOrigin and the current target HitAnchor or target transform.
+- The beam visual should bind to AttackOrigin and the current target's monster-side hit/reference anchor.
 - Beam VFX should not own damage, target search, or hit validation.
 
 ---
@@ -738,6 +739,10 @@ Excluded:
 
 
 # Change Log
+
+## 2026-06-12
+
+- Clarified that monster-side hit/reference positions are provided by the Monster System and consumed by attack patterns, projectile target snapshots, projectile hit checks, and ChannelBeam VFX binding.
 
 ## 2026-06-10
 

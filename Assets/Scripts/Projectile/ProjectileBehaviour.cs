@@ -53,7 +53,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
         if (attackConfig.AttackArchetype == AttackArchetype.StraightProjectile)
         {
-            launchDirection = CalculateLaunchDirection(targetMonster.transform.position);
+            launchDirection = CalculateLaunchDirection(targetMonster.HitAnchor.position);
         }
 
         arcTravelTime = CalculateArcTravelTime();
@@ -214,6 +214,11 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
+        if (!IsWithinHitDistance(hitMonster))
+        {
+            return;
+        }
+
         ImpactStraightProjectile(hitMonster);
     }
 
@@ -291,7 +296,7 @@ public class ProjectileBehaviour : MonoBehaviour
                 continue;
             }
 
-            float distanceSqr = (monster.transform.position - transform.position).sqrMagnitude;
+            float distanceSqr = GetHitDistanceSqr(monster);
 
             if (distanceSqr > hitDistanceThresholdSqr || distanceSqr >= nearestDistanceSqr)
             {
@@ -303,6 +308,17 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         return hitMonster != null;
+    }
+
+    private bool IsWithinHitDistance(MonsterBehaviour monster)
+    {
+        float hitDistanceThresholdSqr = projectileConfig.HitDistanceThreshold * projectileConfig.HitDistanceThreshold;
+        return GetHitDistanceSqr(monster) <= hitDistanceThresholdSqr;
+    }
+
+    private float GetHitDistanceSqr(MonsterBehaviour monster)
+    {
+        return (monster.HitAnchor.position - transform.position).sqrMagnitude;
     }
 
     private bool IsTrackedValidTarget(MonsterBehaviour monster)

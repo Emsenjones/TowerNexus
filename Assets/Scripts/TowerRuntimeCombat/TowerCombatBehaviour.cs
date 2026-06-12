@@ -27,8 +27,6 @@ public class TowerCombatBehaviour : MonoBehaviour
     private BeamVfxBehaviour activeBeamVfx;
     private GameObject activePeriodicAreaVfx;
 
-    private const string HitAnchorName = "HitAnchor";
-
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnChannelStarted;
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnChannelEnded;
@@ -219,7 +217,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         pendingProjectileTarget = currentTarget;
-        pendingProjectileTargetPosition = currentTarget.transform.position;
+        pendingProjectileTargetPosition = currentTarget.HitAnchor.position;
         attackState = TowerAttackState.WaitingForAnimationRelease;
         cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
         SetAttackingAnimatorBool(true);
@@ -430,7 +428,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         for (int i = 0; i < detectedEnemies.Count; i++)
         {
             MonsterBehaviour monster = detectedEnemies[i];
-            float distanceSqr = (monster.transform.position - transform.position).sqrMagnitude;
+            float distanceSqr = (monster.HitAnchor.position - GetAttackOrigin().position).sqrMagnitude;
 
             if (distanceSqr < bestDistanceSqr)
             {
@@ -484,7 +482,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         float attackRange = attackConfig.AttackRange;
         Vector3 originPosition = GetAttackOrigin().position;
-        return Vector3.Distance(originPosition, monster.transform.position) <= attackRange;
+        return Vector3.Distance(originPosition, monster.HitAnchor.position) <= attackRange;
     }
 
     private Transform GetAttackOrigin()
@@ -621,20 +619,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             return null;
         }
 
-        Transform targetTransform = target.transform;
-        Transform[] childTransforms = target.GetComponentsInChildren<Transform>(true);
-
-        for (int i = 0; i < childTransforms.Length; i++)
-        {
-            Transform childTransform = childTransforms[i];
-
-            if (childTransform != null && childTransform.name == HitAnchorName)
-            {
-                return childTransform;
-            }
-        }
-
-        return targetTransform;
+        return target.HitAnchor;
     }
 
     private void ResetAttackingAnimatorBoolIfUsed()

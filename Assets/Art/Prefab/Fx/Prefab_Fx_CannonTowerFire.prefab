@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 984529505118432826}
   - component: {fileID: 1247188163712836840}
   m_Layer: 0
-  m_Name: Prefab_Fx_CannonFire
+  m_Name: Prefab_Fx_CannonTowerFire
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

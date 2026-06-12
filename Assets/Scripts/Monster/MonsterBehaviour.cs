@@ -6,13 +6,14 @@ using Sirenix.OdinInspector;
 public class MonsterBehaviour : MonoBehaviour
 {
     [SerializeField] private MonsterDefinition definition;
-    [SerializeField] private MonsterManager monsterManager;
-    [SerializeField] private PlayerSystem playerSystem;
-    [SerializeField] private DamageNumberManager damageNumberManager;
+    private MonsterManager monsterManager;
+    private PlayerSystem playerSystem;
+    private DamageNumberManager damageNumberManager;
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
     [SerializeField] private Animator animator;
     [SerializeField] private MonsterHitFeedback hitFeedback;
+    [SerializeField] private Transform hitAnchor;
     [SerializeField] private float arriveDistanceThreshold = 0.05f;
 
     [ShowInInspector, ReadOnly] private GridNodeBehaviour currentNode;
@@ -28,6 +29,7 @@ public class MonsterBehaviour : MonoBehaviour
     public int CurrentHealth => currentHealth;
     public float CurrentMoveSpeed => currentMoveSpeed;
     public Animator Animator => animator;
+    public Transform HitAnchor => hitAnchor != null ? hitAnchor : transform;
     public GridNodeBehaviour CurrentNode => currentNode;
     public GridNodeBehaviour TargetNode => targetNode;
     public IReadOnlyList<GridNodeBehaviour> CurrentPath => currentPath;

@@ -144,6 +144,8 @@ Attack Damage
 
 Runtime state should never be stored inside configuration assets.
 
+When a projectile needs a monster-side target or hit reference position, that position should come from the Monster System hit/reference anchor concept.
+
 ---
 
 ## 7. ProjectileConfig (First Version)
@@ -286,6 +288,8 @@ Future versions may support:
 
 Different projectile types may use different hit conditions.
 
+Projectile hit detection may consume the monster hit/reference anchor exposed by the Monster System when evaluating monster-side hit positions.
+
 ### Monster Collision
 
 Example:
@@ -297,6 +301,8 @@ Collides With Monster
     ↓
 Trigger Impact Event
 ```
+
+Monster collision and distance-based hit checks should resolve against the same monster-side hit/reference concept so projectile behavior remains consistent across monster prefab layouts.
 
 ---
 
@@ -311,6 +317,8 @@ Reach Target Position
     ↓
 Trigger Impact Event
 ```
+
+For target-position projectile behavior, the target position is provided by the Tower Runtime Combat System. When the target is a monster, that position should represent the monster-side hit/reference position.
 
 ---
 
@@ -390,6 +398,7 @@ Responsible for:
 - Health
 - Damage processing
 - Death handling
+- Monster-side hit/reference anchors
 
 ---
 
