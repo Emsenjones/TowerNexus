@@ -2,24 +2,24 @@ using UnityEngine;
 
 public class BeamVfxBehaviour : MonoBehaviour
 {
-    [SerializeField] private Transform startVfxRoot;
-    [SerializeField] private Transform beamVisualRoot;
-    [SerializeField] private Transform hitVfxRoot;
+    [SerializeField] private Transform startAnchor;
+    [SerializeField] private Transform targetAnchor;
     [SerializeField] private LineRenderer lineRenderer;
 
-    private Transform startAnchor;
-    private Transform targetAnchor;
+    private Transform startFollowTarget;
+    private Transform endFollowTarget;
     private bool isInitialized;
     private bool isStopping;
 
     public Transform StartAnchor => startAnchor;
     public Transform TargetAnchor => targetAnchor;
+    public LineRenderer LineRenderer => lineRenderer;
     public bool IsInitialized => isInitialized;
 
-    public void Initialize(Transform startAnchor, Transform targetAnchor)
+    public void Initialize(Transform startFollowTarget, Transform endFollowTarget)
     {
-        this.startAnchor = startAnchor;
-        this.targetAnchor = targetAnchor;
+        this.startFollowTarget = startFollowTarget;
+        this.endFollowTarget = endFollowTarget;
         isInitialized = true;
         isStopping = false;
 
@@ -39,8 +39,8 @@ public class BeamVfxBehaviour : MonoBehaviour
         }
 
         isStopping = true;
-        startAnchor = null;
-        targetAnchor = null;
+        startFollowTarget = null;
+        endFollowTarget = null;
         isInitialized = false;
         Destroy(gameObject);
     }
@@ -57,25 +57,19 @@ public class BeamVfxBehaviour : MonoBehaviour
 
     private void UpdateVisuals()
     {
-        if (startAnchor != null)
+        if (startAnchor != null && startFollowTarget != null)
         {
-            if (startVfxRoot != null)
-            {
-                startVfxRoot.position = startAnchor.position;
-            }
-
-            if (beamVisualRoot != null)
-            {
-                beamVisualRoot.position = startAnchor.position;
-            }
+            startAnchor.position = startFollowTarget.position;
+            startAnchor.rotation = startFollowTarget.rotation;
         }
 
-        if (targetAnchor != null && hitVfxRoot != null)
+        if (targetAnchor != null && endFollowTarget != null)
         {
-            hitVfxRoot.position = targetAnchor.position;
+            targetAnchor.position = endFollowTarget.position;
+            targetAnchor.rotation = endFollowTarget.rotation;
         }
 
-        if (lineRenderer == null || startAnchor == null || targetAnchor == null)
+        if (lineRenderer == null || !TryGetLinePositions(out Vector3 startPosition, out Vector3 endPosition))
         {
             return;
         }
@@ -85,7 +79,25 @@ public class BeamVfxBehaviour : MonoBehaviour
             lineRenderer.positionCount = 2;
         }
 
-        lineRenderer.SetPosition(0, startAnchor.position);
-        lineRenderer.SetPosition(1, targetAnchor.position);
+        lineRenderer.SetPosition(0, startPosition);
+        lineRenderer.SetPosition(1, endPosition);
+    }
+
+    private bool TryGetLinePositions(out Vector3 startPosition, out Vector3 endPosition)
+    {
+        startPosition = Vector3.zero;
+        endPosition = Vector3.zero;
+
+        Transform resolvedStart = startAnchor != null ? startAnchor : startFollowTarget;
+        Transform resolvedEnd = targetAnchor != null ? targetAnchor : endFollowTarget;
+
+        if (resolvedStart == null || resolvedEnd == null)
+        {
+            return false;
+        }
+
+        startPosition = resolvedStart.position;
+        endPosition = resolvedEnd.position;
+        return true;
     }
 }
