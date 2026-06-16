@@ -56,6 +56,14 @@ Current first-version configuration assets include:
 - ProjectileConfig
 - EffectConfig
 
+Presentation-oriented prefab references may live in the configuration asset that owns the runtime event.
+
+Examples:
+
+- AttackConfig owns tower attack presentation hooks such as projectile release VFX, channel beam VFX, and periodic area VFX.
+- ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
+- EffectConfig owns gameplay effect data and should not be required for purely visual projectile impact feedback.
+
 Current combat configuration dependency flow:
 
 ```text
@@ -234,10 +242,13 @@ Responsible for:
 - Projectile hit detection
 - Projectile lifetime management
 - Impact event generation
+- Projectile-specific impact visual effect triggering
 - Simple single-target projectile damage dispatch
 - Projectile destruction
 
 Does not own tower targeting, attack cooldowns, area damage resolution, buff application, or monster health logic.
+
+Projectile impact VFX is presentation-only and should not affect hit detection, damage dispatch, area damage execution, or projectile lifetime rules.
 
 ---
 
@@ -252,6 +263,8 @@ First version responsibility:
 - Area damage resolution for cannon-style projectile impacts
 
 Direct projectile hit damage is not treated as an Effect in the first version.
+
+Projectile impact VFX is not owned by the Buff And Effect System. It is configured through ProjectileConfig and triggered by the Projectile System when impact occurs.
 
 Buff runtime behavior is reserved for future versions.
 

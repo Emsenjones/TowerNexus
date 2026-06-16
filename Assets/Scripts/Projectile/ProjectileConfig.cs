@@ -23,12 +23,15 @@ public class ProjectileConfig : ScriptableObject
 
     [TitleGroup("Impact")]
     [SerializeField] private EffectConfig impactEffectConfig;
+    [TitleGroup("Impact VFX")]
+    [SerializeField] private GameObject impactVfxPrefab;
 
     public GameObject ProjectilePrefab => projectilePrefab;
     public float ProjectileSpeed => projectileSpeed;
     public float HitDistanceThreshold => hitDistanceThreshold;
     public float MaxLifetime => maxLifetime;
     public EffectConfig ImpactEffectConfig => impactEffectConfig;
+    public GameObject ImpactVfxPrefab => impactVfxPrefab;
 
     public bool IsValid()
     {

@@ -32,6 +32,12 @@ The first version only needs to support AreaDamageEffect.
 
 Buff-related interfaces may be reserved for future expansion.
 
+Projectile impact visual effects are separate from gameplay Effects.
+
+Impact VFX is configured by ProjectileConfig and triggered by the Projectile System when projectile impact occurs.
+
+The Buff And Effect System should not be required for purely visual impact feedback.
+
 ---
 
 ## 2. Responsibility Boundary
@@ -53,6 +59,8 @@ The Buff And Effect System does not own:
 - Projectile movement
 - Projectile collision detection
 - Projectile lifetime
+- Projectile impact VFX spawning
+- Projectile impact VFX cleanup
 - Tower target selection
 - Tower attack cooldown
 - Monster pathfinding
@@ -161,6 +169,10 @@ AreaDamageEffect data may include:
 | effectId | string | Unique effect identifier |
 | radius | float | Area damage radius |
 
+AreaDamageEffect data should not include projectile impact VFX prefab references in the first version.
+
+Projectile-specific impact presentation belongs to ProjectileConfig.
+
 Attack damage is not owned by AreaDamageEffect.
 
 Attack damage is provided by the combat event that triggered the effect.
@@ -225,6 +237,7 @@ Responsible for:
 - Detecting projectile hit or arrival
 - Dispatching direct damage for simple single-target hits
 - Triggering Effect execution for complex results
+- Triggering optional projectile impact VFX
 - Providing impact position and attack damage when triggering an effect
 
 Example:
@@ -232,8 +245,12 @@ Example:
 ```text
 Projectile Impact
     ↓
+Trigger Optional Impact VFX
+    ↓
 Trigger AreaDamageEffect
 ```
+
+Impact VFX playback must remain presentation-only. It must not affect area damage resolution, direct damage dispatch, target selection, or monster validity checks.
 
 ---
 

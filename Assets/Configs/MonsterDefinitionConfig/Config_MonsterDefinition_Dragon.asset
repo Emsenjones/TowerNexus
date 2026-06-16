@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterId: 5
   displayName: Dragon
   monsterPrefab: {fileID: 3866999361384652794, guid: 013fd63c6df284007a43fae2a2ab273e, type: 3}
-  moveSpeed: 0.4
+  moveSpeed: 0.25
   maxHealth: 20
   expReward: 0
   damageToPlayer: 1

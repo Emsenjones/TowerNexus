@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterId: 2
   displayName: Spider
   monsterPrefab: {fileID: 2179103727158641011, guid: 62fd2f6db0c024c02a5b236fc72ec53e, type: 3}
-  moveSpeed: 0.4
+  moveSpeed: 0.25
   maxHealth: 20
   expReward: 0
   damageToPlayer: 1

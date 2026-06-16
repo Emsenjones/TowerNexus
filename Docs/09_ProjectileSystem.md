@@ -10,6 +10,7 @@ The system manages:
 - Projectile collision detection
 - Projectile lifetime management
 - Impact event triggering
+- Impact VFX triggering
 - Projectile destruction
 
 The Projectile System does not own tower combat logic, buff execution, area damage execution, or monster health.
@@ -27,6 +28,7 @@ The Projectile System owns:
 - Projectile collision detection
 - Projectile lifetime management
 - Impact event generation
+- Projectile-specific impact VFX triggering
 - Direct single-target hit dispatch for projectile-to-monster impacts
 - Projectile destruction
 
@@ -41,6 +43,7 @@ The Projectile System does not own:
 - Buff application
 - Monster health
 - Tower combat logic
+- Gameplay effect execution
 
 These responsibilities belong to other systems.
 
@@ -95,10 +98,14 @@ Hit
     ↓
 Trigger Impact Event
     ↓
+Trigger Optional Impact VFX
+    ↓
 Destroy
 ```
 
 The lifecycle begins when a projectile is created and ends when the projectile is destroyed.
+
+Impact VFX is presentation-only. It must not change projectile hit detection, damage dispatch, area damage execution, target validity, or projectile destruction rules.
 
 ---
 
@@ -170,15 +177,22 @@ Recommended first-version fields:
 
 | projectilePrefab | GameObject | Projectile prefab reference |
 | projectileSpeed | float | Projectile movement speed (Unity units per second) |
+| hitDistanceThreshold | float | Distance threshold used by projectile hit detection |
+| maxLifetime | float | Maximum projectile lifetime before forced cleanup |
 | impactEffectConfig | EffectConfig | Optional effect triggered on impact |
+| impactVfxPrefab | GameObject | Optional visual effect prefab spawned when impact occurs |
 
 Notes:
 
 - projectileSpeed controls how quickly the projectile reaches its target.
+- hitDistanceThreshold controls when a projectile is considered to have reached or hit its target.
+- maxLifetime prevents projectiles from existing forever if impact does not occur.
 - Projectile prefabs are expected to face negative Y axis (-Y) in local space.
 - ProjectileBehaviour should rotate the projectile so its local -Y direction points toward the movement direction.
 - This orientation convention should be used consistently across all projectile prefabs to avoid per-projectile rotation fixes.
 - impactEffectConfig is optional.
+- impactVfxPrefab is optional and presentation-only.
+- impactVfxPrefab should point to a prefab prepared for one-shot impact playback, commonly a GameObject with ParticleSystem components.
 - Direct single-target projectile hits may dispatch damage directly to MonsterBehaviour.
 - Complex combat results should still be represented as Effects.
 - AreaDamageEffect is an example of a valid impact effect.
@@ -217,6 +231,21 @@ EffectConfig
 ```
 
 This separation prevents duplicate configuration and keeps responsibilities clear.
+
+Impact VFX follows the same separation:
+
+```text
+ProjectileConfig
+    Owns projectile impact presentation reference
+
+ProjectileBehaviour
+    Owns impact-time VFX trigger
+
+Impact VFX Prefab
+    Owns visual playback
+```
+
+EffectConfig should not be required just to play a visual impact effect. A projectile may have impactVfxPrefab without impactEffectConfig.
 
 ---
 

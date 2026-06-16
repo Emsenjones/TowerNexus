@@ -1,10 +1,11 @@
 ## AI Workflow
-1. ChatGPT 和你维护 ProjectOverview + System Documents
-2. ChatGPT 根据 System Documents 生成轻量 Task Docs
-3. Codex 先读代码，输出 Implementation Plan
-4. 你审核 Plan
-5. Codex 实现并总结改动
-6. 我进Unity配置数据+调试
+1. 我和ChatGPT先聊一聊纯抽象的设计内容和迭代激活
+2. Codex 根据我和ChatGPT聊的第一阶段内容维护 ProjectOverview + System Documents
+3. Codex 根据 System Documents 生成轻量 Task Docs
+4. Codex 先读代码，输出 Implementation Plan
+5. 你审核 Plan
+6. Codex 实现并总结改动
+7. 我进Unity配置数据+调试
 8. Task Docs 用完归档或删除
 
 
@@ -43,6 +44,6 @@ After I approve your plan, I will ask you to proceed with implementation.
 1. *Add Monster health bar.
 2. *Add Monster hit effect.
 3. *Add damage display.
-4. Tower and Projectile effect.
+4. *Tower and Projectile effect.
 5. Implement Tower upgrade system.
 6. Develop Monster & Projectile object pool.

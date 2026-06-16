@@ -258,8 +258,19 @@ public class ProjectileBehaviour : MonoBehaviour
             projectileConfig.ImpactEffectConfig
         );
 
+        PlayImpactVfx(impactContext.ImpactPosition);
         OnImpact?.Invoke(impactContext);
         AreaDamageEffectExecutor.Execute(impactContext);
+    }
+
+    private void PlayImpactVfx(Vector3 impactPosition)
+    {
+        if (projectileConfig == null || projectileConfig.ImpactVfxPrefab == null)
+        {
+            return;
+        }
+
+        Instantiate(projectileConfig.ImpactVfxPrefab, impactPosition, Quaternion.identity);
     }
 
     private Vector3 CalculateLaunchDirection(Vector3 targetPosition)

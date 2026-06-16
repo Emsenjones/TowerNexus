@@ -15,7 +15,7 @@ MonoBehaviour:
   monsterId: 9
   displayName: Golem
   monsterPrefab: {fileID: 3333681211596321960, guid: 6973816234f2b4f3a9ee8c30c3053911, type: 3}
-  moveSpeed: 0.4
+  moveSpeed: 0.25
   maxHealth: 20
   expReward: 0
   damageToPlayer: 1

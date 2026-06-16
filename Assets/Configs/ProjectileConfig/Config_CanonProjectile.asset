@@ -17,3 +17,4 @@ MonoBehaviour:
   hitDistanceThreshold: 0.1
   maxLifetime: 10
   impactEffectConfig: {fileID: 11400000, guid: 4a883e7be44054865adbdc9fc2a2d9f1, type: 2}
+  impactVfxPrefab: {fileID: 4243979002228035779, guid: fb1811978a8f749eda670bf2172a50d8, type: 3}
