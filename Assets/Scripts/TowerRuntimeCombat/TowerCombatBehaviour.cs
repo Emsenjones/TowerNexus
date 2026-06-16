@@ -561,9 +561,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private void StartPeriodicAreaVfx()
     {
         if (activePeriodicAreaVfx != null || attackConfig == null || attackConfig.PeriodicAreaVfxPrefab == null)
-        {
             return;
-        }
 
         Transform origin = GetAttackOrigin();
         activePeriodicAreaVfx = Instantiate(
