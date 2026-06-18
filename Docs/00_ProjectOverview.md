@@ -1,10 +1,12 @@
 # 1. Project Introduction
 
-Tower Nexus is a strategy tower defense game focused on terrain manipulation, tower drafting, and runtime battlefield reshaping.
+Tower Nexus is a draft-driven tower defense roguelike focused on terrain manipulation, tower drafting, and runtime battlefield reshaping.
 
 Unlike traditional tower defense games where towers only act as combat units, towers in Tower Nexus also function as physical obstacles that affect monster pathfinding and battlefield topology.
 
 The core experience is built around meaningful placement decisions, path manipulation, random build creation, and gradual tower growth during each run.
+
+Tower Nexus is not designed as an EXP-driven tower defense game. Player progression is driven by monster resolution and the next Draft opportunity.
 
 ---
 
@@ -25,7 +27,9 @@ Player Places Towers
     ↓
 Towers Occupy Nodes And Attack Monsters
     ↓
-Monster Death Grants EXP
+Monsters Are Resolved
+    ↓
+ResolvedMonsterCount Advances Level Progress
     ↓
 Player Level Up Triggers Draft
     ↓
@@ -39,7 +43,9 @@ Key runtime rules:
 - Tower placement can change monster paths.
 - Path-blocking validation is part of the intended placement rule set and prevents fully blocking all valid monster routes when enabled.
 - Alive monsters recalculate paths when battlefield walkability changes.
-- Monster death grants EXP.
+- Monsters are resolved when they are killed or when they reach the destination.
+- ResolvedMonsterCount advances player level progress.
+- Player health and player level progress are separate.
 - Player level-up triggers draft selection.
 
 ---
@@ -79,7 +85,7 @@ EffectConfig
 Future versions may additionally introduce:
 
 - BuffConfig
-- LevelConfig
+- PlayerLevelConfig
 - StageConfig
 
 Odin Inspector may be used to improve configuration editing workflows, validation, and editor usability.
@@ -130,7 +136,7 @@ Owns player runtime progression and survival state.
 Responsible for:
 
 - Player level
-- EXP
+- ResolvedMonsterCount / level progress
 - HP
 - Level-up events
 - Player death / battle failure
@@ -160,7 +166,7 @@ Owns runtime draft generation and draft result processing.
 
 First-version draft categories:
 
-- New Tower Draft
+- Tower Draft
 - Tower Upgrade Draft
 
 Responsible for:
@@ -168,7 +174,8 @@ Responsible for:
 - Listening to player level-up events
 - Generating draft choices
 - Processing draft selection
-- Creating pending tower entries
+- Creating draft results
+- Routing Tower Draft deployment or tower-level-up intent to the appropriate system
 
 ---
 
@@ -272,7 +279,7 @@ Buff runtime behavior is reserved for future versions.
 
 ## 5.10 Monster System
 
-Owns monster spawning, pathfinding, movement, runtime state, and death flow.
+Owns monster spawning, pathfinding, movement, runtime state, death flow, arrival flow, and monster resolution reporting.
 
 Responsible for:
 
@@ -283,7 +290,7 @@ Responsible for:
 - Movement toward target
 - Health and damage processing
 - Death handling
-- EXP reward generation
+- Monster resolution reporting
 - Player damage reporting when monsters reach the target
 - Monster health bar runtime presentation
 - Monster hit feedback presentation
@@ -298,9 +305,11 @@ PlayerSystem
 DraftSystem
     ↓ Draft Result
 BattleHUDUISystem
-    ↓ Pending Tower Entry
+    ↓ Drag / Selection Intent
 TowerPlacementSystem
-    ↓ Place Tower
+    ↓ Placement Or Target Intent
+TowerUpgradeSystem
+    ↓ Tower Level / Upgrade Request
 TowerRuntimeCombatSystem
     ↓ Attack Execution / Projectile Creation
 ProjectileSystem
@@ -312,6 +321,10 @@ MonsterSystem
 TowerPlacementSystem
     ↓ Modify Walkability
 MapSystem
+
+MonsterSystem
+    ↓ Monster Resolved
+PlayerSystem
 
 MonsterSystem
     ↓ Pathfinding Queries

@@ -407,6 +407,10 @@ The Map System does not handle player HP damage, battle failure, or monster arri
 
 When a monster reaches the Target Node, the Monster System should detect the arrival result and notify the Player System if player HP damage needs to be applied.
 
+Target arrival may also cause Monster System to report the monster as resolved for ResolvedMonsterCount progression while the run is still active.
+
+Map System does not own monster resolution, player progression, or player HP consequences.
+
 The current version supports:
 
 - Single Spawn Node
@@ -469,6 +473,11 @@ These features are not required for the first playable version.
 ---
 
 # Change Log
+
+## 2026-06-18 (Monster Resolution Boundary Sync)
+
+- Clarified that Target Node arrival may cause Monster System to report monster resolution.
+- Clarified that Map System does not own ResolvedMonsterCount progression or player HP consequences.
 
 ## 2026-05-24 (Naming Sync)
 

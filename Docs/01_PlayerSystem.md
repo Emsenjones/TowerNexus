@@ -9,13 +9,13 @@ Player System defines the player's core runtime state in battle.
 
 Player System acts as the runtime player state authority.
 
-This system is responsible for player level, player experience, player health, and battle failure conditions related to the player.
+This system is responsible for player level, ResolvedMonsterCount-based level progress, player health, and battle failure conditions related to the player.
 
 Player System should be treated as an independent core system. Other systems may read player state or listen to player events, but they should not own or modify player data directly unless explicitly allowed by this document.
 
 ## 2. Design Goals
 
-1. Provide a clear runtime data structure for player level, experience, and health.
+1. Provide a clear runtime data structure for player level, ResolvedMonsterCount-based level progress, and health.
 2. Separate player-related logic from Tower Placement System.
 3. Allow Draft System to react to player level-up events.
 4. Allow Monster System to damage the player when monsters reach the target node.
@@ -26,8 +26,8 @@ Player System should be treated as an independent core system. Other systems may
 Player System is responsible for:
 
 1. Tracking current player level.
-2. Tracking current player experience.
-3. Handling experience gain and level-up logic.
+2. Tracking current ResolvedMonsterCount progress for the current level.
+3. Handling monster resolution progress and level-up logic.
 4. Tracking current player health and maximum player health.
 5. Applying damage to the player when monsters reach the target node.
 6. Triggering battle failure when player health reaches zero.
@@ -48,29 +48,44 @@ Player System should maintain the following runtime data during battle:
 | Field | Type | Description |
 | --- | --- | --- |
 | currentLevel | int | Current player level. |
-| currentExp | int | Current player experience within the current level. |
+| currentResolvedMonsterCount | int | Number of resolved monsters counted toward the next level. |
 | currentHealth | int | Current player health. |
 | maxHealth | int | Maximum player health. |
 | isDead | bool | Whether the player has reached the battle failure state. |
 
+Implementation status note:
+
+Current runtime code may still use EXP-oriented names until the implementation task updates the scripts. This document defines the next-stage system design direction.
+
 ## 5. Player Level System
 
-Player Level System handles experience gain and level-up logic.
+Player Level System handles ResolvedMonsterCount progress and level-up logic.
 
-When the player gains experience, Player System should add the experience value to currentExp and check whether the player can level up.
+The system-level progression resource is ResolvedMonsterCount.
 
-If currentExp reaches the required experience of the current level, Player System should:
+A monster counts as resolved when either:
+
+1. The monster is killed by tower combat.
+2. The monster reaches the destination.
+
+Both outcomes increase ResolvedMonsterCount by 1 while the run is still active.
+
+Once the run has ended, monster resolution should no longer advance player progression.
+
+When Player System receives a valid monster resolution report, it should add 1 to currentResolvedMonsterCount and check whether the player can level up.
+
+If currentResolvedMonsterCount reaches the required resolved monster count of the current level, Player System should:
 
 1. Increase currentLevel by 1.
-2. Subtract the required experience from currentExp.
+2. Subtract the required resolved monster count from currentResolvedMonsterCount.
 3. Trigger a level-up event.
-4. Continue checking level-up conditions if the remaining experience is still enough for the next level.
+4. Continue checking level-up conditions if the remaining resolved monster count is still enough for the next level.
 
-If the player has reached the maximum level, currentExp should no longer trigger additional level-up logic.
+If the player has reached the maximum level, currentResolvedMonsterCount should no longer trigger additional level-up logic.
 
 ## 6. Player Level Config
 
-Player level configuration defines how much experience is required to level up.
+Player level configuration defines how many resolved monsters are required to level up.
 
 Suggested config asset:
 
@@ -82,15 +97,15 @@ Suggested fields:
 
 | Field | Type | Description |
 | --- | --- | --- |
-| levelExpList | List<int> | Experience required to level up from each level to the next level. |
+| resolvedMonsterRequirementsPerLevel | List<int> | Resolved monster count required to level up from each level to the next level. |
 
 Example:
 
 | Index | Meaning |
 | --- | --- |
-| 0 | EXP required from Level 1 to Level 2. |
-| 1 | EXP required from Level 2 to Level 3. |
-| 2 | EXP required from Level 3 to Level 4. |
+| 0 | Resolved monsters required from Level 1 to Level 2. |
+| 1 | Resolved monsters required from Level 2 to Level 3. |
+| 2 | Resolved monsters required from Level 3 to Level 4. |
 
 ## 7. Player Health System
 
@@ -134,7 +149,7 @@ Suggested events:
 
 | Event | Description |
 | --- | --- |
-| OnPlayerExpChanged | Triggered when player experience changes. |
+| OnPlayerProgressChanged | Triggered when ResolvedMonsterCount progress changes. UI may display this as Level Progress. |
 | OnPlayerLevelUp | Triggered when player level increases. |
 | OnPlayerHealthChanged | Triggered when player health changes. |
 | OnPlayerDead | Triggered when player health reaches zero. |
@@ -156,7 +171,7 @@ Draft generation ownership belongs to Draft System.
 
 ### 10.2 Tower Placement System
 
-Tower Placement System should not own player level, experience, or health data.
+Tower Placement System should not own player level, ResolvedMonsterCount, level progress, or health data.
 
 Tower Placement System is only responsible for placement-related logic, including tower dragging, snapping, placement validation, walkability update, path blocking validation, and successful placement handling.
 
@@ -166,6 +181,8 @@ Monster System should notify Player System when a monster reaches the target nod
 
 Monster System should not directly decide battle failure. Battle failure should be triggered by Player System after health calculation.
 
+Monster System should also notify Player System when a monster is resolved, whether the monster was killed or reached the target node.
+
 ### 10.4 Battle HUD UI System
 
 Battle HUD UI System may subscribe to player runtime events and update runtime battle UI.
@@ -173,7 +190,7 @@ Battle HUD UI System may subscribe to player runtime events and update runtime b
 Example UI elements:
 
 1. Player level text.
-2. Player experience bar.
+2. Player level progress bar.
 3. Player health display.
 4. Battle failure panel.
 5. Runtime draft window.
@@ -189,7 +206,7 @@ Recommended runtime ownership:
 
 | System | Owns |
 |---|---|
-| Player System | Level, EXP, HP, death state |
+| Player System | Level, ResolvedMonsterCount progress, HP, death state |
 | Draft System | Draft generation and draft workflow |
 | Battle HUD UI System | Runtime UI display and interaction |
 | Tower Placement System | Placement validation and placement |
@@ -215,6 +232,13 @@ Possible future extensions:
 ---
 
 # Change Log
+
+## 2026-06-18 (ResolvedMonsterCount Progression Sync)
+
+- Replaced EXP-driven progression design with ResolvedMonsterCount-based level progress.
+- Clarified that killed monsters and leaked monsters both count as resolved while the run is active.
+- Clarified that monster resolution no longer advances progression after the run has ended.
+- Renamed the UI-facing progress event direction from EXP progress to level progress.
 
 ## 2026-05-24 (Naming Sync)
 

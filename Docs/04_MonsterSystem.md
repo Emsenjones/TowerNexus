@@ -7,7 +7,7 @@ Monster System is one of the core runtime systems in TowerNexus.
 
 Monsters are generated from map spawn nodes and automatically move toward the target node using Monster System pathfinding functionality and Map System data.
 
-Players must strategically deploy and upgrade towers to eliminate monsters before they reach the target point.
+Players must strategically deploy and upgrade towers to eliminate monsters before they reach the target point, while accepting that some monsters may leak as a health tradeoff.
 
 This system focuses on the following core gameplay loop and current Monster-related implementation direction:
 
@@ -15,10 +15,11 @@ This system focuses on the following core gameplay loop and current Monster-rela
 - Monster movement and pathfinding
 - Dynamic path recalculation
 - Monster death handling
+- Monster target arrival handling
+- Monster resolution reporting
 - Monster health bar display through current Task implementation scope
 - Monster hit feedback through current Task implementation scope
 - Monster damage number display through current Task implementation scope
-- Rewarding player EXP after monster elimination
 - Notifying Player System when monsters reach the target node
 - Providing path validation functionality used by Tower Placement System
 
@@ -51,7 +52,7 @@ Health bar, hit feedback, and damage number fields are current Task design targe
 | monsterPrefab | Runtime monster prefab |
 | moveSpeed | Monster movement speed |
 | maxHealth | Monster maximum health |
-| expReward | EXP rewarded to player after death |
+| resolvedProgressValue | ResolvedMonsterCount value reported when this monster is resolved; current design target is usually 1 |
 | damageToPlayer | Damage dealt to player when reaching target |
 | hitAnchor | Optional transform used as the monster hit/reference anchor for combat targeting, hit checks, effects, and presentation binding |
 | isWalkingParameterName | Animator bool parameter name used to switch between Idle and Walk |
@@ -66,6 +67,10 @@ Health bar, hit feedback, and damage number fields are current Task design targe
 | hitFlashRendererRoot | Optional root transform used to collect monster renderers for hit flash |
 | damageNumberOffset | World-space offset between monster transform and damage number spawn position |
 | damageNumberPrefab | Optional damage number UI prefab override used by this monster type |
+
+Implementation status note:
+
+Current runtime code may still use EXP-oriented names such as expReward until the implementation task updates the scripts. This document defines the next-stage system design direction.
 
 ---
 
@@ -88,6 +93,13 @@ Monster System is responsible for detecting when a monster reaches the Target No
 After target arrival, Monster System should notify Player System so Player System can apply player HP damage and handle battle failure if needed.
 
 Monster System should not directly modify player HP or decide battle failure.
+
+Monster System should also report monster resolution to Player System when a monster is killed or reaches the Target Node.
+
+Player health and player level progress are intentionally separate:
+
+- Life determines victory and defeat.
+- ResolvedMonsterCount determines level progress and Draft pacing.
 
 ## 3.1 Node Types
 
@@ -176,6 +188,7 @@ Behavior:
 - Stop movement immediately
 - Notify Player System that this monster has reached the target
 - Pass target arrival damage information if required
+- Report this monster as resolved if the run is still active
 - Remove or destroy the monster after arrival handling
 
 Monster System should not directly reduce player HP.
@@ -191,7 +204,7 @@ Behavior:
 - Stop movement immediately
 - Stop all pathfinding behavior
 - Play death animation
-- Reward player EXP
+- Report this monster as resolved if the run is still active
 - Destroy monster after delay
 
 ---
@@ -430,7 +443,7 @@ Monster System owns:
 
 Battle HUD UI System should not own individual monster health bars.
 
-Battle HUD UI System is responsible for global battle UI, such as player HP, player EXP, and battle failure UI.
+Battle HUD UI System is responsible for global battle UI, such as player HP, level progress, and battle failure UI.
 
 Monster health bars are battlefield unit UI and belong to Monster System.
 
@@ -814,7 +827,20 @@ This validation should reuse the same pathfinding system used by monsters.
 
 ---
 
-# 10. Monster Death Flow
+# 10. Monster Resolution Flow
+
+A monster is considered resolved when either:
+
+1. It is killed by tower combat.
+2. It reaches the Target Node.
+
+Both outcomes should report monster resolution to Player System while the run is still active.
+
+Once the run has ended, monster resolution should no longer advance player progression.
+
+Monster System owns detection of monster death and target arrival. Player System owns ResolvedMonsterCount accumulation and level-up checks.
+
+## 10.1 Monster Death Flow
 
 When monster HP reaches 0:
 
@@ -823,18 +849,18 @@ Monster HP <= 0
 → Enter Dead state
 → Stop movement
 → Play death animation
-→ Reward player EXP
+→ Report Monster Resolved
 → Delay
 → Destroy monster object
 ```
 
-EXP reward should be sent to Player System.
+Monster resolution should be sent to Player System.
 
-Monster System may provide the reward value from MonsterDefinition, but Player System should own EXP accumulation and level-up logic.
+Monster System may provide the resolved progress value from MonsterDefinition if the design later needs non-standard monsters, but the current design target is one resolved monster contributing +1 ResolvedMonsterCount.
 
 ---
 
-# 11. Monster Target Arrival Flow
+## 10.2 Monster Target Arrival Flow
 
 When a monster reaches the Target Node:
 
@@ -843,6 +869,8 @@ Monster reaches Target Node
 → Monster enters Arrived state
 → Monster System notifies Player System
 → Player System applies HP damage
+→ Monster System reports Monster Resolved
+→ Player System advances ResolvedMonsterCount if the run is still active
 → BattleHUDUISystem updates HP display through Player System events
 → Monster is removed from battlefield
 ```
@@ -851,14 +879,16 @@ Monster target arrival should follow these ownership rules:
 
 - Monster System detects arrival.
 - Monster System reports arrival damage information.
+- Monster System reports monster resolution.
 - Player System owns player HP damage calculation.
+- Player System owns ResolvedMonsterCount accumulation and level-up checks.
 - Player System owns battle failure state.
 - Battle HUD UI System displays updated HP and battle failure UI.
 - Map System only provides the Target Node spatial reference.
 
 ---
 
-# 12. Current Scope
+# 11. Current Scope
 
 The current and upcoming implementation scope of the Monster System focuses only on:
 
@@ -867,11 +897,12 @@ The current and upcoming implementation scope of the Monster System focuses only
 - A* pathfinding
 - Dynamic path recalculation
 - Death handling
+- Target arrival handling
+- Monster resolution reporting
 - Monster health bar display
 - Monster hit animation trigger
 - Monster hit flash feedback
 - Monster damage number display
-- EXP reward flow
 - Monster target arrival notification to Player System
 - Pathfinding functionality that can be reused by tower placement validation
 - Optional Monster HitAnchor for shared combat, effect, and presentation reference positioning
@@ -890,22 +921,23 @@ The following features are intentionally postponed:
 
 ---
 
-# 13. Related Systems
+# 12. Related Systems
 
 ## Player System
 
-Player System owns player EXP, level-up logic, player HP, and battle failure state.
+Player System owns player level progress, ResolvedMonsterCount accumulation, level-up logic, player HP, and battle failure state.
 
 Monster System may notify Player System when:
 
-- A monster dies and provides EXP reward
+- A monster dies and is resolved
 - A monster reaches the target node and provides player damage information
+- A monster reaches the target node and is resolved
 
 Monster System should not directly own player progression or player HP.
 
 ## Battle HUD UI System
 
-Battle HUD UI System displays player EXP, player HP, and battle failure UI through Player System events.
+Battle HUD UI System displays player level progress, player HP, and battle failure UI through Player System events.
 
 Monster System should not directly control Battle HUD UI.
 
@@ -940,6 +972,13 @@ Monster System may provide pathfinding functionality used during placement valid
 - Clarified that HitAnchor must not own monster position, pathfinding, collision, damage, or target validity logic.
 
 # Change Log
+
+## 2026-06-18 (Monster Resolution Sync)
+
+- Added Monster Resolution as the shared outcome for killed monsters and monsters that reach the Target Node.
+- Replaced current design direction from EXP reward reporting to monster resolution reporting.
+- Clarified that target arrival still damages player HP but also resolves the monster while the run is active.
+- Clarified that Player System owns ResolvedMonsterCount accumulation and level-up checks.
 
 ## 2026-06-08 (Damage Number Visual Feedback Sync)
 

@@ -6,7 +6,7 @@ The Battle HUD UI System is responsible for displaying runtime battle UI during 
 
 This system acts as the primary runtime gameplay interface between the player and the battle systems.
 
-Battle HUD UI System is responsible for displaying gameplay state, draft interaction, pending tower deployment interaction, and player battle information.
+Battle HUD UI System is responsible for displaying gameplay state, draft interaction, Draft item interaction, and player battle information.
 
 The Battle HUD UI System should not own gameplay progression data, tower deployment validation logic, monster runtime logic, or player runtime state.
 
@@ -29,19 +29,20 @@ Instead, it should observe and display runtime data owned by other systems.
 The Battle HUD UI System is responsible for:
 
 - Displaying player level.
-- Displaying player EXP progress.
+- Displaying player level progress.
 - Displaying player HP.
 - Displaying runtime battle state.
-- Opening and closing the Tower Draft Window.
-- Displaying pending deployment towers.
-- Providing tower drag interaction entry.
+- Opening and closing the Draft Window.
+- Displaying draggable Draft items.
+- Providing Draft item drag interaction entry.
 - Displaying placement validation feedback.
+- Displaying valid target highlights for Tower Upgrade Draft items.
 - Displaying future runtime battle notifications.
 - Displaying future battle failure UI.
 
 The Battle HUD UI System is NOT responsible for:
 
-- Player EXP calculation.
+- Player ResolvedMonsterCount calculation.
 - Player level-up logic.
 - Player HP calculation.
 - Player death logic.
@@ -66,7 +67,7 @@ Recommended ownership boundaries:
 
 | System | Owns |
 |---|---|
-| Player System | Level, EXP, HP, death state |
+| Player System | Level, ResolvedMonsterCount progress, HP, death state |
 | Draft System | Draft generation and draft result workflow |
 | Tower Placement System | Placement validation and placement |
 | Monster System | Monster runtime state |
@@ -83,7 +84,7 @@ The first version should include:
 | UI Element | Description |
 |---|---|
 | Current Level Text | Displays current player level |
-| EXP Progress Bar | Displays current EXP progress |
+| Level Progress Bar | Displays progress toward the next level and Draft opportunity |
 | HP Bar | Displays current player HP |
 | HP Text | Displays current HP and max HP |
 
@@ -92,7 +93,7 @@ These UI elements should listen to Player System runtime events.
 Recommended events:
 
 ```csharp
-OnPlayerExpChanged
+OnPlayerProgressChanged
 OnPlayerLevelUp
 OnPlayerHealthChanged
 OnPlayerDead
@@ -100,7 +101,7 @@ OnPlayerDead
 
 ---
 
-### 5.2 Tower Draft Window
+### 5.2 Draft Window
 
 The Draft Window is opened by Draft System.
 
@@ -123,30 +124,49 @@ DraftSystem
 BattleHUDUISystem
     ↓ Open Draft Window
 DraftWindowUI
-    ↓ Player Selects Tower
+    ↓ Player Selects Draft Choice
 DraftSystem
 ```
 
 ---
 
-### 5.3 Pending Tower Deployment Area
+### 5.3 Draft Item Interaction Area
 
-The Pending Tower Deployment Area stores towers selected from the draft window but not yet deployed onto the battlefield.
+The Draft Item Interaction Area stores Draft items selected from the Draft Window but not yet consumed.
 
 Responsibilities:
 
-- Display pending tower entries.
-- Allow tower drag interaction.
-- Remove deployed tower entries.
+- Display draggable Tower Draft and Tower Upgrade Draft items.
+- Allow Draft item drag interaction.
+- Remove consumed Draft items after successful placement, tower level-up, or upgrade application.
 - Display future recycle tower entries.
 
-The Pending Tower Deployment Area should not validate placement.
+The Draft Item Interaction Area should not validate placement, tower level-up rules, or tower upgrade rules.
 
 Placement validation belongs to Tower Placement System.
 
+Tower level-up and upgrade validation belong to Tower Upgrade System.
+
 ---
 
-### 5.4 Placement Feedback
+### 5.4 Valid Target Highlighting
+
+When dragging a Tower Upgrade Draft item, Battle HUD UI System should present valid target feedback requested by gameplay validation.
+
+Example display behavior:
+
+| Target Type | Display |
+|---|---|
+| Valid tower | Highlighted |
+| Invalid tower | Dimmed or unhighlighted |
+
+This presentation helps reduce interaction complexity.
+
+Battle HUD UI System should not decide TowerType, TowerLevel, duplicate upgrade, or max-level rules.
+
+---
+
+### 5.5 Placement Feedback
 
 Battle HUD UI System may display placement feedback during deployment.
 
@@ -184,15 +204,15 @@ It should not become a gameplay logic owner.
 
 ## 7. Runtime Event Flow
 
-### 7.1 Player EXP Flow
+### 7.1 Player Level Progress Flow
 
 ```text
 MonsterSystem
-    ↓ Reward EXP
+    ↓ Monster Resolved
 PlayerSystem
-    ↓ OnPlayerExpChanged
+    ↓ OnPlayerProgressChanged
 BattleHUDUISystem
-    ↓ Update EXP UI
+    ↓ Update Level Progress UI
 ```
 
 ---
@@ -229,13 +249,13 @@ BattleHUDUISystem
 
 ```text
 BattleHUDUISystem
-    ↓ Player Drags Pending Tower
+    ↓ Player Drags Tower Draft Item
 TowerPlacementSystem
     ↓ Placement Validation
 TowerPlacementSystem
     ↓ Successful Placement
 BattleHUDUISystem
-    ↓ Remove Pending Tower Entry
+    ↓ Remove Consumed Draft Item
 ```
 
 ---
@@ -273,7 +293,7 @@ Battle HUD UI System owns only display and interaction.
 Provides:
 
 - Level
-- EXP
+- ResolvedMonsterCount progress
 - HP
 - Death state
 - Runtime player events
@@ -312,7 +332,7 @@ BattleHUDUISystem only provides interaction entry and visual feedback.
 Provides:
 
 - Runtime monster state
-- EXP rewards
+- Monster resolution reports
 - Player target arrival notification
 
 BattleHUDUISystem may display monster-related runtime information.
@@ -324,11 +344,12 @@ BattleHUDUISystem may display monster-related runtime information.
 Included features:
 
 - Current player level display
-- EXP progress bar
+- Level progress bar
 - Player HP display
 - Draft Window display
-- Pending Tower Deployment Area
-- Pending tower drag interaction entry
+- Draft Item Interaction Area
+- Draft item drag interaction entry
+- Valid target highlight presentation
 - Placement feedback display
 - Runtime event-driven UI updates
 
@@ -346,6 +367,13 @@ Excluded features:
 ---
 
 # Change Log
+
+## 2026-06-18 (Draft Interaction And Level Progress Sync)
+
+- Replaced EXP progress UI direction with Level Progress based on Player System progress events.
+- Replaced pending tower UI wording with Draft Item Interaction Area.
+- Added valid target highlight direction for Tower Upgrade Draft items.
+- Clarified that Battle HUD UI System does not own tower level-up or upgrade validation.
 
 ## 2026-05-24 (Naming Sync)
 

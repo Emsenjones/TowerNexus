@@ -39,11 +39,28 @@ Important constraints:
 
 After I approve your plan, I will ask you to proceed with implementation.
 
-
+## Wittle Defender
+1. Average each wave duration: 400 s;
+2. Wave count: 20;
 ## Future Development
 1. *Add Monster health bar.
 2. *Add Monster hit effect.
 3. *Add damage display.
 4. *Tower and Projectile effect.
 5. Implement Tower upgrade system.
+   1. 10_TowerUpgradeSystem.md
+   2. 07_TowerFrameworkSystem.md
+   3. 05_DraftSystem.md
+   4. 02_BattleHUDUISystem.md
+   5. 06_TowerPlacementSystem.md
+   6. 01_PlayerSystem.md
+   7. 04_MonsterSystem.md
+   8. 00_ProjectOverview.md
+      
+      
+      
+      
+      
+      
+      
 6. Develop Monster & Projectile object pool.

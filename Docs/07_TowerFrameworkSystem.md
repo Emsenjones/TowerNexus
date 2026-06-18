@@ -102,8 +102,22 @@ Recommended fields:
 | towerPrefab | GameObject | Runtime tower prefab |
 | towerCategory | TowerCategory | Tower category |
 | attackConfig | AttackConfig | Attack configuration reference |
+| towerLevelConfigs | List<TowerLevelConfig> | Optional per-level base stat and presentation data consumed by Tower Upgrade System |
 
-Upgrade-related configuration references are reserved for the future Tower Upgrade System and are not required by the first-version Tower Framework data implementation.
+Tower level base stat growth should be configured in TowerDefinition through per-level config data.
+
+Upgrade definition references are owned by the Tower Upgrade System and should not be mixed with basic TowerDefinition attack configuration unless a later implementation explicitly requires a shared lookup.
+
+Suggested TowerLevelConfig fields include:
+
+| Field | Type | Description |
+|---|---|---|
+| level | int | Tower level represented by this config entry |
+| baseDamageModifier | float | Optional base damage adjustment for this level |
+| attackIntervalModifier | float | Optional attack interval adjustment for this level |
+| rangeModifier | float | Optional attack range adjustment for this level |
+| towerModelPrefab | GameObject | Optional visual/model replacement for this level |
+| displayIcon | Sprite | Optional UI icon for this level |
 
 ---
 
@@ -681,7 +695,7 @@ Cannon Tower explosion should be treated as an instant area damage effect rather
 
 ## Draft System
 
-Uses TowerDefinition to generate New Tower Draft choices.
+Uses TowerDefinition to generate Tower Draft choices.
 
 ---
 
@@ -699,7 +713,9 @@ Uses TowerDefinition and AttackConfig to determine attack archetypes and combat 
 
 ## Tower Upgrade System
 
-Uses TowerDefinition and upgrade configuration references to define and apply tower upgrades.
+Uses TowerDefinition per-level config data to process tower level-up requests.
+
+Uses Tower Upgrade System-owned upgrade definitions to define and apply tower upgrades.
 
 ---
 
@@ -739,6 +755,12 @@ Excluded:
 
 
 # Change Log
+
+## 2026-06-18
+
+- Added TowerDefinition-owned per-level config direction for tower level base stat growth and visuals.
+- Updated Draft System relationship wording from New Tower Draft to Tower Draft.
+- Clarified that TowerUpgradeSystem consumes TowerDefinition level config for tower level-up requests while owning upgrade definitions separately.
 
 ## 2026-06-12
 

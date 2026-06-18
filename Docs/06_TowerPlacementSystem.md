@@ -6,7 +6,7 @@
 
 The Tower Placement System is one of the core runtime gameplay systems in Tower Nexus.
 
-This system is responsible for converting a pending deployable tower entry into a placed battlefield tower.
+This system is responsible for converting a dragged Tower Draft item into either a placed battlefield tower or a target-intent request for an existing tower.
 
 The Tower Placement System focuses only on tower placement-related responsibilities:
 
@@ -18,6 +18,7 @@ The Tower Placement System focuses only on tower placement-related responsibilit
 - Runtime GridNode occupation
 - Runtime walkability update
 - Path-blocking validation integration with Monster System pathfinding
+- Detecting whether a dragged Draft item targets a deployment tile or an existing tower
 - Reserved support for future tower recycle and redeployment
 
 The Tower Placement System is designed around dynamic battlefield manipulation.
@@ -33,11 +34,13 @@ The Tower Placement System should only own placement workflow and placement vali
 It should not own:
 
 - Player level
-- Player EXP
+- Player ResolvedMonsterCount progress
 - Player HP
 - Player death or battle failure logic
 - Draft generation
 - Draft result rules
+- Tower level-up rules
+- Tower upgrade application rules
 - Draft Window UI
 - Battle HUD layout
 - Monster movement
@@ -49,12 +52,12 @@ Recommended ownership boundary:
 
 | System | Owns |
 |---|---|
-| Player System | Level, EXP, HP, battle failure |
+| Player System | Level, ResolvedMonsterCount progress, HP, battle failure |
 | Draft System | Draft generation and draft result workflow |
 | Battle HUD UI System | Runtime UI display and interaction entry points |
-| Tower Placement System | Tower placement, validation, occupation, and walkability update |
+| Tower Placement System | Tower placement, target intent detection, validation, occupation, and walkability update |
 | Map System | GridNode data, node query, walkability state, and visual refresh |
-| Monster System | Monster spawning, movement, path recalculation, and death flow |
+| Monster System | Monster spawning, movement, path recalculation, death flow, arrival flow, and monster resolution reporting |
 
 ---
 
@@ -120,9 +123,9 @@ The Tower Placement System must support fast and stable runtime updates.
 
 ## 4.1 Player System
 
-Player System owns player level, player EXP, player HP, and battle failure conditions.
+Player System owns player level, ResolvedMonsterCount progress, player HP, and battle failure conditions.
 
-Tower Placement System may be reached indirectly after Player System triggers level-up progression and Draft System creates a pending tower entry.
+Tower Placement System may be reached indirectly after Player System triggers level-up progression and Draft System creates a draggable Draft item.
 
 Tower Placement System should not read or modify player progression data directly.
 
@@ -132,11 +135,11 @@ Tower Placement System should not read or modify player progression data directl
 
 Draft System owns draft generation and draft result handling.
 
-For the first version, Draft System may generate New Tower Draft results.
+Draft System may generate Tower Draft and Tower Upgrade Draft results.
 
-After the player selects a New Tower Draft result, the selected tower becomes a pending deployable tower entry.
+After the player selects a Tower Draft result, the selected tower becomes a draggable Tower Draft item.
 
-Tower Placement System only handles placement after a tower has already become a pending deployable entry.
+Tower Placement System detects whether the Tower Draft item is dropped onto a valid deployment tile or onto an existing same-type tower.
 
 Tower Placement System should not:
 
@@ -144,6 +147,8 @@ Tower Placement System should not:
 - Read tower pools for draft logic.
 - Decide tower draft availability.
 - Handle future draft type rules.
+- Decide tower level-up rules.
+- Apply tower upgrades.
 
 ---
 
@@ -153,10 +158,11 @@ Battle HUD UI System owns runtime battle UI display and interaction entry points
 
 For Tower Placement System, Battle HUD UI System provides:
 
-- Pending Tower Deployment Area display
-- Pending tower drag interaction entry
-- Pending tower entry removal after successful placement
+- Draft Item Interaction Area display
+- Draft item drag interaction entry
+- Draft item removal after successful placement, accepted tower level-up, or accepted upgrade application
 - Placement feedback display when requested by placement logic
+- Valid target highlight presentation for Tower Upgrade Draft items
 
 Battle HUD UI System should not:
 
@@ -164,6 +170,7 @@ Battle HUD UI System should not:
 - Update GridNode walkability.
 - Decide placement legality.
 - Own tower placement workflow.
+- Validate tower level-up or tower upgrade rules.
 
 ---
 
@@ -185,7 +192,7 @@ Map System should not own tower placement rules or placement workflow.
 
 ## 4.5 Monster System
 
-Monster System owns monster spawning, movement, path recalculation, death flow, EXP reward reporting, and target arrival reporting.
+Monster System owns monster spawning, movement, path recalculation, death flow, monster resolution reporting, and target arrival reporting.
 
 Tower Placement System may affect Monster System indirectly by changing map walkability.
 
@@ -255,28 +262,30 @@ Tower Placement System should not hardcode tower-specific footprint rules.
 
 ---
 
-# 6. Pending Tower Deployment Area
+# 6. Draft Item Interaction Area
 
-The Pending Tower Deployment Area belongs to Battle HUD UI System.
+The Draft Item Interaction Area belongs to Battle HUD UI System.
 
-It stores towers that have been selected from Draft System but have not yet been placed onto the map.
+It stores Draft items that have been selected from Draft System but have not yet been consumed.
 
-The Pending Tower Deployment Area is responsible for:
+The Draft Item Interaction Area is responsible for:
 
-- Displaying pending tower entries.
-- Allowing players to select or drag pending towers.
-- Removing a tower entry when placement succeeds.
-- Keeping a tower entry when placement fails.
+- Displaying draggable Tower Draft and Tower Upgrade Draft items.
+- Allowing players to select or drag Draft items.
+- Removing a Draft item when placement, tower level-up, or upgrade application succeeds.
+- Keeping a Draft item when placement, tower level-up, or upgrade application fails.
 
-The Pending Tower Deployment Area is not responsible for:
+The Draft Item Interaction Area is not responsible for:
 
 - Grid snapping.
 - Placement validation.
 - GridNode walkability updates.
 - Pathfinding validation.
 - Tower combat logic.
+- Tower level-up validation.
+- Tower upgrade validation.
 
-Tower Placement System treats pending tower entries as placement input.
+Tower Placement System treats Draft items as placement or target-intent input.
 
 ---
 
@@ -290,7 +299,7 @@ Tower Placement System handles drag placement and final placement validation.
 
 The placement workflow is:
 
-1. Player selects or drags a tower from the Pending Tower Deployment Area.
+1. Player selects or drags a Tower Draft item from the Draft Item Interaction Area.
 2. Tower Placement System creates a placement preview object.
 3. The preview follows cursor or touch position.
 4. Center Anchor snaps to the nearest valid GridNode.
@@ -299,12 +308,42 @@ The placement workflow is:
 7. Tower Placement System validates final placement.
 8. If placement is valid, the tower is placed onto the map.
 9. Occupied GridNodes become unwalkable.
-10. Battle HUD UI System removes the pending tower entry.
-11. If placement is invalid, the tower remains in the Pending Tower Deployment Area.
+10. Battle HUD UI System removes the consumed Draft item.
+11. If placement is invalid, the Draft item remains in the Draft Item Interaction Area.
 
 ---
 
-## 7.2 Grid Snap Rules
+## 7.2 Existing Tower Target Intent
+
+When a Draft item is dragged onto an existing tower, Tower Placement System should detect the target intent and route it to TowerUpgradeSystem.
+
+Tower Draft item on existing tower:
+
+```text
+Tower Draft Item
+    ↓ Dropped On Existing Tower
+TowerPlacementSystem
+    ↓ Detect Same-Type Tower Target Intent
+TowerUpgradeSystem
+    ↓ Validate And Process Tower Level-Up Request
+```
+
+Tower Upgrade Draft item on existing tower:
+
+```text
+Tower Upgrade Draft Item
+    ↓ Dropped On Existing Tower
+TowerPlacementSystem
+    ↓ Detect Target Tower Intent
+TowerUpgradeSystem
+    ↓ Validate And Apply Upgrade
+```
+
+Tower Placement System should not decide whether the target tower satisfies TowerType, TowerLevel, duplicate upgrade, or max-level rules.
+
+---
+
+## 7.3 Grid Snap Rules
 
 The placement preview continuously snaps to the nearest GridNode.
 
@@ -438,7 +477,7 @@ Recommended runtime states:
 | State | Description |
 |---|---|
 | Normal | Standard gameplay |
-| PendingPlacement | At least one tower is stored in the Pending Tower Deployment Area |
+| PendingPlacement | At least one Draft item is available in the Draft Item Interaction Area |
 | TowerDragging | Tower placement preview active |
 | PlacementValidation | Placement legality checking |
 | TowerPlaced | Placement completed |
@@ -483,27 +522,29 @@ The first implementation focuses on the core placement loop.
 
 Included features:
 
-- Use pending tower entries from Battle HUD UI System as placement input.
+- Use Draft items from Battle HUD UI System as placement or target-intent input.
 - Tower anchor structure.
-- Tower drag placement from pending deployment area.
+- Tower drag placement from Draft Item Interaction Area.
 - Placement preview object.
 - Grid snapping.
 - Placement validation based on occupied anchors and walkable nodes.
 - Path-blocking validation integration point, enabled when current runtime pathfinding support is connected.
 - Runtime walkability updates.
 - Valid / invalid placement feedback.
-- Pending tower entry removal after successful placement.
+- Draft item removal after successful placement.
+- Existing tower target-intent detection for Tower Draft and Tower Upgrade Draft items.
 
 Excluded from first implementation:
 
 - Draft generation.
 - Draft Window UI.
-- Player EXP / level-up logic.
+- Player ResolvedMonsterCount / level-up logic.
 - Player HP / battle failure logic.
-- Tower upgrading.
+- Tower level-up validation and execution.
+- Tower upgrade validation and execution.
 - Weighted draft system.
 - Tower rarity.
-- Additional draft types beyond New Tower Draft and Tower Upgrade Draft.
+- Additional draft types beyond Tower Draft and Tower Upgrade Draft.
 - Tower recycle system.
 - Redeployment inventory.
 - Tower rotation.
@@ -553,15 +594,22 @@ PlayerSystem
 DraftSystem
     ↓ Draft Result
 BattleHUDUISystem
-    ↓ Pending Tower Entry
+    ↓ Draggable Draft Item
 TowerPlacementSystem
-    ↓ Runtime Placement
+    ↓ Runtime Placement Or Target Intent
 MapSystem
 ```
 
 ---
 
 # Change Log
+
+## 2026-06-18 (Draft Item Target Intent Sync)
+
+- Replaced pending tower interaction wording with Draft item interaction wording.
+- Clarified that Tower Placement System detects deployment or existing tower target intent.
+- Clarified that Tower Draft level-up requests and Tower Upgrade Draft application are routed to TowerUpgradeSystem.
+- Updated progression ownership wording from EXP to ResolvedMonsterCount.
 
 ## 2026-06-07
 

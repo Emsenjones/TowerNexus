@@ -10,7 +10,7 @@ The first version of the Draft System focuses on tower-related drafting.
 
 Current supported draft types:
 
-- New Tower Draft
+- Tower Draft
 - Tower Upgrade Draft
 
 Additional draft types may be added in future versions.
@@ -25,7 +25,7 @@ The Draft System should not directly handle:
 - Placement validation
 - GridNode occupancy
 - Runtime walkability updates
-- Player EXP calculation
+- Player ResolvedMonsterCount calculation
 - Player HP calculation
 - Runtime battle UI layout
 
@@ -52,7 +52,7 @@ The Draft System owns only:
 
 | System | Owns |
 |---|---|
-| Player System | Level, EXP, HP, battle failure |
+| Player System | Level, ResolvedMonsterCount progress, HP, battle failure |
 | Draft System | Draft generation and draft result workflow |
 | Battle HUD UI System | Draft window display and player interaction |
 | Tower Placement System | Tower deployment and placement validation |
@@ -70,9 +70,9 @@ Current gameplay flow:
 
 ```text
 MonsterSystem
-    ↓ Monster Dies
+    ↓ Monster Resolved
 PlayerSystem
-    ↓ Gain EXP
+    ↓ Advance ResolvedMonsterCount
 PlayerSystem
     ↓ OnPlayerLevelUp
 DraftSystem
@@ -85,14 +85,26 @@ DraftSystem
     ↓ Process Selection Result
 ```
 
-If the selected result is a New Tower Draft:
+If the selected result is a Tower Draft and the player deploys it onto the map:
 
 ```text
 DraftSystem
-    ↓ Process New Tower Draft
+    ↓ Process Tower Draft
 BattleHUDUISystem
-    ↓ Add Pending Tower Entry
+    ↓ Create Draggable Tower Draft Item
 TowerPlacementSystem
+    ↓ Place New Tower
+```
+
+If the selected Tower Draft is dragged onto an existing tower of the same TowerType:
+
+```text
+BattleHUDUISystem
+    ↓ Drag Tower Draft Item
+TowerPlacementSystem
+    ↓ Detect Existing Same-Type Tower Target
+TowerUpgradeSystem
+    ↓ Process Tower Level-Up Request
 ```
 
 If the selected result is a Tower Upgrade Draft:
@@ -100,24 +112,38 @@ If the selected result is a Tower Upgrade Draft:
 ```text
 DraftSystem
     ↓ Process Tower Upgrade Draft
+BattleHUDUISystem
+    ↓ Drag Upgrade Draft Item
+TowerPlacementSystem
+    ↓ Detect Target Tower Intent
 TowerUpgradeSystem
+    ↓ Apply Upgrade To Target Tower
 ```
 
 ---
 
 ## 5. Current Draft Types
 
-### 5.1 New Tower Draft
+### 5.1 Tower Draft
 
-A New Tower Draft gives the player a new deployable tower.
+A Tower Draft represents a tower card or tower item.
 
-The selected tower becomes a pending deployable tower entry handled later by Battle HUD UI System and Tower Placement System.
+The player may use a Tower Draft in two ways:
+
+1. Deploy it onto a valid deployment tile.
+2. Drag it onto an existing tower of the same TowerType to request a tower level-up.
+
+Deploying a Tower Draft consumes the draft item and creates a new tower.
+
+Using a Tower Draft as a tower level-up request consumes the draft item only if TowerUpgradeSystem accepts the request.
+
+TowerPlacementSystem only detects placement or target intent. TowerUpgradeSystem owns tower level-up rules and execution.
 
 ---
 
 ### 5.2 Tower Upgrade Draft
 
-A Tower Upgrade Draft gives the player an upgrade option for an existing tower type.
+A Tower Upgrade Draft gives the player an upgrade item for an eligible existing tower.
 
 Tower Upgrade Drafts may affect:
 
@@ -127,7 +153,7 @@ Tower Upgrade Drafts may affect:
 
 Draft System only generates the choice.
 
-Tower Upgrade System is responsible for applying the selected upgrade.
+Tower Upgrade System is responsible for validating the target tower and applying the selected upgrade.
 
 ---
 
@@ -152,16 +178,31 @@ Tower Placement System should not decide draft generation.
 
 ### 6.2 Tower Upgrade Pool
 
-Tower Upgrade Draft choices are generated from the player's current tower progression state.
+Tower Upgrade Draft choices are generated from the player's current tower instance state.
 
 The upgrade pool may be constructed using:
 
-- Current tower types owned by the player
-- Current tower levels
+- Current tower instances on the battlefield
+- Each tower instance's TowerType
+- Each tower instance's TowerLevel
 - Available upgrade layers
 - Upgrade definitions provided by Tower Upgrade System
 
-Detailed upgrade pool construction rules belong to Tower Upgrade System and may evolve in future versions.
+Upgrade pool generation is tower-instance weighted.
+
+Example:
+
+```text
+Battlefield
+- Archer Lv2 x 3
+- Cannon Lv1 x 1
+```
+
+Because three eligible Archer tower instances exist, Archer upgrade definitions naturally receive higher representation in the generated pool.
+
+Draft System should still prevent duplicate upgrade options from appearing in the same displayed Draft round.
+
+Detailed upgrade eligibility rules belong to Tower Upgrade System and may evolve in future versions.
 
 ---
 
@@ -172,7 +213,7 @@ Recommended first-version rules:
 | Rule | Description |
 |---|---|
 | Choice Count | 3 choices |
-| Duplicate Prevention | Optional |
+| Duplicate Prevention | Prevent duplicate displayed options within the same Draft round |
 | Random Weight | Equal weight initially |
 | Refresh System | Not included |
 | Rarity System | Not included |
@@ -204,7 +245,7 @@ Battle HUD UI System is responsible for:
 The first version supports:
 
 ```text
-New Tower Draft Result
+Tower Draft Result
 
 Tower Upgrade Draft Result
 ```
@@ -213,7 +254,7 @@ Future versions may support:
 
 | Draft Type | Example |
 |---|---|
-| Tower Draft | New tower |
+| Tower Draft | New tower or tower level-up request |
 | Tower Buff Draft | Buff specific tower |
 | Global Buff Draft | Global gameplay modifier |
 | Temporary Buff Draft | Temporary battle buff |
@@ -226,7 +267,7 @@ The Draft System should remain generic enough to support multiple future reward 
 
 ## 9. Draft Result Flow
 
-### 9.1 New Tower Draft Result Flow
+### 9.1 Tower Draft Result Flow
 
 ```text
 Player selects tower
@@ -235,10 +276,14 @@ DraftSystem validates selection
     ↓
 DraftSystem creates draft result
     ↓
-BattleHUDUISystem adds pending tower entry
+BattleHUDUISystem creates draggable Tower Draft item
     ↓
-TowerPlacementSystem handles deployment later
+TowerPlacementSystem detects deployment or same-type tower target intent
 ```
+
+If the Tower Draft item is dropped on a valid deployment tile, TowerPlacementSystem places the new tower.
+
+If the Tower Draft item is dropped on an existing tower with matching TowerType, TowerPlacementSystem forwards a tower level-up request to TowerUpgradeSystem.
 
 ---
 
@@ -251,7 +296,11 @@ DraftSystem validates selection
     ↓
 DraftSystem creates draft result
     ↓
-TowerUpgradeSystem applies upgrade
+BattleHUDUISystem creates draggable Tower Upgrade Draft item
+    ↓
+TowerPlacementSystem detects target tower intent
+    ↓
+TowerUpgradeSystem validates and applies upgrade
 ```
 
 ### 9.3 Ownership Rules
@@ -266,7 +315,8 @@ Battle HUD UI System owns:
 
 - Draft Window UI
 - Draft interaction UI
-- Pending tower entry display
+- Draggable draft item display
+- Valid target highlight presentation
 
 Tower Placement System owns:
 
@@ -300,7 +350,7 @@ The Draft System should remain event-driven and reward-type agnostic.
 
 ### Player System
 
-Player System owns EXP accumulation and level-up events.
+Player System owns ResolvedMonsterCount accumulation and level-up events.
 
 Draft System may subscribe to:
 
@@ -316,7 +366,7 @@ Battle HUD UI System displays:
 
 - Draft Window
 - Draft choices
-- Pending tower entries
+- Draggable draft items
 
 Draft System should not directly manage runtime UI layout.
 
@@ -330,21 +380,21 @@ Tower Upgrade System owns:
 - Upgrade application
 - Upgrade layer definitions
 
-Draft System may generate Tower Upgrade Draft results and forward them to Tower Upgrade System.
+Draft System may generate Tower Upgrade Draft results. TowerUpgradeSystem owns target validation, duplicate checks per tower, and final application.
 
 ---
 
 ### Tower Placement System
 
-Tower Placement System only handles deployment after a tower has already become a pending deployable entry.
+Tower Placement System only detects whether a dragged Draft item is targeting a deployment tile or an existing tower.
 
-Tower Placement System should not generate draft choices.
+Tower Placement System should not generate draft choices, decide tower level-up rules, or apply tower upgrades.
 
 ---
 
 ### Monster System
 
-Monster System may indirectly trigger Draft System progression through EXP rewards sent to Player System.
+Monster System may indirectly trigger Draft System progression through monster resolution reports sent to Player System.
 
 Monster System should not directly interact with Draft System.
 
@@ -356,10 +406,11 @@ Included features:
 
 - Player level-up draft trigger
 - 3-choice draft window
-- New Tower Draft
+- Tower Draft
 - Tower Upgrade Draft
 - Random tower selection
-- Pending tower entry creation
+- Draggable draft item creation
+- Same-round duplicate prevention for displayed upgrade options
 - Event-driven draft flow
 
 Excluded features:
@@ -375,6 +426,13 @@ Excluded features:
 ---
 
 # Change Log
+
+## 2026-06-18 (Tower Draft And Upgrade Draft Sync)
+
+- Replaced EXP-triggered draft wording with ResolvedMonsterCount-based level-up draft flow.
+- Renamed New Tower Draft direction to Tower Draft with deployment and same-type tower level-up use cases.
+- Routed Tower Draft level-up requests and Tower Upgrade Draft application to TowerUpgradeSystem.
+- Added tower-instance weighted Upgrade Draft Pool generation with same-round duplicate prevention for displayed options.
 
 ## 2026-05-24
 
