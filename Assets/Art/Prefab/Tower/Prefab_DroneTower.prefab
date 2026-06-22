@@ -286,7 +286,7 @@ GameObject:
   - component: {fileID: -4831914119387582302}
   - component: {fileID: 2299392899388808485}
   m_Layer: 0
-  m_Name: Prefab_WatchTower
+  m_Name: Prefab_DroneTower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
