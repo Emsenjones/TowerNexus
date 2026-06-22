@@ -64,16 +64,12 @@
 3. *Add damage display.
 4. *Tower and Projectile effect.
 5. Implement Tower upgrade system.
-   1. 07_TowerFrameworkSystem.md
-   2. 09_Projectile.md
-   3. 08_TowerRuntimeSystem.md and 
-   4. 10_TowerUpgradeSystem.md
-   5. 08_TowerRuntimeSystem.md and 09_Projectile.md
-   6. 05_DraftSystem.md
-   7. 01_PlayerSystem.md
-   8. 02_BattleHUDUISystem.md
-   9. 06_TowerPlacementSystem.md
-   10. 04_MonsterSystem.md
+   Phase 1: Tower Framework foundation
+   Phase 2: Projectile foundation + four base tower runtime
+   Phase 3: Upgrade data/application foundation
+   Phase 4: Runtime upgrade effects
+   Phase 5: Draft integration for deploy / level-up / upgrade
+   Phase 6: Player progression polish
 6. Develop Monster & Projectile object pool.
 7. Try to separate the Tower and it blocks.
 

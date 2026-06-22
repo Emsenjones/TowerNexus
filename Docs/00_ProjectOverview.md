@@ -390,7 +390,7 @@ Use the System Documents as the source of truth for each area:
 | Tower growth and upgrade concepts | `10_TowerUpgradeSystem.md` |
 | Area effects and future buff behavior | `11_BuffAndEffectSystem.md` |
 
-Task Documents under `Docs/Tasks/` are temporary implementation references.
+Task Documents under `Docs/Task/` are temporary implementation references.
 
 After a Task implementation is completed, its Task Document may be removed while the corresponding System Document remains as the long-term reference.
 
