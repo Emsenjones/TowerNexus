@@ -180,7 +180,11 @@ Tower Placement System should not decide draft generation.
 
 Tower Upgrade Draft choices are generated from the player's current tower instance state.
 
-The upgrade pool may be constructed using:
+Draft System owns Tower Upgrade Draft pool generation.
+
+TowerUpgradeSystem provides upgrade definitions and eligibility checks, but Draft System owns how those eligible candidates are gathered, weighted, sampled, deduplicated for display, and presented as Draft choices.
+
+The upgrade pool should be constructed using:
 
 - Current tower instances on the battlefield
 - Each tower instance's TowerType
@@ -188,7 +192,16 @@ The upgrade pool may be constructed using:
 - Available upgrade layers
 - Upgrade definitions provided by Tower Upgrade System
 
-Upgrade pool generation is tower-instance weighted.
+For every tower instance, Draft System should request or evaluate eligible upgrades using TowerUpgradeSystem rules:
+
+- Determine TowerType.
+- Determine TowerLevel.
+- Gather all valid upgrades that tower is eligible for.
+- Exclude upgrades already owned by that tower.
+
+The resulting candidate set forms the Tower Upgrade Draft Pool for the current Draft.
+
+Tower Upgrade Draft Pool generation is tower-instance weighted.
 
 Example:
 
@@ -200,13 +213,21 @@ Battlefield
 
 Because three eligible Archer tower instances exist, Archer upgrade definitions naturally receive higher representation in the generated pool.
 
+This creates the desired behavior:
+
+- More invested tower types appear more often in upgrade drafts.
+- More high-level towers create more opportunities to discover higher-level upgrades.
+- The player can shape future upgrade discovery by choosing which towers to deploy and level.
+
 Draft System should still prevent duplicate upgrade options from appearing in the same displayed Draft round.
+
+The pool may contain weighted duplicate candidates internally, but the final displayed choices should not show the same upgrade definition more than once in a single Draft window.
 
 Detailed upgrade eligibility rules belong to Tower Upgrade System and may evolve in future versions.
 
 ---
 
-### 6.2 Current First-Version Rules
+### 6.3 Current First-Version Rules
 
 Recommended first-version rules:
 

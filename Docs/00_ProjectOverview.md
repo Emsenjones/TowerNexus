@@ -6,8 +6,6 @@ Unlike traditional tower defense games where towers only act as combat units, to
 
 The core experience is built around meaningful placement decisions, path manipulation, random build creation, and gradual tower growth during each run.
 
-Tower Nexus is not designed as an EXP-driven tower defense game. Player progression is driven by monster resolution and the next Draft opportunity.
-
 ---
 
 # 2. Core Gameplay Loop
@@ -81,6 +79,19 @@ ProjectileConfig
     ↓
 EffectConfig
 ```
+
+Current first-version tower lineup:
+
+- Archer Tower
+- Cannon Tower
+- Magic Tower
+- Drone Tower
+
+Archer Tower and Cannon Tower keep their existing functional direction.
+
+Magic Tower is redesigned around a persistent orbiting Magic Orb rather than a channel beam.
+
+Watch Tower is removed from the current first-version tower lineup and replaced by Drone Tower.
 
 Future versions may additionally introduce:
 
@@ -205,6 +216,7 @@ Responsible for:
 - TowerDefinition
 - AttackConfig
 - Attack archetypes
+- Attack Entity concepts
 - Target selection types
 - Attack presentation configuration
 - Animator presentation parameter definitions
@@ -227,15 +239,20 @@ Responsible for:
 - Enemy detection
 - Target selection
 - Attack cooldown management
-- Channel attack state management
-- Periodic area attack state management
+- Attack Entity spawning or control
+- Magic Orb lifecycle orchestration
+- Drone launch, return, and recharge orchestration
 - Attack execution
 - Attack animation state control
 - Attack visual effect hook triggering
 - Projectile creation and initialization
 - Damage dispatch coordination
 
-Projectile lifecycle execution belongs to Projectile System.
+Tower Runtime Combat decides when an attack happens.
+
+Attack Entities decide how the attack behaves.
+
+Projectile lifecycle execution belongs to Projectile System when the Attack Entity is a projectile.
 
 ---
 
@@ -256,6 +273,16 @@ Responsible for:
 Does not own tower targeting, attack cooldowns, area damage resolution, buff application, or monster health logic.
 
 Projectile impact VFX is presentation-only and should not affect hit detection, damage dispatch, area damage execution, or projectile lifetime rules.
+
+Projectile is a shared runtime concept for projectile-style Attack Entities.
+
+Current first-version projectile flight behaviors:
+
+- Direction
+- Arc
+- Tracking
+
+Future projectile-style attacks should extend this shared framework whenever practical.
 
 ---
 
@@ -311,7 +338,7 @@ TowerPlacementSystem
 TowerUpgradeSystem
     ↓ Tower Level / Upgrade Request
 TowerRuntimeCombatSystem
-    ↓ Attack Execution / Projectile Creation
+    ↓ Attack Execution / Attack Entity Creation
 ProjectileSystem
     ↓ Hit Detection / Impact Event
 BuffAndEffectSystem

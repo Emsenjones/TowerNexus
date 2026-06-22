@@ -183,7 +183,7 @@ Invalid Targets:
 - Archer Lv1
 - Cannon Towers
 - Magic Towers
-- Watch Towers
+- Drone Towers
 ```
 
 ## 4.2 Duplicate Rules
@@ -202,46 +202,36 @@ Archer B may still receive Multi Shot.
 
 ---
 
-# 5. Upgrade Pool Generation
+# 5. Upgrade Eligibility Support
 
-Upgrade pool generation is tower-instance driven.
+TowerUpgradeSystem provides upgrade definitions and eligibility rules used by DraftSystem when DraftSystem builds Tower Upgrade Draft pools.
 
-When Draft System requests Tower Upgrade Draft options, the system should inspect all towers currently present on the battlefield.
+TowerUpgradeSystem owns:
 
-For every tower instance:
+- TowerType matching rules
+- Required Tower Level checks
+- Per-tower duplicate upgrade checks
+- Upgrade definition lookup
+- Upgrade application validation
 
-- Determine TowerType.
-- Determine TowerLevel.
-- Gather all valid upgrades that tower is eligible for.
-- Exclude upgrades already owned by that tower.
+TowerUpgradeSystem does not own:
 
-The resulting candidate set forms the Upgrade Pool for the current Draft.
+- Draft pool generation timing
+- Tower-instance weighting
+- Draft choice count
+- Same-round duplicate prevention for displayed Draft options
+- Reroll, rarity, or future Draft presentation rules
 
-## 5.1 Tower-Instance Weighting
+Those Draft option generation rules belong to DraftSystem.
 
-Upgrade Draft Pool should be tower-instance weighted.
-
-Example:
+When requested by DraftSystem, TowerUpgradeSystem may expose helper queries such as:
 
 ```text
-Battlefield
-- Archer Lv2 x 3
-- Cannon Lv1 x 1
+GetEligibleUpgradesForTower(towerInstance)
+CanApplyUpgrade(towerInstance, upgradeDefinition)
 ```
 
-Because three eligible Archer tower instances exist, Archer upgrades naturally have higher representation in the generated pool.
-
-This creates the desired behavior:
-
-- More invested tower types appear more often in upgrade drafts.
-- More high-level towers create more opportunities to discover higher-level upgrades.
-- The player can shape future upgrade discovery by choosing which towers to deploy and level.
-
-## 5.2 Same-Round Duplicate Prevention
-
-Displayed Draft options should prevent duplicates within the same Draft round.
-
-The pool may contain weighted duplicate candidates internally, but the final displayed choices should not show the same upgrade definition more than once in a single Draft window.
+These helpers should answer eligibility questions only. They should not decide how DraftSystem samples, weights, or displays the final Draft choices.
 
 ---
 
@@ -286,9 +276,22 @@ Examples:
 | Archer Tower | Pierce |
 | Cannon Tower | Larger explosion radius |
 | Cannon Tower | Secondary explosion |
-| Laser Tower | Damage ramps up over time |
-| Magic Tower | Larger aura radius |
-| Magic Tower | Faster aura tick rate |
+| Magic Tower | Additional Orb |
+| Magic Tower | Unlimited Hits |
+| Magic Tower | Consecutive Hit Bonus |
+| Drone Tower | Dual Drones |
+| Drone Tower | Missile Attack |
+
+Current design-reference upgrade ideas:
+
+| Tower | Lv1 Ideas | Lv2 Ideas |
+|---|---|---|
+| Archer Tower | Arrow Damage, Attack Interval | Pierce Arrow, Scatter Arrow, Split Arrow |
+| Cannon Tower | Shell Damage, Attack Interval | Bouncing Shell, Burning Shell, Delayed Shell |
+| Magic Tower | Orb Rotation Speed, Orb Damage | Additional Orb, Unlimited Hits, Consecutive Hit Bonus |
+| Drone Tower | Bullet Damage, Recharge Time | Dual Drones, Missile Attack |
+
+These upgrade ideas are design references for framework extensibility. They are not part of the current implementation scope unless a later Task Document explicitly adopts them.
 
 Purpose:
 
@@ -379,13 +382,19 @@ Future versions may expand this system with:
 
 # Change Log
 
+## 2026-06-22
+
+- Updated upgrade examples from the previous Watch/beam direction to current Archer, Cannon, Magic Orb, and Drone tower direction.
+- Added design-reference upgrade ideas from the Tower Combat Framework v3 discussion.
+- Clarified that listed upgrade ideas are not current implementation scope by themselves.
+
 ## 2026-06-18 (Tower Level And Instance Upgrade Sync)
 
 - Added Tower Level as a light growth layer separate from Tower Upgrades.
 - Added max tower level target, TowerDefinition-owned per-level config direction, and tower level-up request rules.
 - Clarified that Tower Upgrades are applied to individual tower instances and are not global upgrades.
 - Added per-tower duplicate upgrade rules.
-- Added tower-instance weighted Upgrade Draft Pool generation with same-round duplicate prevention for displayed Draft options.
+- Clarified TowerUpgradeSystem as the eligibility and application rule owner used by DraftSystem's Tower Upgrade Draft pool generation.
 
 ## 2026-05-29
 

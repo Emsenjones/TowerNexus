@@ -53,7 +53,7 @@ These responsibilities belong to other systems.
 
 The Projectile System should remain independent from tower-specific logic.
 
-Projectile behaviour should be determined by AttackConfig rather than tower type.
+Projectile behaviour should be determined by AttackConfig and projectile-style Attack Entity behavior rather than tower type.
 
 Bad:
 
@@ -75,13 +75,23 @@ Spawn Projectile
 Execute Matching Projectile Behaviour
 ```
 
-Projectile movement style is determined by AttackConfig.attackArchetype.
+Projectile movement style is determined by the projectile-style Attack Entity behavior selected by AttackConfig.
 
 ProjectileConfig should never contain a movement type field.
 
-Movement ownership belongs to AttackConfig.attackArchetype to avoid duplicate configuration and conflicting runtime behavior.
+Movement ownership belongs to AttackConfig and the Attack Entity behavior to avoid duplicate configuration and conflicting runtime behavior.
 
 The Projectile System should only care about projectile runtime execution.
+
+Projectile is a shared runtime concept for projectile-style Attack Entities.
+
+Examples:
+
+- Archer Tower spawns Arrow projectile Attack Entities.
+- Cannon Tower spawns Shell projectile Attack Entities.
+- Drone is an Attack Entity which may spawn Projectile Attack Entities.
+
+Magic Orb and Drone themselves are Attack Entities, but they do not have to use the full projectile impact lifecycle unless their behavior is implemented as projectile-style movement and hit resolution.
 
 ---
 
@@ -170,6 +180,7 @@ Examples of data that should remain in AttackConfig:
 - attackInterval
 - attackArchetype
 - arcHeight
+- tracking behavior parameters when owned by attack behavior rather than projectile-specific visuals
 
 ProjectileConfig should focus on projectile-specific configuration.
 
@@ -249,27 +260,29 @@ EffectConfig should not be required just to play a visual impact effect. A proje
 
 ---
 
-## 8. Projectile Movement Types
+## 8. Projectile Flight Behaviors
 
-The first version supports two movement types.
+The first version supports three projectile flight behaviors.
 
-### Straight Movement
+### Direction Flight
 
-Used by arrow-style projectiles.
+Used by arrow-style projectiles and other projectiles that travel in a fixed direction after launch.
 
 Example:
 
 ```text
 Spawn
     ↓
-Move Directly Toward Target
+Move In Launch Direction
     ↓
 Hit Monster
 ```
 
+The selected target may define the initial launch direction, but the projectile is not required to remain locked to that target after launch.
+
 ---
 
-### Arc Movement
+### Arc Flight
 
 Used by cannonball-style projectiles.
 
@@ -284,6 +297,26 @@ Reach Target Position
 ```
 
 Arc height is provided by AttackConfig.arcHeight.
+
+---
+
+### Tracking Flight
+
+Used by projectile-style attacks that update their travel direction toward a target or target reference over time.
+
+Example:
+
+```text
+Spawn
+    ↓
+Track Target Or Target Reference
+    ↓
+Hit Monster Or Expire
+```
+
+Tracking flight is useful for future missiles, homing shots, and Drone-fired projectile variants.
+
+Tracking projectiles still belong to Projectile System after they are created and initialized. Tower Runtime Combat or the spawning Attack Entity provides the source, target information, and AttackConfig data.
 
 ---
 
@@ -305,7 +338,6 @@ This prevents projectile prefabs from appearing sideways, backwards, or requirin
 
 Future versions may support:
 
-- Homing
 - Chain
 - Split
 - Boomerang
@@ -313,7 +345,7 @@ Future versions may support:
 
 ---
 
-## 8. Hit Detection
+## 9. Hit Detection
 
 Different projectile types may use different hit conditions.
 
@@ -357,7 +389,7 @@ The Projectile System does not determine what the hit does.
 
 ---
 
-## 9. Impact Event Triggering
+## 10. Impact Event Triggering
 
 When a projectile hits a valid target or arrives at a valid position, it generates an impact event.
 
@@ -397,7 +429,7 @@ For complex impact behavior such as area damage, buff application, chained effec
 
 ---
 
-## 10. Relationship With Other Systems
+## 11. Relationship With Other Systems
 
 ### Tower Runtime Combat System
 
@@ -407,6 +439,26 @@ Responsible for:
 - Initializing projectile runtime state
 - Providing target information
 - Providing AttackConfig data
+
+---
+
+### Attack Entities
+
+Responsible for:
+
+- Spawning projectile Attack Entities when their behavior requires it
+- Providing projectile source context
+- Providing target or launch direction context
+
+Example:
+
+```text
+Drone Attack Entity
+    ↓
+Spawn Projectile Attack Entity
+    ↓
+Projectile System handles flight, hit detection, impact event, and destruction
+```
 
 ---
 
@@ -431,19 +483,19 @@ Responsible for:
 
 ---
 
-## 11. First Version Scope
+## 12. First Version Scope
 
 The first version supports:
 
-- Straight Movement
-- Arc Movement
+- Direction Flight
+- Arc Flight
+- Tracking Flight
 - Monster Collision Hit Detection
 - Position Arrival Hit Detection
 - Impact Event Triggering
 
 The first version intentionally excludes:
 
-- Homing Projectiles
 - Piercing Projectiles
 - Chain Projectiles
 - Split Projectiles
@@ -453,7 +505,7 @@ These features may be added in future versions.
 
 ---
 
-## 12. Summary
+## 13. Summary
 
 Projectile creation is owned by the Tower Runtime Combat System. The Projectile System begins responsibility after a projectile has been initialized.
 
@@ -467,3 +519,13 @@ The system is responsible for:
 - Destroying projectiles
 
 The system should remain independent from tower-specific logic. Simple projectile-to-monster hits may dispatch direct single-target damage, while complex combat results should be delegated to the Buff And Effect System.
+
+---
+
+# Change Log
+
+## 2026-06-22
+
+- Updated projectile movement language to projectile flight behaviors: Direction, Arc, and Tracking.
+- Clarified Projectile as a shared runtime concept for projectile-style Attack Entities.
+- Added Drone relationship: Drone is an Attack Entity which may spawn Projectile Attack Entities.

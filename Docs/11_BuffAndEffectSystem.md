@@ -265,9 +265,9 @@ Responsible for:
 Example:
 
 ```text
-Watch Tower Tick
+Attack Entity Contact Or Projectile Impact
     ↓
-May Trigger Area Damage Logic Directly
+May Trigger Direct Damage Or Effect Execution Depending On The Attack Result
 ```
 
 ---
@@ -316,3 +316,11 @@ In the first version, the system only needs to support AreaDamageEffect and area
 Direct projectile hit damage remains part of the Projectile System and MonsterBehaviour damage flow.
 
 This keeps the current combat implementation simple while preserving clear extension points for future buff and effect features.
+
+---
+
+# Change Log
+
+## 2026-06-22
+
+- Replaced the previous Watch Tower runtime example with a generic Attack Entity or projectile impact example to match the current Archer, Cannon, Magic, and Drone tower lineup.

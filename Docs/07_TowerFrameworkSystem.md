@@ -243,8 +243,8 @@ Current first-version tower categories:
 |---|---|
 | Archer | Fires fast straight-line arrows toward enemies |
 | Cannon | Launches arcing explosive shells toward enemy positions |
-| Magic | Locks onto one enemy and channels a continuous magic beam for a limited attack duration |
-| Watch | Periodically damages all enemies within its attack radius |
+| Magic | Maintains orbiting Magic Orb attack entities that contact enemies and consume hit count |
+| Drone | Launches an autonomous Drone attack entity that fights away from the tower and may spawn projectile attack entities |
 
 Future categories may include:
 
@@ -252,30 +252,63 @@ Future categories may include:
 - Trap Tower
 - Summon Tower
 - Resource Tower
+- Watch Tower
 
 ---
 
-# 7. Attack Archetypes
+# 7. Attack Entities and Archetypes
 
-Attack archetypes define the fundamental attack behavior of a tower.
+Attack archetypes define the fundamental attack behavior expressed by a tower.
 
-Recommended first-version archetypes:
+Towers orchestrate combat while Attack Entities execute combat behavior.
+
+Tower responsibilities:
+
+- Detect monsters
+- Select targets when required
+- Manage cooldowns
+- Decide attack timing
+- Spawn or control Attack Entities
+
+Attack Entity responsibilities:
+
+- Movement
+- Orbit or tracking behavior
+- Hit detection
+- Damage dispatch
+- Lifetime
+
+Tower decides when an attack happens.
+
+Attack Entity decides how the attack behaves.
+
+Current first-version Attack Entities:
 
 | Archetype | Description |
 |---|---|
-| StraightProjectile | Fires a projectile in a straight trajectory toward the selected target direction. After launch, the projectile travels independently and applies damage when it hits any valid monster within its hit threshold |
-| ArcProjectile | Launches a projectile in an arcing trajectory toward a target position |
-| ChannelBeam | Locks onto one target and continuously damages it during a limited attack duration |
-| PeriodicArea | Periodically applies damage to all valid enemies within the tower attack radius |
+| Arrow | Direction projectile attack entity fired by Archer Tower |
+| Shell | Arc projectile attack entity fired by Cannon Tower |
+| Magic Orb | Orbiting attack entity owned by Magic Tower |
+| Drone | Autonomous attack entity launched by Drone Tower |
+
+Projectile is a shared runtime concept supporting projectile-style Attack Entities.
+
+Current first-version projectile flight behaviors:
+
+- Direction
+- Arc
+- Tracking
+
+Future Laser, Area, Trap, Boomerang, Missile, and Summon Towers should primarily be implemented by introducing new Attack Entity behavior rather than continuously expanding TowerCombatBehaviour.
 
 Examples:
 
-| Tower | Archetype | Core Behavior |
+| Tower | Attack Entity | Core Behavior |
 |---|---|---|
-| Archer Tower | StraightProjectile | Fires low-damage arrows with short range and high attack speed |
-| Cannon Tower | ArcProjectile | Fires slow arcing shells with long range; shells explode on impact and deal area damage |
-| Magic Tower | ChannelBeam | After cooldown, selects one target and channels a beam for up to the configured attack duration; if the target dies early, the tower enters cooldown immediately |
-| Watch Tower | PeriodicArea | While enemies are within range, periodically damages all enemies inside its attack radius |
+| Archer Tower | Arrow | Fires low-damage direction projectiles with short range and high attack speed |
+| Cannon Tower | Shell | Fires slow arcing shells with long range; shells explode on arrival and deal area damage |
+| Magic Tower | Magic Orb | Maintains orbiting magic weapon behavior with contact damage and hit-count lifetime |
+| Drone Tower | Drone | Launches an autonomous drone that hovers near enemies, fires projectiles, consumes battery, returns, and recharges |
 
 ---
 
@@ -292,6 +325,7 @@ Design intent:
 - After launch, the projectile travels independently and is not required to hit the originally selected target
 - During flight, the projectile continuously checks whether any valid monster's hit/reference anchor is within its hit distance threshold
 - If one or more valid monsters are within the hit distance threshold, the projectile hits the nearest valid monster and applies damage
+- Attack cooldown starts immediately after the arrow is fired, not after impact
 - If no valid monster is hit before the projectile reaches its maximum lifetime, the projectile is destroyed automatically
 
 
@@ -318,6 +352,7 @@ Design intent:
 - Projectile travels toward a selected enemy reference position
 - Projectile explodes when it reaches the target position or impact point
 - Explosion deals area damage to enemies within the explosion radius
+- Attack cooldown starts immediately after the shell is launched, not after explosion
 
 The cannon projectile itself should be handled by projectile runtime logic.
 
@@ -336,54 +371,61 @@ Explosion visuals should follow gameplay impact timing. Particle collision shoul
 
 ## 7.3 Magic Tower Attack Pattern
 
-Magic Tower uses channel beam attacks.
+Magic Tower uses an orbiting Magic Orb attack entity.
 
 Design intent:
 
-- After cooldown ends, the tower selects one valid target
-- The tower locks onto that target and channels a magic beam
-- The beam applies damage in discrete ticks during the attack duration
-- Damage timing is controlled by channelDamageInterval
-- If the target dies before the attack duration ends, the tower immediately enters cooldown
-- If the attack duration ends and the target is still alive, the tower enters cooldown
-- After cooldown ends, the tower selects a target again
+- The tower continuously owns one Magic Orb when the orb is active
+- The Magic Orb rotates around the tower
+- The Magic Orb checks distance to monsters while orbiting
+- Contact deals damage
+- The Magic Orb has a configurable maximum hit count
+- Hit count decreases after each successful hit
+- One Magic Orb may hit the same monster only once per orbit
+- When hit count reaches zero, the Magic Orb disappears
+- After cooldown, the tower generates a new Magic Orb
 
 
-Magic Tower does not require buff configuration in the first version. Its damage is owned by tower runtime attack logic.
+Magic Tower does not require buff configuration in the first version. Its damage is owned by Magic Orb attack entity behavior.
 
 VFX expectation:
 
-- May use a ChannelBeam VFX prefab controlled by runtime logic. This prefab may be an empty GameObject with a dedicated Beam VFX control script and Inspector-configured visual references.
-- The beam start point should follow the tower AttackOrigin
-- The beam end point should follow the current target's monster-side hit/reference anchor
-- The beam VFX should be updated while the tower remains in channeling state
-- The beam VFX should stop when the channel ends, the target dies, or the target becomes invalid
+- May use visual references on the Magic Orb prefab for orbiting presentation
+- The Magic Orb visual should follow the runtime orbit path
+- Contact VFX may play when the Magic Orb successfully hits a monster
+- The Magic Orb visual should stop or despawn when the Magic Orb lifetime ends
 
-ChannelBeam VFX is presentation-only and must not apply damage, search targets, or determine hit results.
+Magic Orb VFX is presentation-only and must not apply damage, search targets, or determine hit results.
 
 ---
 
-## 7.4 Watch Tower Attack Pattern
+## 7.4 Drone Tower Attack Pattern
 
-Watch Tower uses periodic area attacks.
+Drone Tower uses an autonomous Drone attack entity.
 
 Design intent:
 
-- The tower checks for valid enemies inside its attack radius
-- If enemies are inside the radius, the tower periodically deals damage to all valid enemies in range
-- Example: if attack interval is 1 second, the tower deals damage once per second to all enemies currently within range
-- Enemies entering or leaving the radius are naturally included or excluded by the next periodic damage tick
+- The Drone rests on the tower when inactive
+- When monsters enter range, the Drone launches
+- The Drone selects a target
+- The Drone flies near the target and hovers while facing it
+- If the target moves away, the Drone relocates to maintain hover distance
+- The Drone periodically fires straight projectiles
+- Drone flight consumes battery
+- When battery is depleted or no monsters remain, the Drone returns to recharge
+- Once recharged and monsters exist, the Drone launches again
 
+Drone is an Attack Entity which may spawn Projectile Attack Entities.
 
-Watch Tower should not apply a damage-over-time buff in the first version. The damage source is the Watch Tower itself, not a buff attached to each enemy.
+Drone Tower does not require buff configuration in the first version. Projectile damage fired by Drone should follow projectile attack entity rules.
 
 VFX expectation:
 
-- May use a looping PeriodicArea VFX prefab centered on the tower or AttackOrigin
-- The area VFX may be active while one or more valid enemies are inside attackRange
-- The prefab's authored scale should visually match the tower's configured attackRange in the first version
+- The Drone visual should support resting, launching, hovering, returning, and recharging states
+- Projectile travel and impact VFX should follow projectile runtime and impact timing
+- Drone battery or recharge presentation should remain visual feedback only unless explicitly connected to gameplay state by runtime logic
 
-PeriodicArea VFX is presentation-only. Periodic damage is still controlled by attackInterval and attackRange.
+Drone VFX is presentation-only and must not own target selection, battery rules, projectile hit detection, or damage.
 
 # 8. Attack Configuration
 
@@ -419,7 +461,7 @@ AttackConfig defines:
 - Target selection rules
 - Projectile references
 - Projectile trajectory parameters
-- Channel attack parameters
+- Attack Entity behavior parameters
 - Animator parameter names for attack presentation
 - Optional attack VFX prefab references
 
@@ -431,7 +473,7 @@ Examples of runtime state:
 
 - Current target
 - Cooldown timer
-- Channel timer
+- Attack Entity lifetime state
 - Detected enemies
 - Attack execution state
 
@@ -451,13 +493,16 @@ Recommended first-version fields:
 | damage | int | Base damage value |
 | projectileConfig | ProjectileConfig | Direct projectile configuration reference |
 | arcHeight | float | Arc projectile trajectory height |
-| channelDamageInterval | float | Damage application interval during channeling |
-| maxChannelDuration | float | Maximum channel duration |
+| magicOrbRotationSpeed | float | Rotation speed for Magic Orb behavior |
+| magicOrbMaxHitCount | int | Maximum number of successful hits before a Magic Orb disappears |
+| droneBatteryDuration | float | Maximum active flight duration before Drone must return |
+| droneRechargeDuration | float | Recharge time before Drone may launch again |
+| droneHoverDistance | float | Preferred hover distance from the selected target |
 | attackAnimatorTriggerName | string | Animator Trigger parameter used by projectile-based attacks |
 | attackingAnimatorBoolName | string | Animator Bool parameter used by continuous attack archetypes |
 | projectileReleaseVfxPrefab | GameObject | Optional one-shot VFX prefab spawned at AttackOrigin when a projectile attack is released |
-| channelBeamVfxPrefab | GameObject | Optional continuous beam VFX prefab used by ChannelBeam attacks |
-| periodicAreaVfxPrefab | GameObject | Optional looping field VFX prefab used by PeriodicArea attacks |
+| magicOrbPrefab | GameObject | Optional Magic Orb attack entity prefab |
+| dronePrefab | GameObject | Optional Drone attack entity prefab |
 
 Not every attack archetype requires every field.
 
@@ -490,7 +535,7 @@ However, animator parameter names remain configurable through AttackConfig.
 
 Different attack archetypes consume different AttackConfig fields.
 
-### StraightProjectile
+### Direction Projectile
 
 Typically uses:
 
@@ -506,8 +551,9 @@ Notes:
 
 - targetSelectionType is used by the tower to select an initial target before firing.
 - The selected target's monster-side hit/reference anchor provides the launch direction for the projectile.
-- After launch, StraightProjectile hit detection belongs to the Projectile System.
+- After launch, direction projectile hit detection belongs to the Projectile System.
 - The projectile may hit any valid monster encountered during flight, not only the originally selected target.
+- Attack cooldown starts immediately after the projectile is fired.
 - The projectile should be destroyed by projectile runtime logic when it exceeds its maximum lifetime.
 
 VFX notes:
@@ -518,7 +564,7 @@ VFX notes:
 
 ---
 
-### ArcProjectile
+### Arc Projectile
 
 Typically uses:
 
@@ -535,6 +581,7 @@ Notes:
 
 - The selected target's monster-side hit/reference anchor provides the target position snapshot.
 - Explosion radius and area damage behavior belong to the Projectile System and Buff And Effect System, not AttackConfig.
+- Attack cooldown starts immediately after the projectile is launched.
 
 VFX notes:
 
@@ -544,64 +591,64 @@ VFX notes:
 
 ---
 
-### ChannelBeam
+### Magic Orb
 
 Typically uses:
 
 - attackRange
 - attackInterval
 - damage
-- channelDamageInterval
-- maxChannelDuration
-- targetSelectionType
+- magicOrbRotationSpeed
+- magicOrbMaxHitCount
 - attackingAnimatorBoolName
-- channelBeamVfxPrefab
+- magicOrbPrefab
 
 Notes:
 
-- channelDamageInterval controls how frequently damage is applied while channeling.
-- maxChannelDuration controls the maximum duration of a single channel attack.
-- attackInterval controls the cooldown duration after a channel attack ends.
-- When a channel attack ends because the duration expires or the target becomes invalid, the tower enters cooldown.
-- After cooldown ends, the tower may begin a new channel attack if a valid target exists.
+- magicOrbRotationSpeed controls how quickly the Magic Orb rotates around the tower.
+- magicOrbMaxHitCount controls how many successful hits the active Magic Orb can perform before disappearing.
+- The Magic Orb may hit the same monster only once per orbit.
+- attackInterval controls the cooldown before a new Magic Orb is generated after the active orb ends.
+- Magic Orb behavior does not require targetSelectionType in the first version.
 
 VFX notes:
 
-- channelBeamVfxPrefab should be controlled by runtime combat logic while channeling.
-- The beam visual should bind to AttackOrigin and the current target's monster-side hit/reference anchor.
-- Beam VFX should not own damage, target search, or hit validation.
+- magicOrbPrefab may contain visual references for orbiting and contact feedback.
+- Magic Orb VFX should not own damage, target search, orbit hit rules, or hit validation.
 
 ---
 
-### PeriodicArea
+### Drone
 
 Typically uses:
 
 - attackRange
 - attackInterval
 - damage
-- attackingAnimatorBoolName
-- periodicAreaVfxPrefab
-
-PeriodicArea attacks do not require:
-
-- projectileConfigId
+- projectileConfig
 - targetSelectionType
+- droneBatteryDuration
+- droneRechargeDuration
+- droneHoverDistance
+- attackingAnimatorBoolName
+- dronePrefab
 
-TargetSelectionType is not used by PeriodicArea because the tower applies damage to all valid monsters within attackRange.
+Notes:
 
-attackInterval controls how often area damage is applied.
+- targetSelectionType is used when the Drone chooses a target.
+- droneBatteryDuration controls how long the Drone can remain active away from the tower.
+- droneRechargeDuration controls how long the Drone must recharge after returning.
+- droneHoverDistance controls the preferred distance between the Drone and its current target.
+- Drone is an Attack Entity which may spawn Projectile Attack Entities.
+- Projectiles fired by Drone should use ProjectileConfig and Projectile System behavior.
+- Drone battery, return, and recharge behavior should belong to Drone attack entity runtime logic.
 
-When one or more valid enemies exist within attackRange, the tower remains in its active attack state.
-When no valid enemies exist within attackRange, the tower returns to its idle state.
-
-attackingAnimatorBoolName controls the Animator Bool parameter used to enter and exit the periodic area attack visual state.
+attackInterval controls how often the Drone fires while it is in a valid hover attack state.
 
 VFX notes:
 
-- periodicAreaVfxPrefab may be used as a looping field effect while the tower is active.
-- The authored periodicAreaVfxPrefab scale should visually match the tower's configured attackRange in the first version.
-- PeriodicArea VFX should not own damage ticks or enemy detection.
+- dronePrefab may contain visual references for launch, hover, return, and recharge presentation.
+- Drone VFX should not own target selection, battery rules, projectile hit detection, or damage.
 
 ---
 
@@ -652,10 +699,10 @@ Archetype usage:
 
 | AttackArchetype | Uses TargetSelectionType |
 |---|---|
-| StraightProjectile | Yes |
-| ArcProjectile | Yes |
-| ChannelBeam | Yes |
-| PeriodicArea | No |
+| Direction Projectile | Yes |
+| Arc Projectile | Yes |
+| Magic Orb | No |
+| Drone | Yes |
 
 Examples:
 
@@ -663,8 +710,8 @@ Examples:
 |---|---|
 | Archer | Selects one target before firing |
 | Cannon | Selects one target or target position before firing |
-| Magic | Selects one target before channeling |
-| Watch | Does not need single-target selection; it damages all enemies within range |
+| Magic | Does not need single-target selection for first-version orbiting Magic Orb behavior |
+| Drone | Selects one target for Drone hover and projectile fire behavior |
 
 ---
 
@@ -678,13 +725,13 @@ First-version recommendation:
 |---|---|
 | Archer | No buff/effect required; projectile collision applies direct damage |
 | Cannon | Projectile impact may trigger an AreaDamageEffect; no buff required |
-| Magic | No buff required; channel damage is owned by tower runtime combat logic |
-| Watch | No buff required; periodic area damage is owned by tower runtime combat logic |
+| Magic | No buff required; Magic Orb contact damage is owned by attack entity behavior |
+| Drone | No buff required; Drone-fired projectile damage follows projectile attack entity rules |
 
 Guideline:
 
 - Use Projectile runtime logic for projectile movement and collision.
-- Use Effect logic for instant gameplay events such as explosion damage, impact visuals, or area damage calculation.
+- Use Effect logic for instant gameplay events such as explosion damage or area damage calculation.
 - Use Buff logic only when a gameplay state is attached to a unit over time, such as poison, slow, burn, weaken, or armor reduction.
 
 Cannon Tower explosion should be treated as an instant area damage effect rather than a buff.
@@ -733,11 +780,11 @@ Included:
 
 - TowerDefinition structure
 - Tower categories
-- Attack archetypes
+- Attack Entity concepts and archetypes
 - Target selection types
 - Runtime system references
 - Basic relationship between tower attacks, effects, and buffs
-- Optional AttackConfig VFX references for projectile release, channel beam, and periodic area attacks
+- Optional AttackConfig VFX and Attack Entity prefab references for projectile release, Magic Orb, and Drone attacks
 
 Excluded:
 
@@ -755,6 +802,15 @@ Excluded:
 
 
 # Change Log
+
+## 2026-06-22
+
+- Updated first-version tower categories to Archer, Cannon, Magic, and Drone.
+- Removed Watch Tower from the current first-version tower lineup.
+- Redesigned Magic Tower documentation from ChannelBeam to orbiting Magic Orb attack entity behavior.
+- Added Drone Tower as an autonomous Attack Entity that may spawn Projectile Attack Entities.
+- Added Attack Entity responsibility boundaries and projectile flight behavior direction: Direction, Arc, and Tracking.
+- Updated AttackConfig field guidance and target selection usage for Magic Orb and Drone behavior.
 
 ## 2026-06-18
 

@@ -11,8 +11,8 @@ This system answers:
 - When a placed tower can attack
 - Which monsters are valid targets
 - Which target should be selected
-- Which attack archetype should execute
-- When projectiles are created
+- Which attack archetype or Attack Entity behavior should execute
+- When Attack Entities or projectiles are created
 - When direct runtime damage is applied
 - When attack animation and presentation hooks are triggered
 
@@ -34,9 +34,10 @@ The Tower Runtime Combat System owns:
 - Attack cooldown management
 - Attack state transitions
 - Attack animation parameter control
+- Attack Entity spawning and control
 - Projectile creation and initialization
-- ChannelBeam damage timing
-- PeriodicArea damage timing
+- Magic Orb lifecycle orchestration
+- Drone launch, hover, return, and recharge orchestration
 - Direct damage dispatch coordination
 - Presentation hook triggering for attack VFX
 
@@ -94,9 +95,9 @@ Runtime state belongs to the tower instance currently fighting in the battlefiel
 
 ---
 
-## 3.2 Archetype-Based Runtime Behavior
+## 3.2 Attack Entity-Based Runtime Behavior
 
-Runtime combat behavior should branch by AttackArchetype, not by tower category.
+Runtime combat behavior should be expressed through attack archetypes and Attack Entity behavior, not hardcoded tower category branches.
 
 Bad:
 
@@ -113,12 +114,12 @@ Good:
 ```text
 Read AttackConfig.attackArchetype
     ↓
-Execute StraightProjectile, ArcProjectile, ChannelBeam, or PeriodicArea
+Spawn or control Arrow, Shell, Magic Orb, or Drone Attack Entity behavior
 ```
 
 Tower categories describe design identity.
 
-Attack archetypes describe runtime execution behavior.
+Attack archetypes and Attack Entities describe runtime execution behavior.
 
 ---
 
@@ -129,8 +130,9 @@ Tower Runtime Combat may start downstream behavior, but it should not absorb dow
 Examples:
 
 - It creates and initializes a projectile, then Projectile System moves and resolves that projectile.
-- It selects a ChannelBeam target, then applies channel damage according to channel timing.
-- It triggers PeriodicArea damage ticks, but persistent enemy-attached state belongs to Buff And Effect System.
+- It spawns or controls a Magic Orb, then Magic Orb behavior owns orbit, contact detection, hit count, and lifetime.
+- It launches a Drone, then Drone behavior owns move, hover, battery, return, recharge, and projectile fire timing.
+- Drone is an Attack Entity which may spawn Projectile Attack Entities.
 - It may trigger attack VFX hooks, but VFX components should own visual presentation only.
 
 ---
@@ -164,7 +166,7 @@ Recommended runtime references:
 | MonsterManager | Provides alive monsters for detection |
 | Animator | Receives attack presentation parameters |
 | AttackOrigin | Provides attack range origin and projectile spawn position |
-| MonsterBehaviour.HitAnchor | Provides the monster-side hit/reference position for targeting, range checks, projectile target snapshots, and beam binding |
+| MonsterBehaviour.HitAnchor | Provides the monster-side hit/reference position for targeting, range checks, projectile target snapshots, Magic Orb contact checks, and Drone hover targeting |
 
 If AttackOrigin is not assigned, the tower transform may be used as the fallback origin.
 
@@ -178,11 +180,14 @@ Tower Runtime Combat may maintain the following runtime state per tower:
 - Current target
 - Pending projectile target
 - Pending projectile target position, usually captured from the target monster hit/reference anchor
-- Current channel target
 - Cooldown timer
-- Channel timer
-- Channel tick timer
-- Channel damage accumulator
+- Active Magic Orb reference
+- Magic Orb cooldown or respawn timer
+- Active Drone reference
+- Drone state
+- Drone target
+- Drone battery timer
+- Drone recharge timer
 - Current attack state
 
 This state should never be stored in TowerDefinition or AttackConfig.
@@ -193,8 +198,10 @@ Recommended attack states:
 |---|---|
 | Idle | Tower is not currently executing an attack |
 | WaitingForAnimationRelease | Tower has selected a projectile target and is waiting for the attack release moment |
-| Channeling | Tower is actively channeling damage into one target |
-| PeriodicAreaActive | Tower has valid enemies in range and is running periodic area behavior |
+| MagicOrbActive | Tower currently owns an active Magic Orb |
+| DroneResting | Drone is resting on the tower and waiting for launch conditions |
+| DroneLaunched | Drone is away from the tower and executing move, hover, fire, or return behavior |
+| DroneRecharging | Drone has returned and is recharging before it may launch again |
 
 ---
 
@@ -218,10 +225,10 @@ The attack archetype determines the update branch:
 
 | AttackArchetype | Runtime Branch |
 |---|---|
-| StraightProjectile | Projectile attack update |
-| ArcProjectile | Projectile attack update |
-| ChannelBeam | Channel attack update |
-| PeriodicArea | Periodic area update |
+| Direction Projectile | Projectile attack update |
+| Arc Projectile | Projectile attack update |
+| Magic Orb | Magic Orb lifecycle update |
+| Drone | Drone lifecycle update |
 
 ---
 
@@ -261,11 +268,11 @@ Recommended first-version target selection rules:
 
 TargetSelectionType is used by:
 
-- StraightProjectile
-- ArcProjectile
-- ChannelBeam
+- Direction Projectile
+- Arc Projectile
+- Drone
 
-TargetSelectionType is not used by PeriodicArea because PeriodicArea affects all valid enemies inside attackRange.
+TargetSelectionType is not used by first-version Magic Orb behavior because the orb detects monster contact while orbiting.
 
 ---
 
@@ -273,8 +280,9 @@ TargetSelectionType is not used by PeriodicArea because PeriodicArea affects all
 
 Projectile attack runtime is used by:
 
-- StraightProjectile
-- ArcProjectile
+- Direction Projectile
+- Arc Projectile
+- Projectile Attack Entities fired by Drone
 
 Recommended flow:
 
@@ -303,6 +311,8 @@ Return to Idle
 Projectile creation belongs to Tower Runtime Combat.
 
 Projectile movement, collision detection, impact handling, lifetime management, and destruction belong to Projectile System.
+
+Attack cooldown starts immediately after Archer arrows and Cannon shells are fired, not after projectile impact or explosion.
 
 ---
 
@@ -335,97 +345,92 @@ When releasing a projectile, Tower Runtime Combat provides:
 
 ProjectileBehaviour then owns projectile runtime execution after initialization.
 
-StraightProjectile and ArcProjectile may use the same Tower Runtime Combat release flow while Projectile System handles their different movement behavior.
+Direction Projectile and Arc Projectile may use the same Tower Runtime Combat release flow while Projectile System handles their different movement behavior.
 
 ---
 
-# 10. ChannelBeam Runtime
+# 10. Magic Orb Runtime
 
-ChannelBeam attacks select one valid target and continuously apply damage while the target remains valid and within range.
+Magic Orb behavior represents a persistent orbiting attack entity owned by Magic Tower.
 
-Recommended channel start flow:
+Recommended Magic Orb flow:
 
 ```text
 Cooldown ready
     ↓
-Select target
+Spawn Magic Orb
     ↓
-Set current channel target
+Orbit around tower
     ↓
-Reset channel timers
+Contact detection against monsters
     ↓
-Enter Channeling
+Apply damage on successful contact
     ↓
-Set attacking animator bool
+Decrease hit count
     ↓
-Trigger channel started hook
-```
-
-Recommended channel update flow:
-
-```text
-Validate current channel target
-    ↓
-Validate attack range
-    ↓
-Advance channel timer
-    ↓
-Advance channel tick timer
-    ↓
-Apply damage when tick interval is reached
-    ↓
-Stop channel when max duration is reached
-```
-
-Recommended channel end flow:
-
-```text
-Clear current channel target
-    ↓
-Reset channel timers
-    ↓
-Enter Idle
+If hit count reaches zero, despawn Magic Orb
     ↓
 Start cooldown
-    ↓
-Clear attacking animator bool
-    ↓
-Trigger channel ended hook
 ```
 
-ChannelBeam damage is owned by Tower Runtime Combat in the first version.
+Magic Orb rules:
 
-Persistent status effects applied by future channel attacks should be delegated to Buff And Effect System.
+- Magic Orb rotates around the tower.
+- Magic Orb checks distance to monsters.
+- Contact deals damage.
+- Magic Orb has a configurable maximum hit count.
+- Hit count decreases after each successful hit.
+- One Magic Orb may hit the same monster only once per orbit.
+- When hit count reaches zero, the Magic Orb disappears.
+- After cooldown, a new Magic Orb may be generated.
+
+Magic Orb damage is owned by attack entity behavior in the first version.
+
+Persistent status effects applied by future Magic Orb upgrades should be delegated to Buff And Effect System.
 
 ---
 
-# 11. PeriodicArea Runtime
+# 11. Drone Runtime
 
-PeriodicArea attacks damage all valid enemies inside attackRange at a fixed interval.
+Drone behavior represents an autonomous Attack Entity launched by Drone Tower.
 
-Recommended flow:
+Recommended Drone flow:
 
 ```text
-Detect enemies
+Enemy detected
     ↓
-If no valid enemies exist, enter Idle
+Launch Drone
     ↓
-If valid enemies exist, enter PeriodicAreaActive
+Select target
     ↓
-When cooldown reaches zero, damage each valid enemy
+Move near target
     ↓
-Reset cooldown to attackInterval
+Hover while facing target
     ↓
-Trigger periodic area tick hook
+Fire projectile attack entities at attack interval
+    ↓
+Consume battery while active
+    ↓
+Return when battery is depleted or no monsters remain
+    ↓
+Recharge
+    ↓
+Launch again if monsters exist
 ```
 
-PeriodicArea does not select one target.
+Drone runtime rules:
 
-PeriodicArea does not use TargetSelectionType.
+- Drone rests on the tower when inactive.
+- Drone selects a target when launched.
+- Drone relocates when the target moves away from the desired hover distance.
+- Drone periodically fires straight projectiles in the first version.
+- Drone flight consumes battery.
+- Drone returns for recharge when battery is depleted or no monsters remain.
+- Drone is an Attack Entity which may spawn Projectile Attack Entities.
 
-PeriodicArea direct damage is owned by Tower Runtime Combat in the first version.
+Drone projectile movement and projectile hit detection belong to Projectile System after projectile creation.
 
-If future PeriodicArea attacks apply persistent states such as slow, burn, poison, or armor reduction, those states should be owned by Buff And Effect System.
+Persistent status effects applied by future Drone projectiles should be delegated to Buff And Effect System.
 
 ---
 
@@ -462,9 +467,10 @@ Recommended hooks:
 | Hook | Trigger Timing |
 |---|---|
 | OnProjectileReleased | After projectile release is confirmed |
-| OnChannelStarted | When ChannelBeam enters Channeling |
-| OnChannelEnded | When ChannelBeam exits Channeling |
-| OnPeriodicAreaTick | When PeriodicArea applies a damage tick |
+| OnAttackEntitySpawned | When an Attack Entity is created or launched |
+| OnAttackEntityEnded | When an Attack Entity finishes, returns, despawns, or is destroyed |
+| OnMagicOrbHit | When Magic Orb contact damage is applied |
+| OnDroneStateChanged | When Drone launch, hover, return, or recharge state changes |
 
 These hooks are presentation and integration points.
 
@@ -515,8 +521,8 @@ Tower Runtime Combat may directly apply simple runtime damage for first-version 
 
 Examples:
 
-- ChannelBeam damage ticks
-- PeriodicArea damage ticks
+- Magic Orb contact damage, if implemented directly by runtime combat before a dedicated Attack Entity runtime exists
+- Drone-fired projectile damage follows projectile impact rules
 
 Buff And Effect System should own reusable effect and buff execution.
 
@@ -559,8 +565,8 @@ Included:
 - Attack cooldowns
 - Projectile attack release flow
 - Projectile creation and initialization
-- ChannelBeam runtime damage
-- PeriodicArea runtime damage
+- Magic Orb lifecycle orchestration
+- Drone lifecycle orchestration
 - Attack animation parameter control
 - Runtime presentation hooks
 
@@ -582,13 +588,19 @@ Excluded:
 
 Tower Runtime Combat is the live execution layer for placed towers.
 
-It consumes TowerDefinition and AttackConfig, manages runtime combat state, selects targets, runs cooldowns, executes attack archetypes, creates projectiles, and coordinates simple damage dispatch.
+It consumes TowerDefinition and AttackConfig, manages runtime combat state, selects targets, runs cooldowns, executes attack archetypes, creates or controls Attack Entities, creates projectiles, and coordinates simple damage dispatch.
 
 It should remain between Tower Framework data and downstream runtime systems without taking over placement, projectile lifecycle, monster lifecycle, or buff state ownership.
 
 ---
 
 # Change Log
+
+## 2026-06-22
+
+- Updated current runtime direction from ChannelBeam and PeriodicArea first-version behavior to Magic Orb and Drone attack entity behavior.
+- Added Attack Entity responsibility language and Drone as an Attack Entity that may spawn Projectile Attack Entities.
+- Updated target selection, runtime state, presentation hooks, and first-version scope for Archer, Cannon, Magic, and Drone.
 
 ## 2026-06-12
 
