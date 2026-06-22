@@ -397,7 +397,7 @@ GameObject:
   - component: {fileID: 3384613813462457567}
   - component: {fileID: 4765481689080620768}
   m_Layer: 0
-  m_Name: Prefab_MageTower
+  m_Name: Prefab_MagicTower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

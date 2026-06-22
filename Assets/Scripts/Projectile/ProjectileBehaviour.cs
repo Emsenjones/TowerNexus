@@ -51,7 +51,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        if (attackConfig.AttackArchetype == AttackArchetype.StraightProjectile)
+        if (attackConfig.AttackArchetype == AttackArchetype.DirectionProjectile)
         {
             launchDirection = CalculateLaunchDirection(targetMonster.HitAnchor.position);
         }
@@ -80,17 +80,17 @@ public class ProjectileBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackConfig.AttackArchetype == AttackArchetype.StraightProjectile)
+        if (attackConfig.AttackArchetype == AttackArchetype.DirectionProjectile)
         {
             if (monsterManager == null)
             {
-                Debug.LogWarning("Projectile behaviour cannot initialize straight projectile: monster manager is null.", this);
+                Debug.LogWarning("Projectile behaviour cannot initialize direction projectile: monster manager is null.", this);
                 return false;
             }
 
             if (!IsValidTarget(targetMonster))
             {
-                Debug.LogWarning("Projectile behaviour cannot initialize straight projectile: target monster is invalid.", this);
+                Debug.LogWarning("Projectile behaviour cannot initialize direction projectile: target monster is invalid.", this);
                 return false;
             }
 
@@ -123,8 +123,8 @@ public class ProjectileBehaviour : MonoBehaviour
 
         switch (attackConfig.AttackArchetype)
         {
-            case AttackArchetype.StraightProjectile:
-                UpdateStraightProjectile();
+            case AttackArchetype.DirectionProjectile:
+                UpdateDirectionProjectile();
                 break;
             case AttackArchetype.ArcProjectile:
                 UpdateArcProjectile();
@@ -135,18 +135,18 @@ public class ProjectileBehaviour : MonoBehaviour
         }
     }
 
-    private void UpdateStraightProjectile()
+    private void UpdateDirectionProjectile()
     {
         transform.position += launchDirection * projectileConfig.ProjectileSpeed * Time.deltaTime;
 
         FaceMoveDirection(launchDirection);
 
-        if (!TryGetStraightProjectileHit(out MonsterBehaviour hitMonster))
+        if (!TryGetDirectionProjectileHit(out MonsterBehaviour hitMonster))
         {
             return;
         }
 
-        ImpactStraightProjectile(hitMonster);
+        ImpactDirectionProjectile(hitMonster);
     }
 
     private void UpdateArcProjectile()
@@ -201,7 +201,7 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         if (!isInitialized ||
             hasImpacted ||
-            attackConfig.AttackArchetype != AttackArchetype.StraightProjectile ||
+            attackConfig.AttackArchetype != AttackArchetype.DirectionProjectile ||
             hitCollider == null)
         {
             return;
@@ -219,10 +219,10 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        ImpactStraightProjectile(hitMonster);
+        ImpactDirectionProjectile(hitMonster);
     }
 
-    private void ImpactStraightProjectile(MonsterBehaviour hitMonster)
+    private void ImpactDirectionProjectile(MonsterBehaviour hitMonster)
     {
         if (hasImpacted)
         {
@@ -285,7 +285,7 @@ public class ProjectileBehaviour : MonoBehaviour
         return direction.normalized;
     }
 
-    private bool TryGetStraightProjectileHit(out MonsterBehaviour hitMonster)
+    private bool TryGetDirectionProjectileHit(out MonsterBehaviour hitMonster)
     {
         hitMonster = null;
 

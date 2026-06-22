@@ -2,6 +2,8 @@ public enum TowerAttackState
 {
     Idle,
     WaitingForAnimationRelease,
-    Channeling,
-    PeriodicAreaActive
+    MagicOrbActive,
+    DroneResting,
+    DroneLaunched,
+    DroneRecharging
 }

@@ -18,27 +18,18 @@ public class TowerCombatBehaviour : MonoBehaviour
     private MonsterBehaviour currentTarget;
     private MonsterBehaviour pendingProjectileTarget;
     private Vector3 pendingProjectileTargetPosition;
-    private MonsterBehaviour currentChannelTarget;
     private float cooldownTimer;
-    private float channelTimer;
-    private float channelTickTimer;
-    private float channelDamageAccumulator;
     private TowerAttackState attackState = TowerAttackState.Idle;
-    private BeamVfxBehaviour activeBeamVfx;
-    private GameObject activePeriodicAreaVfx;
+    private bool hasLoggedUnsupportedAttackEntity;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
-    public event Action<TowerCombatBehaviour, MonsterBehaviour> OnChannelStarted;
-    public event Action<TowerCombatBehaviour, MonsterBehaviour> OnChannelEnded;
-    public event Action<TowerCombatBehaviour, IReadOnlyList<MonsterBehaviour>> OnPeriodicAreaTick;
+    public event Action<TowerCombatBehaviour, AttackArchetype> OnUnsupportedAttackEntity;
 
     public MonsterBehaviour CurrentTarget => currentTarget;
     public IReadOnlyList<MonsterBehaviour> DetectedEnemies => detectedEnemies;
     public float CooldownTimer => cooldownTimer;
     public TowerAttackState AttackState => attackState;
     public bool IsAttacking => attackState != TowerAttackState.Idle;
-    public MonsterBehaviour CurrentChannelTarget => currentChannelTarget;
-    public float ChannelTimer => channelTimer;
 
     public void Initialize(TowerInstance towerInstance, MonsterManager monsterManager)
     {
@@ -52,12 +43,9 @@ public class TowerCombatBehaviour : MonoBehaviour
         CacheOptionalReferences();
 
         cooldownTimer = 0f;
-        channelTimer = 0f;
-        channelTickTimer = 0f;
-        channelDamageAccumulator = 0f;
         currentTarget = null;
-        currentChannelTarget = null;
         pendingProjectileTarget = null;
+        hasLoggedUnsupportedAttackEntity = false;
         attackState = TowerAttackState.Idle;
         ResetAttackingAnimatorBoolIfUsed();
     }
@@ -101,15 +89,16 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         switch (attackConfig.AttackArchetype)
         {
-            case AttackArchetype.StraightProjectile:
+            case AttackArchetype.DirectionProjectile:
             case AttackArchetype.ArcProjectile:
                 UpdateProjectileAttack();
                 break;
-            case AttackArchetype.ChannelBeam:
-                UpdateChannelBeam();
+            case AttackArchetype.MagicOrb:
+            case AttackArchetype.Drone:
+                UpdateUnsupportedAttackEntity();
                 break;
-            case AttackArchetype.PeriodicArea:
-                UpdatePeriodicArea();
+            default:
+                UpdateUnsupportedAttackEntity();
                 break;
         }
     }
@@ -283,120 +272,22 @@ public class TowerCombatBehaviour : MonoBehaviour
         attackState = TowerAttackState.Idle;
     }
 
-    private void UpdateChannelBeam()
+    private void UpdateUnsupportedAttackEntity()
     {
-        if (attackState != TowerAttackState.Channeling)
-        {
-            StopChannelBeamVfx();
-            TryStartChannel();
-            return;
-        }
-
-        if (!IsValidTarget(currentChannelTarget) || !IsInAttackRange(currentChannelTarget))
-        {
-            StopChannel();
-            return;
-        }
-
-        if (activeBeamVfx == null)
-        {
-            StartChannelBeamVfx();
-        }
-
-        channelTimer += Time.deltaTime;
-        channelTickTimer += Time.deltaTime;
-
-        if (channelTickTimer >= attackConfig.ChannelDamageInterval)
-        {
-            channelDamageAccumulator += attackConfig.Damage * channelTickTimer;
-            channelTickTimer = 0f;
-
-            int damageToApply = Mathf.FloorToInt(channelDamageAccumulator);
-
-            if (damageToApply > 0)
-            {
-                channelDamageAccumulator -= damageToApply;
-                currentChannelTarget.TakeDamage(damageToApply);
-            }
-        }
-
-        if (channelTimer >= attackConfig.MaxChannelDuration)
-        {
-            StopChannel();
-            return;
-        }
-    }
-
-    private void TryStartChannel()
-    {
-        if (cooldownTimer > 0f)
-        {
-            return;
-        }
-
-        currentTarget = SelectTarget();
-
-        if (!IsValidTarget(currentTarget))
-        {
-            return;
-        }
-
-        currentChannelTarget = currentTarget;
-        channelTimer = 0f;
-        channelTickTimer = attackConfig.ChannelDamageInterval;
-        channelDamageAccumulator = 0f;
-        attackState = TowerAttackState.Channeling;
-        SetAttackingAnimatorBool(true);
-        StartChannelBeamVfx();
-        OnChannelStarted?.Invoke(this, currentChannelTarget);
-    }
-
-    private void StopChannel()
-    {
-        MonsterBehaviour endedTarget = currentChannelTarget;
-        StopChannelBeamVfx();
-        currentChannelTarget = null;
-        channelTimer = 0f;
-        channelTickTimer = 0f;
-        channelDamageAccumulator = 0f;
         attackState = TowerAttackState.Idle;
-        cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
         SetAttackingAnimatorBool(false);
-        OnChannelEnded?.Invoke(this, endedTarget);
-    }
 
-    private void UpdatePeriodicArea()
-    {
-        bool hasTargets = detectedEnemies.Count > 0;
-        attackState = hasTargets ? TowerAttackState.PeriodicAreaActive : TowerAttackState.Idle;
-        SetAttackingAnimatorBool(hasTargets);
-
-        if (hasTargets)
-        {
-            StartPeriodicAreaVfx();
-        }
-        else
-        {
-            StopPeriodicAreaVfx();
-        }
-
-        if (!hasTargets || cooldownTimer > 0f)
+        if (hasLoggedUnsupportedAttackEntity)
         {
             return;
         }
 
-        for (int i = 0; i < detectedEnemies.Count; i++)
-        {
-            MonsterBehaviour monster = detectedEnemies[i];
-
-            if (IsValidTarget(monster))
-            {
-                monster.TakeDamage(attackConfig.Damage);
-            }
-        }
-
-        cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
-        OnPeriodicAreaTick?.Invoke(this, detectedEnemies);
+        hasLoggedUnsupportedAttackEntity = true;
+        Debug.LogWarning(
+            $"Tower combat does not implement attack archetype '{attackConfig.AttackArchetype}' yet. Runtime behavior belongs to a later task.",
+            this
+        );
+        OnUnsupportedAttackEntity?.Invoke(this, attackConfig.AttackArchetype);
     }
 
     private MonsterBehaviour SelectTarget()
@@ -511,7 +402,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         switch (attackConfig.AttackArchetype)
         {
-            case AttackArchetype.StraightProjectile:
+            case AttackArchetype.DirectionProjectile:
                 Vector3 direction = pendingProjectileTargetPosition - origin.position;
 
                 if (direction.sqrMagnitude > 0.0001f)
@@ -527,97 +418,12 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
     }
 
-    private void StartChannelBeamVfx()
-    {
-        if (activeBeamVfx != null || attackConfig == null || attackConfig.ChannelBeamVfxPrefab == null)
-        {
-            return;
-        }
-
-        Transform origin = GetAttackOrigin();
-        GameObject beamObject = Instantiate(attackConfig.ChannelBeamVfxPrefab, origin.position, origin.rotation);
-
-        if (!beamObject.TryGetComponent(out activeBeamVfx))
-        {
-            activeBeamVfx = beamObject.AddComponent<BeamVfxBehaviour>();
-        }
-
-        activeBeamVfx.Initialize(origin, ResolveTargetAnchor(currentChannelTarget));
-    }
-
-    private void StopChannelBeamVfx()
-    {
-        if (activeBeamVfx == null)
-        {
-            activeBeamVfx = null;
-            return;
-        }
-
-        BeamVfxBehaviour beamVfxToStop = activeBeamVfx;
-        activeBeamVfx = null;
-        beamVfxToStop.StopAndDestroy();
-    }
-
-    private void StartPeriodicAreaVfx()
-    {
-        if (activePeriodicAreaVfx != null || attackConfig == null || attackConfig.PeriodicAreaVfxPrefab == null)
-            return;
-
-        Transform origin = GetAttackOrigin();
-        activePeriodicAreaVfx = Instantiate(
-            attackConfig.PeriodicAreaVfxPrefab,
-            origin.position,
-            origin.rotation,
-            origin
-        );
-    }
-
-    private void StopPeriodicAreaVfx()
-    {
-        if (activePeriodicAreaVfx == null)
-        {
-            activePeriodicAreaVfx = null;
-            return;
-        }
-
-        GameObject periodicAreaVfxToStop = activePeriodicAreaVfx;
-        activePeriodicAreaVfx = null;
-        Destroy(periodicAreaVfxToStop);
-    }
-
     private void CleanupActiveVfx()
     {
-        StopChannelBeamVfx();
-        StopPeriodicAreaVfx();
     }
 
     private void CleanupVfxOutsideCurrentArchetype()
     {
-        if (attackConfig == null)
-        {
-            CleanupActiveVfx();
-            return;
-        }
-
-        if (attackConfig.AttackArchetype != AttackArchetype.ChannelBeam)
-        {
-            StopChannelBeamVfx();
-        }
-
-        if (attackConfig.AttackArchetype != AttackArchetype.PeriodicArea)
-        {
-            StopPeriodicAreaVfx();
-        }
-    }
-
-    private static Transform ResolveTargetAnchor(MonsterBehaviour target)
-    {
-        if (target == null)
-        {
-            return null;
-        }
-
-        return target.HitAnchor;
     }
 
     private void ResetAttackingAnimatorBoolIfUsed()

@@ -32,32 +32,43 @@ public class AttackConfig : ScriptableObject
     [SerializeField] private string attackingAnimatorBoolName = "IsAttacking";
 
     [TitleGroup("Projectile")]
-    [ShowIf(nameof(UsesProjectile))]
-    [Required]
+    [ShowIf(nameof(UsesProjectileConfig))]
     [SerializeField] private ProjectileConfig projectileConfig;
     [TitleGroup("Projectile")]
     [ShowIf(nameof(IsArcProjectile))]
     [MinValue(0f)]
     [SerializeField] private float arcHeight = 1f;
     [TitleGroup("Projectile VFX")]
-    [ShowIf(nameof(UsesProjectile))]
+    [ShowIf(nameof(UsesProjectileConfig))]
     [SerializeField] private GameObject projectileReleaseVfxPrefab;
-    
-    [TitleGroup("Channel")]
-    [ShowIf(nameof(IsChannelBeam))]
-    [MinValue(0.01f)]
-    [SerializeField] private float channelDamageInterval = 0.5f;
-    [TitleGroup("Channel")]
-    [ShowIf(nameof(IsChannelBeam))]
-    [MinValue(0f)]
-    [SerializeField] private float maxChannelDuration = 5f;
-    [TitleGroup("Channel VFX")]
-    [ShowIf(nameof(IsChannelBeam))]
-    [SerializeField] private GameObject channelBeamVfxPrefab;
 
-    [TitleGroup("Periodic Area VFX")]
-    [ShowIf(nameof(IsPeriodicArea))]
-    [SerializeField] private GameObject periodicAreaVfxPrefab;
+    [TitleGroup("Magic Orb")]
+    [ShowIf(nameof(IsMagicOrb))]
+    [MinValue(0f)]
+    [SerializeField] private float magicOrbRotationSpeed = 180f;
+    [TitleGroup("Magic Orb")]
+    [ShowIf(nameof(IsMagicOrb))]
+    [MinValue(1)]
+    [SerializeField] private int magicOrbMaxHitCount = 3;
+    [TitleGroup("Magic Orb")]
+    [ShowIf(nameof(IsMagicOrb))]
+    [SerializeField] private GameObject magicOrbPrefab;
+
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [MinValue(0.01f)]
+    [SerializeField] private float droneBatteryDuration = 5f;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [MinValue(0f)]
+    [SerializeField] private float droneRechargeDuration = 2f;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [MinValue(0f)]
+    [SerializeField] private float droneHoverDistance = 1.5f;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [SerializeField] private GameObject dronePrefab;
 
     public string AttackConfigId => attackConfigId;
     public AttackArchetype AttackArchetype => attackArchetype;
@@ -70,14 +81,24 @@ public class AttackConfig : ScriptableObject
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
     public GameObject ProjectileReleaseVfxPrefab => projectileReleaseVfxPrefab;
-    public float ChannelDamageInterval => channelDamageInterval;
-    public float MaxChannelDuration => maxChannelDuration;
-    public GameObject ChannelBeamVfxPrefab => channelBeamVfxPrefab;
-    public GameObject PeriodicAreaVfxPrefab => periodicAreaVfxPrefab;
+    public float MagicOrbRotationSpeed => magicOrbRotationSpeed;
+    public int MagicOrbMaxHitCount => magicOrbMaxHitCount;
+    public GameObject MagicOrbPrefab => magicOrbPrefab;
+    public float DroneBatteryDuration => droneBatteryDuration;
+    public float DroneRechargeDuration => droneRechargeDuration;
+    public float DroneHoverDistance => droneHoverDistance;
+    public GameObject DronePrefab => dronePrefab;
 
-    private bool UsesProjectile()
+    private bool UsesProjectileConfig()
     {
-        return attackArchetype == AttackArchetype.StraightProjectile ||
+        return attackArchetype == AttackArchetype.DirectionProjectile ||
+               attackArchetype == AttackArchetype.ArcProjectile ||
+               attackArchetype == AttackArchetype.Drone;
+    }
+
+    private bool RequiresProjectileConfig()
+    {
+        return attackArchetype == AttackArchetype.DirectionProjectile ||
                attackArchetype == AttackArchetype.ArcProjectile;
     }
 
@@ -88,18 +109,19 @@ public class AttackConfig : ScriptableObject
 
     private bool UsesTargetSelection()
     {
-        return attackArchetype != AttackArchetype.PeriodicArea;
+        return attackArchetype == AttackArchetype.DirectionProjectile ||
+               attackArchetype == AttackArchetype.ArcProjectile ||
+               attackArchetype == AttackArchetype.Drone;
     }
 
-
-    private bool IsChannelBeam()
+    private bool IsMagicOrb()
     {
-        return attackArchetype == AttackArchetype.ChannelBeam;
+        return attackArchetype == AttackArchetype.MagicOrb;
     }
 
-    private bool IsPeriodicArea()
+    private bool IsDrone()
     {
-        return attackArchetype == AttackArchetype.PeriodicArea;
+        return attackArchetype == AttackArchetype.Drone;
     }
 
     public bool IsValid()
@@ -122,7 +144,13 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
-        if (UsesProjectile() && projectileConfig == null)
+        if (damage < 0)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: damage cannot be negative.", this);
+            return false;
+        }
+
+        if (RequiresProjectileConfig() && projectileConfig == null)
         {
             Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: projectile config is not assigned.", this);
             return false;
@@ -134,18 +162,35 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
-        if (channelDamageInterval <= 0f)
+        if (magicOrbRotationSpeed < 0f)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: channel damage interval must be greater than zero.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: magic orb rotation speed cannot be negative.", this);
             return false;
         }
 
-        if (maxChannelDuration < 0f)
+        if (magicOrbMaxHitCount <= 0)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: max channel duration cannot be negative.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: magic orb max hit count must be greater than zero.", this);
             return false;
         }
 
+        if (droneBatteryDuration <= 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone battery duration must be greater than zero.", this);
+            return false;
+        }
+
+        if (droneRechargeDuration < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone recharge duration cannot be negative.", this);
+            return false;
+        }
+
+        if (droneHoverDistance < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone hover distance cannot be negative.", this);
+            return false;
+        }
 
         return true;
     }

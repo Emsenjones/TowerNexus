@@ -1,7 +1,7 @@
 public enum AttackArchetype
 {
-    StraightProjectile,
-    ArcProjectile,
-    ChannelBeam,
-    PeriodicArea
+    DirectionProjectile = 0,
+    ArcProjectile = 1,
+    MagicOrb = 2,
+    Drone = 3
 }
