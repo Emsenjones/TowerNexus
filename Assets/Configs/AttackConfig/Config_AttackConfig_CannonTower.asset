@@ -12,18 +12,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008a5cd59d0f643d39191b0690bfb938, type: 3}
   m_Name: Config_AttackConfig_CannonTower
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
-  attackConfigId: 102
+  attackConfigId: 2
   attackArchetype: 1
   attackRange: 5
   attackInterval: 5
-  targetSelectionType: 3
+  targetSelectionType: 1
   damage: 5
   attackAnimatorTriggerName: Attack
   attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 11400000, guid: 8f0e12318c23b49ab8f62ef06ffb01f7, type: 2}
   arcHeight: 2
   projectileReleaseVfxPrefab: {fileID: 1703296453783264684, guid: c322bec26b475401b9e70147095b03fb, type: 3}
-  channelDamageInterval: 0.1
-  maxChannelDuration: 1
-  channelBeamVfxPrefab: {fileID: 0}
-  periodicAreaVfxPrefab: {fileID: 0}
+  magicOrbRotationSpeed: 180
+  magicOrbMaxHitCount: 3
+  magicOrbPrefab: {fileID: 0}
+  droneBatteryDuration: 5
+  droneRechargeDuration: 2
+  droneHoverDistance: 1.5
+  dronePrefab: {fileID: 0}

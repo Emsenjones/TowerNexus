@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Config_TowerDefinition_MagicTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerId: 3
-  displayName: Mage Tower
-  description: This is a mage tower
+  displayName: Magic Tower
+  description: Persistent orbiting magic weapon tower.
   towerCategory: 2
   icon: {fileID: 21300000, guid: 9b8ccf0882bbe4a38836b2714c6462ab, type: 3}
   towerPrefab: {fileID: 6027618472494872927, guid: 5b7ed8402f4fc4e9bbbfc43e6ae17d24, type: 3}
