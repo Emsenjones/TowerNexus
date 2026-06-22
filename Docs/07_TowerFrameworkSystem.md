@@ -159,6 +159,33 @@ TowerPrefab
 
 Future versions may add additional runtime combat components.
 
+Drone Tower uses AttackOrigin differently from projectile-only towers:
+
+```text
+DroneTowerPrefab
+├── VisualRoot
+├── Collider
+├── TowerAnchorSet
+└── AttackOrigin
+```
+
+For Drone Tower, AttackOrigin represents where the Drone rests, launches from, returns to, and recharges when inactive.
+
+This keeps Drone parking behavior aligned with the existing tower attack-origin convention and avoids adding a separate DroneParkingAnchor in the first version.
+
+The Drone prefab itself may define its own internal combat anchors:
+
+```text
+DronePrefab
+├── VisualRoot
+├── DroneBehaviour
+└── FireAnchor
+```
+
+FireAnchor represents where Drone-fired projectile Attack Entities and optional projectile release VFX should spawn.
+
+FireAnchor belongs to the Drone prefab or DroneBehaviour because it moves with the Drone.
+
 ---
 
 ## 5.2 TowerAnchorSet
@@ -381,7 +408,7 @@ Design intent:
 - Contact deals damage
 - The Magic Orb has a configurable maximum hit count
 - Hit count decreases after each successful hit
-- One Magic Orb may hit the same monster only once per orbit
+- The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed
 - When hit count reaches zero, the Magic Orb disappears
 - After cooldown, the tower generates a new Magic Orb
 
@@ -419,10 +446,18 @@ Drone is an Attack Entity which may spawn Projectile Attack Entities.
 
 Drone Tower does not require buff configuration in the first version. Projectile damage fired by Drone should follow projectile attack entity rules.
 
+Anchor expectation:
+
+- Drone Tower should use AttackOrigin as the Drone rest position, launch point, return target, and recharge position in the first version.
+- Drone prefab should define its own FireAnchor for Drone-fired projectiles.
+- Drone-fired projectile release VFX should play from the Drone FireAnchor when configured.
+- AttackOrigin and FireAnchor are runtime/prefab references; they should not decide target selection, battery rules, projectile hit detection, or damage.
+
 VFX expectation:
 
 - The Drone visual should support resting, launching, hovering, returning, and recharging states
 - Projectile travel and impact VFX should follow projectile runtime and impact timing
+- Projectile release VFX may be reused for Drone-fired projectiles, but should spawn from the Drone FireAnchor rather than the tower AttackOrigin
 - Drone battery or recharge presentation should remain visual feedback only unless explicitly connected to gameplay state by runtime logic
 
 Drone VFX is presentation-only and must not own target selection, battery rules, projectile hit detection, or damage.
@@ -495,6 +530,7 @@ Recommended first-version fields:
 | arcHeight | float | Arc projectile trajectory height |
 | magicOrbRotationSpeed | float | Rotation speed for Magic Orb behavior |
 | magicOrbMaxHitCount | int | Maximum number of successful hits before a Magic Orb disappears |
+| sameTargetHitCooldown | float | Cooldown before the same Magic Orb may hit the same monster again |
 | droneBatteryDuration | float | Maximum active flight duration before Drone must return |
 | droneRechargeDuration | float | Recharge time before Drone may launch again |
 | droneHoverDistance | float | Preferred hover distance from the selected target |
@@ -600,6 +636,7 @@ Typically uses:
 - damage
 - magicOrbRotationSpeed
 - magicOrbMaxHitCount
+- sameTargetHitCooldown
 - attackingAnimatorBoolName
 - magicOrbPrefab
 
@@ -607,9 +644,10 @@ Notes:
 
 - magicOrbRotationSpeed controls how quickly the Magic Orb rotates around the tower.
 - magicOrbMaxHitCount controls how many successful hits the active Magic Orb can perform before disappearing.
-- The Magic Orb may hit the same monster only once per orbit.
+- sameTargetHitCooldown controls how soon the same Magic Orb may hit the same monster again.
 - attackInterval controls the cooldown before a new Magic Orb is generated after the active orb ends.
 - Magic Orb behavior does not require targetSelectionType in the first version.
+- magicOrbOrbitRadius should be configured on MagicOrbBehaviour in the first version. If orbit radius becomes an upgrade target later, it may be promoted into AttackConfig or upgrade modifiers.
 
 VFX notes:
 
@@ -639,15 +677,20 @@ Notes:
 - droneBatteryDuration controls how long the Drone can remain active away from the tower.
 - droneRechargeDuration controls how long the Drone must recharge after returning.
 - droneHoverDistance controls the preferred distance between the Drone and its current target.
+- droneMoveSpeed should be configured on DroneBehaviour in the first version. If Drone speed becomes shared tower data or an upgrade target later, it may be promoted into AttackConfig or upgrade modifiers.
+- Drone uses attackRange as the tower detect and launch range in the first version. Dedicated Drone engage or leash ranges may be added later if needed.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
 - Projectiles fired by Drone should use ProjectileConfig and Projectile System behavior.
 - Drone battery, return, and recharge behavior should belong to Drone attack entity runtime logic.
+- Drone Tower should use AttackOrigin as the Drone rest, launch, return, and recharge anchor in the first version.
+- Drone FireAnchor should come from the Drone prefab or DroneBehaviour, not AttackConfig.
 
 attackInterval controls how often the Drone fires while it is in a valid hover attack state.
 
 VFX notes:
 
 - dronePrefab may contain visual references for launch, hover, return, and recharge presentation.
+- projectileReleaseVfxPrefab may be reused for Drone-fired projectile release VFX and should spawn at the Drone FireAnchor.
 - Drone VFX should not own target selection, battery rules, projectile hit detection, or damage.
 
 ---

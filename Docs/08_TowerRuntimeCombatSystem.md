@@ -380,11 +380,15 @@ Magic Orb rules:
 - Contact deals damage.
 - Magic Orb has a configurable maximum hit count.
 - Hit count decreases after each successful hit.
-- One Magic Orb may hit the same monster only once per orbit.
+- The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed.
 - When hit count reaches zero, the Magic Orb disappears.
 - After cooldown, a new Magic Orb may be generated.
 
 Magic Orb damage is owned by attack entity behavior in the first version.
+
+MagicOrbBehaviour should own magicOrbOrbitRadius in the first version.
+
+sameTargetHitCooldown is AttackConfig data because it defines a combat rule shared by Magic Orb behavior.
 
 Persistent status effects applied by future Magic Orb upgrades should be delegated to Buff And Effect System.
 
@@ -421,16 +425,29 @@ Launch again if monsters exist
 Drone runtime rules:
 
 - Drone rests on the tower when inactive.
+- Drone rest position should use AttackOrigin when available.
+- Drone launches from AttackOrigin when available.
 - Drone selects a target when launched.
+- Drone movement speed should be configured on DroneBehaviour in the first version.
 - Drone relocates when the target moves away from the desired hover distance.
 - Drone periodically fires straight projectiles in the first version.
+- Drone-fired projectiles should spawn from the Drone FireAnchor when available.
+- Drone-fired projectile release VFX should spawn from the Drone FireAnchor when configured.
 - Drone flight consumes battery.
-- Drone returns for recharge when battery is depleted or no monsters remain.
+- Drone returns to AttackOrigin for recharge when battery is depleted or no monsters remain.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
+
+Drone uses attackRange as the tower detect and launch range in the first version.
 
 Drone projectile movement and projectile hit detection belong to Projectile System after projectile creation.
 
 Persistent status effects applied by future Drone projectiles should be delegated to Buff And Effect System.
+
+For Drone Tower, AttackOrigin acts as the Drone parking, launch, return, and recharge anchor in the first version.
+
+FireAnchor is owned by the Drone prefab or DroneBehaviour because it moves with the Drone.
+
+Neither AttackOrigin nor FireAnchor should own gameplay decisions such as target selection, battery rules, projectile hit detection, or damage.
 
 ---
 
