@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: afec2cc25e3439e4bb1b43e7c09f6503
+timeCreated: 1442747533
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001046
+  packageName: Simple Airport - Cartoon Assets
+  packageVersion: 1.2.0
+  assetPath: Assets/SimpleAirport/Animations/SimpleCharacter_5.0.controller
+  uploadId: 0

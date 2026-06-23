@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: a633d79e46e930e4da6b2e66261df50e
+timeCreated: 1479609788
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001046
+  packageName: Simple Airport - Cartoon Assets
+  packageVersion: 1.2.0
+  assetPath: Assets/SimpleAirport/Prefabs/Characters/SimpleAirport_Tourist_02_Black.prefab
+  uploadId: 0

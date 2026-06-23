@@ -64,7 +64,7 @@ Presentation-oriented prefab references may live in the configuration asset that
 
 Examples:
 
-- AttackConfig owns tower attack presentation hooks such as projectile release VFX, channel beam VFX, and periodic area VFX.
+- AttackConfig owns tower attack presentation hooks such as attack release VFX.
 - ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
 - EffectConfig owns gameplay effect data and should not be required for purely visual projectile impact feedback.
 
@@ -241,7 +241,7 @@ Responsible for:
 - Attack cooldown management
 - Attack Entity spawning or control
 - Magic Orb lifecycle orchestration
-- Drone launch, return, and recharge orchestration
+- Drone launch, target hover, projectile fire, return, and recharge orchestration
 - Attack execution
 - Attack animation state control
 - Attack visual effect hook triggering

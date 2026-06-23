@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 21239cbcbd21c784299db2f40fc48f08
+timeCreated: 1479609784
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001046
+  packageName: Simple Airport - Cartoon Assets
+  packageVersion: 1.2.0
+  assetPath: Assets/SimpleAirport/Prefabs/Characters/SimpleAirport_Security_Brown.prefab
+  uploadId: 0

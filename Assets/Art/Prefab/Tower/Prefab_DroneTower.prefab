@@ -265,7 +265,7 @@ Transform:
   m_GameObject: {fileID: 7640275252447554844}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.3, z: 0}
+  m_LocalPosition: {x: 0, y: 0.845, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -365,7 +365,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 622c4a1faaa434bf08af843ac4b86746, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerCombatBehaviour
-  towerInstance: {fileID: 1025514080300142389, guid: 4c7d64644d5084801a44646a80d14567, type: 3}
+  towerInstance: {fileID: -5833469859241583986}
   animator: {fileID: 2299392899388808485}
   attackOrigin: {fileID: 6617525378691214913}
 --- !u!95 &2299392899388808485

@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 619352dd408264b4a8f96f83009ab955
+timeCreated: 1479609766
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001046
+  packageName: Simple Airport - Cartoon Assets
+  packageVersion: 1.2.0
+  assetPath: Assets/SimpleAirport/Prefabs/Characters/SimpleAirport_FlightAttendantFemale_White.prefab
+  uploadId: 0

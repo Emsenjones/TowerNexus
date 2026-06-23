@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
   attackConfigId: 4
   attackArchetype: 3
-  attackRange: 3
+  attackRange: 6
   attackInterval: 1
   targetSelectionType: 0
   damage: 1
@@ -22,11 +22,17 @@ MonoBehaviour:
   attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 11400000, guid: 885d88fbd81784ed6998116a641079bc, type: 2}
   arcHeight: 1
-  projectileReleaseVfxPrefab: {fileID: 0}
+  attackReleaseVfxPrefab: {fileID: 0}
   magicOrbRotationSpeed: 180
+  magicOrbOrbitRadius: 0.75
+  magicOrbContactDistance: 0.25
   magicOrbMaxHitCount: 3
+  magicOrbSameTargetHitCooldown: 0.5
   magicOrbPrefab: {fileID: 0}
-  droneBatteryDuration: 5
-  droneRechargeDuration: 2
-  droneHoverDistance: 1.5
-  dronePrefab: {fileID: 0}
+  droneBatteryDuration: 30
+  droneRechargeDuration: 6
+  droneHoverDistance: 2
+  droneMoveSpeed: 2
+  droneLaunchHeight: 1.5
+  droneProjectileConfig: {fileID: 0}
+  dronePrefab: {fileID: 7978792076586334490, guid: 7b10ada619b6042278238b85e5e41ed9, type: 3}

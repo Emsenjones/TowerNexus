@@ -61,7 +61,7 @@ public static class AreaDamageEffectExecutor
                 continue;
             }
 
-            if (Vector3.Distance(impactPosition, monster.HitAnchor.position) > effectConfig.Radius)
+            if (Vector3.Distance(impactPosition, GetMonsterHitPosition(monster)) > effectConfig.Radius)
             {
                 continue;
             }
@@ -75,5 +75,11 @@ public static class AreaDamageEffectExecutor
         return monster != null &&
                monster.gameObject.activeInHierarchy &&
                !monster.IsDead();
+    }
+
+    private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
+    {
+        Transform hitAnchor = monster.HitAnchor;
+        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
     }
 }

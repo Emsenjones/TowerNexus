@@ -89,7 +89,7 @@ Examples:
 
 - Archer Tower spawns Arrow projectile Attack Entities.
 - Cannon Tower spawns Shell projectile Attack Entities.
-- Drone is an Attack Entity which may spawn Projectile Attack Entities.
+- Drone is an Attack Entity which may spawn Projectile Attack Entities using AttackConfig.droneProjectileConfig.
 
 Magic Orb and Drone themselves are Attack Entities, but they do not have to use the full projectile impact lifecycle unless their behavior is implemented as projectile-style movement and hit resolution.
 
@@ -455,7 +455,7 @@ Example:
 ```text
 Drone Attack Entity
     ↓
-Spawn Projectile Attack Entity
+Spawn Projectile Attack Entity from droneProjectileConfig
     ↓
 Projectile System handles flight, hit detection, impact event, and destruction
 ```

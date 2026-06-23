@@ -8,6 +8,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private MonsterManager monsterManager;
     private ProjectileConfig projectileConfig;
     private AttackConfig attackConfig;
+    private AttackArchetype flightArchetype;
     private MonsterBehaviour targetMonster;
     private Vector3 targetPosition;
     private Vector3 launchDirection;
@@ -16,12 +17,14 @@ public class ProjectileBehaviour : MonoBehaviour
     private float arcTravelTime;
     private bool isInitialized;
     private bool hasImpacted;
+    private bool hasLoggedUnsupportedTrackingFlight;
 
     public event Action<ProjectileImpactContext> OnImpact;
 
     public TowerInstance SourceTower => sourceTower;
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public AttackConfig AttackConfig => attackConfig;
+    public AttackArchetype FlightArchetype => flightArchetype;
     public MonsterBehaviour TargetMonster => targetMonster;
     public Vector3 TargetPosition => targetPosition;
     public bool IsInitialized => isInitialized;
@@ -32,18 +35,21 @@ public class ProjectileBehaviour : MonoBehaviour
         ProjectileConfig projectileConfig,
         AttackConfig attackConfig,
         MonsterBehaviour targetMonster,
-        Vector3 targetPosition)
+        Vector3 targetPosition,
+        AttackArchetype? flightArchetypeOverride = null)
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
         this.projectileConfig = projectileConfig;
         this.attackConfig = attackConfig;
+        flightArchetype = flightArchetypeOverride ?? (attackConfig != null ? attackConfig.AttackArchetype : default);
         this.targetMonster = targetMonster;
         this.targetPosition = targetPosition;
 
         startPosition = transform.position;
         elapsedLifetime = 0f;
         hasImpacted = false;
+        hasLoggedUnsupportedTrackingFlight = false;
 
         if (!CanInitialize())
         {
@@ -51,13 +57,12 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        if (attackConfig.AttackArchetype == AttackArchetype.DirectionProjectile)
-        {
-            launchDirection = CalculateLaunchDirection(targetMonster.HitAnchor.position);
-        }
+        isInitialized = InitializeFlight();
 
-        arcTravelTime = CalculateArcTravelTime();
-        isInitialized = true;
+        if (!isInitialized)
+        {
+            DestroyProjectile();
+        }
     }
 
     private bool CanInitialize()
@@ -80,29 +85,77 @@ public class ProjectileBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackConfig.AttackArchetype == AttackArchetype.DirectionProjectile)
+        switch (flightArchetype)
         {
-            if (monsterManager == null)
-            {
-                Debug.LogWarning("Projectile behaviour cannot initialize direction projectile: monster manager is null.", this);
+            case AttackArchetype.DirectionProjectile:
+                return CanInitializeDirectionFlight();
+            case AttackArchetype.ArcProjectile:
+                return CanInitializeArcFlight();
+            case AttackArchetype.TrackingProjectile:
+                return CanInitializeTrackingFlight();
+            default:
+                Debug.LogWarning($"Projectile behaviour cannot initialize: unsupported attack archetype '{flightArchetype}'.", this);
                 return false;
-            }
+        }
+    }
 
-            if (!IsValidTarget(targetMonster))
-            {
-                Debug.LogWarning("Projectile behaviour cannot initialize direction projectile: target monster is invalid.", this);
-                return false;
-            }
-
-            return true;
+    private bool CanInitializeDirectionFlight()
+    {
+        if (monsterManager == null)
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize direction flight: monster manager is null.", this);
+            return false;
         }
 
-        if (attackConfig.AttackArchetype == AttackArchetype.ArcProjectile)
+        if (!IsValidTarget(targetMonster))
         {
-            return true;
+            Debug.LogWarning("Projectile behaviour cannot initialize direction flight: target monster is invalid.", this);
+            return false;
         }
 
-        Debug.LogWarning($"Projectile behaviour cannot initialize: unsupported attack archetype '{attackConfig.AttackArchetype}'.", this);
+        return true;
+    }
+
+    private bool CanInitializeArcFlight()
+    {
+        return true;
+    }
+
+    private bool CanInitializeTrackingFlight()
+    {
+        return true;
+    }
+
+    private bool InitializeFlight()
+    {
+        switch (flightArchetype)
+        {
+            case AttackArchetype.DirectionProjectile:
+                return InitializeDirectionFlight();
+            case AttackArchetype.ArcProjectile:
+                return InitializeArcFlight();
+            case AttackArchetype.TrackingProjectile:
+                return InitializeTrackingFlight();
+            default:
+                return false;
+        }
+    }
+
+    private bool InitializeDirectionFlight()
+    {
+        launchDirection = CalculateLaunchDirection(GetMonsterHitPosition(targetMonster));
+        return true;
+    }
+
+    private bool InitializeArcFlight()
+    {
+        arcTravelTime = CalculateArcTravelTime();
+        return true;
+    }
+
+    private bool InitializeTrackingFlight()
+    {
+        LogUnsupportedTrackingFlight();
         return false;
     }
 
@@ -121,13 +174,16 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        switch (attackConfig.AttackArchetype)
+        switch (flightArchetype)
         {
             case AttackArchetype.DirectionProjectile:
-                UpdateDirectionProjectile();
+                UpdateDirectionFlight();
                 break;
             case AttackArchetype.ArcProjectile:
-                UpdateArcProjectile();
+                UpdateArcFlight();
+                break;
+            case AttackArchetype.TrackingProjectile:
+                UpdateTrackingFlight();
                 break;
             default:
                 DestroyProjectile();
@@ -135,7 +191,7 @@ public class ProjectileBehaviour : MonoBehaviour
         }
     }
 
-    private void UpdateDirectionProjectile()
+    private void UpdateDirectionFlight()
     {
         transform.position += launchDirection * projectileConfig.ProjectileSpeed * Time.deltaTime;
 
@@ -149,14 +205,15 @@ public class ProjectileBehaviour : MonoBehaviour
         ImpactDirectionProjectile(hitMonster);
     }
 
-    private void UpdateArcProjectile()
+    private void UpdateArcFlight()
     {
         float progress = Mathf.Clamp01(elapsedLifetime / arcTravelTime);
         Vector3 nextPosition = Vector3.Lerp(startPosition, targetPosition, progress);
         nextPosition.y += Mathf.Sin(progress * Mathf.PI) * attackConfig.ArcHeight;
+        Vector3 moveDirection = nextPosition - transform.position;
         transform.position = nextPosition;
 
-        FaceMoveDirection(targetPosition - transform.position);
+        FaceMoveDirection(moveDirection);
 
         if (progress < 1f && Vector3.Distance(transform.position, targetPosition) > projectileConfig.HitDistanceThreshold)
         {
@@ -164,6 +221,23 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         ImpactArcProjectile();
+    }
+
+    private void UpdateTrackingFlight()
+    {
+        LogUnsupportedTrackingFlight();
+        DestroyProjectile();
+    }
+
+    private void LogUnsupportedTrackingFlight()
+    {
+        if (hasLoggedUnsupportedTrackingFlight)
+        {
+            return;
+        }
+
+        hasLoggedUnsupportedTrackingFlight = true;
+        Debug.LogWarning("Projectile tracking flight is not implemented yet. Tracking projectiles are reserved for a later runtime task.", this);
     }
 
     private float CalculateArcTravelTime()
@@ -201,7 +275,7 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         if (!isInitialized ||
             hasImpacted ||
-            attackConfig.AttackArchetype != AttackArchetype.DirectionProjectile ||
+            flightArchetype != AttackArchetype.DirectionProjectile ||
             hitCollider == null)
         {
             return;
@@ -329,7 +403,13 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private float GetHitDistanceSqr(MonsterBehaviour monster)
     {
-        return (monster.HitAnchor.position - transform.position).sqrMagnitude;
+        return (GetMonsterHitPosition(monster) - transform.position).sqrMagnitude;
+    }
+
+    private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
+    {
+        Transform hitAnchor = monster.HitAnchor;
+        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
     }
 
     private bool IsTrackedValidTarget(MonsterBehaviour monster)

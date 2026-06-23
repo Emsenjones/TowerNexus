@@ -18,9 +18,13 @@ public class TowerCombatBehaviour : MonoBehaviour
     private MonsterBehaviour currentTarget;
     private MonsterBehaviour pendingProjectileTarget;
     private Vector3 pendingProjectileTargetPosition;
+    private MagicOrbBehaviour activeMagicOrb;
+    private DroneBehaviour activeDrone;
     private float cooldownTimer;
     private TowerAttackState attackState = TowerAttackState.Idle;
     private bool hasLoggedUnsupportedAttackEntity;
+    private bool hasLoggedMissingMagicOrbPrefab;
+    private bool hasLoggedMissingDronePrefab;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, AttackArchetype> OnUnsupportedAttackEntity;
@@ -33,6 +37,8 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     public void Initialize(TowerInstance towerInstance, MonsterManager monsterManager)
     {
+        CleanupActiveMagicOrb();
+        CleanupActiveDrone();
         CleanupActiveVfx();
 
         this.towerInstance = towerInstance;
@@ -45,7 +51,11 @@ public class TowerCombatBehaviour : MonoBehaviour
         cooldownTimer = 0f;
         currentTarget = null;
         pendingProjectileTarget = null;
+        activeMagicOrb = null;
+        activeDrone = null;
         hasLoggedUnsupportedAttackEntity = false;
+        hasLoggedMissingMagicOrbPrefab = false;
+        hasLoggedMissingDronePrefab = false;
         attackState = TowerAttackState.Idle;
         ResetAttackingAnimatorBoolIfUsed();
     }
@@ -67,11 +77,15 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private void OnDisable()
     {
+        CleanupActiveMagicOrb();
+        CleanupActiveDrone();
         CleanupActiveVfx();
     }
 
     private void OnDestroy()
     {
+        CleanupActiveMagicOrb();
+        CleanupActiveDrone();
         CleanupActiveVfx();
     }
 
@@ -87,6 +101,11 @@ public class TowerCombatBehaviour : MonoBehaviour
         DetectEnemies();
         CleanupVfxOutsideCurrentArchetype();
 
+        UpdateAttackEntity();
+    }
+
+    private void UpdateAttackEntity()
+    {
         switch (attackConfig.AttackArchetype)
         {
             case AttackArchetype.DirectionProjectile:
@@ -94,8 +113,10 @@ public class TowerCombatBehaviour : MonoBehaviour
                 UpdateProjectileAttack();
                 break;
             case AttackArchetype.MagicOrb:
+                UpdateMagicOrbAttackEntity();
+                break;
             case AttackArchetype.Drone:
-                UpdateUnsupportedAttackEntity();
+                UpdateDroneAttackEntity();
                 break;
             default:
                 UpdateUnsupportedAttackEntity();
@@ -206,9 +227,8 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         pendingProjectileTarget = currentTarget;
-        pendingProjectileTargetPosition = currentTarget.HitAnchor.position;
+        pendingProjectileTargetPosition = GetMonsterHitPosition(currentTarget);
         attackState = TowerAttackState.WaitingForAnimationRelease;
-        cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
         SetAttackingAnimatorBool(true);
 
         if (SetAttackAnimatorTrigger()) return;
@@ -255,13 +275,21 @@ public class TowerCombatBehaviour : MonoBehaviour
             pendingProjectileTargetPosition
         );
 
-        if (projectileBehaviour.IsInitialized)
+        if (!projectileBehaviour.IsInitialized)
         {
-            PlayProjectileReleaseVfx();
+            ResetProjectileAttackState();
+            return;
         }
 
+        StartAttackCooldown();
+        PlayAttackReleaseVfx();
         OnProjectileReleased?.Invoke(this, pendingProjectileTarget);
         ResetProjectileAttackState();
+    }
+
+    private void StartAttackCooldown()
+    {
+        cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
     }
 
     private void ResetProjectileAttackState()
@@ -270,6 +298,170 @@ public class TowerCombatBehaviour : MonoBehaviour
         pendingProjectileTargetPosition = Vector3.zero;
         SetAttackingAnimatorBool(false);
         attackState = TowerAttackState.Idle;
+    }
+
+    private void UpdateMagicOrbAttackEntity()
+    {
+        hasLoggedUnsupportedAttackEntity = false;
+
+        if (activeMagicOrb != null)
+        {
+            attackState = TowerAttackState.MagicOrbActive;
+            SetAttackingAnimatorBool(true);
+            return;
+        }
+
+        if (cooldownTimer > 0f || detectedEnemies.Count == 0)
+        {
+            attackState = TowerAttackState.Idle;
+            SetAttackingAnimatorBool(false);
+            return;
+        }
+
+        SpawnMagicOrbAttackEntity();
+    }
+
+    private void SpawnMagicOrbAttackEntity()
+    {
+        if (attackConfig.MagicOrbPrefab == null)
+        {
+            attackState = TowerAttackState.Idle;
+            SetAttackingAnimatorBool(false);
+
+            if (!hasLoggedMissingMagicOrbPrefab)
+            {
+                hasLoggedMissingMagicOrbPrefab = true;
+                Debug.LogWarning("Tower combat cannot spawn Magic Orb: magic orb prefab is not assigned.", this);
+            }
+
+            return;
+        }
+
+        Transform origin = GetAttackOrigin();
+        GameObject magicOrbObject = Instantiate(attackConfig.MagicOrbPrefab, origin.position, Quaternion.identity);
+
+        if (!magicOrbObject.TryGetComponent(out MagicOrbBehaviour magicOrbBehaviour))
+        {
+            Debug.LogWarning("Magic Orb prefab does not have MagicOrbBehaviour. Adding it at runtime as a fallback.", magicOrbObject);
+            magicOrbBehaviour = magicOrbObject.AddComponent<MagicOrbBehaviour>();
+        }
+
+        activeMagicOrb = magicOrbBehaviour;
+        activeMagicOrb.OnEnded += HandleMagicOrbEnded;
+        magicOrbBehaviour.Initialize(towerInstance, monsterManager, attackConfig, origin);
+
+        if (!magicOrbBehaviour.IsInitialized)
+        {
+            CleanupActiveMagicOrbReference(magicOrbBehaviour);
+            return;
+        }
+
+        attackState = TowerAttackState.MagicOrbActive;
+        SetAttackingAnimatorBool(true);
+        PlayAttackReleaseVfx();
+    }
+
+    private void HandleMagicOrbEnded(MagicOrbBehaviour magicOrb)
+    {
+        if (magicOrb != activeMagicOrb)
+        {
+            return;
+        }
+
+        CleanupActiveMagicOrbReference(magicOrb);
+        StartAttackCooldown();
+        SetAttackingAnimatorBool(false);
+        attackState = TowerAttackState.Idle;
+    }
+
+    private void UpdateDroneAttackEntity()
+    {
+        hasLoggedUnsupportedAttackEntity = false;
+
+        if (activeDrone != null)
+        {
+            SyncDroneAttackState(activeDrone.State);
+            return;
+        }
+
+        if (detectedEnemies.Count == 0)
+        {
+            attackState = TowerAttackState.Idle;
+            SetAttackingAnimatorBool(false);
+            return;
+        }
+
+        SpawnDroneAttackEntity();
+    }
+
+    private void SpawnDroneAttackEntity()
+    {
+        if (attackConfig.DronePrefab == null)
+        {
+            attackState = TowerAttackState.Idle;
+            SetAttackingAnimatorBool(false);
+
+            if (!hasLoggedMissingDronePrefab)
+            {
+                hasLoggedMissingDronePrefab = true;
+                Debug.LogWarning("Tower combat cannot spawn Drone: drone prefab is not assigned.", this);
+            }
+
+            return;
+        }
+
+        Transform origin = GetAttackOrigin();
+        GameObject droneObject = Instantiate(attackConfig.DronePrefab, origin.position, origin.rotation);
+
+        if (!droneObject.TryGetComponent(out DroneBehaviour droneBehaviour))
+        {
+            Debug.LogWarning("Drone prefab does not have DroneBehaviour. Adding it at runtime as a fallback.", droneObject);
+            droneBehaviour = droneObject.AddComponent<DroneBehaviour>();
+        }
+
+        activeDrone = droneBehaviour;
+        activeDrone.OnStateChanged += HandleDroneStateChanged;
+        droneBehaviour.Initialize(towerInstance, monsterManager, attackConfig, origin);
+
+        if (!droneBehaviour.IsInitialized)
+        {
+            CleanupActiveDroneReference(droneBehaviour);
+            return;
+        }
+
+        SyncDroneAttackState(droneBehaviour.State);
+    }
+
+    private void HandleDroneStateChanged(DroneBehaviour drone, DroneRuntimeState state)
+    {
+        if (drone != activeDrone)
+        {
+            return;
+        }
+
+        SyncDroneAttackState(state);
+    }
+
+    private void SyncDroneAttackState(DroneRuntimeState state)
+    {
+        switch (state)
+        {
+            case DroneRuntimeState.Launching:
+            case DroneRuntimeState.Hovering:
+            case DroneRuntimeState.Returning:
+                attackState = TowerAttackState.DroneLaunched;
+                SetAttackingAnimatorBool(true);
+                break;
+            case DroneRuntimeState.Recharging:
+                attackState = TowerAttackState.DroneRecharging;
+                SetAttackingAnimatorBool(false);
+                break;
+            case DroneRuntimeState.Resting:
+            default:
+                attackState = TowerAttackState.DroneResting;
+                SetAttackingAnimatorBool(false);
+                break;
+        }
     }
 
     private void UpdateUnsupportedAttackEntity()
@@ -319,7 +511,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         for (int i = 0; i < detectedEnemies.Count; i++)
         {
             MonsterBehaviour monster = detectedEnemies[i];
-            float distanceSqr = (monster.HitAnchor.position - GetAttackOrigin().position).sqrMagnitude;
+            float distanceSqr = (GetMonsterHitPosition(monster) - GetAttackOrigin().position).sqrMagnitude;
 
             if (distanceSqr < bestDistanceSqr)
             {
@@ -373,7 +565,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         float attackRange = attackConfig.AttackRange;
         Vector3 originPosition = GetAttackOrigin().position;
-        return Vector3.Distance(originPosition, monster.HitAnchor.position) <= attackRange;
+        return Vector3.Distance(originPosition, GetMonsterHitPosition(monster)) <= attackRange;
     }
 
     private Transform GetAttackOrigin()
@@ -381,19 +573,25 @@ public class TowerCombatBehaviour : MonoBehaviour
         return attackOrigin != null ? attackOrigin : transform;
     }
 
-    private void PlayProjectileReleaseVfx()
+    private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
     {
-        if (attackConfig == null || attackConfig.ProjectileReleaseVfxPrefab == null)
+        Transform hitAnchor = monster.HitAnchor;
+        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
+    }
+
+    private void PlayAttackReleaseVfx()
+    {
+        if (attackConfig == null || attackConfig.AttackReleaseVfxPrefab == null)
         {
             return;
         }
 
         Transform origin = GetAttackOrigin();
-        Quaternion rotation = GetProjectileReleaseVfxRotation(origin);
-        Instantiate(attackConfig.ProjectileReleaseVfxPrefab, origin.position, rotation);
+        Quaternion rotation = GetAttackReleaseVfxRotation(origin);
+        Instantiate(attackConfig.AttackReleaseVfxPrefab, origin.position, rotation);
     }
 
-    private Quaternion GetProjectileReleaseVfxRotation(Transform origin)
+    private Quaternion GetAttackReleaseVfxRotation(Transform origin)
     {
         if (origin == null)
         {
@@ -420,6 +618,64 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private void CleanupActiveVfx()
     {
+    }
+
+    private void CleanupActiveMagicOrb()
+    {
+        if (activeMagicOrb == null)
+        {
+            return;
+        }
+
+        MagicOrbBehaviour magicOrb = activeMagicOrb;
+        CleanupActiveMagicOrbReference(magicOrb);
+
+        if (magicOrb != null)
+        {
+            Destroy(magicOrb.gameObject);
+        }
+    }
+
+    private void CleanupActiveMagicOrbReference(MagicOrbBehaviour magicOrb)
+    {
+        if (magicOrb != null)
+        {
+            magicOrb.OnEnded -= HandleMagicOrbEnded;
+        }
+
+        if (activeMagicOrb == magicOrb)
+        {
+            activeMagicOrb = null;
+        }
+    }
+
+    private void CleanupActiveDrone()
+    {
+        if (activeDrone == null)
+        {
+            return;
+        }
+
+        DroneBehaviour drone = activeDrone;
+        CleanupActiveDroneReference(drone);
+
+        if (drone != null)
+        {
+            Destroy(drone.gameObject);
+        }
+    }
+
+    private void CleanupActiveDroneReference(DroneBehaviour drone)
+    {
+        if (drone != null)
+        {
+            drone.OnStateChanged -= HandleDroneStateChanged;
+        }
+
+        if (activeDrone == drone)
+        {
+            activeDrone = null;
+        }
     }
 
     private void CleanupVfxOutsideCurrentArchetype()

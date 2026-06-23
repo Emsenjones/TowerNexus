@@ -230,6 +230,23 @@ The attack archetype determines the update branch:
 | Magic Orb | Magic Orb lifecycle update |
 | Drone | Drone lifecycle update |
 
+## 6.1 Cooldown Timing
+
+Cooldown timing is based on when the active attack process begins or ends for each attack archetype.
+
+Projectile-style attacks start cooldown when the projectile is successfully released:
+
+- Direction Projectile cooldown starts when the projectile is released.
+- Arc Projectile cooldown starts when the projectile is launched.
+- Tracking Projectile cooldown starts when the projectile is released.
+
+Persistent Attack Entities start cooldown when the active entity finishes its attack process:
+
+- Magic Orb cooldown starts when the active Magic Orb ends or is destroyed by its hit-count lifetime.
+- Drone cooldown or recharge timing starts when the Drone returns to the tower.
+
+Magic Orb existence and Drone active flight are themselves part of the attack process, so their tower cooldown should not start when they are spawned or launched.
+
 ---
 
 # 7. Enemy Detection
@@ -313,6 +330,7 @@ Projectile creation belongs to Tower Runtime Combat.
 Projectile movement, collision detection, impact handling, lifetime management, and destruction belong to Projectile System.
 
 Attack cooldown starts immediately after Archer arrows and Cannon shells are fired, not after projectile impact or explosion.
+Tracking Projectile follows the same projectile-style cooldown rule when implemented: cooldown starts after projectile release, not after impact.
 
 ---
 
@@ -382,13 +400,14 @@ Magic Orb rules:
 - Hit count decreases after each successful hit.
 - The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed.
 - When hit count reaches zero, the Magic Orb disappears.
+- Cooldown starts after the active Magic Orb ends.
 - After cooldown, a new Magic Orb may be generated.
 
 Magic Orb damage is owned by attack entity behavior in the first version.
 
-MagicOrbBehaviour should own magicOrbOrbitRadius in the first version.
+Magic Orb combat parameters such as orbit radius, contact distance, and same-target hit cooldown belong to AttackConfig because they define shared attack rules.
 
-sameTargetHitCooldown is AttackConfig data because it defines a combat rule shared by Magic Orb behavior.
+MagicOrbBehaviour executes orbit movement, contact detection, hit count consumption, and lifetime using AttackConfig data.
 
 Persistent status effects applied by future Magic Orb upgrades should be delegated to Buff And Effect System.
 
@@ -401,13 +420,15 @@ Drone behavior represents an autonomous Attack Entity launched by Drone Tower.
 Recommended Drone flow:
 
 ```text
-Enemy detected
+Drone resting at AttackOrigin
     ↓
-Launch Drone
+Enemy enters tower AttackRange
     ↓
-Select target
+Launch Drone and rise to DroneLaunchHeight
     ↓
-Move near target
+Select target inside tower AttackRange
+    ↓
+Move to hover point
     ↓
 Hover while facing target
     ↓
@@ -415,7 +436,7 @@ Fire projectile attack entities at attack interval
     ↓
 Consume battery while active
     ↓
-Return when battery is depleted or no monsters remain
+Return when battery is depleted or no valid monsters remain inside tower AttackRange
     ↓
 Recharge
     ↓
@@ -427,15 +448,26 @@ Drone runtime rules:
 - Drone rests on the tower when inactive.
 - Drone rest position should use AttackOrigin when available.
 - Drone launches from AttackOrigin when available.
-- Drone selects a target when launched.
-- Drone movement speed should be configured on DroneBehaviour in the first version.
+- Drone first rises from AttackOrigin to AttackConfig.droneLaunchHeight.
+- Drone maintains launch height during active flight.
+- DroneBehaviour owns target selection while using AttackConfig.targetSelectionType.
+- Drone target selection only considers valid monsters inside the source tower AttackRange.
+- Drone movement speed should be configured on AttackConfig.
 - Drone relocates when the target moves away from the desired hover distance.
 - Drone periodically fires straight projectiles in the first version.
+- Drone-fired projectile data should come from AttackConfig.droneProjectileConfig.
 - Drone-fired projectiles should spawn from the Drone FireAnchor when available.
-- Drone-fired projectile release VFX should spawn from the Drone FireAnchor when configured.
+- Drone-fired attack release VFX should spawn from the Drone FireAnchor when configured.
 - Drone flight consumes battery.
-- Drone returns to AttackOrigin for recharge when battery is depleted or no monsters remain.
+- Drone returns to AttackOrigin for recharge when battery is depleted or no valid monsters remain inside source tower AttackRange.
+- Drone recharge or cooldown timing starts after the Drone returns to the tower, not when it launches.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
+- DroneBehaviour should own Drone Animator driving for the Drone prefab.
+- Drone Animator may use Bool parameter `IsFlying`.
+- `IsFlying` should be false while Drone is Resting or Recharging.
+- `IsFlying` should be true while Drone is Launching, Hovering, or Returning.
+- During active flight, Drone model facing assumes local +Z points forward.
+- When Drone is resting or recharging at AttackOrigin, runtime should align it to face local -Z relative to AttackOrigin in the first version.
 
 Drone uses attackRange as the tower detect and launch range in the first version.
 
@@ -478,6 +510,8 @@ Tower Runtime Combat should not hardcode tower-specific animation parameter name
 # 13. Runtime Presentation Hooks
 
 Tower Runtime Combat may expose attack lifecycle hooks for VFX and presentation systems.
+
+AttackConfig.attackReleaseVfxPrefab may be spawned as a one-shot presentation effect when a tower attack or Attack Entity release is confirmed.
 
 Recommended hooks:
 
@@ -612,6 +646,10 @@ It should remain between Tower Framework data and downstream runtime systems wit
 ---
 
 # Change Log
+
+## 2026-06-23
+
+- Added explicit cooldown timing rules for projectile-style attacks, Magic Orb, and Drone.
 
 ## 2026-06-22
 

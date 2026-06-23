@@ -178,13 +178,22 @@ The Drone prefab itself may define its own internal combat anchors:
 ```text
 DronePrefab
 ├── VisualRoot
+├── Animator
 ├── DroneBehaviour
 └── FireAnchor
 ```
 
-FireAnchor represents where Drone-fired projectile Attack Entities and optional projectile release VFX should spawn.
+FireAnchor represents where Drone-fired projectile Attack Entities and optional attack release VFX should spawn.
 
 FireAnchor belongs to the Drone prefab or DroneBehaviour because it moves with the Drone.
+
+Drone prefab presentation convention:
+
+- Drone model forward should use local +Z for active flight facing.
+- When resting or recharging at AttackOrigin, Drone should face local -Z relative to the AttackOrigin orientation in the first version.
+- Drone prefab may include an Animator with Bool parameter `IsFlying`.
+- Runtime should set `IsFlying = false` while Drone is Resting or Recharging.
+- Runtime should set `IsFlying = true` while Drone is Launching, Hovering, or Returning.
 
 ---
 
@@ -360,7 +369,7 @@ Archer Tower does not require buff or effect configuration in the first version.
 
 VFX expectation:
 
-- May play a projectile release VFX at AttackOrigin when the arrow is released
+- May play an attack release VFX at AttackOrigin when the arrow is released
 - May use optional projectile travel VFX on the projectile prefab, such as a trail or glow
 - May play optional impact VFX at the hit position when the projectile hits a monster
 
@@ -388,7 +397,7 @@ The explosion may be represented as an impact effect or area damage effect, but 
 
 VFX expectation:
 
-- May play a projectile release VFX at AttackOrigin when the shell is released
+- May play an attack release VFX at AttackOrigin when the shell is released
 - May use optional projectile travel VFX on the projectile prefab, such as smoke, fire, sparks, or trail particles
 - Should play impact or explosion VFX when the projectile reaches its target position or impact point
 
@@ -410,7 +419,9 @@ Design intent:
 - Hit count decreases after each successful hit
 - The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed
 - When hit count reaches zero, the Magic Orb disappears
+- Cooldown starts after the active Magic Orb ends
 - After cooldown, the tower generates a new Magic Orb
+- May play an attack release VFX at AttackOrigin when the Magic Orb is generated
 
 
 Magic Tower does not require buff configuration in the first version. Its damage is owned by Magic Orb attack entity behavior.
@@ -433,13 +444,15 @@ Drone Tower uses an autonomous Drone attack entity.
 Design intent:
 
 - The Drone rests on the tower when inactive
-- When monsters enter range, the Drone launches
-- The Drone selects a target
-- The Drone flies near the target and hovers while facing it
+- When monsters enter tower AttackRange, the Drone launches
+- The Drone rises from AttackOrigin to configured launch height
+- The Drone selects a target inside the source tower AttackRange
+- The Drone flies to a hover point near the target and hovers while facing it
 - If the target moves away, the Drone relocates to maintain hover distance
 - The Drone periodically fires straight projectiles
 - Drone flight consumes battery
-- When battery is depleted or no monsters remain, the Drone returns to recharge
+- When battery is depleted or no valid monsters remain inside source tower AttackRange, the Drone returns to recharge
+- Drone cooldown or recharge timing starts after the Drone returns to the tower, not when it launches
 - Once recharged and monsters exist, the Drone launches again
 
 Drone is an Attack Entity which may spawn Projectile Attack Entities.
@@ -450,14 +463,18 @@ Anchor expectation:
 
 - Drone Tower should use AttackOrigin as the Drone rest position, launch point, return target, and recharge position in the first version.
 - Drone prefab should define its own FireAnchor for Drone-fired projectiles.
-- Drone-fired projectile release VFX should play from the Drone FireAnchor when configured.
+- Drone-fired attack release VFX should play from the Drone FireAnchor when configured.
 - AttackOrigin and FireAnchor are runtime/prefab references; they should not decide target selection, battery rules, projectile hit detection, or damage.
 
 VFX expectation:
 
 - The Drone visual should support resting, launching, hovering, returning, and recharging states
+- Drone active flight animation may be driven by an Animator Bool parameter named `IsFlying`
+- `IsFlying` should be false for resting and recharging states, and true for launching, hovering, and returning states
+- Drone model active facing assumes local +Z points forward
+- Drone resting and recharging pose should face local -Z relative to AttackOrigin in the first version
 - Projectile travel and impact VFX should follow projectile runtime and impact timing
-- Projectile release VFX may be reused for Drone-fired projectiles, but should spawn from the Drone FireAnchor rather than the tower AttackOrigin
+- Attack release VFX may be reused for Drone-fired projectiles, but should spawn from the Drone FireAnchor rather than the tower AttackOrigin
 - Drone battery or recharge presentation should remain visual feedback only unless explicitly connected to gameplay state by runtime logic
 
 Drone VFX is presentation-only and must not own target selection, battery rules, projectile hit detection, or damage.
@@ -531,12 +548,17 @@ Recommended first-version fields:
 | magicOrbRotationSpeed | float | Rotation speed for Magic Orb behavior |
 | magicOrbMaxHitCount | int | Maximum number of successful hits before a Magic Orb disappears |
 | sameTargetHitCooldown | float | Cooldown before the same Magic Orb may hit the same monster again |
+| magicOrbOrbitRadius | float | Orbit radius used by Magic Orb movement |
+| magicOrbContactDistance | float | Contact distance used by Magic Orb hit detection |
 | droneBatteryDuration | float | Maximum active flight duration before Drone must return |
 | droneRechargeDuration | float | Recharge time before Drone may launch again |
 | droneHoverDistance | float | Preferred hover distance from the selected target |
+| droneMoveSpeed | float | Drone movement speed for launch, active flight, relocation, and return |
+| droneLaunchHeight | float | Height offset above AttackOrigin reached before active Drone flight |
+| droneProjectileConfig | ProjectileConfig | Projectile configuration used by Drone-fired projectiles |
 | attackAnimatorTriggerName | string | Animator Trigger parameter used by projectile-based attacks |
 | attackingAnimatorBoolName | string | Animator Bool parameter used by continuous attack archetypes |
-| projectileReleaseVfxPrefab | GameObject | Optional one-shot VFX prefab spawned at AttackOrigin when a projectile attack is released |
+| attackReleaseVfxPrefab | GameObject | Optional one-shot VFX prefab spawned when a tower attack or attack entity release is confirmed |
 | magicOrbPrefab | GameObject | Optional Magic Orb attack entity prefab |
 | dronePrefab | GameObject | Optional Drone attack entity prefab |
 
@@ -581,7 +603,7 @@ Typically uses:
 - projectileConfig
 - targetSelectionType
 - attackAnimatorTriggerName
-- projectileReleaseVfxPrefab
+- attackReleaseVfxPrefab
 
 Notes:
 
@@ -589,12 +611,12 @@ Notes:
 - The selected target's monster-side hit/reference anchor provides the launch direction for the projectile.
 - After launch, direction projectile hit detection belongs to the Projectile System.
 - The projectile may hit any valid monster encountered during flight, not only the originally selected target.
-- Attack cooldown starts immediately after the projectile is fired.
+- Attack cooldown starts immediately after the projectile is released.
 - The projectile should be destroyed by projectile runtime logic when it exceeds its maximum lifetime.
 
 VFX notes:
 
-- projectileReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
+- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
 - Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
 - Projectile impact VFX should usually be handled by projectile impact logic.
 
@@ -611,7 +633,7 @@ Typically uses:
 - arcHeight
 - targetSelectionType
 - attackAnimatorTriggerName
-- projectileReleaseVfxPrefab
+- attackReleaseVfxPrefab
 
 Notes:
 
@@ -621,9 +643,34 @@ Notes:
 
 VFX notes:
 
-- projectileReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
+- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
 - Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
 - Explosion or impact VFX should follow projectile impact timing.
+
+---
+
+### Tracking Projectile
+
+Typically uses:
+
+- attackRange
+- attackInterval
+- damage
+- projectileConfig
+- targetSelectionType
+- attackAnimatorTriggerName
+- attackReleaseVfxPrefab
+
+Notes:
+
+- Tracking Projectile follows projectile-style cooldown timing.
+- Attack cooldown starts immediately after the projectile is released.
+- Tracking projectile runtime is reserved for later projectile-style attack implementations.
+
+VFX notes:
+
+- attackReleaseVfxPrefab may be played when the projectile is released.
+- Projectile travel and impact VFX should follow Projectile System timing.
 
 ---
 
@@ -635,19 +682,26 @@ Typically uses:
 - attackInterval
 - damage
 - magicOrbRotationSpeed
+- magicOrbOrbitRadius
+- magicOrbContactDistance
 - magicOrbMaxHitCount
 - sameTargetHitCooldown
 - attackingAnimatorBoolName
+- attackReleaseVfxPrefab
 - magicOrbPrefab
 
 Notes:
 
 - magicOrbRotationSpeed controls how quickly the Magic Orb rotates around the tower.
+- magicOrbOrbitRadius controls the Magic Orb attack path around the tower.
+- magicOrbContactDistance controls Magic Orb contact hit detection.
 - magicOrbMaxHitCount controls how many successful hits the active Magic Orb can perform before disappearing.
 - sameTargetHitCooldown controls how soon the same Magic Orb may hit the same monster again.
 - attackInterval controls the cooldown before a new Magic Orb is generated after the active orb ends.
+- The active Magic Orb's lifetime is part of the attack process, so cooldown does not start when the orb spawns.
 - Magic Orb behavior does not require targetSelectionType in the first version.
-- magicOrbOrbitRadius should be configured on MagicOrbBehaviour in the first version. If orbit radius becomes an upgrade target later, it may be promoted into AttackConfig or upgrade modifiers.
+- Magic Orb combat parameters should be configured on AttackConfig so MagicOrbBehaviour remains a runtime executor.
+- attackReleaseVfxPrefab may be played at AttackOrigin when the Magic Orb is generated.
 
 VFX notes:
 
@@ -663,34 +717,40 @@ Typically uses:
 - attackRange
 - attackInterval
 - damage
-- projectileConfig
 - targetSelectionType
 - droneBatteryDuration
 - droneRechargeDuration
 - droneHoverDistance
+- droneMoveSpeed
+- droneLaunchHeight
+- droneProjectileConfig
 - attackingAnimatorBoolName
+- attackReleaseVfxPrefab
 - dronePrefab
 
 Notes:
 
-- targetSelectionType is used when the Drone chooses a target.
+- targetSelectionType is used by DroneBehaviour when the Drone chooses a target.
 - droneBatteryDuration controls how long the Drone can remain active away from the tower.
 - droneRechargeDuration controls how long the Drone must recharge after returning.
 - droneHoverDistance controls the preferred distance between the Drone and its current target.
-- droneMoveSpeed should be configured on DroneBehaviour in the first version. If Drone speed becomes shared tower data or an upgrade target later, it may be promoted into AttackConfig or upgrade modifiers.
+- droneMoveSpeed controls Drone launch, active flight, relocation, and return movement.
+- droneLaunchHeight controls the height offset above AttackOrigin reached before active Drone flight.
 - Drone uses attackRange as the tower detect and launch range in the first version. Dedicated Drone engage or leash ranges may be added later if needed.
+- Drone target selection only considers valid monsters inside the source tower attackRange.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
-- Projectiles fired by Drone should use ProjectileConfig and Projectile System behavior.
+- Projectiles fired by Drone should use droneProjectileConfig and Projectile System behavior.
 - Drone battery, return, and recharge behavior should belong to Drone attack entity runtime logic.
 - Drone Tower should use AttackOrigin as the Drone rest, launch, return, and recharge anchor in the first version.
 - Drone FireAnchor should come from the Drone prefab or DroneBehaviour, not AttackConfig.
 
 attackInterval controls how often the Drone fires while it is in a valid hover attack state.
+Drone recharge or tower cooldown timing starts after the Drone returns to the tower, not when it launches.
 
 VFX notes:
 
 - dronePrefab may contain visual references for launch, hover, return, and recharge presentation.
-- projectileReleaseVfxPrefab may be reused for Drone-fired projectile release VFX and should spawn at the Drone FireAnchor.
+- attackReleaseVfxPrefab may be reused for Drone-fired attack release VFX and should spawn at the Drone FireAnchor.
 - Drone VFX should not own target selection, battery rules, projectile hit detection, or damage.
 
 ---
@@ -827,7 +887,7 @@ Included:
 - Target selection types
 - Runtime system references
 - Basic relationship between tower attacks, effects, and buffs
-- Optional AttackConfig VFX and Attack Entity prefab references for projectile release, Magic Orb, and Drone attacks
+- Optional AttackConfig VFX and Attack Entity prefab references for attack release, Magic Orb, and Drone attacks
 
 Excluded:
 
@@ -845,6 +905,11 @@ Excluded:
 
 
 # Change Log
+
+## 2026-06-23
+
+- Clarified cooldown timing for projectile-style attacks, Magic Orb, and Drone.
+- Added Tracking Projectile first-version cooldown guidance.
 
 ## 2026-06-22
 

@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "AttackConfig",
@@ -38,9 +39,10 @@ public class AttackConfig : ScriptableObject
     [ShowIf(nameof(IsArcProjectile))]
     [MinValue(0f)]
     [SerializeField] private float arcHeight = 1f;
-    [TitleGroup("Projectile VFX")]
-    [ShowIf(nameof(UsesProjectileConfig))]
-    [SerializeField] private GameObject projectileReleaseVfxPrefab;
+    [TitleGroup("Attack VFX")]
+    [ShowIf(nameof(UsesAttackReleaseVfx))]
+    [FormerlySerializedAs("projectileReleaseVfxPrefab")]
+    [SerializeField] private GameObject attackReleaseVfxPrefab;
 
     [TitleGroup("Magic Orb")]
     [ShowIf(nameof(IsMagicOrb))]
@@ -48,8 +50,20 @@ public class AttackConfig : ScriptableObject
     [SerializeField] private float magicOrbRotationSpeed = 180f;
     [TitleGroup("Magic Orb")]
     [ShowIf(nameof(IsMagicOrb))]
+    [MinValue(0f)]
+    [SerializeField] private float magicOrbOrbitRadius = 0.75f;
+    [TitleGroup("Magic Orb")]
+    [ShowIf(nameof(IsMagicOrb))]
+    [MinValue(0f)]
+    [SerializeField] private float magicOrbContactDistance = 0.25f;
+    [TitleGroup("Magic Orb")]
+    [ShowIf(nameof(IsMagicOrb))]
     [MinValue(1)]
     [SerializeField] private int magicOrbMaxHitCount = 3;
+    [TitleGroup("Magic Orb")]
+    [ShowIf(nameof(IsMagicOrb))]
+    [MinValue(0f)]
+    [SerializeField] private float magicOrbSameTargetHitCooldown = 0.5f;
     [TitleGroup("Magic Orb")]
     [ShowIf(nameof(IsMagicOrb))]
     [SerializeField] private GameObject magicOrbPrefab;
@@ -68,6 +82,17 @@ public class AttackConfig : ScriptableObject
     [SerializeField] private float droneHoverDistance = 1.5f;
     [TitleGroup("Drone")]
     [ShowIf(nameof(IsDrone))]
+    [MinValue(0.01f)]
+    [SerializeField] private float droneMoveSpeed = 3f;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [MinValue(0f)]
+    [SerializeField] private float droneLaunchHeight = 1f;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [SerializeField] private ProjectileConfig droneProjectileConfig;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
     [SerializeField] private GameObject dronePrefab;
 
     public string AttackConfigId => attackConfigId;
@@ -80,19 +105,32 @@ public class AttackConfig : ScriptableObject
     public string AttackingAnimatorBoolName => attackingAnimatorBoolName;
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
-    public GameObject ProjectileReleaseVfxPrefab => projectileReleaseVfxPrefab;
+    public GameObject AttackReleaseVfxPrefab => attackReleaseVfxPrefab;
     public float MagicOrbRotationSpeed => magicOrbRotationSpeed;
+    public float MagicOrbOrbitRadius => magicOrbOrbitRadius;
+    public float MagicOrbContactDistance => magicOrbContactDistance;
     public int MagicOrbMaxHitCount => magicOrbMaxHitCount;
+    public float MagicOrbSameTargetHitCooldown => magicOrbSameTargetHitCooldown;
     public GameObject MagicOrbPrefab => magicOrbPrefab;
     public float DroneBatteryDuration => droneBatteryDuration;
     public float DroneRechargeDuration => droneRechargeDuration;
     public float DroneHoverDistance => droneHoverDistance;
+    public float DroneMoveSpeed => droneMoveSpeed;
+    public float DroneLaunchHeight => droneLaunchHeight;
+    public ProjectileConfig DroneProjectileConfig => droneProjectileConfig;
     public GameObject DronePrefab => dronePrefab;
 
     private bool UsesProjectileConfig()
     {
         return attackArchetype == AttackArchetype.DirectionProjectile ||
                attackArchetype == AttackArchetype.ArcProjectile ||
+               attackArchetype == AttackArchetype.TrackingProjectile;
+    }
+
+    private bool UsesAttackReleaseVfx()
+    {
+        return UsesProjectileConfig() ||
+               attackArchetype == AttackArchetype.MagicOrb ||
                attackArchetype == AttackArchetype.Drone;
     }
 
@@ -111,6 +149,7 @@ public class AttackConfig : ScriptableObject
     {
         return attackArchetype == AttackArchetype.DirectionProjectile ||
                attackArchetype == AttackArchetype.ArcProjectile ||
+               attackArchetype == AttackArchetype.TrackingProjectile ||
                attackArchetype == AttackArchetype.Drone;
     }
 
@@ -168,9 +207,27 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
+        if (magicOrbOrbitRadius < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: magic orb orbit radius cannot be negative.", this);
+            return false;
+        }
+
+        if (magicOrbContactDistance < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: magic orb contact distance cannot be negative.", this);
+            return false;
+        }
+
         if (magicOrbMaxHitCount <= 0)
         {
             Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: magic orb max hit count must be greater than zero.", this);
+            return false;
+        }
+
+        if (magicOrbSameTargetHitCooldown < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: magic orb same target hit cooldown cannot be negative.", this);
             return false;
         }
 
@@ -189,6 +246,24 @@ public class AttackConfig : ScriptableObject
         if (droneHoverDistance < 0f)
         {
             Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone hover distance cannot be negative.", this);
+            return false;
+        }
+
+        if (droneMoveSpeed <= 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone move speed must be greater than zero.", this);
+            return false;
+        }
+
+        if (droneLaunchHeight < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone launch height cannot be negative.", this);
+            return false;
+        }
+
+        if (attackArchetype == AttackArchetype.Drone && droneProjectileConfig == null)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone projectile config is not assigned.", this);
             return false;
         }
 

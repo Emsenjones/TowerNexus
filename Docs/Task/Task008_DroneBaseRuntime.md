@@ -38,9 +38,9 @@ Expected ownership:
 
 - Resting on or near the tower while inactive.
 - Using AttackOrigin as rest, launch, return, and recharge target when available.
-- Launch movement.
-- Local movement speed configuration.
-- Target selection or target consumption from `TowerCombatBehaviour`.
+- Launch movement from AttackOrigin up to configured launch height.
+- Movement speed from `AttackConfig`.
+- Target selection owned by `DroneBehaviour`.
 - Movement near the target.
 - Hovering while facing the target.
 - Relocation to maintain hover distance.
@@ -55,9 +55,11 @@ Drone behavior should consume runtime initialization context from `TowerCombatBe
 
 For Drone Tower, AttackOrigin acts as the Drone parking, launch, return, and recharge anchor in the first version.
 
-DroneBehaviour should own `moveSpeed` in the first version.
-
 Drone Tower should reuse `AttackConfig.AttackRange` as the tower detect and launch range in the first version.
+
+Drone target selection should use `AttackConfig.TargetSelectionType` and only consider valid monsters inside the source tower `AttackRange`.
+
+Drone active flight should use `AttackConfig.DroneMoveSpeed`, `AttackConfig.DroneLaunchHeight`, `AttackConfig.DroneHoverDistance`, and `AttackConfig.DroneBatteryDuration`.
 
 FireAnchor should come from the Drone prefab or `DroneBehaviour`, because it moves with the Drone.
 
@@ -69,7 +71,7 @@ Drone Tower integration:
 
 - `TowerCombatBehaviour` reads `AttackArchetype.Drone`.
 - It spawns or owns the active Drone.
-- It supplies MonsterManager, source TowerInstance, AttackConfig, AttackOrigin, and target context as needed.
+- It supplies MonsterManager, source TowerInstance, AttackConfig, and AttackOrigin as needed.
 - It supplies AttackOrigin or a fallback rest transform when available.
 - It remains a coordinator and should not own detailed Drone movement or battery behavior.
 
@@ -78,21 +80,25 @@ Drone Tower integration:
 Expected base loop:
 
 ```text
-Drone rests on tower
+Drone rests at AttackOrigin
     ↓
-Enemy detected
+Enemy enters tower AttackRange
     ↓
-Launch
+Launch and rise to DroneLaunchHeight
     ↓
-Move near target
+Search target inside tower AttackRange
+    ↓
+Move to hover point
     ↓
 Hover and face target
     ↓
 Fire projectile attack entities at attack interval
     ↓
+Search next target if current target becomes invalid
+    ↓
 Consume battery while active
     ↓
-Return when battery is depleted or no monsters remain
+Return to AttackOrigin when battery is depleted or no valid monsters remain inside tower AttackRange
     ↓
 Recharge
     ↓
@@ -107,6 +113,7 @@ Rules:
 
 - Drone itself does not use `ProjectileBehaviour`.
 - Drone-fired bullet/projectile may use `ProjectileBehaviour`.
+- Drone-fired projectile data should come from `AttackConfig.DroneProjectileConfig`.
 - Drone-fired projectile spawn position should use Drone FireAnchor when available.
 - Drone-fired projectile release VFX should use Drone FireAnchor when configured.
 - `AttackConfig.ProjectileReleaseVfxPrefab` may be reused for Drone-fired projectile release VFX.
@@ -135,13 +142,16 @@ Do not implement:
 - Drone Tower spawns or owns a Drone Attack Entity.
 - Drone rests at AttackOrigin when inactive, with a documented fallback if AttackOrigin is missing.
 - Drone launches when enemies enter range.
+- Drone rises from AttackOrigin to `droneLaunchHeight` before moving to a target hover point.
+- Drone target selection is owned by DroneBehaviour and only considers valid monsters inside source tower AttackRange.
 - Drone moves near a target and hovers while facing it.
-- Drone movement speed is configured on DroneBehaviour.
+- Drone movement speed is configured on AttackConfig.
 - Drone relocates when target movement breaks hover distance.
 - Drone fires projectile attack entities from Drone FireAnchor while hovering.
+- Drone-fired projectile config comes from AttackConfig.DroneProjectileConfig.
 - Drone-fired projectile release VFX plays from Drone FireAnchor when configured.
 - Drone battery drains while active.
-- Drone returns to AttackOrigin when battery is depleted or no enemies remain.
+- Drone returns to AttackOrigin when battery is depleted or no valid enemies remain inside source tower AttackRange.
 - Drone recharges and can launch again.
 - Drone itself does not use Projectile System lifecycle.
 - Drone-fired projectiles use Projectile System lifecycle.
