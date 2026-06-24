@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7b82fa865f37e4c08bd443c04f6edc94, type: 3}
-  m_Name: Config_AreaDamageEffect
+  m_Name: Config_ImpactEffect_AreaDamage
   m_EditorClassIdentifier: Assembly-CSharp::EffectConfig
   effectId: 1001
   radius: 1

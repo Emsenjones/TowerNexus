@@ -253,7 +253,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        transform.rotation = Quaternion.FromToRotation(Vector3.down, moveDirection.normalized);
+        transform.rotation = Quaternion.LookRotation(moveDirection.normalized, Vector3.up);
     }
 
     private void OnTriggerEnter(Collider other)

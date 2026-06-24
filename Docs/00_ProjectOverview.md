@@ -284,6 +284,8 @@ Current first-version projectile flight behaviors:
 
 Future projectile-style attacks should extend this shared framework whenever practical.
 
+Projectile prefab roots follow the shared runtime orientation convention: local +Y Up and local +Z Forward.
+
 ---
 
 ## 5.9 Buff And Effect System

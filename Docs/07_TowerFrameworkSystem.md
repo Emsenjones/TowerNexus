@@ -463,7 +463,7 @@ Anchor expectation:
 
 - Drone Tower should use AttackOrigin as the Drone rest position, launch point, return target, and recharge position in the first version.
 - Drone prefab should define its own FireAnchor for Drone-fired projectiles.
-- Drone-fired attack release VFX should play from the Drone FireAnchor when configured.
+- Drone-fired attack release VFX should play from the Drone FireAnchor when configured and face the selected target Monster direction.
 - AttackOrigin and FireAnchor are runtime/prefab references; they should not decide target selection, battery rules, projectile hit detection, or damage.
 
 VFX expectation:
@@ -616,7 +616,7 @@ Notes:
 
 VFX notes:
 
-- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
+- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released and should face the projectile launch direction.
 - Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
 - Projectile impact VFX should usually be handled by projectile impact logic.
 
@@ -643,7 +643,7 @@ Notes:
 
 VFX notes:
 
-- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released.
+- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released and should use the VFX prefab's default direction.
 - Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
 - Explosion or impact VFX should follow projectile impact timing.
 
@@ -669,7 +669,7 @@ Notes:
 
 VFX notes:
 
-- attackReleaseVfxPrefab may be played when the projectile is released.
+- attackReleaseVfxPrefab may be played when the projectile is released. Until Tracking Projectile defines its own orientation rule, it should use the VFX prefab's default direction.
 - Projectile travel and impact VFX should follow Projectile System timing.
 
 ---
@@ -701,7 +701,7 @@ Notes:
 - The active Magic Orb's lifetime is part of the attack process, so cooldown does not start when the orb spawns.
 - Magic Orb behavior does not require targetSelectionType in the first version.
 - Magic Orb combat parameters should be configured on AttackConfig so MagicOrbBehaviour remains a runtime executor.
-- attackReleaseVfxPrefab may be played at AttackOrigin when the Magic Orb is generated.
+- attackReleaseVfxPrefab may be played at AttackOrigin when the Magic Orb is generated and should use the VFX prefab's default direction.
 
 VFX notes:
 
@@ -750,7 +750,7 @@ Drone recharge or tower cooldown timing starts after the Drone returns to the to
 VFX notes:
 
 - dronePrefab may contain visual references for launch, hover, return, and recharge presentation.
-- attackReleaseVfxPrefab may be reused for Drone-fired attack release VFX and should spawn at the Drone FireAnchor.
+- attackReleaseVfxPrefab may be reused for Drone-fired attack release VFX, should spawn at the Drone FireAnchor, and should face the selected target Monster direction.
 - Drone VFX should not own target selection, battery rules, projectile hit detection, or damage.
 
 ---
@@ -905,6 +905,10 @@ Excluded:
 
 
 # Change Log
+
+## 2026-06-24
+
+- Clarified attackReleaseVfxPrefab orientation: Direction Projectile and Drone-fired projectile release VFX face launch direction, while other archetypes use prefab default direction.
 
 ## 2026-06-23
 

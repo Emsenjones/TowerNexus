@@ -595,7 +595,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         if (origin == null)
         {
-            return transform.rotation;
+            return Quaternion.identity;
         }
 
         switch (attackConfig.AttackArchetype)
@@ -605,14 +605,12 @@ public class TowerCombatBehaviour : MonoBehaviour
 
                 if (direction.sqrMagnitude > 0.0001f)
                 {
-                    return Quaternion.LookRotation(direction.normalized);
+                    return Quaternion.LookRotation(direction.normalized, Vector3.up);
                 }
 
-                return origin.rotation;
-            case AttackArchetype.ArcProjectile:
-                return Quaternion.LookRotation(Vector3.up);
+                return Quaternion.identity;
             default:
-                return origin.rotation;
+                return Quaternion.identity;
         }
     }
 

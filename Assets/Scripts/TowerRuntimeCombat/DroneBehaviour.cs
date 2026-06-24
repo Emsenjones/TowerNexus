@@ -330,8 +330,8 @@ public class DroneBehaviour : MonoBehaviour
 
         Vector3 direction = targetPosition - spawnAnchor.position;
         Quaternion rotation = direction.sqrMagnitude > 0.0001f
-            ? Quaternion.LookRotation(direction.normalized)
-            : spawnAnchor.rotation;
+            ? Quaternion.LookRotation(direction.normalized, Vector3.up)
+            : Quaternion.identity;
 
         Instantiate(attackConfig.AttackReleaseVfxPrefab, spawnAnchor.position, rotation);
     }

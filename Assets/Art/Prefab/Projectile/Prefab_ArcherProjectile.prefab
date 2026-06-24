@@ -77,8 +77,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea27477528f2d496abc117eb970cd55d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileBehaviour
-  hitDistanceThreshold: 0.1
-  maxLifetime: 10
 --- !u!1001 &6434560179322706892
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -105,11 +103,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalRotation.y
@@ -121,7 +119,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: -90
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y

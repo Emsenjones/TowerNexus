@@ -365,6 +365,8 @@ ProjectileBehaviour then owns projectile runtime execution after initialization.
 
 Direction Projectile and Arc Projectile may use the same Tower Runtime Combat release flow while Projectile System handles their different movement behavior.
 
+Projectile prefab roots should follow the project-wide orientation convention of local +Y Up and local +Z Forward. Tower Runtime Combat creates and initializes the projectile, while ProjectileBehaviour owns aligning the projectile root's local +Z axis to its movement direction.
+
 ---
 
 # 10. Magic Orb Runtime
@@ -457,7 +459,8 @@ Drone runtime rules:
 - Drone periodically fires straight projectiles in the first version.
 - Drone-fired projectile data should come from AttackConfig.droneProjectileConfig.
 - Drone-fired projectiles should spawn from the Drone FireAnchor when available.
-- Drone-fired attack release VFX should spawn from the Drone FireAnchor when configured.
+- Drone-fired projectile prefabs should follow the same local +Y Up and local +Z Forward root orientation convention as other Projectile System prefabs.
+- Drone-fired attack release VFX should spawn from the Drone FireAnchor when configured and face the selected target Monster direction.
 - Drone flight consumes battery.
 - Drone returns to AttackOrigin for recharge when battery is depleted or no valid monsters remain inside source tower AttackRange.
 - Drone recharge or cooldown timing starts after the Drone returns to the tower, not when it launches.
@@ -512,6 +515,8 @@ Tower Runtime Combat should not hardcode tower-specific animation parameter name
 Tower Runtime Combat may expose attack lifecycle hooks for VFX and presentation systems.
 
 AttackConfig.attackReleaseVfxPrefab may be spawned as a one-shot presentation effect when a tower attack or Attack Entity release is confirmed.
+
+For Direction Projectile attacks, attackReleaseVfxPrefab should face the projectile launch direction. Drone-fired projectile release VFX follows the same direction-projectile rule and should face the selected target Monster direction from the Drone FireAnchor. Other attack archetypes should spawn attackReleaseVfxPrefab with the prefab's default direction unless that archetype later defines its own orientation rule.
 
 Recommended hooks:
 
@@ -646,6 +651,11 @@ It should remain between Tower Framework data and downstream runtime systems wit
 ---
 
 # Change Log
+
+## 2026-06-24
+
+- Added the shared projectile prefab orientation convention: local +Y Up and local +Z Forward.
+- Clarified attackReleaseVfxPrefab orientation: Direction Projectile and Drone-fired projectile release VFX face launch direction, while other archetypes use prefab default direction.
 
 ## 2026-06-23
 

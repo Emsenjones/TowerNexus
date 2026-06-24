@@ -198,8 +198,9 @@ Notes:
 - projectileSpeed controls how quickly the projectile reaches its target.
 - hitDistanceThreshold controls when a projectile is considered to have reached or hit its target.
 - maxLifetime prevents projectiles from existing forever if impact does not occur.
-- Projectile prefabs are expected to face negative Y axis (-Y) in local space.
-- ProjectileBehaviour should rotate the projectile so its local -Y direction points toward the movement direction.
+- Projectile prefab roots are expected to use local +Y as Up and local +Z as Forward.
+- ProjectileBehaviour should rotate the projectile so its local +Z direction points toward the movement direction.
+- Imported visual models with different source orientations should be corrected as child objects under a projectile prefab root that follows the project convention.
 - This orientation convention should be used consistently across all projectile prefabs to avoid per-projectile rotation fixes.
 - impactEffectConfig is optional.
 - impactVfxPrefab is optional and presentation-only.
@@ -327,10 +328,16 @@ Projectile visual orientation should follow a single project-wide convention:
 ```text
 Projectile Head
       ↓
-Local -Y Axis
+Local +Z Axis
+
+Projectile Up
+      ↓
+Local +Y Axis
 ```
 
-When a projectile is moving, ProjectileBehaviour should align the projectile's local -Y axis with the current travel direction.
+When a projectile is moving, ProjectileBehaviour should align the projectile root's local +Z axis with the current travel direction.
+
+The projectile prefab root should use local +Y as Up and local +Z as Forward. If an imported model faces another axis, rotate the visual child under the prefab root so the root remains consistent.
 
 This prevents projectile prefabs from appearing sideways, backwards, or requiring special-case rotation logic.
 
@@ -523,6 +530,10 @@ The system should remain independent from tower-specific logic. Simple projectil
 ---
 
 # Change Log
+
+## 2026-06-24
+
+- Updated projectile prefab orientation convention to local +Y Up and local +Z Forward.
 
 ## 2026-06-22
 

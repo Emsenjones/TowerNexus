@@ -282,3 +282,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DroneBehaviour
   fireAnchor: {fileID: 2326441832793177826}
+  animator: {fileID: 0}
+  flyingAnimatorBoolName: IsFlying
