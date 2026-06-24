@@ -19,4 +19,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: c71c62cf77e164c06b82b60e4352ebad, type: 3}
   towerPrefab: {fileID: 1820178305229058407, guid: 4c7d64644d5084801a44646a80d14567, type: 3}
   attackConfig: {fileID: 11400000, guid: 4e8a7c35bc5194542bd6ce0963ee2afb, type: 2}
-  towerLevelConfigs: []
+  towerLevelConfigs:
+  - level: 1
+    basicDamage: 5
+    towerModelPrefab: {fileID: 0}
+    displayIcon: {fileID: 0}

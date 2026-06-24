@@ -65,12 +65,12 @@
 4. *Tower and Projectile effect.
 5. *Refactor System documents based on new four types of Towers.
 6. Implement the Tower upgrade system.
-   Phase 1: Tower Framework foundation
-   Phase 2: Projectile foundation + four base tower runtime
-   Phase 3: Upgrade data/application foundation
-   Phase 4: Runtime upgrade effects
+   *Phase 1: Tower Framework foundation
+   *Phase 2: Projectile foundation + four base tower runtime
+   Phase 3: Separate the Tower and it blocks.
+   Phase 4: Upgrade data/application foundation
    Phase 5: Draft integration for deploy / level-up / upgrade
-   Phase 6: Player progression polish
+   Phase 6: Runtime upgrade effects
+   Phase 7: Player progression polish
 7. Develop Monster & Projectile object pool.
-8. Try to separate the Tower and it blocks.
 

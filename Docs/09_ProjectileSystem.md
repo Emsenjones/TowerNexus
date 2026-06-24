@@ -171,11 +171,13 @@ The first version introduces a lightweight ProjectileConfig.
 
 ProjectileConfig is responsible for projectile-specific runtime data and visual behavior.
 
-ProjectileConfig should not duplicate data already owned by AttackConfig.
+ProjectileConfig should not duplicate data already owned by Tower Framework, AttackConfig, Tower Runtime Combat, or the spawning Attack Entity.
 
-Examples of data that should remain in AttackConfig:
+Examples of data that should remain outside ProjectileConfig:
 
-- damage
+- TowerLevelConfig.basicDamage
+- AttackConfig.damageMultiplier
+- runtime upgrade damage multipliers
 - attackRange
 - attackInterval
 - attackArchetype
@@ -205,7 +207,7 @@ Notes:
 - impactEffectConfig is optional.
 - impactVfxPrefab is optional and presentation-only.
 - impactVfxPrefab should point to a prefab prepared for one-shot impact playback, commonly a GameObject with ParticleSystem components.
-- Direct single-target projectile hits may dispatch damage directly to MonsterBehaviour.
+- Direct single-target projectile hits may dispatch already-calculated damage directly to MonsterBehaviour.
 - Complex combat results should still be represented as Effects.
 - AreaDamageEffect is an example of a valid impact effect.
 - The first version supports a single impact effect.
@@ -233,7 +235,13 @@ Design Principle:
 
 ```text
 AttackConfig
-    Owns attack behavior and damage
+    Owns attack behavior and default damage multiplier
+
+TowerLevelConfig
+    Owns per-level basic damage
+
+Tower Runtime Combat / Spawning Attack Entity
+    Provides calculated damage context
 
 ProjectileConfig
     Owns projectile runtime data
@@ -414,6 +422,8 @@ The Projectile System may directly dispatch single-target damage when a projecti
 
 This exception exists to keep simple projectile attacks lightweight.
 
+Projectile System should use the damage value provided by Tower Runtime Combat or the spawning Attack Entity. It should not own the formula that combines TowerLevelConfig.basicDamage, AttackConfig.damageMultiplier, and future runtime upgrade multipliers.
+
 Examples:
 
 Arrow
@@ -446,6 +456,7 @@ Responsible for:
 - Initializing projectile runtime state
 - Providing target information
 - Providing AttackConfig data
+- Providing calculated damage context when projectile damage is resolved through Projectile System
 
 ---
 
@@ -456,16 +467,19 @@ Responsible for:
 - Spawning projectile Attack Entities when their behavior requires it
 - Providing projectile source context
 - Providing target or launch direction context
+- Providing calculated damage context for projectile Attack Entities they spawn
 
 Example:
 
 ```text
 Drone Attack Entity
-    ↓
-Spawn Projectile Attack Entity from droneProjectileConfig
+    ↓ Orbit selected target and run burst fire timing
+    ↓ Spawn Projectile Attack Entity from droneProjectileConfig
     ↓
 Projectile System handles flight, hit detection, impact event, and destruction
 ```
+
+Drone orbit movement, battery/recharge timing, and burst timing are owned by the Drone Attack Entity, not by Projectile System.
 
 ---
 
@@ -533,6 +547,8 @@ The system should remain independent from tower-specific logic. Simple projectil
 
 ## 2026-06-24
 
+- Clarified that Projectile System uses calculated damage context from Tower Runtime Combat or the spawning Attack Entity, while TowerLevelConfig and AttackConfig own basic damage and damage multiplier data.
+- Clarified that Drone orbit and burst timing are Drone Attack Entity behavior, not Projectile System behavior.
 - Updated projectile prefab orientation convention to local +Y Up and local +Z Forward.
 
 ## 2026-06-22

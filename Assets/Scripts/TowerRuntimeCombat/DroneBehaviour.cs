@@ -7,7 +7,7 @@ public enum DroneRuntimeState
 {
     Resting,
     Launching,
-    Hovering,
+    Orbiting,
     Returning,
     Recharging
 }
@@ -23,10 +23,14 @@ public class DroneBehaviour : MonoBehaviour
     private AttackConfig attackConfig;
     private Transform restAnchor;
     private MonsterBehaviour currentTarget;
-    private Vector3 hoverPoint;
+    private float orbitAngleRadians;
+    private int orbitDirection = 1;
     private float batteryTimer;
-    private float fireTimer;
+    private float burstTimer;
+    private int burstShotsRemaining;
     private float rechargeTimer;
+    private bool hasReachedOrbitPath;
+    private bool hasReachedReturnFlightPosition;
     private bool isInitialized;
     private bool hasLoggedMissingFireAnchor;
 
@@ -52,9 +56,13 @@ public class DroneBehaviour : MonoBehaviour
 
         CacheAnimator();
         currentTarget = null;
+        orbitAngleRadians = 0f;
+        orbitDirection = 1;
         batteryTimer = 0f;
-        fireTimer = 0f;
+        ResetBurstState();
         rechargeTimer = 0f;
+        hasReachedOrbitPath = false;
+        hasReachedReturnFlightPosition = false;
         hasLoggedMissingFireAnchor = false;
 
         if (!CanInitialize())
@@ -94,9 +102,33 @@ public class DroneBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackConfig.DroneMoveSpeed <= 0f)
+        if (attackConfig.DroneFlightSpeed <= 0f)
         {
-            Debug.LogWarning("Drone cannot initialize: drone move speed must be greater than zero.", this);
+            Debug.LogWarning("Drone cannot initialize: drone flight speed must be greater than zero.", this);
+            return false;
+        }
+
+        if (attackConfig.DroneOrbitRadius <= 0f)
+        {
+            Debug.LogWarning("Drone cannot initialize: drone orbit radius must be greater than zero.", this);
+            return false;
+        }
+
+        if (attackConfig.DroneBurstCount <= 0)
+        {
+            Debug.LogWarning("Drone cannot initialize: drone burst count must be greater than zero.", this);
+            return false;
+        }
+
+        if (attackConfig.DroneBurstInterval < 0f)
+        {
+            Debug.LogWarning("Drone cannot initialize: drone burst interval cannot be negative.", this);
+            return false;
+        }
+
+        if (attackConfig.DroneBurstCooldown < 0f)
+        {
+            Debug.LogWarning("Drone cannot initialize: drone burst cooldown cannot be negative.", this);
             return false;
         }
 
@@ -118,8 +150,8 @@ public class DroneBehaviour : MonoBehaviour
             case DroneRuntimeState.Launching:
                 UpdateLaunching();
                 break;
-            case DroneRuntimeState.Hovering:
-                UpdateHovering();
+            case DroneRuntimeState.Orbiting:
+                UpdateOrbiting();
                 break;
             case DroneRuntimeState.Returning:
                 UpdateReturning();
@@ -146,8 +178,12 @@ public class DroneBehaviour : MonoBehaviour
     private void Launch()
     {
         currentTarget = null;
+        orbitAngleRadians = 0f;
+        orbitDirection = 1;
         batteryTimer = attackConfig.DroneBatteryDuration;
-        fireTimer = 0f;
+        ResetBurstState();
+        hasReachedOrbitPath = false;
+        hasReachedReturnFlightPosition = false;
         SetState(DroneRuntimeState.Launching);
     }
 
@@ -176,11 +212,10 @@ public class DroneBehaviour : MonoBehaviour
             return;
         }
 
-        hoverPoint = CalculateHoverPoint(currentTarget);
-        SetState(DroneRuntimeState.Hovering);
+        BeginOrbitingTarget(currentTarget, true);
     }
 
-    private void UpdateHovering()
+    private void UpdateOrbiting()
     {
         DrainBattery();
 
@@ -200,39 +235,47 @@ public class DroneBehaviour : MonoBehaviour
                 return;
             }
 
-            hoverPoint = CalculateHoverPoint(currentTarget);
-            fireTimer = 0f;
+            BeginOrbitingTarget(currentTarget, true);
         }
 
-        Vector3 desiredHoverPoint = CalculateHoverPoint(currentTarget);
-
-        if ((desiredHoverPoint - hoverPoint).sqrMagnitude > 0.01f)
+        if (!hasReachedOrbitPath)
         {
-            hoverPoint = desiredHoverPoint;
+            Vector3 entryPosition = CalculateOrbitPosition(currentTarget);
+            MoveTowards(entryPosition);
+
+            if (!IsAtPosition(entryPosition))
+            {
+                return;
+            }
+
+            hasReachedOrbitPath = true;
         }
-
-        MoveTowards(hoverPoint);
-        FaceTarget(currentTarget);
-
-        if (!IsAtPosition(hoverPoint))
+        else
         {
-            return;
+            AdvanceOrbitAngle();
+            MoveTowards(CalculateOrbitPosition(currentTarget));
         }
 
-        fireTimer -= Time.deltaTime;
-
-        if (fireTimer > 0f)
-        {
-            return;
-        }
-
-        FireProjectile(currentTarget);
-        fireTimer = Mathf.Max(0f, attackConfig.AttackInterval);
+        UpdateBurstFire();
     }
 
     private void UpdateReturning()
     {
         currentTarget = null;
+
+        if (!hasReachedReturnFlightPosition)
+        {
+            Vector3 returnFlightPosition = GetLaunchPosition();
+            MoveTowards(returnFlightPosition);
+
+            if (!IsAtPosition(returnFlightPosition))
+            {
+                return;
+            }
+
+            hasReachedReturnFlightPosition = true;
+        }
+
         MoveTowards(GetRestPosition());
 
         if (!IsAtPosition(GetRestPosition()))
@@ -262,12 +305,43 @@ public class DroneBehaviour : MonoBehaviour
     private void ReturnToRest()
     {
         currentTarget = null;
+        hasReachedOrbitPath = false;
+        hasReachedReturnFlightPosition = false;
+        ResetBurstState();
         SetState(DroneRuntimeState.Returning);
     }
 
     private void DrainBattery()
     {
         batteryTimer = Mathf.Max(0f, batteryTimer - Time.deltaTime);
+    }
+
+    private void UpdateBurstFire()
+    {
+        burstTimer = Mathf.Max(0f, burstTimer - Time.deltaTime);
+
+        if (burstTimer > 0f)
+        {
+            return;
+        }
+
+        if (burstShotsRemaining <= 0)
+        {
+            burstShotsRemaining = Mathf.Max(1, attackConfig.DroneBurstCount);
+        }
+
+        FireProjectile(currentTarget);
+        burstShotsRemaining--;
+
+        burstTimer = burstShotsRemaining > 0
+            ? Mathf.Max(0f, attackConfig.DroneBurstInterval)
+            : Mathf.Max(0f, attackConfig.DroneBurstCooldown);
+    }
+
+    private void ResetBurstState()
+    {
+        burstTimer = 0f;
+        burstShotsRemaining = 0;
     }
 
     private void FireProjectile(MonsterBehaviour target)
@@ -440,45 +514,94 @@ public class DroneBehaviour : MonoBehaviour
         return (GetMonsterHitPosition(monster) - GetRestPosition()).sqrMagnitude <= attackRangeSqr;
     }
 
-    private Vector3 CalculateHoverPoint(MonsterBehaviour target)
+    private void BeginOrbitingTarget(MonsterBehaviour target, bool resetBurstState)
+    {
+        currentTarget = target;
+        hasReachedOrbitPath = false;
+        InitializeOrbitAngle(target);
+        orbitDirection = ChooseOrbitDirection();
+
+        if (resetBurstState)
+        {
+            ResetBurstState();
+        }
+
+        SetState(DroneRuntimeState.Orbiting);
+    }
+
+    private void InitializeOrbitAngle(MonsterBehaviour target)
     {
         Vector3 targetPosition = GetMonsterHitPosition(target);
-        Vector3 awayDirection = targetPosition - GetRestPosition();
-        awayDirection.y = 0f;
+        Vector3 radialDirection = transform.position - targetPosition;
+        radialDirection.y = 0f;
 
-        if (awayDirection.sqrMagnitude <= 0.0001f)
+        if (radialDirection.sqrMagnitude <= 0.0001f)
         {
-            awayDirection = transform.position - targetPosition;
-            awayDirection.y = 0f;
+            radialDirection = Vector3.Cross(Vector3.up, GetPlanarForward());
         }
 
-        if (awayDirection.sqrMagnitude <= 0.0001f)
+        if (radialDirection.sqrMagnitude <= 0.0001f)
         {
-            awayDirection = Vector3.forward;
+            radialDirection = Vector3.forward;
         }
 
-        Vector3 point = targetPosition + awayDirection.normalized * attackConfig.DroneHoverDistance;
+        radialDirection.Normalize();
+        orbitAngleRadians = Mathf.Atan2(radialDirection.z, radialDirection.x);
+    }
+
+    private int ChooseOrbitDirection()
+    {
+        Vector3 forward = GetPlanarForward();
+        Vector3 positiveTangent = CalculateOrbitTangent(orbitAngleRadians);
+        Vector3 negativeTangent = -positiveTangent;
+
+        return Vector3.Dot(forward, positiveTangent) >= Vector3.Dot(forward, negativeTangent) ? 1 : -1;
+    }
+
+    private Vector3 CalculateOrbitPosition(MonsterBehaviour target)
+    {
+        Vector3 targetPosition = GetMonsterHitPosition(target);
+        float orbitRadius = Mathf.Max(attackConfig.DroneOrbitRadius, 0.01f);
+        Vector3 orbitOffset = new Vector3(
+            Mathf.Cos(orbitAngleRadians),
+            0f,
+            Mathf.Sin(orbitAngleRadians)
+        ) * orbitRadius;
+        Vector3 point = targetPosition + orbitOffset;
         point.y = GetActiveFlightHeight();
         return point;
     }
 
+    private void AdvanceOrbitAngle()
+    {
+        float orbitRadius = Mathf.Max(attackConfig.DroneOrbitRadius, 0.01f);
+        float angularSpeed = attackConfig.DroneFlightSpeed / orbitRadius;
+        orbitAngleRadians += orbitDirection * angularSpeed * Time.deltaTime;
+    }
+
+    private static Vector3 CalculateOrbitTangent(float angleRadians)
+    {
+        return new Vector3(
+            -Mathf.Sin(angleRadians),
+            0f,
+            Mathf.Cos(angleRadians)
+        ).normalized;
+    }
+
     private void MoveTowards(Vector3 targetPosition)
     {
+        FaceMovementDirection(targetPosition);
+
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
-            attackConfig.DroneMoveSpeed * Time.deltaTime
+            attackConfig.DroneFlightSpeed * Time.deltaTime
         );
     }
 
-    private void FaceTarget(MonsterBehaviour target)
+    private void FaceMovementDirection(Vector3 targetPosition)
     {
-        if (!IsValidTarget(target))
-        {
-            return;
-        }
-
-        Vector3 direction = GetMonsterHitPosition(target) - transform.position;
+        Vector3 direction = targetPosition - transform.position;
         direction.y = 0f;
 
         if (direction.sqrMagnitude <= 0.0001f)
@@ -487,6 +610,19 @@ public class DroneBehaviour : MonoBehaviour
         }
 
         transform.rotation = Quaternion.LookRotation(direction.normalized);
+    }
+
+    private Vector3 GetPlanarForward()
+    {
+        Vector3 forward = transform.forward;
+        forward.y = 0f;
+
+        if (forward.sqrMagnitude <= 0.0001f)
+        {
+            return Vector3.forward;
+        }
+
+        return forward.normalized;
     }
 
     private void AlignToRestPose()
@@ -519,7 +655,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private float GetActiveFlightHeight()
     {
-        return GetRestPosition().y + attackConfig.DroneLaunchHeight;
+        return GetRestPosition().y + attackConfig.DroneFlightHeight;
     }
 
     private void SetState(DroneRuntimeState state)

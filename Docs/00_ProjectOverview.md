@@ -56,6 +56,7 @@ Current first-version configuration assets include:
 
 - TowerDefinition
 - AttackConfig
+- TowerLevelConfig
 - MonsterDefinition
 - ProjectileConfig
 - EffectConfig
@@ -90,6 +91,8 @@ Current first-version tower lineup:
 Archer Tower and Cannon Tower keep their existing functional direction.
 
 Magic Tower is redesigned around a persistent orbiting Magic Orb rather than a channel beam.
+
+Drone Tower is redesigned around an autonomous Drone that orbits selected target monsters and fires projectile bursts.
 
 Watch Tower is removed from the current first-version tower lineup and replaced by Drone Tower.
 
@@ -215,6 +218,7 @@ Responsible for:
 
 - TowerDefinition
 - AttackConfig
+- TowerLevelConfig
 - Attack archetypes
 - Attack Entity concepts
 - Target selection types
@@ -241,7 +245,7 @@ Responsible for:
 - Attack cooldown management
 - Attack Entity spawning or control
 - Magic Orb lifecycle orchestration
-- Drone launch, target hover, projectile fire, return, and recharge orchestration
+- Drone launch, target orbit, burst fire, return, and recharge orchestration
 - Attack execution
 - Attack animation state control
 - Attack visual effect hook triggering
@@ -251,6 +255,8 @@ Responsible for:
 Tower Runtime Combat decides when an attack happens.
 
 Attack Entities decide how the attack behaves.
+
+Tower level data provides basic damage. Attack configuration and runtime upgrades provide damage multipliers. Runtime combat and Attack Entity logic use these values to calculate final damage before dispatching it.
 
 Projectile lifecycle execution belongs to Projectile System when the Attack Entity is a projectile.
 

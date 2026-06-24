@@ -304,7 +304,7 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         hasImpacted = true;
-        hitMonster.TakeDamage(attackConfig.Damage);
+        hitMonster.TakeDamage(ResolveAttackDamage());
         RaiseImpact(hitMonster, transform.position);
         DestroyProjectile();
     }
@@ -328,7 +328,7 @@ public class ProjectileBehaviour : MonoBehaviour
             attackConfig,
             hitMonster,
             impactPosition,
-            attackConfig.Damage,
+            ResolveAttackDamage(),
             projectileConfig.ImpactEffectConfig
         );
 
@@ -357,6 +357,17 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         return direction.normalized;
+    }
+
+    private int ResolveAttackDamage()
+    {
+        if (attackConfig == null)
+        {
+            return 0;
+        }
+
+        int basicDamage = sourceTower != null ? sourceTower.BasicDamage : 0;
+        return attackConfig.CalculateDamage(basicDamage);
     }
 
     private bool TryGetDirectionProjectileHit(out MonsterBehaviour hitMonster)

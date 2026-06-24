@@ -19,13 +19,14 @@ public class AttackConfig : ScriptableObject
     [SerializeField] private float attackRange = 1f;
     [TitleGroup("Core")]
     [MinValue(0f)]
+    [HideIf(nameof(IsDrone))]
     [SerializeField] private float attackInterval = 1f;
     [TitleGroup("Core")]
     [ShowIf(nameof(UsesTargetSelection))]
     [SerializeField] private TargetSelectionType targetSelectionType;
     [TitleGroup("Core")]
-    [MinValue(0)]
-    [SerializeField] private int damage = 1;
+    [MinValue(0f)]
+    [SerializeField] private float damageMultiplier = 1f;
 
     [TitleGroup("Animation")]
     [SerializeField] private string attackAnimatorTriggerName = "Attack";
@@ -41,7 +42,6 @@ public class AttackConfig : ScriptableObject
     [SerializeField] private float arcHeight = 1f;
     [TitleGroup("Attack VFX")]
     [ShowIf(nameof(UsesAttackReleaseVfx))]
-    [FormerlySerializedAs("projectileReleaseVfxPrefab")]
     [SerializeField] private GameObject attackReleaseVfxPrefab;
 
     [TitleGroup("Magic Orb")]
@@ -78,16 +78,31 @@ public class AttackConfig : ScriptableObject
     [SerializeField] private float droneRechargeDuration = 2f;
     [TitleGroup("Drone")]
     [ShowIf(nameof(IsDrone))]
-    [MinValue(0f)]
-    [SerializeField] private float droneHoverDistance = 1.5f;
+    [MinValue(0.01f)]
+    [FormerlySerializedAs("droneHoverDistance")]
+    [SerializeField] private float droneOrbitRadius = 1.5f;
     [TitleGroup("Drone")]
     [ShowIf(nameof(IsDrone))]
     [MinValue(0.01f)]
-    [SerializeField] private float droneMoveSpeed = 3f;
+    [FormerlySerializedAs("droneMoveSpeed")]
+    [SerializeField] private float droneFlightSpeed = 3f;
     [TitleGroup("Drone")]
     [ShowIf(nameof(IsDrone))]
     [MinValue(0f)]
-    [SerializeField] private float droneLaunchHeight = 1f;
+    [FormerlySerializedAs("droneLaunchHeight")]
+    [SerializeField] private float droneFlightHeight = 1f;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [MinValue(1)]
+    [SerializeField] private int droneBurstCount = 3;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [MinValue(0f)]
+    [SerializeField] private float droneBurstInterval = 0.1f;
+    [TitleGroup("Drone")]
+    [ShowIf(nameof(IsDrone))]
+    [MinValue(0f)]
+    [SerializeField] private float droneBurstCooldown = 0.5f;
     [TitleGroup("Drone")]
     [ShowIf(nameof(IsDrone))]
     [SerializeField] private ProjectileConfig droneProjectileConfig;
@@ -100,7 +115,7 @@ public class AttackConfig : ScriptableObject
     public float AttackRange => attackRange;
     public float AttackInterval => attackInterval;
     public TargetSelectionType TargetSelectionType => targetSelectionType;
-    public int Damage => damage;
+    public float DamageMultiplier => damageMultiplier;
     public string AttackAnimatorTriggerName => attackAnimatorTriggerName;
     public string AttackingAnimatorBoolName => attackingAnimatorBoolName;
     public ProjectileConfig ProjectileConfig => projectileConfig;
@@ -114,9 +129,12 @@ public class AttackConfig : ScriptableObject
     public GameObject MagicOrbPrefab => magicOrbPrefab;
     public float DroneBatteryDuration => droneBatteryDuration;
     public float DroneRechargeDuration => droneRechargeDuration;
-    public float DroneHoverDistance => droneHoverDistance;
-    public float DroneMoveSpeed => droneMoveSpeed;
-    public float DroneLaunchHeight => droneLaunchHeight;
+    public float DroneOrbitRadius => droneOrbitRadius;
+    public float DroneFlightSpeed => droneFlightSpeed;
+    public float DroneFlightHeight => droneFlightHeight;
+    public int DroneBurstCount => droneBurstCount;
+    public float DroneBurstInterval => droneBurstInterval;
+    public float DroneBurstCooldown => droneBurstCooldown;
     public ProjectileConfig DroneProjectileConfig => droneProjectileConfig;
     public GameObject DronePrefab => dronePrefab;
 
@@ -177,15 +195,15 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
-        if (attackInterval < 0f)
+        if (!IsDrone() && attackInterval < 0f)
         {
             Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: attack interval cannot be negative.", this);
             return false;
         }
 
-        if (damage < 0)
+        if (damageMultiplier < 0f)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: damage cannot be negative.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: damage multiplier cannot be negative.", this);
             return false;
         }
 
@@ -243,21 +261,39 @@ public class AttackConfig : ScriptableObject
             return false;
         }
 
-        if (droneHoverDistance < 0f)
+        if (droneOrbitRadius <= 0f)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone hover distance cannot be negative.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone orbit radius must be greater than zero.", this);
             return false;
         }
 
-        if (droneMoveSpeed <= 0f)
+        if (droneFlightSpeed <= 0f)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone move speed must be greater than zero.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone flight speed must be greater than zero.", this);
             return false;
         }
 
-        if (droneLaunchHeight < 0f)
+        if (droneFlightHeight < 0f)
         {
-            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone launch height cannot be negative.", this);
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone flight height cannot be negative.", this);
+            return false;
+        }
+
+        if (attackArchetype == AttackArchetype.Drone && droneBurstCount <= 0)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone burst count must be greater than zero.", this);
+            return false;
+        }
+
+        if (attackArchetype == AttackArchetype.Drone && droneBurstInterval < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone burst interval cannot be negative.", this);
+            return false;
+        }
+
+        if (attackArchetype == AttackArchetype.Drone && droneBurstCooldown < 0f)
+        {
+            Debug.LogWarning($"Attack config '{attackConfigId}' is invalid: drone burst cooldown cannot be negative.", this);
             return false;
         }
 
@@ -268,5 +304,12 @@ public class AttackConfig : ScriptableObject
         }
 
         return true;
+    }
+
+    public int CalculateDamage(int basicDamage)
+    {
+        int safeBasicDamage = Mathf.Max(0, basicDamage);
+        float safeDamageMultiplier = Mathf.Max(0f, damageMultiplier);
+        return Mathf.Max(0, Mathf.RoundToInt(safeBasicDamage * safeDamageMultiplier));
     }
 }

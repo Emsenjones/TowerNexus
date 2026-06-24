@@ -9,7 +9,6 @@ public class TowerCombatBehaviour : MonoBehaviour
     private MonsterManager monsterManager;
     [SerializeField] private Animator animator;
     [SerializeField] private Transform attackOrigin;
-    //[SerializeField] private Transform projectileSpawnPoint;
 
     private readonly List<MonsterBehaviour> detectedEnemies = new List<MonsterBehaviour>();
 
@@ -58,6 +57,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedMissingDronePrefab = false;
         attackState = TowerAttackState.Idle;
         ResetAttackingAnimatorBoolIfUsed();
+        EnsureDroneAttackEntityIfNeeded();
     }
 
     public void OnAttackAnimationRelease()
@@ -377,6 +377,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private void UpdateDroneAttackEntity()
     {
         hasLoggedUnsupportedAttackEntity = false;
+        EnsureDroneAttackEntityIfNeeded();
 
         if (activeDrone != null)
         {
@@ -384,10 +385,19 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        if (detectedEnemies.Count == 0)
+        attackState = TowerAttackState.Idle;
+        SetAttackingAnimatorBool(false);
+    }
+
+    private void EnsureDroneAttackEntityIfNeeded()
+    {
+        if (attackConfig == null || attackConfig.AttackArchetype != AttackArchetype.Drone)
         {
-            attackState = TowerAttackState.Idle;
-            SetAttackingAnimatorBool(false);
+            return;
+        }
+
+        if (monsterManager == null || activeDrone != null)
+        {
             return;
         }
 
@@ -447,7 +457,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         switch (state)
         {
             case DroneRuntimeState.Launching:
-            case DroneRuntimeState.Hovering:
+            case DroneRuntimeState.Orbiting:
             case DroneRuntimeState.Returning:
                 attackState = TowerAttackState.DroneLaunched;
                 SetAttackingAnimatorBool(true);

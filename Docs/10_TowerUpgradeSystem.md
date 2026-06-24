@@ -93,11 +93,17 @@ Suggested TowerLevelConfig fields:
 | Field | Type | Description |
 |---|---|---|
 | level | int | Tower level represented by this config entry |
-| baseDamageModifier | float | Small base damage adjustment for this level |
-| attackIntervalModifier | float | Optional attack interval adjustment for this level |
-| rangeModifier | float | Optional attack range adjustment for this level |
+| basicDamage | int | Basic damage value for this tower level |
 | towerModelPrefab | GameObject | Optional visual/model replacement for this level |
 | displayIcon | Sprite | Optional UI icon for this level |
+
+Tower Level should own basic damage growth. AttackConfig and Tower Upgrade runtime should own attack-behavior or instance-specific damage multipliers.
+
+The first-version damage direction is:
+
+```text
+FinalDamage = RoundToInt(TowerLevelConfig.basicDamage * RuntimeDamageMultiplier)
+```
 
 Exact stat fields may evolve with AttackConfig and TowerRuntimeCombatSystem implementation needs.
 
@@ -249,7 +255,7 @@ These upgrades are generally shared across most tower types.
 
 Examples:
 
-- Damage
+- Damage multiplier
 - Attack Speed
 - Range
 - Critical Chance
@@ -286,12 +292,14 @@ Current design-reference upgrade ideas:
 
 | Tower | Lv1 Ideas | Lv2 Ideas |
 |---|---|---|
-| Archer Tower | Arrow Damage, Attack Interval | Pierce Arrow, Scatter Arrow, Split Arrow |
-| Cannon Tower | Shell Damage, Attack Interval | Bouncing Shell, Burning Shell, Delayed Shell |
-| Magic Tower | Orb Rotation Speed, Orb Damage | Additional Orb, Unlimited Hits, Consecutive Hit Bonus |
-| Drone Tower | Bullet Damage, Recharge Time | Dual Drones, Missile Attack |
+| Archer Tower | Arrow Damage Multiplier, Attack Interval | Pierce Arrow, Scatter Arrow, Split Arrow |
+| Cannon Tower | Shell Damage Multiplier, Attack Interval | Bouncing Shell, Burning Shell, Delayed Shell |
+| Magic Tower | Orb Rotation Speed, Magic Orb Damage Multiplier | Additional Orb, Unlimited Hits, Consecutive Hit Bonus |
+| Drone Tower | Drone Projectile Damage Multiplier, Recharge Time | Dual Drones, Missile Attack |
 
 These upgrade ideas are design references for framework extensibility. They are not part of the current implementation scope unless a later Task Document explicitly adopts them.
+
+Damage upgrade examples should modify runtime damage multipliers rather than overwrite TowerLevelConfig.basicDamage. TowerLevelConfig.basicDamage remains the tower's level-based base stat.
 
 Purpose:
 
@@ -381,6 +389,12 @@ Future versions may expand this system with:
 ---
 
 # Change Log
+
+## 2026-06-24
+
+- Updated TowerLevelConfig direction from baseDamageModifier to per-level basicDamage.
+- Removed undecided attack interval and range modifiers from TowerLevelConfig guidance.
+- Clarified damage progression split: Tower Level owns basicDamage, while Tower Upgrades should modify runtime damage multipliers.
 
 ## 2026-06-22
 

@@ -17,7 +17,7 @@ MonoBehaviour:
   attackRange: 5
   attackInterval: 5
   targetSelectionType: 1
-  damage: 5
+  damageMultiplier: 1
   attackAnimatorTriggerName: Attack
   attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 11400000, guid: 8f0e12318c23b49ab8f62ef06ffb01f7, type: 2}
@@ -28,5 +28,5 @@ MonoBehaviour:
   magicOrbPrefab: {fileID: 0}
   droneBatteryDuration: 5
   droneRechargeDuration: 2
-  droneHoverDistance: 1.5
+  droneOrbitRadius: 1.5
   dronePrefab: {fileID: 0}

@@ -42,6 +42,26 @@ public class TowerDefinition : ScriptableObject
     public AttackConfig AttackConfig => attackConfig;
     public IReadOnlyList<TowerLevelConfig> TowerLevelConfigs => towerLevelConfigs;
 
+    public TowerLevelConfig GetLevelConfig(int level)
+    {
+        if (towerLevelConfigs == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < towerLevelConfigs.Count; i++)
+        {
+            TowerLevelConfig levelConfig = towerLevelConfigs[i];
+
+            if (levelConfig != null && levelConfig.Level == level)
+            {
+                return levelConfig;
+            }
+        }
+
+        return null;
+    }
+
     public bool IsValid()
     {
         if (string.IsNullOrEmpty(towerId))

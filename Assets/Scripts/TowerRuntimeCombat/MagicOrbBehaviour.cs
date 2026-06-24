@@ -138,7 +138,7 @@ public class MagicOrbBehaviour : MonoBehaviour
 
     private void HitMonster(MonsterBehaviour monster)
     {
-        monster.TakeDamage(attackConfig.Damage);
+        monster.TakeDamage(ResolveAttackDamage());
         monsterHitCooldownEnds[monster] = Time.time + attackConfig.MagicOrbSameTargetHitCooldown;
         remainingHitCount--;
 
@@ -146,6 +146,17 @@ public class MagicOrbBehaviour : MonoBehaviour
         {
             EndOrb();
         }
+    }
+
+    private int ResolveAttackDamage()
+    {
+        if (attackConfig == null)
+        {
+            return 0;
+        }
+
+        int basicDamage = sourceTower != null ? sourceTower.BasicDamage : 0;
+        return attackConfig.CalculateDamage(basicDamage);
     }
 
     private bool IsTargetOnCooldown(MonsterBehaviour monster)
