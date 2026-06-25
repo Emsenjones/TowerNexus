@@ -96,13 +96,13 @@ TowerPlacementSystem
     ↓ Place New Tower
 ```
 
-If the selected Tower Draft is dragged onto an existing tower of the same TowerType:
+If the selected Tower Draft is dragged onto an existing tower with the same TowerId:
 
 ```text
 BattleHUDUISystem
     ↓ Drag Tower Draft Item
 TowerPlacementSystem
-    ↓ Detect Existing Same-Type Tower Target
+    ↓ Detect Existing Same-TowerId Tower Target
 TowerUpgradeSystem
     ↓ Process Tower Level-Up Request
 ```
@@ -131,7 +131,7 @@ A Tower Draft represents a tower card or tower item.
 The player may use a Tower Draft in two ways:
 
 1. Deploy it onto a valid deployment tile.
-2. Drag it onto an existing tower of the same TowerType to request a tower level-up.
+2. Drag it onto an existing tower with the same TowerId to request a tower level-up.
 
 Deploying a Tower Draft consumes the draft item and creates a new tower.
 
@@ -299,12 +299,12 @@ DraftSystem creates draft result
     ↓
 BattleHUDUISystem creates draggable Tower Draft item
     ↓
-TowerPlacementSystem detects deployment or same-type tower target intent
+TowerPlacementSystem detects deployment or same-TowerId tower target intent
 ```
 
 If the Tower Draft item is dropped on a valid deployment tile, TowerPlacementSystem places the new tower.
 
-If the Tower Draft item is dropped on an existing tower with matching TowerType, TowerPlacementSystem forwards a tower level-up request to TowerUpgradeSystem.
+If the Tower Draft item is dropped on an existing tower with matching TowerId, TowerPlacementSystem forwards a tower level-up request to TowerUpgradeSystem.
 
 ---
 
@@ -448,10 +448,14 @@ Excluded features:
 
 # Change Log
 
+## 2026-06-25 (Tower Draft Level-Up Target Sync)
+
+- Clarified that Tower Draft level-up target intent uses matching TowerId rather than broad same-TowerType wording.
+
 ## 2026-06-18 (Tower Draft And Upgrade Draft Sync)
 
 - Replaced EXP-triggered draft wording with ResolvedMonsterCount-based level-up draft flow.
-- Renamed New Tower Draft direction to Tower Draft with deployment and same-type tower level-up use cases.
+- Renamed New Tower Draft direction to Tower Draft with deployment and same-TowerId tower level-up use cases.
 - Routed Tower Draft level-up requests and Tower Upgrade Draft application to TowerUpgradeSystem.
 - Added tower-instance weighted Upgrade Draft Pool generation with same-round duplicate prevention for displayed options.
 

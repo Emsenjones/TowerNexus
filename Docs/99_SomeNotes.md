@@ -67,10 +67,11 @@
 6. Implement the Tower upgrade system.
    *Phase 1: Tower Framework foundation
    *Phase 2: Projectile foundation + four base tower runtime
-   Phase 3: Separate the Tower and it blocks.
+   *Phase 3: Separate the Tower and it blocks.
    Phase 4: Upgrade data/application foundation
    Phase 5: Draft integration for deploy / level-up / upgrade
-   Phase 6: Runtime upgrade effects
    Phase 7: Player progression polish
+   Phase 8: Tap tower interaction
 7. Develop Monster & Projectile object pool.
+8. Runtime upgrade effects
 

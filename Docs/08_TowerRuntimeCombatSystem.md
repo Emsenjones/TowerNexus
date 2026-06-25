@@ -45,6 +45,9 @@ The Tower Runtime Combat System does not own:
 
 - TowerDefinition structure
 - AttackConfig field definitions
+- TowerVisualController ownership
+- Tower model replacement
+- AttackOrigin fallback resolution
 - Tower placement workflow
 - Runtime projectile movement
 - Projectile collision detection
@@ -154,7 +157,7 @@ TowerCombatBehaviour is initialized from:
 - AttackConfig
 - MonsterManager
 - Optional Animator
-- Optional AttackOrigin transform
+- Current active AttackOrigin transform resolved by the tower runtime
 
 Recommended runtime references:
 
@@ -165,10 +168,14 @@ Recommended runtime references:
 | AttackConfig | Provides attack behavior configuration |
 | MonsterManager | Provides alive monsters for detection |
 | Animator | Receives attack presentation parameters |
-| AttackOrigin | Provides attack range origin and projectile spawn position |
+| Current Active AttackOrigin | Provides attack range origin and projectile spawn position |
 | MonsterBehaviour.HitAnchor | Provides the monster-side hit/reference position for targeting, range checks, projectile target snapshots, Magic Orb contact checks, and Drone orbit targeting |
 
-If AttackOrigin is not assigned, the tower transform may be used as the fallback origin.
+The current active AttackOrigin should come from the spawned tower level model when available.
+
+If the current tower model does not provide AttackOrigin, the owning tower visual/runtime layer must log a warning and use AttackOriginFallback. Missing model AttackOrigin is a configuration error, not a normal runtime behavior.
+
+Tower Runtime Combat consumes the resolved current active AttackOrigin. It should not inspect tower model hierarchy or choose fallback references directly.
 
 ---
 
@@ -262,9 +269,7 @@ A valid target should be:
 - Alive
 - Inside attackRange
 
-Range should be measured from AttackOrigin when available.
-
-If AttackOrigin is missing, the tower transform may be used.
+Range should be measured from the current active AttackOrigin resolved by the tower runtime.
 
 The monster-side reference point for range and target distance evaluation is provided by the Monster System through MonsterBehaviour.HitAnchor.
 
@@ -685,6 +690,12 @@ It should remain between Tower Framework data and downstream runtime systems wit
 ---
 
 # Change Log
+
+## 2026-06-25 (Active AttackOrigin Sync)
+
+- Replaced direct optional AttackOrigin fallback wording with current active AttackOrigin consumption.
+- Clarified that missing model AttackOrigin is a configuration error handled by the owning tower visual/runtime layer with a warning and AttackOriginFallback.
+- Clarified that Tower Runtime Combat does not own tower model hierarchy inspection or AttackOrigin fallback resolution.
 
 ## 2026-06-24
 

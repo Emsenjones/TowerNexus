@@ -12,6 +12,9 @@ The Tower Placement System focuses only on tower placement-related responsibilit
 
 - Tower drag placement interaction
 - Tower placement preview
+- Tower Draft level-up preview request flow
+- Attack range preview request flow during Draft item drag
+- Current Drag Operation cancellation flow
 - GridNode snapping
 - Tower footprint validation
 - Placement legality checking
@@ -139,7 +142,7 @@ Draft System may generate Tower Draft and Tower Upgrade Draft results.
 
 After the player selects a Tower Draft result, the selected tower becomes a draggable Tower Draft item.
 
-Tower Placement System detects whether the Tower Draft item is dropped onto a valid deployment tile or onto an existing same-type tower.
+Tower Placement System detects whether the Tower Draft item is dropped onto a valid deployment tile or onto an existing same-TowerId tower.
 
 Tower Placement System should not:
 
@@ -160,6 +163,7 @@ For Tower Placement System, Battle HUD UI System provides:
 
 - Draft Item Interaction Area display
 - Draft item drag interaction entry
+- Draft item drag cancellation target when the current drag operation is released back into the Battle HUD interaction area
 - Draft item removal after successful placement, accepted tower level-up, or accepted upgrade application
 - Placement feedback display when requested by placement logic
 - Valid target highlight presentation for Tower Upgrade Draft items
@@ -317,13 +321,13 @@ The placement workflow is:
 
 When a Draft item is dragged onto an existing tower, Tower Placement System should detect the target intent and route it to TowerUpgradeSystem.
 
-Tower Draft item on existing tower:
+Tower Draft item on existing tower with the same TowerId:
 
 ```text
 Tower Draft Item
-    ↓ Dropped On Existing Tower
+    ↓ Dropped On Existing Same-TowerId Tower
 TowerPlacementSystem
-    ↓ Detect Same-Type Tower Target Intent
+    ↓ Detect Tower Level-Up Target Intent
 TowerUpgradeSystem
     ↓ Validate And Process Tower Level-Up Request
 ```
@@ -339,7 +343,7 @@ TowerUpgradeSystem
     ↓ Validate And Apply Upgrade
 ```
 
-Tower Placement System should not decide whether the target tower satisfies TowerType, TowerLevel, duplicate upgrade, or max-level rules.
+Tower Placement System should not decide whether the target tower satisfies TowerId, TowerType, TowerLevel, duplicate upgrade, or max-level rules.
 
 ---
 
@@ -366,12 +370,26 @@ GridNode Lookup
 
 ---
 
-## 7.3 Placement Preview
+## 7.4 Placement Preview
+
+During any active Tower Draft drag operation, there should be exactly one active Tower Preview.
+
+For a valid empty deployable area, the active Tower Preview should display:
+
+- The tower's permanent base visual.
+- The Lv1 tower model from TowerDefinition per-level config data.
+- Semi-transparent preview materials or material instances.
+- Attack range preview based on the tower's AttackConfig attackRange.
+
+Tower Placement System owns when the active preview should exist, where it should snap, and which placement state it represents.
+
+Tower Placement System should request visual updates through the placed or preview tower's TowerBehaviour / TowerVisualController ownership path. It should not directly manipulate tower visual hierarchy, replace tower models, or modify renderer materials.
 
 During placement:
 
 - Valid placement displays valid visual feedback.
 - Invalid placement displays invalid visual feedback.
+- Invalid placement keeps the active Tower Preview visible in an invalid feedback state.
 
 Recommended examples:
 
@@ -383,6 +401,97 @@ Recommended examples:
 Placement preview is part of placement interaction.
 
 Battle HUD UI System may display additional UI feedback, but validation ownership remains in Tower Placement System.
+
+---
+
+## 7.5 Tower Level-Up Preview
+
+Tower Level-Up Preview currently applies only to Tower Draft items dragged onto an already deployed tower with the same TowerId.
+
+It does not describe future Tower Upgrade Draft item effect previews such as attack damage upgrades, extra Magic Orbs, or other upgrade-definition-specific preview behavior.
+
+Tower Level-Up Preview may be entered when:
+
+- The dragged item is a Tower Draft item.
+- The target is an existing deployed tower.
+- The dragged Tower Draft TowerId matches the deployed tower TowerId.
+- The existing tower is below max tower level.
+
+Current max tower level target:
+
+```text
+Max Tower Level = 3
+```
+
+When all conditions are satisfied, the active Tower Preview should switch to:
+
+```text
+TowerBaseVisualRoot
+    +
+Current Level + 1 Ghost Tower Model
+```
+
+The Tower Level-Up Preview:
+
+- Shows the next level appearance as a semi-transparent ghost model.
+- Displays attack range preview.
+- Does not modify the existing deployed tower before release.
+- Remains active until release or cancel.
+- Uses tower level-up validation rather than grid occupation validation.
+
+If the target tower cannot be upgraded, Tower Level-Up Preview is not entered and the active preview remains in invalid feedback state.
+
+On successful release, Tower Placement System forwards the level-up request to TowerUpgradeSystem. TowerUpgradeSystem validates and applies the tower level-up. TowerVisualController performs the model replacement and AttackOrigin refresh requested by the owning tower runtime.
+
+Tower Placement System should not directly replace the deployed tower model or directly refresh AttackOrigin.
+
+---
+
+## 7.6 Attack Range Preview
+
+When a Draft item drag operation begins:
+
+- All deployed towers should display their attack range preview.
+- The active Tower Preview should display its own attack range preview.
+
+Attack range preview uses:
+
+```text
+TowerDefinition
+    ↓
+AttackConfig
+    ↓
+attackRange
+```
+
+When the drag operation ends or is cancelled:
+
+- Deployed tower attack range previews should be hidden.
+- The active Tower Preview should be removed.
+- Temporary preview objects should be destroyed.
+
+Tower Placement System may request attack range preview visibility during drag operations, but TowerVisualController owns tower-local range preview rendering.
+
+---
+
+## 7.7 Current Drag Operation Cancellation
+
+Canceling the current drag operation is a general Draft item behavior, not only a Tower Draft deployment behavior.
+
+If any currently dragged Draft item is released back inside the Battle HUD Draft Item Interaction Area:
+
+- Cancel the current drag operation immediately.
+- Do not perform scene placement validation.
+- Do not perform tower level-up validation.
+- Do not perform tower upgrade application validation.
+- Do not deploy a tower.
+- Do not upgrade a tower.
+- Return the Draft item to Battle HUD ownership.
+- Destroy the active Tower Preview if one exists.
+- Hide all deployed tower attack range previews.
+- Clear drag state.
+
+This applies to Tower Draft items, future Tower Upgrade Draft items, and future draggable Draft item types.
 
 ---
 
@@ -525,7 +634,11 @@ Included features:
 - Use Draft items from Battle HUD UI System as placement or target-intent input.
 - Tower anchor structure.
 - Tower drag placement from Draft Item Interaction Area.
-- Placement preview object.
+- One active Tower Preview during Tower Draft drag.
+- Lv1 model placement preview for valid empty deployment areas.
+- Current Level + 1 ghost model preview for same-TowerId Tower Draft level-up targets.
+- Attack range preview request flow during Draft item drag.
+- Current Drag Operation cancellation when a dragged Draft item is released back into the Battle HUD Draft Item Interaction Area.
 - Grid snapping.
 - Placement validation based on occupied anchors and walkable nodes.
 - Path-blocking validation integration point, enabled when current runtime pathfinding support is connected.
@@ -603,6 +716,15 @@ MapSystem
 ---
 
 # Change Log
+
+## 2026-06-25 (Tower Visual Preview Foundation Sync)
+
+- Added one-active-preview direction for Tower Draft drag operations.
+- Added Lv1 placement preview and same-TowerId Current Level + 1 Tower Level-Up Preview direction.
+- Clarified that Tower Level-Up Preview does not cover future Tower Upgrade Draft item effect previews.
+- Added attack range preview request flow during Draft item drag.
+- Added Current Drag Operation cancellation when any dragged Draft item is released back into the Battle HUD Draft Item Interaction Area.
+- Clarified that Tower Placement System requests visual changes through TowerBehaviour / TowerVisualController ownership and does not directly manipulate tower visuals.
 
 ## 2026-06-18 (Draft Item Target Intent Sync)
 

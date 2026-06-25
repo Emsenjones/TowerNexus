@@ -138,8 +138,13 @@ Responsibilities:
 
 - Display draggable Tower Draft and Tower Upgrade Draft items.
 - Allow Draft item drag interaction.
+- Act as the release target for cancelling the current Draft item drag operation.
 - Remove consumed Draft items after successful placement, tower level-up, or upgrade application.
 - Display future recycle tower entries.
+
+If any currently dragged Draft item is released back inside the Draft Item Interaction Area, the current drag operation should be cancelled. This applies to Tower Draft items, future Tower Upgrade Draft items, and future draggable Draft item types.
+
+Canceling the current drag operation returns the Draft item to the Battle HUD interaction flow and should not trigger scene placement validation, tower level-up validation, or upgrade application validation.
 
 The Draft Item Interaction Area should not validate placement, tower level-up rules, or tower upgrade rules.
 
@@ -367,6 +372,11 @@ Excluded features:
 ---
 
 # Change Log
+
+## 2026-06-25 (Current Drag Operation Cancel Sync)
+
+- Clarified that releasing any dragged Draft item back into the Draft Item Interaction Area cancels the current drag operation.
+- Clarified that canceling the current drag operation does not trigger placement validation, tower level-up validation, or upgrade application validation.
 
 ## 2026-06-18 (Draft Interaction And Level Progress Sync)
 

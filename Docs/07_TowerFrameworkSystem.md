@@ -37,6 +37,9 @@ The Tower Framework System owns:
 - Target selection definitions
 - Shared tower configuration references
 - Static attack VFX configuration references
+- Tower prefab structure contract
+- Tower visual structure contract
+- TowerVisualController ownership direction
 
 The Tower Framework System does not own:
 
@@ -48,6 +51,8 @@ The Tower Framework System does not own:
 - Runtime tower upgrades
 - Runtime VFX spawning, binding, playback, or cleanup
 - VFX prefab authoring, material setup, shader setup, or particle tuning
+- Placement preview validation
+- Tower level-up validation
 
 ---
 
@@ -126,6 +131,7 @@ The Tower Structure defines the runtime prefab organization and placement-relate
 A tower structure provides:
 
 - Runtime visual representation
+- Runtime visual ownership path
 - Placement footprint definition
 - Placement anchor references
 - Runtime combat component attachment points
@@ -146,28 +152,58 @@ Recommended prefab structure:
 ```text
 TowerPrefab
 ├── VisualRoot
+│   ├── TowerBaseVisualRoot
+│   └── TowerModelSpawnPoint
 ├── Collider
 ├── TowerAnchorSet
 │   ├── CenterAnchor
 │   ├── OccupyAnchor_01
 │   ├── OccupyAnchor_02
 │   └── OccupyAnchor_03
-└── AttackOrigin
+├── PreviewRenderer
+└── AttackOriginFallback
 ```
 
 Future versions may add additional runtime combat components.
 
-Drone Tower uses AttackOrigin differently from projectile-only towers:
+VisualRoot owns every tower-local visual object.
+
+TowerBaseVisualRoot contains the permanent tower base or platform visual. Tower level changes should not replace TowerBaseVisualRoot.
+
+TowerModelSpawnPoint is the spawn parent for the current tower level model. Tower level changes replace only the spawned tower model.
+
+PreviewRenderer provides valid or invalid placement feedback for the active preview. It should not decide placement validity.
+
+AttackOriginFallback is a runtime safety fallback. Each Tower Level Model Prefab is expected to provide its own correctly positioned AttackOrigin. If the current tower model does not provide AttackOrigin, runtime must log a warning and then use AttackOriginFallback.
+
+Missing model AttackOrigin is an authoring or configuration error, not a normal runtime path.
+
+TowerBehaviour owns TowerVisualController.
+
+TowerVisualController owns tower-local visual rendering operations requested by gameplay systems, including model spawn or replacement, preview transparency, attack range preview visibility, and current AttackOrigin resolution.
+
+TowerPlacementSystem may request preview or range visual changes, but should not directly manipulate VisualRoot, TowerModelSpawnPoint, renderer materials, or tower model instances.
+
+TowerUpgradeSystem may request visual refresh after an accepted tower level-up, but should not directly manipulate tower model hierarchy.
+
+TowerRuntimeCombatSystem consumes the current active AttackOrigin resolved by the owning tower runtime. It should not resolve level model hierarchy or fallback references itself.
+
+Drone Tower consumes the current active AttackOrigin differently from projectile-only towers.
+
+Drone Tower still follows the same TowerPrefab visual structure direction:
 
 ```text
 DroneTowerPrefab
 ├── VisualRoot
+│   ├── TowerBaseVisualRoot
+│   └── TowerModelSpawnPoint
 ├── Collider
 ├── TowerAnchorSet
-└── AttackOrigin
+├── PreviewRenderer
+└── AttackOriginFallback
 ```
 
-For Drone Tower, AttackOrigin represents where the Drone rests, launches from, returns to, and recharges when inactive.
+For Drone Tower, the current active AttackOrigin from the spawned tower level model represents where the Drone rests, launches from, returns to, and recharges when inactive.
 
 This keeps Drone parking behavior aligned with the existing tower attack-origin convention and avoids adding a separate DroneParkingAnchor in the first version.
 
@@ -268,6 +304,90 @@ Placement Validation
 The Tower Framework System only defines footprint structure.
 
 Runtime placement validation belongs to Tower Placement System.
+
+---
+
+## 5.6 Tower Level Model Prefab
+
+Tower level models come from TowerDefinition per-level config data.
+
+Example:
+
+```text
+TowerDefinition
+└── towerLevelConfigs
+    ├── Lv1
+    │   └── towerModelPrefab
+    ├── Lv2
+    │   └── towerModelPrefab
+    └── Lv3
+        └── towerModelPrefab
+```
+
+Each Tower Level Model Prefab should provide its own AttackOrigin.
+
+Recommended structure:
+
+```text
+TowerLevelModelPrefab
+├── Model
+└── AttackOrigin
+```
+
+Rules:
+
+- Draft System always creates Lv1 tower deployment results.
+- Deploying a new tower spawns the Lv1 tower model.
+- Upgrading a tower replaces only the spawned tower model.
+- TowerBaseVisualRoot remains unchanged across tower levels.
+- Runtime resolves the active AttackOrigin from the current tower model.
+- If the current tower model lacks AttackOrigin, runtime logs a warning and uses AttackOriginFallback.
+
+---
+
+## 5.7 TowerVisualController
+
+TowerVisualController is a reusable runtime component owned by TowerBehaviour.
+
+Its purpose is to perform tower-local visual rendering requested by gameplay systems.
+
+Responsibilities:
+
+- Manage TowerBaseVisualRoot reference.
+- Manage TowerModelSpawnPoint reference.
+- Spawn tower level model.
+- Replace tower level model.
+- Destroy previous tower level model.
+- Resolve current active AttackOrigin.
+- Apply preview transparency to preview instances.
+- Clear preview transparency from deployed instances when required.
+- Show attack range preview.
+- Hide attack range preview.
+- Update attack range preview.
+
+Example API direction:
+
+```text
+SetTowerVisual()
+ReplaceTowerVisual()
+GetCurrentAttackOrigin()
+ShowAttackRangePreview()
+HideAttackRangePreview()
+UpdateAttackRangePreview()
+SetPreviewTransparency()
+ClearCurrentTowerModel()
+```
+
+TowerVisualController does not decide:
+
+- Placement validity.
+- Upgrade validity.
+- Tower level.
+- Tower upgrade logic.
+- Attack range values.
+- Draft item consumption.
+
+Gameplay systems decide whether a visual should be shown and which data should be rendered. TowerVisualController renders the requested tower-local visual state.
 
 ---
 
@@ -871,11 +991,15 @@ Uses TowerDefinition to generate Tower Draft choices.
 
 Uses TowerDefinition to instantiate tower prefabs.
 
+Requests TowerBehaviour-owned TowerVisualController to update placement preview, tower level-up preview, preview transparency, and attack range preview presentation.
+
 ---
 
 ## Tower Runtime Combat System
 
 Uses TowerDefinition and AttackConfig to determine attack archetypes and combat behavior.
+
+Consumes the current active AttackOrigin resolved through the owning tower runtime and TowerVisualController path.
 
 ---
 
@@ -884,6 +1008,8 @@ Uses TowerDefinition and AttackConfig to determine attack archetypes and combat 
 Uses TowerDefinition per-level config data to process tower level-up requests.
 
 Uses Tower Upgrade System-owned upgrade definitions to define and apply tower upgrades.
+
+After accepting a tower level-up request, requests the owning tower runtime to replace the spawned tower model and refresh the active AttackOrigin.
 
 ---
 
@@ -905,6 +1031,8 @@ Included:
 - Target selection types
 - Runtime system references
 - Basic relationship between tower attacks, effects, and buffs
+- Tower prefab visual structure contract
+- TowerVisualController ownership and API direction
 - Optional AttackConfig VFX and Attack Entity prefab references for attack release, Magic Orb, and Drone attacks
 
 Excluded:
@@ -923,6 +1051,14 @@ Excluded:
 
 
 # Change Log
+
+## 2026-06-25 (Tower Visual Foundation Sync)
+
+- Updated TowerPrefab visual structure direction with TowerBaseVisualRoot, TowerModelSpawnPoint, PreviewRenderer, and AttackOriginFallback.
+- Added Tower Level Model Prefab contract requiring each level model to provide its own AttackOrigin.
+- Added TowerVisualController as a TowerBehaviour-owned runtime component responsible for tower-local visual rendering.
+- Clarified that TowerPlacementSystem and TowerUpgradeSystem request visual changes instead of directly manipulating tower visual hierarchy.
+- Clarified that TowerRuntimeCombatSystem consumes the current active AttackOrigin resolved by the owning tower runtime.
 
 ## 2026-06-24
 

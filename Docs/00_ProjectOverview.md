@@ -201,6 +201,9 @@ Responsible for:
 
 - Drag and snap placement
 - Placement preview
+- Tower Draft level-up preview request flow
+- Attack range preview request flow during Draft item drag
+- Current Drag Operation cancellation flow
 - Placement validation
 - Occupied node detection
 - Walkability updates
@@ -225,6 +228,8 @@ Responsible for:
 - Attack presentation configuration
 - Animator presentation parameter definitions
 - Tower prefab structure
+- Tower visual structure
+- TowerVisualController ownership direction
 - TowerAnchorSet
 - Center Anchor
 - Occupied Anchors
@@ -249,6 +254,7 @@ Responsible for:
 - Attack execution
 - Attack animation state control
 - Attack visual effect hook triggering
+- Current active AttackOrigin consumption
 - Projectile creation and initialization
 - Damage dispatch coordination
 
@@ -257,6 +263,8 @@ Tower Runtime Combat decides when an attack happens.
 Attack Entities decide how the attack behaves.
 
 Tower level data provides basic damage. Attack configuration and runtime upgrades provide damage multipliers. Runtime combat and Attack Entity logic use these values to calculate final damage before dispatching it.
+
+Tower Runtime Combat consumes the current active AttackOrigin resolved by the tower visual/runtime layer. It does not own tower model replacement or AttackOrigin fallback resolution.
 
 Projectile lifecycle execution belongs to Projectile System when the Attack Entity is a projectile.
 
