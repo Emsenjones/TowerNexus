@@ -118,6 +118,18 @@ public class BattleHUDUI : MonoBehaviour
         Destroy(item.gameObject);
     }
 
+    public bool IsScreenPositionInsideDraftItemInteractionArea(Vector2 screenPosition)
+    {
+        RectTransform draftItemArea = pendingTowerContainer as RectTransform;
+
+        if (draftItemArea == null)
+        {
+            return false;
+        }
+
+        return RectTransformUtility.RectangleContainsScreenPoint(draftItemArea, screenPosition);
+    }
+
     public void OpenDraft(List<TowerDefinition> towerDefinitions)
     {
         OpenDraft(towerDefinitions, null);

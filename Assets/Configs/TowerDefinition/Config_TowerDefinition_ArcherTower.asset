@@ -12,15 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
   m_Name: Config_TowerDefinition_ArcherTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
-  towerId: 1
+  towerFamily: 0
   displayName: Archer Tower
   description: This is an archer tower
-  towerCategory: 0
   icon: {fileID: 21300000, guid: 48902436d5fe340feb0da315672b5b04, type: 3}
   towerPrefab: {fileID: 8270491640636788401, guid: 7f40fd16bab2d4a20b51506d3cb37e8f, type: 3}
   attackConfig: {fileID: 11400000, guid: 1c1d31696daa84d328a1612b624643c6, type: 2}
   towerLevelConfigs:
   - level: 1
     basicDamage: 1
-    towerModelPrefab: {fileID: 0}
+    towerModelPrefab: {fileID: 3903350526785741268, guid: d256d5dec72004825987f5b254513862, type: 3}
+    displayIcon: {fileID: 0}
+  - level: 2
+    basicDamage: 2
+    towerModelPrefab: {fileID: 5632306376414796951, guid: 7526a2221a85e4a94bf715bd376adbf6, type: 3}
+    displayIcon: {fileID: 0}
+  - level: 3
+    basicDamage: 3
+    towerModelPrefab: {fileID: 6373366450379645454, guid: bddad87cd3ef84b518b7e8c968dd884f, type: 3}
     displayIcon: {fileID: 0}

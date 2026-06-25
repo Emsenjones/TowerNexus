@@ -40,6 +40,47 @@ public class TowerInstance : MonoBehaviour
         }
     }
 
+    public int GetMaxConfiguredLevel()
+    {
+        if (towerDefinition == null || towerDefinition.TowerLevelConfigs == null)
+        {
+            return 0;
+        }
+
+        int maxLevel = 0;
+        IReadOnlyList<TowerLevelConfig> levelConfigs = towerDefinition.TowerLevelConfigs;
+
+        for (int i = 0; i < levelConfigs.Count; i++)
+        {
+            TowerLevelConfig levelConfig = levelConfigs[i];
+
+            if (levelConfig != null && levelConfig.Level > maxLevel)
+            {
+                maxLevel = levelConfig.Level;
+            }
+        }
+
+        return maxLevel;
+    }
+
+    public bool CanSetLevel(int level)
+    {
+        return towerDefinition != null &&
+               level > 0 &&
+               towerDefinition.GetLevelConfig(level) != null;
+    }
+
+    public bool TrySetLevel(int level)
+    {
+        if (!CanSetLevel(level))
+        {
+            return false;
+        }
+
+        currentLevel = level;
+        return true;
+    }
+
     public IReadOnlyList<GridNodeBehaviour> GetOccupiedNodes()
     {
         return occupiedNodes;

@@ -120,18 +120,20 @@ When a Tower Draft item is dragged onto an existing tower:
 
 ```text
 Tower Draft Item
-    ↓ Dropped On Existing Tower
+    ↓ Preview CenterAnchor Snaps To GridNode
 TowerPlacementSystem
-    ↓ Detect Target Tower Intent
+    ↓ Detect Target Tower Intent From TowerInstance.OccupiedNodes
 TowerUpgradeSystem
     ↓ Validate Tower Level-Up Request
 TowerUpgradeSystem
-    ↓ Apply Tower Level-Up
+    ↓ Apply Tower Level Data
+TowerPlacementSystem
+    ↓ Request Target TowerBehaviour Visual Refresh
 ```
 
 A tower level-up request is valid only when:
 
-- The Draft item's TowerId matches the target tower's TowerId.
+- The Draft item's TowerFamily matches the target tower's TowerFamily.
 - The target tower has not reached max tower level.
 - The run and battle state still allow draft item consumption.
 
@@ -140,18 +142,20 @@ If the request is accepted:
 - Consume the Tower Draft item.
 - Increase the target tower level by 1.
 - Apply the per-level base stat growth from TowerDefinition.
-- Replace or update the tower model/visuals for the new level if configured.
+- Request the target tower runtime to replace or update the tower model/visuals for the new level if configured.
 - Keep the permanent TowerBaseVisualRoot unchanged.
 - Refresh the current active AttackOrigin after model replacement.
 - Unlock access to higher-level upgrade pools.
 
 If the request is rejected, the Tower Draft item should not be consumed.
 
-Tower model replacement is performed through the tower-owned visual/runtime path. TowerUpgradeSystem validates and applies the tower level change, then requests the owning tower runtime to refresh visuals.
+TowerUpgradeSystem owns level-up validation and level data application only. It should not operate TowerBehaviour or TowerVisualController directly.
 
-TowerUpgradeSystem should not directly manipulate VisualRoot, TowerModelSpawnPoint, renderer materials, or AttackOrigin hierarchy.
+Tower model replacement is performed through the tower-owned visual/runtime path after TowerPlacementSystem receives an accepted level-up result and asks the target TowerBehaviour to refresh visuals.
 
-Tower Level-Up Preview is owned by the placement drag workflow. It currently means a Tower Draft item dragged onto an existing deployed tower with the same TowerId can display the Current Level + 1 ghost model before release. It does not include future Tower Upgrade Draft item effect previews.
+TowerUpgradeSystem should not directly manipulate VisualRoot, TowerPrefabSpawnPoint, renderer materials, or AttackOrigin hierarchy.
+
+Tower Level-Up Preview is owned by the placement drag workflow. It currently means a Tower Draft item dragged onto an existing deployed tower with the same TowerFamily can display the Current Level + 1 ghost model before release. It does not include future Tower Upgrade Draft item effect previews.
 
 ---
 
@@ -181,7 +185,7 @@ Archer B
 
 An upgrade may be applied only when:
 
-- The upgrade TowerType matches the target tower's TowerType.
+- The upgrade TowerFamily matches the target tower's TowerFamily.
 - The target tower level satisfies Required Tower Level.
 - The target tower does not already have the same upgrade.
 
@@ -189,7 +193,7 @@ Example:
 
 ```text
 Upgrade: Archer Multi Shot
-TowerType: Archer
+TowerFamily: Archer
 Required Level: 2
 
 Valid Targets:
@@ -225,7 +229,7 @@ TowerUpgradeSystem provides upgrade definitions and eligibility rules used by Dr
 
 TowerUpgradeSystem owns:
 
-- TowerType matching rules
+- TowerFamily matching rules
 - Required Tower Level checks
 - Per-tower duplicate upgrade checks
 - Upgrade definition lookup
@@ -406,7 +410,7 @@ Future versions may expand this system with:
 - Clarified that accepted tower level-up requests keep TowerBaseVisualRoot unchanged and refresh the active AttackOrigin after model replacement.
 - Clarified that TowerUpgradeSystem requests tower-owned visual refresh instead of directly manipulating tower visual hierarchy.
 - Clarified that Tower Level-Up Preview belongs to the placement drag workflow and does not include future Tower Upgrade Draft item effect previews.
-- Clarified that Tower Draft level-up validation uses matching TowerId rather than broad same-TowerType wording.
+- Clarified that Tower Draft level-up validation uses matching TowerFamily.
 
 ## 2026-06-24
 

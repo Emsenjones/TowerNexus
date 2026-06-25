@@ -7,8 +7,8 @@ public class TowerCombatBehaviour : MonoBehaviour
 {
     [SerializeField] private TowerInstance towerInstance;
     private MonsterManager monsterManager;
+    private TowerBehaviour towerBehaviour;
     [SerializeField] private Animator animator;
-    [SerializeField] private Transform attackOrigin;
 
     private readonly List<MonsterBehaviour> detectedEnemies = new List<MonsterBehaviour>();
 
@@ -24,6 +24,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool hasLoggedUnsupportedAttackEntity;
     private bool hasLoggedMissingMagicOrbPrefab;
     private bool hasLoggedMissingDronePrefab;
+    private bool hasLoggedMissingAttackOrigin;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, AttackArchetype> OnUnsupportedAttackEntity;
@@ -55,6 +56,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedUnsupportedAttackEntity = false;
         hasLoggedMissingMagicOrbPrefab = false;
         hasLoggedMissingDronePrefab = false;
+        hasLoggedMissingAttackOrigin = false;
         attackState = TowerAttackState.Idle;
         ResetAttackingAnimatorBoolIfUsed();
         EnsureDroneAttackEntityIfNeeded();
@@ -146,7 +148,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             monsterManager = FindFirstObjectByType<MonsterManager>();
         }
 
-        return attackConfig != null && monsterManager != null;
+        return attackConfig != null && monsterManager != null && GetAttackOrigin() != null;
     }
 
     private void CacheOptionalReferences()
@@ -161,11 +163,10 @@ public class TowerCombatBehaviour : MonoBehaviour
             animator = GetComponentInChildren<Animator>();
         }
 
-        if (attackOrigin == null)
+        if (towerBehaviour == null)
         {
-            attackOrigin = transform;
+            towerBehaviour = GetComponent<TowerBehaviour>();
         }
-        
     }
 
     private void UpdateCooldown()
@@ -258,8 +259,15 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        Vector3 spawnPosition = attackOrigin != null ? attackOrigin.position : transform.position;
-        GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, spawnPosition, Quaternion.identity);
+        Transform origin = GetAttackOrigin();
+
+        if (origin == null)
+        {
+            ResetProjectileAttackState();
+            return;
+        }
+
+        GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, origin.position, Quaternion.identity);
 
         if (!projectileObject.TryGetComponent(out ProjectileBehaviour projectileBehaviour))
         {
@@ -338,6 +346,12 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         Transform origin = GetAttackOrigin();
+
+        if (origin == null)
+        {
+            return;
+        }
+
         GameObject magicOrbObject = Instantiate(attackConfig.MagicOrbPrefab, origin.position, Quaternion.identity);
 
         if (!magicOrbObject.TryGetComponent(out MagicOrbBehaviour magicOrbBehaviour))
@@ -421,6 +435,12 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         Transform origin = GetAttackOrigin();
+
+        if (origin == null)
+        {
+            return;
+        }
+
         GameObject droneObject = Instantiate(attackConfig.DronePrefab, origin.position, origin.rotation);
 
         if (!droneObject.TryGetComponent(out DroneBehaviour droneBehaviour))
@@ -521,7 +541,14 @@ public class TowerCombatBehaviour : MonoBehaviour
         for (int i = 0; i < detectedEnemies.Count; i++)
         {
             MonsterBehaviour monster = detectedEnemies[i];
-            float distanceSqr = (GetMonsterHitPosition(monster) - GetAttackOrigin().position).sqrMagnitude;
+            Transform origin = GetAttackOrigin();
+
+            if (origin == null)
+            {
+                return selectedTarget;
+            }
+
+            float distanceSqr = (GetMonsterHitPosition(monster) - origin.position).sqrMagnitude;
 
             if (distanceSqr < bestDistanceSqr)
             {
@@ -573,14 +600,35 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private bool IsInAttackRange(MonsterBehaviour monster)
     {
+        Transform origin = GetAttackOrigin();
+
+        if (origin == null)
+        {
+            return false;
+        }
+
         float attackRange = attackConfig.AttackRange;
-        Vector3 originPosition = GetAttackOrigin().position;
-        return Vector3.Distance(originPosition, GetMonsterHitPosition(monster)) <= attackRange;
+        return Vector3.Distance(origin.position, GetMonsterHitPosition(monster)) <= attackRange;
     }
 
     private Transform GetAttackOrigin()
     {
-        return attackOrigin != null ? attackOrigin : transform;
+        if (towerBehaviour == null)
+        {
+            towerBehaviour = GetComponent<TowerBehaviour>();
+        }
+
+        Transform origin = towerBehaviour != null && towerBehaviour.VisualController != null
+            ? towerBehaviour.VisualController.GetCurrentAttackOrigin()
+            : null;
+
+        if (origin == null && !hasLoggedMissingAttackOrigin)
+        {
+            Debug.LogWarning("Tower combat cannot resolve current active AttackOrigin from TowerVisualController.", this);
+            hasLoggedMissingAttackOrigin = true;
+        }
+
+        return origin;
     }
 
     private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
@@ -597,6 +645,12 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         Transform origin = GetAttackOrigin();
+
+        if (origin == null)
+        {
+            return;
+        }
+
         Quaternion rotation = GetAttackReleaseVfxRotation(origin);
         Instantiate(attackConfig.AttackReleaseVfxPrefab, origin.position, rotation);
     }

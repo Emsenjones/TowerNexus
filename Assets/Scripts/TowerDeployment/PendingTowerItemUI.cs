@@ -100,11 +100,6 @@ public class PendingTowerItemUI : MonoBehaviour, IPointerDownHandler
             return towerDefinition.DisplayName;
         }
 
-        if (!string.IsNullOrEmpty(towerDefinition.TowerId))
-        {
-            return towerDefinition.TowerId;
-        }
-
-        return "Unnamed Tower";
+        return towerDefinition.name;
     }
 }

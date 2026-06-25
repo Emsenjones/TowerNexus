@@ -142,7 +142,7 @@ Draft System may generate Tower Draft and Tower Upgrade Draft results.
 
 After the player selects a Tower Draft result, the selected tower becomes a draggable Tower Draft item.
 
-Tower Placement System detects whether the Tower Draft item is dropped onto a valid deployment tile or onto an existing same-TowerId tower.
+Tower Placement System detects whether the Tower Draft item is dropped onto a valid deployment tile or onto an existing same-TowerFamily tower.
 
 Tower Placement System should not:
 
@@ -321,11 +321,11 @@ The placement workflow is:
 
 When a Draft item is dragged onto an existing tower, Tower Placement System should detect the target intent and route it to TowerUpgradeSystem.
 
-Tower Draft item on existing tower with the same TowerId:
+Tower Draft item on existing tower with the same TowerFamily:
 
 ```text
 Tower Draft Item
-    ↓ Dropped On Existing Same-TowerId Tower
+    ↓ Dropped On Existing Same-TowerFamily Tower
 TowerPlacementSystem
     ↓ Detect Tower Level-Up Target Intent
 TowerUpgradeSystem
@@ -343,7 +343,7 @@ TowerUpgradeSystem
     ↓ Validate And Apply Upgrade
 ```
 
-Tower Placement System should not decide whether the target tower satisfies TowerId, TowerType, TowerLevel, duplicate upgrade, or max-level rules.
+Tower Placement System should not decide whether the target tower satisfies TowerFamily, TowerLevel, duplicate upgrade, or max-level rules.
 
 ---
 
@@ -377,9 +377,11 @@ During any active Tower Draft drag operation, there should be exactly one active
 For a valid empty deployable area, the active Tower Preview should display:
 
 - The tower's permanent base visual.
-- The Lv1 tower model from TowerDefinition per-level config data.
-- Semi-transparent preview materials or material instances.
+- The tower model for the dragged Tower Draft item's resolved deployment level.
+- Whole-preview material tint and transparency applied to TowerBaseVisualRoot and the spawned tower model.
 - Attack range preview based on the tower's AttackConfig attackRange.
+
+Current first-version Tower Draft configuration may resolve all new tower deployment results to Lv1, but Tower Placement System should use the Draft item's resolved deployment level instead of hardcoding Lv1.
 
 Tower Placement System owns when the active preview should exist, where it should snap, and which placement state it represents.
 
@@ -387,16 +389,35 @@ Tower Placement System should request visual updates through the placed or previ
 
 During placement:
 
-- Valid placement displays valid visual feedback.
-- Invalid placement displays invalid visual feedback.
+- Valid placement displays the whole Tower Preview with original material color multiplied by valid preview tint plus preview alpha.
+- Invalid placement displays the whole Tower Preview with original material color multiplied by invalid preview tint plus preview alpha.
 - Invalid placement keeps the active Tower Preview visible in an invalid feedback state.
+- Active Tower Preview remains semi-transparent until release or cancel.
 
 Recommended examples:
 
 | State | Visual |
 |---|---|
-| Valid | Green highlight |
-| Invalid | Red highlight |
+| Valid | Original material color * validPreviewTint + previewAlpha |
+| Invalid | Original material color * invalidPreviewTint + previewAlpha |
+
+Preview material rules:
+
+- Treat TowerBaseVisualRoot and the spawned tower model as one ghost visual.
+- Apply preview tint and alpha to all renderers under VisualRoot after the tower model is spawned.
+- Preview feedback configuration should live on TowerPlacementPreview:
+  - `validPreviewTint = Color.white`
+  - `invalidPreviewTint = Color.red`
+  - `previewAlpha = 0.5f`
+- Apply preview material state per renderer material instance.
+- Do not replace all preview renderers with one shared ghost material.
+- Support `_BaseColor` and `_Color` material properties.
+- Do not use `sharedMaterial`.
+- Cache preview material instances per preview object and reuse them when switching valid or invalid state.
+- PreviewRenderer may remain for compatibility, but should not be the main placement feedback visual.
+- TowerPlacementPreview should not require a serialized PreviewRenderer reference for material feedback.
+- PreviewRenderer should be disabled or visually ignored unless existing runtime logic still depends on its transforms.
+- Temporary Tower Preview instances are placement visuals and validation helpers only; they should not run TowerCombatBehaviour.
 
 Placement preview is part of placement interaction.
 
@@ -406,7 +427,7 @@ Battle HUD UI System may display additional UI feedback, but validation ownershi
 
 ## 7.5 Tower Level-Up Preview
 
-Tower Level-Up Preview currently applies only to Tower Draft items dragged onto an already deployed tower with the same TowerId.
+Tower Level-Up Preview currently applies only to Tower Draft items dragged onto an already deployed tower with the same TowerFamily.
 
 It does not describe future Tower Upgrade Draft item effect previews such as attack damage upgrades, extra Magic Orbs, or other upgrade-definition-specific preview behavior.
 
@@ -414,8 +435,20 @@ Tower Level-Up Preview may be entered when:
 
 - The dragged item is a Tower Draft item.
 - The target is an existing deployed tower.
-- The dragged Tower Draft TowerId matches the deployed tower TowerId.
+- The dragged Tower Draft TowerFamily matches the deployed tower TowerFamily.
 - The existing tower is below max tower level.
+
+Tower Level-Up Preview target detection should not require deployed tower Colliders, raycast tower hits, distance thresholds, or nearest spatial matching.
+
+Tower Level-Up Preview target detection should use occupied GridNode identity:
+
+1. The active Tower Preview Center Anchor snaps to the current target GridNode.
+2. Tower Placement System searches deployed towers.
+3. If the current target GridNode is contained in a deployed tower's TowerInstance.OccupiedNodes, that deployed tower is the hovered tower candidate.
+4. If a hovered tower candidate exists, Tower Placement System asks TowerUpgradeSystem whether the dragged Tower Draft can level up that candidate.
+5. If the request is valid, the active Tower Preview snaps to the hovered tower's TowerAnchorSet.CenterAnchor and displays the candidate tower's Current Level + 1 ghost model.
+6. If the request is invalid, Tower Level-Up Preview is not entered, the active preview remains invalid, and normal grid placement validation should not run for that occupied node.
+7. If no hovered tower candidate exists, Tower Placement System falls back to normal grid placement validation.
 
 Current max tower level target:
 
@@ -439,9 +472,9 @@ The Tower Level-Up Preview:
 - Remains active until release or cancel.
 - Uses tower level-up validation rather than grid occupation validation.
 
-If the target tower cannot be upgraded, Tower Level-Up Preview is not entered and the active preview remains in invalid feedback state.
+If a hovered tower candidate exists but cannot be upgraded, Tower Level-Up Preview is not entered and the active preview remains in invalid feedback state. Normal placement validation should not run for that occupied node.
 
-On successful release, Tower Placement System forwards the level-up request to TowerUpgradeSystem. TowerUpgradeSystem validates and applies the tower level-up. TowerVisualController performs the model replacement and AttackOrigin refresh requested by the owning tower runtime.
+On successful release, Tower Placement System forwards the level-up request to TowerUpgradeSystem. TowerUpgradeSystem validates and applies tower level data only. After an accepted level-up, Tower Placement System asks the target TowerBehaviour to refresh visuals through the tower-owned visual path.
 
 Tower Placement System should not directly replace the deployed tower model or directly refresh AttackOrigin.
 
@@ -463,6 +496,14 @@ AttackConfig
     ↓
 attackRange
 ```
+
+Runtime rendering direction:
+
+- Each Tower Base Prefab may provide an `AttackRangePreview` child.
+- The `AttackRangePreview` child should contain a circular mesh whose radius is 1 when local scale is 1.
+- TowerVisualController scales `AttackRangePreview` uniformly to `attackRange`.
+- TowerVisualController shows or hides `AttackRangePreview` during Draft item drag lifecycle.
+- TowerVisualController should not generate placement validation data or affect combat range logic.
 
 When the drag operation ends or is cancelled:
 
@@ -635,8 +676,8 @@ Included features:
 - Tower anchor structure.
 - Tower drag placement from Draft Item Interaction Area.
 - One active Tower Preview during Tower Draft drag.
-- Lv1 model placement preview for valid empty deployment areas.
-- Current Level + 1 ghost model preview for same-TowerId Tower Draft level-up targets.
+- Deployment-level model placement preview for valid empty deployment areas.
+- Current Level + 1 ghost model preview for same-TowerFamily Tower Draft level-up targets.
 - Attack range preview request flow during Draft item drag.
 - Current Drag Operation cancellation when a dragged Draft item is released back into the Battle HUD Draft Item Interaction Area.
 - Grid snapping.
@@ -720,11 +761,12 @@ MapSystem
 ## 2026-06-25 (Tower Visual Preview Foundation Sync)
 
 - Added one-active-preview direction for Tower Draft drag operations.
-- Added Lv1 placement preview and same-TowerId Current Level + 1 Tower Level-Up Preview direction.
+- Added deployment-level placement preview and same-TowerFamily Current Level + 1 Tower Level-Up Preview direction.
 - Clarified that Tower Level-Up Preview does not cover future Tower Upgrade Draft item effect previews.
 - Added attack range preview request flow during Draft item drag.
 - Added Current Drag Operation cancellation when any dragged Draft item is released back into the Battle HUD Draft Item Interaction Area.
 - Clarified that Tower Placement System requests visual changes through TowerBehaviour / TowerVisualController ownership and does not directly manipulate tower visuals.
+- Updated placement preview feedback direction to whole-preview tint plus alpha instead of PreviewRenderer child-cube feedback.
 
 ## 2026-06-18 (Draft Item Target Intent Sync)
 

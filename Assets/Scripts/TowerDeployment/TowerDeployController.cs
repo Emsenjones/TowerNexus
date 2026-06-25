@@ -33,6 +33,16 @@ public class TowerDeployController : MonoBehaviour
 
     public bool TryDeployTower(TowerPlacementPreview preview, PendingTowerItemUI draftedTowerEntry)
     {
+        return TryDeployTower(preview, draftedTowerEntry, out _);
+    }
+
+    public bool TryDeployTower(
+        TowerPlacementPreview preview,
+        PendingTowerItemUI draftedTowerEntry,
+        out TowerBehaviour deployedTower)
+    {
+        deployedTower = null;
+
         if (preview == null)
         {
             Debug.LogWarning("Tower deploy controller cannot deploy tower: placement preview is null.", this);
@@ -81,6 +91,14 @@ public class TowerDeployController : MonoBehaviour
 
         towerInstance.Initialize(towerDefinition, occupiedNodes);
 
+        if (!towerObject.TryGetComponent(out TowerBehaviour towerBehaviour))
+        {
+            towerBehaviour = towerObject.AddComponent<TowerBehaviour>();
+        }
+
+        towerBehaviour.Initialize(towerInstance);
+        towerBehaviour.RefreshTowerVisual();
+
         if (!towerObject.TryGetComponent(out TowerCombatBehaviour towerCombatBehaviour))
         {
             towerCombatBehaviour = towerObject.AddComponent<TowerCombatBehaviour>();
@@ -113,6 +131,7 @@ public class TowerDeployController : MonoBehaviour
             battleHUDUI.RemovePendingTower(draftedTowerEntry);
         }
 
+        deployedTower = towerBehaviour;
         return true;
     }
 }

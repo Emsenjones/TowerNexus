@@ -100,12 +100,11 @@ Recommended fields:
 
 | Field | Type | Description |
 |---|---|---|
-| towerId | string | Unique tower identifier |
+| towerFamily | TowerFamily | Tower upgrade compatibility family |
 | displayName | string | Tower display name |
 | description | string | Tower description |
 | icon | Sprite | UI icon |
 | towerPrefab | GameObject | Runtime tower prefab |
-| towerCategory | TowerCategory | Tower category |
 | attackConfig | AttackConfig | Attack configuration reference |
 | towerLevelConfigs | List<TowerLevelConfig> | Optional per-level base stat and presentation data consumed by Tower Upgrade System |
 
@@ -153,13 +152,14 @@ Recommended prefab structure:
 TowerPrefab
 ├── VisualRoot
 │   ├── TowerBaseVisualRoot
-│   └── TowerModelSpawnPoint
+│   └── TowerPrefabSpawnPoint
 ├── Collider
 ├── TowerAnchorSet
 │   ├── CenterAnchor
 │   ├── OccupyAnchor_01
 │   ├── OccupyAnchor_02
 │   └── OccupyAnchor_03
+├── AttackRangePreview
 ├── PreviewRenderer
 └── AttackOriginFallback
 ```
@@ -170,9 +170,13 @@ VisualRoot owns every tower-local visual object.
 
 TowerBaseVisualRoot contains the permanent tower base or platform visual. Tower level changes should not replace TowerBaseVisualRoot.
 
-TowerModelSpawnPoint is the spawn parent for the current tower level model. Tower level changes replace only the spawned tower model.
+TowerPrefabSpawnPoint is the spawn parent for the current tower level model. Tower level changes replace only the spawned tower model.
 
-PreviewRenderer provides valid or invalid placement feedback for the active preview. It should not decide placement validity.
+PreviewRenderer is a compatibility placeholder for preview-related authoring or transforms. It should not decide placement validity, and it should not be the main visual feedback for Tower Placement Preview.
+
+AttackRangePreview is an optional tower-local visual child used by TowerVisualController during Draft item drag operations. It should contain a circular mesh whose radius is 1 when local scale is 1. TowerVisualController scales it uniformly to the tower's configured attackRange and toggles it on or off.
+
+Tower Placement Preview should treat TowerBaseVisualRoot and the spawned tower model as one ghost visual. Valid or invalid placement feedback should be applied through whole-preview material tint and alpha.
 
 AttackOriginFallback is a runtime safety fallback. Each Tower Level Model Prefab is expected to provide its own correctly positioned AttackOrigin. If the current tower model does not provide AttackOrigin, runtime must log a warning and then use AttackOriginFallback.
 
@@ -180,9 +184,9 @@ Missing model AttackOrigin is an authoring or configuration error, not a normal 
 
 TowerBehaviour owns TowerVisualController.
 
-TowerVisualController owns tower-local visual rendering operations requested by gameplay systems, including model spawn or replacement, preview transparency, attack range preview visibility, and current AttackOrigin resolution.
+TowerVisualController owns tower-local visual rendering operations requested by gameplay systems, including model spawn or replacement, preview material tint, preview transparency, attack range preview visibility, and current AttackOrigin resolution.
 
-TowerPlacementSystem may request preview or range visual changes, but should not directly manipulate VisualRoot, TowerModelSpawnPoint, renderer materials, or tower model instances.
+TowerPlacementSystem may request preview or range visual changes, but should not directly manipulate VisualRoot, TowerPrefabSpawnPoint, renderer materials, or tower model instances.
 
 TowerUpgradeSystem may request visual refresh after an accepted tower level-up, but should not directly manipulate tower model hierarchy.
 
@@ -196,9 +200,10 @@ Drone Tower still follows the same TowerPrefab visual structure direction:
 DroneTowerPrefab
 ├── VisualRoot
 │   ├── TowerBaseVisualRoot
-│   └── TowerModelSpawnPoint
+│   └── TowerPrefabSpawnPoint
 ├── Collider
 ├── TowerAnchorSet
+├── AttackRangePreview
 ├── PreviewRenderer
 └── AttackOriginFallback
 ```
@@ -336,8 +341,9 @@ TowerLevelModelPrefab
 
 Rules:
 
-- Draft System always creates Lv1 tower deployment results.
-- Deploying a new tower spawns the Lv1 tower model.
+- A Tower Draft deployment result should carry or resolve the tower level it represents.
+- Deploying a new tower spawns the tower model for the deployment result's resolved tower level.
+- Current first-version Tower Draft configuration may resolve all newly deployed towers to Lv1, but the framework should not hardcode new deployment as Lv1-only.
 - Upgrading a tower replaces only the spawned tower model.
 - TowerBaseVisualRoot remains unchanged across tower levels.
 - Runtime resolves the active AttackOrigin from the current tower model.
@@ -354,13 +360,14 @@ Its purpose is to perform tower-local visual rendering requested by gameplay sys
 Responsibilities:
 
 - Manage TowerBaseVisualRoot reference.
-- Manage TowerModelSpawnPoint reference.
+- Manage TowerPrefabSpawnPoint reference.
 - Spawn tower level model.
 - Replace tower level model.
 - Destroy previous tower level model.
 - Resolve current active AttackOrigin.
-- Apply preview transparency to preview instances.
+- Apply preview material state to preview instances using per-renderer material instances.
 - Clear preview transparency from deployed instances when required.
+- Manage AttackRangePreview visibility and scale.
 - Show attack range preview.
 - Hide attack range preview.
 - Update attack range preview.
@@ -369,12 +376,11 @@ Example API direction:
 
 ```text
 SetTowerVisual()
-ReplaceTowerVisual()
 GetCurrentAttackOrigin()
+SetPreviewMaterialState(Color tint, float alpha)
 ShowAttackRangePreview()
 HideAttackRangePreview()
 UpdateAttackRangePreview()
-SetPreviewTransparency()
 ClearCurrentTowerModel()
 ```
 
@@ -1054,11 +1060,12 @@ Excluded:
 
 ## 2026-06-25 (Tower Visual Foundation Sync)
 
-- Updated TowerPrefab visual structure direction with TowerBaseVisualRoot, TowerModelSpawnPoint, PreviewRenderer, and AttackOriginFallback.
+- Updated TowerPrefab visual structure direction with TowerBaseVisualRoot, TowerPrefabSpawnPoint, PreviewRenderer, and AttackOriginFallback.
 - Added Tower Level Model Prefab contract requiring each level model to provide its own AttackOrigin.
 - Added TowerVisualController as a TowerBehaviour-owned runtime component responsible for tower-local visual rendering.
 - Clarified that TowerPlacementSystem and TowerUpgradeSystem request visual changes instead of directly manipulating tower visual hierarchy.
 - Clarified that TowerRuntimeCombatSystem consumes the current active AttackOrigin resolved by the owning tower runtime.
+- Clarified that Tower Placement Preview feedback should use whole-preview tint and alpha, with PreviewRenderer remaining only as a compatibility placeholder.
 
 ## 2026-06-24
 
@@ -1127,7 +1134,7 @@ Excluded:
 - Added Effect and Buff Relationship section.
 - Clarified that Cannon Tower explosion may be represented as an instant area damage effect, not a buff.
 - Clarified that Watch Tower periodic area damage is owned by tower runtime combat logic rather than enemy-attached damage-over-time buffs.
-- Standardized TowerCategory values to Archer, Cannon, Magic, and Watch.
+- Standardized TowerFamily values to Archer, Cannon, Magic, and Drone.
 - Removed upgradeConfigId from first-version TowerDefinition recommended fields and clarified that upgrade configuration references belong to future Tower Upgrade System work.
 - Clarified that unused AttackConfig fields should be hidden in the Inspector whenever practical.
 - Removed explosionRadius and areaTickInterval from AttackConfig.

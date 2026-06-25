@@ -102,11 +102,6 @@ public class TowerDraftItemUI : MonoBehaviour
             return towerDefinition.DisplayName;
         }
 
-        if (!string.IsNullOrEmpty(towerDefinition.TowerId))
-        {
-            return towerDefinition.TowerId;
-        }
-
-        return "Unnamed Tower";
+        return towerDefinition.name;
     }
 }

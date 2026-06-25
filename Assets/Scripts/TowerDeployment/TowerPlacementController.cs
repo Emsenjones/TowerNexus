@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TowerPlacementController : MonoBehaviour
@@ -8,16 +9,21 @@ public class TowerPlacementController : MonoBehaviour
     [SerializeField] private TowerPlacementValidator placementValidator;
     [SerializeField] private TowerDeployController deployController;
     [SerializeField] private BattleHUDUI battleHUDUI;
+    [SerializeField] private TowerUpgradeSystem towerUpgradeSystem;
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private LayerMask placementRaycastMask = ~0;
     [SerializeField] private float placementRaycastDistance = 500f;
 
     private TowerPlacementPreview currentPreview;
+    private readonly List<TowerBehaviour> deployedTowers = new List<TowerBehaviour>();
     private TowerDefinition currentTowerDefinition;
     private GridNodeBehaviour currentTargetNode;
+    private TowerBehaviour currentLevelUpTarget;
     private PendingTowerItemUI currentDraftedTowerEntry;
     private bool isDragging;
+    private bool isTowerTargetCandidateActive;
+    private bool isLevelUpPreviewActive;
     private bool missingCameraWarningLogged;
     private bool missingMapGeneratorWarningLogged;
 
@@ -28,7 +34,7 @@ public class TowerPlacementController : MonoBehaviour
 
     private void Awake()
     {
-        if (placementCamera == null) 
+        if (placementCamera == null)
             placementCamera = Camera.main;
 
         EnsureRuntimeDependencies();
@@ -64,6 +70,7 @@ public class TowerPlacementController : MonoBehaviour
     {
         CancelPlacement();
         EnsureRuntimeDependencies();
+        RegisterExistingDeployedTowers();
 
         if (towerDefinition == null)
         {
@@ -102,11 +109,14 @@ public class TowerPlacementController : MonoBehaviour
         currentTargetNode = null;
         isDragging = true;
 
+        ShowAttackRangePreviewsForCurrentDrag();
         UpdatePreviewPosition(Input.mousePosition);
     }
 
     public void CancelPlacement()
     {
+        HideAttackRangePreviewsForCurrentDrag();
+
         if (currentPreview != null)
         {
             Destroy(currentPreview.gameObject);
@@ -115,18 +125,73 @@ public class TowerPlacementController : MonoBehaviour
         currentPreview = null;
         currentTowerDefinition = null;
         currentTargetNode = null;
+        currentLevelUpTarget = null;
         currentDraftedTowerEntry = null;
         isDragging = false;
+        isTowerTargetCandidateActive = false;
+        isLevelUpPreviewActive = false;
     }
 
     private void CompletePlacement()
     {
+        if (battleHUDUI != null &&
+            battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
+        {
+            DragCancelCurrentOperation();
+            return;
+        }
+
+        if (isTowerTargetCandidateActive)
+        {
+            if (isLevelUpPreviewActive && currentLevelUpTarget != null)
+            {
+                CompleteLevelUp();
+            }
+
+            CancelPlacement();
+            return;
+        }
+
         if (currentPreview != null && deployController != null)
         {
-            deployController.TryDeployTower(currentPreview, currentDraftedTowerEntry);
+            if (deployController.TryDeployTower(currentPreview, currentDraftedTowerEntry, out TowerBehaviour deployedTower))
+            {
+                RegisterDeployedTower(deployedTower);
+            }
         }
 
         CancelPlacement();
+    }
+
+    private void DragCancelCurrentOperation()
+    {
+        CancelPlacement();
+    }
+
+    private void CompleteLevelUp()
+    {
+        if (towerUpgradeSystem == null ||
+            currentLevelUpTarget == null ||
+            currentLevelUpTarget.TowerInstance == null ||
+            currentTowerDefinition == null)
+        {
+            return;
+        }
+
+        if (!towerUpgradeSystem.TryLevelUpTower(
+                currentLevelUpTarget.TowerInstance,
+                currentTowerDefinition,
+                out _))
+        {
+            return;
+        }
+
+        currentLevelUpTarget.RefreshTowerVisual();
+
+        if (battleHUDUI != null && currentDraftedTowerEntry != null)
+        {
+            battleHUDUI.RemovePendingTower(currentDraftedTowerEntry);
+        }
     }
 
     private void UpdatePreviewPosition(Vector3 screenPosition)
@@ -140,6 +205,7 @@ public class TowerPlacementController : MonoBehaviour
         if (!TryGetWorldPosition(screenPosition, out Vector3 worldPosition))
         {
             currentTargetNode = null;
+            ClearLevelUpPreviewState(true);
             currentPreview.SetPlacementState(false);
             return;
         }
@@ -153,6 +219,7 @@ public class TowerPlacementController : MonoBehaviour
             }
 
             currentTargetNode = null;
+            ClearLevelUpPreviewState(true);
             currentPreview.SetWorldPosition(worldPosition);
             currentPreview.SetPlacementState(false);
             return;
@@ -162,6 +229,12 @@ public class TowerPlacementController : MonoBehaviour
         {
             currentTargetNode = targetNode;
             currentPreview.SetWorldPosition(targetNode.WorldPosition);
+
+            if (TryUpdateLevelUpPreview(targetNode))
+            {
+                return;
+            }
+
             currentPreview.SetPlacementState(
                 placementValidator != null &&
                 placementValidator.CanPlaceTower(currentPreview, out _)
@@ -170,8 +243,208 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         currentTargetNode = null;
+        ClearLevelUpPreviewState(true);
         currentPreview.SetWorldPosition(worldPosition);
         currentPreview.SetPlacementState(false);
+    }
+
+    private bool TryUpdateLevelUpPreview(GridNodeBehaviour targetNode)
+    {
+        TowerBehaviour hoveredTower = FindTowerOccupyingNode(targetNode);
+
+        if (hoveredTower == null)
+        {
+            ClearLevelUpPreviewState(true);
+            return false;
+        }
+
+        isTowerTargetCandidateActive = true;
+
+        if (towerUpgradeSystem == null ||
+            hoveredTower.TowerInstance == null ||
+            !towerUpgradeSystem.CanLevelUpTower(
+                hoveredTower.TowerInstance,
+                currentTowerDefinition,
+                out int nextLevel))
+        {
+            ClearLevelUpPreviewState(true);
+            isTowerTargetCandidateActive = true;
+            currentPreview.SetPlacementState(false);
+            return true;
+        }
+
+        TowerAnchorSet targetAnchorSet = hoveredTower.GetComponent<TowerAnchorSet>();
+
+        if (targetAnchorSet == null || targetAnchorSet.CenterAnchor == null)
+        {
+            ClearLevelUpPreviewState(true);
+            isTowerTargetCandidateActive = true;
+            currentPreview.SetPlacementState(false);
+            return true;
+        }
+
+        currentPreview.SetWorldPosition(targetAnchorSet.CenterAnchor.position);
+        currentPreview.SetPlacementState(true);
+
+        if (!currentPreview.SetPreviewLevel(nextLevel))
+        {
+            ClearLevelUpPreviewState(false);
+            isTowerTargetCandidateActive = true;
+            currentPreview.SetPlacementState(false);
+            return true;
+        }
+
+        currentLevelUpTarget = hoveredTower;
+        isLevelUpPreviewActive = true;
+        return true;
+    }
+
+    private TowerBehaviour FindTowerOccupyingNode(GridNodeBehaviour targetNode)
+    {
+        if (targetNode == null)
+        {
+            return null;
+        }
+
+        RemoveNullDeployedTowerEntries();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+
+            if (tower == null || tower.TowerInstance == null)
+            {
+                continue;
+            }
+
+            IReadOnlyList<GridNodeBehaviour> occupiedNodes = tower.TowerInstance.OccupiedNodes;
+
+            for (int j = 0; j < occupiedNodes.Count; j++)
+            {
+                if (occupiedNodes[j] == targetNode)
+                {
+                    return tower;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private void ClearLevelUpPreviewState(bool resetPreviewLevel)
+    {
+        if (resetPreviewLevel && isLevelUpPreviewActive && currentPreview != null)
+        {
+            currentPreview.ResetPreviewLevel();
+        }
+
+        currentLevelUpTarget = null;
+        isTowerTargetCandidateActive = false;
+        isLevelUpPreviewActive = false;
+    }
+
+    private void RegisterDeployedTower(TowerBehaviour tower)
+    {
+        if (tower == null ||
+            tower.TowerInstance == null ||
+            tower.TowerInstance.OccupiedNodes.Count == 0 ||
+            deployedTowers.Contains(tower))
+        {
+            return;
+        }
+
+        deployedTowers.Add(tower);
+    }
+
+    private void RegisterExistingDeployedTowers()
+    {
+        RemoveNullDeployedTowerEntries();
+
+        TowerBehaviour[] towers = FindObjectsByType<TowerBehaviour>(FindObjectsSortMode.None);
+
+        for (int i = 0; i < towers.Length; i++)
+        {
+            RegisterDeployedTower(towers[i]);
+        }
+    }
+
+    private void RemoveNullDeployedTowerEntries()
+    {
+        for (int i = deployedTowers.Count - 1; i >= 0; i--)
+        {
+            if (deployedTowers[i] == null)
+            {
+                deployedTowers.RemoveAt(i);
+            }
+        }
+    }
+
+    private void ShowAttackRangePreviewsForCurrentDrag()
+    {
+        RegisterExistingDeployedTowers();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            ShowAttackRangePreview(deployedTowers[i]);
+        }
+
+        if (currentPreview != null)
+        {
+            ShowAttackRangePreview(currentPreview.VisualController, currentPreview.TowerDefinition);
+        }
+    }
+
+    private void HideAttackRangePreviewsForCurrentDrag()
+    {
+        RemoveNullDeployedTowerEntries();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+
+            if (tower != null && tower.VisualController != null)
+            {
+                tower.VisualController.HideAttackRangePreview();
+            }
+        }
+
+        if (currentPreview != null && currentPreview.VisualController != null)
+        {
+            currentPreview.VisualController.HideAttackRangePreview();
+        }
+    }
+
+    private void ShowAttackRangePreview(TowerBehaviour tower)
+    {
+        if (tower == null)
+        {
+            return;
+        }
+
+        ShowAttackRangePreview(tower.VisualController, tower.TowerInstance != null ? tower.TowerInstance.TowerDefinition : null);
+    }
+
+    private void ShowAttackRangePreview(TowerVisualController visualController, TowerDefinition towerDefinition)
+    {
+        if (visualController == null || !TryGetAttackRange(towerDefinition, out float attackRange))
+        {
+            return;
+        }
+
+        visualController.ShowAttackRangePreview(attackRange);
+    }
+
+    private bool TryGetAttackRange(TowerDefinition towerDefinition, out float attackRange)
+    {
+        attackRange = 0f;
+
+        if (towerDefinition == null || towerDefinition.AttackConfig == null)
+        {
+            return false;
+        }
+
+        attackRange = towerDefinition.AttackConfig.AttackRange;
+        return attackRange > 0f;
     }
 
     private bool TryGetWorldPosition(Vector3 screenPosition, out Vector3 worldPosition)
@@ -270,6 +543,16 @@ public class TowerPlacementController : MonoBehaviour
         if (monsterManager == null)
         {
             monsterManager = FindFirstObjectByType<MonsterManager>();
+        }
+
+        if (towerUpgradeSystem == null)
+        {
+            towerUpgradeSystem = GetComponent<TowerUpgradeSystem>();
+        }
+
+        if (towerUpgradeSystem == null)
+        {
+            towerUpgradeSystem = gameObject.AddComponent<TowerUpgradeSystem>();
         }
 
         if (placementValidator == null)

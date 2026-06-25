@@ -1,4 +1,4 @@
-public enum TowerCategory
+public enum TowerFamily
 {
     Archer = 0,
     Cannon = 1,

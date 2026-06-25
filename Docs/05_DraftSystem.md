@@ -96,13 +96,13 @@ TowerPlacementSystem
     ↓ Place New Tower
 ```
 
-If the selected Tower Draft is dragged onto an existing tower with the same TowerId:
+If the selected Tower Draft is dragged onto an existing tower with the same TowerFamily:
 
 ```text
 BattleHUDUISystem
     ↓ Drag Tower Draft Item
 TowerPlacementSystem
-    ↓ Detect Existing Same-TowerId Tower Target
+    ↓ Detect Existing Same-TowerFamily Tower Target
 TowerUpgradeSystem
     ↓ Process Tower Level-Up Request
 ```
@@ -131,7 +131,7 @@ A Tower Draft represents a tower card or tower item.
 The player may use a Tower Draft in two ways:
 
 1. Deploy it onto a valid deployment tile.
-2. Drag it onto an existing tower with the same TowerId to request a tower level-up.
+2. Drag it onto an existing tower with the same TowerFamily to request a tower level-up.
 
 Deploying a Tower Draft consumes the draft item and creates a new tower.
 
@@ -187,14 +187,14 @@ TowerUpgradeSystem provides upgrade definitions and eligibility checks, but Draf
 The upgrade pool should be constructed using:
 
 - Current tower instances on the battlefield
-- Each tower instance's TowerType
+- Each tower instance's TowerFamily
 - Each tower instance's TowerLevel
 - Available upgrade layers
 - Upgrade definitions provided by Tower Upgrade System
 
 For every tower instance, Draft System should request or evaluate eligible upgrades using TowerUpgradeSystem rules:
 
-- Determine TowerType.
+- Determine TowerFamily.
 - Determine TowerLevel.
 - Gather all valid upgrades that tower is eligible for.
 - Exclude upgrades already owned by that tower.
@@ -299,12 +299,12 @@ DraftSystem creates draft result
     ↓
 BattleHUDUISystem creates draggable Tower Draft item
     ↓
-TowerPlacementSystem detects deployment or same-TowerId tower target intent
+TowerPlacementSystem detects deployment or same-TowerFamily tower target intent
 ```
 
 If the Tower Draft item is dropped on a valid deployment tile, TowerPlacementSystem places the new tower.
 
-If the Tower Draft item is dropped on an existing tower with matching TowerId, TowerPlacementSystem forwards a tower level-up request to TowerUpgradeSystem.
+If the Tower Draft item is dropped on an existing tower with matching TowerFamily, TowerPlacementSystem forwards a tower level-up request to TowerUpgradeSystem.
 
 ---
 
@@ -450,12 +450,12 @@ Excluded features:
 
 ## 2026-06-25 (Tower Draft Level-Up Target Sync)
 
-- Clarified that Tower Draft level-up target intent uses matching TowerId rather than broad same-TowerType wording.
+- Clarified that Tower Draft level-up target intent uses matching TowerFamily.
 
 ## 2026-06-18 (Tower Draft And Upgrade Draft Sync)
 
 - Replaced EXP-triggered draft wording with ResolvedMonsterCount-based level-up draft flow.
-- Renamed New Tower Draft direction to Tower Draft with deployment and same-TowerId tower level-up use cases.
+- Renamed New Tower Draft direction to Tower Draft with deployment and same-TowerFamily tower level-up use cases.
 - Routed Tower Draft level-up requests and Tower Upgrade Draft application to TowerUpgradeSystem.
 - Added tower-instance weighted Upgrade Draft Pool generation with same-round duplicate prevention for displayed options.
 

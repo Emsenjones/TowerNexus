@@ -8692,6 +8692,7 @@ MonoBehaviour:
   placementValidator: {fileID: 1248973704826299345}
   deployController: {fileID: 1542925268267888326}
   battleHUDUI: {fileID: 4430054556091105857}
+  towerUpgradeSystem: {fileID: 3446166332166411794}
   pathfindingService: {fileID: 4731439007408284308}
   monsterManager: {fileID: 8246104796970957583}
   placementRaycastMask:
@@ -10051,9 +10052,9 @@ MonoBehaviour:
   monsterManager: {fileID: 8246104796970957583}
   playerSystem: {fileID: 8439368486033747447}
   healthBarManager: {fileID: 4279093415070417244}
-  damageNumberManager: {fileID: 0}
+  damageNumberManager: {fileID: 2578153334544192036}
   monsterRoot: {fileID: 806339692037077095}
-  playOnStart: 1
+  playOnStart: 0
 --- !u!1 &5547641298007769305
 GameObject:
   m_ObjectHideFlags: 0
@@ -12731,6 +12732,50 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6709236890343107649
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1021943784080354439}
+  - component: {fileID: 3446166332166411794}
+  m_Layer: 0
+  m_Name: TowerUpgradeSystem
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1021943784080354439
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6709236890343107649}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3261855449354590494}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3446166332166411794
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6709236890343107649}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e34fe0652d3648a88f935cc5604de7c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeSystem
 --- !u!1 &6718634423958995076
 GameObject:
   m_ObjectHideFlags: 0
@@ -17421,6 +17466,7 @@ Transform:
   - {fileID: 2233529894891031527}
   - {fileID: 164484144082982332}
   - {fileID: 5016857861841176031}
+  - {fileID: 1021943784080354439}
   - {fileID: 1314135725715290937}
   - {fileID: 806339692037077095}
   - {fileID: 4895884920261448120}

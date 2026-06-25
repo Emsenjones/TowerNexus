@@ -155,6 +155,6 @@ public class TowerDraftUI : MonoBehaviour
             return string.Empty;
         }
 
-        return string.IsNullOrEmpty(towerDefinition.DisplayName) ? towerDefinition.TowerId : towerDefinition.DisplayName;
+        return string.IsNullOrEmpty(towerDefinition.DisplayName) ? towerDefinition.name : towerDefinition.DisplayName;
     }
 }

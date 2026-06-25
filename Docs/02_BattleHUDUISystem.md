@@ -167,7 +167,7 @@ Example display behavior:
 
 This presentation helps reduce interaction complexity.
 
-Battle HUD UI System should not decide TowerType, TowerLevel, duplicate upgrade, or max-level rules.
+Battle HUD UI System should not decide TowerFamily, TowerLevel, duplicate upgrade, or max-level rules.
 
 ---
 

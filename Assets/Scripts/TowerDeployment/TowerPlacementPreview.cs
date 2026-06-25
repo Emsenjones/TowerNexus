@@ -2,24 +2,33 @@ using UnityEngine;
 
 public class TowerPlacementPreview : MonoBehaviour
 {
-    [SerializeField] private Color validColor = new Color(1f, 1f, 1f, 0.5f);
-    [SerializeField] private Color invalidColor = new Color(1f, 0f, 0f, 0.5f);
-    [SerializeField] private Transform previewRendererRoot;
+    [SerializeField] private Color validPreviewTint = Color.white;
+    [SerializeField] private Color invalidPreviewTint = Color.red;
+    [SerializeField] private float previewAlpha = 0.5f;
 
-    private Renderer[] previewRenderers;
+    private TowerBehaviour towerBehaviour;
+    private TowerVisualController visualController;
+    private TowerInstance towerInstance;
     private TowerDefinition towerDefinition;
     private TowerAnchorSet towerAnchorSet;
     private bool isPlacementValid;
+    private bool hasInitializedPreviewVisual;
 
     public TowerDefinition TowerDefinition => towerDefinition;
     public TowerAnchorSet TowerAnchorSet => towerAnchorSet;
+    public TowerVisualController VisualController => visualController;
     public bool IsPlacementValid => isPlacementValid;
 
     public void Initialize(TowerDefinition towerDefinition)
     {
         this.towerDefinition = towerDefinition;
+        hasInitializedPreviewVisual = false;
         towerAnchorSet = GetComponent<TowerAnchorSet>();
-        CachePreviewRenderers();
+        towerInstance = GetComponent<TowerInstance>();
+        towerBehaviour = GetComponent<TowerBehaviour>();
+        visualController = towerBehaviour != null ? towerBehaviour.VisualController : GetComponent<TowerVisualController>();
+        DisablePreviewRendererVisuals();
+        DisablePreviewCombatRuntime();
 
         if (towerDefinition == null)
         {
@@ -42,6 +51,7 @@ public class TowerPlacementPreview : MonoBehaviour
             return;
         }
 
+        EnsurePreviewVisual();
         SetPlacementState(false);
     }
 
@@ -60,53 +70,120 @@ public class TowerPlacementPreview : MonoBehaviour
     public void SetPlacementState(bool isValid)
     {
         isPlacementValid = isValid;
-        ApplyPreviewColor(isValid ? validColor : invalidColor);
+        ApplyPreviewMaterialState(isValid ? validPreviewTint : invalidPreviewTint);
     }
 
-    private void ApplyPreviewColor(Color color)
+    public bool SetPreviewLevel(int level)
     {
-        if (previewRenderers == null || previewRenderers.Length == 0)
+        EnsurePreviewVisual();
+
+        if (towerInstance == null || !towerInstance.TrySetLevel(level))
         {
-            Debug.Log("Tower placement preview renderers are null or empty.", this);
+            Debug.LogWarning($"Tower placement preview cannot set preview level to {level}.", this);
+            return false;
+        }
+
+        if (towerBehaviour == null || !towerBehaviour.RefreshTowerVisual())
+        {
+            Debug.LogWarning($"Tower placement preview cannot refresh preview visual for level {level}.", this);
+            return false;
+        }
+
+        ApplyPreviewMaterialState(isPlacementValid ? validPreviewTint : invalidPreviewTint);
+        return true;
+    }
+
+    public bool ResetPreviewLevel()
+    {
+        EnsurePreviewVisual();
+
+        if (towerInstance == null || towerBehaviour == null)
+        {
+            return false;
+        }
+
+        towerInstance.Initialize(towerDefinition, null);
+
+        if (!towerBehaviour.RefreshTowerVisual())
+        {
+            return false;
+        }
+
+        ApplyPreviewMaterialState(isPlacementValid ? validPreviewTint : invalidPreviewTint);
+        return true;
+    }
+
+    private void EnsurePreviewVisual()
+    {
+        if (towerInstance == null && !TryGetComponent(out towerInstance))
+        {
+            towerInstance = gameObject.AddComponent<TowerInstance>();
+        }
+
+        if (towerBehaviour == null && !TryGetComponent(out towerBehaviour))
+        {
+            towerBehaviour = gameObject.AddComponent<TowerBehaviour>();
+        }
+
+        towerBehaviour.Initialize(towerInstance);
+        visualController = towerBehaviour.VisualController;
+
+        if (hasInitializedPreviewVisual)
+        {
             return;
         }
 
-        for (int i = 0; i < previewRenderers.Length; i++)
+        towerInstance.Initialize(towerDefinition, null);
+        towerBehaviour.RefreshTowerVisual();
+        hasInitializedPreviewVisual = true;
+    }
+
+    private void ApplyPreviewMaterialState(Color tint)
+    {
+        if (visualController != null)
         {
-            Renderer targetRenderer = previewRenderers[i];
+            visualController.SetPreviewMaterialState(tint, previewAlpha);
+        }
+        else
+        {
+            Debug.LogWarning("Tower placement preview cannot apply preview material state: TowerVisualController is missing.", this);
+        }
+    }
 
-            if (targetRenderer == null)
-            {
-                continue;
-            }
+    private void DisablePreviewRendererVisuals()
+    {
+        Transform compatibilityPreviewRenderer = transform.Find("PreviewRenderer");
 
-            Material material = targetRenderer.material;
+        if (compatibilityPreviewRenderer == null)
+        {
+            return;
+        }
 
-            if (material == null)
-            {
-                continue;
-            }
+        Renderer[] compatibilityRenderers = compatibilityPreviewRenderer.GetComponentsInChildren<Renderer>(true);
 
-            if (material.HasProperty("_BaseColor"))
+        for (int i = 0; i < compatibilityRenderers.Length; i++)
+        {
+            Renderer targetRenderer = compatibilityRenderers[i];
+
+            if (targetRenderer != null)
             {
-                material.SetColor("_BaseColor", color);
-            }
-            else if (material.HasProperty("_Color"))
-            {
-                material.SetColor("_Color", color);
+                targetRenderer.enabled = false;
             }
         }
     }
 
-    private void CachePreviewRenderers()
+    private void DisablePreviewCombatRuntime()
     {
-        if (previewRendererRoot == null)
-        {
-            Debug.LogWarning("Tower placement preview renderer root is null.", this);
-            previewRenderers = null;
-            return;
-        }
+        TowerCombatBehaviour[] combatBehaviours = GetComponentsInChildren<TowerCombatBehaviour>(true);
 
-        previewRenderers = previewRendererRoot.GetComponentsInChildren<Renderer>(true);
+        for (int i = 0; i < combatBehaviours.Length; i++)
+        {
+            TowerCombatBehaviour combatBehaviour = combatBehaviours[i];
+
+            if (combatBehaviour != null)
+            {
+                combatBehaviour.enabled = false;
+            }
+        }
     }
 }
