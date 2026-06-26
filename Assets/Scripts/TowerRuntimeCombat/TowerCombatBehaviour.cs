@@ -8,7 +8,6 @@ public class TowerCombatBehaviour : MonoBehaviour
     [SerializeField] private TowerInstance towerInstance;
     private MonsterManager monsterManager;
     private TowerBehaviour towerBehaviour;
-    [SerializeField] private Animator animator;
 
     private readonly List<MonsterBehaviour> detectedEnemies = new List<MonsterBehaviour>();
 
@@ -156,11 +155,6 @@ public class TowerCombatBehaviour : MonoBehaviour
         if (towerInstance == null)
         {
             towerInstance = GetComponent<TowerInstance>();
-        }
-
-        if (animator == null)
-        {
-            animator = GetComponentInChildren<Animator>();
         }
 
         if (towerBehaviour == null)
@@ -751,23 +745,42 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private void SetAttackingAnimatorBool(bool isAttacking)
     {
-        if (animator == null || attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackingAnimatorBoolName))
+        if (attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackingAnimatorBoolName))
         {
             return;
         }
 
-        animator.SetBool(attackConfig.AttackingAnimatorBoolName, isAttacking);
+        TowerModelPresentation presentation = GetTowerModelPresentation();
+
+        if (presentation == null)
+        {
+            return;
+        }
+
+        presentation.RequestAttackingBool(attackConfig.AttackingAnimatorBoolName, isAttacking);
     }
 
     private bool SetAttackAnimatorTrigger()
     {
-        if (animator == null || attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackAnimatorTriggerName))
+        if (attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackAnimatorTriggerName))
         {
             return false;
         }
-        
-        animator.SetTrigger(attackConfig.AttackAnimatorTriggerName);
-        return true;
+
+        TowerModelPresentation presentation = GetTowerModelPresentation();
+        return presentation != null && presentation.RequestAttackTrigger(attackConfig.AttackAnimatorTriggerName);
+    }
+
+    private TowerModelPresentation GetTowerModelPresentation()
+    {
+        if (towerBehaviour == null)
+        {
+            towerBehaviour = GetComponent<TowerBehaviour>();
+        }
+
+        return towerBehaviour != null && towerBehaviour.VisualController != null
+            ? towerBehaviour.VisualController.GetCurrentTowerModelPresentation()
+            : null;
     }
 
     private static bool IsValidTarget(MonsterBehaviour monster)

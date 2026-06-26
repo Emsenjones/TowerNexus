@@ -14,7 +14,7 @@ This system answers:
 - Which attack archetype or Attack Entity behavior should execute
 - When Attack Entities or projectiles are created
 - When direct runtime damage is applied
-- When attack animation and presentation hooks are triggered
+- When attack animation and presentation requests are issued
 
 The Tower Runtime Combat System consumes data from the Tower Framework System and coordinates downstream runtime systems such as Projectile System, Monster System, and Buff And Effect System.
 
@@ -33,7 +33,7 @@ The Tower Runtime Combat System owns:
 - Target selection execution
 - Attack cooldown management
 - Attack state transitions
-- Attack animation parameter control
+- Attack presentation request timing
 - Attack Entity spawning and control
 - Projectile creation and initialization
 - Magic Orb lifecycle orchestration
@@ -48,6 +48,7 @@ The Tower Runtime Combat System does not own:
 - TowerVisualController ownership
 - Tower model replacement
 - AttackOrigin fallback resolution
+- Animator hierarchy lookup
 - Tower placement workflow
 - Runtime projectile movement
 - Projectile collision detection
@@ -156,7 +157,7 @@ TowerCombatBehaviour is initialized from:
 - TowerDefinition
 - AttackConfig
 - MonsterManager
-- Optional Animator
+- Optional tower model presentation entry resolved by the tower runtime
 - Current active AttackOrigin transform resolved by the tower runtime
 
 Recommended runtime references:
@@ -167,15 +168,17 @@ Recommended runtime references:
 | TowerDefinition | Provides static tower data |
 | AttackConfig | Provides attack behavior configuration |
 | MonsterManager | Provides alive monsters for detection |
-| Animator | Receives attack presentation parameters |
+| Tower Model Presentation | Receives attack presentation requests and applies Animator parameters on the current tower model |
 | Current Active AttackOrigin | Provides attack range origin and projectile spawn position |
 | MonsterBehaviour.HitAnchor | Provides the monster-side hit/reference position for targeting, range checks, projectile target snapshots, Magic Orb contact checks, and Drone orbit targeting |
 
-The current active AttackOrigin should come from the spawned tower level model when available.
+The current active AttackOrigin should come from the spawned tower level model presentation when available.
 
 If the current tower model does not provide AttackOrigin, the owning tower visual/runtime layer must log a warning and use AttackOriginFallback. Missing model AttackOrigin is a configuration error, not a normal runtime behavior.
 
 Tower Runtime Combat consumes the resolved current active AttackOrigin. It should not inspect tower model hierarchy or choose fallback references directly.
+
+Tower Runtime Combat should request attack presentation through the tower-owned visual/model presentation path. It should not search the spawned tower model hierarchy for Animator components directly.
 
 ---
 
@@ -321,7 +324,7 @@ Store pending projectile target position
     ↓
 Enter WaitingForAnimationRelease
     ↓
-Trigger attack animation if configured
+Request attack animation presentation if configured
     ↓
 Release projectile from animation event or immediate fallback
     ↓
@@ -519,14 +522,16 @@ Neither AttackOrigin nor FireAnchor should own gameplay decisions such as target
 
 # 12. Animation Integration
 
-Tower Runtime Combat may control Animator parameters configured by AttackConfig.
+Tower Runtime Combat may request attack presentation using Animator parameter names configured by AttackConfig.
+
+The current tower model presentation entry applies the actual Animator parameter changes on the spawned tower model. In the first version, TowerModelPresentation drives an Animator attached to the Tower Level Model Prefab root.
 
 Recommended fields:
 
 | Field | Runtime Usage |
 |---|---|
-| attackAnimatorTriggerName | Triggered when a projectile attack starts |
-| attackingAnimatorBoolName | Set while continuous attacks are active |
+| attackAnimatorTriggerName | Requested when a projectile attack starts |
+| attackingAnimatorBoolName | Requested while continuous attacks are active |
 
 Recommended default values:
 
@@ -538,6 +543,8 @@ Recommended default values:
 Animator parameter names should come from AttackConfig.
 
 Tower Runtime Combat should not hardcode tower-specific animation parameter names.
+
+Tower Runtime Combat should not cache or search for Animator components on spawned tower models. Animator lookup and parameter application belong to the current tower model presentation entry resolved through TowerVisualController.
 
 ---
 
@@ -662,7 +669,7 @@ Included:
 - Projectile creation and initialization
 - Magic Orb lifecycle orchestration
 - Drone lifecycle orchestration
-- Attack animation parameter control
+- Attack presentation request timing
 - Runtime presentation hooks
 
 Excluded:

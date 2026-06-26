@@ -14,6 +14,7 @@ public class TowerVisualController : MonoBehaviour
     private GameObject requestedTowerModelPrefab;
     private GameObject currentTowerModelInstance;
     private Transform currentAttackOrigin;
+    private TowerModelPresentation currentTowerModelPresentation;
     private readonly List<PreviewMaterialBinding> previewMaterialBindings = new List<PreviewMaterialBinding>();
     private bool hasLoggedMissingRequiredReferences;
     private bool hasLoggedMissingAttackOriginFallback;
@@ -26,6 +27,7 @@ public class TowerVisualController : MonoBehaviour
     public Transform AttackOriginFallback => attackOriginFallback;
     public GameObject RequestedTowerModelPrefab => requestedTowerModelPrefab;
     public GameObject CurrentTowerModelInstance => currentTowerModelInstance;
+    public TowerModelPresentation CurrentTowerModelPresentation => currentTowerModelPresentation;
 
     private void Awake()
     {
@@ -37,6 +39,11 @@ public class TowerVisualController : MonoBehaviour
     public Transform GetCurrentAttackOrigin()
     {
         return currentAttackOrigin != null ? currentAttackOrigin : attackOriginFallback;
+    }
+
+    public TowerModelPresentation GetCurrentTowerModelPresentation()
+    {
+        return currentTowerModelPresentation;
     }
 
     public void SetTowerVisual(GameObject towerModelPrefab)
@@ -62,6 +69,7 @@ public class TowerVisualController : MonoBehaviour
         currentTowerModelInstance.transform.localPosition = Vector3.zero;
         currentTowerModelInstance.transform.localRotation = Quaternion.identity;
         currentTowerModelInstance.transform.localScale = Vector3.one;
+        ResolveCurrentTowerModelPresentation();
         ResolveCurrentAttackOrigin();
         RecachePreviewMaterialBindings();
     }
@@ -184,6 +192,7 @@ public class TowerVisualController : MonoBehaviour
 
         currentTowerModelInstance = null;
         currentAttackOrigin = null;
+        currentTowerModelPresentation = null;
         previewMaterialBindings.Clear();
         hasLoggedMissingModelAttackOrigin = false;
     }
@@ -245,7 +254,12 @@ public class TowerVisualController : MonoBehaviour
     {
         currentAttackOrigin = null;
 
-        if (currentTowerModelInstance != null)
+        if (currentTowerModelPresentation != null)
+        {
+            currentAttackOrigin = currentTowerModelPresentation.AttackOrigin;
+        }
+
+        if (currentAttackOrigin == null && currentTowerModelInstance != null)
         {
             currentAttackOrigin = FindChildByName(currentTowerModelInstance.transform, "AttackOrigin");
 
@@ -268,6 +282,26 @@ public class TowerVisualController : MonoBehaviour
         {
             Debug.LogWarning("Tower visual controller cannot resolve an attack origin: AttackOriginFallback is missing.", this);
             hasLoggedMissingAttackOriginFallback = true;
+        }
+    }
+
+    private void ResolveCurrentTowerModelPresentation()
+    {
+        currentTowerModelPresentation = null;
+
+        if (currentTowerModelInstance == null)
+        {
+            return;
+        }
+
+        if (!currentTowerModelInstance.TryGetComponent(out currentTowerModelPresentation))
+        {
+            currentTowerModelPresentation = currentTowerModelInstance.GetComponentInChildren<TowerModelPresentation>(true);
+        }
+
+        if (currentTowerModelPresentation != null)
+        {
+            currentTowerModelPresentation.Initialize(GetComponent<TowerCombatBehaviour>());
         }
     }
 

@@ -328,7 +328,6 @@ GameObject:
   - component: {fileID: 8354368066510959421}
   - component: {fileID: -1111851195284670965}
   - component: {fileID: 7012975608828511292}
-  - component: {fileID: 7100283724578577964}
   m_Layer: 0
   m_Name: Prefab_TowerBase_ArcherTower
   m_TagString: Untagged
@@ -426,7 +425,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerCombatBehaviour
   towerInstance: {fileID: -5833469859241583986}
-  animator: {fileID: 7100283724578577964}
+  animator: {fileID: 0}
 --- !u!114 &7012975608828511292
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -442,28 +441,6 @@ MonoBehaviour:
   centerAnchor: {fileID: 6618127648878094198}
   occupiedAnchors:
   - {fileID: 6618127648878094198}
---- !u!95 &7100283724578577964
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8270491640636788401}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 7b4287f6b699e47cea7afdfc712b5497, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
 --- !u!1001 &341120636928305538
 PrefabInstance:
   m_ObjectHideFlags: 0

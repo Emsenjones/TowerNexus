@@ -107,7 +107,6 @@ GameObject:
   - component: {fileID: 3578499546469152034}
   - component: {fileID: -54617899545386276}
   - component: {fileID: -5750683001870481658}
-  - component: {fileID: 3011771384502912636}
   - component: {fileID: 6033357621024793606}
   m_Layer: 0
   m_Name: Prefab_TowerBase_CannonTower
@@ -206,29 +205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerCombatBehaviour
   towerInstance: {fileID: 1025514080300142389}
-  animator: {fileID: 3011771384502912636}
---- !u!95 &3011771384502912636
-Animator:
-  serializedVersion: 7
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1820178305229058407}
-  m_Enabled: 1
-  m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 22100000, guid: ee483ff6c236a485fa9f092a7fb4332c, type: 2}
-  m_CullingMode: 0
-  m_UpdateMode: 0
-  m_ApplyRootMotion: 0
-  m_LinearVelocityBlending: 0
-  m_StabilizeFeet: 0
-  m_AnimatePhysics: 0
-  m_WarningMessage: 
-  m_HasTransformHierarchy: 1
-  m_AllowConstantClipSamplingOptimization: 1
-  m_KeepAnimatorStateOnDisable: 0
-  m_WriteDefaultValuesOnDisable: 0
+  animator: {fileID: 0}
 --- !u!114 &6033357621024793606
 MonoBehaviour:
   m_ObjectHideFlags: 0

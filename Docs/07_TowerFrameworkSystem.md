@@ -39,6 +39,7 @@ The Tower Framework System owns:
 - Static attack VFX configuration references
 - Tower prefab structure contract
 - Tower visual structure contract
+- Tower model presentation contract
 - TowerVisualController ownership direction
 
 The Tower Framework System does not own:
@@ -184,13 +185,13 @@ Missing model AttackOrigin is an authoring or configuration error, not a normal 
 
 TowerBehaviour owns TowerVisualController.
 
-TowerVisualController owns tower-local visual rendering operations requested by gameplay systems, including model spawn or replacement, preview material tint, preview transparency, attack range preview visibility, and current AttackOrigin resolution.
+TowerVisualController owns tower-local visual rendering operations requested by gameplay systems, including model spawn or replacement, current tower model presentation resolution, preview material tint, preview transparency, attack range preview visibility, and current AttackOrigin resolution.
 
 TowerPlacementSystem may request preview or range visual changes, but should not directly manipulate VisualRoot, TowerPrefabSpawnPoint, renderer materials, or tower model instances.
 
 TowerUpgradeSystem may request visual refresh after an accepted tower level-up, but should not directly manipulate tower model hierarchy.
 
-TowerRuntimeCombatSystem consumes the current active AttackOrigin resolved by the owning tower runtime. It should not resolve level model hierarchy or fallback references itself.
+TowerRuntimeCombatSystem consumes the current active AttackOrigin and tower model presentation entry resolved by the owning tower runtime. It should not resolve level model hierarchy, Animator hierarchy, or fallback references itself.
 
 Drone Tower consumes the current active AttackOrigin differently from projectile-only towers.
 
@@ -329,15 +330,23 @@ TowerDefinition
         └── towerModelPrefab
 ```
 
-Each Tower Level Model Prefab should provide its own AttackOrigin.
+Each Tower Level Model Prefab should provide its own AttackOrigin and may provide tower model presentation through TowerModelPresentation.
 
 Recommended structure:
 
 ```text
 TowerLevelModelPrefab
-├── Model
+├── TowerModelPresentation
+├── Animator
+├── VisualRoot
 └── AttackOrigin
 ```
+
+TowerModelPresentation should be attached to the Tower Level Model Prefab root.
+
+The tower model Animator should be attached to the Tower Level Model Prefab root in the first version. TowerModelPresentation owns resolving and driving that Animator for the current tower model.
+
+TowerModelPresentation should expose the model-local AttackOrigin reference when available. This lets the tower runtime consume the current model's presentation entry instead of searching model hierarchy by name.
 
 Rules:
 
@@ -346,8 +355,21 @@ Rules:
 - Current first-version Tower Draft configuration may resolve all newly deployed towers to Lv1, but the framework should not hardcode new deployment as Lv1-only.
 - Upgrading a tower replaces only the spawned tower model.
 - TowerBaseVisualRoot remains unchanged across tower levels.
-- Runtime resolves the active AttackOrigin from the current tower model.
+- Runtime resolves the active AttackOrigin from the current tower model presentation when available.
 - If the current tower model lacks AttackOrigin, runtime logs a warning and uses AttackOriginFallback.
+- Runtime resolves the active TowerModelPresentation from the current tower model when available.
+- Missing TowerModelPresentation should not block combat execution; attacks that require animation release may fall back to immediate release when no presentation entry is available.
+
+TowerModelPresentation responsibilities:
+
+- Cache the current tower model Animator.
+- Expose the current tower model AttackOrigin.
+- Apply attack Animator Trigger parameters requested by runtime combat.
+- Apply attack Animator Bool parameters requested by runtime combat.
+- Receive attack animation release events from the tower model animation.
+- Forward attack animation release events to the owning runtime combat component.
+
+TowerModelPresentation does not decide attack timing, target selection, cooldowns, damage, projectile creation, or tower upgrade behavior.
 
 ---
 
@@ -365,6 +387,7 @@ Responsibilities:
 - Replace tower level model.
 - Destroy previous tower level model.
 - Resolve current active AttackOrigin.
+- Resolve current tower model presentation entry.
 - Apply preview material state to preview instances using per-renderer material instances.
 - Clear preview transparency from deployed instances when required.
 - Manage AttackRangePreview visibility and scale.
@@ -377,6 +400,7 @@ Example API direction:
 ```text
 SetTowerVisual()
 GetCurrentAttackOrigin()
+GetCurrentTowerModelPresentation()
 SetPreviewMaterialState(Color tint, float alpha)
 ShowAttackRangePreview()
 HideAttackRangePreview()
@@ -391,6 +415,8 @@ TowerVisualController does not decide:
 - Tower level.
 - Tower upgrade logic.
 - Attack range values.
+- Attack timing.
+- Animator parameter selection.
 - Draft item consumption.
 
 Gameplay systems decide whether a visual should be shown and which data should be rendered. TowerVisualController renders the requested tower-local visual state.
@@ -643,7 +669,7 @@ AttackConfig defines:
 - Projectile references
 - Projectile trajectory parameters
 - Attack Entity behavior parameters
-- Animator parameter names for attack presentation
+- Animator parameter names for attack presentation requests
 - Optional attack VFX prefab references
 
 AttackConfig does not contain runtime state.
@@ -704,8 +730,7 @@ Attack VFX fields are optional. Empty VFX references should not block combat exe
 
 Attack VFX references are static presentation configuration only. They must not define gameplay damage, targeting rules, cooldown logic, projectile hit detection, or buff behavior.
 
-```md
-Animator parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat.
+Animator parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat or TowerModelPresentation.
 
 Recommended naming convention:
 
@@ -717,7 +742,6 @@ Recommended naming convention:
 Most towers should follow the same naming convention to simplify animator setup and runtime combat implementation.
 
 However, animator parameter names remain configurable through AttackConfig.
-```
 
 ---
 
