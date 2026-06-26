@@ -39,22 +39,6 @@ public class TowerModelPresentation : MonoBehaviour
         return true;
     }
 
-    public bool RequestAttackingBool(string boolName, bool isAttacking)
-    {
-        if (string.IsNullOrEmpty(boolName))
-        {
-            return false;
-        }
-
-        if (!TryGetAnimator(out Animator targetAnimator))
-        {
-            return false;
-        }
-
-        targetAnimator.SetBool(boolName, isAttacking);
-        return true;
-    }
-
     public void OnAttackAnimationRelease()
     {
         if (towerCombatBehaviour == null)

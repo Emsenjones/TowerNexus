@@ -226,7 +226,7 @@ Responsible for:
 - Attack Entity concepts
 - Target selection types
 - Attack presentation configuration
-- Tower model presentation contract and Animator parameter definitions
+- Tower model presentation contract
 - Tower prefab structure
 - Tower visual structure
 - TowerVisualController ownership direction
@@ -264,7 +264,7 @@ Attack Entities decide how the attack behaves.
 
 Tower level data provides basic damage. Attack configuration and runtime upgrades provide damage multipliers. Runtime combat and Attack Entity logic use these values to calculate final damage before dispatching it.
 
-Tower Runtime Combat consumes the current active AttackOrigin and tower model presentation entry resolved by the tower visual/runtime layer. It does not own tower model replacement, Animator hierarchy lookup, or AttackOrigin fallback resolution.
+Tower Runtime Combat consumes the current active AttackOrigin and tower model presentation entry resolved by the tower visual/runtime layer. It does not own tower model replacement, model presentation resolution, or AttackOrigin fallback resolution.
 
 Projectile lifecycle execution belongs to Projectile System when the Attack Entity is a projectile.
 

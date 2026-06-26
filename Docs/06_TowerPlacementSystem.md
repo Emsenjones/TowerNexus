@@ -503,6 +503,7 @@ Runtime rendering direction:
 - The `AttackRangePreview` child should contain a circular mesh whose radius is 1 when local scale is 1.
 - TowerVisualController scales `AttackRangePreview` uniformly to `attackRange`.
 - TowerVisualController shows or hides `AttackRangePreview` during Draft item drag lifecycle.
+- AttackRangePreview may provide lightweight prefab-authored looping presentation while the preview is visible.
 - TowerVisualController should not generate placement validation data or affect combat range logic.
 
 When the drag operation ends or is cancelled:
@@ -753,67 +754,3 @@ TowerPlacementSystem
     ↓ Runtime Placement Or Target Intent
 MapSystem
 ```
-
----
-
-# Change Log
-
-## 2026-06-25 (Tower Visual Preview Foundation Sync)
-
-- Added one-active-preview direction for Tower Draft drag operations.
-- Added deployment-level placement preview and same-TowerFamily Current Level + 1 Tower Level-Up Preview direction.
-- Clarified that Tower Level-Up Preview does not cover future Tower Upgrade Draft item effect previews.
-- Added attack range preview request flow during Draft item drag.
-- Added Current Drag Operation cancellation when any dragged Draft item is released back into the Battle HUD Draft Item Interaction Area.
-- Clarified that Tower Placement System requests visual changes through TowerBehaviour / TowerVisualController ownership and does not directly manipulate tower visuals.
-- Updated placement preview feedback direction to whole-preview tint plus alpha instead of PreviewRenderer child-cube feedback.
-
-## 2026-06-18 (Draft Item Target Intent Sync)
-
-- Replaced pending tower interaction wording with Draft item interaction wording.
-- Clarified that Tower Placement System detects deployment or existing tower target intent.
-- Clarified that Tower Draft level-up requests and Tower Upgrade Draft application are routed to TowerUpgradeSystem.
-- Updated progression ownership wording from EXP to ResolvedMonsterCount.
-
-## 2026-06-07
-
-- Synchronized path-blocking validation wording with ProjectOverview and Monster System.
-- Clarified that path-blocking validation is part of the intended placement rule set and depends on Monster System pathfinding.
-
-## 2026-05-24
-
-- Renamed Tower Deploy System document to Tower Placement System.
-- Removed detailed Battle HUD System ownership from this document.
-- Removed detailed Draft System ownership from this document.
-- Clarified that Draft System owns draft generation and draft result workflow.
-- Clarified that Battle HUD UI System owns runtime UI display and pending tower UI.
-- Refocused this document on tower placement, preview, snapping, validation, GridNode occupation, and walkability updates.
-- Moved TowerDefinition and tower prefab structure ownership to Tower Framework System.
-- Updated first-version scope to exclude draft, player progression, and battle HUD ownership.
-- Clarified that path blocking validation depends on Map System data and Monster System pathfinding functionality rather than Map System owning pathfinding.
-
-## 2026-05-22
-
-- Moved Player Level System ownership out of Tower Deploy System and into Player System.
-- Updated responsibility boundaries.
-- Updated references from PlayerLevelSystem to Player System where the placement flow depends on player progression events.
-- Clarified that this system does not own player level, EXP, health, or battle failure logic.
-
-## 2026-05-15
-
-- Clarified responsibility boundaries between Player Level System, Tower Draft System, Battle HUD System, and Tower Deploy System.
-- Added TowerDefinitionDatabase as the recommended first-version source of tower draft data.
-- Clarified that BattleHUDUI should not directly own Tower Pool data or generate draft choices.
-- Added recommended TowerDraftSystem runtime structure and draft data flow.
-- Clarified TowerDraftUI responsibility as display and selection callback only.
-
-## 2026-05-13
-
-- Initial Tower Deploy System Design Document created.
-- Defined player level and tower draft workflow.
-- Defined Battle HUD requirements for current level, EXP progress, and pending tower display.
-- Defined Tower Pending Deployment Area workflow.
-- Defined tower footprint anchor structure.
-- Defined tower drag placement and validation workflow.
-- Clarified that path blocking validation is reserved for future implementation and is not part of the first deploy loop.
-- Defined future recycle and redeployment direction.

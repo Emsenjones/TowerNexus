@@ -228,28 +228,3 @@ Possible future extensions:
 4. Player base upgrade system.
 5. Player talent system.
 6. Player damage resistance or shield system.
-
----
-
-# Change Log
-
-## 2026-06-18 (ResolvedMonsterCount Progression Sync)
-
-- Replaced EXP-driven progression design with ResolvedMonsterCount-based level progress.
-- Clarified that killed monsters and leaked monsters both count as resolved while the run is active.
-- Clarified that monster resolution no longer advances progression after the run has ended.
-- Renamed the UI-facing progress event direction from EXP progress to level progress.
-
-## 2026-05-24 (Naming Sync)
-
-- Updated references from Tower Draft System to Draft System.
-- Updated references from Tower Deploy System to Tower Placement System.
-- Updated runtime observer references to BattleHUDUISystem.
-- Clarified Player System as the runtime player state authority.
-
-## 2026-05-24
-
-- Clarified ownership boundaries between Player System, Tower Draft System, Battle HUD UI System, Tower Deploy System, and Monster System.
-- Updated Battle HUD references to the independent Battle HUD UI System.
-- Clarified that Tower Draft generation belongs to Tower Draft System.
-- Added runtime ownership boundary section.

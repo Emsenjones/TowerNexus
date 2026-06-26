@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
   m_Name: Config_MonsterDefinition_Slime
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 0
   displayName: Slime
   monsterPrefab: {fileID: 6597115842058522919, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
   moveSpeed: 0.25
-  maxHealth: 20
+  maxHealth: 100
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking

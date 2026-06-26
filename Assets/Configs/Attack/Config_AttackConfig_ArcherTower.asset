@@ -12,21 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008a5cd59d0f643d39191b0690bfb938, type: 3}
   m_Name: Config_AttackConfig_ArcherTower
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
-  attackConfigId: 1
   attackArchetype: 0
   attackRange: 2
   attackInterval: 1
   targetSelectionType: 0
   damageMultiplier: 1
   attackAnimatorTriggerName: Attack
-  attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 11400000, guid: 885d88fbd81784ed6998116a641079bc, type: 2}
   arcHeight: 1
   projectileReleaseVfxPrefab: {fileID: 2526188762600594687, guid: e9e726441714d495680f004cfb654b82, type: 3}
   magicOrbRotationSpeed: 180
   magicOrbMaxHitCount: 3
+  magicOrbMaxLifetime: 5
   magicOrbPrefab: {fileID: 0}
   droneBatteryDuration: 5
-  droneRechargeDuration: 2
   droneOrbitRadius: 1.5
   dronePrefab: {fileID: 0}

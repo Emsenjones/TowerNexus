@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
   m_Name: Config_MonsterDefinition_Skeleton
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 6
   displayName: Skeleton
   monsterPrefab: {fileID: 2382199090356143332, guid: 11ae00977065c425f8298ca0e5e60680, type: 3}
   moveSpeed: 0.25
-  maxHealth: 20
+  maxHealth: 100
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking

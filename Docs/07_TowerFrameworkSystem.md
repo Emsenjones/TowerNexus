@@ -175,7 +175,7 @@ TowerPrefabSpawnPoint is the spawn parent for the current tower level model. Tow
 
 PreviewRenderer is a compatibility placeholder for preview-related authoring or transforms. It should not decide placement validity, and it should not be the main visual feedback for Tower Placement Preview.
 
-AttackRangePreview is an optional tower-local visual child used by TowerVisualController during Draft item drag operations. It should contain a circular mesh whose radius is 1 when local scale is 1. TowerVisualController scales it uniformly to the tower's configured attackRange and toggles it on or off.
+AttackRangePreview is an optional tower-local visual child used by TowerVisualController during Draft item drag operations. It should contain a circular mesh whose radius is 1 when local scale is 1. TowerVisualController scales it uniformly to the tower's configured attackRange and toggles it on or off. AttackRangePreview may include lightweight prefab-authored looping presentation while enabled.
 
 Tower Placement Preview should treat TowerBaseVisualRoot and the spawned tower model as one ghost visual. Valid or invalid placement feedback should be applied through whole-preview material tint and alpha.
 
@@ -191,7 +191,7 @@ TowerPlacementSystem may request preview or range visual changes, but should not
 
 TowerUpgradeSystem may request visual refresh after an accepted tower level-up, but should not directly manipulate tower model hierarchy.
 
-TowerRuntimeCombatSystem consumes the current active AttackOrigin and tower model presentation entry resolved by the owning tower runtime. It should not resolve level model hierarchy, Animator hierarchy, or fallback references itself.
+TowerRuntimeCombatSystem consumes the current active AttackOrigin and tower model presentation entry resolved by the owning tower runtime. It should not resolve level model hierarchy, model presentation hierarchy, or fallback references itself.
 
 Drone Tower consumes the current active AttackOrigin differently from projectile-only towers.
 
@@ -209,18 +209,18 @@ DroneTowerPrefab
 └── AttackOriginFallback
 ```
 
-For Drone Tower, the current active AttackOrigin from the spawned tower level model represents where the Drone rests, launches from, returns to, and recharges when inactive.
+For Drone Tower, the current active AttackOrigin from the spawned tower level model represents the Drone release point.
 
-This keeps Drone parking behavior aligned with the existing tower attack-origin convention and avoids adding a separate DroneParkingAnchor in the first version.
+Released Drones should capture the release position they need at launch and should not depend on tower model child Transforms after launch. Drone Tower does not need a separate DroneParkingAnchor in the first version.
 
 The Drone prefab itself may define its own internal combat anchors:
 
 ```text
 DronePrefab
 ├── VisualRoot
-├── Animator
 ├── DroneBehaviour
-└── FireAnchor
+├── FireAnchor
+└── PropellerVisual
 ```
 
 FireAnchor represents where Drone-fired projectile Attack Entities and optional attack release VFX should spawn.
@@ -232,10 +232,8 @@ Drone prefab presentation convention:
 - Drone model forward should use local +Z for active flight facing.
 - Runtime should rotate the Drone root Transform so local +Z faces the current planar movement direction whenever the Drone is moving.
 - Imported model orientation differences should be corrected inside the Drone prefab's VisualRoot, not by runtime offset compensation.
-- When resting or recharging at AttackOrigin, Drone should face local -Z relative to the AttackOrigin orientation in the first version.
-- Drone prefab may include an Animator with Bool parameter `IsFlying`.
-- Runtime should set `IsFlying = false` while Drone is Resting or Recharging.
-- Runtime should set `IsFlying = true` while Drone is Launching, Orbiting, or Returning.
+- Drone prefab may include a local propeller visual Transform.
+- Runtime may spin the propeller visual while Drone is launched and moving.
 
 ---
 
@@ -330,23 +328,22 @@ TowerDefinition
         └── towerModelPrefab
 ```
 
-Each Tower Level Model Prefab should provide its own AttackOrigin and may provide tower model presentation through TowerModelPresentation.
+Each Tower Level Model Prefab should provide its own AttackOrigin and may provide a tower model presentation entry for model-local presentation hooks.
 
 Recommended structure:
 
 ```text
 TowerLevelModelPrefab
-├── TowerModelPresentation
-├── Animator
+├── ModelPresentation
 ├── VisualRoot
 └── AttackOrigin
 ```
 
-TowerModelPresentation should be attached to the Tower Level Model Prefab root.
+The model presentation entry should be reachable from the Tower Level Model Prefab root.
 
-The tower model Animator should be attached to the Tower Level Model Prefab root in the first version. TowerModelPresentation owns resolving and driving that Animator for the current tower model.
+The model presentation entry owns model-local attack presentation hooks for the current tower model.
 
-TowerModelPresentation should expose the model-local AttackOrigin reference when available. This lets the tower runtime consume the current model's presentation entry instead of searching model hierarchy by name.
+The model presentation entry should expose the model-local AttackOrigin reference when available. This lets the tower runtime consume the current model's presentation contract instead of searching model hierarchy by name.
 
 Rules:
 
@@ -357,19 +354,17 @@ Rules:
 - TowerBaseVisualRoot remains unchanged across tower levels.
 - Runtime resolves the active AttackOrigin from the current tower model presentation when available.
 - If the current tower model lacks AttackOrigin, runtime logs a warning and uses AttackOriginFallback.
-- Runtime resolves the active TowerModelPresentation from the current tower model when available.
-- Missing TowerModelPresentation should not block combat execution; attacks that require animation release may fall back to immediate release when no presentation entry is available.
+- Runtime resolves the active model presentation entry from the current tower model when available.
+- Missing model presentation should not block combat execution; attacks that require animation release may fall back to immediate release when no presentation entry is available.
 
-TowerModelPresentation responsibilities:
+Tower model presentation responsibilities:
 
-- Cache the current tower model Animator.
-- Expose the current tower model AttackOrigin.
-- Apply attack Animator Trigger parameters requested by runtime combat.
-- Apply attack Animator Bool parameters requested by runtime combat.
-- Receive attack animation release events from the tower model animation.
-- Forward attack animation release events to the owning runtime combat component.
+- Expose model-local runtime anchors such as AttackOrigin.
+- Receive attack presentation requests from runtime combat.
+- Apply model-local attack presentation parameters.
+- Forward attack animation release signals to the owning runtime combat component.
 
-TowerModelPresentation does not decide attack timing, target selection, cooldowns, damage, projectile creation, or tower upgrade behavior.
+Tower model presentation does not decide attack timing, target selection, cooldowns, damage, projectile creation, or tower upgrade behavior.
 
 ---
 
@@ -395,19 +390,6 @@ Responsibilities:
 - Hide attack range preview.
 - Update attack range preview.
 
-Example API direction:
-
-```text
-SetTowerVisual()
-GetCurrentAttackOrigin()
-GetCurrentTowerModelPresentation()
-SetPreviewMaterialState(Color tint, float alpha)
-ShowAttackRangePreview()
-HideAttackRangePreview()
-UpdateAttackRangePreview()
-ClearCurrentTowerModel()
-```
-
 TowerVisualController does not decide:
 
 - Placement validity.
@@ -431,7 +413,7 @@ Current first-version tower categories:
 |---|---|
 | Archer | Fires fast straight-line arrows toward enemies |
 | Cannon | Launches arcing explosive shells toward enemy positions |
-| Magic | Maintains orbiting Magic Orb attack entities that contact enemies and consume hit count |
+| Magic | Releases orbiting Magic Orb attack entities that contact enemies and consume hit count |
 | Drone | Launches an autonomous Drone attack entity that fights away from the tower and may spawn projectile attack entities |
 
 Future categories may include:
@@ -456,7 +438,7 @@ Tower responsibilities:
 - Select targets when required
 - Manage cooldowns
 - Decide attack timing
-- Spawn or control Attack Entities
+- Release Attack Entities
 
 Attack Entity responsibilities:
 
@@ -476,7 +458,7 @@ Current first-version Attack Entities:
 |---|---|
 | Arrow | Direction projectile attack entity fired by Archer Tower |
 | Shell | Arc projectile attack entity fired by Cannon Tower |
-| Magic Orb | Orbiting attack entity owned by Magic Tower |
+| Magic Orb | Orbiting attack entity released by Magic Tower |
 | Drone | Autonomous attack entity launched by Drone Tower |
 
 Projectile is a shared runtime concept supporting projectile-style Attack Entities.
@@ -495,8 +477,8 @@ Examples:
 |---|---|---|
 | Archer Tower | Arrow | Fires low-damage direction projectiles with short range and high attack speed |
 | Cannon Tower | Shell | Fires slow arcing shells with long range; shells explode on arrival and deal area damage |
-| Magic Tower | Magic Orb | Maintains orbiting magic weapon behavior with contact damage and hit-count lifetime |
-| Drone Tower | Drone | Launches an autonomous drone that orbits selected target monsters, fires projectile bursts, consumes battery, returns, and recharges |
+| Magic Tower | Magic Orb | Releases orbiting magic weapon behavior with contact damage and hit-count lifetime |
+| Drone Tower | Drone | Releases an autonomous drone that orbits selected target monsters, fires projectile bursts, consumes battery, air-explodes, and despawns |
 
 ---
 
@@ -563,16 +545,18 @@ Magic Tower uses an orbiting Magic Orb attack entity.
 
 Design intent:
 
-- The tower continuously owns one Magic Orb when the orb is active
-- The Magic Orb rotates around the tower
+- The tower releases Magic Orb attack entities on its attack interval
+- Each Magic Orb rotates around the release-time center captured from AttackOrigin
 - The Magic Orb checks distance to monsters while orbiting
 - Contact deals damage
 - The Magic Orb has a configurable maximum hit count
 - Hit count decreases after each successful hit
 - The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed
 - When hit count reaches zero, the Magic Orb disappears
-- Cooldown starts after the active Magic Orb ends
-- After cooldown, the tower generates a new Magic Orb
+- When maximum lifetime is reached, the Magic Orb disappears even if remaining hit count is greater than zero
+- Cooldown starts when the Magic Orb is generated
+- After cooldown, the tower may generate a new Magic Orb without checking older released Magic Orbs
+- Magic Orb should spawn at a runtime-selected orbit angle
 - May play an attack release VFX at AttackOrigin when the Magic Orb is generated
 
 
@@ -595,17 +579,19 @@ Drone Tower uses an autonomous Drone attack entity.
 
 Design intent:
 
-- When Drone Tower is deployed, the Drone prefab should be spawned immediately and rest on the tower while inactive
-- When monsters enter tower AttackRange, the Drone launches
-- The Drone rises vertically from AttackOrigin to configured flight height
+- When Drone Tower attacks, it releases a Drone prefab from AttackOrigin
+- Attack cooldown starts when the Drone is successfully launched
+- If no valid monster exists inside AttackRange at release time, Drone Tower should not launch a Drone and should not start cooldown
+- The Drone rises vertically from its release position to configured flight height
 - The Drone selects a target inside the source tower AttackRange
 - The Drone orbits around the selected target monster
 - The Drone model local +Z faces the current planar movement direction while moving; during stable orbit this is the orbit tangent
 - The Drone fires straight projectile bursts while orbiting
 - Drone flight consumes battery
-- When battery is depleted or no valid monsters remain inside source tower AttackRange, the Drone first returns to the point above AttackOrigin at configured flight height, then descends vertically to AttackOrigin for recharge
-- Drone cooldown or recharge timing starts after the Drone returns to the tower, not when it launches
-- Once recharged and monsters exist, the Drone launches again
+- If the Drone's current target becomes invalid after launch, the Drone should retarget to another valid monster inside the source tower AttackRange when possible
+- If no valid monster remains inside AttackRange after launch, the Drone should end its task by exploding in the air and disappearing
+- When battery is depleted, the Drone explodes in the air and disappears
+- If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time
 
 Drone is an Attack Entity which may spawn Projectile Attack Entities.
 
@@ -613,24 +599,23 @@ Drone Tower does not require buff configuration in the first version. Projectile
 
 Anchor expectation:
 
-- Drone Tower should use AttackOrigin as the Drone rest position, launch point, return target, and recharge position in the first version.
-- Drone Tower runtime should instantiate and initialize the Drone at AttackOrigin when the tower is deployed, not only when the first monster enters range.
+- Drone Tower should use AttackOrigin as the Drone release point in the first version.
+- Released Drones should not depend on tower model child Transforms after launch.
 - Drone prefab should define its own FireAnchor for Drone-fired projectiles.
 - Drone-fired attack release VFX should play from the Drone FireAnchor when configured and face the selected target Monster direction.
 - AttackOrigin and FireAnchor are runtime/prefab references; they should not decide target selection, battery rules, projectile hit detection, or damage.
 
 VFX expectation:
 
-- The Drone visual should support resting, launching, orbiting, returning, and recharging states
-- Drone active flight animation may be driven by an Animator Bool parameter named `IsFlying`
-- `IsFlying` should be false for resting and recharging states, and true for launching, orbiting, and returning states
+- The Drone visual should support launching, orbiting, firing, battery-end explosion, and despawn states
+- Drone active flight presentation may include a lightweight local propeller spin
+- Propeller spin should be active while the Drone is launched and moving
 - Drone model active facing assumes local +Z points forward along the current planar movement direction.
 - Runtime should rotate the Drone root Transform immediately toward movement direction, without model-specific rotation offsets or first-version smoothing.
 - During stable Orbiting, Drone model local +Z should face the current orbit tangent rather than the target center.
-- Drone resting and recharging pose should face local -Z relative to AttackOrigin in the first version
 - Projectile travel and impact VFX should follow projectile runtime and impact timing
 - Attack release VFX may be reused for Drone-fired projectiles, but should spawn from the Drone FireAnchor rather than the tower AttackOrigin
-- Drone battery or recharge presentation should remain visual feedback only unless explicitly connected to gameplay state by runtime logic
+- Drone battery and battery-end explosion presentation should remain visual feedback only unless explicitly connected to gameplay state by runtime logic
 
 Drone VFX is presentation-only and must not own target selection, battery rules, projectile hit detection, or damage.
 
@@ -690,32 +675,32 @@ Examples of runtime state:
 
 Recommended first-version fields:
 
+AttackConfig assets are referenced directly by TowerDefinition. They should not maintain a hand-authored attack config id unless a future persistence, external-data, or lookup requirement needs a stable id. Debug output should use the ScriptableObject asset name.
+
 | Field | Type | Description |
 |---|---|---|
-| attackConfigId | string | Unique attack configuration identifier |
 | attackArchetype | AttackArchetype | Attack behavior type |
 | attackRange | float | Maximum attack range |
-| attackInterval | float | Time between projectile-style attacks, or Magic Orb respawn cooldown after an active orb ends |
+| attackInterval | float | Time between successful Attack Entity releases |
 | targetSelectionType | TargetSelectionType | Target selection rule |
 | damageMultiplier | float | Default attack-behavior damage multiplier applied to TowerLevelConfig.basicDamage |
 | projectileConfig | ProjectileConfig | Direct projectile configuration reference |
 | arcHeight | float | Arc projectile trajectory height |
 | magicOrbRotationSpeed | float | Rotation speed for Magic Orb behavior |
 | magicOrbMaxHitCount | int | Maximum number of successful hits before a Magic Orb disappears |
+| magicOrbMaxLifetime | float | Maximum lifetime before a released Magic Orb disappears, even if remaining hit count is greater than zero |
 | sameTargetHitCooldown | float | Cooldown before the same Magic Orb may hit the same monster again |
 | magicOrbOrbitRadius | float | Orbit radius used by Magic Orb movement |
 | magicOrbContactDistance | float | Contact distance used by Magic Orb hit detection |
-| droneBatteryDuration | float | Maximum active flight duration before Drone must return |
-| droneRechargeDuration | float | Recharge time before Drone may launch again |
+| droneBatteryDuration | float | Maximum active flight duration before Drone air-explodes and despawns |
 | droneOrbitRadius | float | Orbit radius around the selected target monster |
-| droneFlightSpeed | float | Drone movement speed for launch, approach, orbit, and return |
-| droneFlightHeight | float | Height offset above AttackOrigin maintained during active Drone flight |
+| droneFlightSpeed | float | Drone movement speed for launch, approach, and orbit |
+| droneFlightHeight | float | Height offset above the Drone release position maintained during active Drone flight |
 | droneBurstCount | int | Number of projectiles fired in one Drone burst |
 | droneBurstInterval | float | Time between projectiles within one Drone burst |
 | droneBurstCooldown | float | Cooldown between Drone bursts |
 | droneProjectileConfig | ProjectileConfig | Projectile configuration used by Drone-fired projectiles |
-| attackAnimatorTriggerName | string | Animator Trigger parameter used by projectile-based attacks |
-| attackingAnimatorBoolName | string | Animator Bool parameter used by continuous attack archetypes |
+| attackAnimatorTriggerName | string | Animator Trigger parameter used by released attacks |
 | attackReleaseVfxPrefab | GameObject | Optional one-shot VFX prefab spawned when a tower attack or attack entity release is confirmed |
 | magicOrbPrefab | GameObject | Optional Magic Orb attack entity prefab |
 | dronePrefab | GameObject | Optional Drone attack entity prefab |
@@ -730,14 +715,13 @@ Attack VFX fields are optional. Empty VFX references should not block combat exe
 
 Attack VFX references are static presentation configuration only. They must not define gameplay damage, targeting rules, cooldown logic, projectile hit detection, or buff behavior.
 
-Animator parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat or TowerModelPresentation.
+Attack presentation parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat or tower model presentation.
 
 Recommended naming convention:
 
 | Field | Recommended Value |
 |---|---|
 | attackAnimatorTriggerName | Attack |
-| attackingAnimatorBoolName | IsAttacking |
 
 Most towers should follow the same naming convention to simplify animator setup and runtime combat implementation.
 
@@ -844,20 +828,24 @@ Typically uses:
 - magicOrbOrbitRadius
 - magicOrbContactDistance
 - magicOrbMaxHitCount
+- magicOrbMaxLifetime
 - sameTargetHitCooldown
-- attackingAnimatorBoolName
+- attackAnimatorTriggerName
 - attackReleaseVfxPrefab
 - magicOrbPrefab
 
 Notes:
 
-- magicOrbRotationSpeed controls how quickly the Magic Orb rotates around the tower.
-- magicOrbOrbitRadius controls the Magic Orb attack path around the tower.
+- magicOrbRotationSpeed controls how quickly the Magic Orb rotates around its release-time center.
+- magicOrbOrbitRadius controls the Magic Orb attack path around its release-time center.
 - magicOrbContactDistance controls Magic Orb contact hit detection.
 - magicOrbMaxHitCount controls how many successful hits the active Magic Orb can perform before disappearing.
+- magicOrbMaxLifetime controls how long a released Magic Orb can remain active before disappearing, even if remaining hit count is greater than zero.
 - sameTargetHitCooldown controls how soon the same Magic Orb may hit the same monster again.
-- attackInterval controls the cooldown before a new Magic Orb is generated after the active orb ends.
-- The active Magic Orb's lifetime is part of the attack process, so cooldown does not start when the orb spawns.
+- attackInterval controls the cooldown before the tower may release another Magic Orb.
+- Magic Orb cooldown starts when the Magic Orb is generated.
+- Older Magic Orbs do not block later Magic Orb releases.
+- Magic Orb should spawn at a runtime-selected orbit angle.
 - Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and the active Magic Orb damage multiplier.
 - Magic Orb behavior does not require targetSelectionType in the first version.
 - Magic Orb combat parameters should be configured on AttackConfig so MagicOrbBehaviour remains a runtime executor.
@@ -875,10 +863,10 @@ VFX notes:
 Typically uses:
 
 - attackRange
+- attackInterval
 - damageMultiplier
 - targetSelectionType
 - droneBatteryDuration
-- droneRechargeDuration
 - droneOrbitRadius
 - droneFlightSpeed
 - droneFlightHeight
@@ -886,18 +874,18 @@ Typically uses:
 - droneBurstInterval
 - droneBurstCooldown
 - droneProjectileConfig
-- attackingAnimatorBoolName
+- attackAnimatorTriggerName
 - attackReleaseVfxPrefab
 - dronePrefab
 
 Notes:
 
 - targetSelectionType is used by DroneBehaviour when the Drone chooses a target.
-- droneBatteryDuration controls how long the Drone can remain active away from the tower.
-- droneRechargeDuration controls how long the Drone must recharge after returning.
+- attackInterval controls how often Drone Tower may release a new Drone after a successful launch.
+- droneBatteryDuration controls how long the released Drone can remain active before air-exploding and despawning.
 - droneOrbitRadius controls the Drone's orbit distance around the selected target monster.
-- droneFlightSpeed controls Drone launch, approach, orbit, and return movement.
-- droneFlightHeight controls the height offset above AttackOrigin maintained during active Drone flight.
+- droneFlightSpeed controls Drone launch, approach, and orbit movement.
+- droneFlightHeight controls the height offset above the Drone release position maintained during active Drone flight.
 - Drone orbit direction should be chosen at runtime when entering Orbiting or retargeting, based on which tangent direction is closer to the Drone's current local +Z forward direction.
 - Drone orbit direction should not be configured on AttackConfig.
 - Whenever the Drone is moving, Drone model local +Z should face the current planar movement direction. During stable Orbiting this is the selected orbit tangent / flight direction.
@@ -905,19 +893,23 @@ Notes:
 - droneBurstCount, droneBurstInterval, and droneBurstCooldown control Drone-specific burst fire timing.
 - Drone uses attackRange as the tower detect and launch range in the first version. Dedicated Drone engage or leash ranges may be added later if needed.
 - Drone target selection only considers valid monsters inside the source tower attackRange.
+- If no valid monster is available before Drone release, Drone Tower should remain idle and should not start cooldown.
+- If a released Drone loses its current target, it should retarget to another valid monster inside the source tower attackRange when possible.
+- If no valid monster remains after release, the released Drone should air-explode and despawn.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
 - Projectiles fired by Drone should use droneProjectileConfig and Projectile System behavior.
 - Final Drone-fired projectile damage is calculated from the source tower's current TowerLevelConfig.basicDamage and the active Drone projectile damage multiplier.
-- Drone battery, return, and recharge behavior should belong to Drone attack entity runtime logic.
-- Drone Tower should use AttackOrigin as the Drone rest, launch, return, and recharge anchor in the first version.
+- Drone battery and battery-end destruction behavior should belong to Drone attack entity runtime logic.
+- Drone Tower should use AttackOrigin as the Drone release point in the first version.
+- Released Drones should not depend on tower model child Transforms after launch.
 - Drone FireAnchor should come from the Drone prefab or DroneBehaviour, not AttackConfig.
 
-Drone does not use attackInterval. Drone attack cycle timing is controlled by droneBatteryDuration and droneRechargeDuration, while Drone projectile fire timing is controlled by droneBurstCount, droneBurstInterval, and droneBurstCooldown.
-Drone recharge or tower cooldown timing starts after the Drone returns to the tower, not when it launches.
+Drone tower cooldown timing starts when the Drone is successfully launched. Drone projectile fire timing is controlled by droneBurstCount, droneBurstInterval, and droneBurstCooldown.
+If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time.
 
 VFX notes:
 
-- dronePrefab may contain visual references for launch, orbit, return, and recharge presentation.
+- dronePrefab may contain visual references for launch, orbit, projectile firing, battery-end explosion, and despawn presentation.
 - attackReleaseVfxPrefab may be reused for Drone-fired attack release VFX, should spawn at the Drone FireAnchor, and should face the selected target Monster direction.
 - Drone VFX should not own target selection, battery rules, projectile hit detection, or damage.
 
@@ -1077,103 +1069,3 @@ Excluded:
 - Particle collision driven combat logic
 
 ---
-
-
-
-# Change Log
-
-## 2026-06-25 (Tower Visual Foundation Sync)
-
-- Updated TowerPrefab visual structure direction with TowerBaseVisualRoot, TowerPrefabSpawnPoint, PreviewRenderer, and AttackOriginFallback.
-- Added Tower Level Model Prefab contract requiring each level model to provide its own AttackOrigin.
-- Added TowerVisualController as a TowerBehaviour-owned runtime component responsible for tower-local visual rendering.
-- Clarified that TowerPlacementSystem and TowerUpgradeSystem request visual changes instead of directly manipulating tower visual hierarchy.
-- Clarified that TowerRuntimeCombatSystem consumes the current active AttackOrigin resolved by the owning tower runtime.
-- Clarified that Tower Placement Preview feedback should use whole-preview tint and alpha, with PreviewRenderer remaining only as a compatibility placeholder.
-
-## 2026-06-24
-
-- Updated damage framework ownership: TowerLevelConfig owns per-level basicDamage, while AttackConfig owns attack-behavior damageMultiplier.
-- Removed undecided attack interval and range modifiers from TowerLevelConfig guidance.
-- Updated Drone design from hover-distance firing to target orbit and Drone-specific projectile burst fire.
-- Clarified Drone orbit direction as runtime-derived from current forward direction, not AttackConfig data.
-- Clarified Drone active orbit facing: model local +Z follows orbit tangent, while Drone-fired projectiles still aim at the selected monster hit position.
-- Clarified Drone deployment and return presentation: Drone spawns at AttackOrigin when Drone Tower is deployed, launches by rising vertically, and returns by moving above AttackOrigin before descending.
-- Clarified Drone movement-facing presentation: runtime rotates the Drone root local +Z toward planar movement direction whenever it moves, without model-specific offsets or first-version smoothing.
-- Clarified that Drone does not use attackInterval; battery/recharge and burst timing own Drone combat timing.
-- Clarified attackReleaseVfxPrefab orientation: Direction Projectile and Drone-fired projectile release VFX face launch direction, while other archetypes use prefab default direction.
-
-## 2026-06-23
-
-- Clarified cooldown timing for projectile-style attacks, Magic Orb, and Drone.
-- Added Tracking Projectile first-version cooldown guidance.
-
-## 2026-06-22
-
-- Updated first-version tower categories to Archer, Cannon, Magic, and Drone.
-- Removed Watch Tower from the current first-version tower lineup.
-- Redesigned Magic Tower documentation from ChannelBeam to orbiting Magic Orb attack entity behavior.
-- Added Drone Tower as an autonomous Attack Entity that may spawn Projectile Attack Entities.
-- Added Attack Entity responsibility boundaries and projectile flight behavior direction: Direction, Arc, and Tracking.
-- Updated AttackConfig field guidance and target selection usage for Magic Orb and Drone behavior.
-
-## 2026-06-18
-
-- Added TowerDefinition-owned per-level config direction for tower level base stat growth and visuals.
-- Updated Draft System relationship wording from New Tower Draft to Tower Draft.
-- Clarified that TowerUpgradeSystem consumes TowerDefinition level config for tower level-up requests while owning upgrade definitions separately.
-
-## 2026-06-12
-
-- Clarified that monster-side hit/reference positions are provided by the Monster System and consumed by attack patterns, projectile target snapshots, projectile hit checks, and ChannelBeam VFX binding.
-
-## 2026-06-10
-
-- Added AttackConfig VFX reference fields for projectile release, ChannelBeam, and PeriodicArea attacks.
-- Clarified that AttackConfig VFX references are optional presentation data and must not own gameplay logic.
-- Added VFX expectations for Archer, Cannon, Magic, and Watch Tower attack patterns.
-- Clarified that projectile travel and impact VFX should follow projectile runtime and impact timing.
-- Clarified that ChannelBeam VFX should be runtime-controlled between AttackOrigin and the current target.
-- Clarified that PeriodicArea VFX should be authored at a scale that visually matches the tower's configured attackRange in the first version.
-- Clarified that particle collision should not drive combat hit detection or damage in the first version.
-
-
-## 2026-06-08
-
-- Clarified StraightProjectile behavior as direction-based independent projectile flight rather than guaranteed target locking or target-position snapshot impact.
-- Updated Archer Tower attack pattern to specify that the selected target only determines launch direction.
-- Clarified that StraightProjectile may hit any valid monster encountered during flight, not only the originally selected target.
-- Clarified that StraightProjectile hit detection belongs to the Projectile System and should use hit distance threshold plus maximum lifetime handling.
-
-
-## 2026-05-30
-
-- Updated AttackConfig damage type from float to int to align with MonsterBehaviour.TakeDamage(int).
-- Removed damagePerSecond from first-version AttackConfig documentation and clarified that ChannelBeam uses damage with channelDamageInterval.
-- Replaced projectileConfigId with direct ProjectileConfig reference.
-- Added AttackConfig animator parameter name fields for attack Trigger and continuous attacking Bool presentation.
-- Updated first-version tower categories to Archer Tower, Cannon Tower, Magic Tower, and Watch Tower.
-- Replaced generic Projectile/Beam archetype list with StraightProjectile, ArcProjectile, ChannelBeam, and PeriodicArea.
-- Added detailed attack pattern descriptions for Archer Tower, Cannon Tower, Magic Tower, and Watch Tower.
-- Added Effect and Buff Relationship section.
-- Clarified that Cannon Tower explosion may be represented as an instant area damage effect, not a buff.
-- Clarified that Watch Tower periodic area damage is owned by tower runtime combat logic rather than enemy-attached damage-over-time buffs.
-- Standardized TowerFamily values to Archer, Cannon, Magic, and Drone.
-- Removed upgradeConfigId from first-version TowerDefinition recommended fields and clarified that upgrade configuration references belong to future Tower Upgrade System work.
-- Clarified that unused AttackConfig fields should be hidden in the Inspector whenever practical.
-- Removed explosionRadius and areaTickInterval from AttackConfig.
-- Added arcHeight for ArcProjectile configuration.
-- Added channelDamageInterval for ChannelBeam damage timing.
-- Clarified which AttackConfig fields are consumed by each AttackArchetype.
-- Clarified that PeriodicArea uses attackInterval and does not use TargetSelectionType.
-
-## 2026-05-29
-
-- Created Tower Framework System.
-- Renamed the document from Tower Definition System to Tower Framework System to better reflect ownership of tower architecture, structure, categories, attack archetypes, and upgrade concepts.
-- Extracted TowerDefinition ownership from Tower Placement System.
-- Added tower categories.
-- Added attack archetype definitions.
-- Added target selection definitions.
-- Added Tower Structure ownership including TowerPrefab, TowerAnchorSet, Center Anchor, Occupied Anchors, and footprint definitions.
-- Moved tower upgrade layer ownership to Tower Upgrade System.

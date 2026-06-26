@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
   m_Name: Config_MonsterDefinition_TurtuleShell
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 1
   displayName: Turtule Shell
   monsterPrefab: {fileID: 2882519792444244193, guid: cbabe32a21d9843728ed0b40c5d4dd16, type: 3}
   moveSpeed: 0.25
-  maxHealth: 20
+  maxHealth: 100
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking

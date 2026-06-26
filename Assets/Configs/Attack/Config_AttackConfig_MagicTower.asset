@@ -12,14 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 008a5cd59d0f643d39191b0690bfb938, type: 3}
   m_Name: Config_AttackConfig_MagicTower
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
-  attackConfigId: 3
   attackArchetype: 2
   attackRange: 1.5
   attackInterval: 3
   targetSelectionType: 1
   damageMultiplier: 1
   attackAnimatorTriggerName: Attack
-  attackingAnimatorBoolName: IsAttacking
   projectileConfig: {fileID: 0}
   arcHeight: 1
   attackReleaseVfxPrefab: {fileID: 0}
@@ -27,10 +25,10 @@ MonoBehaviour:
   magicOrbOrbitRadius: 1
   magicOrbContactDistance: 0.4
   magicOrbMaxHitCount: 10
+  magicOrbMaxLifetime: 8
   magicOrbSameTargetHitCooldown: 0.5
   magicOrbPrefab: {fileID: 5932105996875227893, guid: ddbc56afe56b5423287d527e7c7b5b88, type: 3}
   droneBatteryDuration: 5
-  droneRechargeDuration: 2
   droneOrbitRadius: 1.5
   droneFlightSpeed: 3
   droneFlightHeight: 1

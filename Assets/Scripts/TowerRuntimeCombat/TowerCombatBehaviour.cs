@@ -16,8 +16,8 @@ public class TowerCombatBehaviour : MonoBehaviour
     private MonsterBehaviour currentTarget;
     private MonsterBehaviour pendingProjectileTarget;
     private Vector3 pendingProjectileTargetPosition;
-    private MagicOrbBehaviour activeMagicOrb;
-    private DroneBehaviour activeDrone;
+    private MonsterBehaviour pendingDroneTarget;
+    private AttackArchetype pendingAttackArchetype;
     private float cooldownTimer;
     private TowerAttackState attackState = TowerAttackState.Idle;
     private bool hasLoggedUnsupportedAttackEntity;
@@ -36,8 +36,6 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     public void Initialize(TowerInstance towerInstance, MonsterManager monsterManager)
     {
-        CleanupActiveMagicOrb();
-        CleanupActiveDrone();
         CleanupActiveVfx();
 
         this.towerInstance = towerInstance;
@@ -50,15 +48,14 @@ public class TowerCombatBehaviour : MonoBehaviour
         cooldownTimer = 0f;
         currentTarget = null;
         pendingProjectileTarget = null;
-        activeMagicOrb = null;
-        activeDrone = null;
+        pendingProjectileTargetPosition = Vector3.zero;
+        pendingDroneTarget = null;
+        pendingAttackArchetype = default;
         hasLoggedUnsupportedAttackEntity = false;
         hasLoggedMissingMagicOrbPrefab = false;
         hasLoggedMissingDronePrefab = false;
         hasLoggedMissingAttackOrigin = false;
         attackState = TowerAttackState.Idle;
-        ResetAttackingAnimatorBoolIfUsed();
-        EnsureDroneAttackEntityIfNeeded();
     }
 
     public void OnAttackAnimationRelease()
@@ -68,7 +65,22 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        ReleasePendingProjectileAttack();
+        switch (pendingAttackArchetype)
+        {
+            case AttackArchetype.DirectionProjectile:
+            case AttackArchetype.ArcProjectile:
+                ReleasePendingProjectileAttack();
+                break;
+            case AttackArchetype.MagicOrb:
+                ReleasePendingMagicOrbAttack();
+                break;
+            case AttackArchetype.Drone:
+                ReleasePendingDroneAttack();
+                break;
+            default:
+                ResetPendingAttackState();
+                break;
+        }
     }
 
     private void Awake()
@@ -78,15 +90,11 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private void OnDisable()
     {
-        CleanupActiveMagicOrb();
-        CleanupActiveDrone();
         CleanupActiveVfx();
     }
 
     private void OnDestroy()
     {
-        CleanupActiveMagicOrb();
-        CleanupActiveDrone();
         CleanupActiveVfx();
     }
 
@@ -203,7 +211,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         {
             if (!IsValidTarget(pendingProjectileTarget) || !IsInAttackRange(pendingProjectileTarget))
             {
-                ResetProjectileAttackState();
+                ResetPendingAttackState();
             }
 
             return;
@@ -223,8 +231,8 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         pendingProjectileTarget = currentTarget;
         pendingProjectileTargetPosition = GetMonsterHitPosition(currentTarget);
+        pendingAttackArchetype = attackConfig.AttackArchetype;
         attackState = TowerAttackState.WaitingForAnimationRelease;
-        SetAttackingAnimatorBool(true);
 
         if (SetAttackAnimatorTrigger()) return;
 
@@ -240,7 +248,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         if (!IsValidTarget(pendingProjectileTarget))
         {
-            ResetProjectileAttackState();
+            ResetPendingAttackState();
             return;
         }
 
@@ -249,7 +257,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         if (projectileConfig == null || projectileConfig.ProjectilePrefab == null)
         {
             Debug.LogWarning("Tower combat cannot release projectile: projectile config or prefab is missing.", this);
-            ResetProjectileAttackState();
+            ResetPendingAttackState();
             return;
         }
 
@@ -257,7 +265,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         if (origin == null)
         {
-            ResetProjectileAttackState();
+            ResetPendingAttackState();
             return;
         }
 
@@ -279,14 +287,14 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         if (!projectileBehaviour.IsInitialized)
         {
-            ResetProjectileAttackState();
+            ResetPendingAttackState();
             return;
         }
 
         StartAttackCooldown();
         PlayAttackReleaseVfx();
         OnProjectileReleased?.Invoke(this, pendingProjectileTarget);
-        ResetProjectileAttackState();
+        ResetPendingAttackState();
     }
 
     private void StartAttackCooldown()
@@ -294,11 +302,12 @@ public class TowerCombatBehaviour : MonoBehaviour
         cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
     }
 
-    private void ResetProjectileAttackState()
+    private void ResetPendingAttackState()
     {
         pendingProjectileTarget = null;
         pendingProjectileTargetPosition = Vector3.zero;
-        SetAttackingAnimatorBool(false);
+        pendingDroneTarget = null;
+        pendingAttackArchetype = default;
         attackState = TowerAttackState.Idle;
     }
 
@@ -306,36 +315,42 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         hasLoggedUnsupportedAttackEntity = false;
 
-        if (activeMagicOrb != null)
+        if (attackState == TowerAttackState.WaitingForAnimationRelease)
         {
-            attackState = TowerAttackState.MagicOrbActive;
-            SetAttackingAnimatorBool(true);
             return;
         }
 
         if (cooldownTimer > 0f || detectedEnemies.Count == 0)
         {
             attackState = TowerAttackState.Idle;
-            SetAttackingAnimatorBool(false);
             return;
         }
 
-        SpawnMagicOrbAttackEntity();
+        pendingAttackArchetype = AttackArchetype.MagicOrb;
+        attackState = TowerAttackState.WaitingForAnimationRelease;
+
+        if (SetAttackAnimatorTrigger()) return;
+
+        ReleasePendingMagicOrbAttack();
     }
 
-    private void SpawnMagicOrbAttackEntity()
+    private void ReleasePendingMagicOrbAttack()
     {
+        if (attackState != TowerAttackState.WaitingForAnimationRelease ||
+            pendingAttackArchetype != AttackArchetype.MagicOrb)
+        {
+            return;
+        }
+
         if (attackConfig.MagicOrbPrefab == null)
         {
-            attackState = TowerAttackState.Idle;
-            SetAttackingAnimatorBool(false);
-
             if (!hasLoggedMissingMagicOrbPrefab)
             {
                 hasLoggedMissingMagicOrbPrefab = true;
                 Debug.LogWarning("Tower combat cannot spawn Magic Orb: magic orb prefab is not assigned.", this);
             }
 
+            ResetPendingAttackState();
             return;
         }
 
@@ -343,6 +358,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         if (origin == null)
         {
+            ResetPendingAttackState();
             return;
         }
 
@@ -354,77 +370,74 @@ public class TowerCombatBehaviour : MonoBehaviour
             magicOrbBehaviour = magicOrbObject.AddComponent<MagicOrbBehaviour>();
         }
 
-        activeMagicOrb = magicOrbBehaviour;
-        activeMagicOrb.OnEnded += HandleMagicOrbEnded;
         magicOrbBehaviour.Initialize(towerInstance, monsterManager, attackConfig, origin);
 
         if (!magicOrbBehaviour.IsInitialized)
         {
-            CleanupActiveMagicOrbReference(magicOrbBehaviour);
+            ResetPendingAttackState();
             return;
         }
 
-        attackState = TowerAttackState.MagicOrbActive;
-        SetAttackingAnimatorBool(true);
-        PlayAttackReleaseVfx();
-    }
-
-    private void HandleMagicOrbEnded(MagicOrbBehaviour magicOrb)
-    {
-        if (magicOrb != activeMagicOrb)
-        {
-            return;
-        }
-
-        CleanupActiveMagicOrbReference(magicOrb);
         StartAttackCooldown();
-        SetAttackingAnimatorBool(false);
-        attackState = TowerAttackState.Idle;
+        PlayAttackReleaseVfx();
+        ResetPendingAttackState();
     }
 
     private void UpdateDroneAttackEntity()
     {
         hasLoggedUnsupportedAttackEntity = false;
-        EnsureDroneAttackEntityIfNeeded();
 
-        if (activeDrone != null)
-        {
-            SyncDroneAttackState(activeDrone.State);
-            return;
-        }
-
-        attackState = TowerAttackState.Idle;
-        SetAttackingAnimatorBool(false);
-    }
-
-    private void EnsureDroneAttackEntityIfNeeded()
-    {
-        if (attackConfig == null || attackConfig.AttackArchetype != AttackArchetype.Drone)
+        if (attackState == TowerAttackState.WaitingForAnimationRelease)
         {
             return;
         }
 
-        if (monsterManager == null || activeDrone != null)
-        {
-            return;
-        }
-
-        SpawnDroneAttackEntity();
-    }
-
-    private void SpawnDroneAttackEntity()
-    {
-        if (attackConfig.DronePrefab == null)
+        if (cooldownTimer > 0f)
         {
             attackState = TowerAttackState.Idle;
-            SetAttackingAnimatorBool(false);
+            return;
+        }
 
+        currentTarget = SelectTarget();
+
+        if (!IsValidTarget(currentTarget))
+        {
+            attackState = TowerAttackState.Idle;
+            return;
+        }
+
+        pendingDroneTarget = currentTarget;
+        pendingAttackArchetype = AttackArchetype.Drone;
+        attackState = TowerAttackState.WaitingForAnimationRelease;
+
+        if (SetAttackAnimatorTrigger()) return;
+
+        ReleasePendingDroneAttack();
+    }
+
+    private void ReleasePendingDroneAttack()
+    {
+        if (attackState != TowerAttackState.WaitingForAnimationRelease ||
+            pendingAttackArchetype != AttackArchetype.Drone)
+        {
+            return;
+        }
+
+        if (!IsValidTarget(pendingDroneTarget) || !IsInAttackRange(pendingDroneTarget))
+        {
+            ResetPendingAttackState();
+            return;
+        }
+
+        if (attackConfig.DronePrefab == null)
+        {
             if (!hasLoggedMissingDronePrefab)
             {
                 hasLoggedMissingDronePrefab = true;
                 Debug.LogWarning("Tower combat cannot spawn Drone: drone prefab is not assigned.", this);
             }
 
+            ResetPendingAttackState();
             return;
         }
 
@@ -432,6 +445,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         if (origin == null)
         {
+            ResetPendingAttackState();
             return;
         }
 
@@ -443,55 +457,28 @@ public class TowerCombatBehaviour : MonoBehaviour
             droneBehaviour = droneObject.AddComponent<DroneBehaviour>();
         }
 
-        activeDrone = droneBehaviour;
-        activeDrone.OnStateChanged += HandleDroneStateChanged;
-        droneBehaviour.Initialize(towerInstance, monsterManager, attackConfig, origin);
+        droneBehaviour.Initialize(
+            towerInstance,
+            monsterManager,
+            attackConfig,
+            origin.position,
+            origin.rotation,
+            pendingDroneTarget
+        );
 
         if (!droneBehaviour.IsInitialized)
         {
-            CleanupActiveDroneReference(droneBehaviour);
+            ResetPendingAttackState();
             return;
         }
 
-        SyncDroneAttackState(droneBehaviour.State);
-    }
-
-    private void HandleDroneStateChanged(DroneBehaviour drone, DroneRuntimeState state)
-    {
-        if (drone != activeDrone)
-        {
-            return;
-        }
-
-        SyncDroneAttackState(state);
-    }
-
-    private void SyncDroneAttackState(DroneRuntimeState state)
-    {
-        switch (state)
-        {
-            case DroneRuntimeState.Launching:
-            case DroneRuntimeState.Orbiting:
-            case DroneRuntimeState.Returning:
-                attackState = TowerAttackState.DroneLaunched;
-                SetAttackingAnimatorBool(true);
-                break;
-            case DroneRuntimeState.Recharging:
-                attackState = TowerAttackState.DroneRecharging;
-                SetAttackingAnimatorBool(false);
-                break;
-            case DroneRuntimeState.Resting:
-            default:
-                attackState = TowerAttackState.DroneResting;
-                SetAttackingAnimatorBool(false);
-                break;
-        }
+        StartAttackCooldown();
+        ResetPendingAttackState();
     }
 
     private void UpdateUnsupportedAttackEntity()
     {
         attackState = TowerAttackState.Idle;
-        SetAttackingAnimatorBool(false);
 
         if (hasLoggedUnsupportedAttackEntity)
         {
@@ -676,88 +663,8 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
     }
 
-    private void CleanupActiveMagicOrb()
-    {
-        if (activeMagicOrb == null)
-        {
-            return;
-        }
-
-        MagicOrbBehaviour magicOrb = activeMagicOrb;
-        CleanupActiveMagicOrbReference(magicOrb);
-
-        if (magicOrb != null)
-        {
-            Destroy(magicOrb.gameObject);
-        }
-    }
-
-    private void CleanupActiveMagicOrbReference(MagicOrbBehaviour magicOrb)
-    {
-        if (magicOrb != null)
-        {
-            magicOrb.OnEnded -= HandleMagicOrbEnded;
-        }
-
-        if (activeMagicOrb == magicOrb)
-        {
-            activeMagicOrb = null;
-        }
-    }
-
-    private void CleanupActiveDrone()
-    {
-        if (activeDrone == null)
-        {
-            return;
-        }
-
-        DroneBehaviour drone = activeDrone;
-        CleanupActiveDroneReference(drone);
-
-        if (drone != null)
-        {
-            Destroy(drone.gameObject);
-        }
-    }
-
-    private void CleanupActiveDroneReference(DroneBehaviour drone)
-    {
-        if (drone != null)
-        {
-            drone.OnStateChanged -= HandleDroneStateChanged;
-        }
-
-        if (activeDrone == drone)
-        {
-            activeDrone = null;
-        }
-    }
-
     private void CleanupVfxOutsideCurrentArchetype()
     {
-    }
-
-    private void ResetAttackingAnimatorBoolIfUsed()
-    {
-        SetAttackingAnimatorBool(false);
-    }
-
-    private void SetAttackingAnimatorBool(bool isAttacking)
-    {
-        if (attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackingAnimatorBoolName))
-        {
-            return;
-        }
-
-        TowerModelPresentation presentation = GetTowerModelPresentation();
-
-        if (presentation == null)
-        {
-            return;
-        }
-
-        presentation.RequestAttackingBool(attackConfig.AttackingAnimatorBoolName, isAttacking);
     }
 
     private bool SetAttackAnimatorTrigger()

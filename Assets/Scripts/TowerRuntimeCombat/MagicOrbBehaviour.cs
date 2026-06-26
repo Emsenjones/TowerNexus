@@ -7,9 +7,10 @@ public class MagicOrbBehaviour : MonoBehaviour
     private TowerInstance sourceTower;
     private MonsterManager monsterManager;
     private AttackConfig attackConfig;
-    private Transform orbitCenter;
+    private Vector3 orbitCenterPosition;
     private int remainingHitCount;
     private float orbitAngle;
+    private float elapsedLifetime;
     private bool isInitialized;
     private bool hasEnded;
 
@@ -19,7 +20,7 @@ public class MagicOrbBehaviour : MonoBehaviour
 
     public TowerInstance SourceTower => sourceTower;
     public AttackConfig AttackConfig => attackConfig;
-    public Transform OrbitCenter => orbitCenter;
+    public Vector3 OrbitCenterPosition => orbitCenterPosition;
     public int RemainingHitCount => remainingHitCount;
     public bool IsInitialized => isInitialized;
 
@@ -32,10 +33,11 @@ public class MagicOrbBehaviour : MonoBehaviour
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
         this.attackConfig = attackConfig;
-        this.orbitCenter = orbitCenter != null ? orbitCenter : transform.parent;
+        orbitCenterPosition = orbitCenter != null ? orbitCenter.position : transform.position;
 
         remainingHitCount = attackConfig != null ? attackConfig.MagicOrbMaxHitCount : 0;
-        orbitAngle = 0f;
+        orbitAngle = UnityEngine.Random.Range(0f, 360f);
+        elapsedLifetime = 0f;
         hasEnded = false;
         monsterHitCooldownEnds.Clear();
 
@@ -63,15 +65,15 @@ public class MagicOrbBehaviour : MonoBehaviour
             return false;
         }
 
-        if (orbitCenter == null)
-        {
-            Debug.LogWarning("Magic orb cannot initialize: orbit center is null.", this);
-            return false;
-        }
-
         if (remainingHitCount <= 0)
         {
             Debug.LogWarning("Magic orb cannot initialize: max hit count must be greater than zero.", this);
+            return false;
+        }
+
+        if (attackConfig.MagicOrbMaxLifetime <= 0f)
+        {
+            Debug.LogWarning("Magic orb cannot initialize: max lifetime must be greater than zero.", this);
             return false;
         }
 
@@ -85,22 +87,24 @@ public class MagicOrbBehaviour : MonoBehaviour
             return;
         }
 
+        elapsedLifetime += Time.deltaTime;
+
+        if (elapsedLifetime >= attackConfig.MagicOrbMaxLifetime)
+        {
+            EndOrb();
+            return;
+        }
+
         UpdateOrbitPosition();
         TryHitMonsters();
     }
 
     private void UpdateOrbitPosition()
     {
-        if (orbitCenter == null)
-        {
-            EndOrb();
-            return;
-        }
-
         orbitAngle += attackConfig.MagicOrbRotationSpeed * Time.deltaTime;
         float angleRadians = orbitAngle * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Cos(angleRadians), 0f, Mathf.Sin(angleRadians)) * attackConfig.MagicOrbOrbitRadius;
-        transform.position = orbitCenter.position + offset;
+        transform.position = orbitCenterPosition + offset;
     }
 
     private void TryHitMonsters()

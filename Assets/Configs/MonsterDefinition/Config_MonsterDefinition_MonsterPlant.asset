@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
   m_Name: Config_MonsterDefinition_MonsterPlant
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 4
   displayName: Monster Plant
   monsterPrefab: {fileID: 2198626025461408082, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
   moveSpeed: 0.25
-  maxHealth: 20
+  maxHealth: 100
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking

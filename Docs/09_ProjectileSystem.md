@@ -479,7 +479,7 @@ Drone Attack Entity
 Projectile System handles flight, hit detection, impact event, and destruction
 ```
 
-Drone orbit movement, battery/recharge timing, and burst timing are owned by the Drone Attack Entity, not by Projectile System.
+Drone orbit movement, battery lifetime, battery-end destruction, and burst timing are owned by the Drone Attack Entity, not by Projectile System.
 
 ---
 
@@ -540,19 +540,3 @@ The system is responsible for:
 - Destroying projectiles
 
 The system should remain independent from tower-specific logic. Simple projectile-to-monster hits may dispatch direct single-target damage, while complex combat results should be delegated to the Buff And Effect System.
-
----
-
-# Change Log
-
-## 2026-06-24
-
-- Clarified that Projectile System uses calculated damage context from Tower Runtime Combat or the spawning Attack Entity, while TowerLevelConfig and AttackConfig own basic damage and damage multiplier data.
-- Clarified that Drone orbit and burst timing are Drone Attack Entity behavior, not Projectile System behavior.
-- Updated projectile prefab orientation convention to local +Y Up and local +Z Forward.
-
-## 2026-06-22
-
-- Updated projectile movement language to projectile flight behaviors: Direction, Arc, and Tracking.
-- Clarified Projectile as a shared runtime concept for projectile-style Attack Entities.
-- Added Drone relationship: Drone is an Attack Entity which may spawn Projectile Attack Entities.

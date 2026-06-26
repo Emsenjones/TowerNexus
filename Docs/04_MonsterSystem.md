@@ -43,11 +43,12 @@ Recommended structure:
 
 Each monster should support the following configurable fields:
 
+MonsterDefinition assets are referenced directly by systems that need monster configuration. They should not maintain a hand-authored monster id unless a future persistence, external-data, or lookup requirement needs a stable id. Debug output should use the ScriptableObject asset name.
+
 Health bar, hit feedback, and damage number fields are current Task design targets. They may be added to code during the corresponding Task implementation.
 
 | Field | Description |
 |---|---|
-| monsterId | Unique monster id |
 | displayName | Monster display name |
 | monsterPrefab | Runtime monster prefab |
 | moveSpeed | Monster movement speed |
@@ -970,52 +971,3 @@ Monster System may provide pathfinding functionality used during placement valid
 - Clarified that HitAnchor is a shared Transform reference used for beam target binding, hit VFX, damage number positioning, and future visual attachment points.
 - Clarified that runtime systems should fall back to monster transform when HitAnchor is not configured.
 - Clarified that HitAnchor must not own monster position, pathfinding, collision, damage, or target validity logic.
-
-# Change Log
-
-## 2026-06-18 (Monster Resolution Sync)
-
-- Added Monster Resolution as the shared outcome for killed monsters and monsters that reach the Target Node.
-- Replaced current design direction from EXP reward reporting to monster resolution reporting.
-- Clarified that target arrival still damages player HP but also resolves the monster while the run is active.
-- Clarified that Player System owns ResolvedMonsterCount accumulation and level-up checks.
-
-## 2026-06-08 (Damage Number Visual Feedback Sync)
-
-- Reorganized Monster animation, hit flash, health bar, and damage number content under Monster Visual Feedback.
-- Added Monster Damage Number System.
-- Added damage number creation, position binding, ownership, tween step list, and preview rules.
-- Added configurable `damageNumberOffset` and `damageNumberPrefab` fields.
-- Clarified that DamageNumberUI should use TextMeshProUGUI, CanvasGroup, and DOTween.
-- Clarified that damage number tween parameters should be Inspector-configurable.
-- Clarified that DamageNumberUI should support preview playback for tuning animation without full combat flow.
-- Simplified first-version tween types to Position, Scale, and Fade.
-- Clarified that punch-like scale feedback should be created through multiple Scale tween steps with delay and ease type.
-- Added Odin Inspector recommendation for preview buttons and conditional tween step field display.
-
-- Removed `useCurrentAsStart` from Position tween and clarified explicit startAnchoredPosition usage.
-
-## 2026-06-07 (Monster Visual Feedback Sync)
-
-- Added Monster Health Bar System.
-- Added health bar creation, binding, offset, update, and removal rules.
-- Added configurable `healthBarOffset`.
-- Updated Hit Reaction to include hit animation trigger and hit flash feedback.
-- Added configurable hit flash fields: `hitFlashColor`, `hitFlashDuration`, `hitFlashRestoreDuration`, and `hitFlashRendererRoot`.
-- Clarified Monster System ownership of battlefield unit UI.
-- Clarified that Battle HUD UI System should not own individual monster health bars.
-
-## 2026-05-24 (Naming Sync)
-
-- Updated deployment terminology to placement terminology.
-- Updated BattleHUDUI references to BattleHUDUISystem.
-- Clarified ownership boundary between Monster System pathfinding behavior and Map System spatial data.
-- Clarified ownership boundary between Monster System pathfinding functionality and Tower Placement System path validation.
-
-## 2026-05-24
-
-- Clarified Monster System relationship with Player System.
-- Added monster target arrival flow.
-- Clarified that Monster System detects target arrival but does not directly modify player HP.
-- Clarified that EXP reward should be sent to Player System.
-- Added Battle HUD UI System and Map System ownership boundaries.

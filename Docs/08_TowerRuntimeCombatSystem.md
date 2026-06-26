@@ -34,10 +34,10 @@ The Tower Runtime Combat System owns:
 - Attack cooldown management
 - Attack state transitions
 - Attack presentation request timing
-- Attack Entity spawning and control
+- Attack Entity release orchestration
 - Projectile creation and initialization
-- Magic Orb lifecycle orchestration
-- Drone launch, orbit, burst fire, return, and recharge orchestration
+- Magic Orb release orchestration
+- Drone release orchestration
 - Direct damage dispatch coordination
 - Presentation hook triggering for attack VFX
 
@@ -48,7 +48,7 @@ The Tower Runtime Combat System does not own:
 - TowerVisualController ownership
 - Tower model replacement
 - AttackOrigin fallback resolution
-- Animator hierarchy lookup
+- Model presentation hierarchy lookup
 - Tower placement workflow
 - Runtime projectile movement
 - Projectile collision detection
@@ -118,7 +118,7 @@ Good:
 ```text
 Read AttackConfig.attackArchetype
     ↓
-Spawn or control Arrow, Shell, Magic Orb, or Drone Attack Entity behavior
+Release Arrow, Shell, Magic Orb, or Drone Attack Entity behavior
 ```
 
 Tower categories describe design identity.
@@ -134,8 +134,8 @@ Tower Runtime Combat may start downstream behavior, but it should not absorb dow
 Examples:
 
 - It creates and initializes a projectile, then Projectile System moves and resolves that projectile.
-- It spawns or controls a Magic Orb, then Magic Orb behavior owns orbit, contact detection, hit count, and lifetime.
-- It launches a Drone, then Drone behavior owns movement, target orbit, battery, return, recharge, and projectile burst fire timing.
+- It releases a Magic Orb, then Magic Orb behavior owns orbit, contact detection, hit count, and lifetime from its release-time orbit center.
+- It releases a Drone, then Drone behavior owns movement, target orbit, battery, battery-end destruction, and projectile burst fire timing.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
 - It may trigger attack VFX hooks, but VFX components should own visual presentation only.
 
@@ -168,7 +168,7 @@ Recommended runtime references:
 | TowerDefinition | Provides static tower data |
 | AttackConfig | Provides attack behavior configuration |
 | MonsterManager | Provides alive monsters for detection |
-| Tower Model Presentation | Receives attack presentation requests and applies Animator parameters on the current tower model |
+| Tower Model Presentation | Receives attack presentation requests and applies model-local presentation parameters |
 | Current Active AttackOrigin | Provides attack range origin and projectile spawn position |
 | MonsterBehaviour.HitAnchor | Provides the monster-side hit/reference position for targeting, range checks, projectile target snapshots, Magic Orb contact checks, and Drone orbit targeting |
 
@@ -178,7 +178,7 @@ If the current tower model does not provide AttackOrigin, the owning tower visua
 
 Tower Runtime Combat consumes the resolved current active AttackOrigin. It should not inspect tower model hierarchy or choose fallback references directly.
 
-Tower Runtime Combat should request attack presentation through the tower-owned visual/model presentation path. It should not search the spawned tower model hierarchy for Animator components directly.
+Tower Runtime Combat should request attack presentation through the tower-owned visual/model presentation path. It should not search the spawned tower model hierarchy for presentation components directly.
 
 ---
 
@@ -191,13 +191,6 @@ Tower Runtime Combat may maintain the following runtime state per tower:
 - Pending projectile target
 - Pending projectile target position, usually captured from the target monster hit/reference anchor
 - Cooldown timer
-- Active Magic Orb reference
-- Magic Orb cooldown or respawn timer
-- Active Drone reference
-- Drone state
-- Drone target
-- Drone battery timer
-- Drone recharge timer
 - Current attack state
 
 This state should never be stored in TowerDefinition or AttackConfig.
@@ -207,11 +200,7 @@ Recommended attack states:
 | State | Meaning |
 |---|---|
 | Idle | Tower is not currently executing an attack |
-| WaitingForAnimationRelease | Tower has selected a projectile target and is waiting for the attack release moment |
-| MagicOrbActive | Tower currently owns an active Magic Orb |
-| DroneResting | Drone is resting on the tower and waiting for launch conditions |
-| DroneLaunched | Drone is away from the tower and executing launch, orbit, burst fire, or return behavior |
-| DroneRecharging | Drone has returned and is recharging before it may launch again |
+| WaitingForAnimationRelease | Tower has prepared an attack and is waiting for the animation release moment |
 
 ---
 
@@ -237,27 +226,24 @@ The attack archetype determines the update branch:
 |---|---|
 | Direction Projectile | Projectile attack update |
 | Arc Projectile | Projectile attack update |
-| Magic Orb | Magic Orb lifecycle update |
-| Drone | Drone lifecycle update |
+| Magic Orb | Magic Orb release update |
+| Drone | Drone release update |
 
 ## 6.1 Cooldown Timing
 
-Cooldown timing is based on when the active attack process begins or ends for each attack archetype.
+Cooldown timing is based on successful Attack Entity release for every first-version tower attack archetype.
 
-Projectile-style attacks start cooldown when the projectile is successfully released:
+First-version tower attacks start cooldown when their Attack Entity is successfully released:
 
 - Direction Projectile cooldown starts when the projectile is released.
 - Arc Projectile cooldown starts when the projectile is launched.
 - Tracking Projectile cooldown starts when the projectile is released.
+- Magic Orb cooldown starts when the Magic Orb is generated.
+- Drone cooldown starts when the Drone is launched.
 
-Persistent Attack Entities start cooldown when the active entity finishes its attack process:
+After release, Projectile, Magic Orb, and Drone Attack Entities own their own lifecycle. Tower Runtime Combat should not wait for projectile impact, Magic Orb hit-count depletion, Drone battery depletion, or Drone destruction before starting the next attack interval.
 
-- Magic Orb cooldown starts when the active Magic Orb ends or is destroyed by its hit-count lifetime.
-- Drone recharge timing starts when the Drone returns to the tower.
-
-Magic Orb existence and Drone active flight are themselves part of the attack process, so their tower cooldown or recharge timing should not start when they are spawned or launched.
-
-Drone does not use AttackConfig.attackInterval. Drone attack cycle timing is controlled by droneBatteryDuration and droneRechargeDuration, while Drone projectile fire timing is controlled by droneBurstCount, droneBurstInterval, and droneBurstCooldown.
+Drone uses AttackConfig.attackInterval for tower-side release cadence. Drone battery timing remains Drone-local lifetime behavior, while Drone projectile fire timing is controlled by droneBurstCount, droneBurstInterval, and droneBurstCooldown.
 
 ---
 
@@ -383,7 +369,7 @@ Projectile prefab roots should follow the project-wide orientation convention of
 
 # 10. Magic Orb Runtime
 
-Magic Orb behavior represents a persistent orbiting attack entity owned by Magic Tower.
+Magic Orb behavior represents a released orbiting Attack Entity created by Magic Tower.
 
 Recommended Magic Orb flow:
 
@@ -392,7 +378,11 @@ Cooldown ready
     ↓
 Spawn Magic Orb
     ↓
-Orbit around tower
+Capture release-time orbit center from current active AttackOrigin
+    ↓
+Start cooldown
+    ↓
+Orbit around release-time center
     ↓
 Contact detection against monsters
     ↓
@@ -400,28 +390,28 @@ Apply damage on successful contact
     ↓
 Decrease hit count
     ↓
-If hit count reaches zero, despawn Magic Orb
-    ↓
-Start cooldown
+If hit count reaches zero or maximum lifetime is reached, despawn Magic Orb
 ```
 
 Magic Orb rules:
 
-- Magic Orb rotates around the tower.
+- Magic Orb rotates around its release-time orbit center.
 - Magic Orb checks distance to monsters.
 - Contact deals damage.
 - Magic Orb has a configurable maximum hit count.
 - Hit count decreases after each successful hit.
 - The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed.
 - When hit count reaches zero, the Magic Orb disappears.
-- Cooldown starts after the active Magic Orb ends.
-- After cooldown, a new Magic Orb may be generated.
+- When maximum lifetime is reached, the Magic Orb disappears even if remaining hit count is greater than zero.
+- Cooldown starts when the Magic Orb is generated.
+- After cooldown, a new Magic Orb may be generated without checking older released Magic Orbs.
+- Magic Orb should start from a runtime-selected orbit angle so repeated releases do not all begin from the same point.
 
 Magic Orb damage is owned by attack entity behavior in the first version.
 
 Magic Orb contact damage should be calculated from the source tower's current TowerLevelConfig.basicDamage and the active Magic Orb damage multiplier.
 
-Magic Orb combat parameters such as orbit radius, contact distance, and same-target hit cooldown belong to AttackConfig because they define shared attack rules.
+Magic Orb combat parameters such as orbit radius, contact distance, same-target hit cooldown, and maximum lifetime belong to AttackConfig because they define shared attack rules.
 
 MagicOrbBehaviour executes orbit movement, contact detection, hit count consumption, and lifetime using AttackConfig data.
 
@@ -431,22 +421,24 @@ Persistent status effects applied by future Magic Orb upgrades should be delegat
 
 # 11. Drone Runtime
 
-Drone behavior represents an autonomous Attack Entity launched by Drone Tower.
+Drone behavior represents a released autonomous Attack Entity launched by Drone Tower.
 
 Recommended Drone flow:
 
 ```text
-Drone Tower deployed
-    ↓
-Spawn and initialize Drone at AttackOrigin
-    ↓
-Drone resting at AttackOrigin
-    ↓
-Enemy enters tower AttackRange
-    ↓
-Launch Drone and rise vertically to droneFlightHeight above AttackOrigin
+Cooldown ready
     ↓
 Select target inside tower AttackRange
+    ↓
+If no valid target exists, remain Idle and do not start cooldown
+    ↓
+Request attack animation presentation if configured
+    ↓
+Release Drone from current active AttackOrigin
+    ↓
+Start cooldown
+    ↓
+Drone rises vertically to droneFlightHeight above release position
     ↓
 Approach selected target
     ↓
@@ -456,24 +448,15 @@ Fire projectile bursts
     ↓
 Consume battery while active
     ↓
-Return when battery is depleted or no valid monsters remain inside tower AttackRange
-    ↓
-Move to droneFlightHeight above AttackOrigin
-    ↓
-Descend vertically to AttackOrigin
-    ↓
-Recharge
-    ↓
-Launch again if monsters exist
+When battery is depleted, explode in the air and despawn
 ```
 
 Drone runtime rules:
 
-- Drone rests on the tower when inactive.
-- Drone Tower runtime should spawn and initialize the Drone prefab at AttackOrigin when Drone Tower is deployed.
-- Drone rest position should use AttackOrigin when available.
-- Drone launches from AttackOrigin when available.
-- Drone first rises vertically from AttackOrigin to AttackConfig.droneFlightHeight above AttackOrigin.
+- Drone Tower runtime should release a Drone prefab from the current active AttackOrigin when a Drone attack is confirmed.
+- If no valid monster exists inside AttackRange at release time, Drone Tower should not release a Drone and should not start cooldown.
+- Drone launches from AttackOrigin when available, but does not keep depending on AttackOrigin after release.
+- Drone first rises vertically from its release position to AttackConfig.droneFlightHeight above that position.
 - Drone maintains configured flight height during active flight.
 - DroneBehaviour owns target selection while using AttackConfig.targetSelectionType.
 - Drone target selection only considers valid monsters inside the source tower AttackRange.
@@ -494,25 +477,24 @@ Drone runtime rules:
 - Drone-fired projectile prefabs should follow the same local +Y Up and local +Z Forward root orientation convention as other Projectile System prefabs.
 - Drone-fired attack release VFX should spawn from the Drone FireAnchor when configured and face the selected target Monster direction.
 - Drone flight consumes battery.
-- Drone returns for recharge when battery is depleted or no valid monsters remain inside source tower AttackRange.
-- Drone return movement should first move to AttackConfig.droneFlightHeight above AttackOrigin, then descend vertically to AttackOrigin.
-- Drone recharge or cooldown timing starts after the Drone returns to the tower, not when it launches.
+- If the Drone's current target becomes invalid after launch, Drone should retarget to another valid monster inside the source tower AttackRange when possible.
+- If no valid monster remains inside AttackRange after launch, Drone should explode in the air and despawn.
+- When battery is depleted, Drone should explode in the air and despawn.
+- Drone tower cooldown starts when the Drone is launched, not when the Drone is destroyed.
+- If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
-- DroneBehaviour should own Drone Animator driving for the Drone prefab.
-- Drone Animator may use Bool parameter `IsFlying`.
-- `IsFlying` should be false while Drone is Resting or Recharging.
-- `IsFlying` should be true while Drone is Launching, Orbiting, or Returning.
+- Drone runtime may own lightweight Drone-local presentation such as propeller visual spinning.
+- Propeller visual spinning should be active while Drone is launched and moving.
 - During active flight, Drone model facing assumes local +Z points along the current planar movement direction.
 - Drone-fired projectile launch direction and attack release VFX should still aim from FireAnchor to the selected monster hit position, independent of Drone body movement-facing.
-- When Drone is resting or recharging at AttackOrigin, runtime should align it to face local -Z relative to AttackOrigin in the first version.
 
 Drone uses attackRange as the tower detect and launch range in the first version.
 
 Drone projectile movement and projectile hit detection belong to Projectile System after projectile creation.
 
-Persistent status effects applied by future Drone projectiles should be delegated to Buff And Effect System.
+Persistent status effects applied by future Drone projectiles or Drone battery-end effects should be delegated to Buff And Effect System.
 
-For Drone Tower, AttackOrigin acts as the Drone parking, launch, return, and recharge anchor in the first version.
+For Drone Tower, AttackOrigin acts as the Drone release point only. Released Drones should not depend on tower model child Transforms after launch.
 
 FireAnchor is owned by the Drone prefab or DroneBehaviour because it moves with the Drone.
 
@@ -522,29 +504,27 @@ Neither AttackOrigin nor FireAnchor should own gameplay decisions such as target
 
 # 12. Animation Integration
 
-Tower Runtime Combat may request attack presentation using Animator parameter names configured by AttackConfig.
+Tower Runtime Combat may request attack presentation using parameter names configured by AttackConfig.
 
-The current tower model presentation entry applies the actual Animator parameter changes on the spawned tower model. In the first version, TowerModelPresentation drives an Animator attached to the Tower Level Model Prefab root.
+The current tower model presentation entry applies the actual presentation parameter changes on the spawned tower model.
 
 Recommended fields:
 
 | Field | Runtime Usage |
 |---|---|
-| attackAnimatorTriggerName | Requested when a projectile attack starts |
-| attackingAnimatorBoolName | Requested while continuous attacks are active |
+| attackAnimatorTriggerName | Requested when a released attack starts |
 
 Recommended default values:
 
 | Field | Value |
 |---|---|
 | attackAnimatorTriggerName | Attack |
-| attackingAnimatorBoolName | IsAttacking |
 
-Animator parameter names should come from AttackConfig.
+Attack presentation parameter names should come from AttackConfig.
 
 Tower Runtime Combat should not hardcode tower-specific animation parameter names.
 
-Tower Runtime Combat should not cache or search for Animator components on spawned tower models. Animator lookup and parameter application belong to the current tower model presentation entry resolved through TowerVisualController.
+Tower Runtime Combat should not cache or search for spawned tower model presentation components. Model-local presentation lookup and parameter application belong to the current tower model presentation entry resolved through TowerVisualController.
 
 ---
 
@@ -562,9 +542,9 @@ Recommended hooks:
 |---|---|
 | OnProjectileReleased | After projectile release is confirmed |
 | OnAttackEntitySpawned | When an Attack Entity is created or launched |
-| OnAttackEntityEnded | When an Attack Entity finishes, returns, despawns, or is destroyed |
+| OnAttackEntityEnded | When an Attack Entity despawns or is destroyed |
 | OnMagicOrbHit | When Magic Orb contact damage is applied |
-| OnDroneStateChanged | When Drone launch, orbit, return, or recharge state changes |
+| OnDroneStateChanged | When Drone launch, orbit, burst, battery-end, or destruction state changes |
 
 These hooks are presentation and integration points.
 
@@ -667,8 +647,8 @@ Included:
 - Attack cooldowns
 - Projectile attack release flow
 - Projectile creation and initialization
-- Magic Orb lifecycle orchestration
-- Drone lifecycle orchestration
+- Magic Orb release orchestration
+- Drone release orchestration
 - Attack presentation request timing
 - Runtime presentation hooks
 
@@ -690,49 +670,6 @@ Excluded:
 
 Tower Runtime Combat is the live execution layer for placed towers.
 
-It consumes TowerDefinition and AttackConfig, manages runtime combat state, selects targets, runs cooldowns, executes attack archetypes, creates or controls Attack Entities, creates projectiles, and coordinates simple damage dispatch.
+It consumes TowerDefinition and AttackConfig, manages runtime combat state, selects targets, runs cooldowns, executes attack archetypes, releases Attack Entities, creates projectiles, and coordinates simple damage dispatch.
 
 It should remain between Tower Framework data and downstream runtime systems without taking over placement, projectile lifecycle, monster lifecycle, or buff state ownership.
-
----
-
-# Change Log
-
-## 2026-06-25 (Active AttackOrigin Sync)
-
-- Replaced direct optional AttackOrigin fallback wording with current active AttackOrigin consumption.
-- Clarified that missing model AttackOrigin is a configuration error handled by the owning tower visual/runtime layer with a warning and AttackOriginFallback.
-- Clarified that Tower Runtime Combat does not own tower model hierarchy inspection or AttackOrigin fallback resolution.
-
-## 2026-06-24
-
-- Updated damage calculation direction: TowerLevelConfig.basicDamage multiplied by runtime damage multiplier.
-- Updated Drone runtime direction from target hover and attackInterval firing to target orbit and Drone-specific burst fire.
-- Clarified Drone orbit direction selection from current forward direction when entering Orbiting or retargeting.
-- Clarified Drone orbit facing: model local +Z follows orbit tangent, while Drone-fired projectiles still aim at the selected monster hit position.
-- Clarified Drone deployment and return presentation: Drone spawns at AttackOrigin when Drone Tower is deployed, launches by rising vertically, and returns by moving above AttackOrigin before descending.
-- Clarified Drone movement-facing presentation: runtime rotates the Drone root local +Z toward planar movement direction whenever it moves, without model-specific offsets or first-version smoothing.
-- Clarified that Drone attack timing is controlled by battery/recharge and burst fields, not attackInterval.
-- Added the shared projectile prefab orientation convention: local +Y Up and local +Z Forward.
-- Clarified attackReleaseVfxPrefab orientation: Direction Projectile and Drone-fired projectile release VFX face launch direction, while other archetypes use prefab default direction.
-
-## 2026-06-23
-
-- Added explicit cooldown timing rules for projectile-style attacks, Magic Orb, and Drone.
-
-## 2026-06-22
-
-- Updated current runtime direction from ChannelBeam and PeriodicArea first-version behavior to Magic Orb and Drone attack entity behavior.
-- Added Attack Entity responsibility language and Drone as an Attack Entity that may spawn Projectile Attack Entities.
-- Updated target selection, runtime state, presentation hooks, and first-version scope for Archer, Cannon, Magic, and Drone.
-
-## 2026-06-12
-
-- Added MonsterBehaviour.HitAnchor as the monster-side hit/reference anchor consumed by tower targeting, range checks, projectile target snapshots, and beam binding.
-
-## 2026-06-11
-
-- Reorganized the document as a full Tower Runtime Combat System design document.
-- Clarified runtime ownership boundaries against Tower Framework, Tower Placement, Projectile, Monster, and Buff And Effect systems.
-- Added sections for runtime state, update flow, enemy detection, target selection, projectile attacks, ChannelBeam, PeriodicArea, animation integration, and presentation hooks.
-- Clarified runtime VFX presentation ownership within the long-term system design.

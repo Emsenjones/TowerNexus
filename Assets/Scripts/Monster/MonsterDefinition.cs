@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "MonsterDefinition",
@@ -7,7 +6,6 @@ using UnityEngine.Serialization;
 )]
 public class MonsterDefinition : ScriptableObject
 {
-    [SerializeField] private string monsterId;
     [SerializeField] private string displayName;
     [SerializeField] private GameObject monsterPrefab;
     [SerializeField] private float moveSpeed = 1f;
@@ -24,7 +22,6 @@ public class MonsterDefinition : ScriptableObject
     [SerializeField] private float hitFlashDuration = 0.08f;
     [SerializeField] private Vector3 damageNumberOffset = new Vector3(0f, 1.5f, 0f);
 
-    public string MonsterId => monsterId;
     public string DisplayName => displayName;
     public GameObject MonsterPrefab => monsterPrefab;
     public float MoveSpeed => moveSpeed;
@@ -43,51 +40,45 @@ public class MonsterDefinition : ScriptableObject
 
     public bool IsValid()
     {
-        if (string.IsNullOrEmpty(monsterId))
-        {
-            Debug.LogWarning("Monster definition is invalid: monster id is missing.", this);
-            return false;
-        }
-
         if (monsterPrefab == null)
         {
-            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: monster prefab is not assigned.", this);
+            Debug.LogWarning($"Monster definition '{name}' is invalid: monster prefab is not assigned.", this);
             return false;
         }
 
         if (!monsterPrefab.TryGetComponent(out MonsterBehaviour _))
         {
-            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: monster prefab root is missing a MonsterBehaviour component.", monsterPrefab);
+            Debug.LogWarning($"Monster definition '{name}' is invalid: monster prefab root is missing a MonsterBehaviour component.", monsterPrefab);
             return false;
         }
 
         if (monsterPrefab.GetComponentInChildren<Animator>() == null)
         {
-            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: monster prefab is missing an Animator component.", monsterPrefab);
+            Debug.LogWarning($"Monster definition '{name}' is invalid: monster prefab is missing an Animator component.", monsterPrefab);
             return false;
         }
 
         if (moveSpeed < 0f)
         {
-            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: move speed cannot be negative.", this);
+            Debug.LogWarning($"Monster definition '{name}' is invalid: move speed cannot be negative.", this);
             return false;
         }
 
         if (maxHealth <= 0)
         {
-            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: max health must be greater than 0.", this);
+            Debug.LogWarning($"Monster definition '{name}' is invalid: max health must be greater than 0.", this);
             return false;
         }
 
         if (deathDelay < 0f)
         {
-            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: death delay cannot be negative.", this);
+            Debug.LogWarning($"Monster definition '{name}' is invalid: death delay cannot be negative.", this);
             return false;
         }
 
         if (hitFlashDuration < 0f)
         {
-            Debug.LogWarning($"Monster definition '{monsterId}' is invalid: hit flash duration cannot be negative.", this);
+            Debug.LogWarning($"Monster definition '{name}' is invalid: hit flash duration cannot be negative.", this);
             return false;
         }
 

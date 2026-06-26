@@ -166,8 +166,9 @@ AreaDamageEffect data may include:
 
 | Field | Type | Description |
 |---|---|---|
-| effectId | string | Unique effect identifier |
 | radius | float | Area damage radius |
+
+EffectConfig assets are referenced directly by gameplay data that needs an effect configuration. They should not maintain a hand-authored effect id unless a future persistence, external-data, or lookup requirement needs a stable id. Debug output should use the ScriptableObject asset name.
 
 AreaDamageEffect data should not include projectile impact VFX prefab references in the first version.
 
@@ -316,11 +317,3 @@ In the first version, the system only needs to support AreaDamageEffect and area
 Direct projectile hit damage remains part of the Projectile System and MonsterBehaviour damage flow.
 
 This keeps the current combat implementation simple while preserving clear extension points for future buff and effect features.
-
----
-
-# Change Log
-
-## 2026-06-22
-
-- Replaced the previous Watch Tower runtime example with a generic Attack Entity or projectile impact example to match the current Archer, Cannon, Magic, and Drone tower lineup.

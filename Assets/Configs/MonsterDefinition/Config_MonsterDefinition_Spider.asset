@@ -12,11 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
   m_Name: Config_MonsterDefinition_Spider
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  monsterId: 2
   displayName: Spider
   monsterPrefab: {fileID: 2179103727158641011, guid: 62fd2f6db0c024c02a5b236fc72ec53e, type: 3}
   moveSpeed: 0.25
-  maxHealth: 20
+  maxHealth: 100
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking
