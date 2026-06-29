@@ -32,6 +32,7 @@ The Tower Runtime Combat System owns:
 - Enemy detection within attack range
 - Target selection execution
 - Attack cooldown management
+- Runtime stat resolution from base config plus tower upgrade state
 - Attack state transitions
 - Attack presentation request timing
 - Attack Entity release orchestration
@@ -66,7 +67,7 @@ Recommended ownership boundary:
 |---|---|
 | Tower Framework System | TowerDefinition, AttackConfig, attack archetype definitions, target selection definitions |
 | Tower Placement System | Tower placement workflow, footprint validation, GridNode occupation |
-| Tower Runtime Combat System | Tower attack state, target selection execution, cooldowns, attack execution |
+| Tower Runtime Combat System | Tower attack state, target selection execution, resolved runtime stats, cooldowns, attack execution |
 | Projectile System | Projectile movement, hit detection, impact event triggering, projectile destruction |
 | Monster System | Monster lifecycle, movement, health, death handling |
 | Buff And Effect System | Buff application, buff lifetime, reusable effect execution |
@@ -325,7 +326,7 @@ Projectile creation belongs to Tower Runtime Combat.
 
 Projectile movement, collision detection, impact handling, lifetime management, and destruction belong to Projectile System.
 
-Projectile damage should be calculated before dispatch using the source tower's current TowerLevelConfig.basicDamage and the active projectile damage multiplier.
+Projectile damage should be calculated before dispatch using the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 
 Attack cooldown starts immediately after Archer arrows and Cannon shells are fired, not after projectile impact or explosion.
 Tracking Projectile follows the same projectile-style cooldown rule when implemented: cooldown starts after projectile release, not after impact.
@@ -409,7 +410,7 @@ Magic Orb rules:
 
 Magic Orb damage is owned by attack entity behavior in the first version.
 
-Magic Orb contact damage should be calculated from the source tower's current TowerLevelConfig.basicDamage and the active Magic Orb damage multiplier.
+Magic Orb contact damage should be calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 
 Magic Orb combat parameters such as orbit radius, contact distance, same-target hit cooldown, and maximum lifetime belong to AttackConfig because they define shared attack rules.
 
@@ -472,7 +473,7 @@ Drone runtime rules:
 - Drone fires straight projectile bursts in the first version.
 - Drone burst fire should use AttackConfig.droneBurstCount, droneBurstInterval, and droneBurstCooldown.
 - Drone-fired projectile data should come from AttackConfig.droneProjectileConfig.
-- Drone-fired projectile damage should be calculated from the source tower's current TowerLevelConfig.basicDamage and the active Drone projectile damage multiplier.
+- Drone-fired projectile damage should be calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Drone-fired projectiles should spawn from the Drone FireAnchor when available.
 - Drone-fired projectile prefabs should follow the same local +Y Up and local +Z Forward root orientation convention as other Projectile System prefabs.
 - Drone-fired attack release VFX should spawn from the Drone FireAnchor when configured and face the selected target Monster direction.
@@ -601,10 +602,21 @@ Examples:
 The first-version damage formula is:
 
 ```text
-FinalDamage = RoundToInt(TowerLevelConfig.basicDamage * RuntimeDamageMultiplier)
+FinalDamage = TowerLevelConfig.basicDamage + RuntimeDamageBonus
 ```
 
-Tower level data owns the basic damage value. AttackConfig provides the default attack-behavior damage multiplier, and Tower Upgrade runtime may later add instance-specific multiplier modifiers.
+Tower level data owns the basic damage value. Tower upgrade runtime state may add instance-specific damage bonuses. Other runtime stats are resolved from immutable base configuration plus same-type additive upgrade deltas, then clamped before combat uses them.
+
+Example first-version stat direction:
+
+```text
+FinalAttackRange = BaseAttackRange + Sum(AttackRangeDeltas)
+FinalAttackInterval = Clamp(BaseAttackInterval + Sum(AttackIntervalDeltas))
+```
+
+AttackInterval improvements may use negative deltas.
+
+Behaviour upgrades are active packages recorded on the tower instance. Tower Runtime Combat may coordinate those packages, but the actual behaviour should remain inside the corresponding runtime module instead of moving into TowerUpgradeSystem.
 
 Buff And Effect System should own reusable effect and buff execution.
 
@@ -649,6 +661,8 @@ Included:
 - Projectile creation and initialization
 - Magic Orb release orchestration
 - Drone release orchestration
+- Resolved runtime stat consumption
+- Active behaviour package coordination
 - Attack presentation request timing
 - Runtime presentation hooks
 
@@ -659,7 +673,8 @@ Excluded:
 - Projectile impact VFX
 - Projectile travel VFX
 - Buff lifetime implementation
-- Tower upgrade modifiers
+- Tower upgrade application rules
+- Concrete tower upgrade behaviour package implementation
 - Object pooling
 - Final VFX prefab authoring and particle polish
 - Particle collision driven combat logic

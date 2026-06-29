@@ -151,6 +151,14 @@ Tower Upgrade Drafts may affect:
 - Behaviour Layer upgrades
 - Synergy Layer upgrades
 
+Tower level determines which upgrade layers may appear for a tower:
+
+| Tower Level | Eligible Tower Upgrade Draft Layers |
+|---|---|
+| Lv1 | Basic |
+| Lv2 | Basic, Behaviour |
+| Lv3 | Basic, Behaviour, Synergy |
+
 Draft System only generates the choice.
 
 Tower Upgrade System is responsible for validating the target tower and applying the selected upgrade.
@@ -189,13 +197,16 @@ The upgrade pool should be constructed using:
 - Current tower instances on the battlefield
 - Each tower instance's TowerFamily
 - Each tower instance's TowerLevel
-- Available upgrade layers
+- Unlocked upgrade layers for that tower level
+- Remaining upgrade slots for each unlocked layer
+- Upgrades already applied to that tower
 - Upgrade definitions provided by Tower Upgrade System
 
 For every tower instance, Draft System should request or evaluate eligible upgrades using TowerUpgradeSystem rules:
 
 - Determine TowerFamily.
 - Determine TowerLevel.
+- Determine unlocked upgrade layers and remaining slots.
 - Gather all valid upgrades that tower is eligible for.
 - Exclude upgrades already owned by that tower.
 

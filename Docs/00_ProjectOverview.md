@@ -191,6 +191,8 @@ Responsible for:
 - Creating draft results
 - Routing Tower Draft deployment or tower-level-up intent to the appropriate system
 
+Tower Upgrade Draft choices are generated from eligible tower instance state, including TowerFamily, tower level, unlocked upgrade layers, remaining upgrade slots, and upgrades already applied to each tower.
+
 ---
 
 ## 5.5 Tower Placement System
@@ -262,7 +264,7 @@ Tower Runtime Combat decides when an attack happens.
 
 Attack Entities decide how the attack behaves.
 
-Tower level data provides basic damage. Attack configuration and runtime upgrades provide damage multipliers. Runtime combat and Attack Entity logic use these values to calculate final damage before dispatching it.
+Tower level data provides basic damage. Runtime upgrade state provides damage bonuses. Runtime combat and Attack Entity logic use resolved damage values before dispatching damage.
 
 Tower Runtime Combat consumes the current active AttackOrigin and tower model presentation entry resolved by the tower visual/runtime layer. It does not own tower model replacement, model presentation resolution, or AttackOrigin fallback resolution.
 
@@ -352,9 +354,9 @@ BattleHUDUISystem
 TowerPlacementSystem
     ↓ Placement Or Target Intent
 TowerUpgradeSystem
-    ↓ Tower Level / Upgrade Request
+    ↓ Tower Level / Upgrade Application
 TowerRuntimeCombatSystem
-    ↓ Attack Execution / Attack Entity Creation
+    ↓ Resolved Stats / Behaviour Execution
 ProjectileSystem
     ↓ Hit Detection / Impact Event
 BuffAndEffectSystem

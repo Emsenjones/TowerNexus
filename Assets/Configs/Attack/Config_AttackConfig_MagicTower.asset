@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
   attackArchetype: 2
   attackRange: 1.5
-  attackInterval: 3
+  attackInterval: 8
   targetSelectionType: 1
   damageMultiplier: 1
   attackAnimatorTriggerName: Attack

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Config_AttackConfig_DroneTower
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
   attackArchetype: 3
-  attackRange: 3
-  attackInterval: 0.5
+  attackRange: 4
+  attackInterval: 20
   targetSelectionType: 0
   damageMultiplier: 1
   attackAnimatorTriggerName: Attack
@@ -28,7 +28,7 @@ MonoBehaviour:
   magicOrbMaxLifetime: 5
   magicOrbSameTargetHitCooldown: 0.5
   magicOrbPrefab: {fileID: 0}
-  droneBatteryDuration: 30
+  droneBatteryDuration: 20
   droneOrbitRadius: 1
   droneFlightSpeed: 2
   droneFlightHeight: 1.5

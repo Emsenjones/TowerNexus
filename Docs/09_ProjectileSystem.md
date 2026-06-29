@@ -176,8 +176,8 @@ ProjectileConfig should not duplicate data already owned by Tower Framework, Att
 Examples of data that should remain outside ProjectileConfig:
 
 - TowerLevelConfig.basicDamage
-- AttackConfig.damageMultiplier
-- runtime upgrade damage multipliers
+- Tower upgrade runtime damage bonuses
+- resolved projectile damage
 - attackRange
 - attackInterval
 - attackArchetype
@@ -235,13 +235,16 @@ Design Principle:
 
 ```text
 AttackConfig
-    Owns attack behavior and default damage multiplier
+    Owns immutable default attack configuration
 
 TowerLevelConfig
     Owns per-level basic damage
 
+Tower Upgrade Runtime State
+    Owns instance-specific damage bonuses
+
 Tower Runtime Combat / Spawning Attack Entity
-    Provides calculated damage context
+    Provides resolved damage context
 
 ProjectileConfig
     Owns projectile runtime data
@@ -351,12 +354,11 @@ This prevents projectile prefabs from appearing sideways, backwards, or requirin
 
 ---
 
-Future versions may support:
+Future versions may support additional projectile patterns:
 
 - Chain
 - Split
 - Boomerang
-- Piercing
 
 ---
 
@@ -422,7 +424,7 @@ The Projectile System may directly dispatch single-target damage when a projecti
 
 This exception exists to keep simple projectile attacks lightweight.
 
-Projectile System should use the damage value provided by Tower Runtime Combat or the spawning Attack Entity. It should not own the formula that combines TowerLevelConfig.basicDamage, AttackConfig.damageMultiplier, and future runtime upgrade multipliers.
+Projectile System should use the resolved damage value provided by Tower Runtime Combat or the spawning Attack Entity. It should not own the formula that combines TowerLevelConfig.basicDamage and tower upgrade runtime damage bonuses.
 
 Examples:
 
@@ -514,15 +516,17 @@ The first version supports:
 - Monster Collision Hit Detection
 - Position Arrival Hit Detection
 - Impact Event Triggering
+- Projectile-level piercing state when granted by an Archer Behaviour package
 
-The first version intentionally excludes:
+The first version intentionally excludes these projectile patterns:
 
-- Piercing Projectiles
 - Chain Projectiles
 - Split Projectiles
 - Ricochet Projectiles
 
-These features may be added in future versions.
+Those excluded projectile patterns may be added in future versions.
+
+Piercing is introduced through tower upgrade behaviour packages. Projectile System may execute projectile-level piercing state, but it should not decide why a projectile has piercing.
 
 ---
 

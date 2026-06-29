@@ -163,7 +163,7 @@ public class DroneBehaviour : MonoBehaviour
 
         if (batteryTimer <= 0f)
         {
-            ExplodeAndDespawn();
+            Despawn();
             return;
         }
 
@@ -180,7 +180,7 @@ public class DroneBehaviour : MonoBehaviour
 
             if (!IsValidTargetInRange(currentTarget))
             {
-                ExplodeAndDespawn();
+                Despawn();
                 return;
             }
         }
@@ -194,7 +194,7 @@ public class DroneBehaviour : MonoBehaviour
 
         if (batteryTimer <= 0f)
         {
-            ExplodeAndDespawn();
+            Despawn();
             return;
         }
 
@@ -204,7 +204,7 @@ public class DroneBehaviour : MonoBehaviour
 
             if (!IsValidTargetInRange(currentTarget))
             {
-                ExplodeAndDespawn();
+                Despawn();
                 return;
             }
 
@@ -232,7 +232,7 @@ public class DroneBehaviour : MonoBehaviour
         UpdateBurstFire();
     }
 
-    private void ExplodeAndDespawn()
+    private void Despawn()
     {
         currentTarget = null;
         isInitialized = false;

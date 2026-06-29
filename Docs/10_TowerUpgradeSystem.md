@@ -55,7 +55,7 @@ Tower growth has two separate surfaces:
 1. Tower Level
 2. Tower Upgrades
 
-Tower Level is a light growth layer used for small base stat increases, model or visual replacement, and unlocking higher-level upgrade pools.
+Tower Level is a light growth layer used for small base stat increases, model or visual replacement, and unlocking higher upgrade layers and slots.
 
 Tower Upgrades are the primary source of build identity and power growth.
 
@@ -75,7 +75,7 @@ Tower levels provide:
 
 - Small base stat increases
 - New tower visuals or models
-- Access to higher-level Upgrade Pools
+- Access to higher upgrade layers and upgrade slots
 
 Tower levels are not intended to be the primary source of power growth.
 
@@ -100,12 +100,12 @@ Suggested TowerLevelConfig fields:
 | towerModelPrefab | GameObject | Optional visual/model replacement for this level |
 | displayIcon | Sprite | Optional UI icon for this level |
 
-Tower Level should own basic damage growth. AttackConfig and Tower Upgrade runtime should own attack-behavior or instance-specific damage multipliers.
+Tower Level should own basic damage growth. Tower upgrade runtime state should own instance-specific damage bonuses and other upgrade modifiers.
 
 The first-version damage direction is:
 
 ```text
-FinalDamage = RoundToInt(TowerLevelConfig.basicDamage * RuntimeDamageMultiplier)
+FinalDamage = TowerLevelConfig.basicDamage + RuntimeDamageBonus
 ```
 
 Exact stat fields may evolve with AttackConfig and TowerRuntimeCombatSystem implementation needs.
@@ -145,7 +145,7 @@ If the request is accepted:
 - Request the target tower runtime to replace or update the tower model/visuals for the new level if configured.
 - Keep the permanent TowerBaseVisualRoot unchanged.
 - Refresh the current active AttackOrigin after model replacement.
-- Unlock access to higher-level upgrade pools.
+- Unlock access to higher upgrade layers and slots.
 
 If the request is rejected, the Tower Draft item should not be consumed.
 
@@ -159,13 +159,82 @@ Tower Level-Up Preview is owned by the placement drag workflow. It currently mea
 
 ---
 
-# 4. Tower Upgrade Draft Application
+# 4. Tower Upgrade Definitions And Runtime State
 
-Tower Upgrade Drafts represent tower enhancement items.
+TowerUpgradeDefinition represents one independent tower upgrade option.
 
-Tower Upgrades are applied to individual tower instances.
+Each TowerUpgradeDefinition belongs to one TowerFamily and one upgrade layer.
+
+TowerUpgradeDefinition should not be attached to AttackConfig. AttackConfig remains the immutable default combat configuration template. TowerUpgradeDefinition represents upgrade content that may be applied to a tower instance during a battle.
+
+TowerUpgradeDefinition may define:
+
+- Upgrade identity and display text
+- TowerFamily
+- Upgrade layer
+- Required tower level
+- Basic Layer stat deltas
+- Behaviour Layer package
+- Future Synergy Layer data
+- Authoring validation metadata
+- Explicit incompatibility data for upgrades that should not compose
+
+TowerUpgradeDefinition should not contain Draft sampling, display choice count, reroll, or weighting rules. Those rules belong to DraftSystem.
+
+## 4.1 Tower Upgrade Database
+
+Tower Upgrade System owns the configured set of available TowerUpgradeDefinition assets.
+
+The upgrade database is a content lookup source. It may support lookup and filtering by TowerFamily, upgrade layer, required tower level, behaviour package, or other authoring metadata.
+
+The upgrade database should not contain gameplay selection logic.
+
+Runtime flow:
+
+```text
+Tower Upgrade Database
+    ↓ Provides Upgrade Definitions
+DraftSystem
+    ↓ Selects Tower Upgrade Draft Candidates
+Player Selects TowerUpgradeDefinition
+    ↓
+TowerPlacementSystem
+    ↓ Detects Target Tower Intent
+TowerUpgradeSystem
+    ↓ Validates And Applies Selected Upgrade
+Tower Runtime
+    ↓ Resolves Stats And Behaviour Packages
+```
+
+## 4.2 Per-Tower Upgrade State
+
+Tower upgrades are applied to individual tower instances.
 
 Tower Upgrades are not global upgrades.
+
+Each tower instance tracks its own applied upgrades and remaining upgrade slots.
+
+Runtime upgrade state should answer:
+
+- Which TowerUpgradeDefinition entries this tower already owns
+- Which upgrade layers are unlocked for this tower level
+- How many upgrade slots remain per unlocked layer
+- Which Basic Layer stat deltas affect this tower
+- Which Behaviour Layer packages are active on this tower
+
+Applying any TowerUpgradeDefinition consumes one slot from that upgrade's layer.
+
+Basic, Behaviour, and Synergy upgrades all consume slots. They do not share one global counter unless a later design explicitly changes that rule.
+
+Tower level unlocks upgrade slot layers:
+
+| Tower Level | Unlocked Upgrade Slots |
+|---|---|
+| Lv1 | Basic slots |
+| Lv2 | Basic slots, Behaviour slots |
+| Lv3 | Basic slots, Behaviour slots, Synergy slots |
+
+Exact slot counts are tuning data. The system contract is that lower tower levels cannot receive upgrades from layers they have not unlocked.
 
 Each tower may gradually develop its own build identity.
 
@@ -173,27 +242,38 @@ Example:
 
 ```text
 Archer A
-- Multi Shot
-- Critical Strike
+- Extended Range
+- Scatter Arrow
+- Piercing Arrow
 
 Archer B
-- Poison Arrow
-- Long Range
+- Damage Bonus
+- Rapid Fire
 ```
 
-## 4.1 Upgrade Eligibility
+---
+
+# 5. Tower Upgrade Target Validation And Application
+
+Tower Upgrade Drafts represent tower enhancement items.
+
+## 5.1 Upgrade Eligibility
 
 An upgrade may be applied only when:
 
 - The upgrade TowerFamily matches the target tower's TowerFamily.
 - The target tower level satisfies Required Tower Level.
+- The upgrade layer is unlocked by the target tower level.
+- The target tower has a remaining slot for that upgrade layer.
 - The target tower does not already have the same upgrade.
+- The upgrade is not explicitly incompatible with an already-applied upgrade on that tower.
 
 Example:
 
 ```text
-Upgrade: Archer Multi Shot
+Upgrade: Archer Scatter Arrow
 TowerFamily: Archer
+Upgrade Layer: Behaviour
 Required Level: 2
 
 Valid Targets:
@@ -207,7 +287,7 @@ Invalid Targets:
 - Drone Towers
 ```
 
-## 4.2 Duplicate Rules
+## 5.2 Duplicate Rules
 
 A tower cannot receive the same Upgrade twice.
 
@@ -221,9 +301,33 @@ Archer A cannot receive Multi Shot again.
 Archer B may still receive Multi Shot.
 ```
 
+## 5.3 Upgrade Composition
+
+TowerUpgradeDefinition entries are independent by default.
+
+If a tower owns both Piercing Arrow and Scatter Arrow, the intended result is that the scattered arrows can also pierce.
+
+Behaviour upgrades should compose unless a definition explicitly declares an incompatibility.
+
+This lets the player build identity through limited upgrade choices while preserving an escape hatch for future upgrades that cannot safely combine.
+
+## 5.4 Authoring Validation
+
+Authoring validation exists to prevent invalid content configuration.
+
+For example:
+
+- Hunting Arrow should not be configured for Cannon.
+- Twin Drones should not be configured for Archer.
+- Magic Orb-specific stat deltas should not be configured for Cannon.
+
+These cases are content errors, not player-facing gameplay rules.
+
+The editor or validation path should warn designers about invalid combinations. Runtime should fail safely and log clear warnings if invalid content is encountered.
+
 ---
 
-# 5. Upgrade Eligibility Support
+# 6. Upgrade Eligibility Support
 
 TowerUpgradeSystem provides upgrade definitions and eligibility rules used by DraftSystem when DraftSystem builds Tower Upgrade Draft pools.
 
@@ -231,7 +335,10 @@ TowerUpgradeSystem owns:
 
 - TowerFamily matching rules
 - Required Tower Level checks
+- Upgrade layer unlock checks
+- Remaining upgrade slot checks
 - Per-tower duplicate upgrade checks
+- Explicit incompatibility checks
 - Upgrade definition lookup
 - Upgrade application validation
 
@@ -256,24 +363,43 @@ These helpers should answer eligibility questions only. They should not decide h
 
 ---
 
-# 6. Tower Upgrade Layers
+# 7. Tower Upgrade Layers
 
 Tower upgrades are divided into three conceptual layers.
 
 ---
 
-## 6.1 Basic Layer
+## 7.1 Basic Layer
 
-Basic Layer upgrades represent common numerical improvements.
+Basic Layer upgrades represent numerical improvements.
 
-These upgrades are generally shared across most tower types.
+Each tower family owns its own Basic Layer upgrade definitions. Many tower families may still share common concepts such as range, attack interval, and damage bonus.
 
-Examples:
+Common Basic Layer stat deltas:
 
-- Damage multiplier
-- Attack Speed
-- Range
-- Critical Chance
+- Attack range delta
+- Attack interval delta
+- Damage bonus delta
+
+Tower-family-specific Basic Layer stat deltas may include examples such as:
+
+- Magic Orb rotation speed delta
+- Magic Orb max hit count delta
+- Drone battery duration delta
+- Drone burst cooldown delta
+
+Basic Layer stat deltas use same-type addition:
+
+```text
+FinalAttackRange = BaseAttackRange + Sum(AttackRangeDeltas)
+FinalAttackInterval = Clamp(BaseAttackInterval + Sum(AttackIntervalDeltas))
+FinalDamage = TowerLevelConfig.basicDamage + Sum(DamageBonusDeltas)
+FinalMagicOrbMaxHitCount = Clamp(BaseMagicOrbMaxHitCount + Sum(MagicOrbMaxHitCountDeltas))
+```
+
+AttackInterval improvements may use negative deltas.
+
+Runtime stat resolution should clamp final values so invalid or extreme content cannot break combat behavior.
 
 Purpose:
 
@@ -283,11 +409,17 @@ Purpose:
 
 ---
 
-## 6.2 Behaviour Layer
+## 7.2 Behaviour Layer
 
 Behaviour Layer upgrades modify how a tower attacks.
 
 These upgrades are intended to reinforce the identity of a specific tower type.
+
+Each Behaviour Layer TowerUpgradeDefinition grants one behaviour package.
+
+TowerUpgradeSystem applies the upgrade and records that the tower owns the behaviour package. Tower Runtime Combat and the corresponding runtime modules execute the behavior.
+
+TowerUpgradeSystem should not become a behaviour manager.
 
 Examples:
 
@@ -307,14 +439,16 @@ Current design-reference upgrade ideas:
 
 | Tower | Lv1 Ideas | Lv2 Ideas |
 |---|---|---|
-| Archer Tower | Arrow Damage Multiplier, Attack Interval | Pierce Arrow, Scatter Arrow, Split Arrow |
-| Cannon Tower | Shell Damage Multiplier, Attack Interval | Bouncing Shell, Burning Shell, Delayed Shell |
-| Magic Tower | Orb Rotation Speed, Magic Orb Damage Multiplier | Additional Orb, Unlimited Hits, Consecutive Hit Bonus |
-| Drone Tower | Drone Projectile Damage Multiplier, Recharge Time | Dual Drones, Missile Attack |
+| Archer Tower | Damage Bonus, Attack Interval | Piercing Arrow, Scatter Arrow, Hunting Arrow |
+| Cannon Tower | Damage Bonus, Attack Interval | Bouncing Shell, Burning Shell, Timed Shell |
+| Magic Tower | Orb Rotation Speed, Damage Bonus | Twin Orbs, Orb Splash, Resonance Orb |
+| Drone Tower | Damage Bonus, Drone Burst Cooldown | Twin Drones, Missile Drone, Final Dive |
 
 These upgrade ideas are design references for framework extensibility. They are not part of the current implementation scope unless a later Task Document explicitly adopts them.
 
-Damage upgrade examples should modify runtime damage multipliers rather than overwrite TowerLevelConfig.basicDamage. TowerLevelConfig.basicDamage remains the tower's level-based base stat.
+Damage upgrade examples should modify runtime damage bonuses rather than overwrite TowerLevelConfig.basicDamage. TowerLevelConfig.basicDamage remains the tower's level-based base stat.
+
+Burning Shell should not require a general Buff And Effect System in the first upgrade implementation. If implemented before the Buff And Effect System phase, it should remain a Cannon-local behaviour that creates local area damage over time, with a future migration path to the Buff And Effect System.
 
 Purpose:
 
@@ -324,7 +458,7 @@ Purpose:
 
 ---
 
-## 6.3 Synergy Layer
+## 7.3 Synergy Layer
 
 Synergy Layer upgrades introduce buff and interaction mechanics.
 
@@ -360,7 +494,7 @@ Purpose:
 
 ---
 
-# 7. Related Systems
+# 8. Related Systems
 
 ## Draft System
 
@@ -388,7 +522,7 @@ Battle HUD UI System should not own upgrade validation rules.
 
 ---
 
-# 8. Future Expansion
+# 9. Future Expansion
 
 Future versions may expand this system with:
 

@@ -113,6 +113,8 @@ Tower level base stat growth should be configured in TowerDefinition through per
 
 Upgrade definition references are owned by the Tower Upgrade System and should not be mixed with basic TowerDefinition attack configuration unless a later implementation explicitly requires a shared lookup.
 
+TowerUpgradeDefinition content should stay outside TowerDefinition and AttackConfig. TowerDefinition owns tower identity, base prefab/config references, and per-level base stat and presentation data. AttackConfig owns immutable default attack configuration. Tower upgrade runtime state tracks per-instance upgrade state, damage bonuses, stat deltas, and behaviour package activation.
+
 Suggested TowerLevelConfig fields include:
 
 | Field | Type | Description |
@@ -649,7 +651,6 @@ AttackConfig defines:
 
 - Attack range
 - Attack interval
-- Attack behavior damage multiplier
 - Target selection rules
 - Projectile references
 - Projectile trajectory parameters
@@ -683,7 +684,6 @@ AttackConfig assets are referenced directly by TowerDefinition. They should not 
 | attackRange | float | Maximum attack range |
 | attackInterval | float | Time between successful Attack Entity releases |
 | targetSelectionType | TargetSelectionType | Target selection rule |
-| damageMultiplier | float | Default attack-behavior damage multiplier applied to TowerLevelConfig.basicDamage |
 | projectileConfig | ProjectileConfig | Direct projectile configuration reference |
 | arcHeight | float | Arc projectile trajectory height |
 | magicOrbRotationSpeed | float | Rotation speed for Magic Orb behavior |
@@ -739,7 +739,6 @@ Typically uses:
 
 - attackRange
 - attackInterval
-- damageMultiplier
 - projectileConfig
 - targetSelectionType
 - attackAnimatorTriggerName
@@ -751,7 +750,7 @@ Notes:
 - The selected target's monster-side hit/reference anchor provides the launch direction for the projectile.
 - After launch, direction projectile hit detection belongs to the Projectile System.
 - The projectile may hit any valid monster encountered during flight, not only the originally selected target.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and the active projectile damage multiplier.
+- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Attack cooldown starts immediately after the projectile is released.
 - The projectile should be destroyed by projectile runtime logic when it exceeds its maximum lifetime.
 
@@ -769,7 +768,6 @@ Typically uses:
 
 - attackRange
 - attackInterval
-- damageMultiplier
 - projectileConfig
 - arcHeight
 - targetSelectionType
@@ -779,7 +777,7 @@ Typically uses:
 Notes:
 
 - The selected target's monster-side hit/reference anchor provides the target position snapshot.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and the active projectile damage multiplier.
+- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Explosion radius and area damage behavior belong to the Projectile System and Buff And Effect System, not AttackConfig.
 - Attack cooldown starts immediately after the projectile is launched.
 
@@ -797,7 +795,6 @@ Typically uses:
 
 - attackRange
 - attackInterval
-- damageMultiplier
 - projectileConfig
 - targetSelectionType
 - attackAnimatorTriggerName
@@ -806,7 +803,7 @@ Typically uses:
 Notes:
 
 - Tracking Projectile follows projectile-style cooldown timing.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and the active tracking projectile damage multiplier.
+- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Attack cooldown starts immediately after the projectile is released.
 - Tracking projectile runtime is reserved for later projectile-style attack implementations.
 
@@ -823,7 +820,6 @@ Typically uses:
 
 - attackRange
 - attackInterval
-- damageMultiplier
 - magicOrbRotationSpeed
 - magicOrbOrbitRadius
 - magicOrbContactDistance
@@ -846,7 +842,7 @@ Notes:
 - Magic Orb cooldown starts when the Magic Orb is generated.
 - Older Magic Orbs do not block later Magic Orb releases.
 - Magic Orb should spawn at a runtime-selected orbit angle.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and the active Magic Orb damage multiplier.
+- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Magic Orb behavior does not require targetSelectionType in the first version.
 - Magic Orb combat parameters should be configured on AttackConfig so MagicOrbBehaviour remains a runtime executor.
 - attackReleaseVfxPrefab may be played at AttackOrigin when the Magic Orb is generated and should use the VFX prefab's default direction.
@@ -864,7 +860,6 @@ Typically uses:
 
 - attackRange
 - attackInterval
-- damageMultiplier
 - targetSelectionType
 - droneBatteryDuration
 - droneOrbitRadius
@@ -898,7 +893,7 @@ Notes:
 - If no valid monster remains after release, the released Drone should air-explode and despawn.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
 - Projectiles fired by Drone should use droneProjectileConfig and Projectile System behavior.
-- Final Drone-fired projectile damage is calculated from the source tower's current TowerLevelConfig.basicDamage and the active Drone projectile damage multiplier.
+- Final Drone-fired projectile damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Drone battery and battery-end destruction behavior should belong to Drone attack entity runtime logic.
 - Drone Tower should use AttackOrigin as the Drone release point in the first version.
 - Released Drones should not depend on tower model child Transforms after launch.
@@ -1019,7 +1014,7 @@ Requests TowerBehaviour-owned TowerVisualController to update placement preview,
 
 ## Tower Runtime Combat System
 
-Uses TowerDefinition and AttackConfig to determine attack archetypes and combat behavior.
+Uses TowerDefinition, AttackConfig, and resolved tower upgrade state to determine attack archetypes, final runtime stats, and combat behavior.
 
 Consumes the current active AttackOrigin resolved through the owning tower runtime and TowerVisualController path.
 

@@ -38,6 +38,8 @@ Impact VFX is configured by ProjectileConfig and triggered by the Projectile Sys
 
 The Buff And Effect System should not be required for purely visual impact feedback.
 
+Tower upgrade behaviours should not force this system to exist before their first implementation. If a tower-specific upgrade such as Burning Shell is implemented before the Buff And Effect System phase, it may remain a local tower behaviour that creates area damage over time. That local implementation should not be treated as the general buff or effect framework, and may be migrated here later when shared effect or buff behavior is needed.
+
 ---
 
 ## 2. Responsibility Boundary
