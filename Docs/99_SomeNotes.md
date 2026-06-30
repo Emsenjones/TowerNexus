@@ -1,12 +1,14 @@
 ## AI Workflow
-1. 我和ChatGPT先聊一聊纯抽象的设计内容和迭代激活
-2. Codex根据我和ChatGPT聊的内容维护 ProjectOverview + System Documents
-3. Codex 根据 System Documents 生成轻量 Task Docs
-4. Codex 先读代码，输出 Implementation Plan
+1. 我和ChatGPT先聊一聊纯抽象的设计内容和迭代激活；
+2. Codex(High)根据我和ChatGPT聊的内容维护 ProjectOverview + System Documents
+3. Codex(High) 根据 System Documents 生成轻量 Task Docs
+4. Codex(Medium) 先读代码，输出 Implementation Plan
 5. 我和ChatGPT审核Plan
-6. Codex 实现并总结改动
+6. Codex(Medium) 实现并总结改动
 7. 我进Unity配置数据+调试
 8. Task Docs 用完归档或删除
+9. 有问题再让Codex(Medium/High)修bug
+
 
 
 ## Tower Nexus Framework

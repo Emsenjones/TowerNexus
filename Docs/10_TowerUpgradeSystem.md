@@ -55,7 +55,7 @@ Tower growth has two separate surfaces:
 1. Tower Level
 2. Tower Upgrades
 
-Tower Level is a light growth layer used for small base stat increases, model or visual replacement, and unlocking higher upgrade categories and slots.
+Tower Level is a light growth layer used for small base stat increases, model or visual replacement, and unlocking higher upgrade categories.
 
 Tower Upgrades are the primary source of build identity and power growth.
 
@@ -75,7 +75,7 @@ Tower levels provide:
 
 - Small base stat increases
 - New tower visuals or models
-- Access to higher upgrade categories and upgrade slots
+- Access to higher upgrade categories
 
 Tower levels are not intended to be the primary source of power growth.
 
@@ -145,7 +145,7 @@ If the request is accepted:
 - Request the target tower runtime to replace or update the tower model/visuals for the new level if configured.
 - Keep the permanent TowerBaseVisualRoot unchanged.
 - Refresh the current active AttackOrigin after model replacement.
-- Unlock access to higher upgrade categories and slots.
+- Unlock access to higher upgrade categories.
 
 If the request is rejected, the Tower Draft item should not be consumed.
 
@@ -210,29 +210,28 @@ Tower upgrades are applied to individual tower instances.
 
 Tower Upgrades are not global upgrades.
 
-Each tower instance tracks its own applied upgrades and remaining upgrade slots.
+Each tower instance tracks its own applied upgrades.
 
 Runtime upgrade state should answer:
 
 - Which TowerUpgradeDefinition entries this tower already owns
 - Which Required Tower Level categories are unlocked for this tower level
-- How many upgrade slots remain for each required-level category
 - Which Basic Layer stat deltas affect this tower
 - Which Behaviour Layer packages are active on this tower
 
-Applying any TowerUpgradeDefinition consumes one slot from that upgrade's required-level category.
+Applying a TowerUpgradeDefinition records that upgrade on the target tower.
 
-Basic, Behaviour, and Synergy upgrade categories all consume slots. They do not share one global counter unless a later design explicitly changes that rule.
+V1 does not impose a quantity limit on upgrades within the same Required Tower Level category. A tower may receive multiple different Basic upgrades, multiple different Behaviour upgrades, or multiple different future Synergy upgrades as long as it satisfies the category unlock and duplicate rules.
 
-Tower level unlocks upgrade slot categories:
+Tower level unlocks upgrade categories:
 
-| Tower Level | Unlocked Upgrade Slots |
+| Tower Level | Unlocked Upgrade Categories |
 |---|---|
-| Lv1 | Basic slots |
-| Lv2 | Basic slots, Behaviour slots |
-| Lv3 | Basic slots, Behaviour slots, Synergy slots |
+| Lv1 | Basic |
+| Lv2 | Basic, Behaviour |
+| Lv3 | Basic, Behaviour, Synergy |
 
-Exact slot counts are tuning data. The system contract is that lower tower levels cannot receive upgrades whose Required Tower Level is higher than the tower's current level.
+The system contract is that lower tower levels cannot receive upgrades whose Required Tower Level is higher than the tower's current level.
 
 Each tower may gradually develop its own build identity.
 
@@ -261,7 +260,6 @@ An upgrade may be applied only when:
 
 - The upgrade TowerFamily matches the target tower's TowerFamily.
 - The target tower level satisfies Required Tower Level.
-- The target tower has a remaining slot for that upgrade's required-level category.
 - The target tower does not already have the same upgrade.
 
 Example:
@@ -332,7 +330,6 @@ TowerUpgradeSystem owns:
 
 - TowerFamily matching rules
 - Required Tower Level checks
-- Remaining upgrade slot checks
 - Per-tower duplicate upgrade checks
 - Upgrade definition lookup
 - Upgrade application validation

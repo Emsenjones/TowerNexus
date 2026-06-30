@@ -282,7 +282,8 @@ public class TowerCombatBehaviour : MonoBehaviour
             projectileConfig,
             attackConfig,
             pendingProjectileTarget,
-            pendingProjectileTargetPosition
+            pendingProjectileTargetPosition,
+            ResolveCombatStats().AttackDamage
         );
 
         if (!projectileBehaviour.IsInitialized)
@@ -299,7 +300,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private void StartAttackCooldown()
     {
-        cooldownTimer = Mathf.Max(0f, attackConfig.AttackInterval);
+        cooldownTimer = ResolveCombatStats().AttackInterval;
     }
 
     private void ResetPendingAttackState()
@@ -370,7 +371,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             magicOrbBehaviour = magicOrbObject.AddComponent<MagicOrbBehaviour>();
         }
 
-        magicOrbBehaviour.Initialize(towerInstance, monsterManager, attackConfig, origin);
+        magicOrbBehaviour.Initialize(towerInstance, monsterManager, attackConfig, ResolveCombatStats(), origin);
 
         if (!magicOrbBehaviour.IsInitialized)
         {
@@ -461,6 +462,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             towerInstance,
             monsterManager,
             attackConfig,
+            ResolveCombatStats(),
             origin.position,
             origin.rotation,
             pendingDroneTarget
@@ -588,8 +590,13 @@ public class TowerCombatBehaviour : MonoBehaviour
             return false;
         }
 
-        float attackRange = attackConfig.AttackRange;
+        float attackRange = ResolveCombatStats().AttackRange;
         return Vector3.Distance(origin.position, GetMonsterHitPosition(monster)) <= attackRange;
+    }
+
+    private ResolvedTowerCombatStats ResolveCombatStats()
+    {
+        return TowerRuntimeStatResolver.Resolve(towerInstance, attackConfig);
     }
 
     private Transform GetAttackOrigin()

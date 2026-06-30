@@ -13,6 +13,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 targetPosition;
     private Vector3 launchDirection;
     private Vector3 startPosition;
+    private int attackDamage;
     private float elapsedLifetime;
     private float arcTravelTime;
     private bool isInitialized;
@@ -36,6 +37,7 @@ public class ProjectileBehaviour : MonoBehaviour
         AttackConfig attackConfig,
         MonsterBehaviour targetMonster,
         Vector3 targetPosition,
+        int attackDamage,
         AttackArchetype? flightArchetypeOverride = null)
     {
         this.sourceTower = sourceTower;
@@ -45,6 +47,7 @@ public class ProjectileBehaviour : MonoBehaviour
         flightArchetype = flightArchetypeOverride ?? (attackConfig != null ? attackConfig.AttackArchetype : default);
         this.targetMonster = targetMonster;
         this.targetPosition = targetPosition;
+        this.attackDamage = Mathf.Max(0, attackDamage);
 
         startPosition = transform.position;
         elapsedLifetime = 0f;
@@ -304,7 +307,7 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         hasImpacted = true;
-        hitMonster.TakeDamage(ResolveAttackDamage());
+        hitMonster.TakeDamage(attackDamage);
         RaiseImpact(hitMonster, transform.position);
         DestroyProjectile();
     }
@@ -328,7 +331,7 @@ public class ProjectileBehaviour : MonoBehaviour
             attackConfig,
             hitMonster,
             impactPosition,
-            ResolveAttackDamage(),
+            attackDamage,
             projectileConfig.ImpactEffectConfig
         );
 
@@ -357,17 +360,6 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         return direction.normalized;
-    }
-
-    private int ResolveAttackDamage()
-    {
-        if (attackConfig == null)
-        {
-            return 0;
-        }
-
-        int basicDamage = sourceTower != null ? sourceTower.BasicDamage : 0;
-        return attackConfig.CalculateDamage(basicDamage);
     }
 
     private bool TryGetDirectionProjectileHit(out MonsterBehaviour hitMonster)

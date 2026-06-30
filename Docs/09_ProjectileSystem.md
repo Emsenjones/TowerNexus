@@ -424,7 +424,7 @@ The Projectile System may directly dispatch single-target damage when a projecti
 
 This exception exists to keep simple projectile attacks lightweight.
 
-Projectile System should use the resolved damage value provided by Tower Runtime Combat or the spawning Attack Entity. It should not own the formula that combines TowerLevelConfig.basicDamage and tower upgrade runtime damage bonuses.
+Projectile System should use the final resolved damage value provided by Tower Runtime Combat or the spawning Attack Entity. It should not own the formula that combines TowerLevelConfig.basicDamage and tower upgrade runtime damage bonuses, and it should not apply damage multipliers.
 
 Examples:
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Planned.
+Implemented.
 
 ## Goal
 
@@ -31,7 +31,7 @@ Resolved stats should include:
 
 - AttackRange
 - AttackInterval
-- DamageBonus
+- AttackDamage resolved from DamageBonus
 - MagicOrbRotationSpeed
 - MagicOrbMaxHitCount
 - DroneBatteryDuration
@@ -43,6 +43,8 @@ The first-version damage direction is:
 FinalDamage = TowerLevelConfig.BasicDamage + DamageBonus
 ```
 
+AttackConfig must not apply an additional damage multiplier in this model.
+
 ## Required Contracts
 
 - Basic stat deltas are additive in v1.
@@ -50,6 +52,7 @@ FinalDamage = TowerLevelConfig.BasicDamage + DamageBonus
 - TowerRuntimeCombatSystem consumes resolved runtime stats.
 - Projectile, Magic Orb, and Drone damage paths consume resolved damage values.
 - ProjectileSystem should receive or consume resolved damage context; it should not own the formula for combining tower level damage and upgrade state.
+- AttackConfig does not own final damage calculation and should not define a runtime damage multiplier.
 
 ## Required Clamps
 
@@ -82,6 +85,7 @@ During this task, keep `Docs/09_ProjectileSystem.md` aligned with the resolved d
 - Applying DroneBurstCooldown delta changes Drone burst cooldown and never resolves below the configured minimum.
 - Runtime combat no longer reads raw AttackConfig values where upgraded values are expected.
 - Existing non-upgraded towers preserve their previous runtime behaviour.
+- Existing non-upgraded towers resolve damage as TowerLevelConfig.BasicDamage.
 
 ## Implementation Review Note
 

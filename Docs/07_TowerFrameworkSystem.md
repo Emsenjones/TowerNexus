@@ -705,6 +705,8 @@ AttackConfig assets are referenced directly by TowerDefinition. They should not 
 | magicOrbPrefab | GameObject | Optional Magic Orb attack entity prefab |
 | dronePrefab | GameObject | Optional Drone attack entity prefab |
 
+AttackConfig should not define a damage multiplier. Final runtime damage is resolved from TowerLevelConfig.basicDamage plus tower upgrade runtime damage bonuses.
+
 Not every attack archetype requires every field.
 
 Unused fields should be hidden in the Inspector whenever practical.

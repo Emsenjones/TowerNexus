@@ -19,10 +19,6 @@ public class AttackConfig : ScriptableObject
     [TitleGroup("Core")]
     [ShowIf(nameof(UsesTargetSelection))]
     [SerializeField] private TargetSelectionType targetSelectionType;
-    [TitleGroup("Core")]
-    [MinValue(0f)]
-    [SerializeField] private float damageMultiplier = 1f;
-
     [TitleGroup("Animation")]
     [SerializeField] private string attackAnimatorTriggerName = "Attack";
 
@@ -107,7 +103,6 @@ public class AttackConfig : ScriptableObject
     public float AttackRange => attackRange;
     public float AttackInterval => attackInterval;
     public TargetSelectionType TargetSelectionType => targetSelectionType;
-    public float DamageMultiplier => damageMultiplier;
     public string AttackAnimatorTriggerName => attackAnimatorTriggerName;
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
@@ -183,12 +178,6 @@ public class AttackConfig : ScriptableObject
         if (attackInterval < 0f)
         {
             Debug.LogWarning($"Attack config '{name}' is invalid: attack interval cannot be negative.", this);
-            return false;
-        }
-
-        if (damageMultiplier < 0f)
-        {
-            Debug.LogWarning($"Attack config '{name}' is invalid: damage multiplier cannot be negative.", this);
             return false;
         }
 
@@ -289,12 +278,5 @@ public class AttackConfig : ScriptableObject
         }
 
         return true;
-    }
-
-    public int CalculateDamage(int basicDamage)
-    {
-        int safeBasicDamage = Mathf.Max(0, basicDamage);
-        float safeDamageMultiplier = Mathf.Max(0f, damageMultiplier);
-        return Mathf.Max(0, Mathf.RoundToInt(safeBasicDamage * safeDamageMultiplier));
     }
 }

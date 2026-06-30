@@ -21,6 +21,9 @@ public class DroneBehaviour : MonoBehaviour
     private AttackConfig attackConfig;
     private Vector3 releasePosition;
     private MonsterBehaviour currentTarget;
+    private int attackDamage;
+    private float attackRange;
+    private float droneBurstCooldown;
     private float orbitAngleRadians;
     private int orbitDirection = 1;
     private float batteryTimer;
@@ -43,6 +46,7 @@ public class DroneBehaviour : MonoBehaviour
         TowerInstance sourceTower,
         MonsterManager monsterManager,
         AttackConfig attackConfig,
+        ResolvedTowerCombatStats resolvedStats,
         Vector3 releasePosition,
         Quaternion releaseRotation,
         MonsterBehaviour initialTarget)
@@ -53,9 +57,12 @@ public class DroneBehaviour : MonoBehaviour
         this.releasePosition = releasePosition;
 
         currentTarget = initialTarget;
+        attackDamage = resolvedStats.AttackDamage;
+        attackRange = resolvedStats.AttackRange;
+        droneBurstCooldown = resolvedStats.DroneBurstCooldown;
         orbitAngleRadians = 0f;
         orbitDirection = 1;
-        batteryTimer = attackConfig != null ? attackConfig.DroneBatteryDuration : 0f;
+        batteryTimer = resolvedStats.DroneBatteryDuration;
         ResetBurstState();
         hasReachedOrbitPath = false;
         hasLoggedMissingFireAnchor = false;
@@ -98,7 +105,7 @@ public class DroneBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackConfig.DroneBatteryDuration <= 0f)
+        if (batteryTimer <= 0f)
         {
             Debug.LogWarning("Drone cannot initialize: drone battery duration must be greater than zero.", this);
             return false;
@@ -128,7 +135,7 @@ public class DroneBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackConfig.DroneBurstCooldown < 0f)
+        if (droneBurstCooldown < 0f)
         {
             Debug.LogWarning("Drone cannot initialize: drone burst cooldown cannot be negative.", this);
             return false;
@@ -264,7 +271,7 @@ public class DroneBehaviour : MonoBehaviour
 
         burstTimer = burstShotsRemaining > 0
             ? Mathf.Max(0f, attackConfig.DroneBurstInterval)
-            : Mathf.Max(0f, attackConfig.DroneBurstCooldown);
+            : droneBurstCooldown;
     }
 
     private void ResetBurstState()
@@ -297,6 +304,7 @@ public class DroneBehaviour : MonoBehaviour
             attackConfig,
             target,
             targetPosition,
+            attackDamage,
             AttackArchetype.DirectionProjectile
         );
 
@@ -438,7 +446,7 @@ public class DroneBehaviour : MonoBehaviour
             return false;
         }
 
-        float attackRangeSqr = attackConfig.AttackRange * attackConfig.AttackRange;
+        float attackRangeSqr = attackRange * attackRange;
         return (GetMonsterHitPosition(monster) - releasePosition).sqrMagnitude <= attackRangeSqr;
     }
 

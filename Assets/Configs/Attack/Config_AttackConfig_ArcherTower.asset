@@ -16,7 +16,6 @@ MonoBehaviour:
   attackRange: 2
   attackInterval: 1
   targetSelectionType: 0
-  damageMultiplier: 1
   attackAnimatorTriggerName: Attack
   projectileConfig: {fileID: 11400000, guid: 885d88fbd81784ed6998116a641079bc, type: 2}
   arcHeight: 1

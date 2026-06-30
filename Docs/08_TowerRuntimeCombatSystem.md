@@ -244,7 +244,7 @@ First-version tower attacks start cooldown when their Attack Entity is successfu
 
 After release, Projectile, Magic Orb, and Drone Attack Entities own their own lifecycle. Tower Runtime Combat should not wait for projectile impact, Magic Orb hit-count depletion, Drone battery depletion, or Drone destruction before starting the next attack interval.
 
-Drone uses AttackConfig.attackInterval for tower-side release cadence. Drone battery timing remains Drone-local lifetime behavior, while Drone projectile fire timing is controlled by droneBurstCount, droneBurstInterval, and droneBurstCooldown.
+Drone uses resolved attack interval for tower-side release cadence. Drone battery timing remains Drone-local lifetime behavior, while Drone projectile fire timing is controlled by resolved Drone burst stats plus static Drone burst configuration.
 
 ---
 
@@ -326,7 +326,7 @@ Projectile creation belongs to Tower Runtime Combat.
 
 Projectile movement, collision detection, impact handling, lifetime management, and destruction belong to Projectile System.
 
-Projectile damage should be calculated before dispatch using the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
+Projectile damage should be resolved before dispatch using the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 
 Attack cooldown starts immediately after Archer arrows and Cannon shells are fired, not after projectile impact or explosion.
 Tracking Projectile follows the same projectile-style cooldown rule when implemented: cooldown starts after projectile release, not after impact.
@@ -410,7 +410,7 @@ Magic Orb rules:
 
 Magic Orb damage is owned by attack entity behavior in the first version.
 
-Magic Orb contact damage should be calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
+Magic Orb contact damage should be resolved from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 
 Magic Orb combat parameters such as orbit radius, contact distance, same-target hit cooldown, and maximum lifetime belong to AttackConfig because they define shared attack rules.
 
@@ -473,7 +473,7 @@ Drone runtime rules:
 - Drone fires straight projectile bursts in the first version.
 - Drone burst fire should use AttackConfig.droneBurstCount, droneBurstInterval, and droneBurstCooldown.
 - Drone-fired projectile data should come from AttackConfig.droneProjectileConfig.
-- Drone-fired projectile damage should be calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
+- Drone-fired projectile damage should be resolved from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Drone-fired projectiles should spawn from the Drone FireAnchor when available.
 - Drone-fired projectile prefabs should follow the same local +Y Up and local +Z Forward root orientation convention as other Projectile System prefabs.
 - Drone-fired attack release VFX should spawn from the Drone FireAnchor when configured and face the selected target Monster direction.
@@ -606,6 +606,8 @@ FinalDamage = TowerLevelConfig.basicDamage + RuntimeDamageBonus
 ```
 
 Tower level data owns the basic damage value. Tower upgrade runtime state may add instance-specific damage bonuses. Other runtime stats are resolved from immutable base configuration plus same-type additive upgrade deltas, then clamped before combat uses them.
+
+AttackConfig does not define a runtime damage multiplier. Final damage comes from resolved runtime combat stats.
 
 Example first-version stat direction:
 

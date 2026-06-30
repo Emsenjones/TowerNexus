@@ -2,7 +2,7 @@
 
 ## Status
 
-Planned.
+Implemented.
 
 ## Goal
 
@@ -21,18 +21,13 @@ After this task, runtime tower instances can track applied upgrades and TowerUpg
 This task should introduce per-tower upgrade state for:
 
 - Applied upgrade ids or references
-- Basic slots
-- Behaviour slots
-- Synergy slots
 - RequiredTowerLevel unlock by tower level
-- Remaining slot count per required-level slot pool
 - Duplicate upgrade prevention
-- Slot validation
 - TowerFamily compatibility checks
 - CanApplyUpgrade
 - TryApplyUpgrade
 
-Slot counts may be fixed in v1, but they must be centralized and not scattered across unrelated code paths.
+V1 does not impose an upgrade slot count limit. A tower may receive multiple different upgrades from the same RequiredTowerLevel category.
 
 ## Required Contracts
 
@@ -47,8 +42,8 @@ Slot counts may be fixed in v1, but they must be centralized and not scattered a
 | Lv2 | RequiredTowerLevel 1 / Basic, RequiredTowerLevel 2 / Behaviour |
 | Lv3 | RequiredTowerLevel 1 / Basic, RequiredTowerLevel 2 / Behaviour, RequiredTowerLevel 3 / Synergy |
 
-- Applying any TowerUpgradeDefinition consumes one slot from that upgrade's required-level slot pool.
-- Basic, Behaviour, and Synergy slots are separate required-level-derived slot pools in v1.
+- Applying a TowerUpgradeDefinition records that upgrade on the target tower.
+- RequiredTowerLevel gates when an upgrade can be applied, but it does not impose a quantity limit in v1.
 - Duplicate restriction is per tower, not global.
 - V1 does not include upgrade-exclusion rules where one applied upgrade blocks a different upgrade.
 - V1 does not introduce a separate code-level layer field.
@@ -72,13 +67,11 @@ The exact debug approach should be proposed in the implementation plan before co
 ## Acceptance Criteria
 
 - A tower can track which upgrades it owns.
-- A tower can report remaining Basic, Behaviour, and Synergy slots.
 - TowerUpgradeSystem rejects an upgrade when TowerFamily does not match.
 - TowerUpgradeSystem rejects an upgrade when required tower level is not met.
 - TowerUpgradeSystem rejects an upgrade when the target tower has not unlocked that upgrade's required-level category.
-- TowerUpgradeSystem rejects an upgrade when no slot remains for that upgrade's required-level slot pool.
 - TowerUpgradeSystem rejects duplicate upgrades on the same tower.
-- A successful TryApplyUpgrade records the upgrade and consumes the correct required-level slot.
+- A successful TryApplyUpgrade records the upgrade.
 - A failed TryApplyUpgrade does not mutate tower upgrade state.
 - A development-only debug path can apply a configured upgrade during Play Mode for validation.
 

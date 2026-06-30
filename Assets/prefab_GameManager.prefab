@@ -10054,7 +10054,7 @@ MonoBehaviour:
   healthBarManager: {fileID: 4279093415070417244}
   damageNumberManager: {fileID: 2578153334544192036}
   monsterRoot: {fileID: 806339692037077095}
-  playOnStart: 0
+  playOnStart: 1
 --- !u!1 &5547641298007769305
 GameObject:
   m_ObjectHideFlags: 0
@@ -17465,6 +17465,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3261855449354590494}
   - component: {fileID: 2046345648947699159}
+  - component: {fileID: 7872436870159318992}
   m_Layer: 0
   m_Name: prefab_GameManager
   m_TagString: Untagged
@@ -17513,6 +17514,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ExpAddController
   playerSystem: {fileID: 8439368486033747447}
   addedExp: 60
+--- !u!114 &7872436870159318992
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8939497704752416150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ee6542b4b0a64811a690ce666c2b34a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDebugApplier
+  towerUpgradeSystem: {fileID: 3446166332166411794}
+  targetTower: {fileID: 0}
+  upgradeDefinition: {fileID: 0}
 --- !u!1 &8943461399236715822
 GameObject:
   m_ObjectHideFlags: 0

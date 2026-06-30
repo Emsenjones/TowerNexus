@@ -7,6 +7,7 @@ public class TowerInstance : MonoBehaviour
 
     private TowerDefinition towerDefinition;
     private int currentLevel = DefaultLevel;
+    private readonly TowerUpgradeState upgradeState = new TowerUpgradeState();
 
     private List<GridNodeBehaviour> occupiedNodes = new List<GridNodeBehaviour>();
 
@@ -15,11 +16,13 @@ public class TowerInstance : MonoBehaviour
     public TowerLevelConfig CurrentLevelConfig => towerDefinition != null ? towerDefinition.GetLevelConfig(currentLevel) : null;
     public int BasicDamage => CurrentLevelConfig != null ? CurrentLevelConfig.BasicDamage : 0;
     public IReadOnlyList<GridNodeBehaviour> OccupiedNodes => occupiedNodes;
+    public IReadOnlyList<TowerUpgradeDefinition> AppliedUpgrades => upgradeState.AppliedUpgrades;
 
     public void Initialize(TowerDefinition towerDefinition, List<GridNodeBehaviour> occupiedNodes)
     {
         this.towerDefinition = towerDefinition;
         currentLevel = DefaultLevel;
+        upgradeState.Reset();
         this.occupiedNodes.Clear();
 
         if (occupiedNodes == null)
@@ -84,5 +87,15 @@ public class TowerInstance : MonoBehaviour
     public IReadOnlyList<GridNodeBehaviour> GetOccupiedNodes()
     {
         return occupiedNodes;
+    }
+
+    public bool HasUpgrade(TowerUpgradeDefinition upgradeDefinition)
+    {
+        return upgradeState.HasUpgrade(upgradeDefinition);
+    }
+
+    public bool TryRecordUpgrade(TowerUpgradeDefinition upgradeDefinition)
+    {
+        return upgradeState.TryRecordUpgrade(upgradeDefinition);
     }
 }

@@ -8,6 +8,8 @@ public class MagicOrbBehaviour : MonoBehaviour
     private MonsterManager monsterManager;
     private AttackConfig attackConfig;
     private Vector3 orbitCenterPosition;
+    private int attackDamage;
+    private float rotationSpeed;
     private int remainingHitCount;
     private float orbitAngle;
     private float elapsedLifetime;
@@ -28,6 +30,7 @@ public class MagicOrbBehaviour : MonoBehaviour
         TowerInstance sourceTower,
         MonsterManager monsterManager,
         AttackConfig attackConfig,
+        ResolvedTowerCombatStats resolvedStats,
         Transform orbitCenter)
     {
         this.sourceTower = sourceTower;
@@ -35,7 +38,9 @@ public class MagicOrbBehaviour : MonoBehaviour
         this.attackConfig = attackConfig;
         orbitCenterPosition = orbitCenter != null ? orbitCenter.position : transform.position;
 
-        remainingHitCount = attackConfig != null ? attackConfig.MagicOrbMaxHitCount : 0;
+        attackDamage = resolvedStats.AttackDamage;
+        rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
+        remainingHitCount = resolvedStats.MagicOrbMaxHitCount;
         orbitAngle = UnityEngine.Random.Range(0f, 360f);
         elapsedLifetime = 0f;
         hasEnded = false;
@@ -101,7 +106,7 @@ public class MagicOrbBehaviour : MonoBehaviour
 
     private void UpdateOrbitPosition()
     {
-        orbitAngle += attackConfig.MagicOrbRotationSpeed * Time.deltaTime;
+        orbitAngle += rotationSpeed * Time.deltaTime;
         float angleRadians = orbitAngle * Mathf.Deg2Rad;
         Vector3 offset = new Vector3(Mathf.Cos(angleRadians), 0f, Mathf.Sin(angleRadians)) * attackConfig.MagicOrbOrbitRadius;
         transform.position = orbitCenterPosition + offset;
@@ -142,7 +147,7 @@ public class MagicOrbBehaviour : MonoBehaviour
 
     private void HitMonster(MonsterBehaviour monster)
     {
-        monster.TakeDamage(ResolveAttackDamage());
+        monster.TakeDamage(attackDamage);
         monsterHitCooldownEnds[monster] = Time.time + attackConfig.MagicOrbSameTargetHitCooldown;
         remainingHitCount--;
 
@@ -150,17 +155,6 @@ public class MagicOrbBehaviour : MonoBehaviour
         {
             EndOrb();
         }
-    }
-
-    private int ResolveAttackDamage()
-    {
-        if (attackConfig == null)
-        {
-            return 0;
-        }
-
-        int basicDamage = sourceTower != null ? sourceTower.BasicDamage : 0;
-        return attackConfig.CalculateDamage(basicDamage);
     }
 
     private bool IsTargetOnCooldown(MonsterBehaviour monster)

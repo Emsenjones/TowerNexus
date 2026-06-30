@@ -54,4 +54,90 @@ public class TowerUpgradeSystem : MonoBehaviour
 
         return targetTower.TrySetLevel(nextLevel);
     }
+
+    public bool CanApplyUpgrade(
+        TowerInstance targetTower,
+        TowerUpgradeDefinition upgradeDefinition,
+        out string failureReason)
+    {
+        if (targetTower == null)
+        {
+            failureReason = "Target tower is missing.";
+            return false;
+        }
+
+        if (upgradeDefinition == null)
+        {
+            failureReason = "Upgrade definition is missing.";
+            return false;
+        }
+
+        int requiredTowerLevel = upgradeDefinition.RequiredTowerLevel;
+
+        if (!IsSupportedRequiredTowerLevel(requiredTowerLevel))
+        {
+            failureReason = $"Required Tower Level {requiredTowerLevel} is not supported by v1 upgrade rules.";
+            return false;
+        }
+
+        TowerDefinition targetDefinition = targetTower.TowerDefinition;
+
+        if (targetDefinition == null)
+        {
+            failureReason = "Target tower definition is missing.";
+            return false;
+        }
+
+        if (targetDefinition.TowerFamily != upgradeDefinition.TowerFamily)
+        {
+            failureReason = $"Upgrade TowerFamily '{upgradeDefinition.TowerFamily}' does not match target tower TowerFamily '{targetDefinition.TowerFamily}'.";
+            return false;
+        }
+
+        if (!upgradeDefinition.IsValid())
+        {
+            failureReason = $"Upgrade definition '{upgradeDefinition.name}' failed validation.";
+            return false;
+        }
+
+        if (targetTower.CurrentLevel < requiredTowerLevel)
+        {
+            failureReason = $"Target tower level {targetTower.CurrentLevel} does not satisfy Required Tower Level {requiredTowerLevel}.";
+            return false;
+        }
+
+        if (targetTower.HasUpgrade(upgradeDefinition))
+        {
+            failureReason = $"Target tower already has upgrade '{upgradeDefinition.name}'.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public bool TryApplyUpgrade(
+        TowerInstance targetTower,
+        TowerUpgradeDefinition upgradeDefinition,
+        out string failureReason)
+    {
+        if (!CanApplyUpgrade(targetTower, upgradeDefinition, out failureReason))
+        {
+            return false;
+        }
+
+        if (!targetTower.TryRecordUpgrade(upgradeDefinition))
+        {
+            failureReason = $"Target tower failed to record upgrade '{upgradeDefinition.name}'.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    private bool IsSupportedRequiredTowerLevel(int requiredTowerLevel)
+    {
+        return requiredTowerLevel >= 1 && requiredTowerLevel <= CurrentMaxTowerLevel;
+    }
 }
