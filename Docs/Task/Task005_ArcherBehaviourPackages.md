@@ -47,7 +47,7 @@ Do not implement Hunting Arrow in this task unless explicitly approved later.
 
 If one Archer owns both Piercing Arrow and Scatter Arrow, all scattered arrows should also support piercing.
 
-Behaviour upgrades are composable by default unless an explicit incompatibility says otherwise.
+Behaviour upgrades are composable by default in v1. This task should not introduce an upgrade-exclusion rule where applying one Archer Behaviour package blocks another.
 
 ## System Document Sync Check
 

@@ -191,7 +191,7 @@ Responsible for:
 - Creating draft results
 - Routing Tower Draft deployment or tower-level-up intent to the appropriate system
 
-Tower Upgrade Draft choices are generated from eligible tower instance state, including TowerFamily, tower level, unlocked upgrade layers, remaining upgrade slots, and upgrades already applied to each tower.
+Tower Upgrade Draft choices are generated from eligible tower instance state, including TowerFamily, tower level, Required Tower Level eligibility, remaining upgrade slots, and upgrades already applied to each tower.
 
 ---
 

@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
-  m_Name: Config_MonsterDefinition_Bat
+  m_Name: Config_MonsterDefini_Spider
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  displayName: Bat
-  monsterPrefab: {fileID: 3866999361384652794, guid: fea114b78b71741fa89ac0ed135e6a17, type: 3}
+  displayName: Spider
+  monsterPrefab: {fileID: 2179103727158641011, guid: 62fd2f6db0c024c02a5b236fc72ec53e, type: 3}
   moveSpeed: 0.25
   maxHealth: 100
   expReward: 0

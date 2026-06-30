@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
-  m_Name: Config_TowerDefinition_ArcherTower
+  m_Name: Config_TowerDefini_ArcherTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerFamily: 0
   displayName: Archer Tower
-  description: This is an archer tower
+  description: A reliable ranged tower that picks off enemies with precise arrow
+    shots
   icon: {fileID: 21300000, guid: 48902436d5fe340feb0da315672b5b04, type: 3}
   towerPrefab: {fileID: 8270491640636788401, guid: 7f40fd16bab2d4a20b51506d3cb37e8f, type: 3}
   attackConfig: {fileID: 11400000, guid: 1c1d31696daa84d328a1612b624643c6, type: 2}

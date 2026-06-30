@@ -10,11 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
-  m_Name: Config_TowerDefinition_MagicTower
+  m_Name: Config_TowerDefini_MagicTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerFamily: 2
   displayName: Magic Tower
-  description: Persistent orbiting magic weapon tower.
+  description: A tactical tower that sends out a combat drone to hunt enemies before
+    recharging
   icon: {fileID: 21300000, guid: 9b8ccf0882bbe4a38836b2714c6462ab, type: 3}
   towerPrefab: {fileID: 6027618472494872927, guid: 5b7ed8402f4fc4e9bbbfc43e6ae17d24, type: 3}
   attackConfig: {fileID: 11400000, guid: 1f45c942290de471f8a105f3bf885357, type: 2}

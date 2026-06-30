@@ -12742,6 +12742,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1021943784080354439}
   - component: {fileID: 3446166332166411794}
+  - component: {fileID: 7321847719346502912}
   m_Layer: 0
   m_Name: TowerUpgradeSystem
   m_TagString: Untagged
@@ -12776,6 +12777,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e34fe0652d3648a88f935cc5604de7c4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeSystem
+--- !u!114 &7321847719346502912
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6709236890343107649}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44387f5c34084fe28363601416749152, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDatabase
+  upgradeDefinitions: []
 --- !u!1 &6718634423958995076
 GameObject:
   m_ObjectHideFlags: 0

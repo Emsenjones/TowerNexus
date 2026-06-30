@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
-  m_Name: Config_MonsterDefinition_MonsterPlant
+  m_Name: Config_MonsterDefini_MonsterPlant
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
   displayName: Monster Plant
   monsterPrefab: {fileID: 2198626025461408082, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}

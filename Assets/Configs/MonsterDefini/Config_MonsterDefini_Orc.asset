@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
-  m_Name: Config_MonsterDefinition_Slime
+  m_Name: Config_MonsterDefini_Orc
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  displayName: Slime
-  monsterPrefab: {fileID: 6597115842058522919, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
+  displayName: Orc
+  monsterPrefab: {fileID: 7885271453143739113, guid: ef8b8f95e97d742a5a4982c0e73bb673, type: 3}
   moveSpeed: 0.25
   maxHealth: 100
   expReward: 0

@@ -24,11 +24,11 @@ This task should introduce per-tower upgrade state for:
 - Basic slots
 - Behaviour slots
 - Synergy slots
-- Layer unlock by tower level
-- Remaining slot count per layer
+- RequiredTowerLevel unlock by tower level
+- Remaining slot count per required-level slot pool
 - Duplicate upgrade prevention
 - Slot validation
-- Compatibility and explicit incompatibility checks
+- TowerFamily compatibility checks
 - CanApplyUpgrade
 - TryApplyUpgrade
 
@@ -39,17 +39,19 @@ Slot counts may be fixed in v1, but they must be centralized and not scattered a
 - TowerUpgradeSystem owns eligibility and application rules.
 - TowerUpgradeSystem does not own Draft pool generation.
 - TowerUpgradeSystem does not execute runtime combat behaviour packages.
-- Tower level unlocks upgrade layers:
+- Tower level unlocks upgrade categories by RequiredTowerLevel:
 
-| Tower Level | Unlocked Layers |
+| Tower Level | Eligible Upgrade Categories |
 |---|---|
-| Lv1 | Basic |
-| Lv2 | Basic, Behaviour |
-| Lv3 | Basic, Behaviour, Synergy |
+| Lv1 | RequiredTowerLevel 1 / Basic |
+| Lv2 | RequiredTowerLevel 1 / Basic, RequiredTowerLevel 2 / Behaviour |
+| Lv3 | RequiredTowerLevel 1 / Basic, RequiredTowerLevel 2 / Behaviour, RequiredTowerLevel 3 / Synergy |
 
-- Applying any TowerUpgradeDefinition consumes one slot from that upgrade's layer.
-- Basic, Behaviour, and Synergy slots are separate layer-specific slot pools in v1.
+- Applying any TowerUpgradeDefinition consumes one slot from that upgrade's required-level slot pool.
+- Basic, Behaviour, and Synergy slots are separate required-level-derived slot pools in v1.
 - Duplicate restriction is per tower, not global.
+- V1 does not include upgrade-exclusion rules where one applied upgrade blocks a different upgrade.
+- V1 does not introduce a separate code-level layer field.
 
 ## Debug Testing Requirement
 
@@ -73,11 +75,10 @@ The exact debug approach should be proposed in the implementation plan before co
 - A tower can report remaining Basic, Behaviour, and Synergy slots.
 - TowerUpgradeSystem rejects an upgrade when TowerFamily does not match.
 - TowerUpgradeSystem rejects an upgrade when required tower level is not met.
-- TowerUpgradeSystem rejects an upgrade when the target tower has not unlocked the upgrade layer.
-- TowerUpgradeSystem rejects an upgrade when no slot remains for the upgrade layer.
+- TowerUpgradeSystem rejects an upgrade when the target tower has not unlocked that upgrade's required-level category.
+- TowerUpgradeSystem rejects an upgrade when no slot remains for that upgrade's required-level slot pool.
 - TowerUpgradeSystem rejects duplicate upgrades on the same tower.
-- TowerUpgradeSystem rejects explicitly incompatible upgrades.
-- A successful TryApplyUpgrade records the upgrade and consumes the correct layer slot.
+- A successful TryApplyUpgrade records the upgrade and consumes the correct required-level slot.
 - A failed TryApplyUpgrade does not mutate tower upgrade state.
 - A development-only debug path can apply a configured upgrade during Play Mode for validation.
 

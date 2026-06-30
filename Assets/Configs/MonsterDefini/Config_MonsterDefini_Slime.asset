@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
-  m_Name: Config_MonsterDefinition_Spider
+  m_Name: Config_MonsterDefini_Slime
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  displayName: Spider
-  monsterPrefab: {fileID: 2179103727158641011, guid: 62fd2f6db0c024c02a5b236fc72ec53e, type: 3}
+  displayName: Slime
+  monsterPrefab: {fileID: 6597115842058522919, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
   moveSpeed: 0.25
   maxHealth: 100
   expReward: 0

@@ -16,7 +16,7 @@ This system owns:
 - Tower level-up request validation
 - Upgrade definitions
 - Upgrade application rules
-- Upgrade layer unlock rules
+- Required tower level unlock rules
 - Per-tower duplicate upgrade rules
 - Future upgrade prerequisites and evolution paths
 
@@ -55,7 +55,7 @@ Tower growth has two separate surfaces:
 1. Tower Level
 2. Tower Upgrades
 
-Tower Level is a light growth layer used for small base stat increases, model or visual replacement, and unlocking higher upgrade layers and slots.
+Tower Level is a light growth layer used for small base stat increases, model or visual replacement, and unlocking higher upgrade categories and slots.
 
 Tower Upgrades are the primary source of build identity and power growth.
 
@@ -75,7 +75,7 @@ Tower levels provide:
 
 - Small base stat increases
 - New tower visuals or models
-- Access to higher upgrade layers and upgrade slots
+- Access to higher upgrade categories and upgrade slots
 
 Tower levels are not intended to be the primary source of power growth.
 
@@ -145,7 +145,7 @@ If the request is accepted:
 - Request the target tower runtime to replace or update the tower model/visuals for the new level if configured.
 - Keep the permanent TowerBaseVisualRoot unchanged.
 - Refresh the current active AttackOrigin after model replacement.
-- Unlock access to higher upgrade layers and slots.
+- Unlock access to higher upgrade categories and slots.
 
 If the request is rejected, the Tower Draft item should not be consumed.
 
@@ -163,7 +163,7 @@ Tower Level-Up Preview is owned by the placement drag workflow. It currently mea
 
 TowerUpgradeDefinition represents one independent tower upgrade option.
 
-Each TowerUpgradeDefinition belongs to one TowerFamily and one upgrade layer.
+Each TowerUpgradeDefinition belongs to one TowerFamily and declares a Required Tower Level.
 
 TowerUpgradeDefinition should not be attached to AttackConfig. AttackConfig remains the immutable default combat configuration template. TowerUpgradeDefinition represents upgrade content that may be applied to a tower instance during a battle.
 
@@ -171,13 +171,11 @@ TowerUpgradeDefinition may define:
 
 - Upgrade identity and display text
 - TowerFamily
-- Upgrade layer
 - Required tower level
 - Basic Layer stat deltas
 - Behaviour Layer package
 - Future Synergy Layer data
 - Authoring validation metadata
-- Explicit incompatibility data for upgrades that should not compose
 
 TowerUpgradeDefinition should not contain Draft sampling, display choice count, reroll, or weighting rules. Those rules belong to DraftSystem.
 
@@ -185,7 +183,7 @@ TowerUpgradeDefinition should not contain Draft sampling, display choice count, 
 
 Tower Upgrade System owns the configured set of available TowerUpgradeDefinition assets.
 
-The upgrade database is a content lookup source. It may support lookup and filtering by TowerFamily, upgrade layer, required tower level, behaviour package, or other authoring metadata.
+The upgrade database is a content lookup source. It may support lookup and filtering by TowerFamily, required tower level, behaviour package, or other authoring metadata.
 
 The upgrade database should not contain gameplay selection logic.
 
@@ -217,16 +215,16 @@ Each tower instance tracks its own applied upgrades and remaining upgrade slots.
 Runtime upgrade state should answer:
 
 - Which TowerUpgradeDefinition entries this tower already owns
-- Which upgrade layers are unlocked for this tower level
-- How many upgrade slots remain per unlocked layer
+- Which Required Tower Level categories are unlocked for this tower level
+- How many upgrade slots remain for each required-level category
 - Which Basic Layer stat deltas affect this tower
 - Which Behaviour Layer packages are active on this tower
 
-Applying any TowerUpgradeDefinition consumes one slot from that upgrade's layer.
+Applying any TowerUpgradeDefinition consumes one slot from that upgrade's required-level category.
 
-Basic, Behaviour, and Synergy upgrades all consume slots. They do not share one global counter unless a later design explicitly changes that rule.
+Basic, Behaviour, and Synergy upgrade categories all consume slots. They do not share one global counter unless a later design explicitly changes that rule.
 
-Tower level unlocks upgrade slot layers:
+Tower level unlocks upgrade slot categories:
 
 | Tower Level | Unlocked Upgrade Slots |
 |---|---|
@@ -234,7 +232,7 @@ Tower level unlocks upgrade slot layers:
 | Lv2 | Basic slots, Behaviour slots |
 | Lv3 | Basic slots, Behaviour slots, Synergy slots |
 
-Exact slot counts are tuning data. The system contract is that lower tower levels cannot receive upgrades from layers they have not unlocked.
+Exact slot counts are tuning data. The system contract is that lower tower levels cannot receive upgrades whose Required Tower Level is higher than the tower's current level.
 
 Each tower may gradually develop its own build identity.
 
@@ -263,17 +261,14 @@ An upgrade may be applied only when:
 
 - The upgrade TowerFamily matches the target tower's TowerFamily.
 - The target tower level satisfies Required Tower Level.
-- The upgrade layer is unlocked by the target tower level.
-- The target tower has a remaining slot for that upgrade layer.
+- The target tower has a remaining slot for that upgrade's required-level category.
 - The target tower does not already have the same upgrade.
-- The upgrade is not explicitly incompatible with an already-applied upgrade on that tower.
 
 Example:
 
 ```text
 Upgrade: Archer Scatter Arrow
 TowerFamily: Archer
-Upgrade Layer: Behaviour
 Required Level: 2
 
 Valid Targets:
@@ -307,9 +302,11 @@ TowerUpgradeDefinition entries are independent by default.
 
 If a tower owns both Piercing Arrow and Scatter Arrow, the intended result is that the scattered arrows can also pierce.
 
-Behaviour upgrades should compose unless a definition explicitly declares an incompatibility.
+Behaviour upgrades are composable by default in v1.
 
-This lets the player build identity through limited upgrade choices while preserving an escape hatch for future upgrades that cannot safely combine.
+The first version does not define upgrade-exclusion rules where applying one upgrade prevents another different upgrade from being applied later.
+
+If a future design needs upgrade exclusion, that rule should be added as an explicit reviewed contract instead of being assumed by the current upgrade model.
 
 ## 5.4 Authoring Validation
 
@@ -335,10 +332,8 @@ TowerUpgradeSystem owns:
 
 - TowerFamily matching rules
 - Required Tower Level checks
-- Upgrade layer unlock checks
 - Remaining upgrade slot checks
 - Per-tower duplicate upgrade checks
-- Explicit incompatibility checks
 - Upgrade definition lookup
 - Upgrade application validation
 
@@ -366,6 +361,8 @@ These helpers should answer eligibility questions only. They should not decide h
 # 7. Tower Upgrade Layers
 
 Tower upgrades are divided into three conceptual layers.
+
+These layers are design categories derived from Required Tower Level in v1. They are not separate TowerUpgradeDefinition data fields.
 
 ---
 
@@ -529,7 +526,6 @@ Future versions may expand this system with:
 - Upgrade prerequisites
 - Upgrade rarity
 - Upgrade evolution chains
-- Upgrade exclusions
 - Tower level unlock requirements
 - Global upgrades
 - Tower specialization paths

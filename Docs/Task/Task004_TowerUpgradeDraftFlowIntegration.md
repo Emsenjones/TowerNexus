@@ -43,7 +43,7 @@ DraftSystem should generate eligible Tower Upgrade Draft choices from current to
 
 - TowerFamily
 - TowerLevel
-- Unlocked upgrade layers
+- RequiredTowerLevel eligibility
 - Remaining upgrade slots
 - Already applied upgrades
 - TowerUpgradeDefinition assets provided by TowerUpgradeSystem or TowerUpgradeDatabase

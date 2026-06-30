@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
-  m_Name: Config_TowerDefinition_DroneTower
+  m_Name: Config_TowerDefini_DroneTower
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerFamily: 3
   displayName: Drone Tower
-  description: Deploys an autonomous drone attack entity.
+  description: An arcane tower that damages nearby enemies with orbiting magic orbs
   icon: {fileID: 21300000, guid: 3580ed0c0afbd47ab93d02417e0bffef, type: 3}
   towerPrefab: {fileID: 8270491640636788401, guid: b41b585d975044e40aed1799db9297fb, type: 3}
   attackConfig: {fileID: 11400000, guid: 325fdd5c6d3894adf9126f02b835cd35, type: 2}

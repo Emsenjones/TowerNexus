@@ -10,10 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3b114ea45bc744699fd2aadd1c7a4c3b, type: 3}
-  m_Name: Config_MonsterDefinition_Skeleton
+  m_Name: Config_MonsterDefini_Golem
   m_EditorClassIdentifier: Assembly-CSharp::MonsterDefinition
-  displayName: Skeleton
-  monsterPrefab: {fileID: 2382199090356143332, guid: 11ae00977065c425f8298ca0e5e60680, type: 3}
+  displayName: Golem
+  monsterPrefab: {fileID: 3333681211596321960, guid: 6973816234f2b4f3a9ee8c30c3053911, type: 3}
   moveSpeed: 0.25
   maxHealth: 100
   expReward: 0

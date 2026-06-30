@@ -22,7 +22,8 @@ This task should introduce the data model for:
 
 - TowerUpgradeDefinition
 - TowerUpgradeDatabase
-- UpgradeLayer
+- RequiredTowerLevel
+- RequiredTowerLevel-based upgrade category
 - TowerFamily binding
 - Basic additive stat deltas
 - Behaviour package identifier
@@ -43,6 +44,7 @@ TowerUpgradeDatabase should be the central source of truth for configured TowerU
 - TowerUpgradeDatabase contains no gameplay selection or application logic.
 - DraftSystem selects candidates later.
 - TowerUpgradeSystem applies selected upgrades later.
+- Do not introduce a separate code-level layer field in v1.
 
 Basic stat delta authoring should support the stat categories required by the current System docs, including common tower stats and tower-family-specific stats.
 
@@ -58,12 +60,13 @@ Basic stat delta authoring should support the stat categories required by the cu
 ## Acceptance Criteria
 
 - Designers can create TowerUpgradeDefinition assets.
-- A TowerUpgradeDefinition can specify TowerFamily, UpgradeLayer, required tower level, display data, additive Basic stat deltas, and one Behaviour package identifier when applicable.
+- A TowerUpgradeDefinition can specify TowerFamily, required tower level, display data, additive Basic stat deltas, and one Behaviour package identifier when applicable.
 - A TowerUpgradeDatabase can reference all configured TowerUpgradeDefinition assets.
 - TowerUpgradeDatabase can be queried or inspected as a content lookup source without owning gameplay logic.
 - Authoring validation warns about clearly invalid combinations, such as Magic Orb-specific stat deltas on a Cannon upgrade.
 - No TowerUpgradeDefinition data is stored on AttackConfig.
 - No TargetTowerType field is introduced.
+- No separate layer field is introduced.
 
 ## Implementation Review Note
 
