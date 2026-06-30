@@ -31,14 +31,14 @@ public class TowerDeployController : MonoBehaviour
         this.monsterManager = monsterManager;
     }
 
-    public bool TryDeployTower(TowerPlacementPreview preview, PendingTowerItemUI draftedTowerEntry)
+    public bool TryDeployTower(TowerPlacementPreview preview, PendingDraftUI draftedDraftEntry)
     {
-        return TryDeployTower(preview, draftedTowerEntry, out _);
+        return TryDeployTower(preview, draftedDraftEntry, out _);
     }
 
     public bool TryDeployTower(
         TowerPlacementPreview preview,
-        PendingTowerItemUI draftedTowerEntry,
+        PendingDraftUI draftedDraftEntry,
         out TowerBehaviour deployedTower)
     {
         deployedTower = null;
@@ -74,7 +74,7 @@ public class TowerDeployController : MonoBehaviour
             return false;
         }
 
-        if (draftedTowerEntry != null && battleHUDUI == null)
+        if (draftedDraftEntry != null && battleHUDUI == null)
         {
             Debug.LogWarning("Tower deploy controller cannot deploy tower: battle HUD UI is not assigned for drafted tower entry removal.", this);
             return false;
@@ -126,9 +126,9 @@ public class TowerDeployController : MonoBehaviour
             monsterManager.RecalculateAllMonsterPaths();
         }
 
-        if (battleHUDUI != null && draftedTowerEntry != null)
+        if (battleHUDUI != null && draftedDraftEntry != null)
         {
-            battleHUDUI.RemovePendingTower(draftedTowerEntry);
+            battleHUDUI.RemovePendingDraft(draftedDraftEntry);
         }
 
         deployedTower = towerBehaviour;

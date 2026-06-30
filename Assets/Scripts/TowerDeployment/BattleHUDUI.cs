@@ -2,22 +2,26 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class BattleHUDUI : MonoBehaviour
 {
     [SerializeField] private PlayerSystem playerSystem;
-    [SerializeField] private TowerDraftUI towerDraftUI;
+    [FormerlySerializedAs("towerDraftUI")]
+    [SerializeField] private DraftUI draftUI;
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text hpText;
     [SerializeField] private Slider expSlider;
-    [SerializeField] private Transform pendingTowerContainer;
-    [SerializeField] private GameObject pendingTowerItemPrefab;
+    [FormerlySerializedAs("pendingTowerContainer")]
+    [SerializeField] private Transform pendingDraftContainer;
+    [FormerlySerializedAs("pendingTowerItemPrefab")]
+    [SerializeField] private GameObject pendingDraftItemPrefab;
 
-    private readonly List<PendingTowerItemUI> pendingTowerItems = new List<PendingTowerItemUI>();
+    private readonly List<PendingDraftUI> pendingDraftItems = new List<PendingDraftUI>();
 
-    public IReadOnlyList<PendingTowerItemUI> PendingTowerItems => pendingTowerItems;
+    public IReadOnlyList<PendingDraftUI> PendingDraftItems => pendingDraftItems;
 
     private void OnEnable()
     {
@@ -75,52 +79,62 @@ public class BattleHUDUI : MonoBehaviour
 
     public void AddPendingTower(TowerDefinition towerDefinition)
     {
-        if (towerDefinition == null)
+        AddPendingDraft(DraftResult.CreateTowerDraft(towerDefinition));
+    }
+
+    public void AddPendingDraft(DraftResult draftResult)
+    {
+        if (draftResult == null || !draftResult.IsValid)
         {
-            Debug.LogWarning("Battle HUD UI cannot add pending tower: tower definition is null.", this);
+            Debug.LogWarning("Battle HUD UI cannot add pending draft: draft result is invalid.", this);
             return;
         }
 
-        if (pendingTowerContainer == null)
+        if (pendingDraftContainer == null)
         {
-            Debug.LogWarning("Battle HUD UI cannot add pending tower: pending tower container is not assigned.", this);
+            Debug.LogWarning("Battle HUD UI cannot add pending draft: pending draft container is not assigned.", this);
             return;
         }
 
-        if (pendingTowerItemPrefab == null)
+        if (pendingDraftItemPrefab == null)
         {
-            Debug.LogWarning("Battle HUD UI cannot add pending tower: pending tower item prefab is not assigned.", this);
+            Debug.LogWarning("Battle HUD UI cannot add pending draft: pending draft item prefab is not assigned.", this);
             return;
         }
 
-        GameObject itemObject = Instantiate(pendingTowerItemPrefab, pendingTowerContainer);
+        GameObject itemObject = Instantiate(pendingDraftItemPrefab, pendingDraftContainer);
 
-        if (!itemObject.TryGetComponent(out PendingTowerItemUI item))
+        if (!itemObject.TryGetComponent(out PendingDraftUI item))
         {
-            Debug.LogWarning("Battle HUD UI cannot add pending tower: pending tower item prefab is missing PendingTowerItemUI.", itemObject);
+            Debug.LogWarning("Battle HUD UI cannot add pending draft: pending draft item prefab is missing PendingDraftUI.", itemObject);
             Destroy(itemObject);
             return;
         }
 
-        item.Initialize(towerDefinition, towerPlacementController);
-        pendingTowerItems.Add(item);
+        item.Initialize(draftResult, towerPlacementController);
+        pendingDraftItems.Add(item);
     }
 
-    public void RemovePendingTower(PendingTowerItemUI item)
+    public void RemovePendingTower(PendingDraftUI item)
+    {
+        RemovePendingDraft(item);
+    }
+
+    public void RemovePendingDraft(PendingDraftUI item)
     {
         if (item == null)
         {
-            Debug.LogWarning("Battle HUD UI cannot remove pending tower: item is null.", this);
+            Debug.LogWarning("Battle HUD UI cannot remove pending draft: item is null.", this);
             return;
         }
 
-        pendingTowerItems.Remove(item);
+        pendingDraftItems.Remove(item);
         Destroy(item.gameObject);
     }
 
     public bool IsScreenPositionInsideDraftItemInteractionArea(Vector2 screenPosition)
     {
-        RectTransform draftItemArea = pendingTowerContainer as RectTransform;
+        RectTransform draftItemArea = pendingDraftContainer as RectTransform;
 
         if (draftItemArea == null)
         {
@@ -130,20 +144,20 @@ public class BattleHUDUI : MonoBehaviour
         return RectTransformUtility.RectangleContainsScreenPoint(draftItemArea, screenPosition);
     }
 
-    public void OpenDraft(List<TowerDefinition> towerDefinitions)
+    public void OpenDraft(List<DraftResult> draftResults)
     {
-        OpenDraft(towerDefinitions, null);
+        OpenDraft(draftResults, null);
     }
 
-    public void OpenDraft(List<TowerDefinition> towerDefinitions, Action<TowerDefinition> onSelected)
+    public void OpenDraft(List<DraftResult> draftResults, Action<DraftResult> onSelected)
     {
-        if (towerDraftUI == null)
+        if (draftUI == null)
         {
-            Debug.LogWarning("Battle HUD UI cannot open draft: tower draft UI is not assigned.", this);
+            Debug.LogWarning("Battle HUD UI cannot open draft: Draft UI is not assigned.", this);
             return;
         }
 
-        towerDraftUI.OpenDraft(towerDefinitions, onSelected);
+        draftUI.OpenDraft(draftResults, onSelected);
     }
 
     private void SubscribeToPlayerSystem()

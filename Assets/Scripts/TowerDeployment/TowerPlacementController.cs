@@ -17,10 +17,14 @@ public class TowerPlacementController : MonoBehaviour
 
     private TowerPlacementPreview currentPreview;
     private readonly List<TowerBehaviour> deployedTowers = new List<TowerBehaviour>();
+    private readonly List<TowerInstance> deployedTowerInstances = new List<TowerInstance>();
+    private DraftResult currentDraftResult;
     private TowerDefinition currentTowerDefinition;
+    private TowerUpgradeDefinition currentTowerUpgradeDefinition;
     private GridNodeBehaviour currentTargetNode;
     private TowerBehaviour currentLevelUpTarget;
-    private PendingTowerItemUI currentDraftedTowerEntry;
+    private TowerBehaviour currentUpgradeTarget;
+    private PendingDraftUI currentDraftEntry;
     private bool isDragging;
     private bool isTowerTargetCandidateActive;
     private bool isLevelUpPreviewActive;
@@ -30,6 +34,15 @@ public class TowerPlacementController : MonoBehaviour
     public TowerPlacementPreview CurrentPreview => currentPreview;
     public TowerDefinition CurrentTowerDefinition => currentTowerDefinition;
     public GridNodeBehaviour CurrentTargetNode => currentTargetNode;
+    public IReadOnlyList<TowerInstance> DeployedTowerInstances
+    {
+        get
+        {
+            RegisterExistingDeployedTowers();
+            RebuildDeployedTowerInstances();
+            return deployedTowerInstances;
+        }
+    }
     public bool IsDragging => isDragging;
 
     private void Awake()
@@ -66,11 +79,40 @@ public class TowerPlacementController : MonoBehaviour
         BeginPlacement(towerDefinition, null);
     }
 
-    public void BeginPlacement(TowerDefinition towerDefinition, PendingTowerItemUI draftedTowerEntry)
+    public void BeginPlacement(TowerDefinition towerDefinition, PendingDraftUI draftedDraftEntry)
+    {
+        BeginTowerDraftDrag(DraftResult.CreateTowerDraft(towerDefinition), draftedDraftEntry);
+    }
+
+    public void BeginDraftDrag(DraftResult draftResult, PendingDraftUI draftedDraftEntry)
+    {
+        if (draftResult == null || !draftResult.IsValid)
+        {
+            Debug.LogWarning("Tower placement controller cannot begin draft drag: draft result is invalid.", this);
+            return;
+        }
+
+        switch (draftResult.ResultType)
+        {
+            case DraftResultType.TowerDraft:
+                BeginTowerDraftDrag(draftResult, draftedDraftEntry);
+                break;
+            case DraftResultType.TowerUpgradeDraft:
+                BeginTowerUpgradeDrag(draftResult, draftedDraftEntry);
+                break;
+            default:
+                Debug.LogWarning($"Tower placement controller cannot begin draft drag: unsupported draft result type '{draftResult.ResultType}'.", this);
+                break;
+        }
+    }
+
+    private void BeginTowerDraftDrag(DraftResult draftResult, PendingDraftUI draftedDraftEntry)
     {
         CancelPlacement();
         EnsureRuntimeDependencies();
         RegisterExistingDeployedTowers();
+
+        TowerDefinition towerDefinition = draftResult != null ? draftResult.TowerDefinition : null;
 
         if (towerDefinition == null)
         {
@@ -104,12 +146,39 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         currentPreview.Initialize(towerDefinition);
+        currentDraftResult = draftResult;
         currentTowerDefinition = towerDefinition;
-        currentDraftedTowerEntry = draftedTowerEntry;
+        currentTowerUpgradeDefinition = null;
+        currentDraftEntry = draftedDraftEntry;
         currentTargetNode = null;
         isDragging = true;
 
         ShowAttackRangePreviewsForCurrentDrag();
+        UpdatePreviewPosition(Input.mousePosition);
+    }
+
+    private void BeginTowerUpgradeDrag(DraftResult draftResult, PendingDraftUI draftedDraftEntry)
+    {
+        CancelPlacement();
+        EnsureRuntimeDependencies();
+        RegisterExistingDeployedTowers();
+
+        TowerUpgradeDefinition upgradeDefinition = draftResult != null ? draftResult.TowerUpgradeDefinition : null;
+
+        if (upgradeDefinition == null)
+        {
+            Debug.LogWarning("Tower placement controller cannot begin upgrade drag: upgrade definition is null.", this);
+            return;
+        }
+
+        currentDraftResult = draftResult;
+        currentTowerDefinition = null;
+        currentTowerUpgradeDefinition = upgradeDefinition;
+        currentDraftEntry = draftedDraftEntry;
+        currentTargetNode = null;
+        currentUpgradeTarget = null;
+        isDragging = true;
+
         UpdatePreviewPosition(Input.mousePosition);
     }
 
@@ -123,10 +192,13 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         currentPreview = null;
+        currentDraftResult = null;
         currentTowerDefinition = null;
+        currentTowerUpgradeDefinition = null;
         currentTargetNode = null;
         currentLevelUpTarget = null;
-        currentDraftedTowerEntry = null;
+        currentUpgradeTarget = null;
+        currentDraftEntry = null;
         isDragging = false;
         isTowerTargetCandidateActive = false;
         isLevelUpPreviewActive = false;
@@ -138,6 +210,13 @@ public class TowerPlacementController : MonoBehaviour
             battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
         {
             DragCancelCurrentOperation();
+            return;
+        }
+
+        if (IsTowerUpgradeDraftDrag())
+        {
+            CompleteTowerUpgrade();
+            CancelPlacement();
             return;
         }
 
@@ -154,7 +233,7 @@ public class TowerPlacementController : MonoBehaviour
 
         if (currentPreview != null && deployController != null)
         {
-            if (deployController.TryDeployTower(currentPreview, currentDraftedTowerEntry, out TowerBehaviour deployedTower))
+            if (deployController.TryDeployTower(currentPreview, currentDraftEntry, out TowerBehaviour deployedTower))
             {
                 RegisterDeployedTower(deployedTower);
             }
@@ -188,14 +267,47 @@ public class TowerPlacementController : MonoBehaviour
 
         currentLevelUpTarget.RefreshTowerVisual();
 
-        if (battleHUDUI != null && currentDraftedTowerEntry != null)
+        if (battleHUDUI != null && currentDraftEntry != null)
         {
-            battleHUDUI.RemovePendingTower(currentDraftedTowerEntry);
+            battleHUDUI.RemovePendingDraft(currentDraftEntry);
+        }
+    }
+
+    private void CompleteTowerUpgrade()
+    {
+        if (towerUpgradeSystem == null ||
+            currentUpgradeTarget == null ||
+            currentUpgradeTarget.TowerInstance == null ||
+            currentTowerUpgradeDefinition == null)
+        {
+            return;
+        }
+
+        if (!towerUpgradeSystem.TryApplyUpgrade(
+                currentUpgradeTarget.TowerInstance,
+                currentTowerUpgradeDefinition,
+                out string failureReason))
+        {
+            Debug.LogWarning(
+                $"Tower placement controller failed to apply upgrade '{currentTowerUpgradeDefinition.name}' to '{currentUpgradeTarget.name}': {failureReason}",
+                this);
+            return;
+        }
+
+        if (battleHUDUI != null && currentDraftEntry != null)
+        {
+            battleHUDUI.RemovePendingDraft(currentDraftEntry);
         }
     }
 
     private void UpdatePreviewPosition(Vector3 screenPosition)
     {
+        if (IsTowerUpgradeDraftDrag())
+        {
+            UpdateUpgradeTargetPosition(screenPosition);
+            return;
+        }
+
         if (currentPreview == null)
         {
             CancelPlacement();
@@ -246,6 +358,38 @@ public class TowerPlacementController : MonoBehaviour
         ClearLevelUpPreviewState(true);
         currentPreview.SetWorldPosition(worldPosition);
         currentPreview.SetPlacementState(false);
+    }
+
+    private void UpdateUpgradeTargetPosition(Vector3 screenPosition)
+    {
+        currentUpgradeTarget = null;
+
+        if (!TryGetWorldPosition(screenPosition, out Vector3 worldPosition))
+        {
+            currentTargetNode = null;
+            return;
+        }
+
+        if (mapGenerator == null)
+        {
+            if (!missingMapGeneratorWarningLogged)
+            {
+                Debug.LogWarning("Tower placement controller cannot resolve upgrade target: map generator is not assigned.", this);
+                missingMapGeneratorWarningLogged = true;
+            }
+
+            currentTargetNode = null;
+            return;
+        }
+
+        if (!mapGenerator.TryGetNodeByWorldPosition(worldPosition, out GridNodeBehaviour targetNode))
+        {
+            currentTargetNode = null;
+            return;
+        }
+
+        currentTargetNode = targetNode;
+        currentUpgradeTarget = FindTowerOccupyingNode(targetNode);
     }
 
     private bool TryUpdateLevelUpPreview(GridNodeBehaviour targetNode)
@@ -372,11 +516,33 @@ public class TowerPlacementController : MonoBehaviour
     {
         for (int i = deployedTowers.Count - 1; i >= 0; i--)
         {
-            if (deployedTowers[i] == null)
+            if (deployedTowers[i] == null || deployedTowers[i].TowerInstance == null)
             {
                 deployedTowers.RemoveAt(i);
             }
         }
+    }
+
+    private void RebuildDeployedTowerInstances()
+    {
+        deployedTowerInstances.Clear();
+        RemoveNullDeployedTowerEntries();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+
+            if (tower != null && tower.TowerInstance != null)
+            {
+                deployedTowerInstances.Add(tower.TowerInstance);
+            }
+        }
+    }
+
+    private bool IsTowerUpgradeDraftDrag()
+    {
+        return currentDraftResult != null &&
+               currentDraftResult.ResultType == DraftResultType.TowerUpgradeDraft;
     }
 
     private void ShowAttackRangePreviewsForCurrentDrag()

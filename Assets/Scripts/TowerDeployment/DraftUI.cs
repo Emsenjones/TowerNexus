@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TowerDraftUI : MonoBehaviour
+public class DraftUI : MonoBehaviour
 {
     [SerializeField] private GameObject rootObject;
     [SerializeField] private Transform draftItemContainer;
     [SerializeField] private GameObject towerDraftItemPrefab;
 
     private readonly List<TowerDraftItemUI> draftItems = new List<TowerDraftItemUI>();
-    private Action<TowerDefinition> onTowerSelected;
+    private Action<DraftResult> onDraftSelected;
 
     public bool IsOpen => rootObject != null && rootObject.activeSelf;
 
@@ -18,16 +18,16 @@ public class TowerDraftUI : MonoBehaviour
         CloseDraft();
     }
 
-    public void OpenDraft(List<TowerDefinition> towerDefinitions)
+    public void OpenDraft(List<DraftResult> draftResults)
     {
-        OpenDraft(towerDefinitions, null);
+        OpenDraft(draftResults, null);
     }
 
-    public void OpenDraft(List<TowerDefinition> towerDefinitions, Action<TowerDefinition> onSelected)
+    public void OpenDraft(List<DraftResult> draftResults, Action<DraftResult> onSelected)
     {
         Debug.Log("Opening draft UI...");
         ClearDraftItems();
-        onTowerSelected = onSelected;
+        onDraftSelected = onSelected;
 
         if (rootObject == null)
         {
@@ -47,28 +47,30 @@ public class TowerDraftUI : MonoBehaviour
             return;
         }
 
-        if (towerDefinitions == null || towerDefinitions.Count == 0)
+        if (draftResults == null || draftResults.Count == 0)
         {
-            Debug.LogWarning("Tower draft UI cannot open: draft tower list is empty.", this);
+            Debug.LogWarning("Draft UI cannot open: draft result list is empty.", this);
             rootObject.SetActive(false);
             return;
         }
 
         int createdItemCount = 0;
 
-        for (int i = 0; i < towerDefinitions.Count && createdItemCount < 3; i++)
+        for (int i = 0; i < draftResults.Count && createdItemCount < 3; i++)
         {
-            TowerDefinition towerDefinition = towerDefinitions[i];
+            DraftResult draftResult = draftResults[i];
 
-            if (towerDefinition == null)
+            if (draftResult == null || !draftResult.IsValid)
             {
-                Debug.LogWarning($"Tower draft UI skipped draft entry at index {i}: tower definition is null.", this);
+                Debug.LogWarning($"Draft UI skipped draft entry at index {i}: draft result is invalid.", this);
                 continue;
             }
 
-            if (towerDefinition.TowerPrefab == null)
+            if (draftResult.ResultType == DraftResultType.TowerDraft &&
+                draftResult.TowerDefinition != null &&
+                draftResult.TowerDefinition.TowerPrefab == null)
             {
-                Debug.LogWarning($"Tower draft UI entry '{GetTowerName(towerDefinition)}' is missing a tower prefab reference.", towerDefinition);
+                Debug.LogWarning($"Draft UI entry '{draftResult.DisplayName}' is missing a tower prefab reference.", draftResult.TowerDefinition);
             }
 
             GameObject itemObject = Instantiate(towerDraftItemPrefab, draftItemContainer);
@@ -80,7 +82,7 @@ public class TowerDraftUI : MonoBehaviour
                 continue;
             }
 
-            item.Initialize(towerDefinition, HandleTowerSelected);
+            item.Initialize(draftResult, HandleDraftSelected);
             draftItems.Add(item);
             createdItemCount++;
         }
@@ -103,7 +105,7 @@ public class TowerDraftUI : MonoBehaviour
     public void CloseDraft()
     {
         ClearDraftItems();
-        onTowerSelected = null;
+        onDraftSelected = null;
 
         if (rootObject != null)
         {
@@ -111,15 +113,15 @@ public class TowerDraftUI : MonoBehaviour
         }
     }
 
-    private void HandleTowerSelected(TowerDefinition towerDefinition)
+    private void HandleDraftSelected(DraftResult draftResult)
     {
-        if (towerDefinition == null)
+        if (draftResult == null || !draftResult.IsValid)
         {
-            Debug.LogWarning("Tower draft UI cannot select tower: tower definition is null.", this);
+            Debug.LogWarning("Draft UI cannot select draft result: draft result is invalid.", this);
             return;
         }
 
-        onTowerSelected?.Invoke(towerDefinition);
+        onDraftSelected?.Invoke(draftResult);
         CloseDraft();
     }
 
@@ -146,15 +148,5 @@ public class TowerDraftUI : MonoBehaviour
         {
             Destroy(draftItemContainer.GetChild(i).gameObject);
         }
-    }
-
-    private static string GetTowerName(TowerDefinition towerDefinition)
-    {
-        if (towerDefinition == null)
-        {
-            return string.Empty;
-        }
-
-        return string.IsNullOrEmpty(towerDefinition.DisplayName) ? towerDefinition.name : towerDefinition.DisplayName;
     }
 }

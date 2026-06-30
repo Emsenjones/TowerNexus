@@ -8,11 +8,12 @@ public class TowerDraftItemUI : MonoBehaviour
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private Button button;
+    [SerializeField] private TMP_Text descriptionText;
 
-    private TowerDefinition towerDefinition;
-    private Action<TowerDefinition> onSelected;
+    private DraftResult draftResult;
+    private Action<DraftResult> onSelected;
 
-    public TowerDefinition TowerDefinition => towerDefinition;
+    public DraftResult DraftResult => draftResult;
 
     private void OnDisable()
     {
@@ -22,19 +23,20 @@ public class TowerDraftItemUI : MonoBehaviour
         }
     }
 
-    public void Initialize(TowerDefinition towerDefinition, Action<TowerDefinition> onSelected)
+    public void Initialize(DraftResult draftResult, Action<DraftResult> onSelected)
     {
-        this.towerDefinition = towerDefinition;
+        this.draftResult = draftResult;
         this.onSelected = onSelected;
 
-        if (towerDefinition == null)
+        if (draftResult == null || !draftResult.IsValid)
         {
-            Debug.LogWarning("Tower draft item UI cannot initialize: tower definition is null.", this);
+            Debug.LogWarning("Draft item UI cannot initialize: draft result is invalid.", this);
             return;
         }
 
-        UpdateIcon(towerDefinition.Icon);
-        UpdateText(towerDefinition);
+        UpdateIcon(draftResult.Icon);
+        UpdateText(draftResult);
+        UpdateDescription(draftResult);
         BindButton();
     }
 
@@ -51,11 +53,11 @@ public class TowerDraftItemUI : MonoBehaviour
 
         if (icon == null)
         {
-            Debug.LogWarning($"Tower draft item UI has no icon for tower '{GetTowerName(towerDefinition)}'.", this);
+            Debug.LogWarning($"Draft item UI has no icon for '{GetDraftName()}'.", this);
         }
     }
 
-    private void UpdateText(TowerDefinition towerDefinition)
+    private void UpdateText(DraftResult draftResult)
     {
         if (nameText == null)
         {
@@ -63,7 +65,19 @@ public class TowerDraftItemUI : MonoBehaviour
         }
         else
         {
-            nameText.text = GetTowerName(towerDefinition);
+            nameText.text = draftResult.DisplayName;
+        }
+    }
+
+    private void UpdateDescription(DraftResult draftResult)
+    {
+        if (descriptionText == null)
+        {
+            Debug.LogWarning("Tower draft item UI cannot update description: description text is not assigned.", this);
+        }
+        else
+        {
+            descriptionText.text = draftResult.Description;
         }
     }
 
@@ -81,27 +95,17 @@ public class TowerDraftItemUI : MonoBehaviour
 
     private void HandleButtonClicked()
     {
-        if (towerDefinition == null)
+        if (draftResult == null || !draftResult.IsValid)
         {
-            Debug.LogWarning("Tower draft item UI cannot select tower: tower definition is null.", this);
+            Debug.LogWarning("Draft item UI cannot select draft result: draft result is invalid.", this);
             return;
         }
 
-        onSelected?.Invoke(towerDefinition);
+        onSelected?.Invoke(draftResult);
     }
 
-    private static string GetTowerName(TowerDefinition towerDefinition)
+    private string GetDraftName()
     {
-        if (towerDefinition == null)
-        {
-            return string.Empty;
-        }
-
-        if (!string.IsNullOrEmpty(towerDefinition.DisplayName))
-        {
-            return towerDefinition.DisplayName;
-        }
-
-        return towerDefinition.name;
+        return draftResult != null ? draftResult.DisplayName : string.Empty;
     }
 }

@@ -171,6 +171,8 @@ Tower Upgrade System is responsible for validating the target tower and applying
 
 The first version uses a Tower Definition Database or Tower Pool.
 
+As long as the Tower Definition Database contains at least one valid TowerDefinition, the Draft System should be able to produce Tower Draft candidates.
+
 The Draft System may randomly generate draft choices from:
 
 - All available towers
@@ -198,7 +200,6 @@ The upgrade pool should be constructed using:
 - Each tower instance's TowerFamily
 - Each tower instance's TowerLevel
 - Required Tower Level eligibility for that tower level
-- Remaining upgrade slots for each required-level category
 - Upgrades already applied to that tower
 - Upgrade definitions provided by Tower Upgrade System
 
@@ -206,7 +207,7 @@ For every tower instance, Draft System should request or evaluate eligible upgra
 
 - Determine TowerFamily.
 - Determine TowerLevel.
-- Determine Required Tower Level eligibility and remaining slots.
+- Determine Required Tower Level eligibility.
 - Gather all valid upgrades that tower is eligible for.
 - Exclude upgrades already owned by that tower.
 
@@ -238,7 +239,56 @@ Detailed upgrade eligibility rules belong to Tower Upgrade System and may evolve
 
 ---
 
-### 6.3 Current First-Version Rules
+### 6.3 Combined Draft Candidate Pool
+
+The first-version Draft System may combine Tower Draft candidates and Tower Upgrade Draft candidates into one Draft candidate pool before sampling displayed choices.
+
+Recommended first-version generation order:
+
+```text
+Generate Tower Draft candidates from TowerDefinitionDatabase
+    ↓
+Generate Tower Upgrade Draft candidates from current tower instances
+    ↓
+Merge both candidate lists into one Draft candidate pool
+    ↓
+Sample displayed Draft choices from candidate entries
+    ↓
+Deduplicate displayed choices by Draft item identity
+```
+
+Each candidate entry has equal sampling weight by default.
+
+This does not mean every TowerUpgradeDefinition has equal final probability. Tower Upgrade Draft candidates are generated per eligible tower instance, so the same TowerUpgradeDefinition may appear multiple times internally when multiple tower instances are eligible for it.
+
+Example:
+
+```text
+Tower Draft candidates:
+- Archer Tower
+- Cannon Tower
+
+Tower Upgrade Draft candidates:
+- Scatter Arrow from Archer A
+- Scatter Arrow from Archer B
+- Scatter Arrow from Archer C
+- Reinforced Shells from Cannon A
+```
+
+Every candidate entry above has equal sampling weight, but Scatter Arrow has higher total representation because three eligible Archer tower instances contributed it.
+
+Displayed choices should still be deduplicated by Draft item identity:
+
+- Tower Draft identity is the TowerDefinition.
+- Tower Upgrade Draft identity is the TowerUpgradeDefinition.
+
+The internal candidate pool may contain duplicates for weighting, but the final displayed Draft choices should not show the same TowerDefinition or TowerUpgradeDefinition more than once in the same Draft window.
+
+If no Tower Upgrade Draft candidates exist, the Draft System may still generate choices from available Tower Draft candidates.
+
+---
+
+### 6.4 Current First-Version Rules
 
 Recommended first-version rules:
 
@@ -246,7 +296,7 @@ Recommended first-version rules:
 |---|---|
 | Choice Count | 3 choices |
 | Duplicate Prevention | Prevent duplicate displayed options within the same Draft round |
-| Random Weight | Equal weight initially |
+| Random Weight | Equal weight per candidate entry initially |
 | Refresh System | Not included |
 | Rarity System | Not included |
 | Ban/Pick System | Not included |
@@ -333,6 +383,8 @@ BattleHUDUISystem creates draggable Tower Upgrade Draft item
 TowerPlacementSystem detects target tower intent
     ↓
 TowerUpgradeSystem validates and applies upgrade
+    ↓
+Successful apply consumes draft item
 ```
 
 ### 9.3 Ownership Rules

@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerFamily: 0
   displayName: Archer Tower
-  description: A reliable ranged tower that picks off enemies with precise arrow
-    shots
+  description: Fast straight shots
   icon: {fileID: 21300000, guid: 48902436d5fe340feb0da315672b5b04, type: 3}
   towerPrefab: {fileID: 8270491640636788401, guid: 7f40fd16bab2d4a20b51506d3cb37e8f, type: 3}
   attackConfig: {fileID: 11400000, guid: 1c1d31696daa84d328a1612b624643c6, type: 2}
