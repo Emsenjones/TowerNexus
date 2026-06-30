@@ -28,12 +28,12 @@ MonoBehaviour:
   magicOrbMaxLifetime: 5
   magicOrbSameTargetHitCooldown: 0.5
   magicOrbPrefab: {fileID: 0}
-  droneBatteryDuration: 20
+  droneBatteryDuration: 15
   droneOrbitRadius: 1
   droneFlightSpeed: 2
   droneFlightHeight: 1.5
   droneBurstCount: 6
-  droneBurstInterval: 0.1
-  droneBurstCooldown: 1
+  droneBurstInterval: 0.2
+  droneBurstCooldown: 2
   droneProjectileConfig: {fileID: 11400000, guid: 6a58c9e1d15b348c2b43499f6a6e273b, type: 2}
   dronePrefab: {fileID: 7978792076586334490, guid: 7b10ada619b6042278238b85e5e41ed9, type: 3}

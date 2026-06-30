@@ -12789,7 +12789,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 44387f5c34084fe28363601416749152, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDatabase
-  upgradeDefinitions: []
+  upgradeDefinitions:
+  - {fileID: 11400000, guid: fced72daa7b7c42419e4cb626f897805, type: 2}
+  - {fileID: 11400000, guid: 76b13c72bfb594d89beecab5f1ce3520, type: 2}
+  - {fileID: 11400000, guid: 83605bc8a0ade4983a10e00192c09e89, type: 2}
+  - {fileID: 11400000, guid: 43d1ce78aedd8460fb2773003312c23b, type: 2}
+  - {fileID: 11400000, guid: 499144ae5a9eb4bdeb291f0123049068, type: 2}
+  - {fileID: 11400000, guid: 24709742dca2046779cfef5ef0de9612, type: 2}
+  - {fileID: 11400000, guid: 546d23d1100934c27a3c9b24cf9e9444, type: 2}
+  - {fileID: 11400000, guid: 3065ae8f2b27d49f39547a329a3630c7, type: 2}
+  - {fileID: 11400000, guid: 9e74b0160f9d04f668443ecd79712ae8, type: 2}
+  - {fileID: 11400000, guid: 0acd53ffd208c4f399f43a5192483a25, type: 2}
+  - {fileID: 11400000, guid: 350a57194686d4136b25bcf36394e53d, type: 2}
+  - {fileID: 11400000, guid: 8ba6e423e1f554928aa9100d50c4246a, type: 2}
 --- !u!1 &6718634423958995076
 GameObject:
   m_ObjectHideFlags: 0
