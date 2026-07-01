@@ -61,21 +61,22 @@
 1. Average each wave duration: 400 s;
 2. Wave count: 20;
 ## Future Development
-1. *Add Monster health bar.
-2. *Add Monster hit effect.
-3. *Add damage display.
-4. *Tower and Projectile effect.
-5. *Refactor System documents based on new four types of Towers.
-6. Implement the Tower upgrade system.
-   *Phase 1: Tower Framework foundation
-   *Phase 2: Projectile foundation + four base tower runtime
-   *Phase 3: Separate the Tower and it blocks.
-   *Phase 4: Upgrade data/application foundation
-   *Phase 5: Draft integration for deploy / level-up / upgrade
-   Phase 6: Archer/Cannon/MagicOrb/Drone tower behavior layer upgrade development 
-   Phase 8: Draft detail window implementation
-   Phase 9: Player progression polish
-   Phase 10: Tap tower interaction
-7. Develop Monster & Projectile object pool.
-8. Runtime upgrade effects
+1. *Add Monster health bar;
+2. *Add Monster hit effect;
+3. *Add damage display;
+4. *Tower and Projectile effect;
+5. *Refactor System documents based on new four types of Towers;
+6. Implement the Tower upgrade system;
+   *Phase 1: Tower Framework foundation;
+   *Phase 2: Projectile foundation + four base tower runtime;
+   *Phase 3: Separate the Tower and it blocks;
+   *Phase 4: Upgrade data/application foundation;
+   *Phase 5: Draft integration for deploy / level-up / upgrade;
+   Phase 6: Archer/Cannon/MagicOrb/Drone tower behavior layer Phase1 to Phase2 implementation;
+7. BuffAndEffectSystem implementation;
+8. Player Level up by resolving monsters;
+9. Level configuration design;
+10. Tap tower to pop up TowerInfoWindow;
+11. Develop Monster & Projectile object pool;
+12. (Optional)Phase3 Tower upgrade items: Hunting Arrow、Bouncing Shell、Resonance Orb、Missile Drone、Final Dive.
 

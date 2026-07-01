@@ -28,7 +28,9 @@ Projectile System Triggers AreaDamageEffect
 Buff And Effect System Executes Area Damage
 ```
 
-The first version only needs to support AreaDamageEffect.
+The first effect foundation only needs to support instant area damage.
+
+Delayed area damage and repeated area damage over duration are extensions of the same effect foundation. They should be added when adopted Behaviour Layer upgrades require them, instead of being duplicated inside individual tower runtimes.
 
 Buff-related interfaces may be reserved for future expansion.
 
@@ -38,7 +40,9 @@ Impact VFX is configured by ProjectileConfig and triggered by the Projectile Sys
 
 The Buff And Effect System should not be required for purely visual impact feedback.
 
-Tower upgrade behaviours should not force this system to exist before their first implementation. If a tower-specific upgrade such as Burning Shell is implemented before the Buff And Effect System phase, it may remain a local tower behaviour that creates area damage over time. That local implementation should not be treated as the general buff or effect framework, and may be migrated here later when shared effect or buff behavior is needed.
+Tower upgrade behaviours that only change attack shape or released attack entity count do not require this system.
+
+Tower upgrade behaviours that create reusable area damage, delayed area damage, repeated area damage, buffs, or other complex combat results should delegate that execution to this system once those effects are in scope.
 
 ---
 
@@ -136,7 +140,9 @@ Buffs are not required in the first version.
 
 ## 5. First Version Effect Type
 
-The first version only supports AreaDamageEffect.
+The first effect foundation supports AreaDamageEffect.
+
+Delayed or repeated area damage should extend this section only when an approved gameplay behaviour needs it.
 
 ---
 
@@ -197,6 +203,25 @@ The first version does not need advanced falloff rules.
 All valid monsters inside the radius receive the same damage.
 
 AreaDamageEffect does not own monster positioning, collision shape, or target validity. It consumes monster references and dispatches damage to valid monsters selected by the effect query.
+
+---
+
+### 5.2 Delayed And Repeated Area Damage
+
+Delayed area damage represents area damage that is triggered after a configured delay.
+
+Repeated area damage represents area damage that ticks over a configured duration.
+
+These are effect-foundation extensions, not separate tower-owned query systems.
+
+Typical Behaviour Layer consumers:
+
+- Cannon Timed Shell
+- Cannon Burning Shell
+
+These effects should reuse the same monster validity and radius-evaluation contract as AreaDamageEffect.
+
+They should not own projectile movement, projectile impact VFX, tower target selection, or monster health.
 
 ---
 

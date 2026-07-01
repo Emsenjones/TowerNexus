@@ -625,6 +625,7 @@ Buff And Effect System should own reusable effect and buff execution.
 Examples:
 
 - AreaDamageEffect triggered by a projectile impact
+- Delayed or repeated area damage triggered by an effect-backed Behaviour package
 - Buff application effects
 - Enemy-attached states such as poison, slow, burn, weaken, or armor reduction
 

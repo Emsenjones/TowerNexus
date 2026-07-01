@@ -423,17 +423,17 @@ TowerUpgradeSystem should not become a behaviour manager.
 
 Examples:
 
-| Tower | Example |
-|---|---|
-| Archer Tower | Multi-shot |
-| Archer Tower | Pierce |
-| Cannon Tower | Larger explosion radius |
-| Cannon Tower | Secondary explosion |
-| Magic Tower | Additional Orb |
-| Magic Tower | Unlimited Hits |
-| Magic Tower | Consecutive Hit Bonus |
-| Drone Tower | Dual Drones |
-| Drone Tower | Missile Attack |
+| Tower | Example                  |
+|---|--------------------------|
+| Archer Tower | Multi-shot               |
+| Archer Tower | Pierce                   |
+| Cannon Tower | Larger explosion radius  |
+| Cannon Tower | Secondary explosion      |
+| Magic Tower | Additional Orb           |
+| Magic Tower | Hit to trigger Explosion |
+| Magic Tower | Consecutive Hit Bonus    |
+| Drone Tower | Dual Drones              |
+| Drone Tower | Missile Attack           |
 
 Current design-reference upgrade ideas:
 
@@ -446,9 +446,38 @@ Current design-reference upgrade ideas:
 
 These upgrade ideas are design references for framework extensibility. They are not part of the current implementation scope unless a later Task Document explicitly adopts them.
 
+Behaviour Layer implementation should be grouped by runtime dependency, not only by tower family.
+
+Low-dependency behaviour packages may be implemented inside their corresponding tower runtime path when they only change attack shape, attack count, or released attack entities.
+
+Examples:
+
+- Archer Piercing Arrow
+- Archer Scatter Arrow
+- Magic Twin Orbs
+- Drone Twin Drones
+
+Effect-backed behaviour packages should wait for the Buff And Effect System foundation when they need reusable area damage, delayed area damage, or repeated area damage over duration.
+
+Examples:
+
+- Cannon Burning Shell
+- Cannon Timed Shell
+- Magic Orb Splash
+
+Advanced behaviour packages should be reviewed after combat runtime and Buff And Effect System contracts are stable when they require target reacquisition, chained projectile behaviour, tracking projectiles, per-target stack state, or Drone lifecycle changes.
+
+Examples:
+
+- Archer Hunting Arrow
+- Cannon Bouncing Shell
+- Magic Resonance Orb
+- Drone Missile Drone
+- Drone Final Dive
+
 Damage upgrade examples should modify runtime damage bonuses rather than overwrite TowerLevelConfig.basicDamage. TowerLevelConfig.basicDamage remains the tower's level-based base stat.
 
-Burning Shell should not require a general Buff And Effect System in the first upgrade implementation. If implemented before the Buff And Effect System phase, it should remain a Cannon-local behaviour that creates local area damage over time, with a future migration path to the Buff And Effect System.
+Behaviour packages should not duplicate shared area-query, delayed-damage, repeated-damage, buff, or effect execution logic inside individual tower runtimes when that logic belongs to the Buff And Effect System. Tower runtimes may request or trigger those effects, but reusable effect resolution should remain in the Buff And Effect System.
 
 Purpose:
 
