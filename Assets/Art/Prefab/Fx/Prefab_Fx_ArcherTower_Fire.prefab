@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &53140670463588588
 Transform:
   m_ObjectHideFlags: 0
@@ -4828,7 +4828,7 @@ GameObject:
   - component: {fileID: 7046460567170397679}
   - component: {fileID: 4975408998935522837}
   m_Layer: 0
-  m_Name: Prefab_Fx_ArcherTowerFire
+  m_Name: Prefab_Fx_ArcherTower_Fire
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9552,7 +9552,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &5957381272939854758
 Transform:
   m_ObjectHideFlags: 0

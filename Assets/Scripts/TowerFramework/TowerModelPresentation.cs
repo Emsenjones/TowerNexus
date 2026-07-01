@@ -4,6 +4,7 @@ public class TowerModelPresentation : MonoBehaviour
 {
     [SerializeField] private Transform attackOrigin;
     [SerializeField] private Animator animator;
+    [SerializeField] private string attackAnimatorTriggerName = "Attack";
 
     private TowerCombatBehaviour towerCombatBehaviour;
     private bool hasLoggedMissingAnimator;
@@ -11,6 +12,7 @@ public class TowerModelPresentation : MonoBehaviour
 
     public Animator Animator => animator;
     public Transform AttackOrigin => attackOrigin;
+    public string AttackAnimatorTriggerName => attackAnimatorTriggerName;
 
     private void Awake()
     {
@@ -23,9 +25,9 @@ public class TowerModelPresentation : MonoBehaviour
         CacheReferences();
     }
 
-    public bool RequestAttackTrigger(string triggerName)
+    public bool RequestAttackTrigger()
     {
-        if (string.IsNullOrEmpty(triggerName))
+        if (string.IsNullOrEmpty(attackAnimatorTriggerName))
         {
             return false;
         }
@@ -35,7 +37,7 @@ public class TowerModelPresentation : MonoBehaviour
             return false;
         }
 
-        targetAnimator.SetTrigger(triggerName);
+        targetAnimator.SetTrigger(attackAnimatorTriggerName);
         return true;
     }
 

@@ -505,9 +505,9 @@ Neither AttackOrigin nor FireAnchor should own gameplay decisions such as target
 
 # 12. Animation Integration
 
-Tower Runtime Combat may request attack presentation using parameter names configured by AttackConfig.
+Tower Runtime Combat may request attack presentation from the current tower model presentation entry.
 
-The current tower model presentation entry applies the actual presentation parameter changes on the spawned tower model.
+The current tower model presentation entry owns model-local animator references and attack presentation parameter names. It applies the actual presentation parameter changes on the spawned tower model.
 
 Recommended fields:
 
@@ -521,7 +521,7 @@ Recommended default values:
 |---|---|
 | attackAnimatorTriggerName | Attack |
 
-Attack presentation parameter names should come from AttackConfig.
+Attack presentation parameter names should come from the current tower model presentation entry.
 
 Tower Runtime Combat should not hardcode tower-specific animation parameter names.
 

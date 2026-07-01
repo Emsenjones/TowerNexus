@@ -312,6 +312,7 @@ Transform:
   - {fileID: 5746934747466559390}
   - {fileID: 4533830863776722980}
   - {fileID: 2002234350006752929}
+  - {fileID: 4285878243403081194}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &389886832855391554
@@ -369,9 +370,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd20732edbfb4b3da87d32aee1ba61a4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerPlacementPreview
-  validPreviewTint: {r: 1, g: 1, b: 1, a: 1}
-  invalidPreviewTint: {r: 1, g: 0, b: 0, a: 1}
-  previewAlpha: 0.5
+  validPreviewTint: {r: 0.4666667, g: 1, b: 0.47058824, a: 1}
+  invalidPreviewTint: {r: 1, g: 0.47058824, b: 0.4705882, a: 1}
 --- !u!114 &-5750683001870481658
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -400,8 +400,15 @@ MonoBehaviour:
   visualRoot: {fileID: 2288449949685193059}
   towerBaseVisualRoot: {fileID: 6181689511322833318}
   towerPrefabSpawnPoint: {fileID: 7710910861242704590}
-  attackRangePreviewRoot: {fileID: 2002234350006752929}
+  attackRangePreviewMotion: {fileID: 2009019606441846592}
   attackOriginFallback: {fileID: 4533830863776722980}
+  towerSpawnRefreshVfxAnchor: {fileID: 4285878243403081194}
+  towerUpgradeAppliedVfxAnchor: {fileID: 7710910861242704590}
+  towerSpawnRefreshVfxPrefab: {fileID: 2407319477381325343, guid: 1cc7165880e704e1ca3d20862578e2cb, type: 3}
+  towerUpgradeAppliedVfxPrefab: {fileID: 2549197258187512340, guid: d11c3d7cf18dc42848ffc47a089a7cb8, type: 3}
+  validUpgradeTargetHighlightColor: {r: 1, g: 1, b: 1, a: 1}
+  validUpgradeTargetHighlightIntensity: 1.5
+  validUpgradeTargetPulseDuration: 0.5
 --- !u!1 &2264813244175437884
 GameObject:
   m_ObjectHideFlags: 0
@@ -413,7 +420,7 @@ GameObject:
   - component: {fileID: 2002234350006752929}
   - component: {fileID: 2009019606441846592}
   m_Layer: 0
-  m_Name: AttackRangePreviewRoot
+  m_Name: AttackRangePreviewMotion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -611,7 +618,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5746934747466559390}
   m_Layer: 0
-  m_Name: Archer
+  m_Name: OccupiedArcher
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -633,6 +640,37 @@ Transform:
   - {fileID: 4145092963073438059}
   - {fileID: 6374642788228139774}
   - {fileID: 4546508504763103598}
+  m_Father: {fileID: 2753305963885280577}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8480047229879099713
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4285878243403081194}
+  m_Layer: 0
+  m_Name: TowerSpawnRefreshVfxArcher
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4285878243403081194
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8480047229879099713}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
   m_Father: {fileID: 2753305963885280577}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1273490790731742944

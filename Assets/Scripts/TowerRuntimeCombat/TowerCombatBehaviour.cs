@@ -676,13 +676,8 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private bool SetAttackAnimatorTrigger()
     {
-        if (attackConfig == null || string.IsNullOrEmpty(attackConfig.AttackAnimatorTriggerName))
-        {
-            return false;
-        }
-
         TowerModelPresentation presentation = GetTowerModelPresentation();
-        return presentation != null && presentation.RequestAttackTrigger(attackConfig.AttackAnimatorTriggerName);
+        return presentation != null && presentation.RequestAttackTrigger();
     }
 
     private TowerModelPresentation GetTowerModelPresentation()

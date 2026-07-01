@@ -25,7 +25,6 @@ public class DraftUI : MonoBehaviour
 
     public void OpenDraft(List<DraftResult> draftResults, Action<DraftResult> onSelected)
     {
-        Debug.Log("Opening draft UI...");
         ClearDraftItems();
         onDraftSelected = onSelected;
 

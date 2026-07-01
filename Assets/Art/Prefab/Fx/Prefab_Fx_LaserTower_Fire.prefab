@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 4883136625351652412}
   - component: {fileID: 6322107294020716232}
   m_Layer: 0
-  m_Name: Prefab_Fx_LaserTowerFire
+  m_Name: Prefab_Fx_LaserTower_Fire
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -8,15 +8,12 @@ using UnityEngine.UI;
 public class BattleHUDUI : MonoBehaviour
 {
     [SerializeField] private PlayerSystem playerSystem;
-    [FormerlySerializedAs("towerDraftUI")]
     [SerializeField] private DraftUI draftUI;
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text hpText;
     [SerializeField] private Slider expSlider;
-    [FormerlySerializedAs("pendingTowerContainer")]
     [SerializeField] private Transform pendingDraftContainer;
-    [FormerlySerializedAs("pendingTowerItemPrefab")]
     [SerializeField] private GameObject pendingDraftItemPrefab;
 
     private readonly List<PendingDraftUI> pendingDraftItems = new List<PendingDraftUI>();

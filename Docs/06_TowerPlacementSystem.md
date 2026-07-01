@@ -166,7 +166,6 @@ For Tower Placement System, Battle HUD UI System provides:
 - Draft item drag cancellation target when the current drag operation is released back into the Battle HUD interaction area
 - Draft item removal after successful placement, accepted tower level-up, or accepted upgrade application
 - Placement feedback display when requested by placement logic
-- Valid target highlight presentation for Tower Upgrade Draft items
 
 Battle HUD UI System should not:
 
@@ -175,6 +174,7 @@ Battle HUD UI System should not:
 - Decide placement legality.
 - Own tower placement workflow.
 - Validate tower level-up or tower upgrade rules.
+- Own tower-local valid-target highlight presentation.
 
 ---
 
@@ -312,8 +312,9 @@ The placement workflow is:
 7. Tower Placement System validates final placement.
 8. If placement is valid, the tower is placed onto the map.
 9. Occupied GridNodes become unwalkable.
-10. Battle HUD UI System removes the consumed Draft item.
-11. If placement is invalid, the Draft item remains in the Draft Item Interaction Area.
+10. Tower Placement System may request tower-side model spawn feedback through the deployed tower's visual ownership path.
+11. Battle HUD UI System removes the consumed Draft item.
+12. If placement is invalid, the Draft item remains in the Draft Item Interaction Area.
 
 ---
 
@@ -344,6 +345,12 @@ TowerUpgradeSystem
 ```
 
 Tower Placement System should not decide whether the target tower satisfies TowerFamily, TowerLevel, duplicate upgrade, or max-level rules.
+
+During a Tower Upgrade Draft drag, Tower Placement System may resolve current deployed tower candidates and ask TowerUpgradeSystem whether each candidate can receive the dragged TowerUpgradeDefinition.
+
+Tower Placement System may request valid-target highlight visibility from the candidate tower's visual ownership path, but it should not directly modify tower renderers, materials, model hierarchy, or VFX playback.
+
+After a TowerUpgradeSystem upgrade application succeeds, Tower Placement System may request upgrade-applied success feedback through the target tower's visual ownership path.
 
 ---
 
@@ -398,17 +405,16 @@ Recommended examples:
 
 | State | Visual |
 |---|---|
-| Valid | Original material color * validPreviewTint + previewAlpha |
-| Invalid | Original material color * invalidPreviewTint + previewAlpha |
+| Valid | Original material color * validPreviewTint color + validPreviewTint alpha |
+| Invalid | Original material color * invalidPreviewTint color + invalidPreviewTint alpha |
 
 Preview material rules:
 
 - Treat TowerBaseVisualRoot and the spawned tower model as one ghost visual.
-- Apply preview tint and alpha to all renderers under VisualRoot after the tower model is spawned.
+- Apply preview tint color and alpha to all renderers under VisualRoot after the tower model is spawned.
 - Preview feedback configuration should live on TowerPlacementPreview:
-  - `validPreviewTint = Color.white`
-  - `invalidPreviewTint = Color.red`
-  - `previewAlpha = 0.5f`
+  - `validPreviewTint`
+  - `invalidPreviewTint`
 - Apply preview material state per renderer material instance.
 - Do not replace all preview renderers with one shared ghost material.
 - Support `_BaseColor` and `_Color` material properties.
@@ -476,7 +482,9 @@ If a hovered tower candidate exists but cannot be upgraded, Tower Level-Up Previ
 
 On successful release, Tower Placement System forwards the level-up request to TowerUpgradeSystem. TowerUpgradeSystem validates and applies tower level data only. After an accepted level-up, Tower Placement System asks the target TowerBehaviour to refresh visuals through the tower-owned visual path.
 
-Tower Placement System should not directly replace the deployed tower model or directly refresh AttackOrigin.
+After the visual refresh is accepted, Tower Placement System may request tower-side model refresh feedback through the same visual ownership path.
+
+Tower Placement System should not directly replace the deployed tower model, directly refresh AttackOrigin, or play tower-side VFX itself.
 
 ---
 
@@ -516,7 +524,42 @@ Tower Placement System may request attack range preview visibility during drag o
 
 ---
 
-## 7.7 Current Drag Operation Cancellation
+## 7.7 Tower Upgrade Draft Target Feedback
+
+Tower Upgrade Draft target feedback is a drag-time presentation layer for showing which deployed towers can receive the dragged TowerUpgradeDefinition.
+
+Responsibility split:
+
+- Tower Placement System owns the active drag lifecycle and deployed tower candidate lookup.
+- TowerUpgradeSystem owns upgrade eligibility checks.
+- TowerVisualController owns tower-local highlight presentation.
+- Battle HUD UI System owns the UI drag entry and pending Draft item display only.
+
+Valid target feedback should not preview upgrade-definition-specific gameplay effects such as extra projectiles, extra Magic Orbs, or future behaviour package visuals.
+
+The first-version feedback can be a lightweight periodic tower highlight or pulse on valid targets.
+
+When a Tower Upgrade Draft drag begins or updates:
+
+1. Tower Placement System resolves deployed tower candidates from the current battlefield state.
+2. Tower Placement System asks TowerUpgradeSystem whether each candidate can receive the dragged TowerUpgradeDefinition.
+3. Towers accepted by TowerUpgradeSystem may receive valid-target highlight presentation through their TowerVisualController ownership path.
+4. Towers rejected by TowerUpgradeSystem should not display valid-target highlight.
+
+Valid-target highlight must be cleared when:
+
+- Drag is cancelled.
+- The dragged item is released back into the Draft Item Interaction Area.
+- Upgrade application succeeds.
+- Upgrade application fails.
+- The pending Draft item is restored.
+- The target tower is destroyed or no longer available during drag.
+
+TowerUpgradeSystem must not directly control highlight presentation.
+
+---
+
+## 7.8 Current Drag Operation Cancellation
 
 Canceling the current drag operation is a general Draft item behavior, not only a Tower Draft deployment behavior.
 
@@ -531,6 +574,7 @@ If any currently dragged Draft item is released back inside the Battle HUD Draft
 - Return the Draft item to Battle HUD ownership.
 - Destroy the active Tower Preview if one exists.
 - Hide all deployed tower attack range previews.
+- Clear all Tower Upgrade Draft valid-target highlights.
 - Clear drag state.
 
 This applies to Tower Draft items, future Tower Upgrade Draft items, and future draggable Draft item types.

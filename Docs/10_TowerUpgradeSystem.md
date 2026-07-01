@@ -254,6 +254,12 @@ Archer B
 
 Tower Upgrade Drafts represent tower enhancement items.
 
+TowerUpgradeSystem is the eligibility authority for Tower Upgrade Draft targets. Drag or placement systems may ask TowerUpgradeSystem whether a deployed tower can receive the selected TowerUpgradeDefinition, then use that result for valid-target feedback.
+
+TowerUpgradeSystem should return eligibility or application results only. It should not directly play VFX, control tower highlight state, mutate renderer materials, or operate tower visual hierarchy.
+
+After an upgrade application succeeds, the caller may request upgrade-applied visual feedback through the target tower's visual ownership path.
+
 ## 5.1 Upgrade Eligibility
 
 An upgrade may be applied only when:
@@ -510,9 +516,9 @@ Tower Framework System owns TowerDefinition and the per-level TowerDefinition co
 
 ## Battle HUD UI System
 
-Battle HUD UI System displays Draft items and valid target highlights.
+Battle HUD UI System displays Draft items and owns the drag interaction entry points.
 
-Battle HUD UI System should not own upgrade validation rules.
+Battle HUD UI System should not own upgrade validation rules or tower-local highlight presentation.
 
 ---
 

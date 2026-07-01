@@ -39,6 +39,7 @@ The Tower Framework System owns:
 - Static attack VFX configuration references
 - Tower prefab structure contract
 - Tower visual structure contract
+- Tower visual VFX anchor contract
 - Tower model presentation contract
 - TowerVisualController ownership direction
 
@@ -163,6 +164,8 @@ TowerPrefab
 │   ├── OccupyAnchor_02
 │   └── OccupyAnchor_03
 ├── AttackRangePreview
+├── TowerSpawnRefreshVfxAnchor
+├── TowerUpgradeAppliedVfxAnchor
 ├── PreviewRenderer
 └── AttackOriginFallback
 ```
@@ -179,6 +182,10 @@ PreviewRenderer is a compatibility placeholder for preview-related authoring or 
 
 AttackRangePreview is an optional tower-local visual child used by TowerVisualController during Draft item drag operations. It should contain a circular mesh whose radius is 1 when local scale is 1. TowerVisualController scales it uniformly to the tower's configured attackRange and toggles it on or off. AttackRangePreview may include lightweight prefab-authored looping presentation while enabled.
 
+TowerSpawnRefreshVfxAnchor is an optional tower-local anchor for deploy success and tower level-up model refresh VFX.
+
+TowerUpgradeAppliedVfxAnchor is an optional tower-local anchor for TowerUpgradeDefinition application success VFX.
+
 Tower Placement Preview should treat TowerBaseVisualRoot and the spawned tower model as one ghost visual. Valid or invalid placement feedback should be applied through whole-preview material tint and alpha.
 
 AttackOriginFallback is a runtime safety fallback. Each Tower Level Model Prefab is expected to provide its own correctly positioned AttackOrigin. If the current tower model does not provide AttackOrigin, runtime must log a warning and then use AttackOriginFallback.
@@ -187,7 +194,7 @@ Missing model AttackOrigin is an authoring or configuration error, not a normal 
 
 TowerBehaviour owns TowerVisualController.
 
-TowerVisualController owns tower-local visual rendering operations requested by gameplay systems, including model spawn or replacement, current tower model presentation resolution, preview material tint, preview transparency, attack range preview visibility, and current AttackOrigin resolution.
+TowerVisualController owns tower-local visual rendering operations requested by gameplay systems, including model spawn or replacement, current tower model presentation resolution, preview material tint, preview transparency, attack range preview visibility, valid-target highlight presentation, tower-side success feedback playback, and current AttackOrigin resolution.
 
 TowerPlacementSystem may request preview or range visual changes, but should not directly manipulate VisualRoot, TowerPrefabSpawnPoint, renderer materials, or tower model instances.
 
@@ -391,6 +398,9 @@ Responsibilities:
 - Show attack range preview.
 - Hide attack range preview.
 - Update attack range preview.
+- Present valid-target highlight feedback when a gameplay system requests it.
+- Present tower-side success feedback after deploy, level-up model refresh, or upgrade application succeeds.
+- Use tower-local VFX anchors for tower-related one-shot VFX when available.
 
 TowerVisualController does not decide:
 
@@ -398,6 +408,7 @@ TowerVisualController does not decide:
 - Upgrade validity.
 - Tower level.
 - Tower upgrade logic.
+- Whether deploy, level-up, or upgrade application succeeded.
 - Attack range values.
 - Attack timing.
 - Animator parameter selection.
@@ -700,7 +711,6 @@ AttackConfig assets are referenced directly by TowerDefinition. They should not 
 | droneBurstInterval | float | Time between projectiles within one Drone burst |
 | droneBurstCooldown | float | Cooldown between Drone bursts |
 | droneProjectileConfig | ProjectileConfig | Projectile configuration used by Drone-fired projectiles |
-| attackAnimatorTriggerName | string | Animator Trigger parameter used by released attacks |
 | attackReleaseVfxPrefab | GameObject | Optional one-shot VFX prefab spawned when a tower attack or attack entity release is confirmed |
 | magicOrbPrefab | GameObject | Optional Magic Orb attack entity prefab |
 | dronePrefab | GameObject | Optional Drone attack entity prefab |
@@ -717,7 +727,7 @@ Attack VFX fields are optional. Empty VFX references should not block combat exe
 
 Attack VFX references are static presentation configuration only. They must not define gameplay damage, targeting rules, cooldown logic, projectile hit detection, or buff behavior.
 
-Attack presentation parameter names should be configured in AttackConfig instead of hardcoded in Tower Runtime Combat or tower model presentation.
+Attack animation parameter names belong to the current tower model presentation entry. Tower Runtime Combat requests attack presentation from the resolved model presentation entry instead of hardcoding animator parameter names.
 
 Recommended naming convention:
 
@@ -725,9 +735,9 @@ Recommended naming convention:
 |---|---|
 | attackAnimatorTriggerName | Attack |
 
-Most towers should follow the same naming convention to simplify animator setup and runtime combat implementation.
+Most tower model presentation entries should follow the same naming convention to simplify animator setup and runtime combat implementation.
 
-However, animator parameter names remain configurable through AttackConfig.
+However, animator parameter names remain configurable per tower model presentation entry.
 
 ---
 
@@ -743,7 +753,6 @@ Typically uses:
 - attackInterval
 - projectileConfig
 - targetSelectionType
-- attackAnimatorTriggerName
 - attackReleaseVfxPrefab
 
 Notes:
@@ -773,7 +782,6 @@ Typically uses:
 - projectileConfig
 - arcHeight
 - targetSelectionType
-- attackAnimatorTriggerName
 - attackReleaseVfxPrefab
 
 Notes:
@@ -799,7 +807,6 @@ Typically uses:
 - attackInterval
 - projectileConfig
 - targetSelectionType
-- attackAnimatorTriggerName
 - attackReleaseVfxPrefab
 
 Notes:
@@ -828,7 +835,6 @@ Typically uses:
 - magicOrbMaxHitCount
 - magicOrbMaxLifetime
 - sameTargetHitCooldown
-- attackAnimatorTriggerName
 - attackReleaseVfxPrefab
 - magicOrbPrefab
 
@@ -871,7 +877,6 @@ Typically uses:
 - droneBurstInterval
 - droneBurstCooldown
 - droneProjectileConfig
-- attackAnimatorTriggerName
 - attackReleaseVfxPrefab
 - dronePrefab
 

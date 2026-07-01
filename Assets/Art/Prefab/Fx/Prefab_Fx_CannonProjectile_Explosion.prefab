@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &59713173252592891
 Transform:
   m_ObjectHideFlags: 0
@@ -4662,7 +4662,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &439137027295331830
 Transform:
   m_ObjectHideFlags: 0
@@ -9311,7 +9311,7 @@ GameObject:
   - component: {fileID: 4032514859096343059}
   - component: {fileID: 187727016569937037}
   m_Layer: 0
-  m_Name: Prefab_Fx_CannonProjectileExplosion
+  m_Name: Prefab_Fx_CannonProjectile_Explosion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

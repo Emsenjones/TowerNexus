@@ -2,9 +2,8 @@ using UnityEngine;
 
 public class TowerPlacementPreview : MonoBehaviour
 {
-    [SerializeField] private Color validPreviewTint = Color.white;
-    [SerializeField] private Color invalidPreviewTint = Color.red;
-    [SerializeField] private float previewAlpha = 0.5f;
+    [SerializeField] private Color validPreviewTint = new Color(1f, 1f, 1f, 0.5f);
+    [SerializeField] private Color invalidPreviewTint = new Color(1f, 0f, 0f, 0.5f);
 
     private TowerBehaviour towerBehaviour;
     private TowerVisualController visualController;
@@ -142,7 +141,7 @@ public class TowerPlacementPreview : MonoBehaviour
     {
         if (visualController != null)
         {
-            visualController.SetPreviewMaterialState(tint, previewAlpha);
+            visualController.SetPreviewMaterialState(tint);
         }
         else
         {

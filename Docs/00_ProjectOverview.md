@@ -66,6 +66,7 @@ Presentation-oriented prefab references may live in the configuration asset that
 Examples:
 
 - AttackConfig owns tower attack presentation hooks such as attack release VFX.
+- The tower visual ownership path owns tower-side success feedback hooks such as model spawn or upgrade-applied VFX.
 - ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
 - EffectConfig owns gameplay effect data and should not be required for purely visual projectile impact feedback.
 
@@ -231,12 +232,15 @@ Responsible for:
 - Tower model presentation contract
 - Tower prefab structure
 - Tower visual structure
+- Tower visual VFX anchors
 - TowerVisualController ownership direction
 - TowerAnchorSet
 - Center Anchor
 - Occupied Anchors
 
 Runtime placement, combat execution, projectile behavior, effect execution, and upgrade behavior are owned by their respective systems.
+
+Tower-side visual feedback is presentation-only. Deploy success and tower level-up model refresh may share a model spawn or refresh feedback category, while applying a TowerUpgradeDefinition may use a separate upgrade-applied feedback category. Gameplay systems decide whether the underlying action succeeds; tower-owned visual presentation handles the local feedback playback.
 
 ---
 

@@ -3,16 +3,32 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class PendingDraftUI : MonoBehaviour, IPointerDownHandler
+public class PendingDraftUI : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text nameText;
 
     private DraftResult draftResult;
     private TowerPlacementController placementController;
+    private RectTransform rectTransform;
+    private Canvas rootCanvas;
+    private Transform originalParent;
+    private int originalSiblingIndex;
+    private Vector2 originalAnchoredPosition;
+    private Vector3 originalLocalScale;
+    private bool originalParentUsesLayoutGroup;
+    private bool hasStoredPendingPosition;
+    private bool isDragVisualActive;
 
     public DraftResult DraftResult => draftResult;
     public TowerDefinition TowerDefinition => draftResult != null ? draftResult.TowerDefinition : null;
+
+    private void Awake()
+    {
+        rectTransform = transform as RectTransform;
+        Canvas canvas = GetComponentInParent<Canvas>();
+        rootCanvas = canvas != null ? canvas.rootCanvas : null;
+    }
 
     public void Initialize(TowerDefinition towerDefinition)
     {
@@ -63,7 +79,79 @@ public class PendingDraftUI : MonoBehaviour, IPointerDownHandler
             return;
         }
 
+        if (ShouldShowDragVisual())
+        {
+            BeginDragVisual(eventData.position, eventData.pressEventCamera);
+        }
+
         placementController.BeginDraftDrag(draftResult, this);
+
+        if (!placementController.IsDragging)
+        {
+            RestorePendingPosition();
+        }
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        if (eventData == null || eventData.button != PointerEventData.InputButton.Left)
+        {
+            return;
+        }
+
+        if (!ShouldShowDragVisual())
+        {
+            return;
+        }
+
+        BeginDragVisual(eventData.position, eventData.pressEventCamera);
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (eventData == null || eventData.button != PointerEventData.InputButton.Left)
+        {
+            return;
+        }
+
+        if (!ShouldShowDragVisual())
+        {
+            return;
+        }
+
+        SetDragVisualScreenPosition(eventData.position, eventData.pressEventCamera);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        RestorePendingPosition();
+    }
+
+    public void RestorePendingPosition()
+    {
+        if (!hasStoredPendingPosition || originalParent == null || rectTransform == null)
+        {
+            isDragVisualActive = false;
+            return;
+        }
+
+        transform.SetParent(originalParent, false);
+        transform.SetSiblingIndex(Mathf.Min(originalSiblingIndex, originalParent.childCount - 1));
+
+        if (!originalParentUsesLayoutGroup)
+        {
+            rectTransform.anchoredPosition = originalAnchoredPosition;
+        }
+
+        rectTransform.localScale = originalLocalScale;
+
+        if (originalParent is RectTransform originalParentRect)
+        {
+            LayoutRebuilder.MarkLayoutForRebuild(originalParentRect);
+        }
+
+        hasStoredPendingPosition = false;
+        isDragVisualActive = false;
     }
 
     private void UpdateIcon(Sprite icon)
@@ -102,5 +190,74 @@ public class PendingDraftUI : MonoBehaviour, IPointerDownHandler
         }
 
         return draftResult.DisplayName;
+    }
+
+    private void BeginDragVisual(Vector2 screenPosition, Camera eventCamera)
+    {
+        if (rectTransform == null)
+        {
+            rectTransform = transform as RectTransform;
+        }
+
+        if (rectTransform == null)
+        {
+            return;
+        }
+
+        if (rootCanvas == null)
+        {
+            Canvas canvas = GetComponentInParent<Canvas>();
+            rootCanvas = canvas != null ? canvas.rootCanvas : null;
+        }
+
+        if (!hasStoredPendingPosition)
+        {
+            originalParent = transform.parent;
+            originalSiblingIndex = transform.GetSiblingIndex();
+            originalAnchoredPosition = rectTransform.anchoredPosition;
+            originalLocalScale = rectTransform.localScale;
+            originalParentUsesLayoutGroup = originalParent != null && originalParent.GetComponent<LayoutGroup>() != null;
+            hasStoredPendingPosition = true;
+        }
+
+        if (!isDragVisualActive && rootCanvas != null)
+        {
+            transform.SetParent(rootCanvas.transform, true);
+            transform.SetAsLastSibling();
+        }
+
+        isDragVisualActive = true;
+        SetDragVisualScreenPosition(screenPosition, eventCamera);
+    }
+
+    private void SetDragVisualScreenPosition(Vector2 screenPosition, Camera eventCamera)
+    {
+        if (!isDragVisualActive || rectTransform == null)
+        {
+            return;
+        }
+
+        RectTransform canvasRectTransform = rootCanvas != null ? rootCanvas.transform as RectTransform : null;
+        Camera dragCamera = rootCanvas != null && rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : eventCamera;
+
+        if (canvasRectTransform != null &&
+            RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                canvasRectTransform,
+                screenPosition,
+                dragCamera,
+                out Vector3 worldPoint))
+        {
+            rectTransform.position = worldPoint;
+            return;
+        }
+
+        rectTransform.position = screenPosition;
+    }
+
+    private bool ShouldShowDragVisual()
+    {
+        return draftResult != null && draftResult.ResultType == DraftResultType.TowerUpgradeDraft;
     }
 }

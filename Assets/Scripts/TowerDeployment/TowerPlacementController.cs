@@ -18,6 +18,7 @@ public class TowerPlacementController : MonoBehaviour
     private TowerPlacementPreview currentPreview;
     private readonly List<TowerBehaviour> deployedTowers = new List<TowerBehaviour>();
     private readonly List<TowerInstance> deployedTowerInstances = new List<TowerInstance>();
+    private readonly List<TowerBehaviour> highlightedUpgradeTargets = new List<TowerBehaviour>();
     private DraftResult currentDraftResult;
     private TowerDefinition currentTowerDefinition;
     private TowerUpgradeDefinition currentTowerUpgradeDefinition;
@@ -179,12 +180,19 @@ public class TowerPlacementController : MonoBehaviour
         currentUpgradeTarget = null;
         isDragging = true;
 
+        RefreshUpgradeTargetHighlights();
         UpdatePreviewPosition(Input.mousePosition);
     }
 
     public void CancelPlacement()
     {
         HideAttackRangePreviewsForCurrentDrag();
+        ClearUpgradeTargetHighlights();
+
+        if (currentDraftEntry != null)
+        {
+            currentDraftEntry.RestorePendingPosition();
+        }
 
         if (currentPreview != null)
         {
@@ -236,6 +244,12 @@ public class TowerPlacementController : MonoBehaviour
             if (deployController.TryDeployTower(currentPreview, currentDraftEntry, out TowerBehaviour deployedTower))
             {
                 RegisterDeployedTower(deployedTower);
+                if (deployedTower != null && deployedTower.VisualController != null)
+                {
+                    deployedTower.VisualController.PlayTowerSpawnRefreshFeedback();
+                }
+
+                currentDraftEntry = null;
             }
         }
 
@@ -265,11 +279,17 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
-        currentLevelUpTarget.RefreshTowerVisual();
+        bool didRefreshVisual = currentLevelUpTarget.RefreshTowerVisual();
+
+        if (didRefreshVisual && currentLevelUpTarget.VisualController != null)
+        {
+            currentLevelUpTarget.VisualController.PlayTowerSpawnRefreshFeedback();
+        }
 
         if (battleHUDUI != null && currentDraftEntry != null)
         {
             battleHUDUI.RemovePendingDraft(currentDraftEntry);
+            currentDraftEntry = null;
         }
     }
 
@@ -294,9 +314,15 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
+        if (currentUpgradeTarget.VisualController != null)
+        {
+            currentUpgradeTarget.VisualController.PlayUpgradeAppliedFeedback();
+        }
+
         if (battleHUDUI != null && currentDraftEntry != null)
         {
             battleHUDUI.RemovePendingDraft(currentDraftEntry);
+            currentDraftEntry = null;
         }
     }
 
@@ -363,6 +389,7 @@ public class TowerPlacementController : MonoBehaviour
     private void UpdateUpgradeTargetPosition(Vector3 screenPosition)
     {
         currentUpgradeTarget = null;
+        RefreshUpgradeTargetHighlights();
 
         if (!TryGetWorldPosition(screenPosition, out Vector3 worldPosition))
         {
@@ -518,6 +545,7 @@ public class TowerPlacementController : MonoBehaviour
         {
             if (deployedTowers[i] == null || deployedTowers[i].TowerInstance == null)
             {
+                ClearUpgradeTargetHighlight(deployedTowers[i]);
                 deployedTowers.RemoveAt(i);
             }
         }
@@ -558,6 +586,95 @@ public class TowerPlacementController : MonoBehaviour
         {
             ShowAttackRangePreview(currentPreview.VisualController, currentPreview.TowerDefinition);
         }
+    }
+
+    private void RefreshUpgradeTargetHighlights()
+    {
+        if (!IsTowerUpgradeDraftDrag() ||
+            currentTowerUpgradeDefinition == null ||
+            towerUpgradeSystem == null)
+        {
+            ClearUpgradeTargetHighlights();
+            return;
+        }
+
+        RegisterExistingDeployedTowers();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+
+            if (tower == null || tower.TowerInstance == null)
+            {
+                continue;
+            }
+
+            bool canApplyUpgrade = towerUpgradeSystem.CanApplyUpgrade(
+                tower.TowerInstance,
+                currentTowerUpgradeDefinition,
+                out _
+            );
+
+            SetUpgradeTargetHighlight(tower, canApplyUpgrade);
+        }
+
+        for (int i = highlightedUpgradeTargets.Count - 1; i >= 0; i--)
+        {
+            TowerBehaviour highlightedTarget = highlightedUpgradeTargets[i];
+
+            if (highlightedTarget == null ||
+                highlightedTarget.TowerInstance == null ||
+                !deployedTowers.Contains(highlightedTarget) ||
+                !towerUpgradeSystem.CanApplyUpgrade(
+                    highlightedTarget.TowerInstance,
+                    currentTowerUpgradeDefinition,
+                    out _))
+            {
+                ClearUpgradeTargetHighlight(highlightedTarget);
+            }
+        }
+    }
+
+    private void SetUpgradeTargetHighlight(TowerBehaviour tower, bool isHighlighted)
+    {
+        if (tower == null || tower.VisualController == null)
+        {
+            return;
+        }
+
+        tower.VisualController.SetValidUpgradeTargetHighlight(isHighlighted);
+
+        if (isHighlighted)
+        {
+            if (!highlightedUpgradeTargets.Contains(tower))
+            {
+                highlightedUpgradeTargets.Add(tower);
+            }
+        }
+        else
+        {
+            highlightedUpgradeTargets.Remove(tower);
+        }
+    }
+
+    private void ClearUpgradeTargetHighlights()
+    {
+        for (int i = highlightedUpgradeTargets.Count - 1; i >= 0; i--)
+        {
+            ClearUpgradeTargetHighlight(highlightedUpgradeTargets[i]);
+        }
+
+        highlightedUpgradeTargets.Clear();
+    }
+
+    private void ClearUpgradeTargetHighlight(TowerBehaviour tower)
+    {
+        if (tower != null && tower.VisualController != null)
+        {
+            tower.VisualController.ClearValidUpgradeTargetHighlight();
+        }
+
+        highlightedUpgradeTargets.Remove(tower);
     }
 
     private void HideAttackRangePreviewsForCurrentDrag()

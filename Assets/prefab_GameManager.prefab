@@ -12778,7 +12778,7 @@ GameObject:
   - component: {fileID: 3446166332166411794}
   - component: {fileID: 7321847719346502912}
   m_Layer: 0
-  m_Name: TowerUpgradeSystem
+  m_Name: TowerUpgradeDatabase
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -17556,7 +17556,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8939497704752416150}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: ee6542b4b0a64811a690ce666c2b34a2, type: 3}
   m_Name: 

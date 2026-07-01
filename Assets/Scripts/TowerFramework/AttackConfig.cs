@@ -19,9 +19,6 @@ public class AttackConfig : ScriptableObject
     [TitleGroup("Core")]
     [ShowIf(nameof(UsesTargetSelection))]
     [SerializeField] private TargetSelectionType targetSelectionType;
-    [TitleGroup("Animation")]
-    [SerializeField] private string attackAnimatorTriggerName = "Attack";
-
     [TitleGroup("Projectile")]
     [ShowIf(nameof(UsesProjectileConfig))]
     [SerializeField] private ProjectileConfig projectileConfig;
@@ -103,7 +100,6 @@ public class AttackConfig : ScriptableObject
     public float AttackRange => attackRange;
     public float AttackInterval => attackInterval;
     public TargetSelectionType TargetSelectionType => targetSelectionType;
-    public string AttackAnimatorTriggerName => attackAnimatorTriggerName;
     public ProjectileConfig ProjectileConfig => projectileConfig;
     public float ArcHeight => arcHeight;
     public GameObject AttackReleaseVfxPrefab => attackReleaseVfxPrefab;

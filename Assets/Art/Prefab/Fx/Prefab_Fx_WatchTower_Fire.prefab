@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2229182082485982976}
   - component: {fileID: 2477301143388340266}
   m_Layer: 0
-  m_Name: Prefab_Fx_WatchTowerFire
+  m_Name: Prefab_Fx_WatchTower_Fire
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
