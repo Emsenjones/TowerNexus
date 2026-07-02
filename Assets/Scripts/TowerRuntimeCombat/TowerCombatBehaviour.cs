@@ -6,6 +6,8 @@ using Random = UnityEngine.Random;
 public class TowerCombatBehaviour : MonoBehaviour
 {
     [SerializeField] private TowerInstance towerInstance;
+    [SerializeField] private float scatterArrowAngleOffset = 15f;
+    [SerializeField] private int piercingArrowMaxHitCount = 3;
     private MonsterManager monsterManager;
     private TowerBehaviour towerBehaviour;
 
@@ -269,6 +271,81 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
+        ProjectileRuntimeOptions projectileRuntimeOptions = CreateProjectileRuntimeOptions();
+        bool releasedProjectile = IsArcherScatterArrowActive()
+            ? TryReleaseScatterProjectiles(projectileConfig, origin, projectileRuntimeOptions)
+            : TryReleaseProjectile(projectileConfig, origin, pendingProjectileTargetPosition, pendingProjectileTarget, projectileRuntimeOptions);
+
+        if (!releasedProjectile)
+        {
+            ResetPendingAttackState();
+            return;
+        }
+
+        StartAttackCooldown();
+        PlayAttackReleaseVfx();
+        OnProjectileReleased?.Invoke(this, pendingProjectileTarget);
+        ResetPendingAttackState();
+    }
+
+    private bool TryReleaseScatterProjectiles(
+        ProjectileConfig projectileConfig,
+        Transform origin,
+        ProjectileRuntimeOptions projectileRuntimeOptions)
+    {
+        Vector3 centerDirection = pendingProjectileTargetPosition - origin.position;
+
+        if (centerDirection.sqrMagnitude <= 0.0001f)
+        {
+            centerDirection = origin.forward;
+        }
+
+        centerDirection.Normalize();
+
+        bool releasedCenter = TryReleaseProjectile(
+            projectileConfig,
+            origin,
+            pendingProjectileTargetPosition,
+            pendingProjectileTarget,
+            projectileRuntimeOptions);
+
+        bool releasedLeft = TryReleaseProjectileInDirection(
+            projectileConfig,
+            origin,
+            Quaternion.AngleAxis(-scatterArrowAngleOffset, Vector3.up) * centerDirection,
+            projectileRuntimeOptions);
+
+        bool releasedRight = TryReleaseProjectileInDirection(
+            projectileConfig,
+            origin,
+            Quaternion.AngleAxis(scatterArrowAngleOffset, Vector3.up) * centerDirection,
+            projectileRuntimeOptions);
+
+        return releasedCenter || releasedLeft || releasedRight;
+    }
+
+    private bool TryReleaseProjectileInDirection(
+        ProjectileConfig projectileConfig,
+        Transform origin,
+        Vector3 direction,
+        ProjectileRuntimeOptions projectileRuntimeOptions)
+    {
+        if (direction.sqrMagnitude <= 0.0001f)
+        {
+            return false;
+        }
+
+        Vector3 targetPosition = origin.position + direction.normalized;
+        return TryReleaseProjectile(projectileConfig, origin, targetPosition, pendingProjectileTarget, projectileRuntimeOptions);
+    }
+
+    private bool TryReleaseProjectile(
+        ProjectileConfig projectileConfig,
+        Transform origin,
+        Vector3 targetPosition,
+        MonsterBehaviour target,
+        ProjectileRuntimeOptions projectileRuntimeOptions)
+    {
         GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, origin.position, Quaternion.identity);
 
         if (!projectileObject.TryGetComponent(out ProjectileBehaviour projectileBehaviour))
@@ -281,21 +358,41 @@ public class TowerCombatBehaviour : MonoBehaviour
             monsterManager,
             projectileConfig,
             attackConfig,
-            pendingProjectileTarget,
-            pendingProjectileTargetPosition,
-            ResolveCombatStats().AttackDamage
+            target,
+            targetPosition,
+            ResolveCombatStats().AttackDamage,
+            runtimeOptions: projectileRuntimeOptions
         );
 
-        if (!projectileBehaviour.IsInitialized)
-        {
-            ResetPendingAttackState();
-            return;
-        }
+        return projectileBehaviour.IsInitialized;
+    }
 
-        StartAttackCooldown();
-        PlayAttackReleaseVfx();
-        OnProjectileReleased?.Invoke(this, pendingProjectileTarget);
-        ResetPendingAttackState();
+    private ProjectileRuntimeOptions CreateProjectileRuntimeOptions()
+    {
+        return new ProjectileRuntimeOptions(
+            IsArcherPiercingArrowActive(),
+            Mathf.Max(1, piercingArrowMaxHitCount)
+        );
+    }
+
+    private bool IsArcherPiercingArrowActive()
+    {
+        return IsArcherProjectileRelease() &&
+               HasBehaviourPackage(TowerBehaviourPackageIds.ArcherPiercingArrow);
+    }
+
+    private bool IsArcherScatterArrowActive()
+    {
+        return IsArcherProjectileRelease() &&
+               HasBehaviourPackage(TowerBehaviourPackageIds.ArcherScatterArrow);
+    }
+
+    private bool IsArcherProjectileRelease()
+    {
+        return towerDefinition != null &&
+               towerDefinition.TowerFamily == TowerFamily.Archer &&
+               attackConfig != null &&
+               attackConfig.AttackArchetype == AttackArchetype.DirectionProjectile;
     }
 
     private void StartAttackCooldown()
@@ -597,6 +694,17 @@ public class TowerCombatBehaviour : MonoBehaviour
     private ResolvedTowerCombatStats ResolveCombatStats()
     {
         return TowerRuntimeStatResolver.Resolve(towerInstance, attackConfig);
+    }
+
+    private bool HasBehaviourPackage(string behaviourPackageId)
+    {
+        if (string.IsNullOrWhiteSpace(behaviourPackageId))
+        {
+            Debug.LogWarning("Tower combat cannot query Behaviour package: package id is missing.", this);
+            return false;
+        }
+
+        return towerInstance != null && towerInstance.HasBehaviourPackage(behaviourPackageId);
     }
 
     private Transform GetAttackOrigin()

@@ -117,7 +117,7 @@ public class TowerUpgradeDefinition : ScriptableObject
         }
 
         bool isValid = true;
-        HashSet<TowerUpgradeStatType> configuredStatTypes = new HashSet<TowerUpgradeStatType>();
+        HashSet<TowerUpgradeBasicStatType> configuredStatTypes = new HashSet<TowerUpgradeBasicStatType>();
 
         for (int i = 0; i < basicStatDeltas.Count; i++)
         {

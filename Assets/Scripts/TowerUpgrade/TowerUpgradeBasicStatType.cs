@@ -1,4 +1,4 @@
-public enum TowerUpgradeStatType
+public enum TowerUpgradeBasicStatType
 {
     AttackRange = 0,
     AttackInterval = 1,

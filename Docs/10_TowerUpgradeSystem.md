@@ -457,6 +457,10 @@ Examples:
 - Magic Twin Orbs
 - Drone Twin Drones
 
+Behaviour Layer packages may provide behaviour parameters consumed by the corresponding runtime path. For example, Archer Piercing Arrow may provide a finite piercing hit count used when initializing projectile-level piercing.
+
+TowerUpgradeSystem remains responsible for upgrade ownership, validation, and application only. It should not execute piercing, scatter release, Magic Orb count changes, Drone count changes, or other Behaviour Layer gameplay effects.
+
 Effect-backed behaviour packages should wait for the Buff And Effect System foundation when they need reusable area damage, delayed area damage, or repeated area damage over duration.
 
 Examples:

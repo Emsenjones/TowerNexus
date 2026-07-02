@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8762358482027527669}
   - component: {fileID: -7195602320074236366}
   m_Layer: 0
-  m_Name: Prefab_Projectile_Cannon
+  m_Name: Prefab_Projectile_CannonTower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

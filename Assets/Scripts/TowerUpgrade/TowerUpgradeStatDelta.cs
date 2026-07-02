@@ -4,25 +4,25 @@ using UnityEngine;
 [Serializable]
 public class TowerUpgradeStatDelta
 {
-    [SerializeField] private TowerUpgradeStatType statType;
+    [SerializeField] private TowerUpgradeBasicStatType statType;
     [SerializeField] private float additiveValue;
 
-    public TowerUpgradeStatType StatType => statType;
+    public TowerUpgradeBasicStatType StatType => statType;
     public float AdditiveValue => additiveValue;
 
     public bool IsCompatibleWithTowerFamily(TowerFamily towerFamily)
     {
         switch (statType)
         {
-            case TowerUpgradeStatType.AttackRange:
-            case TowerUpgradeStatType.AttackInterval:
-            case TowerUpgradeStatType.DamageBonus:
+            case TowerUpgradeBasicStatType.AttackRange:
+            case TowerUpgradeBasicStatType.AttackInterval:
+            case TowerUpgradeBasicStatType.DamageBonus:
                 return true;
-            case TowerUpgradeStatType.MagicOrbRotationSpeed:
-            case TowerUpgradeStatType.MagicOrbMaxHitCount:
+            case TowerUpgradeBasicStatType.MagicOrbRotationSpeed:
+            case TowerUpgradeBasicStatType.MagicOrbMaxHitCount:
                 return towerFamily == TowerFamily.Magic;
-            case TowerUpgradeStatType.DroneBatteryDuration:
-            case TowerUpgradeStatType.DroneBurstCooldown:
+            case TowerUpgradeBasicStatType.DroneBatteryDuration:
+            case TowerUpgradeBasicStatType.DroneBurstCooldown:
                 return towerFamily == TowerFamily.Drone;
             default:
                 return false;
@@ -31,8 +31,8 @@ public class TowerUpgradeStatDelta
 
     public bool RequiresWholeNumberAdditiveValue()
     {
-        return statType == TowerUpgradeStatType.MagicOrbMaxHitCount ||
-               statType == TowerUpgradeStatType.DamageBonus;
+        return statType == TowerUpgradeBasicStatType.MagicOrbMaxHitCount ||
+               statType == TowerUpgradeBasicStatType.DamageBonus;
     }
 
     public bool HasWholeNumberAdditiveValue()

@@ -100,7 +100,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6512539937036389786}
   m_Layer: 0
-  m_Name: Prefab_DroneProjectile
+  m_Name: Prefab_Projectile_Drone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

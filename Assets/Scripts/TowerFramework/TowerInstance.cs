@@ -94,6 +94,16 @@ public class TowerInstance : MonoBehaviour
         return upgradeState.HasUpgrade(upgradeDefinition);
     }
 
+    public bool HasBehaviourPackage(string behaviourPackageId)
+    {
+        return upgradeState.HasBehaviourPackage(behaviourPackageId);
+    }
+
+    public IReadOnlyList<string> GetActiveBehaviourPackageIds()
+    {
+        return upgradeState.GetActiveBehaviourPackageIds();
+    }
+
     public bool TryRecordUpgrade(TowerUpgradeDefinition upgradeDefinition)
     {
         return upgradeState.TryRecordUpgrade(upgradeDefinition);

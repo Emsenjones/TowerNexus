@@ -517,6 +517,7 @@ The first version supports:
 - Position Arrival Hit Detection
 - Impact Event Triggering
 - Projectile-level piercing state when granted by an Archer Behaviour package
+- Finite piercing hit count for projectile-level piercing
 
 The first version intentionally excludes these projectile patterns:
 
@@ -527,6 +528,10 @@ The first version intentionally excludes these projectile patterns:
 Those excluded projectile patterns may be added in future versions.
 
 Piercing is introduced through tower upgrade behaviour packages. Projectile System may execute projectile-level piercing state, but it should not decide why a projectile has piercing.
+
+Projectile-level piercing should have a finite hit count. Projectile System owns tracking which monsters a single piercing projectile has already hit, prevents repeated damage to the same monster from the same projectile, and ends the projectile when its configured piercing hit count is reached.
+
+Projectile lifetime remains a safety cleanup boundary for piercing projectiles. Lifetime should not be the primary balancing rule for how many enemies one piercing projectile may damage.
 
 ---
 

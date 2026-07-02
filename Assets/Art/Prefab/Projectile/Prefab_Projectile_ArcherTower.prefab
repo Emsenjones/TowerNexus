@@ -43,7 +43,7 @@ GameObject:
   - component: {fileID: 3362382406300252155}
   - component: {fileID: 6201473830942121708}
   m_Layer: 0
-  m_Name: Prefab_Projectile_Archer
+  m_Name: Prefab_Projectile_ArcherTower
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -91,15 +91,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalScale.x
-      value: 1.1
+      value: 1.2
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalScale.y
-      value: 1.1
+      value: 1.2
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalScale.z
-      value: 1.1
+      value: 1.2
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9264a3c0d21d83e48bc213eaa785772e, type: 3}
       propertyPath: m_LocalPosition.x

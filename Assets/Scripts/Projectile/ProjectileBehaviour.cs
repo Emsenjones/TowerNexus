@@ -13,6 +13,8 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 targetPosition;
     private Vector3 launchDirection;
     private Vector3 startPosition;
+    private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
+    private ProjectileRuntimeOptions runtimeOptions;
     private int attackDamage;
     private float elapsedLifetime;
     private float arcTravelTime;
@@ -38,7 +40,8 @@ public class ProjectileBehaviour : MonoBehaviour
         MonsterBehaviour targetMonster,
         Vector3 targetPosition,
         int attackDamage,
-        AttackArchetype? flightArchetypeOverride = null)
+        AttackArchetype? flightArchetypeOverride = null,
+        ProjectileRuntimeOptions runtimeOptions = default)
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
@@ -47,9 +50,11 @@ public class ProjectileBehaviour : MonoBehaviour
         flightArchetype = flightArchetypeOverride ?? (attackConfig != null ? attackConfig.AttackArchetype : default);
         this.targetMonster = targetMonster;
         this.targetPosition = targetPosition;
+        this.runtimeOptions = runtimeOptions;
         this.attackDamage = Mathf.Max(0, attackDamage);
 
         startPosition = transform.position;
+        piercedMonsters.Clear();
         elapsedLifetime = 0f;
         hasImpacted = false;
         hasLoggedUnsupportedTrackingFlight = false;
@@ -146,7 +151,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool InitializeDirectionFlight()
     {
-        launchDirection = CalculateLaunchDirection(GetMonsterHitPosition(targetMonster));
+        launchDirection = CalculateLaunchDirection(targetPosition);
         return true;
     }
 
@@ -201,6 +206,11 @@ public class ProjectileBehaviour : MonoBehaviour
         FaceMoveDirection(launchDirection);
 
         if (!TryGetDirectionProjectileHit(out MonsterBehaviour hitMonster))
+        {
+            return;
+        }
+
+        if (runtimeOptions.CanPierce && piercedMonsters.Contains(hitMonster))
         {
             return;
         }
@@ -301,14 +311,42 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void ImpactDirectionProjectile(MonsterBehaviour hitMonster)
     {
-        if (hasImpacted)
+        if (hasImpacted || hitMonster == null)
         {
             return;
         }
 
-        hasImpacted = true;
+        if (runtimeOptions.CanPierce)
+        {
+            if (piercedMonsters.Contains(hitMonster))
+            {
+                return;
+            }
+
+            piercedMonsters.Add(hitMonster);
+            ApplyDirectionProjectileImpact(hitMonster);
+
+            if (piercedMonsters.Count >= runtimeOptions.MaxPierceHitCount)
+            {
+                FinishDirectionProjectileAfterImpact();
+            }
+
+            return;
+        }
+
+        ApplyDirectionProjectileImpact(hitMonster);
+        FinishDirectionProjectileAfterImpact();
+    }
+
+    private void ApplyDirectionProjectileImpact(MonsterBehaviour hitMonster)
+    {
         hitMonster.TakeDamage(attackDamage);
         RaiseImpact(hitMonster, transform.position);
+    }
+
+    private void FinishDirectionProjectileAfterImpact()
+    {
+        hasImpacted = true;
         DestroyProjectile();
     }
 
@@ -379,7 +417,8 @@ public class ProjectileBehaviour : MonoBehaviour
         {
             MonsterBehaviour monster = aliveMonsters[i];
 
-            if (!IsValidTarget(monster))
+            if (!IsValidTarget(monster) ||
+                (runtimeOptions.CanPierce && piercedMonsters.Contains(monster)))
             {
                 continue;
             }

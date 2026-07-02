@@ -90,25 +90,25 @@ public static class TowerRuntimeStatResolver
 
             switch (statDelta.StatType)
             {
-                case TowerUpgradeStatType.AttackRange:
+                case TowerUpgradeBasicStatType.AttackRange:
                     attackRangeDelta += statDelta.AdditiveValue;
                     break;
-                case TowerUpgradeStatType.AttackInterval:
+                case TowerUpgradeBasicStatType.AttackInterval:
                     attackIntervalDelta += statDelta.AdditiveValue;
                     break;
-                case TowerUpgradeStatType.DamageBonus:
+                case TowerUpgradeBasicStatType.DamageBonus:
                     damageBonus += statDelta.AdditiveValue;
                     break;
-                case TowerUpgradeStatType.MagicOrbRotationSpeed:
+                case TowerUpgradeBasicStatType.MagicOrbRotationSpeed:
                     magicOrbRotationSpeedDelta += statDelta.AdditiveValue;
                     break;
-                case TowerUpgradeStatType.MagicOrbMaxHitCount:
+                case TowerUpgradeBasicStatType.MagicOrbMaxHitCount:
                     magicOrbMaxHitCountDelta += statDelta.AdditiveValue;
                     break;
-                case TowerUpgradeStatType.DroneBatteryDuration:
+                case TowerUpgradeBasicStatType.DroneBatteryDuration:
                     droneBatteryDurationDelta += statDelta.AdditiveValue;
                     break;
-                case TowerUpgradeStatType.DroneBurstCooldown:
+                case TowerUpgradeBasicStatType.DroneBurstCooldown:
                     droneBurstCooldownDelta += statDelta.AdditiveValue;
                     break;
             }
