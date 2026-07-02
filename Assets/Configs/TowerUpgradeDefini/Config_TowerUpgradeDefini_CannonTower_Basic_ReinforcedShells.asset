@@ -20,4 +20,3 @@ MonoBehaviour:
   basicStatDeltas:
   - statType: 2
     additiveValue: 2
-  behaviourPackageId: 

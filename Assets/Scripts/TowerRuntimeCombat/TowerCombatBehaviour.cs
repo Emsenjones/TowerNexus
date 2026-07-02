@@ -1,17 +1,24 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
 public class TowerCombatBehaviour : MonoBehaviour
 {
+    private const int DefaultPiercingArrowMaxHitCount = 3;
+    private const float DefaultScatterArrowAngleOffset = 15f;
+    private const int DefaultTwinOrbsCount = 2;
+    private const float DefaultTwinOrbsStartingAngleOffset = 180f;
+    private const int DefaultTwinDronesCount = 2;
+    private const float DefaultTwinDronesTakeOffDelay = 0.6f;
+
     [SerializeField] private TowerInstance towerInstance;
-    [SerializeField] private float scatterArrowAngleOffset = 15f;
-    [SerializeField] private int piercingArrowMaxHitCount = 3;
     private MonsterManager monsterManager;
     private TowerBehaviour towerBehaviour;
 
     private readonly List<MonsterBehaviour> detectedEnemies = new List<MonsterBehaviour>();
+    private readonly HashSet<TowerBehaviourPackageType> missingBehaviourPackageWarnings = new HashSet<TowerBehaviourPackageType>();
 
     private TowerDefinition towerDefinition;
     private AttackConfig attackConfig;
@@ -57,6 +64,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedMissingMagicOrbPrefab = false;
         hasLoggedMissingDronePrefab = false;
         hasLoggedMissingAttackOrigin = false;
+        missingBehaviourPackageWarnings.Clear();
         attackState = TowerAttackState.Idle;
     }
 
@@ -312,13 +320,13 @@ public class TowerCombatBehaviour : MonoBehaviour
         bool releasedLeft = TryReleaseProjectileInDirection(
             projectileConfig,
             origin,
-            Quaternion.AngleAxis(-scatterArrowAngleOffset, Vector3.up) * centerDirection,
+            Quaternion.AngleAxis(-GetScatterArrowAngleOffset(), Vector3.up) * centerDirection,
             projectileRuntimeOptions);
 
         bool releasedRight = TryReleaseProjectileInDirection(
             projectileConfig,
             origin,
-            Quaternion.AngleAxis(scatterArrowAngleOffset, Vector3.up) * centerDirection,
+            Quaternion.AngleAxis(GetScatterArrowAngleOffset(), Vector3.up) * centerDirection,
             projectileRuntimeOptions);
 
         return releasedCenter || releasedLeft || releasedRight;
@@ -369,22 +377,24 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private ProjectileRuntimeOptions CreateProjectileRuntimeOptions()
     {
+        bool canPierce = IsArcherPiercingArrowActive();
+
         return new ProjectileRuntimeOptions(
-            IsArcherPiercingArrowActive(),
-            Mathf.Max(1, piercingArrowMaxHitCount)
+            canPierce,
+            canPierce ? GetPiercingArrowMaxHitCount() : 1
         );
     }
 
     private bool IsArcherPiercingArrowActive()
     {
         return IsArcherProjectileRelease() &&
-               HasBehaviourPackage(TowerBehaviourPackageIds.ArcherPiercingArrow);
+               HasBehaviourPackage(TowerBehaviourPackageType.ArcherPiercingArrow);
     }
 
     private bool IsArcherScatterArrowActive()
     {
         return IsArcherProjectileRelease() &&
-               HasBehaviourPackage(TowerBehaviourPackageIds.ArcherScatterArrow);
+               HasBehaviourPackage(TowerBehaviourPackageType.ArcherScatterArrow);
     }
 
     private bool IsArcherProjectileRelease()
@@ -460,17 +470,12 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        GameObject magicOrbObject = Instantiate(attackConfig.MagicOrbPrefab, origin.position, Quaternion.identity);
+        ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
+        bool releasedMagicOrb = IsMagicTwinOrbsActive()
+            ? TryReleaseTwinMagicOrbs(origin, resolvedStats)
+            : TryReleaseMagicOrb(origin, resolvedStats);
 
-        if (!magicOrbObject.TryGetComponent(out MagicOrbBehaviour magicOrbBehaviour))
-        {
-            Debug.LogWarning("Magic Orb prefab does not have MagicOrbBehaviour. Adding it at runtime as a fallback.", magicOrbObject);
-            magicOrbBehaviour = magicOrbObject.AddComponent<MagicOrbBehaviour>();
-        }
-
-        magicOrbBehaviour.Initialize(towerInstance, monsterManager, attackConfig, ResolveCombatStats(), origin);
-
-        if (!magicOrbBehaviour.IsInitialized)
+        if (!releasedMagicOrb)
         {
             ResetPendingAttackState();
             return;
@@ -479,6 +484,60 @@ public class TowerCombatBehaviour : MonoBehaviour
         StartAttackCooldown();
         PlayAttackReleaseVfx();
         ResetPendingAttackState();
+    }
+
+    private bool TryReleaseTwinMagicOrbs(Transform origin, ResolvedTowerCombatStats resolvedStats)
+    {
+        float baseStartingOrbitAngle = UnityEngine.Random.Range(0f, 360f);
+        int orbCount = GetTwinOrbsCount();
+        bool releasedAnyOrb = false;
+
+        for (int i = 0; i < orbCount; i++)
+        {
+            float startingOrbitAngle = baseStartingOrbitAngle + GetTwinOrbsStartingAngleOffset() * i;
+            releasedAnyOrb |= TryReleaseMagicOrb(origin, resolvedStats, startingOrbitAngle);
+        }
+
+        return releasedAnyOrb;
+    }
+
+    private bool TryReleaseMagicOrb(
+        Transform origin,
+        ResolvedTowerCombatStats resolvedStats,
+        float? startingOrbitAngle = null)
+    {
+        GameObject magicOrbObject = Instantiate(attackConfig.MagicOrbPrefab, origin.position, Quaternion.identity);
+
+        if (!magicOrbObject.TryGetComponent(out MagicOrbBehaviour magicOrbBehaviour))
+        {
+            Debug.LogWarning("Magic Orb prefab does not have MagicOrbBehaviour. Adding it at runtime as a fallback.", magicOrbObject);
+            magicOrbBehaviour = magicOrbObject.AddComponent<MagicOrbBehaviour>();
+        }
+
+        magicOrbBehaviour.Initialize(
+            towerInstance,
+            monsterManager,
+            attackConfig,
+            resolvedStats,
+            origin,
+            startingOrbitAngle
+        );
+
+        return magicOrbBehaviour.IsInitialized;
+    }
+
+    private bool IsMagicTwinOrbsActive()
+    {
+        return IsMagicOrbRelease() &&
+               HasBehaviourPackage(TowerBehaviourPackageType.MagicTwinOrbs);
+    }
+
+    private bool IsMagicOrbRelease()
+    {
+        return towerDefinition != null &&
+               towerDefinition.TowerFamily == TowerFamily.Magic &&
+               attackConfig != null &&
+               attackConfig.AttackArchetype == AttackArchetype.MagicOrb;
     }
 
     private void UpdateDroneAttackEntity()
@@ -547,7 +606,64 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        GameObject droneObject = Instantiate(attackConfig.DronePrefab, origin.position, origin.rotation);
+        Vector3 releasePosition = origin.position;
+        Quaternion releaseRotation = origin.rotation;
+        MonsterBehaviour initialTarget = pendingDroneTarget;
+        ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
+
+        if (!TryReleaseDrone(releasePosition, releaseRotation, initialTarget, resolvedStats))
+        {
+            ResetPendingAttackState();
+            return;
+        }
+
+        ScheduleDelayedTwinDrones(releasePosition, releaseRotation, initialTarget, resolvedStats);
+        StartAttackCooldown();
+        ResetPendingAttackState();
+    }
+
+    private void ScheduleDelayedTwinDrones(
+        Vector3 releasePosition,
+        Quaternion releaseRotation,
+        MonsterBehaviour initialTarget,
+        ResolvedTowerCombatStats resolvedStats)
+    {
+        if (!IsDroneTwinDronesActive())
+        {
+            return;
+        }
+
+        int droneCount = GetTwinDronesCount();
+        float takeOffDelay = GetTwinDronesTakeOffDelay();
+
+        for (int i = 1; i < droneCount; i++)
+        {
+            StartCoroutine(ReleaseDelayedDrone(releasePosition, releaseRotation, initialTarget, resolvedStats, takeOffDelay * i));
+        }
+    }
+
+    private IEnumerator ReleaseDelayedDrone(
+        Vector3 releasePosition,
+        Quaternion releaseRotation,
+        MonsterBehaviour initialTarget,
+        ResolvedTowerCombatStats resolvedStats,
+        float delay)
+    {
+        if (delay > 0f)
+        {
+            yield return new WaitForSeconds(delay);
+        }
+
+        TryReleaseDrone(releasePosition, releaseRotation, initialTarget, resolvedStats);
+    }
+
+    private bool TryReleaseDrone(
+        Vector3 releasePosition,
+        Quaternion releaseRotation,
+        MonsterBehaviour initialTarget,
+        ResolvedTowerCombatStats resolvedStats)
+    {
+        GameObject droneObject = Instantiate(attackConfig.DronePrefab, releasePosition, releaseRotation);
 
         if (!droneObject.TryGetComponent(out DroneBehaviour droneBehaviour))
         {
@@ -559,20 +675,27 @@ public class TowerCombatBehaviour : MonoBehaviour
             towerInstance,
             monsterManager,
             attackConfig,
-            ResolveCombatStats(),
-            origin.position,
-            origin.rotation,
-            pendingDroneTarget
+            resolvedStats,
+            releasePosition,
+            releaseRotation,
+            initialTarget
         );
 
-        if (!droneBehaviour.IsInitialized)
-        {
-            ResetPendingAttackState();
-            return;
-        }
+        return droneBehaviour.IsInitialized;
+    }
 
-        StartAttackCooldown();
-        ResetPendingAttackState();
+    private bool IsDroneTwinDronesActive()
+    {
+        return IsDroneRelease() &&
+               HasBehaviourPackage(TowerBehaviourPackageType.DroneTwinDrones);
+    }
+
+    private bool IsDroneRelease()
+    {
+        return towerDefinition != null &&
+               towerDefinition.TowerFamily == TowerFamily.Drone &&
+               attackConfig != null &&
+               attackConfig.AttackArchetype == AttackArchetype.Drone;
     }
 
     private void UpdateUnsupportedAttackEntity()
@@ -696,15 +819,85 @@ public class TowerCombatBehaviour : MonoBehaviour
         return TowerRuntimeStatResolver.Resolve(towerInstance, attackConfig);
     }
 
-    private bool HasBehaviourPackage(string behaviourPackageId)
+    private int GetPiercingArrowMaxHitCount()
     {
-        if (string.IsNullOrWhiteSpace(behaviourPackageId))
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.ArcherPiercingArrow,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.PiercingMaxHitCount
+            : DefaultPiercingArrowMaxHitCount;
+    }
+
+    private float GetScatterArrowAngleOffset()
+    {
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.ArcherScatterArrow,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.ScatterAngleOffset
+            : DefaultScatterArrowAngleOffset;
+    }
+
+    private int GetTwinOrbsCount()
+    {
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.MagicTwinOrbs,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.TwinOrbsCount
+            : DefaultTwinOrbsCount;
+    }
+
+    private float GetTwinOrbsStartingAngleOffset()
+    {
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.MagicTwinOrbs,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.TwinOrbsStartingAngleOffset
+            : DefaultTwinOrbsStartingAngleOffset;
+    }
+
+    private int GetTwinDronesCount()
+    {
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.DroneTwinDrones,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.TwinDronesCount
+            : DefaultTwinDronesCount;
+    }
+
+    private float GetTwinDronesTakeOffDelay()
+    {
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.DroneTwinDrones,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.TwinDronesTakeOffDelay
+            : DefaultTwinDronesTakeOffDelay;
+    }
+
+    private bool HasBehaviourPackage(TowerBehaviourPackageType packageType)
+    {
+        return towerInstance != null && towerInstance.HasBehaviourPackage(packageType);
+    }
+
+    private bool TryGetBehaviourPackageUpgrade(
+        TowerBehaviourPackageType packageType,
+        out TowerUpgradeDefinition upgradeDefinition)
+    {
+        if (towerInstance != null &&
+            towerInstance.TryGetBehaviourPackageUpgrade(packageType, out upgradeDefinition))
         {
-            Debug.LogWarning("Tower combat cannot query Behaviour package: package id is missing.", this);
-            return false;
+            return true;
         }
 
-        return towerInstance != null && towerInstance.HasBehaviourPackage(behaviourPackageId);
+        if (missingBehaviourPackageWarnings.Add(packageType))
+        {
+            Debug.LogWarning(
+                $"Tower combat could not resolve applied Behaviour package upgrade '{packageType}'. Using fallback runtime defaults.",
+                this
+            );
+        }
+
+        upgradeDefinition = null;
+        return false;
     }
 
     private Transform GetAttackOrigin()

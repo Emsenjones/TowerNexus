@@ -94,14 +94,21 @@ public class TowerInstance : MonoBehaviour
         return upgradeState.HasUpgrade(upgradeDefinition);
     }
 
-    public bool HasBehaviourPackage(string behaviourPackageId)
+    public bool HasBehaviourPackage(TowerBehaviourPackageType packageType)
     {
-        return upgradeState.HasBehaviourPackage(behaviourPackageId);
+        return upgradeState.HasBehaviourPackage(packageType);
     }
 
-    public IReadOnlyList<string> GetActiveBehaviourPackageIds()
+    public bool TryGetBehaviourPackageUpgrade(
+        TowerBehaviourPackageType packageType,
+        out TowerUpgradeDefinition upgradeDefinition)
     {
-        return upgradeState.GetActiveBehaviourPackageIds();
+        return upgradeState.TryGetBehaviourPackageUpgrade(packageType, out upgradeDefinition);
+    }
+
+    public IReadOnlyList<TowerBehaviourPackageType> GetActiveBehaviourPackageTypes()
+    {
+        return upgradeState.GetActiveBehaviourPackageTypes();
     }
 
     public bool TryRecordUpgrade(TowerUpgradeDefinition upgradeDefinition)

@@ -651,6 +651,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerCombatBehaviour
   towerInstance: {fileID: -5833469859241583986}
+  scatterArrowAngleOffset: 15
+  piercingArrowMaxHitCount: 3
+  twinOrbsCount: 2
+  twinOrbsStartingAngleOffset: 180
+  twinDronesCount: 2
+  twinDronesTakeOffDelay: 0.5
 --- !u!114 &2757564218915723808
 MonoBehaviour:
   m_ObjectHideFlags: 0

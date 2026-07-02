@@ -31,7 +31,8 @@ public class MagicOrbBehaviour : MonoBehaviour
         MonsterManager monsterManager,
         AttackConfig attackConfig,
         ResolvedTowerCombatStats resolvedStats,
-        Transform orbitCenter)
+        Transform orbitCenter,
+        float? startingOrbitAngle = null)
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
@@ -41,7 +42,7 @@ public class MagicOrbBehaviour : MonoBehaviour
         attackDamage = resolvedStats.AttackDamage;
         rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
         remainingHitCount = resolvedStats.MagicOrbMaxHitCount;
-        orbitAngle = UnityEngine.Random.Range(0f, 360f);
+        orbitAngle = startingOrbitAngle ?? UnityEngine.Random.Range(0f, 360f);
         elapsedLifetime = 0f;
         hasEnded = false;
         monsterHitCooldownEnds.Clear();

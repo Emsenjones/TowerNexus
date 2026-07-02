@@ -18,4 +18,10 @@ MonoBehaviour:
   towerFamily: 0
   requiredTowerLevel: 2
   basicStatDeltas: []
-  behaviourPackageId: archer.piercing_arrow
+  behaviourPackageType: 100
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  twinOrbsCount: 2
+  twinOrbsStartingAngleOffset: 180
+  twinDronesCount: 2
+  twinDronesTakeOffDelay: 0.15

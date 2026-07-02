@@ -18,4 +18,10 @@ MonoBehaviour:
   towerFamily: 3
   requiredTowerLevel: 2
   basicStatDeltas: []
-  behaviourPackageId: drone.twin_drones
+  behaviourPackageType: 300
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  twinOrbsCount: 2
+  twinOrbsStartingAngleOffset: 180
+  twinDronesCount: 2
+  twinDronesTakeOffDelay: 0.6

@@ -75,11 +75,11 @@ public class TowerUpgradeDatabase : MonoBehaviour
         return results;
     }
 
-    public List<TowerUpgradeDefinition> GetUpgradesByBehaviourPackageId(string behaviourPackageId)
+    public List<TowerUpgradeDefinition> GetUpgradesByBehaviourPackageType(TowerBehaviourPackageType packageType)
     {
         List<TowerUpgradeDefinition> results = new List<TowerUpgradeDefinition>();
 
-        if (string.IsNullOrWhiteSpace(behaviourPackageId))
+        if (packageType == TowerBehaviourPackageType.None)
         {
             return results;
         }
@@ -88,7 +88,7 @@ public class TowerUpgradeDatabase : MonoBehaviour
         {
             TowerUpgradeDefinition upgradeDefinition = upgradeDefinitions[i];
 
-            if (upgradeDefinition != null && upgradeDefinition.BehaviourPackageId == behaviourPackageId)
+            if (upgradeDefinition != null && upgradeDefinition.BehaviourPackageType == packageType)
             {
                 results.Add(upgradeDefinition);
             }

@@ -218,6 +218,7 @@ Runtime upgrade state should answer:
 - Which Required Tower Level categories are unlocked for this tower level
 - Which Basic Layer stat deltas affect this tower
 - Which Behaviour Layer packages are active on this tower
+- Which Behaviour Layer upgrade definition provides the active package parameters
 
 Applying a TowerUpgradeDefinition records that upgrade on the target tower.
 
@@ -325,6 +326,19 @@ For example:
 These cases are content errors, not player-facing gameplay rules.
 
 The editor or validation path should warn designers about invalid combinations. Runtime should fail safely and log clear warnings if invalid content is encountered.
+
+Behaviour Layer package identity should use typed package identifiers rather than free-form strings. The package identity represents which runtime Behaviour package an upgrade grants. It is separate from Basic Layer stat delta types.
+
+Behaviour Layer package parameters belong to the corresponding TowerUpgradeDefinition asset. Runtime systems consume those parameters through the applied upgrade definition on the placed tower instance.
+
+Examples of Behaviour Layer package parameters:
+
+- Archer Piercing Arrow finite piercing hit count
+- Archer Scatter Arrow angle offset
+- Magic Twin Orbs orb count and starting angle offset
+- Drone Twin Drones drone count and takeoff delay
+
+TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
 ---
 
@@ -458,6 +472,8 @@ Examples:
 - Drone Twin Drones
 
 Behaviour Layer packages may provide behaviour parameters consumed by the corresponding runtime path. For example, Archer Piercing Arrow may provide a finite piercing hit count used when initializing projectile-level piercing.
+
+Behaviour Layer package identity should be typed. Runtime checks should ask whether the placed tower owns a specific Behaviour package type, then read the applied upgrade definition for that package type when behaviour parameters are needed.
 
 TowerUpgradeSystem remains responsible for upgrade ownership, validation, and application only. It should not execute piercing, scatter release, Magic Orb count changes, Drone count changes, or other Behaviour Layer gameplay effects.
 

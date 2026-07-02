@@ -3,13 +3,14 @@ using System.Collections.Generic;
 public class TowerUpgradeState
 {
     private readonly List<TowerUpgradeDefinition> appliedUpgrades = new List<TowerUpgradeDefinition>();
-    private readonly List<string> activeBehaviourPackageIds = new List<string>();
+    private readonly List<TowerBehaviourPackageType> activeBehaviourPackageTypes = new List<TowerBehaviourPackageType>();
 
     public IReadOnlyList<TowerUpgradeDefinition> AppliedUpgrades => appliedUpgrades;
 
     public void Reset()
     {
         appliedUpgrades.Clear();
+        activeBehaviourPackageTypes.Clear();
     }
 
     public bool HasUpgrade(TowerUpgradeDefinition upgradeDefinition)
@@ -17,19 +18,30 @@ public class TowerUpgradeState
         return upgradeDefinition != null && appliedUpgrades.Contains(upgradeDefinition);
     }
 
-    public bool HasBehaviourPackage(string behaviourPackageId)
+    public bool HasBehaviourPackage(TowerBehaviourPackageType packageType)
     {
-        if (string.IsNullOrWhiteSpace(behaviourPackageId))
+        return TryGetBehaviourPackageUpgrade(packageType, out _);
+    }
+
+    public bool TryGetBehaviourPackageUpgrade(
+        TowerBehaviourPackageType packageType,
+        out TowerUpgradeDefinition upgradeDefinition)
+    {
+        upgradeDefinition = null;
+
+        if (packageType == TowerBehaviourPackageType.None)
         {
             return false;
         }
 
         for (int i = 0; i < appliedUpgrades.Count; i++)
         {
-            TowerUpgradeDefinition upgradeDefinition = appliedUpgrades[i];
+            TowerUpgradeDefinition candidateUpgradeDefinition = appliedUpgrades[i];
 
-            if (upgradeDefinition != null && upgradeDefinition.BehaviourPackageId == behaviourPackageId)
+            if (candidateUpgradeDefinition != null &&
+                candidateUpgradeDefinition.BehaviourPackageType == packageType)
             {
+                upgradeDefinition = candidateUpgradeDefinition;
                 return true;
             }
         }
@@ -37,23 +49,24 @@ public class TowerUpgradeState
         return false;
     }
 
-    public IReadOnlyList<string> GetActiveBehaviourPackageIds()
+    public IReadOnlyList<TowerBehaviourPackageType> GetActiveBehaviourPackageTypes()
     {
-        activeBehaviourPackageIds.Clear();
+        activeBehaviourPackageTypes.Clear();
 
         for (int i = 0; i < appliedUpgrades.Count; i++)
         {
             TowerUpgradeDefinition upgradeDefinition = appliedUpgrades[i];
 
-            if (upgradeDefinition == null || string.IsNullOrWhiteSpace(upgradeDefinition.BehaviourPackageId))
+            if (upgradeDefinition == null ||
+                upgradeDefinition.BehaviourPackageType == TowerBehaviourPackageType.None)
             {
                 continue;
             }
 
-            activeBehaviourPackageIds.Add(upgradeDefinition.BehaviourPackageId);
+            activeBehaviourPackageTypes.Add(upgradeDefinition.BehaviourPackageType);
         }
 
-        return activeBehaviourPackageIds;
+        return activeBehaviourPackageTypes;
     }
 
     public bool TryRecordUpgrade(TowerUpgradeDefinition upgradeDefinition)

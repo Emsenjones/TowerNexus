@@ -72,8 +72,9 @@
    *Phase 3: Separate the Tower and it blocks;
    *Phase 4: Upgrade data/application foundation;
    *Phase 5: Draft integration for deploy / level-up / upgrade;
-   Phase 6: Archer/Cannon/MagicOrb/Drone tower behavior layer Phase1 to Phase2 implementation;
+   *Phase 6: Archer/Cannon/MagicOrb/Drone tower behavior layer Phase1 implementation;
 7. BuffAndEffectSystem implementation;
+8. Archer/Cannon/MagicOrb/Drone tower behavior layer Phase2 implementation;
 8. Player Level up by resolving monsters;
 9. Level configuration design;
 10. Tap tower to pop up TowerInfoWindow;

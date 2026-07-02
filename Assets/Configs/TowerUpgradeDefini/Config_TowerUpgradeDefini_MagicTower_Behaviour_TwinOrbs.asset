@@ -18,4 +18,10 @@ MonoBehaviour:
   towerFamily: 2
   requiredTowerLevel: 2
   basicStatDeltas: []
-  behaviourPackageId: magic.twin_orbs
+  behaviourPackageType: 200
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  twinOrbsCount: 2
+  twinOrbsStartingAngleOffset: 180
+  twinDronesCount: 2
+  twinDronesTakeOffDelay: 0.15

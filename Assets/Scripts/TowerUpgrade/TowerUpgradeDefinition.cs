@@ -28,7 +28,30 @@ public class TowerUpgradeDefinition : ScriptableObject
 
     [TitleGroup("Behaviour Layer")]
     [ShowIf(nameof(IsBehaviourPackageUpgrade))]
-    [SerializeField] private string behaviourPackageId;
+    [SerializeField] private TowerBehaviourPackageType behaviourPackageType;
+    [TitleGroup("Behaviour Layer/Archer Piercing Arrow")]
+    [ShowIf(nameof(IsArcherPiercingArrow))]
+    [MinValue(1)]
+    [SerializeField] private int piercingMaxHitCount = 3;
+    [TitleGroup("Behaviour Layer/Archer Scatter Arrow")]
+    [ShowIf(nameof(IsArcherScatterArrow))]
+    [MinValue(0f)]
+    [SerializeField] private float scatterAngleOffset = 15f;
+    [TitleGroup("Behaviour Layer/Magic Twin Orbs")]
+    [ShowIf(nameof(IsMagicTwinOrbs))]
+    [MinValue(1)]
+    [SerializeField] private int twinOrbsCount = 2;
+    [TitleGroup("Behaviour Layer/Magic Twin Orbs")]
+    [ShowIf(nameof(IsMagicTwinOrbs))]
+    [SerializeField] private float twinOrbsStartingAngleOffset = 180f;
+    [TitleGroup("Behaviour Layer/Drone Twin Drones")]
+    [ShowIf(nameof(IsDroneTwinDrones))]
+    [MinValue(1)]
+    [SerializeField] private int twinDronesCount = 2;
+    [TitleGroup("Behaviour Layer/Drone Twin Drones")]
+    [ShowIf(nameof(IsDroneTwinDrones))]
+    [MinValue(0f)]
+    [SerializeField] private float twinDronesTakeOffDelay = 0.15f;
 
     public string DisplayName => displayName;
     public string Description => description;
@@ -36,7 +59,13 @@ public class TowerUpgradeDefinition : ScriptableObject
     public TowerFamily TowerFamily => towerFamily;
     public int RequiredTowerLevel => requiredTowerLevel;
     public IReadOnlyList<TowerUpgradeStatDelta> BasicStatDeltas => basicStatDeltas;
-    public string BehaviourPackageId => behaviourPackageId;
+    public TowerBehaviourPackageType BehaviourPackageType => behaviourPackageType;
+    public int PiercingMaxHitCount => Mathf.Max(1, piercingMaxHitCount);
+    public float ScatterAngleOffset => Mathf.Max(0f, scatterAngleOffset);
+    public int TwinOrbsCount => Mathf.Clamp(twinOrbsCount, 1, 2);
+    public float TwinOrbsStartingAngleOffset => twinOrbsStartingAngleOffset;
+    public int TwinDronesCount => Mathf.Clamp(twinDronesCount, 1, 2);
+    public float TwinDronesTakeOffDelay => Mathf.Max(0f, twinDronesTakeOffDelay);
 
     public bool IsValid()
     {
@@ -70,7 +99,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     {
         bool isValid = true;
         bool hasBasicStatDeltas = basicStatDeltas != null && basicStatDeltas.Count > 0;
-        bool hasBehaviourPackageId = !string.IsNullOrWhiteSpace(behaviourPackageId);
+        bool hasBehaviourPackageType = behaviourPackageType != TowerBehaviourPackageType.None;
 
         if (IsBasicStatUpgrade())
         {
@@ -80,17 +109,17 @@ public class TowerUpgradeDefinition : ScriptableObject
                 isValid = false;
             }
 
-            if (hasBehaviourPackageId)
+            if (hasBehaviourPackageType)
             {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Basic layer upgrades should not define a behaviour package identifier.");
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Basic layer upgrades should not define a behaviour package type.");
                 isValid = false;
             }
         }
         else if (IsBehaviourPackageUpgrade())
         {
-            if (!hasBehaviourPackageId)
+            if (!hasBehaviourPackageType)
             {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Behaviour layer upgrades need one behaviour package identifier.");
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Behaviour layer upgrades need one behaviour package type.");
                 isValid = false;
             }
 
@@ -99,10 +128,87 @@ public class TowerUpgradeDefinition : ScriptableObject
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Behaviour layer upgrades should not define Basic stat deltas in v1.");
                 isValid = false;
             }
+
+            if (!IsBehaviourPackageCompatibleWithTowerFamily(logWarnings))
+            {
+                isValid = false;
+            }
+
+            if (!AreBehaviourPackageParametersValid(logWarnings))
+            {
+                isValid = false;
+            }
         }
         else if (IsFutureSynergyUpgrade())
         {
             Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Required Tower Level {requiredTowerLevel} upgrade authoring data is not defined in v1.");
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private bool IsBehaviourPackageCompatibleWithTowerFamily(bool logWarnings)
+    {
+        switch (behaviourPackageType)
+        {
+            case TowerBehaviourPackageType.ArcherPiercingArrow:
+            case TowerBehaviourPackageType.ArcherScatterArrow:
+                return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Archer);
+            case TowerBehaviourPackageType.MagicTwinOrbs:
+                return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Magic);
+            case TowerBehaviourPackageType.DroneTwinDrones:
+                return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Drone);
+            case TowerBehaviourPackageType.None:
+                return true;
+            default:
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: unsupported behaviour package type '{behaviourPackageType}'.");
+                return false;
+        }
+    }
+
+    private bool WarnIfBehaviourPackageTowerFamilyMismatch(bool logWarnings, TowerFamily expectedTowerFamily)
+    {
+        if (towerFamily == expectedTowerFamily)
+        {
+            return true;
+        }
+
+        Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: behaviour package '{behaviourPackageType}' requires TowerFamily '{expectedTowerFamily}'.");
+        return false;
+    }
+
+    private bool AreBehaviourPackageParametersValid(bool logWarnings)
+    {
+        bool isValid = true;
+
+        if (IsArcherPiercingArrow() && piercingMaxHitCount < 1)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Piercing Arrow max hit count must be at least 1.");
+            isValid = false;
+        }
+
+        if (IsArcherScatterArrow() && scatterAngleOffset < 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Scatter Arrow angle offset cannot be negative.");
+            isValid = false;
+        }
+
+        if (IsMagicTwinOrbs() && (twinOrbsCount < 1 || twinOrbsCount > 2))
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Twin Orbs count must be between 1 and 2 in v1.");
+            isValid = false;
+        }
+
+        if (IsDroneTwinDrones() && (twinDronesCount < 1 || twinDronesCount > 2))
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Twin Drones count must be between 1 and 2 in v1.");
+            isValid = false;
+        }
+
+        if (IsDroneTwinDrones() && twinDronesTakeOffDelay < 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Twin Drones takeoff delay cannot be negative.");
             isValid = false;
         }
 
@@ -165,6 +271,26 @@ public class TowerUpgradeDefinition : ScriptableObject
     private bool IsFutureSynergyUpgrade()
     {
         return requiredTowerLevel >= 3;
+    }
+
+    private bool IsArcherPiercingArrow()
+    {
+        return behaviourPackageType == TowerBehaviourPackageType.ArcherPiercingArrow;
+    }
+
+    private bool IsArcherScatterArrow()
+    {
+        return behaviourPackageType == TowerBehaviourPackageType.ArcherScatterArrow;
+    }
+
+    private bool IsMagicTwinOrbs()
+    {
+        return behaviourPackageType == TowerBehaviourPackageType.MagicTwinOrbs;
+    }
+
+    private bool IsDroneTwinDrones()
+    {
+        return behaviourPackageType == TowerBehaviourPackageType.DroneTwinDrones;
     }
 
     private void Warn(bool logWarnings, string message)
