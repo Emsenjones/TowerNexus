@@ -16,5 +16,5 @@ MonoBehaviour:
   projectileSpeed: 6
   hitDistanceThreshold: 0.2
   maxLifetime: 4
-  impactEffectConfig: {fileID: 0}
+  impactEffectDefinition: {fileID: 0}
   impactVfxPrefab: {fileID: 0}

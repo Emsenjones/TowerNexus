@@ -23,6 +23,7 @@ public class MonsterBehaviour : MonoBehaviour
     [ShowInInspector, ReadOnly] private bool isCleaningUp;
 
     private readonly List<GridNodeBehaviour> currentPath = new List<GridNodeBehaviour>();
+    private MonsterBuffRuntime buffRuntime;
     private int pathIndex;
 
     public MonsterDefinition Definition => definition;
@@ -52,6 +53,8 @@ public class MonsterBehaviour : MonoBehaviour
         this.definition = definition;
         currentHealth = definition.MaxHealth;
         currentMoveSpeed = definition.MoveSpeed;
+        EnsureBuffRuntime();
+        buffRuntime.Clear();
         isDead = false;
         isCleaningUp = false;
         CacheAnimator();
@@ -171,6 +174,7 @@ public class MonsterBehaviour : MonoBehaviour
         }
 
         isDead = true;
+        buffRuntime?.Clear();
         StopMovement();
         currentPath.Clear();
         hitFeedback?.StopFeedback();
@@ -191,24 +195,68 @@ public class MonsterBehaviour : MonoBehaviour
         return isDead;
     }
 
+    public BuffApplyResult ApplyBuff(BuffApplyRequest request)
+    {
+        if (isDead || isCleaningUp)
+        {
+            return BuffApplyResult.Invalid;
+        }
+
+        EnsureBuffRuntime();
+        return buffRuntime.ApplyBuff(request);
+    }
+
+    public bool RemoveBuff(BuffDefinition buffDefinition)
+    {
+        EnsureBuffRuntime();
+        return buffRuntime.RemoveBuff(buffDefinition);
+    }
+
+    public bool HasBuff(BuffDefinition buffDefinition)
+    {
+        EnsureBuffRuntime();
+        return buffRuntime.HasBuff(buffDefinition);
+    }
+
+    public bool HasElementalStackImmunity(ElementType elementType)
+    {
+        EnsureBuffRuntime();
+        return buffRuntime.HasElementalStackImmunity(elementType);
+    }
+
     private void Awake()
     {
         CacheAnimator();
+        EnsureBuffRuntime();
     }
 
     private void Update()
     {
-        if (!isMoving || isDead || isCleaningUp)
+        if (isDead || isCleaningUp)
         {
             return;
         }
 
-        MoveAlongPath();
+        buffRuntime?.Tick(Time.deltaTime);
+
+        if (isMoving)
+        {
+            MoveAlongPath();
+        }
     }
 
     private void OnDestroy()
     {
+        buffRuntime?.Clear();
         OnDestroyed?.Invoke(this);
+    }
+
+    private void EnsureBuffRuntime()
+    {
+        if (buffRuntime == null)
+        {
+            buffRuntime = new MonsterBuffRuntime(this);
+        }
     }
 
     private void CacheAnimator()
@@ -285,6 +333,7 @@ public class MonsterBehaviour : MonoBehaviour
         }
 
         isCleaningUp = true;
+        buffRuntime?.Clear();
         StopMovement();
         currentPath.Clear();
         hitFeedback?.StopFeedback();

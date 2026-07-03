@@ -9,7 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7b82fa865f37e4c08bd443c04f6edc94, type: 3}
-  m_Name: Config_ImpactEffect_AreaDamage
-  m_EditorClassIdentifier: Assembly-CSharp::EffectConfig
+  m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
+  m_Name: Config_EffectDefini_CannonTower_AreaDamage
+  m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
+  displayName: Area Damage
   radius: 1
+  actions:
+  - actionType: 0
+    buffDefinition: {fileID: 0}

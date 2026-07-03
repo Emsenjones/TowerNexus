@@ -27,6 +27,8 @@ Projectile impact visual effects are separate from gameplay Effects. Projectile-
 
 Purely visual feedback should not require Buff And Effect System data.
 
+EffectDefinition is the gameplay Effect source of truth for reusable effect data. EffectBinding references and projectile gameplay impact effects should point to EffectDefinition.
+
 ---
 
 ## 2. Responsibility Boundary
@@ -177,6 +179,8 @@ Trigger context may carry:
 - Element type when relevant
 - Whether this hit can apply Elemental stacks
 
+When a trigger position is carried, the context must expose explicit validity such as HasTriggerPosition. Systems should not use Vector3.zero as an implicit "no position" sentinel.
+
 The exact runtime fields may evolve during implementation. The stable contract is that Attack Entities, projectiles, zones, and buffs provide enough source, target, and position context for Buff And Effect System to resolve effects without owning their upstream behavior.
 
 ---
@@ -188,12 +192,12 @@ First-version Effect targeting should stay simple.
 The trigger context should provide one of:
 
 - Target monster
-- Position
+- Trigger position with explicit validity
 
 Effect targeting uses:
 
 - Target monster
-- Position
+- Valid trigger position
 - Radius
 
 Targeting rule:
@@ -202,10 +206,16 @@ Targeting rule:
 If radius <= 0 and target monster exists:
     target = target monster
 
+If radius <= 0 and target monster is missing:
+    execute nothing and log a warning
+
 If radius > 0:
     center = target monster position if target monster exists
-    otherwise center = context position
+    otherwise center = context trigger position only when HasTriggerPosition is true
     targets = valid monsters inside radius around center
+
+If radius > 0 and neither target monster nor valid trigger position exists:
+    execute nothing and log a warning
 ```
 
 Monster inclusion in radius should use the monster-side hit/reference anchor provided by Monster System.
@@ -243,11 +253,15 @@ Examples:
 
 First implementation can route Effect, Buff, Zone, and Overload damage through Effect actions while keeping base attack damage unchanged.
 
+In the Task002 foundation, DealDamage reads the numeric damage from EffectTriggerContext.ResolvedDamage only. EffectDefinition does not author independent damage values in that first executable slice.
+
 Reaction-generated damage should not apply Elemental stacks by default.
 
 ### 6.2 ApplyBuff
 
 ApplyBuff creates, refreshes, or stacks a Buff runtime instance.
+
+ApplyBuff is an Effect action. When executed through EffectExecutor, it applies the configured Buff definition to each resolved target monster while preserving source tower and source upgrade context from the EffectTriggerContext when available.
 
 Examples:
 
@@ -298,15 +312,10 @@ Buff definition data may include:
 - Element type when relevant
 - Duration
 - Tick interval when relevant
-- Stackability
 - Max stack
-- Stack amount per apply
-- Refresh duration on reapply
-- Same-source apply cooldown
-- Normal phase effect
-- Overload effect
-- Remove on overload
-- Same-element stack immunity duration
+- Buff apply cooldown
+- Tick effect definition
+- Whether this Buff represents ElementalStackImmunity
 
 Buff runtime state should include:
 
@@ -317,9 +326,25 @@ Buff runtime state should include:
 - Remaining duration
 - Tick timer
 - Stack count
-- Same-source cooldown tracking when required
+- Buff apply cooldown tracking when required
 
 Runtime state must not be stored in definition assets.
+
+MonsterBehaviour owns attached Buff runtime state through an internal plain C# runtime container:
+
+```text
+MonsterBehaviour
+    -> MonsterBuffRuntime
+        -> List<MonsterBuffInstance>
+```
+
+Buff runtime instances are not MonoBehaviour components.
+
+First-version successful apply always adds one stack, up to max stack, and refreshes duration to the Buff definition duration.
+
+Buff apply attempts should return explicit results such as Applied, Refreshed, Stacked, BlockedByBuffApplyCooldown, BlockedByElementalStackImmunity, or Invalid.
+
+Buff ticks may execute tick effect definitions through EffectExecutor using OnBuffTick context. Task003 tick context uses ResolvedDamage = 0 as a pipeline placeholder; concrete tick damage authoring belongs to later content slices.
 
 ---
 
@@ -346,16 +371,16 @@ Each elemental debuff has two phases:
 General stacking rule:
 
 1. If the monster does not have this elemental debuff, apply it with initial stacks.
-2. If the monster already has this elemental debuff and the application is not blocked, run the normal phase when configured, refresh duration, and add stacks.
+2. If the monster already has this elemental debuff and the application is not blocked, run the normal phase when configured, refresh duration, and add one stack.
 3. Multiple towers with the same elemental upgrade can add stacks to the same monster.
-4. The same source tower may have an apply cooldown for the same elemental debuff on the same monster.
+4. The same elemental debuff on the same monster may have an apply cooldown that blocks applications from any tower while active.
 5. If the elemental debuff expires before max stack is reached, the debuff is removed and stacks are lost.
 6. When max stack is reached, trigger overload.
 7. After overload triggers, apply same-element ElementalStackImmunity.
 
 First application of an elemental debuff should apply the debuff only. Normal phase extra effects such as Electric extra damage or WindVortex spawn should trigger only when the monster already has that elemental debuff and the direct elemental hit successfully applies or refreshes it.
 
-Same-source apply cooldown prevents one tower from stacking the same elemental debuff too quickly on the same monster. When this cooldown blocks an application, no stack is added, duration is not refreshed, and normal phase extra effects do not trigger.
+Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, no stack is added, duration is not refreshed, and normal phase extra effects do not trigger.
 
 After normal phase resolution, the system checks whether max stacks have been reached. If max stacks are reached, overload executes, the normal debuff is removed when configured to do so, and same-element stack immunity is applied.
 
@@ -531,7 +556,7 @@ The next implementation should be split into Task Documents rather than implemen
 Recommended order:
 
 1. Effect trigger context, Effect definition, simple target resolution, and Effect action foundation.
-2. Buff definition, Monster buff runtime state, stacking, refresh, same-source cooldown, and same-element stack immunity foundation.
+2. Buff definition, Monster buff runtime state, stacking, refresh, Buff apply cooldown, and same-element stack immunity foundation.
 3. Fire vertical slice: Burning and FlameBurst.
 4. Cold and Electric vertical slices.
 5. EffectZone foundation.

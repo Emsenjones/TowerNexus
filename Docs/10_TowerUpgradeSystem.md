@@ -580,10 +580,10 @@ Elemental Layer content may include:
 - Elemental debuff definition reference
 - Normal phase effect reference or binding
 - Overload effect reference or binding
-- Same-source apply cooldown
+- Buff apply cooldown
 - Same-element stack immunity duration
 
-Same-source apply cooldown prevents one tower from stacking the same elemental debuff too quickly on the same monster. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and normal phase extra effects such as Electric extra damage or WindVortex spawn do not trigger.
+Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and normal phase extra effects such as Electric extra damage or WindVortex spawn do not trigger.
 
 First application of an elemental debuff should apply the debuff only. If the monster already has that elemental debuff and a direct elemental hit successfully applies or refreshes it, the normal phase may execute. After normal phase resolution, the system checks whether max stacks have been reached; if yes, overload executes, the normal debuff is removed when configured to do so, and same-element stack immunity is applied.
 

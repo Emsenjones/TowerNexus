@@ -66,15 +66,23 @@
 3. *Add damage display;
 4. *Tower and Projectile effect;
 5. *Refactor System documents based on new four types of Towers;
-6. Implement the Tower upgrade system;
-   *Phase 1: Tower Framework foundation;
-   *Phase 2: Projectile foundation + four base tower runtime;
-   *Phase 3: Separate the Tower and it blocks;
-   *Phase 4: Upgrade data/application foundation;
-   *Phase 5: Draft integration for deploy / level-up / upgrade;
-   *Phase 6: Archer/Cannon/MagicOrb/Drone tower behavior layer Phase1 implementation;
-7. BuffAndEffectSystem implementation;
-8. Archer/Cannon/MagicOrb/Drone tower behavior layer Phase2 implementation;
+6. *Implement the Tower upgrade system:
+   1. *Tower Framework foundation;
+   2. *Tower Framework foundation;
+   3. *Projectile foundation + four base tower runtime;
+   4. *Separate the Tower and it blocks;
+   5. *Draft integration for deploy / level-up / upgrade;
+   6. *Archer/Cannon/MagicOrb/Drone tower behavior layer Phase1 implementation;
+7. Buff and Effect system implementation:
+   1. *Effect trigger and Binding foundation;
+   2. *Definition action and targeting foundation
+   3. *Monster buff runtime foundation
+   4. Elemental upgrade profile and eligibility
+   5. Fire element vertical slice
+   6. Cold and electric element slices
+   7. Effect zone foundation
+   8. Tower upgrade behavior layer Phase2 implementation;
+   9. Wind element and moving effect zone
 8. Player Level up by resolving monsters;
 9. Level configuration design;
 10. Tap tower to pop up TowerInfoWindow;

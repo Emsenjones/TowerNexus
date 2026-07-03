@@ -13,10 +13,19 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Sharpened Arrows
-  description: Archer Tower gains increased attack range
+  description: Attack range +1
   icon: {fileID: 21300000, guid: c6f3ddfa43da4ad4cad2375c9d4df858, type: 3}
   towerFamily: 0
   requiredTowerLevel: 1
+  upgradeLayer: 0
   basicStatDeltas:
   - statType: 0
     additiveValue: 1
+  behaviourPackageType: 0
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  twinOrbsCount: 2
+  twinOrbsStartingAngleOffset: 180
+  twinDronesCount: 2
+  twinDronesTakeOffDelay: 0.15
+  effectBindings: []

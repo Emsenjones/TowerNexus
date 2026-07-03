@@ -21,8 +21,8 @@ public class ProjectileConfig : ScriptableObject
     [MinValue(0f)]
     [SerializeField] private float maxLifetime = 10f;
 
-    [TitleGroup("Impact")]
-    [SerializeField] private EffectConfig impactEffectConfig;
+    [TitleGroup("Impact Gameplay")]
+    [SerializeField] private EffectDefinition impactEffectDefinition;
     [TitleGroup("Impact VFX")]
     [SerializeField] private GameObject impactVfxPrefab;
 
@@ -30,7 +30,7 @@ public class ProjectileConfig : ScriptableObject
     public float ProjectileSpeed => projectileSpeed;
     public float HitDistanceThreshold => hitDistanceThreshold;
     public float MaxLifetime => maxLifetime;
-    public EffectConfig ImpactEffectConfig => impactEffectConfig;
+    public EffectDefinition ImpactEffectDefinition => impactEffectDefinition;
     public GameObject ImpactVfxPrefab => impactVfxPrefab;
 
     public bool IsValid()
@@ -44,12 +44,6 @@ public class ProjectileConfig : ScriptableObject
         if (projectileSpeed <= 0f)
         {
             Debug.LogWarning("Projectile config is invalid: projectile speed must be greater than zero.", this);
-            return false;
-        }
-
-        if (hitDistanceThreshold < 0f)
-        {
-            Debug.LogWarning("Projectile config is invalid: hit distance threshold cannot be negative.", this);
             return false;
         }
 

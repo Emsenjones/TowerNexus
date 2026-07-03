@@ -266,6 +266,8 @@ Monster System owns monster health, movement, pathfinding state, current node st
 
 Buff And Effect System may apply gameplay results to monsters, but those results should pass through Monster System-owned runtime capabilities.
 
+MonsterBehaviour owns attached Buff runtime state through an internal plain C# MonsterBuffRuntime container. Buff runtime instances are not MonoBehaviour components and should be cleared when the monster dies, despawns, is destroyed, or is reset for future pooling.
+
 Examples:
 
 - Damage effects may request monster damage processing.

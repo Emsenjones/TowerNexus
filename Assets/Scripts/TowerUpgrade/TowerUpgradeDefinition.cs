@@ -21,13 +21,15 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Progression")]
     [MinValue(1)]
     [SerializeField] private int requiredTowerLevel = 1;
+    [TitleGroup("Progression")]
+    [SerializeField] private TowerUpgradeLayer upgradeLayer = TowerUpgradeLayer.Basic;
 
     [TitleGroup("Basic Layer")]
-    [ShowIf(nameof(IsBasicStatUpgrade))]
+    [ShowIf(nameof(IsBasicLayerUpgrade))]
     [SerializeField] private List<TowerUpgradeStatDelta> basicStatDeltas = new List<TowerUpgradeStatDelta>();
 
     [TitleGroup("Behaviour Layer")]
-    [ShowIf(nameof(IsBehaviourPackageUpgrade))]
+    [ShowIf(nameof(IsBehaviourLayerUpgrade))]
     [SerializeField] private TowerBehaviourPackageType behaviourPackageType;
     [TitleGroup("Behaviour Layer/Archer Piercing Arrow")]
     [ShowIf(nameof(IsArcherPiercingArrow))]
@@ -53,13 +55,19 @@ public class TowerUpgradeDefinition : ScriptableObject
     [MinValue(0f)]
     [SerializeField] private float twinDronesTakeOffDelay = 0.15f;
 
+    [TitleGroup("Effect Bindings")]
+    [ShowIf(nameof(CanAuthorEffectBindings))]
+    [SerializeField] private List<EffectBinding> effectBindings = new List<EffectBinding>();
+
     public string DisplayName => displayName;
     public string Description => description;
     public Sprite Icon => icon;
     public TowerFamily TowerFamily => towerFamily;
     public int RequiredTowerLevel => requiredTowerLevel;
+    public TowerUpgradeLayer UpgradeLayer => upgradeLayer;
     public IReadOnlyList<TowerUpgradeStatDelta> BasicStatDeltas => basicStatDeltas;
     public TowerBehaviourPackageType BehaviourPackageType => behaviourPackageType;
+    public IReadOnlyList<EffectBinding> EffectBindings => effectBindings;
     public int PiercingMaxHitCount => Mathf.Max(1, piercingMaxHitCount);
     public float ScatterAngleOffset => Mathf.Max(0f, scatterAngleOffset);
     public int TwinOrbsCount => Mathf.Clamp(twinOrbsCount, 1, 2);
@@ -92,6 +100,11 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
+        if (!AreEffectBindingsValid(logWarnings))
+        {
+            isValid = false;
+        }
+
         return isValid;
     }
 
@@ -100,8 +113,9 @@ public class TowerUpgradeDefinition : ScriptableObject
         bool isValid = true;
         bool hasBasicStatDeltas = basicStatDeltas != null && basicStatDeltas.Count > 0;
         bool hasBehaviourPackageType = behaviourPackageType != TowerBehaviourPackageType.None;
+        bool hasEffectBindings = HasEffectBindings();
 
-        if (IsBasicStatUpgrade())
+        if (IsBasicLayerUpgrade())
         {
             if (!hasBasicStatDeltas)
             {
@@ -114,12 +128,18 @@ public class TowerUpgradeDefinition : ScriptableObject
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Basic layer upgrades should not define a behaviour package type.");
                 isValid = false;
             }
-        }
-        else if (IsBehaviourPackageUpgrade())
-        {
-            if (!hasBehaviourPackageType)
+
+            if (hasEffectBindings)
             {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Behaviour layer upgrades need one behaviour package type.");
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Basic layer upgrades should not define Effect bindings.");
+                isValid = false;
+            }
+        }
+        else if (IsBehaviourLayerUpgrade())
+        {
+            if (!hasBehaviourPackageType && !hasEffectBindings)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Behaviour layer upgrades need a behaviour package type, at least one Effect binding, or both.");
                 isValid = false;
             }
 
@@ -129,20 +149,29 @@ public class TowerUpgradeDefinition : ScriptableObject
                 isValid = false;
             }
 
-            if (!IsBehaviourPackageCompatibleWithTowerFamily(logWarnings))
+            if (hasBehaviourPackageType && !IsBehaviourPackageCompatibleWithTowerFamily(logWarnings))
             {
                 isValid = false;
             }
 
-            if (!AreBehaviourPackageParametersValid(logWarnings))
+            if (hasBehaviourPackageType && !AreBehaviourPackageParametersValid(logWarnings))
             {
                 isValid = false;
             }
         }
-        else if (IsFutureSynergyUpgrade())
+        else if (IsElementalLayerUpgrade())
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Required Tower Level {requiredTowerLevel} upgrade authoring data is not defined in v1.");
-            isValid = false;
+            if (hasBasicStatDeltas)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades should not define Basic stat deltas in Task001.");
+                isValid = false;
+            }
+
+            if (hasBehaviourPackageType)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades should not define a behaviour package type in Task001.");
+                isValid = false;
+            }
         }
 
         return isValid;
@@ -258,19 +287,59 @@ public class TowerUpgradeDefinition : ScriptableObject
         return isValid;
     }
 
-    private bool IsBasicStatUpgrade()
+    private bool AreEffectBindingsValid(bool logWarnings)
     {
-        return requiredTowerLevel == 1;
+        if (effectBindings == null)
+        {
+            return true;
+        }
+
+        bool isValid = true;
+
+        for (int i = 0; i < effectBindings.Count; i++)
+        {
+            EffectBinding effectBinding = effectBindings[i];
+
+            if (effectBinding == null)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Effect binding at index {i} is missing.");
+                isValid = false;
+                continue;
+            }
+
+            if (!effectBinding.IsValid())
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Effect binding at index {i} is missing a valid EffectDefinition.");
+                isValid = false;
+            }
+        }
+
+        return isValid;
     }
 
-    private bool IsBehaviourPackageUpgrade()
+    private bool HasEffectBindings()
     {
-        return requiredTowerLevel == 2;
+        return effectBindings != null && effectBindings.Count > 0;
     }
 
-    private bool IsFutureSynergyUpgrade()
+    private bool IsBasicLayerUpgrade()
     {
-        return requiredTowerLevel >= 3;
+        return upgradeLayer == TowerUpgradeLayer.Basic;
+    }
+
+    private bool IsBehaviourLayerUpgrade()
+    {
+        return upgradeLayer == TowerUpgradeLayer.Behaviour;
+    }
+
+    private bool IsElementalLayerUpgrade()
+    {
+        return upgradeLayer == TowerUpgradeLayer.Elemental;
+    }
+
+    private bool CanAuthorEffectBindings()
+    {
+        return IsBehaviourLayerUpgrade() || IsElementalLayerUpgrade();
     }
 
     private bool IsArcherPiercingArrow()

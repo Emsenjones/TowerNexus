@@ -192,26 +192,27 @@ Recommended first-version fields:
 
 | projectilePrefab | GameObject | Projectile prefab reference |
 | projectileSpeed | float | Projectile movement speed (Unity units per second) |
-| hitDistanceThreshold | float | Distance threshold used by projectile hit detection |
+| hitDistanceThreshold | float | Distance threshold used by projectile direct monster hit detection |
 | maxLifetime | float | Maximum projectile lifetime before forced cleanup |
-| impactEffectConfig | EffectConfig | Optional effect triggered on impact |
+| impactEffectDefinition | EffectDefinition | Optional gameplay effect triggered on impact |
 | impactVfxPrefab | GameObject | Optional visual effect prefab spawned when impact occurs |
 
 Notes:
 
 - projectileSpeed controls how quickly the projectile reaches its target.
-- hitDistanceThreshold controls when a projectile is considered to have reached or hit its target.
+- hitDistanceThreshold controls direct monster hit checks for projectile types that can hit monsters directly.
+- hitDistanceThreshold <= 0 disables direct monster hit checks. Projectile types that should only resolve impact effects, such as Cannon-style impact projectiles, may use this to avoid duplicate direct-hit damage.
 - maxLifetime prevents projectiles from existing forever if impact does not occur.
 - Projectile prefab roots are expected to use local +Y as Up and local +Z as Forward.
 - ProjectileBehaviour should rotate the projectile so its local +Z direction points toward the movement direction.
 - Imported visual models with different source orientations should be corrected as child objects under a projectile prefab root that follows the project convention.
 - This orientation convention should be used consistently across all projectile prefabs to avoid per-projectile rotation fixes.
-- impactEffectConfig is optional.
+- impactEffectDefinition is optional.
 - impactVfxPrefab is optional and presentation-only.
 - impactVfxPrefab should point to a prefab prepared for one-shot impact playback, commonly a GameObject with ParticleSystem components.
 - Direct single-target projectile hits may dispatch already-calculated damage directly to MonsterBehaviour.
 - Complex combat results should still be represented as Effects.
-- AreaDamageEffect is an example of a valid impact effect.
+- AreaDamageEffect backed by EffectDefinition is an example of a valid impact effect.
 - The first version supports a single impact effect.
 - Future versions may support multiple impact effects.
 
@@ -270,7 +271,7 @@ Impact VFX Prefab
     Owns visual playback
 ```
 
-Gameplay Effect data should not be required just to play a visual impact effect. A projectile may have impactVfxPrefab without impactEffectConfig.
+Gameplay Effect data should not be required just to play a visual impact effect. A projectile may have impactVfxPrefab without impactEffectDefinition.
 
 ---
 
@@ -426,6 +427,8 @@ The Projectile System may directly dispatch single-target damage when a projecti
 
 This exception exists to keep simple projectile attacks lightweight.
 
+For projectile types that use direct hit damage and also author an impact EffectDefinition, direct hit damage executes first. The optional impact EffectDefinition then executes as additional gameplay effect using the generated trigger context.
+
 Projectile System should use the final resolved damage value provided by Tower Runtime Combat or the spawning Attack Entity. It should not own the formula that combines TowerLevelConfig.basicDamage and tower upgrade runtime damage bonuses, and it should not apply damage multipliers.
 
 Examples:
@@ -442,7 +445,9 @@ Reach Target Position
     ↓
 Impact Event
     ↓
-AreaDamageEffect
+Impact EffectDefinition
+
+Cannon-style projectiles that should not apply direct single-target damage can disable direct monster hit checks by setting hitDistanceThreshold <= 0, then deal damage only through the authored impact EffectDefinition radius query.
 
 The Projectile System should not directly apply buffs.
 

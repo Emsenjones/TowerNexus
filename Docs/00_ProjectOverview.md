@@ -59,7 +59,8 @@ Current first-version configuration assets include:
 - TowerLevelConfig
 - MonsterDefinition
 - ProjectileConfig
-- EffectConfig
+- EffectDefinition
+- BuffDefinition
 - TowerUpgradeDefinition
 
 Presentation-oriented prefab references may live in the configuration asset that owns the runtime event.
@@ -81,7 +82,7 @@ AttackConfig
 ProjectileConfig
 ```
 
-ProjectileConfig may reference gameplay effect data for projectile impact results that need reusable Effect execution.
+ProjectileConfig may reference EffectDefinition for projectile impact results that need reusable gameplay Effect execution.
 
 TowerUpgradeDefinition owns runtime upgrade content such as Basic stat deltas, Behaviour packages, future Elemental profiles, and future Effect bindings. Upgrade content should not be mixed into TowerDefinition or AttackConfig.
 
@@ -103,8 +104,6 @@ Watch Tower is removed from the current first-version tower lineup and replaced 
 Future versions may additionally introduce:
 
 - BuffConfig
-- EffectDefinition
-- BuffDefinition
 - EffectZoneDefinition
 - PlayerLevelConfig
 - StageConfig

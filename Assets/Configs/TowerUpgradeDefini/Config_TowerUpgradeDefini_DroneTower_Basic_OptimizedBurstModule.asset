@@ -13,10 +13,19 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_DroneTower_Basic_OptimizedBurstModule
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Optimized Burst Module
-  description: Drone burst attacks have a shorter cooldown
+  description: Drone Burst Cooldown -0.8s
   icon: {fileID: 21300000, guid: c6f3ddfa43da4ad4cad2375c9d4df858, type: 3}
   towerFamily: 3
   requiredTowerLevel: 1
+  upgradeLayer: 0
   basicStatDeltas:
   - statType: 201
     additiveValue: -0.8
+  behaviourPackageType: 0
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  twinOrbsCount: 2
+  twinOrbsStartingAngleOffset: 180
+  twinDronesCount: 2
+  twinDronesTakeOffDelay: 0.15
+  effectBindings: []

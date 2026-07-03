@@ -27,6 +27,8 @@ Create the first Effect definition contract for reusable gameplay effects.
 
 Effect definitions should be referenced directly through Inspector-assigned asset references. They should not require hand-authored string ids.
 
+EffectDefinition is the new gameplay effect source of truth and should be used by new EffectBinding and projectile gameplay impact effect references.
+
 Effect definitions may own:
 
 - Display/debug authoring information
@@ -41,7 +43,7 @@ First-version target resolution should remain simple.
 
 Inputs:
 
-- Trigger context provides TargetMonster or Position.
+- Trigger context provides TargetMonster or a TriggerPosition with explicit validity.
 - Effect definition provides Radius.
 
 Rules:
@@ -50,10 +52,16 @@ Rules:
 If Radius <= 0 and TargetMonster exists:
     Resolve the single TargetMonster.
 
+If Radius <= 0 and TargetMonster is missing:
+    Execute nothing and log a warning.
+
 If Radius > 0:
     Center on TargetMonster when present.
-    Otherwise center on context Position.
+    Otherwise center on TriggerPosition only when HasTriggerPosition is true.
     Resolve all valid monsters inside Radius.
+
+If Radius > 0 and neither TargetMonster nor valid TriggerPosition exists:
+    Execute nothing and log a warning.
 ```
 
 Monster inclusion should use the Monster System hit/reference anchor.
@@ -78,6 +86,8 @@ Existing area damage behavior should move toward the shared EffectDefinition plu
 
 Magic Orb Splash and Cannon Behaviour Phase 2 content should eventually use this shared path rather than custom area queries inside tower or attack entity behavior.
 
+For projectile types that use direct hit damage, existing direct hit damage executes first. Optional authored impact EffectDefinition execution happens afterward as additional gameplay effect.
+
 ## Out Of Scope
 
 - Buff runtime.
@@ -98,12 +108,15 @@ Magic Orb Splash and Cannon Behaviour Phase 2 content should eventually use this
 ## Acceptance Criteria
 
 - EffectDefinition can express Radius and executable Effect behavior for damage.
-- Radius targeting follows the simple TargetMonster or Position plus Radius rule.
+- Radius targeting follows the simple TargetMonster or valid TriggerPosition plus Radius rule.
 - Radius <= 0 resolves single target only when TargetMonster exists.
-- Radius > 0 resolves valid monsters around TargetMonster or context Position.
+- Radius > 0 resolves valid monsters around TargetMonster or valid TriggerPosition.
 - Effect targeting uses Monster hit/reference anchors.
 - DealDamage can damage resolved targets without owning Monster health rules directly.
 - Projectile impact or another existing trigger can execute an EffectDefinition through the Task001 binding/context path.
 - Projectile impact VFX remains owned by ProjectileConfig and Projectile System.
+- Projectile impact gameplay effect references EffectDefinition directly.
+- HitDistanceThreshold <= 0 disables projectile direct monster hit checks for projectile types that should resolve only impact effects.
+- Projectile direct hit damage executes before optional projectile impact EffectDefinition execution.
 - No large targeting enum is introduced.
 - Existing direct projectile damage remains behaviorally unchanged unless an authored Effect binding explicitly adds an additional effect.

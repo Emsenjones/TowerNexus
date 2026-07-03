@@ -67,7 +67,7 @@ public static class TowerRuntimeStatResolver
         ref float droneBatteryDurationDelta,
         ref float droneBurstCooldownDelta)
     {
-        if (upgradeDefinition == null || upgradeDefinition.RequiredTowerLevel != 1)
+        if (upgradeDefinition == null || upgradeDefinition.UpgradeLayer != TowerUpgradeLayer.Basic)
         {
             return;
         }

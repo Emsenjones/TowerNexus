@@ -23,6 +23,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private bool hasLoggedUnsupportedTrackingFlight;
 
     public event Action<ProjectileImpactContext> OnImpact;
+    public event Action<EffectTriggerContext> OnEffectTriggerContextCreated;
 
     public TowerInstance SourceTower => sourceTower;
     public ProjectileConfig ProjectileConfig => projectileConfig;
@@ -296,6 +297,11 @@ public class ProjectileBehaviour : MonoBehaviour
 
         MonsterBehaviour hitMonster = hitCollider.GetComponentInParent<MonsterBehaviour>();
 
+        if (!IsDirectHitEnabled())
+        {
+            return;
+        }
+
         if (!IsTrackedValidTarget(hitMonster))
         {
             return;
@@ -370,12 +376,34 @@ public class ProjectileBehaviour : MonoBehaviour
             hitMonster,
             impactPosition,
             attackDamage,
-            projectileConfig.ImpactEffectConfig
+            projectileConfig.ImpactEffectDefinition
         );
 
         PlayImpactVfx(impactContext.ImpactPosition);
         OnImpact?.Invoke(impactContext);
-        AreaDamageEffectExecutor.Execute(impactContext);
+        EffectTriggerContext effectTriggerContext = CreateEffectTriggerContext(hitMonster, impactPosition);
+        OnEffectTriggerContextCreated?.Invoke(effectTriggerContext);
+        EffectExecutor.Execute(projectileConfig.ImpactEffectDefinition, effectTriggerContext);
+    }
+
+    private EffectTriggerContext CreateEffectTriggerContext(
+        MonsterBehaviour hitMonster,
+        Vector3 triggerPosition)
+    {
+        EffectTriggerType triggerType = hitMonster != null
+            ? EffectTriggerType.OnHit
+            : EffectTriggerType.OnImpact;
+
+        return new EffectTriggerContext(
+            triggerType,
+            sourceTower,
+            null,
+            hitMonster,
+            true,
+            triggerPosition,
+            attackDamage,
+            false
+        );
     }
 
     private void PlayImpactVfx(Vector3 impactPosition)
@@ -404,7 +432,7 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         hitMonster = null;
 
-        if (monsterManager == null)
+        if (monsterManager == null || !IsDirectHitEnabled())
         {
             return false;
         }
@@ -439,8 +467,18 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool IsWithinHitDistance(MonsterBehaviour monster)
     {
+        if (!IsDirectHitEnabled())
+        {
+            return false;
+        }
+
         float hitDistanceThresholdSqr = projectileConfig.HitDistanceThreshold * projectileConfig.HitDistanceThreshold;
         return GetHitDistanceSqr(monster) <= hitDistanceThresholdSqr;
+    }
+
+    private bool IsDirectHitEnabled()
+    {
+        return projectileConfig != null && projectileConfig.HitDistanceThreshold > 0f;
     }
 
     private float GetHitDistanceSqr(MonsterBehaviour monster)
