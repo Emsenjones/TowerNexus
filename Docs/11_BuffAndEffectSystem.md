@@ -384,7 +384,56 @@ It should be treated as a system-level state, not as a normal elemental debuff.
 
 ---
 
-## 10. Recursion Rule
+## 10. Elemental First-Version Design Contracts
+
+The first Elemental content set should preserve clear identity for each element without locking numeric tuning or concrete implementation details into the system contract.
+
+| Element | Normal Phase | Overload | Important Boundary |
+|---|---|---|---|
+| Fire | Burning creates persistent damage pressure while active | FlameBurst deals area damage around the target monster | Burning tick damage and FlameBurst damage do not apply Burning stacks by default |
+| Cold | Cold slows the monster while active | Frozen is an instant overload effect that applies a temporary movement lock | Movement lock must go through safe Monster movement APIs |
+| Electric | ElectricShock causes later direct Electric tower hits to trigger extra electric damage | Overcharged is an instant lightning sequence that selects random monsters near the target and strikes them one by one | Overcharged is not a persistent Buff, and lightning strikes do not apply ElectricShock stacks by default |
+| Wind | Windcut causes later direct Wind tower hits to spawn WindVortex | Storm Shift is an instant overload effect that moves the target monster to a valid nearby grid node | WindVortex damage and Storm Shift do not apply Windcut stacks by default |
+
+### 10.1 Burning Overload
+
+Burning overload triggers FlameBurst.
+
+FlameBurst deals area damage around the monster that reached max Burning stacks.
+
+FlameBurst damage is Effect damage and should not apply Burning stacks or trigger Elemental reactions by default.
+
+### 10.2 Cold Overload
+
+Cold overload triggers Frozen.
+
+Frozen is an instant overload effect that applies a temporary movement lock to the target monster.
+
+Frozen should request movement control through safe Monster movement APIs. Buff And Effect System should not directly stop movement by bypassing Monster System ownership.
+
+### 10.3 Electric Overload
+
+ElectricShock overload triggers Overcharged.
+
+Overcharged is an instant overload effect, not a long-lived Buff state.
+
+Overcharged selects random monsters within a configured radius around the target monster, then drops sequential single-target lightning strikes with a configured strike interval.
+
+LightningStrike damage is Electric Effect damage and should not apply ElectricShock stacks or trigger Elemental reactions by default.
+
+### 10.4 Wind Overload
+
+Windcut overload triggers Storm Shift.
+
+Storm Shift is an instant overload effect that moves the target monster to a random valid nearby grid node.
+
+The selected node must be walkable and reachable to the goal. After relocation, the monster should recalculate its path through the pathfinding system.
+
+Buff And Effect System should request safe Monster movement and pathfinding APIs for Storm Shift. It must not directly modify the monster Transform, current grid node, or path state.
+
+---
+
+## 11. Recursion Rule
 
 Only direct elemental tower attacks can apply elemental stacks by default.
 
@@ -403,7 +452,7 @@ Future upgrades may explicitly override this rule, but that should be reviewed a
 
 ---
 
-## 11. EffectZone
+## 12. EffectZone
 
 EffectZone is a zone-like gameplay entity.
 
@@ -431,9 +480,19 @@ Static and moving zones may share one EffectZone runtime if the implementation r
 
 WindVortex should be reviewed after Buff core and simpler elemental effects are stable because it needs moving EffectZone behavior and target selection separate from radius-based damage resolution.
 
+WindVortex is a moving EffectZone.
+
+WindVortex movement target selection may use TargetSelectionType, with Nearest as the default first-version movement target rule.
+
+WindVortex damage targeting uses monsters inside the radius around the current WindVortex position. Movement target selection and damage target resolution are separate concepts.
+
+WindVortex damage may use fixed configured damage in the first version.
+
+WindVortex damage should not apply Windcut stacks or trigger Elemental reactions by default.
+
 ---
 
-## 12. Relationship With Other Systems
+## 13. Relationship With Other Systems
 
 ### Tower Upgrade System
 
@@ -465,7 +524,7 @@ Buff And Effect System may request damage or movement/path effects through Monst
 
 ---
 
-## 13. Implementation Scope Direction
+## 14. Implementation Scope Direction
 
 The next implementation should be split into Task Documents rather than implemented as one large change.
 
@@ -482,7 +541,7 @@ Effect-backed Behaviour Layer upgrades such as Magic Orb Splash, Cannon Timed Sh
 
 ---
 
-## 14. Summary
+## 15. Summary
 
 The Buff And Effect System handles reusable gameplay rule execution beyond simple direct attack damage.
 

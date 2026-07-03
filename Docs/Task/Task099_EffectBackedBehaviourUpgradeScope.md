@@ -1,4 +1,4 @@
-# Task005 - Phase 2 Effect-Backed Behaviour Upgrade Scope
+# Paused - Phase 2 Effect-Backed Behaviour Upgrade Scope
 
 ## Objective
 
@@ -51,10 +51,10 @@ Cannon Burning Shell:
 
 ## Scope Rules
 
-- Task005 does not implement Buff And Effect System foundation.
-- Task005 does not implement any Phase 2 upgrade item.
-- Concrete Phase 2 implementation tasks should start from Task006 after Buff And Effect System foundation is available.
-- Concrete Task006+ documents may revise the exact implementation order based on the final Buff And Effect System foundation.
+- This paused scope document does not implement Buff And Effect System foundation.
+- This paused scope document does not implement any Phase 2 upgrade item.
+- Concrete Phase 2 implementation tasks should be generated after the Buff And Effect System foundation tasks are available.
+- Later concrete implementation documents may revise the exact implementation order based on the final Buff And Effect System foundation.
 - Phase 2 upgrade implementation should not duplicate shared area-query, delayed-damage, repeated-damage, buff, or effect execution logic inside individual tower runtimes.
 
 ## Out Of Scope
@@ -66,12 +66,12 @@ Cannon Burning Shell:
 - Drone Final Dive.
 - Any Phase 3 advanced behaviour package.
 - Final Buff And Effect System internal implementation design.
-- Concrete Task006+ implementation breakdown.
+- Concrete later implementation breakdown.
 
 ## Acceptance Criteria
 
 - Phase 2 scope explicitly includes Magic Orb Splash, Cannon Timed Shell, and Cannon Burning Shell.
-- Task005 clearly states that these upgrades wait for Buff And Effect System foundation review.
-- Task005 does not lock the final implementation approach for Buff And Effect System.
-- Task005 preserves the system boundary that reusable effect execution belongs to Buff And Effect System.
+- This paused scope document clearly states that these upgrades wait for Buff And Effect System foundation review.
+- This paused scope document does not lock the final implementation approach for Buff And Effect System.
+- This paused scope document preserves the system boundary that reusable effect execution belongs to Buff And Effect System.
 - Phase 3 upgrade ideas remain deferred for later review after combat runtime and Buff And Effect System contracts are more stable.
