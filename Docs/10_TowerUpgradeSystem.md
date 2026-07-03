@@ -45,10 +45,10 @@ Stat Growth
     ↓
 Behaviour Evolution
     ↓
-Tower Synergy
+Elemental Strategy
 ```
 
-This structure allows towers to first become stronger, then become more unique, and finally interact with other towers through buff and reaction systems.
+This structure allows towers to first become stronger, then become more unique, and finally convert into elemental towers that interact with monster debuff stacks, overloads, and path-segment coverage.
 
 Tower growth has two separate surfaces:
 
@@ -172,10 +172,18 @@ TowerUpgradeDefinition may define:
 - Upgrade identity and display text
 - TowerFamily
 - Required tower level
+- Upgrade Layer
 - Basic Layer stat deltas
 - Behaviour Layer package
-- Future Synergy Layer data
+- Elemental Layer profile
+- Effect bindings for Behaviour or Elemental gameplay
 - Authoring validation metadata
+
+Required Tower Level is a code-facing unlock requirement.
+
+Upgrade Layer is a design-facing category that describes what kind of upgrade the definition represents.
+
+Current content may still align Basic with Lv1, Behaviour with Lv2, and Elemental with Lv3, but the system contract should not permanently derive Upgrade Layer from Required Tower Level. This keeps future content flexible when a later upgrade uses a different unlock level than its design category.
 
 TowerUpgradeDefinition should not contain Draft sampling, display choice count, reroll, or weighting rules. Those rules belong to DraftSystem.
 
@@ -216,13 +224,19 @@ Runtime upgrade state should answer:
 
 - Which TowerUpgradeDefinition entries this tower already owns
 - Which Required Tower Level categories are unlocked for this tower level
+- Whether this tower already owns an Elemental Layer upgrade
 - Which Basic Layer stat deltas affect this tower
 - Which Behaviour Layer packages are active on this tower
 - Which Behaviour Layer upgrade definition provides the active package parameters
+- Which Elemental Layer profile is active on this tower when one has been applied
 
 Applying a TowerUpgradeDefinition records that upgrade on the target tower.
 
-V1 does not impose a quantity limit on upgrades within the same Required Tower Level category. A tower may receive multiple different Basic upgrades, multiple different Behaviour upgrades, or multiple different future Synergy upgrades as long as it satisfies the category unlock and duplicate rules.
+V1 does not impose a quantity limit on upgrades within the same Required Tower Level category for Basic or Behaviour upgrades. A tower may receive multiple different Basic upgrades and multiple different Behaviour upgrades as long as it satisfies the category unlock and duplicate rules.
+
+The first Elemental Layer rule is exclusive per tower: a tower may own at most one Elemental Layer upgrade unless a future reviewed rule explicitly allows replacement or multi-element towers.
+
+TowerUpgradeState should store applied upgrade facts and expose query support, such as whether a tower already owns an Elemental upgrade. TowerUpgradeSystem should remain the authority that interprets those facts into application rules, including the first-version one-element-per-tower restriction.
 
 Tower level unlocks upgrade categories:
 
@@ -230,7 +244,7 @@ Tower level unlocks upgrade categories:
 |---|---|
 | Lv1 | Basic |
 | Lv2 | Basic, Behaviour |
-| Lv3 | Basic, Behaviour, Synergy |
+| Lv3 | Basic, Behaviour, Elemental |
 
 The system contract is that lower tower levels cannot receive upgrades whose Required Tower Level is higher than the tower's current level.
 
@@ -268,6 +282,7 @@ An upgrade may be applied only when:
 - The upgrade TowerFamily matches the target tower's TowerFamily.
 - The target tower level satisfies Required Tower Level.
 - The target tower does not already have the same upgrade.
+- Elemental Layer upgrades are not applied to a tower that already owns an Elemental Layer upgrade.
 
 Example:
 
@@ -340,6 +355,10 @@ Examples of Behaviour Layer package parameters:
 
 TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
+Elemental Layer profile identity should also be typed or reference-based rather than free-form string based. Runtime systems should ask the tower upgrade state whether a tower owns an Elemental profile, then use Buff And Effect System rules to execute direct elemental hit stacking, normal phase effects, overload, and same-element stack immunity.
+
+Effect bindings belong to upgrade content that needs reusable Buff And Effect System execution. Effect bindings describe which gameplay trigger may execute which Effect definition. They should not be used by Basic Layer upgrades in the first version because Basic Layer should remain a pure numerical layer.
+
 ---
 
 # 6. Upgrade Eligibility Support
@@ -379,7 +398,9 @@ These helpers should answer eligibility questions only. They should not decide h
 
 Tower upgrades are divided into three conceptual layers.
 
-These layers are design categories derived from Required Tower Level in v1. They are not separate TowerUpgradeDefinition data fields.
+These layers are design categories. Required Tower Level controls when an upgrade is unlocked, while Upgrade Layer controls what kind of upgrade it is.
+
+The first content set may map Lv1 to Basic, Lv2 to Behaviour, and Lv3 to Elemental, but system logic should keep those concepts separate so future content can evolve without rewriting the upgrade model.
 
 ---
 
@@ -420,6 +441,8 @@ Purpose:
 - Improve tower efficiency
 - Provide reliable power growth
 - Create a stable progression foundation
+
+Basic Layer upgrades should not define gameplay trigger bindings such as OnHit or OnImpact in the first version. If an upgrade needs trigger-driven gameplay, it belongs in Behaviour Layer or Elemental Layer.
 
 ---
 
@@ -477,6 +500,8 @@ Behaviour Layer package identity should be typed. Runtime checks should ask whet
 
 TowerUpgradeSystem remains responsible for upgrade ownership, validation, and application only. It should not execute piercing, scatter release, Magic Orb count changes, Drone count changes, or other Behaviour Layer gameplay effects.
 
+Behaviour Layer upgrades that need reusable gameplay effects may define Effect bindings. For example, an impact-based Cannon behaviour may bind projectile impact to a shared effect or zone-spawn definition instead of hardcoding duplicate area-query or tick logic inside the Cannon runtime.
+
 Effect-backed behaviour packages should wait for the Buff And Effect System foundation when they need reusable area damage, delayed area damage, or repeated area damage over duration.
 
 Examples:
@@ -507,39 +532,67 @@ Purpose:
 
 ---
 
-## 7.3 Synergy Layer
+## 7.3 Elemental Layer
 
-Synergy Layer upgrades introduce buff and interaction mechanics.
+Elemental Layer upgrades convert a tower into an elemental tower for one element.
 
 Examples:
 
 - Burning
-- Frost
-- Poison
-- Freeze Reaction
-- Flame Burst Reaction
+- Cold
+- ElectricShock
+- Windcut
 
-Synergy Layer upgrades are intended to create interactions between towers.
+Elemental Layer upgrades are intended to make path segments smarter and more dangerous through same-element tower coverage.
+
+Each tower may receive one Elemental Layer upgrade in the first version.
+
+Direct attacks from elemental towers may apply elemental debuff stacks through Buff And Effect System. Multiple towers with the same Elemental Layer upgrade can stack the same elemental debuff on the same monster and eventually trigger overload.
+
+Reaction-generated damage, buff tick damage, EffectZone tick damage, and overload damage should not apply elemental stacks by default. Elemental stacking should remain tied to direct elemental tower attacks unless a future reviewed upgrade explicitly expands that rule.
 
 Examples:
 
 ```text
-Frost + Frost
+Cold tower hits
     ↓
-Freeze
+Apply or refresh Cold stack
+    ↓
+Multiple Cold towers reach max stacks
+    ↓
+Frozen overload
 ```
 
 ```text
-Burning + Burning
+Fire tower hits
     ↓
-Flame Burst
+Apply or refresh Burning stack
+    ↓
+Multiple Fire towers reach max stacks
+    ↓
+FlameBurst overload
 ```
+
+Elemental Layer content may include:
+
+- Elemental profile
+- Direct elemental hit stack rules
+- Elemental debuff definition reference
+- Normal phase effect reference or binding
+- Overload effect reference or binding
+- Same-source apply cooldown
+- Same-element stack immunity duration
+
+Same-source apply cooldown prevents one tower from stacking the same elemental debuff too quickly on the same monster. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and normal phase extra effects such as Electric extra damage or WindVortex spawn do not trigger.
+
+First application of an elemental debuff should apply the debuff only. If the monster already has that elemental debuff and a direct elemental hit successfully applies or refreshes it, the normal phase may execute. After normal phase resolution, the system checks whether max stacks have been reached; if yes, overload executes, the normal debuff is removed when configured to do so, and same-element stack immunity is applied.
 
 Purpose:
 
 - Encourage tower combinations
-- Create emergent gameplay
-- Support future buff reaction systems
+- Encourage same-element path-segment coverage
+- Support elemental debuff stacking and overload rhythm
+- Keep recursive elemental reactions controlled
 
 ---
 

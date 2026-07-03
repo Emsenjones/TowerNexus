@@ -15,8 +15,7 @@ MonoBehaviour:
   attackArchetype: 3
   attackRange: 4
   attackInterval: 20
-  targetSelectionType: 0
-  attackAnimatorTriggerName: Attack
+  targetSelectionType: 3
   projectileConfig: {fileID: 11400000, guid: 885d88fbd81784ed6998116a641079bc, type: 2}
   arcHeight: 1
   attackReleaseVfxPrefab: {fileID: 3966859551205364536, guid: 23dd5e31cc3eb4b9687e919a6e09114d, type: 3}

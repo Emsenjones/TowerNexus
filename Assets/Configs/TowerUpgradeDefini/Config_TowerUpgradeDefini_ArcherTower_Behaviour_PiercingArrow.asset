@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Piercing Arrow
   description: Archer Tower arrows can pierce through enemies.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 8b572ed8117047647b2d3d47940bb1b9, type: 3}
   towerFamily: 0
   requiredTowerLevel: 2
   basicStatDeltas: []

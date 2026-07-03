@@ -13,7 +13,7 @@ The system manages:
 - Impact VFX triggering
 - Projectile destruction
 
-The Projectile System does not own tower combat logic, buff execution, area damage execution, or monster health.
+The Projectile System does not own tower combat logic, buff execution, elemental stack rules, area damage execution, or monster health.
 
 ---
 
@@ -41,6 +41,8 @@ The Projectile System does not own:
 - Damage formula calculation
 - Area damage execution
 - Buff application
+- Elemental stack application
+- Elemental overload rules
 - Monster health
 - Tower combat logic
 - Gameplay effect execution
@@ -249,8 +251,8 @@ Tower Runtime Combat / Spawning Attack Entity
 ProjectileConfig
     Owns projectile runtime data
 
-EffectConfig
-    Owns complex impact results
+Gameplay Effect Data
+    Owns reusable gameplay impact results
 ```
 
 This separation prevents duplicate configuration and keeps responsibilities clear.
@@ -268,7 +270,7 @@ Impact VFX Prefab
     Owns visual playback
 ```
 
-EffectConfig should not be required just to play a visual impact effect. A projectile may have impactVfxPrefab without impactEffectConfig.
+Gameplay Effect data should not be required just to play a visual impact effect. A projectile may have impactVfxPrefab without impactEffectConfig.
 
 ---
 
@@ -402,7 +404,7 @@ For target-position projectile behavior, the target position is provided by the 
 
 The Projectile System only determines when a hit occurs.
 
-The Projectile System does not determine what the hit does.
+The Projectile System does not determine complex gameplay results beyond its simple direct-hit exception.
 
 ---
 
@@ -444,7 +446,9 @@ AreaDamageEffect
 
 The Projectile System should not directly apply buffs.
 
-For complex impact behavior such as area damage, buff application, chained effects, or future special mechanics, the Projectile System should generate an impact event and delegate execution to the Buff And Effect System.
+For complex impact behavior such as area damage, buff application, chained effects, Elemental stack rules, overload rules, or future special mechanics, the Projectile System should generate impact or hit trigger context and delegate execution to the Buff And Effect System.
+
+Projectile impact VFX remains presentation-only and belongs to ProjectileConfig and Projectile System impact playback. It should not be routed through Buff And Effect System.
 
 ---
 
@@ -489,9 +493,16 @@ Drone orbit movement, battery lifetime, battery-end destruction, and burst timin
 
 Responsible for:
 
+- Gameplay effect execution
 - Area damage effects
 - Buff application effects
-- Visual impact effects
+- Elemental stack and overload rules
+
+Not responsible for:
+
+- Projectile movement
+- Projectile hit detection
+- Projectile-specific impact VFX playback
 
 ---
 

@@ -16,15 +16,14 @@ MonoBehaviour:
   attackRange: 1.5
   attackInterval: 8
   targetSelectionType: 1
-  attackAnimatorTriggerName: Attack
   projectileConfig: {fileID: 0}
   arcHeight: 1
   attackReleaseVfxPrefab: {fileID: 0}
-  magicOrbRotationSpeed: 180
+  magicOrbRotationSpeed: 90
   magicOrbOrbitRadius: 1
   magicOrbContactDistance: 0.4
   magicOrbMaxHitCount: 10
-  magicOrbMaxLifetime: 10
+  magicOrbMaxLifetime: 8
   magicOrbSameTargetHitCooldown: 0.5
   magicOrbPrefab: {fileID: 5932105996875227893, guid: ddbc56afe56b5423287d527e7c7b5b88, type: 3}
   droneBatteryDuration: 5

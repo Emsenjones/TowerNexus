@@ -149,7 +149,7 @@ Tower Upgrade Drafts may affect:
 
 - Basic Layer upgrades
 - Behaviour Layer upgrades
-- Synergy Layer upgrades
+- Elemental Layer upgrades
 
 Tower level determines which upgrade categories may appear for a tower:
 
@@ -157,11 +157,13 @@ Tower level determines which upgrade categories may appear for a tower:
 |---|---|
 | Lv1 | Required Tower Level 1 / Basic |
 | Lv2 | Required Tower Level 1 / Basic, Required Tower Level 2 / Behaviour |
-| Lv3 | Required Tower Level 1 / Basic, Required Tower Level 2 / Behaviour, Required Tower Level 3 / Synergy |
+| Lv3 | Required Tower Level 1 / Basic, Required Tower Level 2 / Behaviour, Required Tower Level 3 / Elemental |
 
 Draft System only generates the choice.
 
 Tower Upgrade System is responsible for validating the target tower and applying the selected upgrade.
+
+Required Tower Level is the unlock requirement used for eligibility. Upgrade Layer describes whether an upgrade is Basic, Behaviour, or Elemental. The first content set may align Lv1 with Basic, Lv2 with Behaviour, and Lv3 with Elemental, but Draft System should rely on TowerUpgradeSystem eligibility rules instead of hardcoding Elemental rules locally.
 
 ---
 
@@ -200,6 +202,7 @@ The upgrade pool should be constructed using:
 - Each tower instance's TowerFamily
 - Each tower instance's TowerLevel
 - Required Tower Level eligibility for that tower level
+- Upgrade Layer eligibility, including Elemental Layer exclusivity
 - Upgrades already applied to that tower
 - Upgrade definitions provided by Tower Upgrade System
 
@@ -208,10 +211,13 @@ For every tower instance, Draft System should request or evaluate eligible upgra
 - Determine TowerFamily.
 - Determine TowerLevel.
 - Determine Required Tower Level eligibility.
+- Respect TowerUpgradeSystem rules for whether the tower can receive Basic, Behaviour, or Elemental upgrades.
 - Gather all valid upgrades that tower is eligible for.
 - Exclude upgrades already owned by that tower.
 
 The resulting candidate set forms the Tower Upgrade Draft Pool for the current Draft.
+
+Elemental Layer upgrade candidates should enter the Tower Upgrade Draft Pool only when at least one deployed tower can legally receive them. A typical first-version case is a tower that satisfies the required tower level and does not already own an Elemental Layer upgrade.
 
 Tower Upgrade Draft Pool generation is tower-instance weighted.
 
@@ -416,7 +422,7 @@ Tower Placement System owns:
 Potential future systems:
 
 - Weighted rarity system
-- Synergy draft system
+- Elemental draft weighting or rarity rules
 - Draft reroll system
 - Limited draft pools
 - Wave reward drafts

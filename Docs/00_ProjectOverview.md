@@ -60,6 +60,7 @@ Current first-version configuration assets include:
 - MonsterDefinition
 - ProjectileConfig
 - EffectConfig
+- TowerUpgradeDefinition
 
 Presentation-oriented prefab references may live in the configuration asset that owns the runtime event.
 
@@ -68,7 +69,7 @@ Examples:
 - AttackConfig owns tower attack presentation hooks such as attack release VFX.
 - The tower visual ownership path owns tower-side success feedback hooks such as model spawn or upgrade-applied VFX.
 - ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
-- EffectConfig owns gameplay effect data and should not be required for purely visual projectile impact feedback.
+- Gameplay Effect data owns reusable gameplay effect rules and should not be required for purely visual projectile impact feedback.
 
 Current combat configuration dependency flow:
 
@@ -78,9 +79,11 @@ TowerDefinition
 AttackConfig
     ↓
 ProjectileConfig
-    ↓
-EffectConfig
 ```
+
+ProjectileConfig may reference gameplay effect data for projectile impact results that need reusable Effect execution.
+
+TowerUpgradeDefinition owns runtime upgrade content such as Basic stat deltas, Behaviour packages, future Elemental profiles, and future Effect bindings. Upgrade content should not be mixed into TowerDefinition or AttackConfig.
 
 Current first-version tower lineup:
 
@@ -100,6 +103,9 @@ Watch Tower is removed from the current first-version tower lineup and replaced 
 Future versions may additionally introduce:
 
 - BuffConfig
+- EffectDefinition
+- BuffDefinition
+- EffectZoneDefinition
 - PlayerLevelConfig
 - StageConfig
 
@@ -194,6 +200,8 @@ Responsible for:
 
 Tower Upgrade Draft choices are generated from eligible tower instance state, including TowerFamily, tower level, Required Tower Level eligibility, remaining upgrade slots, and upgrades already applied to each tower.
 
+Future Elemental Layer upgrade choices should only enter the Tower Upgrade Draft pool when at least one deployed tower can legally receive that Elemental upgrade. A typical first rule is that the battlefield must contain a tower that satisfies the required tower level and does not already own an Elemental upgrade.
+
 ---
 
 ## 5.5 Tower Placement System
@@ -274,6 +282,8 @@ Tower Runtime Combat consumes the current active AttackOrigin and tower model pr
 
 Projectile lifecycle execution belongs to Projectile System when the Attack Entity is a projectile.
 
+Attack Entities may emit gameplay trigger context when they hit, contact, or impact a monster or position. Runtime Combat and Attack Entities should not own Buff, Effect, elemental stack, or overload rules.
+
 ---
 
 ## 5.8 Projectile System
@@ -310,19 +320,22 @@ Projectile prefab roots follow the shared runtime orientation convention: local 
 
 ## 5.9 Buff And Effect System
 
-Handles projectile impact effects and future buff-based combat behaviors.
+Handles reusable gameplay effects, future buff runtime, future Elemental debuff stacking, EffectZone execution, and complex combat results beyond simple direct damage.
 
-First version responsibility:
+Framework direction:
 
-- EffectConfig
-- AreaDamageEffectExecutor
-- Area damage resolution for cannon-style projectile impacts
+- Trigger context consumption from Attack Entities, projectiles, zones, and buffs
+- Radius-based target resolution
+- Effect action execution
+- Buff application and lifecycle when buff runtime is in scope
+- Elemental stack, overload, and same-element stack immunity when Elemental Layer is in scope
+- EffectZone duration, tick, targeting, and movement when zone gameplay is in scope
 
-Direct projectile hit damage is not treated as an Effect in the first version.
+Direct base attack damage does not need to migrate into Buff And Effect System immediately. The current direct damage path may remain simple while Buff And Effect System executes additional effects, buff ticks, zone ticks, overload damage, and other complex results.
 
 Projectile impact VFX is not owned by the Buff And Effect System. It is configured through ProjectileConfig and triggered by the Projectile System when impact occurs.
 
-Buff runtime behavior is reserved for future versions.
+Purely visual impact feedback should not require gameplay Effect data.
 
 ---
 
@@ -364,7 +377,7 @@ TowerRuntimeCombatSystem
 ProjectileSystem
     ↓ Hit Detection / Impact Event
 BuffAndEffectSystem
-    ↓ AreaDamageEffect Resolution
+    ↓ Effect / Buff / Elemental Resolution
 MonsterSystem
 
 TowerPlacementSystem
@@ -410,7 +423,7 @@ Use the System Documents as the source of truth for each area:
 | Runtime tower combat behavior | `08_TowerRuntimeCombatSystem.md` |
 | Projectile lifecycle and impact handling | `09_ProjectileSystem.md` |
 | Tower growth and upgrade concepts | `10_TowerUpgradeSystem.md` |
-| Area effects and future buff behavior | `11_BuffAndEffectSystem.md` |
+| Effects, buffs, Elemental rules, and EffectZone behavior | `11_BuffAndEffectSystem.md` |
 
 Task Documents under `Docs/Task/` are temporary implementation references.
 

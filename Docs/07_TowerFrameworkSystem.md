@@ -445,6 +445,26 @@ Attack archetypes define the fundamental attack behavior expressed by a tower.
 
 Towers orchestrate combat while Attack Entities execute combat behavior.
 
+Attack Entity is a design and runtime concept. It does not require every implementation stage to have a dedicated code class with that name.
+
+Current code may still use an attack archetype enum to select the first-version execution branch. The long-term conceptual split is:
+
+```text
+Attack Entity kind
+    -> Projectile
+    -> Magic Orb
+    -> Drone
+
+Projectile flight behavior
+    -> Direction
+    -> Arc
+    -> Tracking
+```
+
+Projectile-style Attack Entities share Projectile System runtime behavior, while Magic Orb and Drone use their own Attack Entity runtime behavior.
+
+Future refactors may separate Attack Entity kind from projectile flight behavior in code, but this is not required before Buff And Effect System foundation work.
+
 Tower responsibilities:
 
 - Detect monsters
@@ -460,6 +480,7 @@ Attack Entity responsibilities:
 - Hit detection
 - Damage dispatch
 - Lifetime
+- Trigger context emission when a hit, contact, or impact should execute reusable Buff And Effect rules
 
 Tower decides when an attack happens.
 

@@ -22,9 +22,12 @@ This system focuses on the following core gameplay loop and current Monster-rela
 - Monster damage number display through current Task implementation scope
 - Notifying Player System when monsters reach the target node
 - Providing path validation functionality used by Tower Placement System
+- Providing safe runtime endpoints for future Buff And Effect movement or path effects
 
 The first version of the Monster System is intentionally kept simple and extensible.
 Future features such as Boss mechanics, elite monsters, flying enemies, abnormal states, and advanced AI behaviors will be added in later phases.
+
+Future Buff And Effect gameplay may request monster state changes such as slow, freeze, or path-position shift. Monster System should own the safe movement, pathfinding, and runtime state operations needed to perform those effects. Buff And Effect System should request those operations rather than directly modifying monster transforms or bypassing pathfinding ownership.
 
 ---
 
@@ -225,7 +228,7 @@ The first version of Monster Visual Feedback focuses on:
 
 Monster Visual Feedback should remain lightweight and should not take ownership of monster combat calculation, pathfinding, or Player System logic.
 
-### 6.1 Monster Hit Reference Anchor
+## 6.1 Monster Hit Reference Anchor
 
 MonsterBehaviour may expose optional anchors that provide stable reference points for other runtime systems.
 
@@ -257,7 +260,29 @@ HitAnchor does not own monster movement, pathfinding, collision shape, damage ap
 
 ---
 
-## 6.2 Monster Animation Rules
+## 6.2 Future Buff And Effect Integration
+
+Monster System owns monster health, movement, pathfinding state, current node state, path recalculation, death, and arrival flow.
+
+Buff And Effect System may apply gameplay results to monsters, but those results should pass through Monster System-owned runtime capabilities.
+
+Examples:
+
+- Damage effects may request monster damage processing.
+- Slow effects may request a safe movement-speed modifier path.
+- Frozen effects may request a safe temporary movement lock.
+- Storm Shift or similar path effects may request a safe grid-node relocation and path recalculation.
+
+Buff And Effect System should not directly:
+
+- Modify monster Transform position for path logic.
+- Change current grid node without Monster System ownership.
+- Recalculate paths by bypassing Monster System or Pathfinding ownership.
+- Override monster death or arrival flow.
+
+---
+
+## 6.3 Monster Animation Rules
 
 The first version of the Monster System uses a simple Animator setup.
 
@@ -345,7 +370,7 @@ Hit Layer
 
 In that future setup, GetHit can be triggered independently while the Base Layer continues controlling Idle or Walk.
 
-## 6.3 Hit Flash
+## 6.4 Hit Flash
 
 The first version of the Monster System should support a simple hit flash effect.
 
@@ -387,7 +412,7 @@ Possible future implementations:
 - Emission intensity flash
 - Renderer overlay effect
 
-## 6.4 Monster Health Bar System
+## 6.5 Monster Health Bar System
 
 Monster Health Bar is a runtime UI feedback feature owned by Monster System.
 
@@ -473,7 +498,7 @@ Future versions may support:
 - Boss health bar
 - Elite monster health bar style
 
-## 6.5 Monster Damage Number System
+## 6.6 Monster Damage Number System
 
 Monster Damage Number is a runtime UI feedback feature owned by Monster System.
 

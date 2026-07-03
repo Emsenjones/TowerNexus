@@ -14,13 +14,14 @@ This system answers:
 - Which attack archetype or Attack Entity behavior should execute
 - When Attack Entities or projectiles are created
 - When direct runtime damage is applied
+- When attack hit, contact, or impact events can provide context for reusable Effect execution
 - When attack animation and presentation requests are issued
 
 The Tower Runtime Combat System consumes data from the Tower Framework System and coordinates downstream runtime systems such as Projectile System, Monster System, and Buff And Effect System.
 
 It does not define what a tower is.
 
-It does not own tower placement, projectile movement, buff state, monster health, or static tower configuration.
+It does not own tower placement, projectile movement, buff state, elemental stack rules, overload rules, monster health, or static tower configuration.
 
 ---
 
@@ -40,6 +41,7 @@ The Tower Runtime Combat System owns:
 - Magic Orb release orchestration
 - Drone release orchestration
 - Direct damage dispatch coordination
+- Effect trigger context coordination at attack hit, contact, or impact boundaries
 - Presentation hook triggering for attack VFX
 
 The Tower Runtime Combat System does not own:
@@ -58,6 +60,7 @@ The Tower Runtime Combat System does not own:
 - Monster movement
 - Monster health state
 - Buff lifetime state
+- Elemental stack, overload, or stack immunity rules
 - Effect asset authoring
 - VFX prefab authoring, particle tuning, material tuning, or shader setup
 
@@ -70,7 +73,7 @@ Recommended ownership boundary:
 | Tower Runtime Combat System | Tower attack state, target selection execution, resolved runtime stats, cooldowns, attack execution |
 | Projectile System | Projectile movement, hit detection, impact event triggering, projectile destruction |
 | Monster System | Monster lifecycle, movement, health, death handling |
-| Buff And Effect System | Buff application, buff lifetime, reusable effect execution |
+| Buff And Effect System | Buff application, buff lifetime, reusable effect execution, Elemental stack and overload rules |
 
 ---
 
@@ -628,8 +631,14 @@ Examples:
 - Delayed or repeated area damage triggered by an effect-backed Behaviour package
 - Buff application effects
 - Enemy-attached states such as poison, slow, burn, weaken, or armor reduction
+- Elemental debuff stack application from direct elemental tower attacks
+- Elemental normal phase and overload effects
 
 Tower Runtime Combat should delegate future complex effects instead of embedding buff-specific logic into tower combat code.
+
+Runtime Combat and Attack Entity behavior may provide trigger context that includes source tower, source upgrade, target monster, trigger position, impact position, resolved damage, and stack eligibility when relevant.
+
+The first-version damage direction remains that base attack damage can use the existing direct damage path. Buff And Effect System may run additional Effect, Buff, Zone, and Elemental results around that path without forcing an immediate DamageContext migration.
 
 ---
 

@@ -2,47 +2,30 @@
 
 ## 1. System Overview
 
-The Buff And Effect System is responsible for handling additional or complex combat results beyond direct single-target damage.
+The Buff And Effect System is responsible for reusable gameplay effects, persistent buff state, future Elemental debuff stacking, overload rules, and EffectZone-style gameplay entities.
 
-In the first version, direct projectile hit damage is not treated as an Effect.
+It is not only a Buff system.
 
-Example:
+It is the gameplay rule framework that can consume trigger events, build runtime context, resolve targets, execute actions, manage persistent states, and coordinate elemental stack and overload behavior.
 
-```text
-Arrow Hits Monster
-    ↓
-Projectile System Dispatches Direct Damage
-    ↓
-MonsterBehaviour Processes Damage
-```
-
-Effects are used when a combat event needs to produce additional behavior.
-
-Example:
+Core direction:
 
 ```text
-Cannonball Reaches Target Position
-    ↓
-Projectile System Triggers AreaDamageEffect
-    ↓
-Buff And Effect System Executes Area Damage
+Attack Entity / Projectile / EffectZone / Buff
+    -> emits trigger context
+Buff And Effect System
+    -> resolves target or radius targets
+    -> executes Effect actions
+    -> applies or updates Buff runtime state when needed
 ```
 
-The first effect foundation only needs to support instant area damage.
+Direct base attack damage does not need to migrate into this system immediately.
 
-Delayed area damage and repeated area damage over duration are extensions of the same effect foundation. They should be added when adopted Behaviour Layer upgrades require them, instead of being duplicated inside individual tower runtimes.
+The current direct damage path may remain simple while Buff And Effect System handles additional gameplay results such as area damage, buff application, buff ticks, EffectZone ticks, elemental normal phase effects, and overload effects.
 
-Buff-related interfaces may be reserved for future expansion.
+Projectile impact visual effects are separate from gameplay Effects. Projectile-specific impact VFX belongs to ProjectileConfig and Projectile System.
 
-Projectile impact visual effects are separate from gameplay Effects.
-
-Impact VFX is configured by ProjectileConfig and triggered by the Projectile System when projectile impact occurs.
-
-The Buff And Effect System should not be required for purely visual impact feedback.
-
-Tower upgrade behaviours that only change attack shape or released attack entity count do not require this system.
-
-Tower upgrade behaviours that create reusable area damage, delayed area damage, repeated area damage, buffs, or other complex combat results should delegate that execution to this system once those effects are in scope.
+Purely visual feedback should not require Buff And Effect System data.
 
 ---
 
@@ -52,295 +35,457 @@ Tower upgrade behaviours that create reusable area damage, delayed area damage, 
 
 The Buff And Effect System owns:
 
-- Effect execution
-- Area damage resolution
+- Effect trigger context consumption
+- Effect target resolution
+- Effect action execution
+- Area damage and other reusable gameplay effect execution
 - Future buff application
 - Future buff lifecycle
-- Future complex combat results
+- Future buff stacking, refresh, tick, and removal rules
+- Future Elemental debuff stacking
+- Future Elemental overload and same-element stack immunity rules
+- Future EffectZone duration, tick, and effect execution
 
 ### Does Not Own
 
 The Buff And Effect System does not own:
 
+- Tower target selection
+- Tower attack cooldown
+- Attack Entity release timing
 - Projectile movement
 - Projectile collision detection
 - Projectile lifetime
 - Projectile impact VFX spawning
 - Projectile impact VFX cleanup
-- Tower target selection
-- Tower attack cooldown
-- Monster pathfinding
+- Monster pathfinding implementation
 - Monster death rewards
+- Draft generation
+- Tower upgrade application rules
 
 These responsibilities belong to their respective systems.
+
+Movement or path effects may request safe Monster System operations, but Buff And Effect System should not directly manipulate monster transforms or bypass pathfinding ownership.
 
 ---
 
 ## 3. Core Design Philosophy
 
-The system should avoid wrapping simple damage into unnecessary layers.
+## 3.1 Effect, Buff, Damage, And EffectZone Are Different Concepts
 
-Direct single-target damage should remain simple.
+An Effect is one rule execution.
+
+Examples:
+
+- Deal damage
+- Apply buff
+- Spawn EffectZone
+- Apply movement effect
+
+A Buff is persistent runtime state attached to a unit.
+
+Examples:
+
+- Burning
+- Cold
+- ElectricShock
+- Windcut
+- ElementalStackImmunity
+
+Damage is an action result. It may be direct base attack damage, effect damage, buff tick damage, zone tick damage, overload damage, or future reaction damage.
+
+EffectZone is a gameplay entity that exists in the world for a duration, checks targets in an area, and executes effects over time.
+
+Examples:
+
+- FireZone
+- WindVortex
+- SlowField
+- DelayedExplosionZone
+
+EffectZone is not a Buff and is not pure VFX.
+
+---
+
+## 3.2 Keep Simple Damage Simple
+
+Direct single-target base attack damage may remain in the existing Projectile, Attack Entity, and Monster damage path.
 
 Example:
 
 ```text
-Projectile Hit Target
-    ↓
-Direct Damage
+Arrow Hits Monster
+    -> Direct Damage
+    -> Optional effect trigger context
 ```
 
-Effects should only be used when the result is more complex than direct single-target damage.
-
-Examples:
-
-```text
-Area Damage
-Apply Buff
-Spawn Persistent Field
-Chain Damage
-Explosion Result
-```
-
-This keeps the first version simple while leaving clean extension points for future combat features.
-
----
-
-## 4. Effect And Buff Definitions
-
-### Effect
-
-An Effect is an additional combat result triggered by a combat event.
-
-Effects are usually immediate or short-lived.
+Buff And Effect System should be used when a combat event needs reusable gameplay rule execution.
 
 Examples:
 
 - Area damage
 - Apply buff
-- Spawn temporary field
-- Trigger chain damage
+- Spawn persistent field
+- Delayed damage
+- Repeated damage
+- Elemental stack
+- Elemental overload
+- Movement or path effect request
 
-### Buff
+This keeps early implementation scope controlled while preserving clean extension points.
 
-A Buff is a persistent status attached to a unit.
+---
 
-Buffs usually have duration, stack rules, and repeated or continuous behavior.
+## 4. Trigger Context
+
+Effect trigger context is the runtime data package created when a gameplay event wants Buff And Effect System execution.
+
+Typical trigger producers:
+
+- Projectile impact
+- Projectile or Attack Entity hit
+- Magic Orb contact
+- Drone-fired projectile hit
+- EffectZone tick
+- Buff tick
+- Elemental max stack event
+
+First-version trigger types:
+
+| Trigger Type | Meaning |
+|---|---|
+| OnHit | An attack entity hits a specific monster |
+| OnImpact | An attack entity reaches a resolve point or impact position |
+| OnBuffTick | A persistent Buff performs a periodic tick |
+| OnZoneTick | An EffectZone performs a periodic tick |
+| OnMaxStack | An elemental debuff reaches max stack and triggers overload |
+
+Elemental tower hits do not need a separate trigger type. They are OnHit events with source tower and stack eligibility context.
+
+Trigger context may carry:
+
+- Source tower
+- Source upgrade
+- Target monster
+- Trigger position
+- Impact position
+- Zone position
+- Zone radius
+- Base damage or resolved damage value when relevant
+- Attack Entity concept
+- Trigger type
+- Element type when relevant
+- Whether this hit can apply Elemental stacks
+
+The exact runtime fields may evolve during implementation. The stable contract is that Attack Entities, projectiles, zones, and buffs provide enough source, target, and position context for Buff And Effect System to resolve effects without owning their upstream behavior.
+
+---
+
+## 5. Effect Targeting
+
+First-version Effect targeting should stay simple.
+
+The trigger context should provide one of:
+
+- Target monster
+- Position
+
+Effect targeting uses:
+
+- Target monster
+- Position
+- Radius
+
+Targeting rule:
+
+```text
+If radius <= 0 and target monster exists:
+    target = target monster
+
+If radius > 0:
+    center = target monster position if target monster exists
+    otherwise center = context position
+    targets = valid monsters inside radius around center
+```
+
+Monster inclusion in radius should use the monster-side hit/reference anchor provided by Monster System.
+
+This avoids a large first-version targeting enum while supporting direct effects, area effects, buff application, and overload effects.
+
+---
+
+## 6. Effect Actions
+
+Effect actions define what happens after targets are resolved.
+
+Core action types:
+
+| Action | Responsibility |
+|---|---|
+| DealDamage | Apply configured gameplay damage to resolved targets |
+| ApplyBuff | Add, refresh, or stack a Buff runtime instance on resolved targets |
+| SpawnEffectZone | Create a gameplay zone that owns duration and tick timing |
+| ApplyMovementEffect | Request a safe Monster System movement or path effect |
+
+### 6.1 DealDamage
+
+DealDamage is an instant action.
 
 Examples:
 
-- Poison
-- Slow
-- Burn
-- Weakened
+- Area impact damage
+- Burning tick damage
+- FlameBurst overload damage
+- Electric extra damage
+- LightningStrike damage
+- WindVortex tick damage
+- EffectZone tick damage
 
-Buffs are not required in the first version.
+First implementation can route Effect, Buff, Zone, and Overload damage through Effect actions while keeping base attack damage unchanged.
 
----
+Reaction-generated damage should not apply Elemental stacks by default.
 
-## 5. First Version Effect Type
+### 6.2 ApplyBuff
 
-The first effect foundation supports AreaDamageEffect.
+ApplyBuff creates, refreshes, or stacks a Buff runtime instance.
 
-Delayed or repeated area damage should extend this section only when an approved gameplay behaviour needs it.
+Examples:
 
----
+- Apply Burning
+- Apply Cold
+- Apply ElectricShock
+- Apply Windcut
+- Apply ElementalStackImmunity
 
-### 5.1 AreaDamageEffect
+### 6.3 SpawnEffectZone
 
-AreaDamageEffect applies attack damage to all valid monsters within a radius around an impact position.
+SpawnEffectZone creates a gameplay entity with duration, radius, tick interval, source context, and an on-tick Effect.
 
-Monster inclusion in the radius should be evaluated using the monster-side hit/reference anchor provided by the Monster System.
+Examples:
 
-Typical source:
+- Spawn FireZone
+- Spawn WindVortex
+- Spawn SlowField
 
-```text
-Arc Projectile Impact
-```
+EffectZone gameplay timing should be authoritative. VFX may follow gameplay timing, but gameplay should not depend on animation timing.
 
-Example flow:
+### 6.4 ApplyMovementEffect
 
-```text
-Projectile Impact Position
-    ↓
-Trigger AreaDamageEffect
-    ↓
-Find Monsters In Radius
-    ↓
-Dispatch Attack Damage To Each MonsterBehaviour
-```
+ApplyMovementEffect requests monster movement or path changes through safe Monster System APIs.
 
-AreaDamageEffect data may include:
+Examples:
 
-| Field | Type | Description |
-|---|---|---|
-| radius | float | Area damage radius |
+- Frozen movement lock
+- Storm Shift
+- Future knockback
+- Future pull
 
-EffectConfig assets are referenced directly by gameplay data that needs an effect configuration. They should not maintain a hand-authored effect id unless a future persistence, external-data, or lookup requirement needs a stable id. Debug output should use the ScriptableObject asset name.
-
-AreaDamageEffect data should not include projectile impact VFX prefab references in the first version.
-
-Projectile-specific impact presentation belongs to ProjectileConfig.
-
-Attack damage is not owned by AreaDamageEffect.
-
-Attack damage is provided by the combat event that triggered the effect.
-
-For example:
-
-```text
-AttackConfig.damage
-    ↓
-Projectile Impact
-    ↓
-AreaDamageEffect
-    ↓
-Dispatch Damage To All Valid Monsters
-```
-
-The first version does not need advanced falloff rules.
-
-All valid monsters inside the radius receive the same damage.
-
-AreaDamageEffect does not own monster positioning, collision shape, or target validity. It consumes monster references and dispatches damage to valid monsters selected by the effect query.
+Buff And Effect System should not directly modify monster transforms for path logic.
 
 ---
 
-### 5.2 Delayed And Repeated Area Damage
+## 7. Buff Definition And Runtime State
 
-Delayed area damage represents area damage that is triggered after a configured delay.
+Buff definitions are static configuration.
 
-Repeated area damage represents area damage that ticks over a configured duration.
+Buff runtime instances are runtime state.
 
-These are effect-foundation extensions, not separate tower-owned query systems.
+Buff definitions should be referenced through Inspector-assigned ScriptableObject references. They should not depend on hand-authored string ids unless a future persistence, external-data, or lookup requirement needs stable ids.
 
-Typical Behaviour Layer consumers:
+Buff definition data may include:
 
-- Cannon Timed Shell
-- Cannon Burning Shell
+- Display name and description
+- Element type when relevant
+- Duration
+- Tick interval when relevant
+- Stackability
+- Max stack
+- Stack amount per apply
+- Refresh duration on reapply
+- Same-source apply cooldown
+- Normal phase effect
+- Overload effect
+- Remove on overload
+- Same-element stack immunity duration
 
-These effects should reuse the same monster validity and radius-evaluation contract as AreaDamageEffect.
+Buff runtime state should include:
 
-They should not own projectile movement, projectile impact VFX, tower target selection, or monster health.
+- Definition reference
+- Owner monster
+- Source tower
+- Source upgrade
+- Remaining duration
+- Tick timer
+- Stack count
+- Same-source cooldown tracking when required
 
----
-
-## 6. Buff Reserved For Future
-
-Buff support is reserved for future versions.
-
-The first version may define interfaces or placeholders, but does not need complete buff runtime behavior.
-
-Future buff features may include:
-
-- Buff duration
-- Buff tick interval
-- Buff stacking rules
-- Buff refresh rules
-- Buff removal rules
-- Stat modification
-- Damage over time
-- Slow effects
-
-Example future flow:
-
-```text
-Projectile Hit
-    ↓
-ApplyBuffEffect
-    ↓
-Attach Buff To Monster
-    ↓
-Buff Runtime Updates Over Time
-```
+Runtime state must not be stored in definition assets.
 
 ---
 
-## 7. Relationship With Other Systems
+## 8. Elemental Debuff Rules
 
-### Projectile System
+Elemental Layer upgrades convert towers into elemental towers.
 
-Responsible for:
+Direct attacks from elemental towers can apply elemental debuff stacks through Buff And Effect System.
 
-- Detecting projectile hit or arrival
-- Dispatching direct damage for simple single-target hits
-- Triggering Effect execution for complex results
-- Triggering optional projectile impact VFX
-- Providing impact position and attack damage when triggering an effect
+First-version elemental debuffs:
+
+- Burning
+- Cold
+- ElectricShock
+- Windcut
+
+Each elemental debuff has two phases:
+
+| Phase | Meaning |
+|---|---|
+| Normal Phase | Persistent stackable debuff behavior before overload |
+| Overload Phase | Effect triggered when max stack is reached |
+
+General stacking rule:
+
+1. If the monster does not have this elemental debuff, apply it with initial stacks.
+2. If the monster already has this elemental debuff and the application is not blocked, run the normal phase when configured, refresh duration, and add stacks.
+3. Multiple towers with the same elemental upgrade can add stacks to the same monster.
+4. The same source tower may have an apply cooldown for the same elemental debuff on the same monster.
+5. If the elemental debuff expires before max stack is reached, the debuff is removed and stacks are lost.
+6. When max stack is reached, trigger overload.
+7. After overload triggers, apply same-element ElementalStackImmunity.
+
+First application of an elemental debuff should apply the debuff only. Normal phase extra effects such as Electric extra damage or WindVortex spawn should trigger only when the monster already has that elemental debuff and the direct elemental hit successfully applies or refreshes it.
+
+Same-source apply cooldown prevents one tower from stacking the same elemental debuff too quickly on the same monster. When this cooldown blocks an application, no stack is added, duration is not refreshed, and normal phase extra effects do not trigger.
+
+After normal phase resolution, the system checks whether max stacks have been reached. If max stacks are reached, overload executes, the normal debuff is removed when configured to do so, and same-element stack immunity is applied.
+
+---
+
+## 9. Elemental Stack Immunity
+
+ElementalStackImmunity is a temporary state applied after elemental overload.
+
+It prevents the monster from gaining stacks of the same element for a short duration.
+
+It does not block damage by default.
 
 Example:
 
 ```text
-Projectile Impact
-    ↓
-Trigger Optional Impact VFX
-    ↓
-Trigger AreaDamageEffect
+Monster triggers Cold overload
+    -> Monster gains Cold ElementalStackImmunity
+    -> Cold stacks cannot be added or refreshed during immunity
+    -> Fire, Electric, and Wind stacks can still be applied normally
 ```
 
-Impact VFX playback must remain presentation-only. It must not affect area damage resolution, direct damage dispatch, target selection, or monster validity checks.
+ElementalStackImmunity can be implemented as a system Buff when Buff runtime is available.
+
+It should be treated as a system-level state, not as a normal elemental debuff.
 
 ---
+
+## 10. Recursion Rule
+
+Only direct elemental tower attacks can apply elemental stacks by default.
+
+The following should not apply elemental stacks by default:
+
+- Burning tick damage
+- FlameBurst damage
+- Electric extra damage
+- LightningStrike damage
+- WindVortex damage
+- EffectZone tick damage
+- Overload damage
+- Buff tick damage
+
+Future upgrades may explicitly override this rule, but that should be reviewed as separate upgrade content rather than assumed by the baseline Elemental Layer.
+
+---
+
+## 11. EffectZone
+
+EffectZone is a zone-like gameplay entity.
+
+It owns:
+
+- Duration
+- Position
+- Radius
+- Tick interval
+- Target detection inside radius
+- On-tick Effect execution
+- Source tower reference
+- Source upgrade reference
+
+EffectZone may be static or moving.
+
+Examples:
+
+| Zone Type | Examples |
+|---|---|
+| Static | FireZone, SlowField, PoisonCloud |
+| Moving | WindVortex, Tornado, MovingStormField |
+
+Static and moving zones may share one EffectZone runtime if the implementation remains clean.
+
+WindVortex should be reviewed after Buff core and simpler elemental effects are stable because it needs moving EffectZone behavior and target selection separate from radius-based damage resolution.
+
+---
+
+## 12. Relationship With Other Systems
+
+### Tower Upgrade System
+
+Tower Upgrade System owns upgrade definitions, eligibility, and application rules.
+
+Behaviour and Elemental upgrades may reference Effect bindings, Elemental profiles, Buff definitions, or Effect definitions.
+
+Tower Upgrade System should not execute Buff, Effect, Elemental stack, or overload behavior.
 
 ### Tower Runtime Combat System
 
-Responsible for:
+Tower Runtime Combat decides when towers attack, resolves combat stats, and releases Attack Entities.
 
-- Deciding when a tower attacks
-- Creating projectiles when needed
-- Triggering non-projectile attack behavior
+Runtime Combat may provide source context and resolved damage values to Attack Entities or trigger context, but it should not own Buff, Elemental stack, or overload rules.
 
-Example:
+### Projectile System
 
-```text
-Attack Entity Contact Or Projectile Impact
-    ↓
-May Trigger Direct Damage Or Effect Execution Depending On The Attack Result
-```
+Projectile System owns projectile movement, hit detection, impact event generation, simple single-target projectile damage dispatch, and projectile-specific impact VFX.
 
----
+Projectile System may emit trigger context for complex gameplay results.
+
+Projectile System should not directly apply Buffs or handle Elemental stack logic.
 
 ### Monster System
 
-Responsible for:
+Monster System owns monster health, movement, pathfinding, death, arrival, hit/reference anchors, and safe movement/path operations.
 
-- Receiving damage
-- Updating monster health
-- Handling monster death
-- Handling monster cleanup
-- Providing monster-side hit/reference anchors for effect queries
+Buff And Effect System may request damage or movement/path effects through Monster System-owned APIs, but it should not bypass Monster System ownership.
 
 ---
 
-## 8. First Version Scope
+## 13. Implementation Scope Direction
 
-The first version supports:
+The next implementation should be split into Task Documents rather than implemented as one large change.
 
-- AreaDamageEffect
-- Damage dispatch to monsters within radius
-- Effect trigger from projectile impact position
+Recommended order:
 
-The first version intentionally excludes:
+1. Effect trigger context, Effect definition, simple target resolution, and Effect action foundation.
+2. Buff definition, Monster buff runtime state, stacking, refresh, same-source cooldown, and same-element stack immunity foundation.
+3. Fire vertical slice: Burning and FlameBurst.
+4. Cold and Electric vertical slices.
+5. EffectZone foundation.
+6. WindVortex and Storm Shift after EffectZone and Monster movement/path APIs are ready.
 
-- Buff runtime
-- Damage over time
-- Slow effects
-- Burn effects
-- Poison effects
-- Buff stacking
-- Buff refresh rules
-- Damage falloff by distance
-
-These features may be added in future versions.
+Effect-backed Behaviour Layer upgrades such as Magic Orb Splash, Cannon Timed Shell, and Cannon Burning Shell should wait until the required Effect binding and Buff And Effect System foundation exists.
 
 ---
 
-## 9. Summary
+## 14. Summary
 
-The Buff And Effect System handles additional or complex combat results beyond direct single-target damage.
+The Buff And Effect System handles reusable gameplay rule execution beyond simple direct attack damage.
 
-In the first version, the system only needs to support AreaDamageEffect and area damage resolution.
+It should grow from a small Effect foundation into Buff runtime, Elemental debuff stacking, overload, and EffectZone support through staged Task Documents.
 
-Direct projectile hit damage remains part of the Projectile System and MonsterBehaviour damage flow.
-
-This keeps the current combat implementation simple while preserving clear extension points for future buff and effect features.
+Direct base attack damage can remain in the existing runtime path until a later DamageContext migration is explicitly reviewed.
