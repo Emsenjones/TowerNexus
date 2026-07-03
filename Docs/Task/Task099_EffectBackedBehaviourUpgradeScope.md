@@ -1,4 +1,4 @@
-# Paused - Phase 2 Effect-Backed Behaviour Upgrade Scope
+# Task008 - Effect-Backed Behaviour Upgrade Scope
 
 ## Objective
 
