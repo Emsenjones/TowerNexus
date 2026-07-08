@@ -142,11 +142,15 @@ Responsibilities:
 - Remove consumed Draft items after successful placement, tower level-up, or upgrade application.
 - Display future recycle tower entries.
 
+Unconsumed Tower Upgrade Draft items in this area represent already selected upgrade capacity that Draft System may read when generating future Tower Upgrade Draft choices.
+
 If any currently dragged Draft item is released back inside the Draft Item Interaction Area, the current drag operation should be cancelled. This applies to Tower Draft items, future Tower Upgrade Draft items, and future draggable Draft item types.
 
 Canceling the current drag operation returns the Draft item to the Battle HUD interaction flow and should not trigger scene placement validation, tower level-up validation, or upgrade application validation.
 
 The Draft Item Interaction Area should not validate placement, tower level-up rules, or tower upgrade rules.
+
+The Draft Item Interaction Area should not decide Draft pool generation, pending upgrade reservation, candidate weighting, or sampling rules.
 
 Placement validation belongs to Tower Placement System.
 

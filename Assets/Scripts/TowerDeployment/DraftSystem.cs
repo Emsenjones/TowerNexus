@@ -127,30 +127,79 @@ public class DraftSystem : MonoBehaviour
             return;
         }
 
-        for (int towerIndex = 0; towerIndex < deployedTowerInstances.Count; towerIndex++)
+        for (int upgradeIndex = 0; upgradeIndex < upgradeDefinitions.Count; upgradeIndex++)
         {
-            TowerInstance towerInstance = deployedTowerInstances[towerIndex];
+            TowerUpgradeDefinition upgradeDefinition = upgradeDefinitions[upgradeIndex];
 
-            if (towerInstance == null)
+            if (upgradeDefinition == null)
             {
                 continue;
             }
 
-            for (int upgradeIndex = 0; upgradeIndex < upgradeDefinitions.Count; upgradeIndex++)
+            int eligibleTowerCount = CountEligibleTowerInstancesForUpgrade(upgradeDefinition, deployedTowerInstances);
+            int pendingSameUpgradeItemCount = CountPendingTowerUpgradeDraftItems(upgradeDefinition);
+            int candidateCount = Mathf.Max(0, eligibleTowerCount - pendingSameUpgradeItemCount);
+
+            for (int candidateIndex = 0; candidateIndex < candidateCount; candidateIndex++)
             {
-                TowerUpgradeDefinition upgradeDefinition = upgradeDefinitions[upgradeIndex];
-
-                if (upgradeDefinition == null)
-                {
-                    continue;
-                }
-
-                if (towerUpgradeSystem.CanApplyUpgrade(towerInstance, upgradeDefinition, out _))
-                {
-                    draftPool.Add(DraftResult.CreateTowerUpgradeDraft(upgradeDefinition));
-                }
+                draftPool.Add(DraftResult.CreateTowerUpgradeDraft(upgradeDefinition));
             }
         }
+    }
+
+    private int CountEligibleTowerInstancesForUpgrade(
+        TowerUpgradeDefinition upgradeDefinition,
+        IReadOnlyList<TowerInstance> deployedTowerInstances)
+    {
+        if (upgradeDefinition == null || deployedTowerInstances == null || towerUpgradeSystem == null)
+        {
+            return 0;
+        }
+
+        int eligibleTowerCount = 0;
+
+        for (int towerIndex = 0; towerIndex < deployedTowerInstances.Count; towerIndex++)
+        {
+            TowerInstance towerInstance = deployedTowerInstances[towerIndex];
+
+            if (towerInstance != null &&
+                towerUpgradeSystem.CanApplyUpgrade(towerInstance, upgradeDefinition, out _))
+            {
+                eligibleTowerCount++;
+            }
+        }
+
+        return eligibleTowerCount;
+    }
+
+    private int CountPendingTowerUpgradeDraftItems(TowerUpgradeDefinition upgradeDefinition)
+    {
+        if (upgradeDefinition == null || battleHUDUI == null)
+        {
+            return 0;
+        }
+
+        IReadOnlyList<PendingDraftUI> pendingDraftItems = battleHUDUI.PendingDraftItems;
+
+        if (pendingDraftItems == null)
+        {
+            return 0;
+        }
+
+        int pendingSameUpgradeItemCount = 0;
+
+        for (int pendingIndex = 0; pendingIndex < pendingDraftItems.Count; pendingIndex++)
+        {
+            PendingDraftUI pendingDraftItem = pendingDraftItems[pendingIndex];
+
+            if (pendingDraftItem != null &&
+                pendingDraftItem.TowerUpgradeDefinition == upgradeDefinition)
+            {
+                pendingSameUpgradeItemCount++;
+            }
+        }
+
+        return pendingSameUpgradeItemCount;
     }
 
     private void HandleDraftSelected(DraftResult draftResult)

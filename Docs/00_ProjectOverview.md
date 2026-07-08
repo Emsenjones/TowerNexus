@@ -197,9 +197,9 @@ Responsible for:
 - Creating draft results
 - Routing Tower Draft deployment or tower-level-up intent to the appropriate system
 
-Tower Upgrade Draft choices are generated from eligible tower instance state, including TowerFamily, tower level, Required Tower Level eligibility, remaining upgrade slots, and upgrades already applied to each tower.
+Tower Upgrade Draft choices are generated from eligible tower instance state, including TowerFamily, tower level, Required Tower Level eligibility, remaining upgrade slots, and upgrades already applied to each tower. Unconsumed Tower Upgrade Draft items already held in the Draft Item Interaction Area reduce future Tower Upgrade Draft capacity for the same upgrade or exclusive upgrade slot, so already selected upgrades are not over-offered before they are applied.
 
-Future Elemental Layer upgrade choices should only enter the Tower Upgrade Draft pool when at least one deployed tower can legally receive that Elemental upgrade. A typical first rule is that the battlefield must contain a tower that satisfies the required tower level and does not already own an Elemental upgrade.
+Future Elemental Layer upgrade choices should only enter the Tower Upgrade Draft pool when at least one deployed tower can legally receive that Elemental upgrade after pending reservation is applied. A typical first rule is that the battlefield must contain a tower that satisfies the required tower level, does not already own an Elemental upgrade, and does not have its Elemental capacity effectively reserved by a pending Tower Upgrade Draft item.
 
 ---
 

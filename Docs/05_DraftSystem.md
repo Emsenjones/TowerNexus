@@ -186,11 +186,13 @@ The Draft System owns the draft generation rules.
 
 Tower Placement System should not decide draft generation.
 
+Pending Tower Draft items already stored in the Draft Item Interaction Area should not reduce or reserve New Tower Pool generation. A Tower Draft item is a flexible future placement or level-up resource, not a reservation against one specific TowerDefinition capacity.
+
 ---
 
 ### 6.2 Tower Upgrade Pool
 
-Tower Upgrade Draft choices are generated from the player's current tower instance state.
+Tower Upgrade Draft choices are generated from the player's current tower instance state and from unconsumed Tower Upgrade Draft items already held in the Draft Item Interaction Area.
 
 Draft System owns Tower Upgrade Draft pool generation.
 
@@ -205,6 +207,7 @@ The upgrade pool should be constructed using:
 - Upgrade Layer eligibility, including Elemental Layer exclusivity
 - Upgrades already applied to that tower
 - Upgrade definitions provided by Tower Upgrade System
+- Unconsumed Tower Upgrade Draft items already held in the Draft Item Interaction Area
 
 For every tower instance, Draft System should request or evaluate eligible upgrades using TowerUpgradeSystem rules:
 
@@ -215,11 +218,25 @@ For every tower instance, Draft System should request or evaluate eligible upgra
 - Gather all valid upgrades that tower is eligible for.
 - Exclude upgrades already owned by that tower.
 
-The resulting candidate set forms the Tower Upgrade Draft Pool for the current Draft.
+For each TowerUpgradeDefinition, Draft System should count how many current tower instances can legally receive that upgrade, then reduce that count by unconsumed pending Tower Upgrade Draft items that already reserve the same upgrade capacity.
 
-Elemental Layer upgrade candidates should enter the Tower Upgrade Draft Pool only when at least one deployed tower can legally receive them. A typical first-version case is a tower that satisfies the required tower level and does not already own an Elemental Layer upgrade.
+First-version pending reservation should at minimum count pending Tower Upgrade Draft items with the same TowerUpgradeDefinition.
 
-Tower Upgrade Draft Pool generation is tower-instance weighted.
+If an upgrade rule uses an exclusive capacity shared by multiple definitions, such as the Elemental Layer one-element-per-tower rule, pending reservation should also respect that exclusive capacity instead of only comparing exact TowerUpgradeDefinition identity.
+
+An upgrade should enter the Tower Upgrade Draft Pool only when its remaining eligible capacity is greater than zero.
+
+```text
+remainingEligibleCapacity = eligibleTowerCount - pendingReservedCapacity
+```
+
+When an upgrade enters the pool, its internal candidate representation should equal the remaining eligible capacity.
+
+The resulting capacity-adjusted candidate set forms the Tower Upgrade Draft Pool for the current Draft.
+
+Elemental Layer upgrade candidates should enter the Tower Upgrade Draft Pool only when at least one deployed tower can legally receive them after pending reservation is applied. A typical first-version case is a tower that satisfies the required tower level, does not already own an Elemental Layer upgrade, and does not have its Elemental capacity effectively reserved by a pending Tower Upgrade Draft item.
+
+Tower Upgrade Draft Pool generation is tower-instance weighted after pending Tower Upgrade Draft reservation is applied.
 
 Example:
 
@@ -227,15 +244,19 @@ Example:
 Battlefield
 - Archer Lv2 x 3
 - Cannon Lv1 x 1
+
+Draft Item Interaction Area
+- Scatter Arrow x 1
 ```
 
-Because three eligible Archer tower instances exist, Archer upgrade definitions naturally receive higher representation in the generated pool.
+If all three Archer tower instances can legally receive Scatter Arrow, but one pending Scatter Arrow item is already held, Scatter Arrow should receive two internal candidate entries instead of three.
 
 This creates the desired behavior:
 
 - More invested tower types appear more often in upgrade drafts.
 - More high-level towers create more opportunities to discover higher-level upgrades.
 - The player can shape future upgrade discovery by choosing which towers to deploy and level.
+- Already selected but unconsumed Tower Upgrade Draft items do not cause the same upgrade capacity to be over-offered.
 
 Draft System should still prevent duplicate upgrade options from appearing in the same displayed Draft round.
 
@@ -254,7 +275,7 @@ Recommended first-version generation order:
 ```text
 Generate Tower Draft candidates from TowerDefinitionDatabase
     ↓
-Generate Tower Upgrade Draft candidates from current tower instances
+Generate Tower Upgrade Draft candidates from current tower instances and pending upgrade-draft reservation
     ↓
 Merge both candidate lists into one Draft candidate pool
     ↓
@@ -277,11 +298,13 @@ Tower Draft candidates:
 Tower Upgrade Draft candidates:
 - Scatter Arrow from Archer A
 - Scatter Arrow from Archer B
-- Scatter Arrow from Archer C
 - Reinforced Shells from Cannon A
+
+Pending Tower Upgrade Draft items:
+- Scatter Arrow x 1
 ```
 
-Every candidate entry above has equal sampling weight, but Scatter Arrow has higher total representation because three eligible Archer tower instances contributed it.
+Every candidate entry above has equal sampling weight, but Scatter Arrow still has higher total representation because three eligible Archer tower instances contributed it and one pending Scatter Arrow item reduced the remaining representation to two.
 
 Displayed choices should still be deduplicated by Draft item identity:
 

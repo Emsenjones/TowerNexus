@@ -377,6 +377,7 @@ TowerUpgradeSystem does not own:
 
 - Draft pool generation timing
 - Tower-instance weighting
+- Pending Tower Upgrade Draft reservation during Draft pool generation
 - Draft choice count
 - Same-round duplicate prevention for displayed Draft options
 - Reroll, rarity, or future Draft presentation rules

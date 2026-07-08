@@ -22,6 +22,7 @@ public class PendingDraftUI : MonoBehaviour, IPointerDownHandler, IBeginDragHand
 
     public DraftResult DraftResult => draftResult;
     public TowerDefinition TowerDefinition => draftResult != null ? draftResult.TowerDefinition : null;
+    public TowerUpgradeDefinition TowerUpgradeDefinition => draftResult != null ? draftResult.TowerUpgradeDefinition : null;
 
     private void Awake()
     {
