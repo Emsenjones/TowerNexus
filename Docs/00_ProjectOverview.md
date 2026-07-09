@@ -327,7 +327,7 @@ Framework direction:
 - Radius-based target resolution
 - Effect action execution
 - Buff application and lifecycle when buff runtime is in scope
-- Elemental stack, overload, and same-element stack immunity when Elemental Layer is in scope
+- Elemental stack, overload, and post-overload Protection phase when Elemental Layer is in scope
 - EffectZone duration, tick, targeting, and movement when zone gameplay is in scope
 
 Direct base attack damage does not need to migrate into Buff And Effect System immediately. The current direct damage path may remain simple while Buff And Effect System executes additional effects, buff ticks, zone ticks, overload damage, and other complex results.

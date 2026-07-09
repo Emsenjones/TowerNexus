@@ -355,7 +355,7 @@ Examples of Behaviour Layer package parameters:
 
 TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
-Elemental Layer profile identity should also be typed or reference-based rather than free-form string based. Runtime systems should ask the tower upgrade state whether a tower owns an Elemental profile, then use Buff And Effect System rules to execute direct elemental hit stacking, normal phase effects, overload, and same-element stack immunity.
+Elemental Layer profile identity should also be typed or reference-based rather than free-form string based. Runtime systems should ask the tower upgrade state whether a tower owns an Elemental profile, then use Buff And Effect System rules to execute Elemental stack application, Buff event bindings, overload, and post-overload Protection phase.
 
 Effect bindings belong to upgrade content that needs reusable Buff And Effect System execution. Effect bindings describe which gameplay trigger may execute which Effect definition. They should not be used by Basic Layer upgrades in the first version because Basic Layer should remain a pure numerical layer.
 
@@ -548,9 +548,9 @@ Elemental Layer upgrades are intended to make path segments smarter and more dan
 
 Each tower may receive one Elemental Layer upgrade in the first version.
 
-Direct attacks from elemental towers may apply elemental debuff stacks through Buff And Effect System. Multiple towers with the same Elemental Layer upgrade can stack the same elemental debuff on the same monster and eventually trigger overload.
+Tower-owned attack events from elemental towers may apply elemental debuff stacks through Buff And Effect System when their runtime context explicitly allows Elemental stack application. Multiple towers with the same Elemental Layer upgrade can stack the same elemental debuff on the same monster and eventually trigger overload.
 
-Reaction-generated damage, buff tick damage, EffectZone tick damage, and overload damage should not apply elemental stacks by default. Elemental stacking should remain tied to direct elemental tower attacks unless a future reviewed upgrade explicitly expands that rule.
+Reaction-generated damage, buff tick damage, EffectZone tick damage, and overload damage should not apply elemental stacks by default. Elemental stacking should remain tied to explicitly eligible tower-owned attack events unless a future reviewed upgrade explicitly expands that rule.
 
 Examples:
 
@@ -577,16 +577,16 @@ FlameBurst overload
 Elemental Layer content may include:
 
 - Elemental profile
-- Direct elemental hit stack rules
-- Elemental debuff definition reference
-- Normal phase effect reference or binding
-- Overload effect reference or binding
+- Element type
+- Trigger bindings from eligible tower-owned attack events to Elemental stack application effects
+- Elemental stack Buff definition reference through Effect actions
+- Periodic, stack, and overload Effect references on the Buff definition
 - Buff apply cooldown
-- Same-element stack immunity duration
+- Protection duration after overload
 
-Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and normal phase extra effects such as Electric extra damage or WindVortex spawn do not trigger.
+Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and stack effects such as Electric extra damage or WindVortex spawn do not trigger.
 
-First application of an elemental debuff should apply the debuff only. If the monster already has that elemental debuff and a direct elemental hit successfully applies or refreshes it, the normal phase may execute. After normal phase resolution, the system checks whether max stacks have been reached; if yes, overload executes, the normal debuff is removed when configured to do so, and same-element stack immunity is applied.
+First application of an elemental debuff should apply the debuff only. If the monster already has that elemental debuff and an eligible tower-owned attack event successfully adds one stack, the StackApplied Buff event binding may execute. A pure refresh should not trigger stack effects. After a successful stack increase, the system checks whether max stacks have been reached; if yes, overload executes and the Buff enters Protection phase when configured.
 
 Purpose:
 

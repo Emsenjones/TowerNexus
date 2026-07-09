@@ -95,7 +95,7 @@ For projectile types that use direct hit damage, existing direct hit damage exec
 - Elemental stack rules.
 - Elemental overload.
 - Same-source apply cooldown.
-- ElementalStackImmunity.
+- Element blocker Buffs.
 - EffectZone runtime.
 - Delayed effect execution.
 - Moving EffectZone behavior.

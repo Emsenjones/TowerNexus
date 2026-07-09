@@ -22,11 +22,13 @@ public static class EffectExecutor
             return;
         }
 
+        List<MonsterBehaviour> executionTargets = new List<MonsterBehaviour>(ResolvedTargets);
+
         IReadOnlyList<EffectAction> actions = effectDefinition.Actions;
 
         for (int i = 0; i < actions.Count; i++)
         {
-            ExecuteAction(actions[i], triggerContext, ResolvedTargets);
+            ExecuteAction(actions[i], triggerContext, executionTargets);
         }
     }
 
@@ -43,7 +45,7 @@ public static class EffectExecutor
         switch (action.ActionType)
         {
             case EffectActionType.DealDamage:
-                ExecuteDealDamage(triggerContext, targets);
+                ExecuteDealDamage(action, triggerContext, targets);
                 break;
             case EffectActionType.ApplyBuff:
                 ExecuteApplyBuff(action, triggerContext, targets);
@@ -55,10 +57,13 @@ public static class EffectExecutor
     }
 
     private static void ExecuteDealDamage(
+        EffectAction action,
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
     {
-        int damage = triggerContext.ResolvedDamage;
+        int damage = action != null && action.DamageAmount > 0
+            ? action.DamageAmount
+            : triggerContext.ResolvedDamage;
 
         if (damage <= 0)
         {
@@ -90,6 +95,12 @@ public static class EffectExecutor
             return;
         }
 
+        if (buffDefinition.ElementType != ElementType.None &&
+            !triggerContext.CanApplyElementalStack)
+        {
+            return;
+        }
+
         for (int i = 0; i < targets.Count; i++)
         {
             MonsterBehaviour target = targets[i];
@@ -99,7 +110,7 @@ public static class EffectExecutor
                 continue;
             }
 
-            target.ApplyBuff(
+            BuffApplyOutcome outcome = target.ApplyBuffWithOutcome(
                 new BuffApplyRequest(
                     buffDefinition,
                     triggerContext.SourceTower,
@@ -107,6 +118,77 @@ public static class EffectExecutor
                     triggerContext.HasTriggerPosition,
                     triggerContext.TriggerPosition)
             );
+
+            ExecuteBuffApplyFollowUps(outcome, triggerContext);
         }
+    }
+
+    private static void ExecuteBuffApplyFollowUps(
+        BuffApplyOutcome outcome,
+        EffectTriggerContext triggerContext)
+    {
+        MonsterBuffInstance buffInstance = outcome.BuffInstance;
+        BuffDefinition buffDefinition = buffInstance != null ? buffInstance.Definition : null;
+        MonsterBehaviour owner = buffInstance != null ? buffInstance.Owner : null;
+
+        if (buffDefinition == null || owner == null)
+        {
+            return;
+        }
+
+        if (outcome.Result == BuffApplyResult.Stacked)
+        {
+            ExecuteBuffFollowUpEffect(
+                buffDefinition.GetEffectDefinition(BuffEventType.StackApplied),
+                EffectTriggerType.OnHit,
+                triggerContext,
+                owner);
+        }
+
+        if (!outcome.ReachedMaxStacks)
+        {
+            return;
+        }
+
+        ExecuteBuffFollowUpEffect(
+            buffDefinition.GetEffectDefinition(BuffEventType.Overload),
+            EffectTriggerType.OnMaxStack,
+            triggerContext,
+            owner);
+
+        if (buffInstance.TryEnterProtectionPhase())
+        {
+            return;
+        }
+
+        owner.RemoveBuff(buffDefinition);
+    }
+
+    private static void ExecuteBuffFollowUpEffect(
+        EffectDefinition effectDefinition,
+        EffectTriggerType triggerType,
+        EffectTriggerContext sourceContext,
+        MonsterBehaviour owner)
+    {
+        if (effectDefinition == null || owner == null)
+        {
+            return;
+        }
+
+        Transform hitAnchor = owner.HitAnchor;
+        Vector3 triggerPosition = hitAnchor != null ? hitAnchor.position : owner.transform.position;
+
+        Execute(
+            effectDefinition,
+            new EffectTriggerContext(
+                triggerType,
+                sourceContext.SourceTower,
+                sourceContext.SourceUpgrade,
+                owner,
+                true,
+                triggerPosition,
+                0,
+                false)
+        );
     }
 }

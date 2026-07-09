@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -27,13 +28,14 @@ public class BuffDefinition : ScriptableObject
     [MinValue(0f)]
     [SerializeField] private float buffApplyCooldown;
 
-    [TitleGroup("Tick Effect")]
-    [SerializeField] private EffectDefinition tickEffectDefinition;
+    [TitleGroup("Buff Event Bindings")]
+    [SerializeField] private List<BuffEventBinding> eventBindings = new List<BuffEventBinding>();
 
     [TitleGroup("Elemental")]
     [SerializeField] private ElementType elementType;
     [TitleGroup("Elemental")]
-    [SerializeField] private bool isElementalStackImmunity;
+    [MinValue(0f)]
+    [SerializeField] private float protectionDuration;
 
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public string Description => description;
@@ -41,9 +43,29 @@ public class BuffDefinition : ScriptableObject
     public float TickInterval => tickInterval;
     public int MaxStacks => Mathf.Max(1, maxStacks);
     public float BuffApplyCooldown => Mathf.Max(0f, buffApplyCooldown);
-    public EffectDefinition TickEffectDefinition => tickEffectDefinition;
+    public IReadOnlyList<BuffEventBinding> EventBindings => eventBindings;
     public ElementType ElementType => elementType;
-    public bool IsElementalStackImmunity => isElementalStackImmunity;
+    public float ProtectionDuration => Mathf.Max(0f, protectionDuration);
+
+    public EffectDefinition GetEffectDefinition(BuffEventType eventType)
+    {
+        if (eventBindings == null)
+        {
+            return null;
+        }
+
+        for (int i = 0; i < eventBindings.Count; i++)
+        {
+            BuffEventBinding eventBinding = eventBindings[i];
+
+            if (eventBinding != null && eventBinding.EventType == eventType)
+            {
+                return eventBinding.EffectDefinition;
+            }
+        }
+
+        return null;
+    }
 
     public bool IsValid()
     {
@@ -73,10 +95,49 @@ public class BuffDefinition : ScriptableObject
             isValid = false;
         }
 
-        if (isElementalStackImmunity && elementType == ElementType.None)
+        if (protectionDuration < 0f)
         {
-            Debug.LogWarning($"Buff definition '{name}' is invalid: elemental stack immunity requires an element type.", this);
+            Debug.LogWarning($"Buff definition '{name}' is invalid: protection duration cannot be negative.", this);
             isValid = false;
+        }
+
+        isValid &= AreEventBindingsValid();
+
+        return isValid;
+    }
+
+    private bool AreEventBindingsValid()
+    {
+        if (eventBindings == null || eventBindings.Count == 0)
+        {
+            return true;
+        }
+
+        bool isValid = true;
+        HashSet<BuffEventType> authoredEventTypes = new HashSet<BuffEventType>();
+
+        for (int i = 0; i < eventBindings.Count; i++)
+        {
+            BuffEventBinding eventBinding = eventBindings[i];
+
+            if (eventBinding == null)
+            {
+                Debug.LogWarning($"Buff definition '{name}' is invalid: buff event binding at index {i} is missing.", this);
+                isValid = false;
+                continue;
+            }
+
+            if (!authoredEventTypes.Add(eventBinding.EventType))
+            {
+                Debug.LogWarning($"Buff definition '{name}' is invalid: duplicate buff event binding for '{eventBinding.EventType}'.", this);
+                isValid = false;
+            }
+
+            if (!eventBinding.IsValid())
+            {
+                Debug.LogWarning($"Buff definition '{name}' is invalid: buff event binding '{eventBinding.EventType}' failed validation.", this);
+                isValid = false;
+            }
         }
 
         return isValid;

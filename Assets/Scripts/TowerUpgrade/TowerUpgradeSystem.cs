@@ -112,6 +112,13 @@ public class TowerUpgradeSystem : MonoBehaviour
             return false;
         }
 
+        if (upgradeDefinition.UpgradeLayer == TowerUpgradeLayer.Elemental &&
+            targetTower.HasElementalUpgrade())
+        {
+            failureReason = "Target tower already has an Elemental Layer upgrade.";
+            return false;
+        }
+
         failureReason = string.Empty;
         return true;
     }

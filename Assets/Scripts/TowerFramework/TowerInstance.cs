@@ -99,6 +99,16 @@ public class TowerInstance : MonoBehaviour
         return upgradeState.HasBehaviourPackage(packageType);
     }
 
+    public bool HasElementalUpgrade()
+    {
+        return upgradeState.HasElementalUpgrade();
+    }
+
+    public bool TryGetElementalUpgrade(out TowerUpgradeDefinition upgradeDefinition)
+    {
+        return upgradeState.TryGetElementalUpgrade(out upgradeDefinition);
+    }
+
     public bool TryGetBehaviourPackageUpgrade(
         TowerBehaviourPackageType packageType,
         out TowerUpgradeDefinition upgradeDefinition)

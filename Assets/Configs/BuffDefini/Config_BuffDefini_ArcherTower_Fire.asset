@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
+  m_Name: Config_BuffDefini_ArcherTower_Fire
+  m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
+  displayName: Burning
+  description: 
+  duration: 5
+  tickInterval: 0.25
+  maxStacks: 2
+  buffApplyCooldown: 0.5
+  eventBindings:
+  - eventType: 0
+    effectDefinition: {fileID: 11400000, guid: ca535fb633964c0596aaed545a9a3ba3, type: 2}
+  - eventType: 2
+    effectDefinition: {fileID: 11400000, guid: d9abc37880d045259af0bc0e82ceb508, type: 2}
+  elementType: 1
+  protectionDuration: 5

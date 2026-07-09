@@ -55,6 +55,10 @@ public class TowerUpgradeDefinition : ScriptableObject
     [MinValue(0f)]
     [SerializeField] private float twinDronesTakeOffDelay = 0.15f;
 
+    [TitleGroup("Elemental Layer")]
+    [ShowIf(nameof(IsElementalLayerUpgrade))]
+    [SerializeField] private ElementType elementType;
+
     [TitleGroup("Effect Bindings")]
     [ShowIf(nameof(CanAuthorEffectBindings))]
     [SerializeField] private List<EffectBinding> effectBindings = new List<EffectBinding>();
@@ -74,6 +78,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     public float TwinOrbsStartingAngleOffset => twinOrbsStartingAngleOffset;
     public int TwinDronesCount => Mathf.Clamp(twinDronesCount, 1, 2);
     public float TwinDronesTakeOffDelay => Mathf.Max(0f, twinDronesTakeOffDelay);
+    public ElementType ElementType => elementType;
 
     public bool IsValid()
     {
@@ -163,13 +168,19 @@ public class TowerUpgradeDefinition : ScriptableObject
         {
             if (hasBasicStatDeltas)
             {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades should not define Basic stat deltas in Task001.");
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades should not define Basic stat deltas.");
                 isValid = false;
             }
 
             if (hasBehaviourPackageType)
             {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades should not define a behaviour package type in Task001.");
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades should not define a behaviour package type.");
+                isValid = false;
+            }
+
+            if (elementType == ElementType.None)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades need a non-None element type.");
                 isValid = false;
             }
         }

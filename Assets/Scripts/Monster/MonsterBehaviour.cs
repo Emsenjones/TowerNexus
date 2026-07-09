@@ -197,13 +197,18 @@ public class MonsterBehaviour : MonoBehaviour
 
     public BuffApplyResult ApplyBuff(BuffApplyRequest request)
     {
+        return ApplyBuffWithOutcome(request).Result;
+    }
+
+    public BuffApplyOutcome ApplyBuffWithOutcome(BuffApplyRequest request)
+    {
         if (isDead || isCleaningUp)
         {
-            return BuffApplyResult.Invalid;
+            return new BuffApplyOutcome(BuffApplyResult.Invalid, null, false, false);
         }
 
         EnsureBuffRuntime();
-        return buffRuntime.ApplyBuff(request);
+        return buffRuntime.ApplyBuffWithOutcome(request);
     }
 
     public bool RemoveBuff(BuffDefinition buffDefinition)
@@ -216,12 +221,6 @@ public class MonsterBehaviour : MonoBehaviour
     {
         EnsureBuffRuntime();
         return buffRuntime.HasBuff(buffDefinition);
-    }
-
-    public bool HasElementalStackImmunity(ElementType elementType)
-    {
-        EnsureBuffRuntime();
-        return buffRuntime.HasElementalStackImmunity(elementType);
     }
 
     private void Awake()

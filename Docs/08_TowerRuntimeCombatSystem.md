@@ -631,8 +631,8 @@ Examples:
 - Delayed or repeated area damage triggered by an effect-backed Behaviour package
 - Buff application effects
 - Enemy-attached states such as poison, slow, burn, weaken, or armor reduction
-- Elemental debuff stack application from direct elemental tower attacks
-- Elemental normal phase and overload effects
+- Elemental debuff stack application from eligible tower-owned attack events
+- Elemental stack effects and overload effects
 
 Tower Runtime Combat should delegate future complex effects instead of embedding buff-specific logic into tower combat code.
 

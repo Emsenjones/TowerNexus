@@ -347,6 +347,13 @@ public class ProjectileBehaviour : MonoBehaviour
     private void ApplyDirectionProjectileImpact(MonsterBehaviour hitMonster)
     {
         hitMonster.TakeDamage(attackDamage);
+        ElementalStackApplication.TryApplyFromTowerAttack(
+            sourceTower,
+            hitMonster,
+            true,
+            transform.position,
+            attackDamage,
+            true);
         RaiseImpact(hitMonster, transform.position);
     }
 

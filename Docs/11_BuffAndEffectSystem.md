@@ -45,7 +45,7 @@ The Buff And Effect System owns:
 - Future buff lifecycle
 - Future buff stacking, refresh, tick, and removal rules
 - Future Elemental debuff stacking
-- Future Elemental overload and same-element stack immunity rules
+- Future Elemental overload and post-overload Protection phase rules
 - Future EffectZone duration, tick, and effect execution
 
 ### Does Not Own
@@ -92,7 +92,7 @@ Examples:
 - Cold
 - ElectricShock
 - Windcut
-- ElementalStackImmunity
+- Elemental Buff Protection phase
 
 Damage is an action result. It may be direct base attack damage, effect damage, buff tick damage, zone tick damage, overload damage, or future reaction damage.
 
@@ -162,7 +162,7 @@ First-version trigger types:
 | OnZoneTick | An EffectZone performs a periodic tick |
 | OnMaxStack | An elemental debuff reaches max stack and triggers overload |
 
-Elemental tower hits do not need a separate trigger type. They are OnHit events with source tower and stack eligibility context.
+Elemental tower attacks do not need a separate trigger type. They are regular trigger events with source tower and explicit stack eligibility context.
 
 Trigger context may carry:
 
@@ -177,7 +177,7 @@ Trigger context may carry:
 - Attack Entity concept
 - Trigger type
 - Element type when relevant
-- Whether this hit can apply Elemental stacks
+- Whether this event can apply Elemental stacks
 
 When a trigger position is carried, the context must expose explicit validity such as HasTriggerPosition. Systems should not use Vector3.zero as an implicit "no position" sentinel.
 
@@ -253,7 +253,7 @@ Examples:
 
 First implementation can route Effect, Buff, Zone, and Overload damage through Effect actions while keeping base attack damage unchanged.
 
-In the Task002 foundation, DealDamage reads the numeric damage from EffectTriggerContext.ResolvedDamage only. EffectDefinition does not author independent damage values in that first executable slice.
+DealDamage may use an authored action damage amount when configured. If no positive authored damage amount is provided, it can fall back to the resolved damage carried by the EffectTriggerContext.
 
 Reaction-generated damage should not apply Elemental stacks by default.
 
@@ -269,7 +269,7 @@ Examples:
 - Apply Cold
 - Apply ElectricShock
 - Apply Windcut
-- Apply ElementalStackImmunity
+- Enter Elemental Buff Protection phase
 
 ### 6.3 SpawnEffectZone
 
@@ -314,8 +314,8 @@ Buff definition data may include:
 - Tick interval when relevant
 - Max stack
 - Buff apply cooldown
-- Tick effect definition
-- Whether this Buff represents ElementalStackImmunity
+- Buff event bindings for lifecycle-driven effects
+- Protection duration when an Elemental Buff should block restacking after overload
 
 Buff runtime state should include:
 
@@ -326,6 +326,7 @@ Buff runtime state should include:
 - Remaining duration
 - Tick timer
 - Stack count
+- Buff phase when an Elemental Buff can enter post-overload Protection
 - Buff apply cooldown tracking when required
 
 Runtime state must not be stored in definition assets.
@@ -342,9 +343,19 @@ Buff runtime instances are not MonoBehaviour components.
 
 First-version successful apply always adds one stack, up to max stack, and refreshes duration to the Buff definition duration.
 
-Buff apply attempts should return explicit results such as Applied, Refreshed, Stacked, BlockedByBuffApplyCooldown, BlockedByElementalStackImmunity, or Invalid.
+Buff apply attempts should return explicit results such as Applied, Refreshed, Stacked, BlockedByBuffApplyCooldown, BlockedByProtectionPhase, or Invalid.
 
-Buff ticks may execute tick effect definitions through EffectExecutor using OnBuffTick context. Task003 tick context uses ResolvedDamage = 0 as a pipeline placeholder; concrete tick damage authoring belongs to later content slices.
+Buff ticks may execute periodic tick Buff event bindings through EffectExecutor using OnBuffTick context.
+
+Buff event bindings express Buff-owned lifecycle events:
+
+| Buff Event | Meaning |
+|---|---|
+| PeriodicTick | The Buff reaches a configured tick interval |
+| StackApplied | An existing Buff successfully gains one stack |
+| Overload | The Buff reaches max stack and triggers overload |
+
+TowerUpgradeDefinition EffectBindings remain responsible for external tower events such as OnHit. BuffDefinition event bindings are responsible for what the Buff does after it already exists on a monster.
 
 ---
 
@@ -352,7 +363,7 @@ Buff ticks may execute tick effect definitions through EffectExecutor using OnBu
 
 Elemental Layer upgrades convert towers into elemental towers.
 
-Direct attacks from elemental towers can apply elemental debuff stacks through Buff And Effect System.
+Tower-owned attack events from elemental towers can apply elemental debuff stacks through Buff And Effect System when their runtime context explicitly allows Elemental stack application.
 
 First-version elemental debuffs:
 
@@ -361,36 +372,36 @@ First-version elemental debuffs:
 - ElectricShock
 - Windcut
 
-Each elemental debuff has two phases:
+Each elemental debuff has two runtime phases:
 
 | Phase | Meaning |
 |---|---|
-| Normal Phase | Persistent stackable debuff behavior before overload |
-| Overload Phase | Effect triggered when max stack is reached |
+| Stacking | Persistent stackable debuff behavior before overload |
+| Protection | Temporary post-overload state that blocks restacking for that same BuffDefinition |
 
 General stacking rule:
 
 1. If the monster does not have this elemental debuff, apply it with initial stacks.
-2. If the monster already has this elemental debuff and the application is not blocked, run the normal phase when configured, refresh duration, and add one stack.
+2. If the monster already has this elemental debuff and the application is not blocked, refresh duration and add one stack when below max stacks.
 3. Multiple towers with the same elemental upgrade can add stacks to the same monster.
 4. The same elemental debuff on the same monster may have an apply cooldown that blocks applications from any tower while active.
 5. If the elemental debuff expires before max stack is reached, the debuff is removed and stacks are lost.
 6. When max stack is reached, trigger overload.
-7. After overload triggers, apply same-element ElementalStackImmunity.
+7. After overload triggers, the elemental debuff enters Protection phase when it has a protection duration.
 
-First application of an elemental debuff should apply the debuff only. Normal phase extra effects such as Electric extra damage or WindVortex spawn should trigger only when the monster already has that elemental debuff and the direct elemental hit successfully applies or refreshes it.
+First application of an elemental debuff should apply the debuff only. StackApplied Buff event bindings, such as Electric extra damage or WindVortex spawn, should trigger only when an existing elemental debuff successfully gains one stack. A pure refresh should not trigger stack effects.
 
-Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, no stack is added, duration is not refreshed, and normal phase extra effects do not trigger.
+Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, no stack is added, duration is not refreshed, and stack effects do not trigger.
 
-After normal phase resolution, the system checks whether max stacks have been reached. If max stacks are reached, overload executes, the normal debuff is removed when configured to do so, and same-element stack immunity is applied.
+After a successful stack increase, the system checks whether max stacks have been reached. If max stacks are reached, overload executes and the Buff enters Protection phase when it has a protection duration. While in Protection phase, the same BuffDefinition cannot be applied, refreshed, or stacked.
 
 ---
 
-## 9. Elemental Stack Immunity
+## 9. Elemental Buff Protection Phase
 
-ElementalStackImmunity is a temporary state applied after elemental overload.
+Protection phase is a temporary state on the same Buff instance after elemental overload.
 
-It prevents the monster from gaining stacks of the same element for a short duration.
+It prevents the monster from gaining stacks for that same Elemental BuffDefinition for a short duration.
 
 It does not block damage by default.
 
@@ -398,14 +409,23 @@ Example:
 
 ```text
 Monster triggers Cold overload
-    -> Monster gains Cold ElementalStackImmunity
-    -> Cold stacks cannot be added or refreshed during immunity
+    -> Cold Buff enters Protection phase
+    -> Cold stacks cannot be added or refreshed while Protection is active
     -> Fire, Electric, and Wind stacks can still be applied normally
 ```
 
-ElementalStackImmunity can be implemented as a system Buff when Buff runtime is available.
+Protection behavior is authored directly on the same BuffDefinition with a protection duration.
 
-It should be treated as a system-level state, not as a normal elemental debuff.
+Example Fire authoring:
+
+```text
+Burning:
+    Element Type = Fire
+    Max Stacks = 3
+    Protection Duration = 2s
+```
+
+Protection phase should be treated as status on the same Buff runtime instance, not as a separate elemental debuff reaction chain.
 
 ---
 
@@ -460,7 +480,7 @@ Buff And Effect System should request safe Monster movement and pathfinding APIs
 
 ## 11. Recursion Rule
 
-Only direct elemental tower attacks can apply elemental stacks by default.
+Only tower-owned attack events whose runtime context explicitly allows Elemental stack application can apply elemental stacks by default.
 
 The following should not apply elemental stacks by default:
 
@@ -474,6 +494,8 @@ The following should not apply elemental stacks by default:
 - Buff tick damage
 
 Future upgrades may explicitly override this rule, but that should be reviewed as separate upgrade content rather than assumed by the baseline Elemental Layer.
+
+The baseline rule is that tower attacks can carry Elemental stack application, while Elemental reactions do not recursively carry Elemental stack application.
 
 ---
 
@@ -556,7 +578,7 @@ The next implementation should be split into Task Documents rather than implemen
 Recommended order:
 
 1. Effect trigger context, Effect definition, simple target resolution, and Effect action foundation.
-2. Buff definition, Monster buff runtime state, stacking, refresh, Buff apply cooldown, and same-element stack immunity foundation.
+2. Buff definition, Monster buff runtime state, stacking, refresh, Buff apply cooldown, and post-overload Protection phase foundation.
 3. Fire vertical slice: Burning and FlameBurst.
 4. Cold and Electric vertical slices.
 5. EffectZone foundation.

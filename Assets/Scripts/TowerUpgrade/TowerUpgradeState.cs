@@ -23,6 +23,30 @@ public class TowerUpgradeState
         return TryGetBehaviourPackageUpgrade(packageType, out _);
     }
 
+    public bool HasElementalUpgrade()
+    {
+        return TryGetElementalUpgrade(out _);
+    }
+
+    public bool TryGetElementalUpgrade(out TowerUpgradeDefinition upgradeDefinition)
+    {
+        upgradeDefinition = null;
+
+        for (int i = 0; i < appliedUpgrades.Count; i++)
+        {
+            TowerUpgradeDefinition candidateUpgradeDefinition = appliedUpgrades[i];
+
+            if (candidateUpgradeDefinition != null &&
+                candidateUpgradeDefinition.UpgradeLayer == TowerUpgradeLayer.Elemental)
+            {
+                upgradeDefinition = candidateUpgradeDefinition;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public bool TryGetBehaviourPackageUpgrade(
         TowerBehaviourPackageType packageType,
         out TowerUpgradeDefinition upgradeDefinition)

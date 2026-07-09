@@ -12,29 +12,33 @@ public class MonsterBuffRuntime
 
     public BuffApplyResult ApplyBuff(BuffApplyRequest request)
     {
+        return ApplyBuffWithOutcome(request).Result;
+    }
+
+    public BuffApplyOutcome ApplyBuffWithOutcome(BuffApplyRequest request)
+    {
         BuffDefinition buffDefinition = request.BuffDefinition;
 
         if (owner == null || buffDefinition == null || !buffDefinition.IsValid())
         {
-            return BuffApplyResult.Invalid;
-        }
-
-        if (!buffDefinition.IsElementalStackImmunity &&
-            buffDefinition.ElementType != ElementType.None &&
-            HasElementalStackImmunity(buffDefinition.ElementType))
-        {
-            return BuffApplyResult.BlockedByElementalStackImmunity;
+            return new BuffApplyOutcome(BuffApplyResult.Invalid, null, false, false);
         }
 
         MonsterBuffInstance existingInstance = FindBuffInstance(buffDefinition);
 
         if (existingInstance == null)
         {
-            buffInstances.Add(new MonsterBuffInstance(request, owner));
-            return BuffApplyResult.Applied;
+            MonsterBuffInstance buffInstance = new MonsterBuffInstance(request, owner);
+            buffInstances.Add(buffInstance);
+            return new BuffApplyOutcome(BuffApplyResult.Applied, buffInstance, false, false);
         }
 
-        return existingInstance.TryReapply(request);
+        int previousStackCount = existingInstance.StackCount;
+        BuffApplyResult result = existingInstance.TryReapply(request);
+        bool reachedMaxStacks = result == BuffApplyResult.Stacked &&
+                                previousStackCount < buffDefinition.MaxStacks &&
+                                existingInstance.StackCount >= buffDefinition.MaxStacks;
+        return new BuffApplyOutcome(result, existingInstance, true, reachedMaxStacks);
     }
 
     public bool RemoveBuff(BuffDefinition buffDefinition)
@@ -53,31 +57,6 @@ public class MonsterBuffRuntime
     public bool HasBuff(BuffDefinition buffDefinition)
     {
         return FindBuffInstance(buffDefinition) != null;
-    }
-
-    public bool HasElementalStackImmunity(ElementType elementType)
-    {
-        if (elementType == ElementType.None)
-        {
-            return false;
-        }
-
-        for (int i = 0; i < buffInstances.Count; i++)
-        {
-            MonsterBuffInstance buffInstance = buffInstances[i];
-
-            if (buffInstance == null ||
-                buffInstance.Definition == null ||
-                !buffInstance.Definition.IsElementalStackImmunity ||
-                buffInstance.Definition.ElementType != elementType)
-            {
-                continue;
-            }
-
-            return true;
-        }
-
-        return false;
     }
 
     public void Tick(float deltaTime)

@@ -4,7 +4,7 @@
 
 Add the runtime foundation for persistent Buff state on monsters.
 
-This task creates the system needed for duration, ticking, refresh, stacking, Buff apply cooldown, and ElementalStackImmunity, without implementing full Elemental content yet.
+This task creates the system needed for duration, ticking, refresh, stacking, Buff apply cooldown, and future post-overload Protection phase, without implementing full Elemental content yet.
 
 ## System References
 
@@ -36,7 +36,7 @@ Buff definition data may include:
 - Buff apply cooldown
 - Tick EffectDefinition
 - Element type
-- Whether this Buff represents ElementalStackImmunity
+- Protection phase support when this Buff temporarily blocks restacking after overload
 
 Task003 should not add stack amount per apply or refresh duration policy fields. Successful apply always adds one stack and refreshes duration to the Buff definition duration.
 
@@ -87,7 +87,7 @@ EffectActionType should add ApplyBuff only. ApplyBuff should expose BuffDefiniti
 
 Buff apply cooldown limits pre-overload stack frequency for the same Buff or Elemental debuff on the same monster, regardless of which tower tries to apply it.
 
-It is not the same system as ElementalStackImmunity.
+It is not the same system as post-overload element blocking.
 
 When Buff apply cooldown blocks an application:
 
@@ -106,12 +106,12 @@ Buff apply attempts should return explicit results:
 - Refreshed
 - Stacked
 - BlockedByBuffApplyCooldown
-- BlockedByElementalStackImmunity
+- BlockedByProtectionPhase
 - Invalid
 
-### ElementalStackImmunity Foundation
+### Protection Phase Foundation
 
-ElementalStackImmunity should be representable as a system-level Buff or equivalent runtime state.
+Post-overload element blocking should be representable as Protection phase state on a Buff runtime instance.
 
 It blocks post-overload same-element restacking from all sources.
 
@@ -142,7 +142,7 @@ Task003 only creates the runtime capability. Specific overload behavior belongs 
 - Buff ticks can call the shared Effect execution path when configured.
 - EffectActionType supports ApplyBuff without adding movement, zone, delayed, overload, or elemental reaction actions.
 - Buff apply attempts return explicit result values.
-- Buff apply cooldown is represented separately from ElementalStackImmunity.
+- Buff apply cooldown is represented separately from post-overload element blocking.
 - Buff apply cooldown blocks stack, refresh, and normal phase behavior when active.
-- ElementalStackImmunity can be represented as a system-level state that blocks same-element restacking from all sources.
+- Protection phase can block same-BuffDefinition restacking from all sources.
 - No concrete Elemental content is required for this task.

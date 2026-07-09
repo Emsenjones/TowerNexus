@@ -8,11 +8,11 @@ This task validates the framework loop:
 
 ```text
 Elemental upgrade eligibility
-    -> OnHit trigger context
+    -> tower-owned attack event with Elemental stack eligibility
     -> Buff runtime
-    -> normal phase rules
+    -> Buff event bindings for periodic tick, stack, and overload effects
     -> max stack overload
-    -> ElementalStackImmunity
+    -> same Buff enters post-overload Protection phase
 ```
 
 ## System References
@@ -38,9 +38,9 @@ Elemental upgrade eligibility
 
 Applying the Fire Elemental Layer upgrade converts a tower into a Fire tower.
 
-Direct hits from that tower may apply Burning through the OnHit trigger context.
+Tower-owned attack events from that tower may apply Burning when their runtime context explicitly allows Elemental stack application.
 
-Elemental stack application should remain tied to direct Elemental tower attacks.
+Elemental stack application should remain tied to tower-owned attack events, not reaction-generated effects.
 
 Reaction-generated damage should not apply Elemental stacks by default.
 
@@ -48,34 +48,42 @@ Reaction-generated damage should not apply Elemental stacks by default.
 
 Burning is the Fire elemental debuff.
 
-First successful direct Fire hit:
+Burning has two runtime phases:
+
+- Stacking: Burning is active, can tick, refresh, and gain stacks.
+- Protection: Burning has overloaded and temporarily blocks further Fire stack application.
+
+First successful Fire stack application:
 
 - Applies Burning.
 - Adds initial stacks.
-- Does not execute additional normal phase behavior beyond applying the debuff.
+- Does not execute additional stack effect behavior beyond applying the debuff.
 
-Later successful direct Fire hits against a monster that already has Burning:
+Later successful Fire stack applications against a monster that already has Burning:
 
-- Must not be blocked by same-source apply cooldown.
-- Must not be blocked by Fire ElementalStackImmunity.
-- Refresh or add Burning stacks according to authored rules.
+- Must not be blocked by shared Buff apply cooldown.
+- Must not be in Burning Protection phase.
+- Refresh Burning duration.
+- Add one Burning stack when the monster is below max stacks.
 - Allow Burning runtime tick behavior to continue through Buff runtime.
 
-Burning tick damage is handled by Buff runtime and shared Effect execution.
+Burning periodic damage is handled by Buff runtime through a periodic tick Buff event binding and shared Effect execution.
 
-Burning tick damage does not apply Burning stacks and does not trigger Elemental reactions by default.
+Burning periodic damage does not apply Burning stacks and does not trigger Elemental reactions by default.
 
-### Same-Source Apply Cooldown
+### Shared Buff Apply Cooldown
 
-Same-source apply cooldown limits pre-overload stack frequency from the same Fire tower to the same monster.
+Shared Buff apply cooldown limits pre-overload stack frequency for the same monster and the same BuffDefinition.
 
-When same-source cooldown blocks a Fire application:
+When shared Buff apply cooldown blocks a Fire application:
 
 - No stack is added.
 - Duration is not refreshed.
-- Normal phase behavior does not trigger.
+- Stack effect behavior does not trigger.
 
-This is separate from ElementalStackImmunity.
+This is separate from post-overload Protection phase.
+
+Multiple Fire towers share this cooldown when they try to apply the same Burning BuffDefinition to the same monster.
 
 ### FlameBurst Overload
 
@@ -89,16 +97,41 @@ FlameBurst damage does not apply Burning stacks and does not trigger Elemental r
 
 After overload:
 
-- Burning is removed when configured to do so.
-- Fire ElementalStackImmunity is applied.
-- Fire stacks cannot be added or refreshed during Fire ElementalStackImmunity.
-- Other elements are not blocked by Fire ElementalStackImmunity.
+- Burning enters Protection phase for its configured protection duration.
+- Fire stacks cannot be added or refreshed while Burning is in Protection phase.
+- Other elements are not blocked by Burning's Fire Protection phase.
+
+Protection phase belongs to the same BuffDefinition as Burning. It is not authored as a separate post-overload Buff asset in Task005.
+
+### Elemental Stack Eligibility
+
+Elemental stack application is controlled by runtime context.
+
+Tower-owned primary attack events may set Elemental stack eligibility when they hit a monster and the source tower owns an active Elemental Layer upgrade.
+
+Examples of future eligible tower-owned attack events may include:
+
+- Archer direct arrow hit
+- Drone direct projectile hit
+- Cannon shell area damage to each damaged monster
+- Magic Orb hit or tick when explicitly treated as a tower-owned attack event
+
+Reaction-generated effects must not inherit Elemental stack eligibility by default.
+
+The following should keep Elemental stack eligibility disabled:
+
+- Burning periodic damage
+- FlameBurst damage
+- Future Electric stack damage
+- Future WindVortex damage
+- Buff tick damage
+- Overload damage
 
 ### Base Damage Boundary
 
 Base attack damage should remain in the existing direct damage path.
 
-Fire Elemental behavior runs around that path through OnHit context and Buff And Effect System rules.
+Fire Elemental behavior runs around that path through attack context and Buff And Effect System rules.
 
 This task should not migrate base attack damage into DamageContext.
 
@@ -122,13 +155,16 @@ This task should not migrate base attack damage into DamageContext.
 
 - Fire Elemental upgrade can be authored, drafted when eligible, and applied to an eligible tower.
 - A tower that already owns an Elemental Layer upgrade cannot receive Fire as a second Elemental upgrade.
-- Direct Fire tower hits use OnHit with Elemental stack eligibility context.
-- First successful Fire hit applies Burning but does not execute an extra normal phase effect.
-- Later successful Fire hits against an already Burning monster refresh or stack Burning according to authored rules.
-- Same-source apply cooldown blocks stack, refresh, and normal phase behavior from the same Fire tower to the same monster.
-- Fire ElementalStackImmunity blocks post-overload Fire restacking from all sources.
-- Burning tick damage is handled by Buff runtime and does not apply Burning stacks.
+- Tower-owned Fire attack events can use OnHit with Elemental stack eligibility context.
+- First successful Fire stack application applies Burning but does not execute a stack effect.
+- Later successful Fire stack applications against an already Burning monster refresh Burning and add one stack when below max stacks.
+- Stack effect behavior triggers only when Burning successfully gains one stack.
+- Shared Buff apply cooldown blocks stack, refresh, and stack effect behavior for the same monster and Burning BuffDefinition.
+- Burning Protection phase blocks post-overload Fire restacking from all sources.
+- Burning periodic damage is handled by Buff runtime and does not apply Burning stacks.
 - FlameBurst triggers when Burning reaches max stack.
 - FlameBurst uses shared EffectDefinition and radius targeting.
 - FlameBurst damage does not apply Burning stacks or trigger Elemental reactions.
+- Burning enters Protection phase after FlameBurst as a fixed first-version rule.
+- Burning Protection phase uses an authored protection duration.
 - Existing base attack damage behavior remains stable and does not migrate into DamageContext.

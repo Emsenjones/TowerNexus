@@ -137,8 +137,8 @@ public class DraftSystem : MonoBehaviour
             }
 
             int eligibleTowerCount = CountEligibleTowerInstancesForUpgrade(upgradeDefinition, deployedTowerInstances);
-            int pendingSameUpgradeItemCount = CountPendingTowerUpgradeDraftItems(upgradeDefinition);
-            int candidateCount = Mathf.Max(0, eligibleTowerCount - pendingSameUpgradeItemCount);
+            int pendingReservedCapacityCount = CountPendingReservedCapacityForUpgrade(upgradeDefinition);
+            int candidateCount = Mathf.Max(0, eligibleTowerCount - pendingReservedCapacityCount);
 
             for (int candidateIndex = 0; candidateIndex < candidateCount; candidateIndex++)
             {
@@ -172,7 +172,7 @@ public class DraftSystem : MonoBehaviour
         return eligibleTowerCount;
     }
 
-    private int CountPendingTowerUpgradeDraftItems(TowerUpgradeDefinition upgradeDefinition)
+    private int CountPendingReservedCapacityForUpgrade(TowerUpgradeDefinition upgradeDefinition)
     {
         if (upgradeDefinition == null || battleHUDUI == null)
         {
@@ -186,20 +186,43 @@ public class DraftSystem : MonoBehaviour
             return 0;
         }
 
-        int pendingSameUpgradeItemCount = 0;
+        int pendingReservedCapacityCount = 0;
 
         for (int pendingIndex = 0; pendingIndex < pendingDraftItems.Count; pendingIndex++)
         {
             PendingDraftUI pendingDraftItem = pendingDraftItems[pendingIndex];
+            TowerUpgradeDefinition pendingUpgradeDefinition = pendingDraftItem != null
+                ? pendingDraftItem.TowerUpgradeDefinition
+                : null;
 
-            if (pendingDraftItem != null &&
-                pendingDraftItem.TowerUpgradeDefinition == upgradeDefinition)
+            if (DoesPendingUpgradeReserveCapacityForUpgrade(
+                    pendingUpgradeDefinition,
+                    upgradeDefinition))
             {
-                pendingSameUpgradeItemCount++;
+                pendingReservedCapacityCount++;
             }
         }
 
-        return pendingSameUpgradeItemCount;
+        return pendingReservedCapacityCount;
+    }
+
+    private bool DoesPendingUpgradeReserveCapacityForUpgrade(
+        TowerUpgradeDefinition pendingUpgradeDefinition,
+        TowerUpgradeDefinition candidateUpgradeDefinition)
+    {
+        if (pendingUpgradeDefinition == null || candidateUpgradeDefinition == null)
+        {
+            return false;
+        }
+
+        if (pendingUpgradeDefinition == candidateUpgradeDefinition)
+        {
+            return true;
+        }
+
+        return pendingUpgradeDefinition.UpgradeLayer == TowerUpgradeLayer.Elemental &&
+               candidateUpgradeDefinition.UpgradeLayer == TowerUpgradeLayer.Elemental &&
+               pendingUpgradeDefinition.TowerFamily == candidateUpgradeDefinition.TowerFamily;
     }
 
     private void HandleDraftSelected(DraftResult draftResult)

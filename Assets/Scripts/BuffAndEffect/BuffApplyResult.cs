@@ -5,5 +5,5 @@ public enum BuffApplyResult
     Refreshed,
     Stacked,
     BlockedByBuffApplyCooldown,
-    BlockedByElementalStackImmunity
+    BlockedByProtectionPhase
 }
