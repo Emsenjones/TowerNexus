@@ -23,6 +23,8 @@ It does not define what a tower is.
 
 It does not own tower placement, projectile movement, buff state, elemental stack rules, overload rules, monster health, or static tower configuration.
 
+For Elemental Layer content, the attacking runtime determines the real attack boundary and provides the current tower's Elemental apply effect to Buff And Effect System. It does not expose a designer-selected trigger type for this path: projectile hit, orb contact, or shell impact are runtime facts, while the upgrade only declares the Elemental effect to apply.
+
 ---
 
 # 2. Responsibility Boundary
@@ -267,6 +269,14 @@ Range should be measured from the current active AttackOrigin resolved by the to
 The monster-side reference point for range and target distance evaluation is provided by the Monster System through MonsterBehaviour.HitAnchor.
 
 Tower Runtime Combat should not spawn monsters, move monsters, or own monster health.
+
+Elemental attack handoff follows the actual attack behavior:
+
+- Archer projectile hit and Drone-fired projectile hit provide a single-target elemental application opportunity.
+- Magic Orb contact provides a single-target elemental application opportunity.
+- Cannon shell impact provides an area resolution opportunity; every valid monster resolved by that explosion may receive the Elemental application.
+
+These attack events may identify source tower, affected monster or impact position, and the elemental-application eligibility needed by Buff And Effect System. They do not execute Buff lifecycle, stack, overload, or reaction behavior themselves.
 
 ---
 

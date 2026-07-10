@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
-  m_Name: Config_TowerUpgradeDefini_MagicTower_Elemental_BlazingOrb
+  m_Name: Config_TowerUpgradeDefini_Elemental_Fire
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
-  displayName: Blazing Orb
+  displayName: Ember Arrow
   description: Applies Burning and trigger FlameBurst
   icon: {fileID: 21300000, guid: e7cc71f7591cdfc4584df69c9acce28a, type: 3}
-  towerFamily: 2
+  towerFamily: 0
   requiredTowerLevel: 3
   upgradeLayer: 2
   basicStatDeltas: []
@@ -28,5 +28,5 @@ MonoBehaviour:
   twinDronesTakeOffDelay: 0.15
   elementType: 1
   effectBindings:
-  - triggerType: 1
-    effectDefinition: {fileID: 11400000, guid: addb1a62cf6864d3fa18044438e1f382, type: 2}
+  - triggerType: 0
+    effectDefinition: {fileID: 11400000, guid: e2002b04373b4422a69bb622fbdb0aeb, type: 2}

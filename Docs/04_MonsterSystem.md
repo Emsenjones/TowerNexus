@@ -223,7 +223,7 @@ The first version of Monster Visual Feedback focuses on:
 - Death animation
 - Hit animation trigger
 - Hit flash feedback
-- Health bar display
+- Monster status bar display for health and active Buff state
 - Damage number display
 
 Monster Visual Feedback should remain lightweight and should not take ownership of monster combat calculation, pathfinding, or Player System logic.
@@ -414,37 +414,38 @@ Possible future implementations:
 - Emission intensity flash
 - Renderer overlay effect
 
-## 6.5 Monster Health Bar System
+## 6.5 Monster Status Bar System
 
-Monster Health Bar is a runtime UI feedback feature owned by Monster System.
+Monster Status Bar is a runtime UI feedback feature owned by Monster System. It evolves the existing health-bar presentation rather than creating a parallel unit UI system.
 
-When a monster is instantiated into the scene, the system should automatically create a corresponding health bar UI item.
+When a monster is instantiated into the scene, the system should automatically create a corresponding status bar UI item.
 
-The health bar UI item should follow the monster's transform position during runtime.
+The status bar UI item should follow the monster's transform position during runtime.
 
-### Health Bar Creation Flow
+### Status Bar Creation Flow
 
 Recommended flow:
 
 ```text
 Monster instantiated
 → MonsterBehaviour.Initialize(...)
-→ Create health bar UI item
-→ Bind health bar to monster transform
+→ Create status bar UI item
+→ Bind status bar to monster transform
 → Apply healthBarOffset
-→ Update health bar value when monster HP changes
-→ Destroy or recycle health bar when monster dies / arrives / is removed
+→ Update health value when monster HP changes
+→ Refresh active Buff state when Buff runtime state changes
+→ Destroy or recycle status bar when monster dies / arrives / is removed
 ```
 
-### Health Bar Position Binding
+### Status Bar Position Binding
 
-Health bar position should be calculated from monster world position plus a configurable offset.
+Status bar position should be calculated from monster world position plus a configurable offset.
 
 ```text
 healthBarWorldPosition = monster.transform.position + healthBarOffset
 ```
 
-The health bar UI system should convert this world position into screen/UI position.
+The status bar UI system should convert this world position into screen/UI position.
 
 The exact offset should be configurable because different monster models may have different heights and visual centers.
 
@@ -460,32 +461,41 @@ Example:
 healthBarOffset = (0, 2.0, 0)
 ```
 
-### Health Bar Ownership Rules
+### Status Bar Ownership Rules
 
 Monster System owns:
 
-- Creating the monster health bar item
-- Binding the health bar to the monster
-- Updating health bar value when monster HP changes
-- Removing the health bar when the monster leaves the battlefield
+- Creating the monster status bar item
+- Binding the status bar to the monster
+- Updating health value when monster HP changes
+- Providing read-only Buff state changes for status display
+- Removing the status bar when the monster leaves the battlefield
 
-Battle HUD UI System should not own individual monster health bars.
+Battle HUD UI System should not own individual monster status bars.
 
 Battle HUD UI System is responsible for global battle UI, such as player HP, level progress, and battle failure UI.
 
-Monster health bars are battlefield unit UI and belong to Monster System.
+Monster status bars are battlefield unit UI and belong to Monster System.
 
-### Health Bar Update Rules
+### Status Bar Update Rules
 
 Recommended update behavior:
 
 ```text
 Monster takes damage
 → MonsterBehaviour updates currentHealth
-→ Monster health bar updates currentHealth / maxHealth
+→ Monster status bar updates currentHealth / maxHealth
+
+Buff state changes
+→ MonsterBehaviour exposes an updated read-only Buff state snapshot
+→ Monster status bar rebuilds or refreshes active Buff icon slots
 ```
 
-Health bar should be hidden or removed when:
+The status bar shows one icon slot per active BuffDefinition, not one icon per stack. It may display stack count for stacks above one and uses the Buff's Protection-phase icon when configured.
+
+Monster-local persistent Buff VFX may attach at HitAnchor and observe the same Buff state changes. This presentation does not own Buff gameplay state, health, movement, pathfinding, or monster lifecycle decisions.
+
+Status bar should be hidden or removed when:
 
 - Monster dies
 - Monster reaches target

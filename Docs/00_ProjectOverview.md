@@ -70,7 +70,8 @@ Examples:
 - AttackConfig owns tower attack presentation hooks such as attack release VFX.
 - The tower visual ownership path owns tower-side success feedback hooks such as model spawn or upgrade-applied VFX.
 - ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
-- Gameplay Effect data owns reusable gameplay effect rules and should not be required for purely visual projectile impact feedback.
+- Gameplay Effect data owns reusable gameplay effect rules and optional one-shot gameplay-effect feedback. It should not be required for purely visual projectile impact feedback.
+- BuffDefinition owns shared Elemental Buff data and may hold first-version Buff status and persistent Buff VFX references. A Buff applies to a monster independently of which tower applied it.
 
 Current combat configuration dependency flow:
 
@@ -84,7 +85,7 @@ ProjectileConfig
 
 ProjectileConfig may reference EffectDefinition for projectile impact results that need reusable gameplay Effect execution.
 
-TowerUpgradeDefinition owns runtime upgrade content such as Basic stat deltas, Behaviour packages, future Elemental profiles, and future Effect bindings. Upgrade content should not be mixed into TowerDefinition or AttackConfig.
+TowerUpgradeDefinition owns runtime upgrade content such as Basic stat deltas, Behaviour packages, Elemental identity, and Elemental apply-effect references. Generic Effect bindings remain available for trigger-driven Behaviour content. Upgrade content should not be mixed into TowerDefinition or AttackConfig.
 
 Current first-version tower lineup:
 
@@ -103,8 +104,7 @@ Watch Tower is removed from the current first-version tower lineup and replaced 
 
 Future versions may additionally introduce:
 
-- BuffConfig
-- EffectZoneDefinition
+- Specialized gameplay-entity configuration when a reviewed Effect requires it, such as a persistent zone or a moving elemental entity
 - PlayerLevelConfig
 - StageConfig
 
@@ -319,22 +319,23 @@ Projectile prefab roots follow the shared runtime orientation convention: local 
 
 ## 5.9 Buff And Effect System
 
-Handles reusable gameplay effects, future buff runtime, future Elemental debuff stacking, EffectZone execution, and complex combat results beyond simple direct damage.
+Handles reusable gameplay effects, Buff runtime, Elemental debuff stacking, EffectZone execution, and complex combat results beyond simple direct damage.
 
 Framework direction:
 
 - Trigger context consumption from Attack Entities, projectiles, zones, and buffs
 - Radius-based target resolution
 - Effect action execution
-- Buff application and lifecycle when buff runtime is in scope
-- Elemental stack, overload, and post-overload Protection phase when Elemental Layer is in scope
-- EffectZone duration, tick, targeting, and movement when zone gameplay is in scope
+- Buff application and lifecycle
+- Elemental stack, overload, and post-overload Protection phase
+- EffectZone duration, tick, and target resolution when zone gameplay is in scope
+- Specialized moving elemental gameplay entities when their reviewed behavior requires them
 
 Direct base attack damage does not need to migrate into Buff And Effect System immediately. The current direct damage path may remain simple while Buff And Effect System executes additional effects, buff ticks, zone ticks, overload damage, and other complex results.
 
 Projectile impact VFX is not owned by the Buff And Effect System. It is configured through ProjectileConfig and triggered by the Projectile System when impact occurs.
 
-Purely visual impact feedback should not require gameplay Effect data.
+Projectile impact feedback should not require gameplay Effect data. Buff status, persistent Buff VFX, and one-shot gameplay-effect VFX follow their respective Buff and Effect definitions.
 
 ---
 
@@ -353,7 +354,7 @@ Responsible for:
 - Death handling
 - Monster resolution reporting
 - Player damage reporting when monsters reach the target
-- Monster health bar runtime presentation
+- Monster status bar runtime presentation, including health and active Buff state display
 - Monster hit feedback presentation
 
 ---

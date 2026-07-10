@@ -2,7 +2,7 @@
 
 ## 1. System Overview
 
-The Buff And Effect System is responsible for reusable gameplay effects, persistent buff state, future Elemental debuff stacking, overload rules, and EffectZone-style gameplay entities.
+The Buff And Effect System is responsible for reusable gameplay effects, persistent Buff state, Elemental debuff stacking, overload rules, EffectZone-style gameplay entities, and reviewed specialized elemental gameplay entities.
 
 It is not only a Buff system.
 
@@ -25,7 +25,7 @@ The current direct damage path may remain simple while Buff And Effect System ha
 
 Projectile impact visual effects are separate from gameplay Effects. Projectile-specific impact VFX belongs to ProjectileConfig and Projectile System.
 
-Purely visual feedback should not require Buff And Effect System data.
+Buff status and persistent Buff VFX may be authored with BuffDefinition. An EffectDefinition may optionally author one-shot feedback for the gameplay Effect it executes. These references do not move projectile impact VFX into Buff And Effect System ownership.
 
 EffectDefinition is the gameplay Effect source of truth for reusable effect data. EffectBinding references and projectile gameplay impact effects should point to EffectDefinition.
 
@@ -41,12 +41,12 @@ The Buff And Effect System owns:
 - Effect target resolution
 - Effect action execution
 - Area damage and other reusable gameplay effect execution
-- Future buff application
-- Future buff lifecycle
-- Future buff stacking, refresh, tick, and removal rules
-- Future Elemental debuff stacking
-- Future Elemental overload and post-overload Protection phase rules
-- Future EffectZone duration, tick, and effect execution
+- Buff application and lifecycle
+- Buff stacking, refresh, tick, and removal rules
+- Elemental debuff stacking
+- Elemental overload and post-overload Protection phase rules
+- EffectZone duration, tick, and effect execution
+- Reviewed specialized elemental gameplay entity behavior
 
 ### Does Not Own
 
@@ -101,11 +101,12 @@ EffectZone is a gameplay entity that exists in the world for a duration, checks 
 Examples:
 
 - FireZone
-- WindVortex
 - SlowField
 - DelayedExplosionZone
 
 EffectZone is not a Buff and is not pure VFX.
+
+Some reviewed gameplay entities may be more specific than a generic EffectZone. WindVortex is one such moving Wind entity: it owns an explicit pursuit-then-straight-line behavior rather than defining a generic moving-zone contract for every future effect.
 
 ---
 
@@ -235,6 +236,7 @@ Core action types:
 | DealDamage | Apply configured gameplay damage to resolved targets |
 | ApplyBuff | Add, refresh, or stack a Buff runtime instance on resolved targets |
 | SpawnEffectZone | Create a gameplay zone that owns duration and tick timing |
+| SpawnWindVortex | Create the reviewed specialized moving Wind gameplay entity |
 | ApplyMovementEffect | Request a safe Monster System movement or path effect |
 
 ### 6.1 DealDamage
@@ -248,7 +250,7 @@ Examples:
 - FlameBurst overload damage
 - Electric extra damage
 - LightningStrike damage
-- WindVortex tick damage
+- WindVortex hit damage
 - EffectZone tick damage
 
 First implementation can route Effect, Buff, Zone, and Overload damage through Effect actions while keeping base attack damage unchanged.
@@ -278,12 +280,15 @@ SpawnEffectZone creates a gameplay entity with duration, radius, tick interval, 
 Examples:
 
 - Spawn FireZone
-- Spawn WindVortex
 - Spawn SlowField
 
 EffectZone gameplay timing should be authoritative. VFX may follow gameplay timing, but gameplay should not depend on animation timing.
 
-### 6.4 ApplyMovementEffect
+### 6.4 SpawnWindVortex
+
+SpawnWindVortex is a deliberately narrow first-version action for the Wind Buff's StackApplied event. It creates the specialized entity described in the WindVortex contract; it is not a requirement to introduce a generic moving EffectZone implementation.
+
+### 6.5 ApplyMovementEffect
 
 ApplyMovementEffect requests monster movement or path changes through safe Monster System APIs.
 
@@ -316,13 +321,13 @@ Buff definition data may include:
 - Buff apply cooldown
 - Buff event bindings for lifecycle-driven effects
 - Protection duration when an Elemental Buff should block restacking after overload
+- Status icon and optional Protection-phase icon
+- Persistent Buff VFX prefab and optional Protection-phase VFX prefab
 
 Buff runtime state should include:
 
 - Definition reference
 - Owner monster
-- Source tower
-- Source upgrade
 - Remaining duration
 - Tick timer
 - Stack count
@@ -330,6 +335,10 @@ Buff runtime state should include:
 - Buff apply cooldown tracking when required
 
 Runtime state must not be stored in definition assets.
+
+For Elemental Buffs, the source tower and source upgrade are relevant only while a tower-owned attack applies the Buff. Once the Buff exists on a monster, its ticking, stack behavior, overload, damage, and visual feedback are determined solely by the shared BuffDefinition and the owner monster. Source information may be retained for diagnostics, but it must not change those gameplay results.
+
+Persistent Elemental Buff effects and overload effects must use their own authored gameplay values. They do not fall back to the source tower's resolved damage.
 
 MonsterBehaviour owns attached Buff runtime state through an internal plain C# runtime container:
 
@@ -355,7 +364,17 @@ Buff event bindings express Buff-owned lifecycle events:
 | StackApplied | An existing Buff successfully gains one stack |
 | Overload | The Buff reaches max stack and triggers overload |
 
-TowerUpgradeDefinition EffectBindings remain responsible for external tower events such as OnHit. BuffDefinition event bindings are responsible for what the Buff does after it already exists on a monster.
+Behaviour Layer EffectBindings remain responsible for generic external tower events such as OnHit. Elemental Layer uses its dedicated Elemental apply effect at the runtime-selected attack boundary. BuffDefinition event bindings are responsible for what the Buff does after it already exists on a monster.
+
+### 7.1 First-Version Buff Feedback
+
+MonsterStatusBar owns UI display of health and active Buff state. It shows one icon slot per active BuffDefinition, may show stack count when it exceeds one, and uses the authored Protection-phase icon when configured. If the Protection icon is absent, the normal status icon remains the fallback.
+
+MonsterBuffVisualController owns persistent world-space Buff VFX lifecycle. It attaches authored Buff VFX at the monster hit/reference anchor, keeps one instance alive across stack and refresh changes, optionally swaps it for Protection-phase VFX, and destroys it when the Buff leaves runtime state.
+
+MonsterBuffRuntime does not operate UI or ParticleSystem behavior. It exposes state-change notifications and read-only Buff state snapshots so these presentation consumers can refresh after apply, refresh, stack, Protection transition, removal, expiry, or cleanup. First version may rebuild all status-icon slots on each state change.
+
+EffectDefinition may own an optional one-shot effect VFX prefab for gameplay feedback such as overload, tick, or special effect execution. It is spawned once at the trigger position or target reference position for that execution, and its prefab owns its own short lifetime.
 
 ---
 
@@ -363,7 +382,9 @@ TowerUpgradeDefinition EffectBindings remain responsible for external tower even
 
 Elemental Layer upgrades convert towers into elemental towers.
 
-Tower-owned attack events from elemental towers can apply elemental debuff stacks through Buff And Effect System when their runtime context explicitly allows Elemental stack application.
+Each ElementType has one shared BuffDefinition and shared Elemental Buff data. Tower-family-specific Elemental upgrades only decide which Elemental apply effect their tower-owned attack may execute; after application, the resulting Buff behavior is independent of the source tower.
+
+Tower-owned attack events from elemental towers can apply elemental debuff stacks through Buff And Effect System when their runtime context explicitly allows Elemental stack application. Elemental Layer authoring does not expose a designer-selected TriggerType in v1. Runtime combat determines the real attack boundary and affected targets, then executes the tower's Elemental apply effect.
 
 First-version elemental debuffs:
 
@@ -383,13 +404,13 @@ General stacking rule:
 
 1. If the monster does not have this elemental debuff, apply it with initial stacks.
 2. If the monster already has this elemental debuff and the application is not blocked, refresh duration and add one stack when below max stacks.
-3. Multiple towers with the same elemental upgrade can add stacks to the same monster.
+3. Multiple towers with the same ElementType can add stacks to the same shared elemental debuff on the same monster.
 4. The same elemental debuff on the same monster may have an apply cooldown that blocks applications from any tower while active.
 5. If the elemental debuff expires before max stack is reached, the debuff is removed and stacks are lost.
 6. When max stack is reached, trigger overload.
 7. After overload triggers, the elemental debuff enters Protection phase when it has a protection duration.
 
-First application of an elemental debuff should apply the debuff only. StackApplied Buff event bindings, such as Electric extra damage or WindVortex spawn, should trigger only when an existing elemental debuff successfully gains one stack. A pure refresh should not trigger stack effects.
+First application of an elemental debuff should apply the debuff only. StackApplied Buff event bindings, such as Electric extra damage or WindVortex spawn, trigger only when an existing elemental debuff successfully gains one stack. A pure refresh does not trigger stack effects.
 
 Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, no stack is added, duration is not refreshed, and stack effects do not trigger.
 
@@ -438,7 +459,7 @@ The first Elemental content set should preserve clear identity for each element 
 | Fire | Burning creates persistent damage pressure while active | FlameBurst deals area damage around the target monster | Burning tick damage and FlameBurst damage do not apply Burning stacks by default |
 | Cold | Cold slows the monster while active | Frozen is an instant overload effect that applies a temporary movement lock | Movement lock must go through safe Monster movement APIs |
 | Electric | ElectricShock causes later direct Electric tower hits to trigger extra electric damage | Overcharged is an instant lightning sequence that selects random monsters near the target and strikes them one by one | Overcharged is not a persistent Buff, and lightning strikes do not apply ElectricShock stacks by default |
-| Wind | Windcut causes later direct Wind tower hits to spawn WindVortex | Storm Shift is an instant overload effect that moves the target monster to a valid nearby grid node | WindVortex damage and Storm Shift do not apply Windcut stacks by default |
+| Wind | A later successful Wind stack creates WindVortex | Storm Shift is an instant overload effect that moves the target monster to a valid nearby grid node | WindVortex damage and Storm Shift do not apply Windcut stacks by default |
 
 ### 10.1 Burning Overload
 
@@ -499,43 +520,26 @@ The baseline rule is that tower attacks can carry Elemental stack application, w
 
 ---
 
-## 12. EffectZone
+## 12. EffectZone And WindVortex
 
-EffectZone is a zone-like gameplay entity.
+EffectZone is a zone-like gameplay entity for reviewed effects that need duration, position, radius, tick interval, target detection, and on-tick Effect execution. Static examples include FireZone, SlowField, PoisonCloud, and DelayedExplosionZone.
 
-It owns:
+EffectZone gameplay timing is authoritative. Its VFX may follow gameplay timing, but gameplay does not depend on animation timing.
 
-- Duration
-- Position
-- Radius
-- Tick interval
-- Target detection inside radius
-- On-tick Effect execution
-- Source tower reference
-- Source upgrade reference
+WindVortex is a separate moving Wind gameplay entity with a deliberately specific first-version contract. It does not require a generic moving EffectZone framework.
 
-EffectZone may be static or moving.
+WindVortex is created only by the Wind Buff's StackApplied event: the target monster must already have Windcut and successfully receive one additional stack. Initial application, pure refresh, blocked application, Buff tick, and overload do not create WindVortex.
 
-Examples:
+WindVortex behavior:
 
-| Zone Type | Examples |
-|---|---|
-| Static | FireZone, SlowField, PoisonCloud |
-| Moving | WindVortex, Tornado, MovingStormField |
+1. Spawn at the Wind Buff owner's current hit/reference position.
+2. At spawn, randomly lock one alive monster inside its authored search radius. If none exists, randomly choose a world position inside that radius instead.
+3. Before its first monster hit, move toward the locked monster or chosen position. A locked monster may be tracked while it remains valid.
+4. The first time it hits any monster, whether or not that monster was the locked target, stop tracking, lock the current movement direction, and continue in a straight line.
+5. Each WindVortex keeps its own set of monsters it has hit; a monster can receive its hit effect at most once from that Vortex.
+6. After it starts moving, it expires after its authored short lifetime.
 
-Static and moving zones may share one EffectZone runtime if the implementation remains clean.
-
-WindVortex should be reviewed after Buff core and simpler elemental effects are stable because it needs moving EffectZone behavior and target selection separate from radius-based damage resolution.
-
-WindVortex is a moving EffectZone.
-
-WindVortex movement target selection may use TargetSelectionType, with Nearest as the default first-version movement target rule.
-
-WindVortex damage targeting uses monsters inside the radius around the current WindVortex position. Movement target selection and damage target resolution are separate concepts.
-
-WindVortex damage may use fixed configured damage in the first version.
-
-WindVortex damage should not apply Windcut stacks or trigger Elemental reactions by default.
+WindVortex owns its target choice, movement, first-hit transition, already-hit set, and lifetime. Its hit effect resolves through Buff And Effect System rules and does not apply Windcut stacks or trigger Elemental reactions by default. It does not move monsters, use Monster pathfinding, or require Storm Shift's safe relocation capability.
 
 ---
 
@@ -545,7 +549,7 @@ WindVortex damage should not apply Windcut stacks or trigger Elemental reactions
 
 Tower Upgrade System owns upgrade definitions, eligibility, and application rules.
 
-Behaviour and Elemental upgrades may reference Effect bindings, Elemental profiles, Buff definitions, or Effect definitions.
+Behaviour upgrades may reference generic Effect bindings. Elemental upgrades reference an ElementType and Elemental apply effect; their shared BuffDefinition and lifecycle-driven Effects belong to the Elemental Buff data.
 
 Tower Upgrade System should not execute Buff, Effect, Elemental stack, or overload behavior.
 
@@ -553,7 +557,7 @@ Tower Upgrade System should not execute Buff, Effect, Elemental stack, or overlo
 
 Tower Runtime Combat decides when towers attack, resolves combat stats, and releases Attack Entities.
 
-Runtime Combat may provide source context and resolved damage values to Attack Entities or trigger context, but it should not own Buff, Elemental stack, or overload rules.
+Runtime Combat determines the actual elemental attack timing and affected target scope, then provides the current tower's Elemental apply effect and context to Buff And Effect System. It does not own Buff, Elemental stack, or overload rules.
 
 ### Projectile System
 
@@ -575,14 +579,7 @@ Buff And Effect System may request damage or movement/path effects through Monst
 
 The next implementation should be split into Task Documents rather than implemented as one large change.
 
-Recommended order:
-
-1. Effect trigger context, Effect definition, simple target resolution, and Effect action foundation.
-2. Buff definition, Monster buff runtime state, stacking, refresh, Buff apply cooldown, and post-overload Protection phase foundation.
-3. Fire vertical slice: Burning and FlameBurst.
-4. Cold and Electric vertical slices.
-5. EffectZone foundation.
-6. WindVortex and Storm Shift after EffectZone and Monster movement/path APIs are ready.
+The next scope should complete Elemental trigger handoff and Fire coverage across all four tower families, then add Buff runtime feedback, Cold, Electric, and Wind in dependency order. WindVortex can proceed as its reviewed specialized entity; Storm Shift remains dependent on safe Monster relocation and path recalculation support.
 
 Effect-backed Behaviour Layer upgrades such as Magic Orb Splash, Cannon Timed Shell, and Cannon Burning Shell should wait until the required Effect binding and Buff And Effect System foundation exists.
 

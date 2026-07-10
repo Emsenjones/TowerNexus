@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_MagicTower_ApplyFire
+  m_Name: Config_EffectDefini_Fire_ApplyFire
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
   displayName: Apply Burning
   radius: 0
   actions:
   - actionType: 1
     damageAmount: 0
-    buffDefinition: {fileID: 11400000, guid: 316c7f3259bb84a5e96f7926ef4968c4, type: 2}
+    buffDefinition: {fileID: 11400000, guid: c11a5379aa3749ad83f0544cb3c03600, type: 2}

@@ -175,8 +175,8 @@ TowerUpgradeDefinition may define:
 - Upgrade Layer
 - Basic Layer stat deltas
 - Behaviour Layer package
-- Elemental Layer profile
-- Effect bindings for Behaviour or Elemental gameplay
+- Elemental Layer element type and elemental apply effect
+- Generic Effect bindings for Behaviour gameplay
 - Authoring validation metadata
 
 Required Tower Level is a code-facing unlock requirement.
@@ -355,9 +355,9 @@ Examples of Behaviour Layer package parameters:
 
 TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
-Elemental Layer profile identity should also be typed or reference-based rather than free-form string based. Runtime systems should ask the tower upgrade state whether a tower owns an Elemental profile, then use Buff And Effect System rules to execute Elemental stack application, Buff event bindings, overload, and post-overload Protection phase.
+Elemental Layer identity should use a typed ElementType rather than a free-form string. Each Elemental Layer upgrade also declares one Elemental apply effect. Runtime systems ask the tower upgrade state whether a tower owns an Elemental upgrade, then provide that apply effect at the real attack boundary for Buff And Effect System execution.
 
-Effect bindings belong to upgrade content that needs reusable Buff And Effect System execution. Effect bindings describe which gameplay trigger may execute which Effect definition. They should not be used by Basic Layer upgrades in the first version because Basic Layer should remain a pure numerical layer.
+Effect bindings remain available for generic trigger-driven Behaviour content. They describe which gameplay trigger may execute which Effect definition. Elemental Layer content does not expose a designer-selected TriggerType in v1: its runtime producer decides whether the real event is a hit, contact, impact, or area resolution. Basic Layer upgrades should not define Effect bindings in the first version because Basic Layer remains a pure numerical layer.
 
 ---
 
@@ -548,7 +548,7 @@ Elemental Layer upgrades are intended to make path segments smarter and more dan
 
 Each tower may receive one Elemental Layer upgrade in the first version.
 
-Tower-owned attack events from elemental towers may apply elemental debuff stacks through Buff And Effect System when their runtime context explicitly allows Elemental stack application. Multiple towers with the same Elemental Layer upgrade can stack the same elemental debuff on the same monster and eventually trigger overload.
+Tower-owned attack events from elemental towers may apply elemental debuff stacks through Buff And Effect System when their runtime context explicitly allows Elemental stack application. Multiple towers whose active Elemental upgrades share the same ElementType stack the same elemental debuff on the same monster and can eventually trigger overload.
 
 Reaction-generated damage, buff tick damage, EffectZone tick damage, and overload damage should not apply elemental stacks by default. Elemental stacking should remain tied to explicitly eligible tower-owned attack events unless a future reviewed upgrade explicitly expands that rule.
 
@@ -574,19 +574,20 @@ Multiple Fire towers reach max stacks
 FlameBurst overload
 ```
 
-Elemental Layer content may include:
+Elemental Layer content is split between tower-specific upgrade authoring and shared Elemental Buff data:
 
-- Elemental profile
-- Element type
-- Trigger bindings from eligible tower-owned attack events to Elemental stack application effects
-- Elemental stack Buff definition reference through Effect actions
-- Periodic, stack, and overload Effect references on the Buff definition
-- Buff apply cooldown
-- Protection duration after overload
+- Each Elemental TowerUpgradeDefinition declares its TowerFamily, ElementType, and one Elemental apply effect.
+- Tower runtime decides when that effect is executed and which monster or explosion-resolved monsters receive it.
+- One shared BuffDefinition owns the persistent Elemental Buff data for each ElementType, including periodic, stack, and overload Effect references, Buff apply cooldown, Protection duration, and first-version Buff visual references.
+- After a Buff is applied, its tick damage, overload, status presentation, and persistent Buff VFX no longer vary by the tower that applied it.
+
+The first complete Elemental Layer content pass contains four ElementTypes for each of the four TowerFamilies: 16 Elemental TowerUpgradeDefinition assets. The four tower-family assets for one element reuse that element's shared Buff data wherever their actual attack timing and target scope allow it.
 
 Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and stack effects such as Electric extra damage or WindVortex spawn do not trigger.
 
 First application of an elemental debuff should apply the debuff only. If the monster already has that elemental debuff and an eligible tower-owned attack event successfully adds one stack, the StackApplied Buff event binding may execute. A pure refresh should not trigger stack effects. After a successful stack increase, the system checks whether max stacks have been reached; if yes, overload executes and the Buff enters Protection phase when configured.
+
+Archer and Drone projectile hits, Magic Orb contact, and Cannon impact each provide different attack timing. Cannon Elemental application must reach every valid monster resolved by the shell explosion; it must not depend on a direct target monster or apply only at the impact center.
 
 Purpose:
 

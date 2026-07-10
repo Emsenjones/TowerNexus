@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
-  m_Name: Config_BuffDefini_CannonTower_Fire
+  m_Name: Config_BuffDefini_Fire
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Burning
   description: 
-  duration: 3
+  duration: 5
   tickInterval: 0.25
-  maxStacks: 3
+  maxStacks: 2
   buffApplyCooldown: 0.5
   eventBindings:
   - eventType: 0
-    effectDefinition: {fileID: 11400000, guid: 8c80a294b04e04cd28dd31f83b948575, type: 2}
+    effectDefinition: {fileID: 11400000, guid: ca535fb633964c0596aaed545a9a3ba3, type: 2}
   - eventType: 2
     effectDefinition: {fileID: 11400000, guid: d9abc37880d045259af0bc0e82ceb508, type: 2}
   elementType: 1
