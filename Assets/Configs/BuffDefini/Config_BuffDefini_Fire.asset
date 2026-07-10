@@ -16,8 +16,8 @@ MonoBehaviour:
   description: 
   duration: 5
   tickInterval: 0.25
-  maxStacks: 2
-  buffApplyCooldown: 0.5
+  maxStacks: 10
+  buffApplyCooldown: 0.2
   eventBindings:
   - eventType: 0
     effectDefinition: {fileID: 11400000, guid: ca535fb633964c0596aaed545a9a3ba3, type: 2}
@@ -25,3 +25,6 @@ MonoBehaviour:
     effectDefinition: {fileID: 11400000, guid: d9abc37880d045259af0bc0e82ceb508, type: 2}
   elementType: 1
   protectionDuration: 5
+  statusIcon: {fileID: 0}
+  protectionStatusIcon: {fileID: 0}
+  persistentBuffVfxPrefab: {fileID: 0}

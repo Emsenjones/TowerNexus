@@ -7,56 +7,70 @@ public static class EffectExecutor
 
     public static void Execute(EffectDefinition effectDefinition, EffectTriggerContext triggerContext)
     {
-        if (effectDefinition == null)
+        ExecuteWithResolvedTargets(effectDefinition, triggerContext, ResolvedTargets);
+    }
+
+    public static bool ExecuteWithResolvedTargets(
+        EffectDefinition effectDefinition,
+        EffectTriggerContext triggerContext,
+        List<MonsterBehaviour> resolvedTargets)
+    {
+        if (effectDefinition == null || resolvedTargets == null)
         {
-            return;
+            return false;
         }
 
         if (!effectDefinition.IsValid())
         {
-            return;
+            return false;
         }
 
-        if (!EffectTargetResolver.TryResolveTargets(effectDefinition, triggerContext, ResolvedTargets))
+        if (!EffectTargetResolver.TryResolveTargets(effectDefinition, triggerContext, resolvedTargets))
         {
-            return;
+            return false;
         }
 
-        List<MonsterBehaviour> executionTargets = new List<MonsterBehaviour>(ResolvedTargets);
+        List<MonsterBehaviour> executionTargets = new List<MonsterBehaviour>(resolvedTargets);
 
         IReadOnlyList<EffectAction> actions = effectDefinition.Actions;
+        bool executedAnyAction = false;
 
         for (int i = 0; i < actions.Count; i++)
         {
-            ExecuteAction(actions[i], triggerContext, executionTargets);
+            executedAnyAction |= ExecuteAction(actions[i], triggerContext, executionTargets);
         }
+
+        if (executedAnyAction)
+        {
+            SpawnOneShotEffectVfx(effectDefinition, triggerContext, executionTargets);
+        }
+
+        return true;
     }
 
-    private static void ExecuteAction(
+    private static bool ExecuteAction(
         EffectAction action,
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
     {
         if (action == null)
         {
-            return;
+            return false;
         }
 
         switch (action.ActionType)
         {
             case EffectActionType.DealDamage:
-                ExecuteDealDamage(action, triggerContext, targets);
-                break;
+                return ExecuteDealDamage(action, triggerContext, targets);
             case EffectActionType.ApplyBuff:
-                ExecuteApplyBuff(action, triggerContext, targets);
-                break;
+                return ExecuteApplyBuff(action, triggerContext, targets);
             default:
                 Debug.LogWarning($"Effect executor cannot execute unsupported action type '{action.ActionType}'.");
-                break;
+                return false;
         }
     }
 
-    private static void ExecuteDealDamage(
+    private static bool ExecuteDealDamage(
         EffectAction action,
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
@@ -67,8 +81,10 @@ public static class EffectExecutor
 
         if (damage <= 0)
         {
-            return;
+            return false;
         }
+
+        bool dealtDamage = false;
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -80,10 +96,13 @@ public static class EffectExecutor
             }
 
             target.TakeDamage(damage);
+            dealtDamage = true;
         }
+
+        return dealtDamage;
     }
 
-    private static void ExecuteApplyBuff(
+    private static bool ExecuteApplyBuff(
         EffectAction action,
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
@@ -92,14 +111,16 @@ public static class EffectExecutor
 
         if (buffDefinition == null)
         {
-            return;
+            return false;
         }
 
         if (buffDefinition.ElementType != ElementType.None &&
-            !triggerContext.CanApplyElementalStack)
+            !triggerContext.AllowsElementalApplication)
         {
-            return;
+            return false;
         }
+
+        bool appliedBuff = false;
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -119,8 +140,16 @@ public static class EffectExecutor
                     triggerContext.TriggerPosition)
             );
 
+            if (!IsSuccessfulBuffApply(outcome.Result))
+            {
+                continue;
+            }
+
+            appliedBuff = true;
             ExecuteBuffApplyFollowUps(outcome, triggerContext);
         }
+
+        return appliedBuff;
     }
 
     private static void ExecuteBuffApplyFollowUps(
@@ -156,7 +185,7 @@ public static class EffectExecutor
             triggerContext,
             owner);
 
-        if (buffInstance.TryEnterProtectionPhase())
+        if (owner.TryEnterBuffProtection(buffDefinition))
         {
             return;
         }
@@ -190,5 +219,65 @@ public static class EffectExecutor
                 0,
                 false)
         );
+    }
+
+    private static bool IsSuccessfulBuffApply(BuffApplyResult result)
+    {
+        return result == BuffApplyResult.Applied ||
+               result == BuffApplyResult.Refreshed ||
+               result == BuffApplyResult.Stacked;
+    }
+
+    private static void SpawnOneShotEffectVfx(
+        EffectDefinition effectDefinition,
+        EffectTriggerContext triggerContext,
+        IReadOnlyList<MonsterBehaviour> targets)
+    {
+        GameObject vfxPrefab = effectDefinition != null ? effectDefinition.OneShotEffectVfxPrefab : null;
+
+        if (vfxPrefab == null || !TryGetOneShotVfxPosition(triggerContext, targets, out Vector3 position))
+        {
+            return;
+        }
+
+        Object.Instantiate(vfxPrefab, position, Quaternion.identity);
+    }
+
+    private static bool TryGetOneShotVfxPosition(
+        EffectTriggerContext triggerContext,
+        IReadOnlyList<MonsterBehaviour> targets,
+        out Vector3 position)
+    {
+        if (triggerContext.HasTriggerPosition)
+        {
+            position = triggerContext.TriggerPosition;
+            return true;
+        }
+
+        if (triggerContext.TargetMonster != null)
+        {
+            position = GetMonsterHitPosition(triggerContext.TargetMonster);
+            return true;
+        }
+
+        for (int i = 0; i < targets.Count; i++)
+        {
+            MonsterBehaviour target = targets[i];
+
+            if (target != null)
+            {
+                position = GetMonsterHitPosition(target);
+                return true;
+            }
+        }
+
+        position = default;
+        return false;
+    }
+
+    private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
+    {
+        Transform hitAnchor = monster.HitAnchor;
+        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
     }
 }

@@ -14,6 +14,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 launchDirection;
     private Vector3 startPosition;
     private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
+    private readonly List<MonsterBehaviour> resolvedImpactTargets = new List<MonsterBehaviour>();
     private ProjectileRuntimeOptions runtimeOptions;
     private int attackDamage;
     private float elapsedLifetime;
@@ -347,13 +348,11 @@ public class ProjectileBehaviour : MonoBehaviour
     private void ApplyDirectionProjectileImpact(MonsterBehaviour hitMonster)
     {
         hitMonster.TakeDamage(attackDamage);
-        ElementalStackApplication.TryApplyFromTowerAttack(
+        ElementalApplication.TryApplyFromTowerAttack(
             sourceTower,
             hitMonster,
-            true,
             transform.position,
-            attackDamage,
-            true);
+            EffectTriggerType.OnHit);
         RaiseImpact(hitMonster, transform.position);
     }
 
@@ -390,7 +389,29 @@ public class ProjectileBehaviour : MonoBehaviour
         OnImpact?.Invoke(impactContext);
         EffectTriggerContext effectTriggerContext = CreateEffectTriggerContext(hitMonster, impactPosition);
         OnEffectTriggerContextCreated?.Invoke(effectTriggerContext);
-        EffectExecutor.Execute(projectileConfig.ImpactEffectDefinition, effectTriggerContext);
+
+        if (flightArchetype != AttackArchetype.ArcProjectile)
+        {
+            EffectExecutor.Execute(projectileConfig.ImpactEffectDefinition, effectTriggerContext);
+            return;
+        }
+
+        if (!EffectExecutor.ExecuteWithResolvedTargets(
+                projectileConfig.ImpactEffectDefinition,
+                effectTriggerContext,
+                resolvedImpactTargets))
+        {
+            return;
+        }
+
+        for (int i = 0; i < resolvedImpactTargets.Count; i++)
+        {
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                resolvedImpactTargets[i],
+                impactPosition,
+                EffectTriggerType.OnImpact);
+        }
     }
 
     private EffectTriggerContext CreateEffectTriggerContext(

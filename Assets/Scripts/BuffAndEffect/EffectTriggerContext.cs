@@ -10,7 +10,7 @@ public struct EffectTriggerContext
         bool hasTriggerPosition,
         Vector3 triggerPosition,
         int resolvedDamage,
-        bool canApplyElementalStack)
+        bool allowsElementalApplication)
     {
         TriggerType = triggerType;
         SourceTower = sourceTower;
@@ -19,7 +19,7 @@ public struct EffectTriggerContext
         HasTriggerPosition = hasTriggerPosition;
         TriggerPosition = triggerPosition;
         ResolvedDamage = resolvedDamage;
-        CanApplyElementalStack = canApplyElementalStack;
+        AllowsElementalApplication = allowsElementalApplication;
     }
 
     public EffectTriggerType TriggerType { get; }
@@ -30,5 +30,5 @@ public struct EffectTriggerContext
     // TriggerPosition is valid only when HasTriggerPosition is true. OnHit uses the hit/target position, OnImpact uses the impact position.
     public Vector3 TriggerPosition { get; }
     public int ResolvedDamage { get; }
-    public bool CanApplyElementalStack { get; }
+    public bool AllowsElementalApplication { get; }
 }

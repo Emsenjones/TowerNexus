@@ -21,7 +21,11 @@ This task creates the visual and observation foundation required before Cold, El
 ### Buff State Observation
 
 - Monster Buff runtime exposes read-only Buff state snapshots and state-change notification support.
-- Consumers refresh after apply, refresh, stack, Protection transition, removal, expiry, and cleanup.
+- Active snapshots contain only currently existing Buff runtime states.
+- Applied, Refreshed, Stacked, and EnteredProtection notifications occur after the runtime state has been updated.
+- Removed and Expired notifications occur after the affected state has been removed from the active snapshot collection.
+- Presentation consumers refresh by rereading the complete snapshot collection. They do not reproduce Buff state transitions themselves.
+- Clear removes all Buff runtime states first, then emits one Clear notification. Consumers rebuild from the resulting empty snapshot collection instead of receiving one refresh per removed Buff.
 - Runtime Buff state does not operate UI or ParticleSystem behavior directly.
 
 ### MonsterStatusBar
@@ -34,9 +38,11 @@ This task creates the visual and observation foundation required before Cold, El
 
 ### Buff And Effect Visual Feedback
 
-- BuffDefinition supports first-version status icon, Protection icon, persistent Buff VFX, and optional Protection VFX references.
+- BuffDefinition supports first-version status icon, Protection icon, and persistent Buff VFX references.
+- Protection is represented by the Protection status icon, with normal status icon fallback. The normal persistent Buff VFX remains active during Protection and is not replaced.
 - Monster-local Buff visual presentation owns persistent VFX lifecycle at the monster hit/reference anchor.
-- EffectDefinition may provide one-shot gameplay-effect feedback for tick, overload, or special Effect execution.
+- EffectDefinition may provide one-shot gameplay-effect feedback for a successfully executed tick, overload, or special Effect action.
+- A rejected ApplyBuff action, including Buff apply cooldown rejection, does not spawn one-shot Effect VFX.
 - Projectile impact VFX remains owned by ProjectileConfig and Projectile System.
 
 ## Shared Constraints
@@ -56,7 +62,9 @@ This task creates the visual and observation foundation required before Cold, El
 
 - Fire Buff state visibly reflects Applied, Stacked, Protection, and Removed or Expired states.
 - MonsterStatusBar keeps health display behavior and correctly displays active Buff state.
-- Persistent Buff VFX is created, retained through refresh or stack, updated for Protection when configured, and destroyed on removal.
-- One-shot gameplay Effect VFX remains distinct from projectile impact VFX.
-- Monster death, target arrival, reset, and destruction clear presentation safely.
+- Persistent Buff VFX is created, retained through refresh, stack, and Protection, and destroyed on removal.
+- Protection uses the authored Protection status icon with normal icon fallback; it does not replace the persistent Buff VFX.
+- One-shot gameplay Effect VFX remains distinct from projectile impact VFX and spawns only when its Effect action succeeds.
+- Buff apply cooldown rejection causes no StatusBar or one-shot Effect VFX change.
+- Monster death, target arrival, reset, and destruction clear runtime states first, then clear presentation from one resulting Clear notification.
 - This foundation is stable before Task009, Task010, or Task013 begins implementation.

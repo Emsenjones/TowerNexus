@@ -15,11 +15,15 @@ public class EffectDefinition : ScriptableObject
     [MinValue(0f)]
     [SerializeField] private float radius;
 
+    [TitleGroup("Visual Feedback")]
+    [SerializeField] private GameObject oneShotEffectVfxPrefab;
+
     [TitleGroup("Actions")]
     [SerializeField] private List<EffectAction> actions = new List<EffectAction> { new EffectAction() };
 
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public float Radius => radius;
+    public GameObject OneShotEffectVfxPrefab => oneShotEffectVfxPrefab;
     public IReadOnlyList<EffectAction> Actions => actions;
 
     public bool IsValid()

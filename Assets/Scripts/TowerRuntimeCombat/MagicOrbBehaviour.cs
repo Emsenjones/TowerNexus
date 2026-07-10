@@ -149,6 +149,11 @@ public class MagicOrbBehaviour : MonoBehaviour
     private void HitMonster(MonsterBehaviour monster)
     {
         monster.TakeDamage(attackDamage);
+        ElementalApplication.TryApplyFromTowerAttack(
+            sourceTower,
+            monster,
+            GetMonsterHitPosition(monster),
+            EffectTriggerType.OnHit);
         monsterHitCooldownEnds[monster] = Time.time + attackConfig.MagicOrbSameTargetHitCooldown;
         remainingHitCount--;
 

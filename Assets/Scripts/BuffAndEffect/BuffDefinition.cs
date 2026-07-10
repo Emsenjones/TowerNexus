@@ -37,6 +37,13 @@ public class BuffDefinition : ScriptableObject
     [MinValue(0f)]
     [SerializeField] private float protectionDuration;
 
+    [TitleGroup("Visual Feedback")]
+    [SerializeField] private Sprite statusIcon;
+    [TitleGroup("Visual Feedback")]
+    [SerializeField] private Sprite protectionStatusIcon;
+    [TitleGroup("Visual Feedback")]
+    [SerializeField] private GameObject persistentBuffVfxPrefab;
+
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public string Description => description;
     public float Duration => duration;
@@ -46,6 +53,9 @@ public class BuffDefinition : ScriptableObject
     public IReadOnlyList<BuffEventBinding> EventBindings => eventBindings;
     public ElementType ElementType => elementType;
     public float ProtectionDuration => Mathf.Max(0f, protectionDuration);
+    public Sprite StatusIcon => statusIcon;
+    public Sprite ProtectionStatusIcon => protectionStatusIcon;
+    public GameObject PersistentBuffVfxPrefab => persistentBuffVfxPrefab;
 
     public EffectDefinition GetEffectDefinition(BuffEventType eventType)
     {

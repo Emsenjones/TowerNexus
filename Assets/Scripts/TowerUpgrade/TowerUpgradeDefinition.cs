@@ -58,6 +58,9 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Elemental Layer")]
     [ShowIf(nameof(IsElementalLayerUpgrade))]
     [SerializeField] private ElementType elementType;
+    [TitleGroup("Elemental Layer")]
+    [ShowIf(nameof(IsElementalLayerUpgrade))]
+    [SerializeField] private EffectDefinition elementalApplyEffect;
 
     [TitleGroup("Effect Bindings")]
     [ShowIf(nameof(CanAuthorEffectBindings))]
@@ -79,6 +82,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     public int TwinDronesCount => Mathf.Clamp(twinDronesCount, 1, 2);
     public float TwinDronesTakeOffDelay => Mathf.Max(0f, twinDronesTakeOffDelay);
     public ElementType ElementType => elementType;
+    public EffectDefinition ElementalApplyEffect => elementalApplyEffect;
 
     public bool IsValid()
     {
@@ -181,6 +185,18 @@ public class TowerUpgradeDefinition : ScriptableObject
             if (elementType == ElementType.None)
             {
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades need a non-None element type.");
+                isValid = false;
+            }
+
+            if (elementalApplyEffect == null)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades need a direct Elemental apply effect.");
+                isValid = false;
+            }
+
+            if (hasEffectBindings)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades must not define generic Effect bindings.");
                 isValid = false;
             }
         }
@@ -350,7 +366,7 @@ public class TowerUpgradeDefinition : ScriptableObject
 
     private bool CanAuthorEffectBindings()
     {
-        return IsBehaviourLayerUpgrade() || IsElementalLayerUpgrade();
+        return IsBehaviourLayerUpgrade();
     }
 
     private bool IsArcherPiercingArrow()

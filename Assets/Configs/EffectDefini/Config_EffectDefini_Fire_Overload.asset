@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Config_EffectDefini_Fire_Overload
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
   displayName: FlameBurst
-  radius: 3
+  radius: 1
+  oneShotEffectVfxPrefab: {fileID: 9219654916902913616, guid: be4a9dc4b48e440d3afee03e7c462923, type: 3}
   actions:
   - actionType: 0
-    damageAmount: 5
+    damageAmount: 10
     buffDefinition: {fileID: 0}

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class MonsterSpawner : MonoBehaviour
 {
@@ -9,7 +10,8 @@ public class MonsterSpawner : MonoBehaviour
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
-    [SerializeField] private MonsterHealthBarManager healthBarManager;
+    [FormerlySerializedAs("healthBarManager")]
+    [SerializeField] private MonsterStatusUIManager statusUiManager;
     [SerializeField] private DamageNumberManager damageNumberManager;
     [SerializeField] private Transform monsterRoot;
     [SerializeField] private bool playOnStart;
@@ -152,7 +154,7 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         monsterBehaviour.Initialize(monsterDefinition);
-        CreateHealthBar(monsterBehaviour, monsterDefinition);
+        CreateStatusUi(monsterBehaviour, monsterDefinition);
         monsterBehaviour.SetRuntimeReferences(monsterManager, playerSystem, ResolveDamageNumberManager());
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
@@ -179,40 +181,40 @@ public class MonsterSpawner : MonoBehaviour
         return monsterBehaviour;
     }
 
-    private void CreateHealthBar(MonsterBehaviour monsterBehaviour, MonsterDefinition monsterDefinition)
+    private void CreateStatusUi(MonsterBehaviour monsterBehaviour, MonsterDefinition monsterDefinition)
     {
         if (monsterBehaviour == null || monsterDefinition == null)
         {
             return;
         }
 
-        MonsterHealthBarManager manager = ResolveHealthBarManager();
+        MonsterStatusUIManager manager = ResolveStatusUiManager();
 
         if (manager == null)
         {
-            Debug.LogWarning("Monster spawner cannot create monster health bar: health bar manager is not assigned.", this);
+            Debug.LogWarning("Monster spawner cannot create monster status UI: status UI manager is not assigned.", this);
             return;
         }
 
-        manager.CreateHealthBar(monsterBehaviour, monsterDefinition.HealthBarOffset);
+        manager.CreateStatusUi(monsterBehaviour, monsterDefinition.HealthBarOffset);
     }
 
-    private MonsterHealthBarManager ResolveHealthBarManager()
+    private MonsterStatusUIManager ResolveStatusUiManager()
     {
-        if (healthBarManager != null)
+        if (statusUiManager != null)
         {
-            return healthBarManager;
+            return statusUiManager;
         }
 
-        healthBarManager = FindFirstObjectByType<MonsterHealthBarManager>();
+        statusUiManager = FindFirstObjectByType<MonsterStatusUIManager>();
 
-        if (healthBarManager != null)
+        if (statusUiManager != null)
         {
-            return healthBarManager;
+            return statusUiManager;
         }
 
-        healthBarManager = gameObject.AddComponent<MonsterHealthBarManager>();
-        return healthBarManager;
+        statusUiManager = gameObject.AddComponent<MonsterStatusUIManager>();
+        return statusUiManager;
     }
 
     private DamageNumberManager ResolveDamageNumberManager()

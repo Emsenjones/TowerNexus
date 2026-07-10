@@ -1,14 +1,20 @@
 using System.Collections.Generic;
+using System;
 
 public class MonsterBuffRuntime
 {
     private readonly MonsterBehaviour owner;
     private readonly List<MonsterBuffInstance> buffInstances = new List<MonsterBuffInstance>();
+    private readonly List<MonsterBuffStateSnapshot> activeSnapshots = new List<MonsterBuffStateSnapshot>();
 
     public MonsterBuffRuntime(MonsterBehaviour owner)
     {
         this.owner = owner;
     }
+
+    public event Action OnStateChanged;
+
+    public IReadOnlyList<MonsterBuffStateSnapshot> ActiveSnapshots => activeSnapshots;
 
     public BuffApplyResult ApplyBuff(BuffApplyRequest request)
     {
@@ -30,6 +36,7 @@ public class MonsterBuffRuntime
         {
             MonsterBuffInstance buffInstance = new MonsterBuffInstance(request, owner);
             buffInstances.Add(buffInstance);
+            RefreshSnapshotsAndNotify();
             return new BuffApplyOutcome(BuffApplyResult.Applied, buffInstance, false, false);
         }
 
@@ -38,6 +45,12 @@ public class MonsterBuffRuntime
         bool reachedMaxStacks = result == BuffApplyResult.Stacked &&
                                 previousStackCount < buffDefinition.MaxStacks &&
                                 existingInstance.StackCount >= buffDefinition.MaxStacks;
+
+        if (IsSuccessfulApplyResult(result))
+        {
+            RefreshSnapshotsAndNotify();
+        }
+
         return new BuffApplyOutcome(result, existingInstance, true, reachedMaxStacks);
     }
 
@@ -51,6 +64,7 @@ public class MonsterBuffRuntime
         }
 
         buffInstances.Remove(buffInstance);
+        RefreshSnapshotsAndNotify();
         return true;
     }
 
@@ -61,6 +75,8 @@ public class MonsterBuffRuntime
 
     public void Tick(float deltaTime)
     {
+        bool removedAnyInstance = false;
+
         for (int i = buffInstances.Count - 1; i >= 0; i--)
         {
             MonsterBuffInstance buffInstance = buffInstances[i];
@@ -68,13 +84,38 @@ public class MonsterBuffRuntime
             if (buffInstance == null || !buffInstance.Tick(deltaTime))
             {
                 buffInstances.RemoveAt(i);
+                removedAnyInstance = true;
             }
+        }
+
+        if (removedAnyInstance)
+        {
+            RefreshSnapshotsAndNotify();
         }
     }
 
     public void Clear()
     {
+        if (buffInstances.Count == 0 && activeSnapshots.Count == 0)
+        {
+            return;
+        }
+
         buffInstances.Clear();
+        RefreshSnapshotsAndNotify();
+    }
+
+    public bool TryEnterProtectionPhase(BuffDefinition buffDefinition)
+    {
+        MonsterBuffInstance buffInstance = FindBuffInstance(buffDefinition);
+
+        if (buffInstance == null || !buffInstance.TryEnterProtectionPhase())
+        {
+            return false;
+        }
+
+        RefreshSnapshotsAndNotify();
+        return true;
     }
 
     private MonsterBuffInstance FindBuffInstance(BuffDefinition buffDefinition)
@@ -95,5 +136,29 @@ public class MonsterBuffRuntime
         }
 
         return null;
+    }
+
+    private static bool IsSuccessfulApplyResult(BuffApplyResult result)
+    {
+        return result == BuffApplyResult.Applied ||
+               result == BuffApplyResult.Refreshed ||
+               result == BuffApplyResult.Stacked;
+    }
+
+    private void RefreshSnapshotsAndNotify()
+    {
+        activeSnapshots.Clear();
+
+        for (int i = 0; i < buffInstances.Count; i++)
+        {
+            MonsterBuffInstance buffInstance = buffInstances[i];
+
+            if (buffInstance != null)
+            {
+                activeSnapshots.Add(new MonsterBuffStateSnapshot(buffInstance));
+            }
+        }
+
+        OnStateChanged?.Invoke();
     }
 }

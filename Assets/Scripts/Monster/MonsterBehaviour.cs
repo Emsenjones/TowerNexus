@@ -13,6 +13,7 @@ public class MonsterBehaviour : MonoBehaviour
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
     [SerializeField] private Animator animator;
     [SerializeField] private MonsterHitFeedback hitFeedback;
+    [SerializeField] private MonsterBuffVisualController buffVisualController;
     [SerializeField] private Transform hitAnchor;
     [SerializeField] private float arriveDistanceThreshold = 0.05f;
 
@@ -26,6 +27,8 @@ public class MonsterBehaviour : MonoBehaviour
     private MonsterBuffRuntime buffRuntime;
     private int pathIndex;
 
+    private static readonly IReadOnlyList<MonsterBuffStateSnapshot> EmptyBuffSnapshots = Array.Empty<MonsterBuffStateSnapshot>();
+
     public MonsterDefinition Definition => definition;
     public int CurrentHealth => currentHealth;
     public float CurrentMoveSpeed => currentMoveSpeed;
@@ -36,11 +39,15 @@ public class MonsterBehaviour : MonoBehaviour
     public IReadOnlyList<GridNodeBehaviour> CurrentPath => currentPath;
     public int PathIndex => pathIndex;
     public bool IsMoving => isMoving;
+    [TitleGroup("Buff Runtime")]
+    [ShowInInspector, ReadOnly]
+    public IReadOnlyList<MonsterBuffStateSnapshot> ActiveBuffSnapshots => buffRuntime != null ? buffRuntime.ActiveSnapshots : EmptyBuffSnapshots;
 
     public event Action<MonsterBehaviour> OnTargetReached;
     public event Action<MonsterBehaviour> OnDied;
     public event Action<MonsterBehaviour> OnDestroyed;
     public event Action<MonsterBehaviour, int, int> OnHealthChanged;
+    public event Action<MonsterBehaviour> OnBuffStateChanged;
 
     public void Initialize(MonsterDefinition definition)
     {
@@ -55,6 +62,7 @@ public class MonsterBehaviour : MonoBehaviour
         currentMoveSpeed = definition.MoveSpeed;
         EnsureBuffRuntime();
         buffRuntime.Clear();
+        CacheBuffVisualController();
         isDead = false;
         isCleaningUp = false;
         CacheAnimator();
@@ -223,10 +231,17 @@ public class MonsterBehaviour : MonoBehaviour
         return buffRuntime.HasBuff(buffDefinition);
     }
 
+    public bool TryEnterBuffProtection(BuffDefinition buffDefinition)
+    {
+        EnsureBuffRuntime();
+        return buffRuntime.TryEnterProtectionPhase(buffDefinition);
+    }
+
     private void Awake()
     {
         CacheAnimator();
         EnsureBuffRuntime();
+        CacheBuffVisualController();
     }
 
     private void Update()
@@ -247,6 +262,10 @@ public class MonsterBehaviour : MonoBehaviour
     private void OnDestroy()
     {
         buffRuntime?.Clear();
+        if (buffRuntime != null)
+        {
+            buffRuntime.OnStateChanged -= HandleBuffStateChanged;
+        }
         OnDestroyed?.Invoke(this);
     }
 
@@ -255,7 +274,28 @@ public class MonsterBehaviour : MonoBehaviour
         if (buffRuntime == null)
         {
             buffRuntime = new MonsterBuffRuntime(this);
+            buffRuntime.OnStateChanged += HandleBuffStateChanged;
         }
+    }
+
+    private void CacheBuffVisualController()
+    {
+        if (buffVisualController == null)
+        {
+            buffVisualController = GetComponent<MonsterBuffVisualController>();
+        }
+
+        if (buffVisualController == null)
+        {
+            buffVisualController = gameObject.AddComponent<MonsterBuffVisualController>();
+        }
+
+        buffVisualController.Initialize(this);
+    }
+
+    private void HandleBuffStateChanged()
+    {
+        OnBuffStateChanged?.Invoke(this);
     }
 
     private void CacheAnimator()

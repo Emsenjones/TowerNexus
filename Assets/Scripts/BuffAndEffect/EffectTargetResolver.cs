@@ -82,7 +82,10 @@ public static class EffectTargetResolver
                 continue;
             }
 
-            targets.Add(monster);
+            if (!targets.Contains(monster))
+            {
+                targets.Add(monster);
+            }
         }
 
         return targets.Count > 0;
