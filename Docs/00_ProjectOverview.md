@@ -169,12 +169,16 @@ Other systems may react to player events, but Player System does not own tower p
 
 Owns runtime battle UI presentation.
 
+The battle Canvas uses a Battle UI Root only as an authored composition and configuration-validation point. It groups the Battle HUD, monster status presentation, and damage-number presentation without becoming a gameplay service locator or a generic UI command router.
+
 Responsible for:
 
 - Player battle info display
 - Draft window presentation
 - Pending tower deployment area
 - Placement feedback presentation
+
+The authored Draft Window remains present in the battle Canvas hierarchy while closed. Its runtime Draft choice items are transient.
 
 Does not own player state, draft generation, placement validation, or combat logic.
 

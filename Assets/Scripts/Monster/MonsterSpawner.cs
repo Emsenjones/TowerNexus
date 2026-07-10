@@ -155,7 +155,7 @@ public class MonsterSpawner : MonoBehaviour
 
         monsterBehaviour.Initialize(monsterDefinition);
         CreateStatusUi(monsterBehaviour, monsterDefinition);
-        monsterBehaviour.SetRuntimeReferences(monsterManager, playerSystem, ResolveDamageNumberManager());
+        monsterBehaviour.SetRuntimeReferences(monsterManager, playerSystem, damageNumberManager);
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
 
@@ -188,50 +188,12 @@ public class MonsterSpawner : MonoBehaviour
             return;
         }
 
-        MonsterStatusUIManager manager = ResolveStatusUiManager();
-
-        if (manager == null)
+        if (statusUiManager == null)
         {
             Debug.LogWarning("Monster spawner cannot create monster status UI: status UI manager is not assigned.", this);
             return;
         }
 
-        manager.CreateStatusUi(monsterBehaviour, monsterDefinition.HealthBarOffset);
-    }
-
-    private MonsterStatusUIManager ResolveStatusUiManager()
-    {
-        if (statusUiManager != null)
-        {
-            return statusUiManager;
-        }
-
-        statusUiManager = FindFirstObjectByType<MonsterStatusUIManager>();
-
-        if (statusUiManager != null)
-        {
-            return statusUiManager;
-        }
-
-        statusUiManager = gameObject.AddComponent<MonsterStatusUIManager>();
-        return statusUiManager;
-    }
-
-    private DamageNumberManager ResolveDamageNumberManager()
-    {
-        if (damageNumberManager != null)
-        {
-            return damageNumberManager;
-        }
-
-        damageNumberManager = FindFirstObjectByType<DamageNumberManager>();
-
-        if (damageNumberManager != null)
-        {
-            return damageNumberManager;
-        }
-
-        damageNumberManager = gameObject.AddComponent<DamageNumberManager>();
-        return damageNumberManager;
+        statusUiManager.CreateStatusUi(monsterBehaviour, monsterDefinition.HealthBarOffset);
     }
 }

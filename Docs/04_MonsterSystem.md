@@ -477,6 +477,8 @@ Battle HUD UI System is responsible for global battle UI, such as player HP, lev
 
 Monster status bars are battlefield unit UI and belong to Monster System.
 
+The monster status presentation manager may be composed under the battle Canvas, but its own authored transform is the parent for status UI items it creates. Cleanup removes only those runtime-created items; it must not broadly delete authored children that may later provide layout or visual structure.
+
 ### Status Bar Update Rules
 
 Recommended update behavior:
@@ -566,6 +568,8 @@ Damage amount + monster world position + optional visual offset
 ```
 
 DamageNumberManager and DamageNumberUI should own visual presentation.
+
+The damage-number presentation manager may be composed under the battle Canvas, but its own authored transform is the parent for damage-number items it creates. Animation completion and cleanup remove only those runtime-created items.
 
 ### Damage Number Tween Step List
 

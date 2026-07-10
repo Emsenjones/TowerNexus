@@ -815,7 +815,7 @@ public class TowerPlacementController : MonoBehaviour
 
         if (battleHUDUI == null)
         {
-            battleHUDUI = FindFirstObjectByType<BattleHUDUI>();
+            Debug.LogError("Tower placement controller requires an assigned BattleHUDUI reference.", this);
         }
 
         if (pathfindingService == null)

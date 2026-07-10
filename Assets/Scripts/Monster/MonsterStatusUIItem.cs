@@ -6,9 +6,9 @@ public class MonsterStatusUIItem : MonoBehaviour
 {
     [SerializeField] private Image fillImage;
     [SerializeField] private RectTransform buffIconContainer;
-    [SerializeField] private MonsterBuffStatusIconUI buffIconPrefab;
+    [SerializeField] private MonsterBuffUIItem buffIconPrefab;
 
-    private readonly List<MonsterBuffStatusIconUI> spawnedBuffIcons = new List<MonsterBuffStatusIconUI>();
+    private readonly List<MonsterBuffUIItem> spawnedBuffIcons = new List<MonsterBuffUIItem>();
 
     private Vector3 worldOffset;
     private Camera targetCamera;
@@ -136,7 +136,7 @@ public class MonsterStatusUIItem : MonoBehaviour
                 continue;
             }
 
-            MonsterBuffStatusIconUI buffIcon = Instantiate(buffIconPrefab, buffIconContainer);
+            MonsterBuffUIItem buffIcon = Instantiate(buffIconPrefab, buffIconContainer);
             buffIcon.Refresh(snapshot);
             spawnedBuffIcons.Add(buffIcon);
         }

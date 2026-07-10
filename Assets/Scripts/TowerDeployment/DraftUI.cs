@@ -15,7 +15,10 @@ public class DraftUI : MonoBehaviour
 
     private void Awake()
     {
-        CloseDraft();
+        if (rootObject != null && rootObject != gameObject)
+        {
+            rootObject.SetActive(false);
+        }
     }
 
     public void OpenDraft(List<DraftResult> draftResults)
@@ -137,15 +140,5 @@ public class DraftUI : MonoBehaviour
         }
 
         draftItems.Clear();
-
-        if (draftItemContainer == null)
-        {
-            return;
-        }
-
-        for (int i = draftItemContainer.childCount - 1; i >= 0; i--)
-        {
-            Destroy(draftItemContainer.GetChild(i).gameObject);
-        }
     }
 }

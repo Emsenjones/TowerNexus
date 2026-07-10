@@ -75,6 +75,22 @@ Recommended ownership boundaries:
 
 ---
 
+## 4.1 Battle UI Composition
+
+The existing battle Canvas may use a Battle UI Root as its authored composition and configuration-validation point.
+
+It groups references to:
+
+- Battle HUD UI
+- Monster status presentation
+- Damage-number presentation
+
+The Battle UI Root does not own gameplay state, does not forward routine UI requests, and does not act as a runtime service locator. Gameplay systems retain narrow dependencies on the presentation module they actually use.
+
+The authored Draft Window remains in the battle Canvas hierarchy while closed. Opening a Draft activates that window and creates transient Draft choice items; closing it removes only those created items and returns the window to its inactive state.
+
+---
+
 ## 5. Core UI Elements
 
 ### 5.1 Player Runtime Display

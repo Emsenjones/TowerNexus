@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Burning
   description: 
-  duration: 5
+  duration: 6
   tickInterval: 0.25
   maxStacks: 10
   buffApplyCooldown: 0.2

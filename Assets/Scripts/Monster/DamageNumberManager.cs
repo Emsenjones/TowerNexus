@@ -1,14 +1,24 @@
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class DamageNumberManager : MonoBehaviour
 {
-    private const string RuntimeContainerName = "DamageNumberContainer";
-    
     [SerializeField] private DamageNumberUI damageNumberPrefab;
-    [SerializeField] private RectTransform damageNumberContainer;
+
+    private readonly List<DamageNumberUI> createdDamageNumbers = new List<DamageNumberUI>();
 
     private Camera worldCamera;
+    private RectTransform itemContainer;
+
+    private void Awake()
+    {
+        itemContainer = transform as RectTransform;
+    }
+
+    private void OnDestroy()
+    {
+        ClearCreatedDamageNumbers();
+    }
 
     public void ShowDamage(int damage, Vector3 worldPosition)
     {
@@ -17,23 +27,18 @@ public class DamageNumberManager : MonoBehaviour
             return;
         }
 
-        DamageNumberUI prefab = damageNumberPrefab;
-
-        if (prefab == null)
+        if (damageNumberPrefab == null)
         {
             Debug.LogWarning("Damage number manager cannot show damage: no damage number prefab is assigned.", this);
             return;
         }
 
-        RectTransform parent = ResolveDamageNumberContainer();
-
-        if (parent == null)
+        if (!TryGetItemContainer(out RectTransform parent))
         {
-            Debug.LogWarning("Damage number manager cannot show damage: no damageNumberPrefab is available.", this);
             return;
         }
 
-        DamageNumberUI damageNumber = Instantiate(prefab, parent);
+        DamageNumberUI damageNumber = Instantiate(damageNumberPrefab, parent);
 
         if (damageNumber == null)
         {
@@ -59,39 +64,28 @@ public class DamageNumberManager : MonoBehaviour
             return;
         }
 
+        createdDamageNumbers.Add(damageNumber);
         damageNumberTransform.position = cameraToUse.WorldToScreenPoint(worldPosition);
         damageNumber.Play(damage, HandleDamageNumberComplete);
+    }
+
+    private bool TryGetItemContainer(out RectTransform parent)
+    {
+        parent = itemContainer != null ? itemContainer : transform as RectTransform;
+
+        if (parent != null)
+        {
+            itemContainer = parent;
+            return true;
+        }
+
+        Debug.LogWarning("Damage number manager must be attached to a RectTransform so it can own its runtime damage-number items.", this);
+        return false;
     }
 
     private Camera ResolveWorldCamera()
     {
         return worldCamera != null ? worldCamera : Camera.main;
-    }
-
-    private RectTransform ResolveDamageNumberContainer()
-    {
-        if (damageNumberContainer != null)
-        {
-            return damageNumberContainer;
-        }
-
-        Canvas canvas = FindFirstObjectByType<Canvas>();
-
-        if (canvas == null)
-        {
-            return null;
-        }
-
-        GameObject containerObject = new GameObject(RuntimeContainerName, typeof(RectTransform));
-        damageNumberContainer = containerObject.GetComponent<RectTransform>();
-        damageNumberContainer.SetParent(canvas.transform, false);
-        damageNumberContainer.anchorMin = Vector2.zero;
-        damageNumberContainer.anchorMax = Vector2.one;
-        damageNumberContainer.offsetMin = Vector2.zero;
-        damageNumberContainer.offsetMax = Vector2.zero;
-        damageNumberContainer.pivot = new Vector2(0.5f, 0.5f);
-
-        return damageNumberContainer;
     }
 
     private void HandleDamageNumberComplete(DamageNumberUI damageNumber)
@@ -101,6 +95,22 @@ public class DamageNumberManager : MonoBehaviour
             return;
         }
 
+        createdDamageNumbers.Remove(damageNumber);
         Destroy(damageNumber.gameObject);
+    }
+
+    private void ClearCreatedDamageNumbers()
+    {
+        for (int i = 0; i < createdDamageNumbers.Count; i++)
+        {
+            DamageNumberUI damageNumber = createdDamageNumbers[i];
+
+            if (damageNumber != null)
+            {
+                Destroy(damageNumber.gameObject);
+            }
+        }
+
+        createdDamageNumbers.Clear();
     }
 }
