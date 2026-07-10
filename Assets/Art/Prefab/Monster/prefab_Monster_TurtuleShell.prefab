@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 8583064042410314771}
   - component: {fileID: 3082340063008460101}
   - component: {fileID: 5674193049052221641}
+  - component: {fileID: 7471097696518668682}
   m_Layer: 0
   m_Name: Prefab_Monster_TurtuleShell
   m_TagString: Untagged
@@ -50,7 +51,8 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: ac0dd61ab1e094ab2970e9e64a9eff79, type: 2}
   animator: {fileID: 7871114821477690268}
   hitFeedback: {fileID: 5674193049052221641}
-  hitAnchor: {fileID: 3468453040755435803}
+  buffVisualController: {fileID: 7471097696518668682}
+  hitAnchor: {fileID: 0}
   arriveDistanceThreshold: 0.05
 --- !u!114 &5674193049052221641
 MonoBehaviour:
@@ -67,6 +69,18 @@ MonoBehaviour:
   animator: {fileID: 7871114821477690268}
   hitFlashRenderers:
   - {fileID: 7871114821473441116}
+--- !u!114 &7471097696518668682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2882519792444244193}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
 --- !u!1 &5389211786643338703
 GameObject:
   m_ObjectHideFlags: 0

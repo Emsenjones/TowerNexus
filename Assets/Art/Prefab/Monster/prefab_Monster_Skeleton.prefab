@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4032835314630318200}
   - component: {fileID: 6147167272419788473}
   - component: {fileID: 8915963629701623545}
+  - component: {fileID: -6150324996508881724}
   m_Layer: 0
   m_Name: Prefab_Monster_Skeleton
   m_TagString: Untagged
@@ -50,6 +51,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: d2993ab2f86f64a8eabd36088246867d, type: 2}
   animator: {fileID: 5331354385135851554}
   hitFeedback: {fileID: 8915963629701623545}
+  buffVisualController: {fileID: -6150324996508881724}
   hitAnchor: {fileID: 9064296490856806550}
   arriveDistanceThreshold: 0.05
 --- !u!114 &8915963629701623545
@@ -69,6 +71,18 @@ MonoBehaviour:
   - {fileID: 5875142078408363541}
   - {fileID: 5331354385140131552}
   - {fileID: 2701524019327245531}
+--- !u!114 &-6150324996508881724
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2382199090356143332}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
 --- !u!1 &2599602136449305532
 GameObject:
   m_ObjectHideFlags: 0

@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 2465670421208695155}
   - component: {fileID: 5918628833992865121}
   - component: {fileID: -3073266323831009886}
+  - component: {fileID: 6095899548051033206}
   m_Layer: 0
   m_Name: Prefab_Monster_Dragon
   m_TagString: Untagged
@@ -50,6 +51,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: bc23fca48772e43708767f0c1a3c4c90, type: 2}
   animator: {fileID: 7917112324773444231}
   hitFeedback: {fileID: -3073266323831009886}
+  buffVisualController: {fileID: 6095899548051033206}
   hitAnchor: {fileID: 7823846486151608507}
   arriveDistanceThreshold: 0.05
 --- !u!114 &-3073266323831009886
@@ -67,6 +69,18 @@ MonoBehaviour:
   animator: {fileID: 7917112324773444231}
   hitFlashRenderers:
   - {fileID: 7917112324769252421}
+--- !u!114 &6095899548051033206
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3866999361384652794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
 --- !u!1 &4286417136733367753
 GameObject:
   m_ObjectHideFlags: 0

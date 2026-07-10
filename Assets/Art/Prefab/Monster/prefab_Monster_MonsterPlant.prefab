@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 7186234949930532882}
   - component: {fileID: 5848973733325559065}
   - component: {fileID: -3293232570255853853}
+  - component: {fileID: 5333958710598534220}
   m_Layer: 0
   m_Name: Prefab_Monster_MonsterPlant
   m_TagString: Untagged
@@ -50,6 +51,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: b761deff0969f465981d947df888786e, type: 2}
   animator: {fileID: 8389110961045296764}
   hitFeedback: {fileID: -3293232570255853853}
+  buffVisualController: {fileID: 5333958710598534220}
   hitAnchor: {fileID: 1874897553912222028}
   arriveDistanceThreshold: 0.05
 --- !u!114 &-3293232570255853853
@@ -67,6 +69,18 @@ MonoBehaviour:
   animator: {fileID: 8389110961045296764}
   hitFlashRenderers:
   - {fileID: 8389110961041123516}
+--- !u!114 &5333958710598534220
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2198626025461408082}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
 --- !u!1 &4426256310236603590
 GameObject:
   m_ObjectHideFlags: 0

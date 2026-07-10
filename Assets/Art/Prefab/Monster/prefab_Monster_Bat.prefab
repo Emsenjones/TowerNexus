@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 2465670421208695155}
   - component: {fileID: 5918628833992865121}
   - component: {fileID: -8015660131404169425}
+  - component: {fileID: 7790506509370628079}
   m_Layer: 0
   m_Name: Prefab_Monster_Bat
   m_TagString: Untagged
@@ -81,6 +82,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: 5ffd181566bc444e7b7942a0aeebdb44, type: 2}
   animator: {fileID: 7595351528232211962}
   hitFeedback: {fileID: -8015660131404169425}
+  buffVisualController: {fileID: 7790506509370628079}
   hitAnchor: {fileID: 8346531459378780291}
   arriveDistanceThreshold: 0.05
 --- !u!114 &-8015660131404169425
@@ -98,6 +100,18 @@ MonoBehaviour:
   animator: {fileID: 7595351528232211962}
   hitFlashRenderers:
   - {fileID: 7595351528236493626}
+--- !u!114 &7790506509370628079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3866999361384652794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
 --- !u!1 &7763474672389107081
 GameObject:
   m_ObjectHideFlags: 0

@@ -27,4 +27,4 @@ MonoBehaviour:
   protectionDuration: 5
   statusIcon: {fileID: 0}
   protectionStatusIcon: {fileID: 0}
-  persistentBuffVfxPrefab: {fileID: 0}
+  persistentBuffVfxPrefab: {fileID: 6904011654687807763, guid: 4376de74f07a24373a09bcaf20ac47ff, type: 3}

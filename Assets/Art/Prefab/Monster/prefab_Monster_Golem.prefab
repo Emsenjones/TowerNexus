@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6126959352770433283}
   - component: {fileID: 952937023508661463}
   - component: {fileID: 2367576008043052619}
+  - component: {fileID: 4631483941930043226}
   m_Layer: 0
   m_Name: Prefab_Monster_Golem
   m_TagString: Untagged
@@ -50,6 +51,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: f6fc3ea3e736144d697270b58aadcc22, type: 2}
   animator: {fileID: 6188540993782782868}
   hitFeedback: {fileID: 2367576008043052619}
+  buffVisualController: {fileID: 4631483941930043226}
   hitAnchor: {fileID: 2759143581031939007}
   arriveDistanceThreshold: 0.05
 --- !u!114 &2367576008043052619
@@ -67,6 +69,18 @@ MonoBehaviour:
   animator: {fileID: 6188540993782782868}
   hitFlashRenderers:
   - {fileID: 6188540993778509140}
+--- !u!114 &4631483941930043226
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3333681211596321960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
 --- !u!1 &7097899650138923960
 GameObject:
   m_ObjectHideFlags: 0

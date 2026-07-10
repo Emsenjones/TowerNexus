@@ -42,6 +42,7 @@ GameObject:
   - component: {fileID: 1451541534037270257}
   - component: {fileID: 2301366516664085335}
   - component: {fileID: 8672949094008729190}
+  - component: {fileID: 863990077540133464}
   m_Layer: 0
   m_Name: Prefab_Monster_Slime
   m_TagString: Untagged
@@ -81,6 +82,7 @@ MonoBehaviour:
   definition: {fileID: 11400000, guid: db8d70b2ee8114d0f99b92710a526ca7, type: 2}
   animator: {fileID: 6225491461590498992}
   hitFeedback: {fileID: 8672949094008729190}
+  buffVisualController: {fileID: 863990077540133464}
   hitAnchor: {fileID: 843983730838469824}
   arriveDistanceThreshold: 0.05
 --- !u!114 &8672949094008729190
@@ -98,6 +100,18 @@ MonoBehaviour:
   animator: {fileID: 6225491461590498992}
   hitFlashRenderers:
   - {fileID: 6225491461586403440}
+--- !u!114 &863990077540133464
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6597115842058522919}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
 --- !u!1 &7521168832872363807
 GameObject:
   m_ObjectHideFlags: 0
