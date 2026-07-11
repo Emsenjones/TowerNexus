@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Extended Barrel
   description: Attack range +1
-  icon: {fileID: 21300000, guid: c6f3ddfa43da4ad4cad2375c9d4df858, type: 3}
+  icon: {fileID: 21300000, guid: 668afd8d672d74fb0ad725fed183c5ad, type: 3}
   towerFamily: 1
   requiredTowerLevel: 1
   upgradeLayer: 0
@@ -28,4 +28,6 @@ MonoBehaviour:
   twinOrbsStartingAngleOffset: 180
   twinDronesCount: 2
   twinDronesTakeOffDelay: 0.15
+  elementType: 0
+  elementalApplyEffect: {fileID: 0}
   effectBindings: []

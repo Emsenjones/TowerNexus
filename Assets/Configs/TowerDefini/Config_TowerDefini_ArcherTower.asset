@@ -15,7 +15,7 @@ MonoBehaviour:
   towerFamily: 0
   displayName: Archer Tower
   description: Fast straight shots
-  icon: {fileID: 21300000, guid: 48902436d5fe340feb0da315672b5b04, type: 3}
+  icon: {fileID: -1729801544510991955, guid: 10cbcc51943ea4b4aa154f8a8adf0bec, type: 3}
   towerPrefab: {fileID: 8270491640636788401, guid: 7f40fd16bab2d4a20b51506d3cb37e8f, type: 3}
   attackConfig: {fileID: 11400000, guid: 1c1d31696daa84d328a1612b624643c6, type: 2}
   towerLevelConfigs:

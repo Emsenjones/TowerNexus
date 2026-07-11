@@ -8,7 +8,7 @@ public class DraftUI : MonoBehaviour
     [SerializeField] private Transform draftItemContainer;
     [SerializeField] private GameObject towerDraftItemPrefab;
 
-    private readonly List<TowerDraftItemUI> draftItems = new List<TowerDraftItemUI>();
+    private readonly List<TowerDraftUIItem> draftItems = new List<TowerDraftUIItem>();
     private Action<DraftResult> onDraftSelected;
 
     public bool IsOpen => rootObject != null && rootObject.activeSelf;
@@ -77,9 +77,9 @@ public class DraftUI : MonoBehaviour
 
             GameObject itemObject = Instantiate(towerDraftItemPrefab, draftItemContainer);
 
-            if (!itemObject.TryGetComponent(out TowerDraftItemUI item))
+            if (!itemObject.TryGetComponent(out TowerDraftUIItem item))
             {
-                Debug.LogWarning("Tower draft UI skipped draft item: tower draft item prefab is missing TowerDraftItemUI.", itemObject);
+                Debug.LogWarning("Tower draft UI skipped draft item: tower draft item prefab is missing TowerDraftUIItem.", itemObject);
                 Destroy(itemObject);
                 continue;
             }
@@ -131,11 +131,11 @@ public class DraftUI : MonoBehaviour
     {
         for (int i = draftItems.Count - 1; i >= 0; i--)
         {
-            TowerDraftItemUI item = draftItems[i];
+            TowerDraftUIItem uiItem = draftItems[i];
 
-            if (item != null)
+            if (uiItem != null)
             {
-                Destroy(item.gameObject);
+                Destroy(uiItem.gameObject);
             }
         }
 

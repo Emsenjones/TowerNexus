@@ -493,7 +493,7 @@ Buff state changes
 → Monster status bar rebuilds or refreshes active Buff icon slots
 ```
 
-The status bar shows one icon slot per active BuffDefinition, not one icon per stack. It may display stack count for stacks above one and uses the Buff's Protection-phase icon when configured.
+The status bar shows one icon slot per active BuffDefinition, not one icon per stack. It may display stack count for stacks above one. During Protection, it keeps the same StatusIcon, hides the stack count, and pulses the icon alpha from 1 to 0 and back to 1 until Protection ends.
 
 Monster-local persistent Buff VFX may attach at HitAnchor and observe the same Buff state changes. This presentation does not own Buff gameplay state, health, movement, pathfinding, or monster lifecycle decisions.
 

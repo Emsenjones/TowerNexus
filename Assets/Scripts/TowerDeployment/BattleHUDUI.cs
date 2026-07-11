@@ -16,9 +16,9 @@ public class BattleHUDUI : MonoBehaviour
     [SerializeField] private Transform pendingDraftContainer;
     [SerializeField] private GameObject pendingDraftItemPrefab;
 
-    private readonly List<PendingDraftUI> pendingDraftItems = new List<PendingDraftUI>();
+    private readonly List<PendingDraftUIItem> pendingDraftItems = new List<PendingDraftUIItem>();
 
-    public IReadOnlyList<PendingDraftUI> PendingDraftItems => pendingDraftItems;
+    public IReadOnlyList<PendingDraftUIItem> PendingDraftItems => pendingDraftItems;
 
     private void OnEnable()
     {
@@ -101,9 +101,9 @@ public class BattleHUDUI : MonoBehaviour
 
         GameObject itemObject = Instantiate(pendingDraftItemPrefab, pendingDraftContainer);
 
-        if (!itemObject.TryGetComponent(out PendingDraftUI item))
+        if (!itemObject.TryGetComponent(out PendingDraftUIItem item))
         {
-            Debug.LogWarning("Battle HUD UI cannot add pending draft: pending draft item prefab is missing PendingDraftUI.", itemObject);
+            Debug.LogWarning("Battle HUD UI cannot add pending draft: pending draft item prefab is missing PendingDraftUIItem.", itemObject);
             Destroy(itemObject);
             return;
         }
@@ -112,12 +112,12 @@ public class BattleHUDUI : MonoBehaviour
         pendingDraftItems.Add(item);
     }
 
-    public void RemovePendingTower(PendingDraftUI item)
+    public void RemovePendingTower(PendingDraftUIItem item)
     {
         RemovePendingDraft(item);
     }
 
-    public void RemovePendingDraft(PendingDraftUI item)
+    public void RemovePendingDraft(PendingDraftUIItem item)
     {
         if (item == null)
         {

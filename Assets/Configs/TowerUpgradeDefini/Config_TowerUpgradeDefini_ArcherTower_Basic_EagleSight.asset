@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
   m_Name: Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
-  displayName: Sharpened Arrows
+  displayName: Eagle Sight
   description: Attack range +1
-  icon: {fileID: 21300000, guid: c6f3ddfa43da4ad4cad2375c9d4df858, type: 3}
+  icon: {fileID: 21300000, guid: 99fb43da8047e4a35b4d7f646ba98854, type: 3}
   towerFamily: 0
   requiredTowerLevel: 1
   upgradeLayer: 0
@@ -28,4 +28,6 @@ MonoBehaviour:
   twinOrbsStartingAngleOffset: 180
   twinDronesCount: 2
   twinDronesTakeOffDelay: 0.15
+  elementType: 0
+  elementalApplyEffect: {fileID: 0}
   effectBindings: []

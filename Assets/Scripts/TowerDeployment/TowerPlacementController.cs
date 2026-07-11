@@ -25,7 +25,7 @@ public class TowerPlacementController : MonoBehaviour
     private GridNodeBehaviour currentTargetNode;
     private TowerBehaviour currentLevelUpTarget;
     private TowerBehaviour currentUpgradeTarget;
-    private PendingDraftUI currentDraftEntry;
+    private PendingDraftUIItem currentDraftEntry;
     private bool isDragging;
     private bool isTowerTargetCandidateActive;
     private bool isLevelUpPreviewActive;
@@ -80,12 +80,12 @@ public class TowerPlacementController : MonoBehaviour
         BeginPlacement(towerDefinition, null);
     }
 
-    public void BeginPlacement(TowerDefinition towerDefinition, PendingDraftUI draftedDraftEntry)
+    public void BeginPlacement(TowerDefinition towerDefinition, PendingDraftUIItem draftedDraftEntry)
     {
         BeginTowerDraftDrag(DraftResult.CreateTowerDraft(towerDefinition), draftedDraftEntry);
     }
 
-    public void BeginDraftDrag(DraftResult draftResult, PendingDraftUI draftedDraftEntry)
+    public void BeginDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
         if (draftResult == null || !draftResult.IsValid)
         {
@@ -107,7 +107,7 @@ public class TowerPlacementController : MonoBehaviour
         }
     }
 
-    private void BeginTowerDraftDrag(DraftResult draftResult, PendingDraftUI draftedDraftEntry)
+    private void BeginTowerDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
         CancelPlacement();
         EnsureRuntimeDependencies();
@@ -158,7 +158,7 @@ public class TowerPlacementController : MonoBehaviour
         UpdatePreviewPosition(Input.mousePosition);
     }
 
-    private void BeginTowerUpgradeDrag(DraftResult draftResult, PendingDraftUI draftedDraftEntry)
+    private void BeginTowerUpgradeDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
         CancelPlacement();
         EnsureRuntimeDependencies();

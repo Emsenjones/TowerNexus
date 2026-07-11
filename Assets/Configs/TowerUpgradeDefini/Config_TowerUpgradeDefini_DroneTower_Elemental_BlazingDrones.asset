@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Blazing Drones
   description: Applies Burning and overloads at max stacks
-  icon: {fileID: 21300000, guid: e7cc71f7591cdfc4584df69c9acce28a, type: 3}
+  icon: {fileID: 21300000, guid: 89fb153c4eaf44a9f9de5b85793a4fc3, type: 3}
   towerFamily: 3
   requiredTowerLevel: 3
   upgradeLayer: 2

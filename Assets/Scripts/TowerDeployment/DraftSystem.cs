@@ -179,7 +179,7 @@ public class DraftSystem : MonoBehaviour
             return 0;
         }
 
-        IReadOnlyList<PendingDraftUI> pendingDraftItems = battleHUDUI.PendingDraftItems;
+        IReadOnlyList<PendingDraftUIItem> pendingDraftItems = battleHUDUI.PendingDraftItems;
 
         if (pendingDraftItems == null)
         {
@@ -190,7 +190,7 @@ public class DraftSystem : MonoBehaviour
 
         for (int pendingIndex = 0; pendingIndex < pendingDraftItems.Count; pendingIndex++)
         {
-            PendingDraftUI pendingDraftItem = pendingDraftItems[pendingIndex];
+            PendingDraftUIItem pendingDraftItem = pendingDraftItems[pendingIndex];
             TowerUpgradeDefinition pendingUpgradeDefinition = pendingDraftItem != null
                 ? pendingDraftItem.TowerUpgradeDefinition
                 : null;

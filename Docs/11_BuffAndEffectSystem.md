@@ -25,7 +25,7 @@ The current direct damage path may remain simple while Buff And Effect System ha
 
 Projectile impact visual effects are separate from gameplay Effects. Projectile-specific impact VFX belongs to ProjectileConfig and Projectile System.
 
-Buff status and persistent Buff VFX may be authored with BuffDefinition. An EffectDefinition may optionally author one-shot feedback for the gameplay Effect it executes. These references do not move projectile impact VFX into Buff And Effect System ownership.
+Buff status and persistent Buff VFX may be authored with BuffDefinition. An EffectDefinition may optionally author execution feedback for the gameplay Effect it executes. These references do not move projectile impact VFX into Buff And Effect System ownership.
 
 EffectDefinition is the gameplay Effect source of truth for reusable effect data. EffectBinding references and projectile gameplay impact effects should point to EffectDefinition.
 
@@ -321,7 +321,7 @@ Buff definition data may include:
 - Buff apply cooldown
 - Buff event bindings for lifecycle-driven effects
 - Protection duration when an Elemental Buff should block restacking after overload
-- Status icon and optional Protection-phase icon
+- Status icon
 - Persistent Buff VFX prefab
 
 Buff runtime state should include:
@@ -368,13 +368,13 @@ Behaviour Layer EffectBindings remain responsible for generic external tower eve
 
 ### 7.1 First-Version Buff Feedback
 
-MonsterStatusBar owns UI display of health and active Buff state. It shows one icon slot per active BuffDefinition, may show stack count when it exceeds one, and uses the authored Protection-phase icon when configured. If the Protection icon is absent, the normal status icon remains the fallback.
+MonsterStatusBar owns UI display of health and active Buff state. It shows one icon slot per active BuffDefinition and may show stack count when it exceeds one. During Protection, it keeps the same StatusIcon but continuously pulses its alpha from 1 to 0 and back to 1 until Protection ends; Protection does not show a stack count.
 
-MonsterBuffVisualController owns persistent world-space Buff VFX lifecycle. It attaches authored Buff VFX at the monster hit/reference anchor, keeps one instance alive across stack, refresh, and Protection changes, and destroys it when the Buff leaves runtime state. Protection is represented by the StatusBar icon only and does not replace the persistent Buff VFX in the first version.
+MonsterBuffVisualController owns persistent world-space Buff VFX lifecycle. It attaches authored Buff VFX at the monster hit/reference anchor, keeps one instance alive across stack, refresh, and Protection changes, and destroys it when the Buff leaves runtime state. Protection is represented by the StatusBar alpha pulse only and does not replace the persistent Buff VFX in the first version.
 
-MonsterBuffRuntime does not operate UI or ParticleSystem behavior. It exposes state-change notifications and read-only Buff state snapshots so these presentation consumers can reread complete active state after apply, refresh, stack, Protection transition, removal, expiry, or cleanup. Applied, Refreshed, Stacked, and Protection notifications occur after runtime state updates; Removed and Expired notifications occur after the state leaves the active snapshot collection. Clear removes all states first and emits one notification for consumers to rebuild from the resulting empty collection. First version may rebuild all status-icon slots on each state change.
+MonsterBuffRuntime does not operate UI or ParticleSystem behavior. It exposes state-change notifications and read-only Buff state snapshots so these presentation consumers can reread complete active state after apply, refresh, stack, Protection transition, removal, expiry, or cleanup. Applied, Refreshed, Stacked, and Protection notifications occur after runtime state updates; Removed and Expired notifications occur after the state leaves the active snapshot collection. Clear removes all states first and emits one notification for consumers to rebuild from the resulting empty collection. First version may rebuild all status-icon slots on each state change. The buff-icon presentation prefab owns one shared full pulse-cycle duration, minimum alpha, maximum alpha, and easing rule for the Protection alpha animation; these are not authored per BuffDefinition.
 
-EffectDefinition may own an optional one-shot effect VFX prefab for gameplay feedback such as overload, tick, or special effect execution. It is spawned once at the trigger position or target reference position for that execution, and its prefab owns its own short lifetime.
+EffectDefinition may own an optional execution VFX prefab for gameplay feedback such as overload, tick, or special effect execution. It is spawned once at the trigger position or target reference position after at least one of that Effect's actions succeeds, and its prefab owns its own short lifetime.
 
 ---
 

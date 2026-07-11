@@ -42,7 +42,7 @@ public static class EffectExecutor
 
         if (executedAnyAction)
         {
-            SpawnOneShotEffectVfx(effectDefinition, triggerContext, executionTargets);
+            SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
         }
 
         return true;
@@ -228,14 +228,14 @@ public static class EffectExecutor
                result == BuffApplyResult.Stacked;
     }
 
-    private static void SpawnOneShotEffectVfx(
+    private static void SpawnExecutionVfx(
         EffectDefinition effectDefinition,
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
     {
-        GameObject vfxPrefab = effectDefinition != null ? effectDefinition.OneShotEffectVfxPrefab : null;
+        GameObject vfxPrefab = effectDefinition != null ? effectDefinition.ExecutionVfxPrefab : null;
 
-        if (vfxPrefab == null || !TryGetOneShotVfxPosition(triggerContext, targets, out Vector3 position))
+        if (vfxPrefab == null || !TryGetExecutionVfxPosition(triggerContext, targets, out Vector3 position))
         {
             return;
         }
@@ -243,7 +243,7 @@ public static class EffectExecutor
         Object.Instantiate(vfxPrefab, position, Quaternion.identity);
     }
 
-    private static bool TryGetOneShotVfxPosition(
+    private static bool TryGetExecutionVfxPosition(
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets,
         out Vector3 position)

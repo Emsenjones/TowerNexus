@@ -61,14 +61,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Color: {r: 0, g: 0, b: 0, a: 0.39215687}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 1d7501232a26f3d4ba68eb61c8ac5dcf, type: 3}
+  m_Sprite: {fileID: 5375086300806125636, guid: 8cb90925c0067474a8aba0fbea0868e5, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -89,9 +89,13 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e232bd451474d8f8d4c8a6c1d72c5fb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffStatusIconUI
+  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffUIItem
   iconImage: {fileID: 4816559772944373305}
   stackCountText: {fileID: 427633233180874110}
+  protectionPulseDuration: 0.4
+  protectionPulseMaxAlpha: 1
+  protectionPulseMinAlpha: 0.2
+  protectionPulseEaseType: 7
 --- !u!1 &3172876302949960193
 GameObject:
   m_ObjectHideFlags: 0
@@ -157,7 +161,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -8089747173718540712, guid: e45ddb761650d4139928623c72298283, type: 3}
+  m_Sprite: {fileID: 21300000, guid: bb573af9f461f418fa63dcd867a889f8, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

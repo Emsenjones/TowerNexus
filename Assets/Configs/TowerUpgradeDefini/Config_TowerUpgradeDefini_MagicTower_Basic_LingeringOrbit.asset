@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Lingering Orbit
   description: Magic Orbit Max Hit Count +10
-  icon: {fileID: 21300000, guid: c6f3ddfa43da4ad4cad2375c9d4df858, type: 3}
+  icon: {fileID: 21300000, guid: c96d3cb9b5f064eb3b4c9bb606258cc7, type: 3}
   towerFamily: 2
   requiredTowerLevel: 1
   upgradeLayer: 0
@@ -28,4 +28,6 @@ MonoBehaviour:
   twinOrbsStartingAngleOffset: 180
   twinDronesCount: 2
   twinDronesTakeOffDelay: 0.15
+  elementType: 0
+  elementalApplyEffect: {fileID: 0}
   effectBindings: []

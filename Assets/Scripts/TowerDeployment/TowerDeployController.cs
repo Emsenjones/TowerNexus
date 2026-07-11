@@ -31,14 +31,14 @@ public class TowerDeployController : MonoBehaviour
         this.monsterManager = monsterManager;
     }
 
-    public bool TryDeployTower(TowerPlacementPreview preview, PendingDraftUI draftedDraftEntry)
+    public bool TryDeployTower(TowerPlacementPreview preview, PendingDraftUIItem draftedDraftEntry)
     {
         return TryDeployTower(preview, draftedDraftEntry, out _);
     }
 
     public bool TryDeployTower(
         TowerPlacementPreview preview,
-        PendingDraftUI draftedDraftEntry,
+        PendingDraftUIItem draftedDraftEntry,
         out TowerBehaviour deployedTower)
     {
         deployedTower = null;

@@ -70,7 +70,7 @@ Examples:
 - AttackConfig owns tower attack presentation hooks such as attack release VFX.
 - The tower visual ownership path owns tower-side success feedback hooks such as model spawn or upgrade-applied VFX.
 - ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
-- Gameplay Effect data owns reusable gameplay effect rules and optional one-shot gameplay-effect feedback. It should not be required for purely visual projectile impact feedback.
+- Gameplay Effect data owns reusable gameplay effect rules and optional execution VFX feedback. It should not be required for purely visual projectile impact feedback.
 - BuffDefinition owns shared Elemental Buff data and may hold first-version Buff status and persistent Buff VFX references. A Buff applies to a monster independently of which tower applied it.
 
 Current combat configuration dependency flow:
@@ -339,7 +339,7 @@ Direct base attack damage does not need to migrate into Buff And Effect System i
 
 Projectile impact VFX is not owned by the Buff And Effect System. It is configured through ProjectileConfig and triggered by the Projectile System when impact occurs.
 
-Projectile impact feedback should not require gameplay Effect data. Buff status, persistent Buff VFX, and one-shot gameplay-effect VFX follow their respective Buff and Effect definitions.
+Projectile impact feedback should not require gameplay Effect data. Buff status, persistent Buff VFX, and gameplay Effect execution VFX follow their respective Buff and Effect definitions.
 
 ---
 

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_CannonTower_Basic_ReinforcedShells
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Reinforced Shells
-  description: Damage +2
-  icon: {fileID: 21300000, guid: c6f3ddfa43da4ad4cad2375c9d4df858, type: 3}
+  description: Damage +1
+  icon: {fileID: 21300000, guid: b9d873bb175664ff086cf296ac5f3aa4, type: 3}
   towerFamily: 1
   requiredTowerLevel: 1
   upgradeLayer: 0
@@ -28,4 +28,6 @@ MonoBehaviour:
   twinOrbsStartingAngleOffset: 180
   twinDronesCount: 2
   twinDronesTakeOffDelay: 0.15
+  elementType: 0
+  elementalApplyEffect: {fileID: 0}
   effectBindings: []

@@ -33,16 +33,17 @@ This task creates the visual and observation foundation required before Cold, El
 - Evolve the existing monster health-bar presentation into MonsterStatusBar.
 - Keep health display and add active Buff icon display below it.
 - Display one icon slot per active BuffDefinition, not one per stack.
-- Show stack count only when useful and display Protection state with the authored fallback icon rule.
+- Show stack count only when useful. During Protection, keep the same StatusIcon, hide the stack count, and pulse the icon alpha from 1 to 0 and back to 1 until Protection ends.
+- The Buff Icon Prefab owns shared Protection alpha pulse-cycle duration, minimum alpha, maximum alpha, and EaseType parameters; individual BuffDefinitions do not configure pulse presentation.
 - First version may rebuild the active icon slots on each Buff state refresh.
 
 ### Buff And Effect Visual Feedback
 
-- BuffDefinition supports first-version status icon, Protection icon, and persistent Buff VFX references.
-- Protection is represented by the Protection status icon, with normal status icon fallback. The normal persistent Buff VFX remains active during Protection and is not replaced.
+- BuffDefinition supports first-version StatusIcon and persistent Buff VFX references.
+- Protection is represented by the StatusIcon alpha pulse. The normal persistent Buff VFX remains active during Protection and is not replaced.
 - Monster-local Buff visual presentation owns persistent VFX lifecycle at the monster hit/reference anchor.
-- EffectDefinition may provide one-shot gameplay-effect feedback for a successfully executed tick, overload, or special Effect action.
-- A rejected ApplyBuff action, including Buff apply cooldown rejection, does not spawn one-shot Effect VFX.
+- EffectDefinition may provide execution VFX feedback for a successfully executed tick, overload, or special Effect action.
+- A rejected ApplyBuff action, including Buff apply cooldown rejection, does not spawn Effect execution VFX.
 - Projectile impact VFX remains owned by ProjectileConfig and Projectile System.
 
 ## Shared Constraints
@@ -63,8 +64,8 @@ This task creates the visual and observation foundation required before Cold, El
 - Fire Buff state visibly reflects Applied, Stacked, Protection, and Removed or Expired states.
 - MonsterStatusBar keeps health display behavior and correctly displays active Buff state.
 - Persistent Buff VFX is created, retained through refresh, stack, and Protection, and destroyed on removal.
-- Protection uses the authored Protection status icon with normal icon fallback; it does not replace the persistent Buff VFX.
-- One-shot gameplay Effect VFX remains distinct from projectile impact VFX and spawns only when its Effect action succeeds.
-- Buff apply cooldown rejection causes no StatusBar or one-shot Effect VFX change.
+- Protection uses the StatusIcon alpha pulse and hides its stack count; it does not replace the persistent Buff VFX.
+- Gameplay Effect execution VFX remains distinct from projectile impact VFX and spawns only when its Effect action succeeds.
+- Buff apply cooldown rejection causes no StatusBar or Effect execution VFX change.
 - Monster death, target arrival, reset, and destruction clear runtime states first, then clear presentation from one resulting Clear notification.
 - This foundation is stable before Task009, Task010, or Task013 begins implementation.
