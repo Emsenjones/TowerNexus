@@ -17,13 +17,13 @@ This system answers:
 - When attack hit, contact, or impact events can provide context for reusable Effect execution
 - When attack animation and presentation requests are issued
 
-The Tower Runtime Combat System consumes data from the Tower Framework System and coordinates downstream runtime systems such as Projectile System, Monster System, and Buff And Effect System.
+The Tower Runtime Combat System consumes data from the Tower Framework System and coordinates downstream runtime systems such as Projectile System, Monster System, Effect System, and Buff System.
 
 It does not define what a tower is.
 
 It does not own tower placement, projectile movement, buff state, elemental stack rules, overload rules, monster health, or static tower configuration.
 
-For Elemental Layer content, the attacking runtime determines the real attack boundary and provides the current tower's Elemental apply effect to Buff And Effect System. It does not expose a designer-selected trigger type for this path: projectile hit, orb contact, or shell impact are runtime facts, while the upgrade only declares the Elemental effect to apply.
+For Elemental Layer content, the attacking runtime determines the real attack boundary and provides the current tower's Elemental apply Effect to Effect System. It does not expose a designer-selected trigger type for this path: projectile hit, orb contact, or shell impact are runtime facts, while the upgrade only declares the Elemental Effect to apply.
 
 ---
 
@@ -75,7 +75,8 @@ Recommended ownership boundary:
 | Tower Runtime Combat System | Tower attack state, target selection execution, resolved runtime stats, cooldowns, attack execution |
 | Projectile System | Projectile movement, hit detection, impact event triggering, projectile destruction |
 | Monster System | Monster lifecycle, movement, health, death handling |
-| Buff And Effect System | Buff application, buff lifetime, reusable effect execution, Elemental stack and overload rules |
+| Effect System | Reusable Effect execution, target resolution, EffectZone, and specialized Effect entities |
+| Buff System | Buff application and lifetime, lifecycle bindings, Elemental stacks, overload, and Protection |
 
 ---
 
@@ -276,7 +277,7 @@ Elemental attack handoff follows the actual attack behavior:
 - Magic Orb contact provides a single-target elemental application opportunity.
 - Cannon shell impact provides an area resolution opportunity; every valid monster resolved by that explosion may receive the Elemental application.
 
-These attack events may identify source tower, affected monster or impact position, and the elemental-application eligibility needed by Buff And Effect System. They do not execute Buff lifecycle, stack, overload, or reaction behavior themselves.
+These attack events may identify source tower, affected monster or impact position, and the elemental-application eligibility needed by Effect System. They do not execute Buff lifecycle, stack, overload, or reaction behavior themselves.
 
 ---
 
@@ -429,7 +430,7 @@ Magic Orb combat parameters such as orbit radius, contact distance, same-target 
 
 MagicOrbBehaviour executes orbit movement, contact detection, hit count consumption, and lifetime using AttackConfig data.
 
-Persistent status effects applied by future Magic Orb upgrades should be delegated to Buff And Effect System.
+Persistent status effects applied by future Magic Orb upgrades should be delegated through Effect System to Buff System.
 
 ---
 
@@ -506,7 +507,7 @@ Drone uses attackRange as the tower detect and launch range in the first version
 
 Drone projectile movement and projectile hit detection belong to Projectile System after projectile creation.
 
-Persistent status effects applied by future Drone projectiles or Drone battery-end effects should be delegated to Buff And Effect System.
+Persistent status effects applied by future Drone projectiles or Drone battery-end effects should be delegated through Effect System to Buff System.
 
 For Drone Tower, AttackOrigin acts as the Drone release point only. Released Drones should not depend on tower model child Transforms after launch.
 
@@ -603,7 +604,7 @@ Projectile System should not select tower targets or manage tower cooldowns.
 
 ---
 
-# 15. Relationship With Buff And Effect System
+# 15. Relationship With Effect System And Buff System
 
 Tower Runtime Combat may directly apply simple runtime damage for first-version non-projectile attacks.
 
@@ -633,7 +634,7 @@ AttackInterval improvements may use negative deltas.
 
 Behaviour upgrades are active packages recorded on the tower instance. Tower Runtime Combat may coordinate those packages, but the actual behaviour should remain inside the corresponding runtime module instead of moving into TowerUpgradeSystem.
 
-Buff And Effect System should own reusable effect and buff execution.
+Effect System should own reusable Effect execution, and Buff System should own persistent Buff execution.
 
 Examples:
 
@@ -648,7 +649,7 @@ Tower Runtime Combat should delegate future complex effects instead of embedding
 
 Runtime Combat and Attack Entity behavior may provide trigger context that includes source tower, source upgrade, target monster, trigger position, impact position, resolved damage, and stack eligibility when relevant.
 
-The first-version damage direction remains that base attack damage can use the existing direct damage path. Buff And Effect System may run additional Effect, Buff, Zone, and Elemental results around that path without forcing an immediate DamageContext migration.
+The first-version damage direction remains that base attack damage can use the existing direct damage path. Effect System and Buff System may run additional Effect, Buff, Zone, and Elemental results around that path without forcing an immediate DamageContext migration.
 
 ---
 

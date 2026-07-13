@@ -22,12 +22,12 @@ This system focuses on the following core gameplay loop and current Monster-rela
 - Monster damage number display through current Task implementation scope
 - Notifying Player System when monsters reach the target node
 - Providing path validation functionality used by Tower Placement System
-- Providing safe runtime endpoints for future Buff And Effect movement or path effects
+- Providing safe runtime endpoints for future Buff System lifecycle and Effect System movement or path requests
 
 The first version of the Monster System is intentionally kept simple and extensible.
 Future features such as Boss mechanics, elite monsters, flying enemies, abnormal states, and advanced AI behaviors will be added in later phases.
 
-Future Buff And Effect gameplay may request monster state changes such as slow, freeze, or path-position shift. Monster System should own the safe movement, pathfinding, and runtime state operations needed to perform those effects. Buff And Effect System should request those operations rather than directly modifying monster transforms or bypassing pathfinding ownership.
+Future Buff and Effect gameplay may request monster state changes such as slow, freeze, or path-position shift. Monster System should own the safe movement, pathfinding, and runtime state operations needed to perform those effects. Buff lifecycle Effects should request those operations rather than directly modifying monster transforms or bypassing pathfinding ownership.
 
 ---
 
@@ -264,18 +264,18 @@ HitAnchor does not own monster movement, pathfinding, collision shape, damage ap
 
 Monster System owns monster health, movement, pathfinding state, current node state, path recalculation, death, and arrival flow.
 
-Buff And Effect System may apply gameplay results to monsters, but those results should pass through Monster System-owned runtime capabilities.
+Effect System actions and Buff lifecycle Effects may apply gameplay results to monsters, but those results should pass through Monster System-owned runtime capabilities.
 
 MonsterBehaviour owns attached Buff runtime state through an internal plain C# MonsterBuffRuntime container. Buff runtime instances are not MonoBehaviour components and should be cleared when the monster dies, despawns, is destroyed, or is reset for future pooling.
 
 Examples:
 
 - Damage effects may request monster damage processing.
-- Slow effects may request a safe movement-speed modifier path.
-- Frozen effects may request a safe temporary movement lock.
+- Buff lifecycle effects may request or clear the active slow.
+- Buff lifecycle effects may request or clear the Frozen movement lock.
 - Storm Shift or similar path effects may request a safe grid-node relocation and path recalculation.
 
-Buff And Effect System should not directly:
+Effect System and Buff System should not directly:
 
 - Modify monster Transform position for path logic.
 - Change current grid node without Monster System ownership.
@@ -306,6 +306,14 @@ Monster starts moving
 
 Monster stops moving
 → Animator.SetBool("IsWalking", false)
+
+Frozen movement lock becomes active
+→ effective move speed resolves to 0
+→ Animator.SetBool("IsWalking", false)
+→ isMoving, path, path index, and current node remain unchanged
+
+Frozen movement lock ends while the monster still has a path
+→ Animator.SetBool("IsWalking", true)
 ```
 
 The exact Animator parameter name should be configurable through MonsterDefinition.

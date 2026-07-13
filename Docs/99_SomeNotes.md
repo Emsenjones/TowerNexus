@@ -77,12 +77,13 @@
    1. *Effect trigger and Binding foundation;
    2. *Definition action and targeting foundation
    3. *Monster buff runtime foundation
-   4. Elemental upgrade profile and eligibility
-   5. Fire element vertical slice
-   6. Cold and electric element slices
-   7. Effect zone foundation
-   8. Tower upgrade behavior layer Phase2 implementation;
-   9. Wind element and moving effect zone
+   4. *Elemental upgrade profile and eligibility
+   5. *Fire element vertical slice
+   6. *Monster Slow And Frozen Control API
+   7. Cold and electric element slices
+   8. Effect zone foundation
+   9. Tower upgrade behavior layer Phase2 implementation;
+   10. Wind element and moving effect zone
 8. Player Level up by resolving monsters;
 9. Level configuration design;
 10. Tap tower to pop up TowerInfoWindow;

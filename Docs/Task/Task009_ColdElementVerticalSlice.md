@@ -8,19 +8,21 @@ Implement Cold as the second complete Elemental vertical slice using shared Cold
 
 - `Docs/04_MonsterSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 
 - Task006 shared Elemental application entry is stable.
 - Task007 MonsterStatusBar and Buff visual feedback are stable.
 - Task008 Slow and Frozen control API is stable.
+- Task009-1 Buff lifecycle Effect binding refactor is stable.
 
 ## Scope
 
 ### Shared Cold Data
 
-- Create one shared Cold BuffDefinition with shared Elemental Buff data.
+- Create one shared stackable Cold BuffDefinition and one shared non-Elemental, non-stackable Frozen BuffDefinition.
 - Create the necessary Cold apply, lifecycle, overload, and presentation Effect data.
 - Cold gameplay after application is independent of source tower identity.
 
@@ -32,9 +34,11 @@ Implement Cold as the second complete Elemental vertical slice using shared Cold
 
 ### Cold Behavior
 
-- Active Cold slows the monster through Task008's safe API.
-- First apply does not trigger stack-only behavior.
-- Frozen overload temporarily locks movement through Task008's safe API.
+- Cold Applied requests slow through Task008's safe API.
+- Cold Overload executes an Apply Frozen Effect whose ApplyBuff action applies Frozen.
+- Frozen Applied requests movement lock through Task008's safe API; Frozen Removed clears it.
+- Cold EnteredProtection and Removed clear slow through Task008's safe API.
+- First Cold apply does not trigger stack-only behavior; a Frozen refresh does not create a second lock.
 - Cold Protection blocks only Cold restacking and does not block damage by default.
 
 ## Shared Constraints

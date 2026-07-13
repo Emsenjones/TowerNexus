@@ -11,6 +11,10 @@ public class MonsterBehaviour : MonoBehaviour
     private DamageNumberManager damageNumberManager;
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
+    [TitleGroup("Movement Control")]
+    [ShowInInspector, ReadOnly] private float coldSlowMultiplier = 1f;
+    [TitleGroup("Movement Control")]
+    [ShowInInspector, ReadOnly] private bool isFrozen;
     [SerializeField] private Animator animator;
     [SerializeField] private MonsterHitFeedback hitFeedback;
     [SerializeField] private MonsterBuffVisualController buffVisualController;
@@ -39,6 +43,8 @@ public class MonsterBehaviour : MonoBehaviour
     public IReadOnlyList<GridNodeBehaviour> CurrentPath => currentPath;
     public int PathIndex => pathIndex;
     public bool IsMoving => isMoving;
+    public float ColdSlowMultiplier => coldSlowMultiplier;
+    public bool IsFrozen => isFrozen;
     [TitleGroup("Buff Runtime")]
     [ShowInInspector, ReadOnly]
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveBuffSnapshots => buffRuntime != null ? buffRuntime.ActiveSnapshots : EmptyBuffSnapshots;
@@ -59,13 +65,14 @@ public class MonsterBehaviour : MonoBehaviour
 
         this.definition = definition;
         currentHealth = definition.MaxHealth;
-        currentMoveSpeed = definition.MoveSpeed;
+        ClearMovementControls();
         EnsureBuffRuntime();
         buffRuntime.Clear();
         CacheBuffVisualController();
         isDead = false;
         isCleaningUp = false;
         CacheAnimator();
+        RefreshEffectiveMoveSpeed();
         CacheHitFeedback();
         hitFeedback?.Initialize(definition);
         NotifyHealthChanged();
@@ -146,14 +153,39 @@ public class MonsterBehaviour : MonoBehaviour
         }
 
         isMoving = pathIndex < currentPath.Count;
-        SetWalkingAnimation(isMoving);
+        RefreshMovementAnimation();
     }
 
     public void StopMovement()
     {
         isMoving = false;
         pathIndex = 0;
-        SetWalkingAnimation(false);
+        RefreshMovementAnimation();
+    }
+
+    public bool SetColdSlowMultiplier(float multiplier)
+    {
+        if (float.IsNaN(multiplier) || float.IsInfinity(multiplier) || multiplier <= 0f || multiplier >= 1f)
+        {
+            Debug.LogWarning("Monster cold slow multiplier must be greater than zero and less than one.", this);
+            return false;
+        }
+
+        coldSlowMultiplier = multiplier;
+        RefreshEffectiveMoveSpeed();
+        return true;
+    }
+
+    public void ClearColdSlow()
+    {
+        coldSlowMultiplier = 1f;
+        RefreshEffectiveMoveSpeed();
+    }
+
+    public void SetFrozenMovementLock(bool isLocked)
+    {
+        isFrozen = isLocked;
+        RefreshEffectiveMoveSpeed();
     }
 
     public void TakeDamage(int damage)
@@ -181,9 +213,11 @@ public class MonsterBehaviour : MonoBehaviour
             return;
         }
 
-        isDead = true;
+        isCleaningUp = true;
         buffRuntime?.Clear();
+        isDead = true;
         StopMovement();
+        ClearMovementControls();
         currentPath.Clear();
         hitFeedback?.StopFeedback();
         OnDied?.Invoke(this);
@@ -231,12 +265,6 @@ public class MonsterBehaviour : MonoBehaviour
         return buffRuntime.HasBuff(buffDefinition);
     }
 
-    public bool TryEnterBuffProtection(BuffDefinition buffDefinition)
-    {
-        EnsureBuffRuntime();
-        return buffRuntime.TryEnterProtectionPhase(buffDefinition);
-    }
-
     private void Awake()
     {
         CacheAnimator();
@@ -262,6 +290,7 @@ public class MonsterBehaviour : MonoBehaviour
     private void OnDestroy()
     {
         buffRuntime?.Clear();
+        ClearMovementControls();
         if (buffRuntime != null)
         {
             buffRuntime.OnStateChanged -= HandleBuffStateChanged;
@@ -319,6 +348,25 @@ public class MonsterBehaviour : MonoBehaviour
         }
     }
 
+    private void ClearMovementControls()
+    {
+        coldSlowMultiplier = 1f;
+        isFrozen = false;
+        RefreshEffectiveMoveSpeed();
+    }
+
+    private void RefreshEffectiveMoveSpeed()
+    {
+        float baseMoveSpeed = definition != null ? Mathf.Max(0f, definition.MoveSpeed) : 0f;
+        currentMoveSpeed = isFrozen ? 0f : baseMoveSpeed * coldSlowMultiplier;
+        RefreshMovementAnimation();
+    }
+
+    private void RefreshMovementAnimation()
+    {
+        SetWalkingAnimation(isMoving && !isFrozen);
+    }
+
     private void MoveAlongPath()
     {
         if (pathIndex < 0 || pathIndex >= currentPath.Count)
@@ -374,6 +422,7 @@ public class MonsterBehaviour : MonoBehaviour
         isCleaningUp = true;
         buffRuntime?.Clear();
         StopMovement();
+        ClearMovementControls();
         currentPath.Clear();
         hitFeedback?.StopFeedback();
         OnTargetReached?.Invoke(this);

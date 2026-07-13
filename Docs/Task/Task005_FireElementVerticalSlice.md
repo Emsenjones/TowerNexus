@@ -22,7 +22,8 @@ Elemental upgrade eligibility
 - `Docs/08_TowerRuntimeCombatSystem.md`
 - `Docs/09_ProjectileSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 
@@ -131,7 +132,7 @@ The following should keep Elemental stack eligibility disabled:
 
 Base attack damage should remain in the existing direct damage path.
 
-Fire Elemental behavior runs around that path through attack context and Buff And Effect System rules.
+Fire Elemental behavior runs around that path through attack context, Effect System execution, and Buff System rules.
 
 This task should not migrate base attack damage into DamageContext.
 

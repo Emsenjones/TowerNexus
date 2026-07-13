@@ -10,7 +10,8 @@ Fire is validation content for the shared pipeline. It must not retain a separat
 
 - `Docs/08_TowerRuntimeCombatSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 

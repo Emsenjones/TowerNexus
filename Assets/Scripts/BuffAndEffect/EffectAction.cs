@@ -14,10 +14,15 @@ public class EffectAction
     [TitleGroup("Effect Action")]
     [ShowIf(nameof(IsApplyBuffAction))]
     [SerializeField] private BuffDefinition buffDefinition;
+    [TitleGroup("Effect Action")]
+    [ShowIf(nameof(IsApplySlowAction))]
+    [Range(0.01f, 0.99f)]
+    [SerializeField] private float slowMultiplier = 0.5f;
 
     public EffectActionType ActionType => actionType;
     public int DamageAmount => Mathf.Max(0, damageAmount);
     public BuffDefinition BuffDefinition => buffDefinition;
+    public float SlowMultiplier => slowMultiplier;
 
     public bool IsValid()
     {
@@ -32,6 +37,13 @@ public class EffectAction
             return false;
         }
 
+        if (actionType == EffectActionType.ApplySlow &&
+            (float.IsNaN(slowMultiplier) || float.IsInfinity(slowMultiplier) || slowMultiplier <= 0f || slowMultiplier >= 1f))
+        {
+            Debug.LogWarning("Effect action is invalid: ApplySlow action requires a multiplier greater than zero and less than one.");
+            return false;
+        }
+
         return true;
     }
 
@@ -43,5 +55,10 @@ public class EffectAction
     private bool IsDealDamageAction()
     {
         return actionType == EffectActionType.DealDamage;
+    }
+
+    private bool IsApplySlowAction()
+    {
+        return actionType == EffectActionType.ApplySlow;
     }
 }

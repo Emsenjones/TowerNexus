@@ -355,7 +355,7 @@ Examples of Behaviour Layer package parameters:
 
 TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
-Elemental Layer identity should use a typed ElementType rather than a free-form string. Each Elemental Layer upgrade also declares one Elemental apply effect. Runtime systems ask the tower upgrade state whether a tower owns an Elemental upgrade, then provide that apply effect at the real attack boundary for Buff And Effect System execution.
+Elemental Layer identity should use a typed ElementType rather than a free-form string. Each Elemental Layer upgrade also declares one Elemental apply Effect. Runtime systems ask the tower upgrade state whether a tower owns an Elemental upgrade, then provide that apply Effect at the real attack boundary for Effect System execution.
 
 Effect bindings remain available for generic trigger-driven Behaviour content. They describe which gameplay trigger may execute which Effect definition. Elemental Layer content does not expose a designer-selected TriggerType in v1: its runtime producer decides whether the real event is a hit, contact, impact, or area resolution. Basic Layer upgrades should not define Effect bindings in the first version because Basic Layer remains a pure numerical layer.
 
@@ -503,7 +503,7 @@ TowerUpgradeSystem remains responsible for upgrade ownership, validation, and ap
 
 Behaviour Layer upgrades that need reusable gameplay effects may define Effect bindings. For example, an impact-based Cannon behaviour may bind projectile impact to a shared effect or zone-spawn definition instead of hardcoding duplicate area-query or tick logic inside the Cannon runtime.
 
-Effect-backed behaviour packages should wait for the Buff And Effect System foundation when they need reusable area damage, delayed area damage, or repeated area damage over duration.
+Effect-backed behaviour packages should wait for the Effect System foundation when they need reusable area damage, delayed area damage, or repeated area damage over duration.
 
 Examples:
 
@@ -511,7 +511,7 @@ Examples:
 - Cannon Timed Shell
 - Magic Orb Splash
 
-Advanced behaviour packages should be reviewed after combat runtime and Buff And Effect System contracts are stable when they require target reacquisition, chained projectile behaviour, tracking projectiles, per-target stack state, or Drone lifecycle changes.
+Advanced behaviour packages should be reviewed after combat runtime and Effect System and Buff System contracts are stable when they require target reacquisition, chained projectile behaviour, tracking projectiles, per-target stack state, or Drone lifecycle changes.
 
 Examples:
 
@@ -523,7 +523,7 @@ Examples:
 
 Damage upgrade examples should modify runtime damage bonuses rather than overwrite TowerLevelConfig.basicDamage. TowerLevelConfig.basicDamage remains the tower's level-based base stat.
 
-Behaviour packages should not duplicate shared area-query, delayed-damage, repeated-damage, buff, or effect execution logic inside individual tower runtimes when that logic belongs to the Buff And Effect System. Tower runtimes may request or trigger those effects, but reusable effect resolution should remain in the Buff And Effect System.
+Behaviour packages should not duplicate shared area-query, delayed-damage, repeated-damage, Buff, or Effect execution logic inside individual tower runtimes when that logic belongs to Effect System or Buff System. Tower runtimes may request or trigger those Effects, but reusable Effect resolution remains in Effect System and persistent Buff rules remain in Buff System.
 
 Purpose:
 
@@ -548,7 +548,7 @@ Elemental Layer upgrades are intended to make path segments smarter and more dan
 
 Each tower may receive one Elemental Layer upgrade in the first version.
 
-Tower-owned attack events from elemental towers may apply elemental debuff stacks through Buff And Effect System when their runtime context explicitly allows Elemental stack application. Multiple towers whose active Elemental upgrades share the same ElementType stack the same elemental debuff on the same monster and can eventually trigger overload.
+Tower-owned attack events from elemental towers may apply Elemental debuff stacks through Effect System and Buff System when their runtime context explicitly allows Elemental stack application. Multiple towers whose active Elemental upgrades share the same ElementType stack the same Elemental debuff on the same monster and can eventually trigger overload.
 
 Reaction-generated damage, buff tick damage, EffectZone tick damage, and overload damage should not apply elemental stacks by default. Elemental stacking should remain tied to explicitly eligible tower-owned attack events unless a future reviewed upgrade explicitly expands that rule.
 

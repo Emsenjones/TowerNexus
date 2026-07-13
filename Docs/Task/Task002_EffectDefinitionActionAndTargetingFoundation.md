@@ -11,7 +11,7 @@ This task turns Task001 trigger context and bindings into executable Effect beha
 - `Docs/08_TowerRuntimeCombatSystem.md`
 - `Docs/09_ProjectileSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
 - `Docs/04_MonsterSystem.md`
 
 ## Prerequisites

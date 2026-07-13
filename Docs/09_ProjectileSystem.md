@@ -451,9 +451,9 @@ Cannon-style projectiles that should not apply direct single-target damage can d
 
 The Projectile System should not directly apply buffs.
 
-For complex impact behavior such as area damage, buff application, chained effects, Elemental stack rules, overload rules, or future special mechanics, the Projectile System should generate impact or hit trigger context and delegate execution to the Buff And Effect System.
+For complex impact behavior such as area damage, Buff application, chained Effects, Elemental stack rules, overload rules, or future special mechanics, the Projectile System should generate impact or hit trigger context and delegate execution to Effect System.
 
-Projectile impact VFX remains presentation-only and belongs to ProjectileConfig and Projectile System impact playback. It should not be routed through Buff And Effect System.
+Projectile impact VFX remains presentation-only and belongs to ProjectileConfig and Projectile System impact playback. It should not be routed through Effect System or Buff System.
 
 ---
 
@@ -494,7 +494,7 @@ Drone orbit movement, battery lifetime, battery-end destruction, and burst timin
 
 ---
 
-### Buff And Effect System
+### Effect System And Buff System
 
 Responsible for:
 
@@ -564,4 +564,4 @@ The system is responsible for:
 - Triggering impact events
 - Destroying projectiles
 
-The system should remain independent from tower-specific logic. Simple projectile-to-monster hits may dispatch direct single-target damage, while complex combat results should be delegated to the Buff And Effect System.
+The system should remain independent from tower-specific logic. Simple projectile-to-monster hits may dispatch direct single-target damage, while complex combat results should be delegated to Effect System and, when persistent state is needed, Buff System.

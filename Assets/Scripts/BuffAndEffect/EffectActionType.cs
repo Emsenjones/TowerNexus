@@ -1,5 +1,9 @@
 public enum EffectActionType
 {
-    DealDamage,
-    ApplyBuff
+    DealDamage = 0,
+    ApplyBuff = 1,
+    ApplySlow = 2,
+    ClearSlow = 3,
+    LockMovement = 4,
+    UnlockMovement = 5
 }

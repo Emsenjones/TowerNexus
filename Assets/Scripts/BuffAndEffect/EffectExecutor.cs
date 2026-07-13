@@ -64,6 +64,14 @@ public static class EffectExecutor
                 return ExecuteDealDamage(action, triggerContext, targets);
             case EffectActionType.ApplyBuff:
                 return ExecuteApplyBuff(action, triggerContext, targets);
+            case EffectActionType.ApplySlow:
+                return ExecuteApplySlow(action, targets);
+            case EffectActionType.ClearSlow:
+                return ExecuteClearSlow(targets);
+            case EffectActionType.LockMovement:
+                return ExecuteSetFrozenMovementLock(targets, true);
+            case EffectActionType.UnlockMovement:
+                return ExecuteSetFrozenMovementLock(targets, false);
             default:
                 Debug.LogWarning($"Effect executor cannot execute unsupported action type '{action.ActionType}'.");
                 return false;
@@ -146,79 +154,70 @@ public static class EffectExecutor
             }
 
             appliedBuff = true;
-            ExecuteBuffApplyFollowUps(outcome, triggerContext);
         }
 
         return appliedBuff;
     }
 
-    private static void ExecuteBuffApplyFollowUps(
-        BuffApplyOutcome outcome,
-        EffectTriggerContext triggerContext)
+    private static bool ExecuteApplySlow(
+        EffectAction action,
+        IReadOnlyList<MonsterBehaviour> targets)
     {
-        MonsterBuffInstance buffInstance = outcome.BuffInstance;
-        BuffDefinition buffDefinition = buffInstance != null ? buffInstance.Definition : null;
-        MonsterBehaviour owner = buffInstance != null ? buffInstance.Owner : null;
+        bool appliedSlow = false;
 
-        if (buffDefinition == null || owner == null)
+        for (int i = 0; i < targets.Count; i++)
         {
-            return;
+            MonsterBehaviour target = targets[i];
+
+            if (target != null && !target.IsDead() && target.SetColdSlowMultiplier(action.SlowMultiplier))
+            {
+                appliedSlow = true;
+            }
         }
 
-        if (outcome.Result == BuffApplyResult.Stacked)
-        {
-            ExecuteBuffFollowUpEffect(
-                buffDefinition.GetEffectDefinition(BuffEventType.StackApplied),
-                EffectTriggerType.OnHit,
-                triggerContext,
-                owner);
-        }
-
-        if (!outcome.ReachedMaxStacks)
-        {
-            return;
-        }
-
-        ExecuteBuffFollowUpEffect(
-            buffDefinition.GetEffectDefinition(BuffEventType.Overload),
-            EffectTriggerType.OnMaxStack,
-            triggerContext,
-            owner);
-
-        if (owner.TryEnterBuffProtection(buffDefinition))
-        {
-            return;
-        }
-
-        owner.RemoveBuff(buffDefinition);
+        return appliedSlow;
     }
 
-    private static void ExecuteBuffFollowUpEffect(
-        EffectDefinition effectDefinition,
-        EffectTriggerType triggerType,
-        EffectTriggerContext sourceContext,
-        MonsterBehaviour owner)
+    private static bool ExecuteClearSlow(IReadOnlyList<MonsterBehaviour> targets)
     {
-        if (effectDefinition == null || owner == null)
+        bool clearedSlow = false;
+
+        for (int i = 0; i < targets.Count; i++)
         {
-            return;
+            MonsterBehaviour target = targets[i];
+
+            if (target == null || target.IsDead())
+            {
+                continue;
+            }
+
+            target.ClearColdSlow();
+            clearedSlow = true;
         }
 
-        Transform hitAnchor = owner.HitAnchor;
-        Vector3 triggerPosition = hitAnchor != null ? hitAnchor.position : owner.transform.position;
+        return clearedSlow;
+    }
 
-        Execute(
-            effectDefinition,
-            new EffectTriggerContext(
-                triggerType,
-                sourceContext.SourceTower,
-                sourceContext.SourceUpgrade,
-                owner,
-                true,
-                triggerPosition,
-                0,
-                false)
-        );
+    private static bool ExecuteSetFrozenMovementLock(
+        IReadOnlyList<MonsterBehaviour> targets,
+        bool isLocked)
+    {
+        bool updatedMovementLock = false;
+
+        for (int i = 0; i < targets.Count; i++)
+        {
+            MonsterBehaviour target = targets[i];
+
+            if (target == null || target.IsDead())
+            {
+                continue;
+            }
+
+            target.SetFrozenMovementLock(isLocked);
+            updatedMovementLock = true;
+        }
+
+        return updatedMovementLock;
     }
 
     private static bool IsSuccessfulBuffApply(BuffApplyResult result)

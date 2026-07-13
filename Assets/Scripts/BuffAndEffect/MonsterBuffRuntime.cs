@@ -1,11 +1,16 @@
-using System.Collections.Generic;
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class MonsterBuffRuntime
 {
     private readonly MonsterBehaviour owner;
     private readonly List<MonsterBuffInstance> buffInstances = new List<MonsterBuffInstance>();
     private readonly List<MonsterBuffStateSnapshot> activeSnapshots = new List<MonsterBuffStateSnapshot>();
+    private readonly HashSet<MonsterBuffInstance> removalInProgress = new HashSet<MonsterBuffInstance>();
+
+    private int stateMutationDepth;
+    private bool stateRefreshPending;
 
     public MonsterBuffRuntime(MonsterBehaviour owner)
     {
@@ -30,42 +35,80 @@ public class MonsterBuffRuntime
             return new BuffApplyOutcome(BuffApplyResult.Invalid, null, false, false);
         }
 
-        MonsterBuffInstance existingInstance = FindBuffInstance(buffDefinition);
+        BeginStateMutation();
 
-        if (existingInstance == null)
+        try
         {
-            MonsterBuffInstance buffInstance = new MonsterBuffInstance(request, owner);
-            buffInstances.Add(buffInstance);
-            RefreshSnapshotsAndNotify();
-            return new BuffApplyOutcome(BuffApplyResult.Applied, buffInstance, false, false);
+            MonsterBuffInstance existingInstance = FindBuffInstance(buffDefinition);
+
+            if (existingInstance == null)
+            {
+                MonsterBuffInstance buffInstance = new MonsterBuffInstance(request, owner);
+                buffInstances.Add(buffInstance);
+                QueueStateRefresh();
+                ExecuteLifecycleEffect(buffInstance, BuffEventType.Applied);
+                return new BuffApplyOutcome(BuffApplyResult.Applied, buffInstance, false, false);
+            }
+
+            if (removalInProgress.Contains(existingInstance))
+            {
+                return new BuffApplyOutcome(BuffApplyResult.Invalid, existingInstance, true, false);
+            }
+
+            int previousStackCount = existingInstance.StackCount;
+            BuffApplyResult result = existingInstance.TryReapply(request);
+
+            if (!IsSuccessfulApplyResult(result))
+            {
+                return new BuffApplyOutcome(result, existingInstance, true, false);
+            }
+
+            QueueStateRefresh();
+
+            bool reachedMaxStacks = result == BuffApplyResult.Stacked &&
+                                    previousStackCount < buffDefinition.MaxStacks &&
+                                    existingInstance.StackCount >= buffDefinition.MaxStacks;
+
+            if (result == BuffApplyResult.Stacked)
+            {
+                ExecuteLifecycleEffect(existingInstance, BuffEventType.StackApplied);
+            }
+
+            if (reachedMaxStacks && IsActive(existingInstance))
+            {
+                ExecuteLifecycleEffect(existingInstance, BuffEventType.Overload);
+
+                if (IsActive(existingInstance) && existingInstance.TryEnterProtectionPhase())
+                {
+                    QueueStateRefresh();
+                    ExecuteLifecycleEffect(existingInstance, BuffEventType.EnteredProtection);
+                }
+                else if (IsActive(existingInstance))
+                {
+                    RemoveBuffInstance(existingInstance);
+                }
+            }
+
+            return new BuffApplyOutcome(result, existingInstance, true, reachedMaxStacks);
         }
-
-        int previousStackCount = existingInstance.StackCount;
-        BuffApplyResult result = existingInstance.TryReapply(request);
-        bool reachedMaxStacks = result == BuffApplyResult.Stacked &&
-                                previousStackCount < buffDefinition.MaxStacks &&
-                                existingInstance.StackCount >= buffDefinition.MaxStacks;
-
-        if (IsSuccessfulApplyResult(result))
+        finally
         {
-            RefreshSnapshotsAndNotify();
+            EndStateMutation();
         }
-
-        return new BuffApplyOutcome(result, existingInstance, true, reachedMaxStacks);
     }
 
     public bool RemoveBuff(BuffDefinition buffDefinition)
     {
-        MonsterBuffInstance buffInstance = FindBuffInstance(buffDefinition);
+        BeginStateMutation();
 
-        if (buffInstance == null)
+        try
         {
-            return false;
+            return RemoveBuffInstance(FindBuffInstance(buffDefinition));
         }
-
-        buffInstances.Remove(buffInstance);
-        RefreshSnapshotsAndNotify();
-        return true;
+        finally
+        {
+            EndStateMutation();
+        }
     }
 
     public bool HasBuff(BuffDefinition buffDefinition)
@@ -75,22 +118,47 @@ public class MonsterBuffRuntime
 
     public void Tick(float deltaTime)
     {
-        bool removedAnyInstance = false;
+        BeginStateMutation();
 
-        for (int i = buffInstances.Count - 1; i >= 0; i--)
+        try
         {
-            MonsterBuffInstance buffInstance = buffInstances[i];
+            List<MonsterBuffInstance> tickSnapshot = new List<MonsterBuffInstance>(buffInstances);
 
-            if (buffInstance == null || !buffInstance.Tick(deltaTime))
+            for (int i = 0; i < tickSnapshot.Count; i++)
             {
-                buffInstances.RemoveAt(i);
-                removedAnyInstance = true;
+                MonsterBuffInstance buffInstance = tickSnapshot[i];
+
+                if (buffInstance == null)
+                {
+                    if (buffInstances.Remove(buffInstance))
+                    {
+                        QueueStateRefresh();
+                    }
+
+                    continue;
+                }
+
+                if (!IsActive(buffInstance) || removalInProgress.Contains(buffInstance))
+                {
+                    continue;
+                }
+
+                bool remainsActive = buffInstance.Tick(deltaTime, out int periodicTickCount);
+
+                for (int tickIndex = 0; tickIndex < periodicTickCount && IsActive(buffInstance); tickIndex++)
+                {
+                    ExecuteLifecycleEffect(buffInstance, BuffEventType.PeriodicTick);
+                }
+
+                if (!remainsActive && IsActive(buffInstance))
+                {
+                    RemoveBuffInstance(buffInstance);
+                }
             }
         }
-
-        if (removedAnyInstance)
+        finally
         {
-            RefreshSnapshotsAndNotify();
+            EndStateMutation();
         }
     }
 
@@ -101,21 +169,56 @@ public class MonsterBuffRuntime
             return;
         }
 
-        buffInstances.Clear();
-        RefreshSnapshotsAndNotify();
+        BeginStateMutation();
+
+        try
+        {
+            List<MonsterBuffInstance> clearSnapshot = new List<MonsterBuffInstance>(buffInstances);
+
+            if (clearSnapshot.Count == 0 && activeSnapshots.Count > 0)
+            {
+                QueueStateRefresh();
+            }
+
+            for (int i = 0; i < clearSnapshot.Count; i++)
+            {
+                RemoveBuffInstance(clearSnapshot[i]);
+            }
+        }
+        finally
+        {
+            EndStateMutation();
+        }
     }
 
-    public bool TryEnterProtectionPhase(BuffDefinition buffDefinition)
+    private bool RemoveBuffInstance(MonsterBuffInstance buffInstance)
     {
-        MonsterBuffInstance buffInstance = FindBuffInstance(buffDefinition);
-
-        if (buffInstance == null || !buffInstance.TryEnterProtectionPhase())
+        if (buffInstance == null || !IsActive(buffInstance) || !removalInProgress.Add(buffInstance))
         {
             return false;
         }
 
-        RefreshSnapshotsAndNotify();
-        return true;
+        try
+        {
+            ExecuteLifecycleEffect(buffInstance, BuffEventType.Removed);
+
+            if (!buffInstances.Remove(buffInstance))
+            {
+                return false;
+            }
+
+            QueueStateRefresh();
+            return true;
+        }
+        finally
+        {
+            removalInProgress.Remove(buffInstance);
+        }
+    }
+
+    private bool IsActive(MonsterBuffInstance buffInstance)
+    {
+        return buffInstance != null && buffInstances.Contains(buffInstance);
     }
 
     private MonsterBuffInstance FindBuffInstance(BuffDefinition buffDefinition)
@@ -138,11 +241,81 @@ public class MonsterBuffRuntime
         return null;
     }
 
+    private void ExecuteLifecycleEffect(MonsterBuffInstance buffInstance, BuffEventType eventType)
+    {
+        BuffDefinition buffDefinition = buffInstance != null ? buffInstance.Definition : null;
+        MonsterBehaviour buffOwner = buffInstance != null ? buffInstance.Owner : null;
+        EffectDefinition effectDefinition = buffDefinition != null ? buffDefinition.GetEffectDefinition(eventType) : null;
+
+        if (effectDefinition == null || buffOwner == null)
+        {
+            return;
+        }
+
+        Transform hitAnchor = buffOwner.HitAnchor;
+        Vector3 triggerPosition = hitAnchor != null ? hitAnchor.position : buffOwner.transform.position;
+
+        EffectExecutor.Execute(
+            effectDefinition,
+            new EffectTriggerContext(
+                GetTriggerType(eventType),
+                buffInstance.SourceTower,
+                buffInstance.SourceUpgrade,
+                buffOwner,
+                true,
+                triggerPosition,
+                0,
+                false)
+        );
+    }
+
+    private static EffectTriggerType GetTriggerType(BuffEventType eventType)
+    {
+        switch (eventType)
+        {
+            case BuffEventType.Applied:
+                return EffectTriggerType.OnBuffApplied;
+            case BuffEventType.PeriodicTick:
+                return EffectTriggerType.OnBuffTick;
+            case BuffEventType.StackApplied:
+                return EffectTriggerType.OnBuffStackApplied;
+            case BuffEventType.Overload:
+                return EffectTriggerType.OnMaxStack;
+            case BuffEventType.EnteredProtection:
+                return EffectTriggerType.OnBuffEnteredProtection;
+            case BuffEventType.Removed:
+                return EffectTriggerType.OnBuffRemoved;
+            default:
+                return EffectTriggerType.OnBuffTick;
+        }
+    }
+
     private static bool IsSuccessfulApplyResult(BuffApplyResult result)
     {
         return result == BuffApplyResult.Applied ||
                result == BuffApplyResult.Refreshed ||
                result == BuffApplyResult.Stacked;
+    }
+
+    private void BeginStateMutation()
+    {
+        stateMutationDepth++;
+    }
+
+    private void EndStateMutation()
+    {
+        stateMutationDepth--;
+
+        if (stateMutationDepth == 0 && stateRefreshPending)
+        {
+            stateRefreshPending = false;
+            RefreshSnapshotsAndNotify();
+        }
+    }
+
+    private void QueueStateRefresh()
+    {
+        stateRefreshPending = true;
     }
 
     private void RefreshSnapshotsAndNotify()

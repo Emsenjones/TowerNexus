@@ -11,7 +11,8 @@ This task creates the system needed for duration, ticking, refresh, stacking, Bu
 - `Docs/04_MonsterSystem.md`
 - `Docs/08_TowerRuntimeCombatSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Establish the first Buff And Effect System entry point by adding trigger context and Effect binding contracts without changing the base damage pipeline.
+Establish the first Effect System entry point by adding trigger context and Effect binding contracts without changing the base damage pipeline.
 
 This task creates the authoring and runtime connection that lets Behaviour Layer and Elemental Layer upgrade content request reusable Effect execution later.
 
@@ -13,7 +13,7 @@ This task creates the authoring and runtime connection that lets Behaviour Layer
 - `Docs/08_TowerRuntimeCombatSystem.md`
 - `Docs/09_ProjectileSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
 
 ## Prerequisites
 
@@ -85,7 +85,7 @@ Context may include:
 - Element type when relevant
 - Whether this hit can apply Elemental stacks
 
-The exact implementation shape may evolve during planning. The stable task contract is that Attack Entities, Projectile System, Buff runtime, and EffectZone runtime can provide context to Buff And Effect System without owning Buff or Elemental rules.
+The exact implementation shape may evolve during planning. The stable task contract is that Attack Entities, Projectile System, Buff runtime, and EffectZone runtime can provide context to the Effect System without owning Buff or Elemental rules.
 
 ### Runtime Integration Points
 

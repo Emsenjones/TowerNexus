@@ -2,22 +2,22 @@
 
 ## Objective
 
-Define the Phase 2 Behaviour Layer upgrade scope that should wait for Buff And Effect System foundation work.
+Define the Phase 2 Behaviour Layer upgrade scope that should wait for Effect System foundation work.
 
-This is a scope and staging document only. It should not prescribe the final Buff And Effect System implementation shape before that foundation is built and reviewed.
+This is a scope and staging document only. It should not prescribe the final Effect System implementation shape before that foundation is built and reviewed.
 
 ## System References
 
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
 - `Docs/08_TowerRuntimeCombatSystem.md`
 - `Docs/09_ProjectileSystem.md`
 
 ## Prerequisites
 
 - Phase 1 Behaviour Layer tasks are complete or intentionally paused at a stable point.
-- Buff And Effect System foundation has been reviewed before any Phase 2 implementation task begins.
-- Area damage, delayed area damage, and repeated area damage contracts are aligned with `Docs/11_BuffAndEffectSystem.md`.
+- Effect System foundation has been reviewed before any Phase 2 implementation task begins.
+- Area damage, delayed area damage, and repeated area damage contracts are aligned with `Docs/11_EffectSystem.md`.
 
 ## Phase 2 Upgrade Items
 
@@ -51,10 +51,10 @@ Cannon Burning Shell:
 
 ## Scope Rules
 
-- This paused scope document does not implement Buff And Effect System foundation.
+- This paused scope document does not implement Effect System foundation.
 - This paused scope document does not implement any Phase 2 upgrade item.
-- Concrete Phase 2 implementation tasks should be generated after the Buff And Effect System foundation tasks are available.
-- Later concrete implementation documents may revise the exact implementation order based on the final Buff And Effect System foundation.
+- Concrete Phase 2 implementation tasks should be generated after the Effect System foundation tasks are available.
+- Later concrete implementation documents may revise the exact implementation order based on the final Effect System foundation.
 - Phase 2 upgrade implementation should not duplicate shared area-query, delayed-damage, repeated-damage, buff, or effect execution logic inside individual tower runtimes.
 
 ## Out Of Scope
@@ -65,13 +65,13 @@ Cannon Burning Shell:
 - Drone Missile Drone.
 - Drone Final Dive.
 - Any Phase 3 advanced behaviour package.
-- Final Buff And Effect System internal implementation design.
+- Final Effect System internal implementation design.
 - Concrete later implementation breakdown.
 
 ## Acceptance Criteria
 
 - Phase 2 scope explicitly includes Magic Orb Splash, Cannon Timed Shell, and Cannon Burning Shell.
-- This paused scope document clearly states that these upgrades wait for Buff And Effect System foundation review.
-- This paused scope document does not lock the final implementation approach for Buff And Effect System.
-- This paused scope document preserves the system boundary that reusable effect execution belongs to Buff And Effect System.
-- Phase 3 upgrade ideas remain deferred for later review after combat runtime and Buff And Effect System contracts are more stable.
+- This paused scope document clearly states that these upgrades wait for Effect System foundation review.
+- This paused scope document does not lock the final implementation approach for Effect System.
+- This paused scope document preserves the system boundary that reusable effect execution belongs to Effect System.
+- Phase 3 upgrade ideas remain deferred for later review after combat runtime and Effect System contracts are more stable.

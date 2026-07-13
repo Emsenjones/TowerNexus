@@ -21,7 +21,7 @@ public class MonsterBuffInstance
         remainingDuration = definition.Duration;
         tickTimer = 0f;
         stackCount = 1;
-        nextAllowedApplyTime = Time.time + definition.BuffApplyCooldown;
+        nextAllowedApplyTime = definition.UsesStacks ? Time.time + definition.BuffApplyCooldown : 0f;
         phase = BuffRuntimePhase.Stacking;
     }
 
@@ -43,12 +43,12 @@ public class MonsterBuffInstance
             return BuffApplyResult.Invalid;
         }
 
-        if (phase == BuffRuntimePhase.Protection)
+        if (definition.UsesStacks && phase == BuffRuntimePhase.Protection)
         {
             return BuffApplyResult.BlockedByProtectionPhase;
         }
 
-        if (Time.time < nextAllowedApplyTime)
+        if (definition.UsesStacks && Time.time < nextAllowedApplyTime)
         {
             return BuffApplyResult.BlockedByBuffApplyCooldown;
         }
@@ -56,7 +56,12 @@ public class MonsterBuffInstance
         sourceTower = request.SourceTower;
         sourceUpgrade = request.SourceUpgrade;
         remainingDuration = definition.Duration;
-        nextAllowedApplyTime = Time.time + definition.BuffApplyCooldown;
+        nextAllowedApplyTime = definition.UsesStacks ? Time.time + definition.BuffApplyCooldown : 0f;
+
+        if (!definition.UsesStacks)
+        {
+            return BuffApplyResult.Refreshed;
+        }
 
         if (stackCount < definition.MaxStacks)
         {
@@ -69,7 +74,7 @@ public class MonsterBuffInstance
 
     public bool TryEnterProtectionPhase()
     {
-        if (definition == null || definition.ProtectionDuration <= 0f)
+        if (definition == null || !definition.UsesStacks || definition.ProtectionDuration <= 0f)
         {
             return false;
         }
@@ -82,8 +87,10 @@ public class MonsterBuffInstance
         return true;
     }
 
-    public bool Tick(float deltaTime)
+    public bool Tick(float deltaTime, out int periodicTickCount)
     {
+        periodicTickCount = 0;
+
         if (definition == null || owner == null)
         {
             return false;
@@ -103,36 +110,10 @@ public class MonsterBuffInstance
             while (tickTimer >= definition.TickInterval)
             {
                 tickTimer -= definition.TickInterval;
-                ExecuteTickEffect();
+                periodicTickCount++;
             }
         }
 
         return remainingDuration > 0f;
-    }
-
-    private void ExecuteTickEffect()
-    {
-        EffectDefinition periodicEffect = definition.GetEffectDefinition(BuffEventType.PeriodicTick);
-
-        if (periodicEffect == null)
-        {
-            return;
-        }
-
-        Transform hitAnchor = owner.HitAnchor;
-        Vector3 triggerPosition = hitAnchor != null ? hitAnchor.position : owner.transform.position;
-
-        EffectExecutor.Execute(
-            periodicEffect,
-            new EffectTriggerContext(
-                EffectTriggerType.OnBuffTick,
-                sourceTower,
-                sourceUpgrade,
-                owner,
-                true,
-                triggerPosition,
-                0,
-                false)
-        );
     }
 }

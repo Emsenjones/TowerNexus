@@ -10,7 +10,7 @@ Storm Shift changes the monster's valid grid position and path state. It is inte
 
 - `Docs/03_MapSystem.md`
 - `Docs/04_MonsterSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
 
 ## Prerequisites
 
@@ -29,7 +29,7 @@ Storm Shift changes the monster's valid grid position and path state. It is inte
 
 - Do not create generic knockback, pull, teleport, or displacement frameworks.
 - Do not create a generic ElementalBuff inheritance framework.
-- Buff And Effect System must not directly mutate monster Transform, current node, or path data.
+- Effect System must not directly mutate monster Transform, current node, or path data.
 - Do not implement Wind Buff content or WindVortex in this task.
 
 ## Out Of Scope

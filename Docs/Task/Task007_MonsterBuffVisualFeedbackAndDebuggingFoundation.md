@@ -9,7 +9,7 @@ This task creates the visual and observation foundation required before Cold, El
 ## System References
 
 - `Docs/04_MonsterSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 

@@ -8,7 +8,8 @@ Complete Wind as the final first-version Elemental vertical slice, then audit th
 
 - `Docs/04_MonsterSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 

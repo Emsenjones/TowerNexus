@@ -7,7 +7,8 @@ Implement Electric as a complete Elemental vertical slice using shared Electric 
 ## System References
 
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 

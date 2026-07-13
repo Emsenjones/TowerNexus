@@ -9,7 +9,8 @@ This is a Cold-specific safety foundation, not a generic movement modifier frame
 ## System References
 
 - `Docs/04_MonsterSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 
@@ -28,7 +29,7 @@ This is a Cold-specific safety foundation, not a generic movement modifier frame
 
 - Do not create a generic movement modifier, crowd-control, or status-effect framework.
 - Do not create a generic ElementalBuff inheritance framework.
-- Do not let Buff And Effect System directly modify monster Transform or path state.
+- Do not let Effect System or Buff System directly modify monster Transform or path state.
 - Do not implement Cold Buff assets or Elemental upgrade assets in this task.
 
 ## Out Of Scope

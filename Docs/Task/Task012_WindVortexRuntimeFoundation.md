@@ -7,7 +7,8 @@ Implement the reviewed WindVortex gameplay entity and its narrow spawn action wi
 ## System References
 
 - `Docs/04_MonsterSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 

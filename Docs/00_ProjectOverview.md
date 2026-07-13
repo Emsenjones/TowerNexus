@@ -321,29 +321,42 @@ Projectile prefab roots follow the shared runtime orientation convention: local 
 
 ---
 
-## 5.9 Buff And Effect System
+## 5.9 Effect System
 
-Handles reusable gameplay effects, Buff runtime, Elemental debuff stacking, EffectZone execution, and complex combat results beyond simple direct damage.
+Handles reusable one-shot gameplay Effects, target resolution, EffectZone execution, and complex combat results beyond simple direct damage.
 
 Framework direction:
 
 - Trigger context consumption from Attack Entities, projectiles, zones, and buffs
 - Radius-based target resolution
 - Effect action execution
-- Buff application and lifecycle
-- Elemental stack, overload, and post-overload Protection phase
 - EffectZone duration, tick, and target resolution when zone gameplay is in scope
 - Specialized moving elemental gameplay entities when their reviewed behavior requires them
 
-Direct base attack damage does not need to migrate into Buff And Effect System immediately. The current direct damage path may remain simple while Buff And Effect System executes additional effects, buff ticks, zone ticks, overload damage, and other complex results.
+Direct base attack damage does not need to migrate into Effect System immediately. The current direct damage path may remain simple while Effect System executes additional Effects, zone ticks, overload results, and other complex results.
 
-Projectile impact VFX is not owned by the Buff And Effect System. It is configured through ProjectileConfig and triggered by the Projectile System when impact occurs.
+Projectile impact VFX is not owned by Effect System. It is configured through ProjectileConfig and triggered by Projectile System when impact occurs.
 
-Projectile impact feedback should not require gameplay Effect data. Buff status, persistent Buff VFX, and gameplay Effect execution VFX follow their respective Buff and Effect definitions.
+Projectile impact feedback should not require gameplay Effect data. Gameplay Effect execution VFX belongs to EffectDefinition.
 
 ---
 
-## 5.10 Monster System
+## 5.10 Buff System
+
+Handles persistent Buff runtime state, lifecycle bindings, Elemental debuff stacking, overload, post-overload Protection, status UI data, and persistent Buff VFX.
+
+Framework direction:
+
+- BuffDefinition static configuration and Monster-owned runtime instances
+- Apply, refresh, stack, periodic tick, Protection, and removal rules
+- Lifecycle bindings that invoke EffectDefinitions
+- Shared Elemental Buff behavior after tower-owned attacks apply a Buff
+
+Buffs do not directly reference other Buffs. A lifecycle binding invokes an EffectDefinition, whose ApplyBuff action may apply a second Buff such as Frozen.
+
+---
+
+## 5.11 Monster System
 
 Owns monster spawning, pathfinding, movement, runtime state, death flow, arrival flow, and monster resolution reporting.
 
@@ -380,8 +393,10 @@ TowerRuntimeCombatSystem
     ↓ Resolved Stats / Behaviour Execution
 ProjectileSystem
     ↓ Hit Detection / Impact Event
-BuffAndEffectSystem
-    ↓ Effect / Buff / Elemental Resolution
+EffectSystem
+    ↓ One-shot Effect Resolution / ApplyBuff Requests
+BuffSystem
+    ↓ Persistent Buff / Elemental Resolution / Lifecycle Effect Requests
 MonsterSystem
 
 TowerPlacementSystem
@@ -427,7 +442,8 @@ Use the System Documents as the source of truth for each area:
 | Runtime tower combat behavior | `08_TowerRuntimeCombatSystem.md` |
 | Projectile lifecycle and impact handling | `09_ProjectileSystem.md` |
 | Tower growth and upgrade concepts | `10_TowerUpgradeSystem.md` |
-| Effects, buffs, Elemental rules, and EffectZone behavior | `11_BuffAndEffectSystem.md` |
+| Reusable Effect execution, target resolution, and EffectZone behavior | `11_EffectSystem.md` |
+| Persistent Buff state, lifecycle bindings, and Elemental rules | `12_BuffSystem.md` |
 
 Task Documents under `Docs/Task/` are temporary implementation references.
 

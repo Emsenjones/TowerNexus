@@ -463,7 +463,7 @@ Projectile flight behavior
 
 Projectile-style Attack Entities share Projectile System runtime behavior, while Magic Orb and Drone use their own Attack Entity runtime behavior.
 
-Future refactors may separate Attack Entity kind from projectile flight behavior in code, but this is not required before Buff And Effect System foundation work.
+Future refactors may separate Attack Entity kind from projectile flight behavior in code, but this is not required before Effect System foundation work.
 
 Tower responsibilities:
 
@@ -809,7 +809,7 @@ Notes:
 
 - The selected target's monster-side hit/reference anchor provides the target position snapshot.
 - Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
-- Explosion radius and area damage behavior belong to the Projectile System and Buff And Effect System, not AttackConfig.
+- Explosion radius and area damage behavior belong to the Projectile System and Effect System, not AttackConfig.
 - Attack cooldown starts immediately after the projectile is launched.
 
 VFX notes:

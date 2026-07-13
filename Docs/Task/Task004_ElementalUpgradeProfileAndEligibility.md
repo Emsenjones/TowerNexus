@@ -11,7 +11,8 @@ This task makes Elemental upgrades selectable and applicable under the correct r
 - `Docs/00_ProjectOverview.md`
 - `Docs/05_DraftSystem.md`
 - `Docs/10_TowerUpgradeSystem.md`
-- `Docs/11_BuffAndEffectSystem.md`
+- `Docs/11_EffectSystem.md`
+- `Docs/12_BuffSystem.md`
 
 ## Prerequisites
 
