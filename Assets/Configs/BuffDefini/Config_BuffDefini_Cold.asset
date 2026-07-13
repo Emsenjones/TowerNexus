@@ -15,11 +15,18 @@ MonoBehaviour:
   displayName: Cold
   description: 
   duration: 6
-  tickInterval: 0.25
+  tickInterval: 0.2
+  usesStacks: 1
   maxStacks: 10
   buffApplyCooldown: 0.2
-  eventBindings: []
-  elementType: 1
-  protectionDuration: 5
+  eventBindings:
+  - eventType: 3
+    effectDefinition: {fileID: 11400000, guid: b6698bbb6bc1d471f9d734269a606767, type: 2}
+  - eventType: 5
+    effectDefinition: {fileID: 11400000, guid: 1b152eae243af4c19a274b6bf0de8fa4, type: 2}
+  - eventType: 2
+    effectDefinition: {fileID: 11400000, guid: ed46457b1ecde428e81920743778bfb9, type: 2}
+  elementType: 2
+  protectionDuration: 1
   statusIcon: {fileID: 21300000, guid: b0354d0d0fef243edaff5c451d6d1dc2, type: 3}
-  persistentBuffVfxPrefab: {fileID: 0}
+  persistentBuffVfxPrefab: {fileID: 7340198452091193608, guid: d682f18e380904e84b3e61c568a8496c, type: 3}

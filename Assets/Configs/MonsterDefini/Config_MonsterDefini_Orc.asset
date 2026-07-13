@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Orc
   monsterPrefab: {fileID: 7885271453143739113, guid: ef8b8f95e97d742a5a4982c0e73bb673, type: 3}
   moveSpeed: 0.25
-  maxHealth: 100
+  maxHealth: 300
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking

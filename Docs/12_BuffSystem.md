@@ -45,7 +45,7 @@ An instance includes definition reference, owner monster, remaining duration, ti
 | Stackable | First application starts at one stack. A successful eligible reapply refreshes duration and gains one stack up to max; it may trigger stack and overload behavior. |
 | Non-stackable | One instance only. Reapplication refreshes duration but does not add a stack, trigger overload, or create parallel state. |
 
-Max stacks and Buff apply cooldown are authored only for stackable Buffs; a stackable Buff has max stacks of at least two. Non-stackable Buffs do not expose stack, overload, or Protection authoring. PeriodicTick remains valid for either model when tick interval is positive.
+Max stacks, Buff apply cooldown, and Protection are authored only for stackable Buffs; a stackable Buff has max stacks of at least two. Non-stackable Buffs do not expose stack, overload, or Protection authoring. PeriodicTick remains valid for either model when tick interval is positive.
 
 Applications return explicit results such as Applied, Refreshed, Stacked, BlockedByBuffApplyCooldown, BlockedByProtectionPhase, or Invalid.
 
@@ -118,11 +118,11 @@ Burning PeriodicTick binds an Effect that deals persistent damage. Its max-stack
 
 ### 7.2 Cold And Frozen
 
-Cold's Applied binding invokes ApplySlow. Cold's EnteredProtection and Removed bindings invoke ClearSlow.
+Cold's Applied binding invokes `SetMoveSpeedMultiplier`. Cold's EnteredProtection and Removed bindings invoke `ClearMoveSpeedMultiplier`.
 
 Cold max-stack Overload binds an Apply Frozen EffectDefinition. That Effect contains ApplyBuff(Frozen), which creates or refreshes Frozen through the ordinary Effect-to-Buff link.
 
-Frozen is non-Elemental and non-stackable. Its Applied binding invokes LockMovement; its Removed binding invokes UnlockMovement. Its duration, UI, and persistent VFX belong to its own runtime instance. Reapplying it refreshes that one instance without a parallel lock.
+Frozen is non-Elemental and non-stackable. Its Applied binding invokes `SetMovementLock(true)`; its Removed binding invokes `SetMovementLock(false)`. Its duration, UI, and persistent VFX belong to its own runtime instance. Reapplying it refreshes that one instance without a parallel lock.
 
 ### 7.3 Electric
 

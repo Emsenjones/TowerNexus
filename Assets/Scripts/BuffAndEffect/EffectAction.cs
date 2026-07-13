@@ -1,6 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [Serializable]
 public class EffectAction
@@ -15,14 +16,19 @@ public class EffectAction
     [ShowIf(nameof(IsApplyBuffAction))]
     [SerializeField] private BuffDefinition buffDefinition;
     [TitleGroup("Effect Action")]
-    [ShowIf(nameof(IsApplySlowAction))]
+    [ShowIf(nameof(IsSetMoveSpeedMultiplierAction))]
     [Range(0.01f, 0.99f)]
-    [SerializeField] private float slowMultiplier = 0.5f;
+    [FormerlySerializedAs("slowMultiplier")]
+    [SerializeField] private float moveSpeedMultiplier = 0.5f;
+    [TitleGroup("Effect Action")]
+    [ShowIf(nameof(IsSetMovementLockAction))]
+    [SerializeField] private bool isMovementLocked;
 
     public EffectActionType ActionType => actionType;
     public int DamageAmount => Mathf.Max(0, damageAmount);
     public BuffDefinition BuffDefinition => buffDefinition;
-    public float SlowMultiplier => slowMultiplier;
+    public float MoveSpeedMultiplier => moveSpeedMultiplier;
+    public bool IsMovementLocked => isMovementLocked;
 
     public bool IsValid()
     {
@@ -37,10 +43,10 @@ public class EffectAction
             return false;
         }
 
-        if (actionType == EffectActionType.ApplySlow &&
-            (float.IsNaN(slowMultiplier) || float.IsInfinity(slowMultiplier) || slowMultiplier <= 0f || slowMultiplier >= 1f))
+        if (actionType == EffectActionType.SetMoveSpeedMultiplier &&
+            (float.IsNaN(moveSpeedMultiplier) || float.IsInfinity(moveSpeedMultiplier) || moveSpeedMultiplier <= 0f || moveSpeedMultiplier >= 1f))
         {
-            Debug.LogWarning("Effect action is invalid: ApplySlow action requires a multiplier greater than zero and less than one.");
+            Debug.LogWarning("Effect action is invalid: SetMoveSpeedMultiplier requires a multiplier greater than zero and less than one.");
             return false;
         }
 
@@ -57,8 +63,13 @@ public class EffectAction
         return actionType == EffectActionType.DealDamage;
     }
 
-    private bool IsApplySlowAction()
+    private bool IsSetMoveSpeedMultiplierAction()
     {
-        return actionType == EffectActionType.ApplySlow;
+        return actionType == EffectActionType.SetMoveSpeedMultiplier;
+    }
+
+    private bool IsSetMovementLockAction()
+    {
+        return actionType == EffectActionType.SetMovementLock;
     }
 }

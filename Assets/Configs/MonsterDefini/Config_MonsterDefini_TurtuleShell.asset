@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Turtule Shell
   monsterPrefab: {fileID: 2882519792444244193, guid: cbabe32a21d9843728ed0b40c5d4dd16, type: 3}
   moveSpeed: 0.25
-  maxHealth: 100
+  maxHealth: 300
   expReward: 0
   damageToPlayer: 1
   walkingBoolParameterName: IsWalking

@@ -16,14 +16,22 @@ MonoBehaviour:
   attackRange: 2
   attackInterval: 1
   targetSelectionType: 0
-  attackAnimatorTriggerName: Attack
   projectileConfig: {fileID: 11400000, guid: 885d88fbd81784ed6998116a641079bc, type: 2}
   arcHeight: 1
-  projectileReleaseVfxPrefab: {fileID: 2526188762600594687, guid: e9e726441714d495680f004cfb654b82, type: 3}
+  attackReleaseVfxPrefab: {fileID: 2526188762600594687, guid: e9e726441714d495680f004cfb654b82, type: 3}
   magicOrbRotationSpeed: 180
+  magicOrbOrbitRadius: 0.75
+  magicOrbContactDistance: 0.25
   magicOrbMaxHitCount: 3
   magicOrbMaxLifetime: 5
+  magicOrbSameTargetHitCooldown: 0.5
   magicOrbPrefab: {fileID: 0}
   droneBatteryDuration: 5
   droneOrbitRadius: 1.5
+  droneFlightSpeed: 3
+  droneFlightHeight: 1
+  droneBurstCount: 3
+  droneBurstInterval: 0.1
+  droneBurstCooldown: 0.5
+  droneProjectileConfig: {fileID: 0}
   dronePrefab: {fileID: 0}

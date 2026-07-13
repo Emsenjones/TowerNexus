@@ -72,8 +72,8 @@ Radius inclusion uses the Monster System hit/reference anchor.
 | ApplyBuff | Ask Buff System to add, refresh, or stack a configured BuffDefinition |
 | SpawnEffectZone | Create a gameplay zone with duration, radius, tick interval, and on-tick Effect |
 | SpawnWindVortex | Create the reviewed specialized moving Wind entity |
-| ApplySlow / ClearSlow | Request or clear the first-version active slow through Monster System |
-| LockMovement / UnlockMovement | Request or clear the first-version movement lock through Monster System |
+| SetMoveSpeedMultiplier / ClearMoveSpeedMultiplier | Set or clear the first-version move-speed multiplier through Monster System |
+| SetMovementLock | Set the first-version movement-lock state through Monster System |
 | RelocateMonster | Request safe Monster relocation and path recalculation |
 
 ### 5.1 DealDamage
@@ -96,9 +96,9 @@ SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff Stack
 
 ### 5.4 Movement And Path Actions
 
-Movement actions request Monster System-owned behavior. The first version has one active slow and one movement lock per monster. Slow must be a real reduction multiplier (`0 < multiplier < 1`); zero is only the Monster System's derived effective-speed result while a movement lock is active.
+Movement actions request Monster System-owned behavior. The first version has one active move-speed multiplier and one movement lock per monster. `SetMoveSpeedMultiplier` is currently a reduction-only slot and must author `0 < multiplier < 1`; `ClearMoveSpeedMultiplier` restores that slot to `1`. Zero is only the Monster System's derived effective-speed result while a movement lock is active. Haste and multiple concurrent move-speed modifiers require a later reviewed model rather than an implicit extension of this slot.
 
-Frozen uses LockMovement and UnlockMovement. Monster System resolves the lock through the same effective-speed path as slow, with the lock taking priority and producing effective speed zero. Storm Shift uses RelocateMonster and remains dependent on the safe relocation and path-recalculation contract.
+Frozen uses `SetMovementLock(true)` and `SetMovementLock(false)`. Monster System resolves the lock through the same effective-speed path as the multiplier, with the lock taking priority and producing effective speed zero. Storm Shift uses RelocateMonster and remains dependent on the safe relocation and path-recalculation contract.
 
 ## 6. Elemental Eligibility And Recursion
 

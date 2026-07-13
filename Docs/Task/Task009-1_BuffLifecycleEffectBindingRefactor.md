@@ -37,8 +37,8 @@ This task makes Fire the regression-validation content for the refactor. Cold an
 
 ### Movement Effect Actions
 
-- Effect actions can request or clear the active slow and request or clear the Frozen movement lock through Task008's Monster System APIs.
-- Slow must use a real reduction multiplier; movement lock remains a separate semantic action that Monster System resolves to zero effective speed.
+- Effect actions use `SetMoveSpeedMultiplier` and `ClearMoveSpeedMultiplier` for the current reduction-only move-speed slot, plus `SetMovementLock(bool)` for Frozen lock state, through Task008's Monster System APIs.
+- The multiplier must satisfy `0 < multiplier < 1`; movement lock remains a separate semantic action that Monster System resolves to zero effective speed.
 - Effect actions do not directly modify a Monster Transform, current node, path, or stored effective speed.
 
 ### Fire Migration And Validation

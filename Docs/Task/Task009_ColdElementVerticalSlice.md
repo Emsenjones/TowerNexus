@@ -34,10 +34,10 @@ Implement Cold as the second complete Elemental vertical slice using shared Cold
 
 ### Cold Behavior
 
-- Cold Applied requests slow through Task008's safe API.
+- Cold Applied sets the reduction-only move-speed multiplier through Task008's safe API.
 - Cold Overload executes an Apply Frozen Effect whose ApplyBuff action applies Frozen.
-- Frozen Applied requests movement lock through Task008's safe API; Frozen Removed clears it.
-- Cold EnteredProtection and Removed clear slow through Task008's safe API.
+- Frozen Applied sets movement lock to true through Task008's safe API; Frozen Removed sets it to false.
+- Cold EnteredProtection and Removed clear the move-speed multiplier through Task008's safe API.
 - First Cold apply does not trigger stack-only behavior; a Frozen refresh does not create a second lock.
 - Cold Protection blocks only Cold restacking and does not block damage by default.
 

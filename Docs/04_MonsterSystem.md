@@ -271,8 +271,8 @@ MonsterBehaviour owns attached Buff runtime state through an internal plain C# M
 Examples:
 
 - Damage effects may request monster damage processing.
-- Buff lifecycle effects may request or clear the active slow.
-- Buff lifecycle effects may request or clear the Frozen movement lock.
+- Buff lifecycle effects may set or clear the current reduction-only move-speed multiplier.
+- Buff lifecycle effects may set or clear the Frozen movement lock.
 - Storm Shift or similar path effects may request a safe grid-node relocation and path recalculation.
 
 Effect System and Buff System should not directly:

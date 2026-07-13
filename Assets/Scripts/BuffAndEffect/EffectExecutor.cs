@@ -64,14 +64,12 @@ public static class EffectExecutor
                 return ExecuteDealDamage(action, triggerContext, targets);
             case EffectActionType.ApplyBuff:
                 return ExecuteApplyBuff(action, triggerContext, targets);
-            case EffectActionType.ApplySlow:
-                return ExecuteApplySlow(action, targets);
-            case EffectActionType.ClearSlow:
-                return ExecuteClearSlow(targets);
-            case EffectActionType.LockMovement:
-                return ExecuteSetFrozenMovementLock(targets, true);
-            case EffectActionType.UnlockMovement:
-                return ExecuteSetFrozenMovementLock(targets, false);
+            case EffectActionType.SetMoveSpeedMultiplier:
+                return ExecuteSetMoveSpeedMultiplier(action, targets);
+            case EffectActionType.ClearMoveSpeedMultiplier:
+                return ExecuteClearMoveSpeedMultiplier(targets);
+            case EffectActionType.SetMovementLock:
+                return ExecuteSetMovementLock(action, targets);
             default:
                 Debug.LogWarning($"Effect executor cannot execute unsupported action type '{action.ActionType}'.");
                 return false;
@@ -159,28 +157,28 @@ public static class EffectExecutor
         return appliedBuff;
     }
 
-    private static bool ExecuteApplySlow(
+    private static bool ExecuteSetMoveSpeedMultiplier(
         EffectAction action,
         IReadOnlyList<MonsterBehaviour> targets)
     {
-        bool appliedSlow = false;
+        bool updatedMoveSpeed = false;
 
         for (int i = 0; i < targets.Count; i++)
         {
             MonsterBehaviour target = targets[i];
 
-            if (target != null && !target.IsDead() && target.SetColdSlowMultiplier(action.SlowMultiplier))
+            if (target != null && !target.IsDead() && target.SetMoveSpeedMultiplier(action.MoveSpeedMultiplier))
             {
-                appliedSlow = true;
+                updatedMoveSpeed = true;
             }
         }
 
-        return appliedSlow;
+        return updatedMoveSpeed;
     }
 
-    private static bool ExecuteClearSlow(IReadOnlyList<MonsterBehaviour> targets)
+    private static bool ExecuteClearMoveSpeedMultiplier(IReadOnlyList<MonsterBehaviour> targets)
     {
-        bool clearedSlow = false;
+        bool clearedMoveSpeed = false;
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -191,16 +189,16 @@ public static class EffectExecutor
                 continue;
             }
 
-            target.ClearColdSlow();
-            clearedSlow = true;
+            target.ClearMoveSpeedMultiplier();
+            clearedMoveSpeed = true;
         }
 
-        return clearedSlow;
+        return clearedMoveSpeed;
     }
 
-    private static bool ExecuteSetFrozenMovementLock(
-        IReadOnlyList<MonsterBehaviour> targets,
-        bool isLocked)
+    private static bool ExecuteSetMovementLock(
+        EffectAction action,
+        IReadOnlyList<MonsterBehaviour> targets)
     {
         bool updatedMovementLock = false;
 
@@ -213,7 +211,7 @@ public static class EffectExecutor
                 continue;
             }
 
-            target.SetFrozenMovementLock(isLocked);
+            target.SetMovementLock(action.IsMovementLocked);
             updatedMovementLock = true;
         }
 

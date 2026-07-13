@@ -12,9 +12,9 @@ public class MonsterBehaviour : MonoBehaviour
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
     [TitleGroup("Movement Control")]
-    [ShowInInspector, ReadOnly] private float coldSlowMultiplier = 1f;
+    [ShowInInspector, ReadOnly] private float moveSpeedMultiplier = 1f;
     [TitleGroup("Movement Control")]
-    [ShowInInspector, ReadOnly] private bool isFrozen;
+    [ShowInInspector, ReadOnly] private bool isMovementLocked;
     [SerializeField] private Animator animator;
     [SerializeField] private MonsterHitFeedback hitFeedback;
     [SerializeField] private MonsterBuffVisualController buffVisualController;
@@ -43,8 +43,8 @@ public class MonsterBehaviour : MonoBehaviour
     public IReadOnlyList<GridNodeBehaviour> CurrentPath => currentPath;
     public int PathIndex => pathIndex;
     public bool IsMoving => isMoving;
-    public float ColdSlowMultiplier => coldSlowMultiplier;
-    public bool IsFrozen => isFrozen;
+    public float MoveSpeedMultiplier => moveSpeedMultiplier;
+    public bool IsMovementLocked => isMovementLocked;
     [TitleGroup("Buff Runtime")]
     [ShowInInspector, ReadOnly]
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveBuffSnapshots => buffRuntime != null ? buffRuntime.ActiveSnapshots : EmptyBuffSnapshots;
@@ -163,28 +163,28 @@ public class MonsterBehaviour : MonoBehaviour
         RefreshMovementAnimation();
     }
 
-    public bool SetColdSlowMultiplier(float multiplier)
+    public bool SetMoveSpeedMultiplier(float multiplier)
     {
         if (float.IsNaN(multiplier) || float.IsInfinity(multiplier) || multiplier <= 0f || multiplier >= 1f)
         {
-            Debug.LogWarning("Monster cold slow multiplier must be greater than zero and less than one.", this);
+            Debug.LogWarning("Monster move speed multiplier must be greater than zero and less than one in the current reduction-only slot.", this);
             return false;
         }
 
-        coldSlowMultiplier = multiplier;
+        moveSpeedMultiplier = multiplier;
         RefreshEffectiveMoveSpeed();
         return true;
     }
 
-    public void ClearColdSlow()
+    public void ClearMoveSpeedMultiplier()
     {
-        coldSlowMultiplier = 1f;
+        moveSpeedMultiplier = 1f;
         RefreshEffectiveMoveSpeed();
     }
 
-    public void SetFrozenMovementLock(bool isLocked)
+    public void SetMovementLock(bool isLocked)
     {
-        isFrozen = isLocked;
+        isMovementLocked = isLocked;
         RefreshEffectiveMoveSpeed();
     }
 
@@ -350,21 +350,21 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void ClearMovementControls()
     {
-        coldSlowMultiplier = 1f;
-        isFrozen = false;
+        moveSpeedMultiplier = 1f;
+        isMovementLocked = false;
         RefreshEffectiveMoveSpeed();
     }
 
     private void RefreshEffectiveMoveSpeed()
     {
         float baseMoveSpeed = definition != null ? Mathf.Max(0f, definition.MoveSpeed) : 0f;
-        currentMoveSpeed = isFrozen ? 0f : baseMoveSpeed * coldSlowMultiplier;
+        currentMoveSpeed = isMovementLocked ? 0f : baseMoveSpeed * moveSpeedMultiplier;
         RefreshMovementAnimation();
     }
 
     private void RefreshMovementAnimation()
     {
-        SetWalkingAnimation(isMoving && !isFrozen);
+        SetWalkingAnimation(isMoving && !isMovementLocked);
     }
 
     private void MoveAlongPath()

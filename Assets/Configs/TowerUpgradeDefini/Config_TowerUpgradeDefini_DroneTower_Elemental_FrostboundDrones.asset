@@ -27,5 +27,5 @@ MonoBehaviour:
   twinDronesCount: 2
   twinDronesTakeOffDelay: 0.15
   elementType: 2
-  elementalApplyEffect: {fileID: 11400000, guid: e2002b04373b4422a69bb622fbdb0aeb, type: 2}
+  elementalApplyEffect: {fileID: 11400000, guid: 392488a5b3b7344808c90274d1334061, type: 2}
   effectBindings: []
