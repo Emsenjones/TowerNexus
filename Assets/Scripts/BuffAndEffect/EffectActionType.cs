@@ -4,5 +4,6 @@ public enum EffectActionType
     ApplyBuff = 1,
     SetMoveSpeedMultiplier = 2,
     ClearMoveSpeedMultiplier = 3,
-    SetMovementLock = 4
+    SetMovementLock = 4,
+    ExecuteMultiTargetEffect = 5
 }

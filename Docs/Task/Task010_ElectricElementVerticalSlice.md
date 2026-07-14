@@ -32,12 +32,12 @@ Implement Electric as a complete Elemental vertical slice using shared Electric 
 
 - A later successful Electric stack can trigger configured extra Electric damage through Buff lifecycle data.
 - First application and pure refresh do not trigger stack-only behavior.
-- Overcharged selects valid nearby monsters and applies sequential lightning strikes with authored count and interval.
+- Overcharged resolves valid nearby monsters, then ExecuteMultiTargetEffect immediately applies LightningStrike to a configured random, non-repeating target count.
 - Overcharged is an instant overload effect, not a persistent Buff.
 
 ## Shared Constraints
 
-- Implement only the reviewed Electric lightning sequence; do not create a generic reaction, skill-sequencing, or chaining framework.
+- Implement only the reviewed ExecuteMultiTargetEffect action: no execution interval, temporary scene runner, target-selection mode, generic reaction, skill-sequencing, or chaining framework.
 - LightningStrike and other Electric reaction damage do not apply ElectricShock stacks by default.
 - Do not create generic ElementalBuff inheritance.
 
@@ -52,6 +52,6 @@ Implement Electric as a complete Elemental vertical slice using shared Electric 
 
 - All four Electric upgrades can be authored, drafted, and applied through the shared Elemental pipeline.
 - Extra Electric damage occurs only after a successful later stack, never on first apply, pure refresh, or blocked application.
-- Overcharged performs the configured sequential nearby strikes and ends cleanly.
+- Overcharged performs the configured immediate multi-target LightningStrike executions and ends cleanly.
 - Electric stack, overload, Protection, UI, and VFX behavior are visible and correct.
 - Electric reaction damage never recursively applies ElectricShock stacks by default.

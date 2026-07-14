@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Config_BuffDefini_Fire
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Fire
-  description: 
+  description: Deals periodic Fire damage and explodes at maximum stacks to damage
+    nearby enemies
   duration: 6
   tickInterval: 0.25
   usesStacks: 1

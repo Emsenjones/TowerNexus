@@ -13,13 +13,19 @@ MonoBehaviour:
   m_Name: Config_BuffDefini_Electricity
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Electricity
-  description: 
+  description: Increases damage taken and triggers an electrical overload at maximum
+    stacks
   duration: 6
   tickInterval: 0.25
+  usesStacks: 0
   maxStacks: 10
   buffApplyCooldown: 0.2
-  eventBindings: []
-  elementType: 1
+  eventBindings:
+  - eventType: 1
+    effectDefinition: {fileID: 11400000, guid: 011df70d1141a430996c7d1a3d6f172c, type: 2}
+  - eventType: 2
+    effectDefinition: {fileID: 11400000, guid: 15324e50f42de47dca6c589aebc9ce8d, type: 2}
+  elementType: 3
   protectionDuration: 5
   statusIcon: {fileID: 21300000, guid: 0b0a6d64cbf76431e9b7348592eb5989, type: 3}
-  persistentBuffVfxPrefab: {fileID: 0}
+  persistentBuffVfxPrefab: {fileID: 1264885020831819667, guid: dfe5d0b84b6e6466c8a6631142f3da1c, type: 3}

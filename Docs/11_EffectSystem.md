@@ -70,6 +70,7 @@ Radius inclusion uses the Monster System hit/reference anchor.
 |---|---|
 | DealDamage | Apply configured gameplay damage to resolved targets |
 | ApplyBuff | Ask Buff System to add, refresh, or stack a configured BuffDefinition |
+| ExecuteMultiTargetEffect | Execute one authored single-target EffectDefinition immediately on a random, non-repeating subset of resolved targets |
 | SpawnEffectZone | Create a gameplay zone with duration, radius, tick interval, and on-tick Effect |
 | SpawnWindVortex | Create the reviewed specialized moving Wind entity |
 | SetMoveSpeedMultiplier / ClearMoveSpeedMultiplier | Set or clear the first-version move-speed multiplier through Monster System |
@@ -88,13 +89,19 @@ ApplyBuff is the only first-version link from an Effect to persistent Buff state
 
 The Buff System owns the resulting instance lifecycle. Effects do not update a Buff's duration, stacks, Protection, UI, or persistent VFX directly.
 
-### 5.3 SpawnEffectZone And SpawnWindVortex
+### 5.3 ExecuteMultiTargetEffect
+
+ExecuteMultiTargetEffect is a small execution action, not a reaction or skill-sequencing framework. The parent EffectDefinition's normal radius targeting resolves the candidate monsters. The action randomly selects up to its authored target count without repetition, then immediately executes its authored child EffectDefinition once per selected monster.
+
+The child EffectDefinition must be single-target. Each child execution keeps the parent trigger's source context and receives the selected monster's hit/reference position. Child executions do not inherit Elemental application eligibility, so secondary damage such as LightningStrike cannot apply Elemental Buffs by default. There is no execution interval, temporary scene object, coroutine, persistent state, chaining rule, or target-selection mode in the first version.
+
+### 5.4 SpawnEffectZone And SpawnWindVortex
 
 SpawnEffectZone creates a world gameplay entity with its own duration, radius, tick interval, source context, and on-tick Effect. Gameplay timing is authoritative; VFX follows gameplay and never drives it.
 
 SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff StackApplied behavior and does not require a generic moving EffectZone abstraction.
 
-### 5.4 Movement And Path Actions
+### 5.5 Movement And Path Actions
 
 Movement actions request Monster System-owned behavior. The first version has one active move-speed multiplier and one movement lock per monster. `SetMoveSpeedMultiplier` is currently a reduction-only slot and must author `0 < multiplier < 1`; `ClearMoveSpeedMultiplier` restores that slot to `1`. Zero is only the Monster System's derived effective-speed result while a movement lock is active. Haste and multiple concurrent move-speed modifiers require a later reviewed model rather than an implicit extension of this slot.
 

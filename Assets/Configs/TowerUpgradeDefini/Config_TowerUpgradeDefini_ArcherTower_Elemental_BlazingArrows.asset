@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_ArcherTower_Elemental_BlazingArrows
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Blazing Arrows
-  description: Applies Burning and overloads at max stacks
+  description: Attacks apply Burning
   icon: {fileID: 21300000, guid: 51e3ca19b355c40d68cfa57b115f8d37, type: 3}
   towerFamily: 0
   requiredTowerLevel: 3

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_MagicTower_Elemental_ChargedOrbs
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Charged Orbs
-  description: Applies Electricity and overloads at max stacks
+  description: Attacks apply Electrified
   icon: {fileID: 21300000, guid: 06df9252ea079429ca60fd1b8ca557fa, type: 3}
   towerFamily: 2
   requiredTowerLevel: 3

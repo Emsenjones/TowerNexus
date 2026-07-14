@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_CannonTower_Elemental_FrostboundShells
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Frostbound Shells
-  description: Applies Cold and overloads at max stacks
+  description: Attacks apply Chilled
   icon: {fileID: 21300000, guid: 47780983ab7144cc4a09dec9fd6c62e9, type: 3}
   towerFamily: 1
   requiredTowerLevel: 3

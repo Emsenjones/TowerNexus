@@ -109,7 +109,7 @@ StackApplied bindings run only for a successful added stack, not first applicati
 |---|---|---|---|
 | Fire | Burning applies persistent damage pressure | FlameBurst deals area damage around the owner | Tick and FlameBurst damage do not apply Burning by default |
 | Cold | Cold slows while active | Apply Frozen Buff | Slow and movement lock use safe Monster APIs |
-| Electric | ElectricShock makes later direct Electric hits deal extra damage | Overcharged is an instant sequential lightning sequence | Lightning strikes do not apply ElectricShock by default |
+| Electric | ElectricShock makes later successful stacks deal configured extra damage | Overcharged is an instant multi-target LightningStrike execution | Lightning strikes do not apply ElectricShock by default |
 | Wind | A later successful stack creates WindVortex | Storm Shift requests relocation to a valid nearby node | Vortex and Storm Shift do not apply Windcut by default |
 
 ### 7.1 Fire
@@ -126,7 +126,9 @@ Frozen is non-Elemental and non-stackable. Its Applied binding invokes `SetMovem
 
 ### 7.3 Electric
 
-ElectricShock overload invokes the instant Overcharged Effect. Overcharged selects random monsters in an authored radius and drops sequential single-target LightningStrike Effects with an authored interval.
+ElectricShock StackApplied binds an authored extra-damage Effect. Because StackApplied runs only after a successful later stack, first application, pure refresh, and blocked application do not execute that damage.
+
+ElectricShock Overload invokes the instant Overcharged Effect. Overcharged uses its authored radius to resolve nearby candidates, then ExecuteMultiTargetEffect randomly selects up to its authored target count without repetition and immediately executes one single-target LightningStrike Effect on each selected monster. Overcharged has no interval, runtime state, or persistent Buff of its own.
 
 ### 7.4 Wind
 

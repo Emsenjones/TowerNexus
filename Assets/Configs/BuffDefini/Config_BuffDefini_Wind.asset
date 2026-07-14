@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Config_BuffDefini_Wind
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Wind
-  description: 
+  description: Sends damaging wind toward another enemy and pushes the monster backward
+    at maximum stacks
   duration: 6
   tickInterval: 0.25
+  usesStacks: 0
   maxStacks: 10
   buffApplyCooldown: 0.2
   eventBindings: []

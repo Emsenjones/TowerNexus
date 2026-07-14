@@ -23,12 +23,24 @@ public class EffectAction
     [TitleGroup("Effect Action")]
     [ShowIf(nameof(IsSetMovementLockAction))]
     [SerializeField] private bool isMovementLocked;
+    [TitleGroup("Multi-Target Effect")]
+    [ShowIf(nameof(IsExecuteMultiTargetEffectAction))]
+    [FormerlySerializedAs("lightningStrikeEffect")]
+    [FormerlySerializedAs("sequentialEffectDefinition")]
+    [SerializeField] private EffectDefinition multiTargetEffectDefinition;
+    [TitleGroup("Multi-Target Effect")]
+    [ShowIf(nameof(IsExecuteMultiTargetEffectAction))]
+    [FormerlySerializedAs("overchargedStrikeCount")]
+    [MinValue(1)]
+    [SerializeField] private int targetCount = 1;
 
     public EffectActionType ActionType => actionType;
     public int DamageAmount => Mathf.Max(0, damageAmount);
     public BuffDefinition BuffDefinition => buffDefinition;
     public float MoveSpeedMultiplier => moveSpeedMultiplier;
     public bool IsMovementLocked => isMovementLocked;
+    public EffectDefinition MultiTargetEffectDefinition => multiTargetEffectDefinition;
+    public int TargetCount => Mathf.Max(1, targetCount);
 
     public bool IsValid()
     {
@@ -48,6 +60,26 @@ public class EffectAction
         {
             Debug.LogWarning("Effect action is invalid: SetMoveSpeedMultiplier requires a multiplier greater than zero and less than one.");
             return false;
+        }
+
+        if (actionType == EffectActionType.ExecuteMultiTargetEffect)
+        {
+            if (multiTargetEffectDefinition == null)
+            {
+                Debug.LogWarning("Effect action is invalid: ExecuteMultiTargetEffect requires an EffectDefinition.");
+                return false;
+            }
+
+            if (multiTargetEffectDefinition.Radius > 0f)
+            {
+                Debug.LogWarning("Effect action is invalid: ExecuteMultiTargetEffect requires a single-target EffectDefinition.");
+                return false;
+            }
+
+            if (!multiTargetEffectDefinition.IsValid())
+            {
+                return false;
+            }
         }
 
         return true;
@@ -71,5 +103,10 @@ public class EffectAction
     private bool IsSetMovementLockAction()
     {
         return actionType == EffectActionType.SetMovementLock;
+    }
+
+    private bool IsExecuteMultiTargetEffectAction()
+    {
+        return actionType == EffectActionType.ExecuteMultiTargetEffect;
     }
 }

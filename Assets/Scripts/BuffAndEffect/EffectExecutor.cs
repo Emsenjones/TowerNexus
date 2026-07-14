@@ -70,6 +70,8 @@ public static class EffectExecutor
                 return ExecuteClearMoveSpeedMultiplier(targets);
             case EffectActionType.SetMovementLock:
                 return ExecuteSetMovementLock(action, targets);
+            case EffectActionType.ExecuteMultiTargetEffect:
+                return ExecuteMultiTargetEffect(action, triggerContext, targets);
             default:
                 Debug.LogWarning($"Effect executor cannot execute unsupported action type '{action.ActionType}'.");
                 return false;
@@ -216,6 +218,61 @@ public static class EffectExecutor
         }
 
         return updatedMovementLock;
+    }
+
+    private static bool ExecuteMultiTargetEffect(
+        EffectAction action,
+        EffectTriggerContext triggerContext,
+        IReadOnlyList<MonsterBehaviour> targets)
+    {
+        if (action == null || action.MultiTargetEffectDefinition == null || targets == null)
+        {
+            return false;
+        }
+
+        List<MonsterBehaviour> candidateTargets = new List<MonsterBehaviour>();
+
+        for (int i = 0; i < targets.Count; i++)
+        {
+            MonsterBehaviour target = targets[i];
+
+            if (target != null && target.gameObject.activeInHierarchy && !target.IsDead() && !candidateTargets.Contains(target))
+            {
+                candidateTargets.Add(target);
+            }
+        }
+
+        bool executedAnyEffect = false;
+        int remainingExecutionCount = action.TargetCount;
+
+        while (remainingExecutionCount > 0 && candidateTargets.Count > 0)
+        {
+            int targetIndex = Random.Range(0, candidateTargets.Count);
+            MonsterBehaviour target = candidateTargets[targetIndex];
+            candidateTargets.RemoveAt(targetIndex);
+
+            if (target == null || !target.gameObject.activeInHierarchy || target.IsDead())
+            {
+                continue;
+            }
+
+            EffectExecutor.Execute(
+                action.MultiTargetEffectDefinition,
+                new EffectTriggerContext(
+                    triggerContext.TriggerType,
+                    triggerContext.SourceTower,
+                    triggerContext.SourceUpgrade,
+                    target,
+                    true,
+                    GetMonsterHitPosition(target),
+                    triggerContext.ResolvedDamage,
+                    false));
+
+            executedAnyEffect = true;
+            remainingExecutionCount--;
+        }
+
+        return executedAnyEffect;
     }
 
     private static bool IsSuccessfulBuffApply(BuffApplyResult result)

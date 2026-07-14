@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_CannonTower_Elemental_ChargedShells
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Charged Shells
-  description: Applies Electricity and  overloads at max stacks
+  description: Attacks apply Electrified
   icon: {fileID: 21300000, guid: 505a97257947846c08813670f29a84a6, type: 3}
   towerFamily: 1
   requiredTowerLevel: 3

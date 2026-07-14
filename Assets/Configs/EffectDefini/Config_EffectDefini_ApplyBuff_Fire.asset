@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_ApplyBuff_ColdBuff
+  m_Name: Config_EffectDefini_ApplyBuff_Fire
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Apply Cold buff
+  displayName: Apply Fire buff
   radius: 0
   executionVfxPrefab: {fileID: 0}
   actions:
   - actionType: 1
     damageAmount: 0
-    buffDefinition: {fileID: 11400000, guid: e5e4aa3f395d3452a9d69215b703f764, type: 2}
+    buffDefinition: {fileID: 11400000, guid: c11a5379aa3749ad83f0544cb3c03600, type: 2}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
