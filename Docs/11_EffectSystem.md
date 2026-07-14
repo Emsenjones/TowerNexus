@@ -15,7 +15,7 @@ Effect System
     -> request Monster or Buff System operations as needed
 ```
 
-Projectile impact VFX remains Projectile System presentation. EffectDefinition may own optional execution VFX, spawned once after at least one of its actions succeeds at a valid target or trigger position.
+Projectile impact VFX remains Projectile System presentation. EffectDefinition may own optional execution VFX. Ordinary execution feedback is short-lived and must not drive gameplay timing or target resolution. A reviewed directional execution may use a supplied origin and selected target: its prefab root uses local +Y as Up and local +Z toward the target; imported visuals are corrected beneath that root.
 
 ## 2. Responsibility Boundary
 
@@ -31,7 +31,7 @@ The Effect System owns:
 
 It does not own persistent Buff lifetime, stack count, Protection phase, status UI, persistent Buff VFX, tower target selection, attack cadence, projectile movement or collision, Monster pathfinding implementation, or Monster reward and arrival flow.
 
-Effects request Monster System capabilities for damage, slow, movement lock, and relocation. They never directly mutate a monster Transform, grid node, path, or stored effective speed.
+Effects request Monster System capabilities for damage, slow, and movement lock. They never directly mutate a monster Transform, grid node, path, or stored effective speed.
 
 ## 3. Core Concepts
 
@@ -75,7 +75,6 @@ Radius inclusion uses the Monster System hit/reference anchor.
 | SpawnWindVortex | Create the reviewed specialized moving Wind entity |
 | SetMoveSpeedMultiplier / ClearMoveSpeedMultiplier | Set or clear the first-version move-speed multiplier through Monster System |
 | SetMovementLock | Set the first-version movement-lock state through Monster System |
-| RelocateMonster | Request safe Monster relocation and path recalculation |
 
 ### 5.1 DealDamage
 
@@ -91,21 +90,23 @@ The Buff System owns the resulting instance lifecycle. Effects do not update a B
 
 ### 5.3 ExecuteMultiTargetEffect
 
-ExecuteMultiTargetEffect is a small execution action, not a reaction or skill-sequencing framework. The parent EffectDefinition's normal radius targeting resolves the candidate monsters. The action randomly selects up to its authored target count without repetition, then immediately executes its authored child EffectDefinition once per selected monster.
+ExecuteMultiTargetEffect is a small execution action, not a reaction or skill-sequencing framework. The parent EffectDefinition's normal radius targeting resolves the candidate monsters. When authored, it may exclude the trigger-context target from that candidate set. The action randomly selects up to its authored target count without repetition, then immediately executes its authored child EffectDefinition once per selected monster.
 
-The child EffectDefinition must be single-target. Each child execution keeps the parent trigger's source context and receives the selected monster's hit/reference position. Child executions do not inherit Elemental application eligibility, so secondary damage such as LightningStrike cannot apply Elemental Buffs by default. There is no execution interval, temporary scene object, coroutine, persistent state, chaining rule, or target-selection mode in the first version.
+The child EffectDefinition must be single-target. Each child execution keeps the parent trigger's source context, receives the selected monster's hit/reference position, and may receive the parent trigger position as an execution-VFX origin. Child executions do not inherit Elemental application eligibility, so secondary damage such as LightningStrike cannot apply Elemental Buffs by default. There is no execution interval, temporary scene object, coroutine, persistent state, chaining rule, or target-selection mode in the first version.
+
+Windcut uses this action with target count one and trigger-target exclusion. Its parent effect may play authored origin feedback even when no secondary candidate exists; its selected-target child effect owns the directional Wind-attack VFX and damage. No target therefore means no damage and no directional target fallback.
 
 ### 5.4 SpawnEffectZone And SpawnWindVortex
 
 SpawnEffectZone creates a world gameplay entity with its own duration, radius, tick interval, source context, and on-tick Effect. Gameplay timing is authoritative; VFX follows gameplay and never drives it.
 
-SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff StackApplied behavior and does not require a generic moving EffectZone abstraction.
+SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff Overload behavior and does not require a generic moving EffectZone abstraction. The action references a dedicated WindVortexDefinition rather than expanding EffectZone authoring prematurely.
 
 ### 5.5 Movement And Path Actions
 
 Movement actions request Monster System-owned behavior. The first version has one active move-speed multiplier and one movement lock per monster. `SetMoveSpeedMultiplier` is currently a reduction-only slot and must author `0 < multiplier < 1`; `ClearMoveSpeedMultiplier` restores that slot to `1`. Zero is only the Monster System's derived effective-speed result while a movement lock is active. Haste and multiple concurrent move-speed modifiers require a later reviewed model rather than an implicit extension of this slot.
 
-Frozen uses `SetMovementLock(true)` and `SetMovementLock(false)`. Monster System resolves the lock through the same effective-speed path as the multiplier, with the lock taking priority and producing effective speed zero. Storm Shift uses RelocateMonster and remains dependent on the safe relocation and path-recalculation contract.
+Frozen uses `SetMovementLock(true)` and `SetMovementLock(false)`. Monster System resolves the lock through the same effective-speed path as the multiplier, with the lock taking priority and producing effective speed zero.
 
 ## 6. Elemental Eligibility And Recursion
 
@@ -117,18 +118,21 @@ Burning ticks, FlameBurst, Electric extra damage, LightningStrike, WindVortex, E
 
 EffectZone is a zone-like gameplay entity for reviewed effects needing duration, position, radius, tick interval, target detection, and on-tick Effect execution. Static examples include FireZone, SlowField, PoisonCloud, and DelayedExplosionZone.
 
-WindVortex is created only by a successful additional Windcut stack through the Wind Buff's StackApplied lifecycle binding. Initial application, pure refresh, blocked application, Buff tick, and overload do not create one.
+Windcut StackApplied is an immediate, single-target Wind attack against up to one other nearby monster. It excludes the Windcut owner from candidates, uses authored extra damage, and has no Elemental-application eligibility. First application, pure refresh, blocked application, Buff tick, and Protection-phase application do not run that attack.
+
+WindVortex is created only by a successful Windcut max-stack Overload through the Overload lifecycle binding. It spawns at the owner's current hit/reference position before the same Buff enters Protection. First application, ordinary StackApplied attacks, pure refresh, blocked application, Buff tick, and Protection-phase application do not create one.
 
 WindVortex behavior:
 
-1. Spawn at the Wind Buff owner's current hit/reference position.
-2. Randomly lock one alive monster in its authored search radius, or choose a random position in that radius when none exists.
-3. Before first hit, pursue the locked target or position; a valid locked monster may be tracked.
-4. On first hit of any monster, stop tracking, lock the current direction, and continue straight.
-5. Keep a per-vortex already-hit set; each monster receives its hit Effect at most once.
-6. Expire after its authored short lifetime once movement begins.
+1. Spawn at the Wind Buff owner's current hit/reference position and start its authored lifetime immediately.
+2. Its dedicated WindVortexDefinition owns lifetime, movement speed, target-search radius, damage radius, damage tick interval, arrival threshold, on-tick EffectDefinition, and visual prefab.
+3. Randomly lock one valid monster in its target-search radius and move directly toward that monster's current hit/reference position. It does not use Monster pathfinding.
+4. On reaching the target anchor, immediately reacquire. Prefer a different valid monster when one exists; otherwise the reached monster may remain eligible.
+5. When the current target becomes invalid, immediately clear and reacquire. With no valid target, remain in place, continue visual presentation, and continue checking for candidates.
+6. At each authored damage tick, resolve every valid monster inside the independent damage radius and execute the on-tick Effect. A monster may be hit again on later ticks while it remains inside the area.
+7. Expire when its authored lifetime ends, regardless of whether it ever acquired a target.
 
-WindVortex owns this pursuit, first-hit transition, lifetime, and hit set. Its hit Effect does not apply Windcut or trigger Elemental reactions by default. It does not move monsters, use Monster pathfinding, or require Storm Shift relocation.
+WindVortex owns this direct pursuit, target validity, lifetime, tick timing, and repeated area damage. Its on-tick Effect does not apply Windcut or trigger Elemental reactions by default. It does not move monsters or use Monster pathfinding.
 
 ## 8. Relationships And Scope
 

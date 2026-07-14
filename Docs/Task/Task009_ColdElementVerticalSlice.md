@@ -49,7 +49,7 @@ Implement Cold as the second complete Elemental vertical slice using shared Cold
 
 ## Out Of Scope
 
-- Electric, Wind, Overcharged, WindVortex, and Storm Shift.
+- Electric, Wind, Overcharged, and WindVortex.
 - New generic movement controls beyond Task008.
 - Behaviour Layer Phase 2 upgrades.
 

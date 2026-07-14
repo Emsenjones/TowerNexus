@@ -44,7 +44,7 @@ Implement Electric as a complete Elemental vertical slice using shared Electric 
 ## Out Of Scope
 
 - Cold movement behavior.
-- WindVortex and Storm Shift.
+- WindVortex.
 - Generic EffectZone or moving-effect frameworks.
 - Behaviour Layer Phase 2 upgrades.
 

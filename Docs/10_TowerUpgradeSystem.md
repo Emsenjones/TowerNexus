@@ -583,7 +583,7 @@ Elemental Layer content is split between tower-specific upgrade authoring and sh
 
 The first complete Elemental Layer content pass contains four ElementTypes for each of the four TowerFamilies: 16 Elemental TowerUpgradeDefinition assets. The four tower-family assets for one element reuse that element's shared Buff data wherever their actual attack timing and target scope allow it.
 
-Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and stack effects such as Electric extra damage or WindVortex spawn do not trigger.
+Buff apply cooldown prevents the same elemental debuff from stacking too quickly on the same monster, regardless of which tower attempts the application. When this cooldown blocks an application, the first-version rule is that no stack is added, duration is not refreshed, and stack effects such as Electric extra damage or the Windcut secondary attack do not trigger.
 
 First application of an elemental debuff should apply the debuff only. If the monster already has that elemental debuff and an eligible tower-owned attack event successfully adds one stack, the StackApplied Buff event binding may execute. A pure refresh should not trigger stack effects. After a successful stack increase, the system checks whether max stacks have been reached; if yes, overload executes and the Buff enters Protection phase when configured.
 

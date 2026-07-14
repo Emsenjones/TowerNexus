@@ -128,7 +128,6 @@ Task003 only creates the runtime capability. Specific overload behavior belongs 
 - Frozen.
 - Overcharged.
 - WindVortex.
-- Storm Shift.
 - EffectZone runtime.
 - Visual status UI.
 - DamageContext migration.

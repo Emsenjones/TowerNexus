@@ -17,7 +17,7 @@ MonoBehaviour:
     stacks
   duration: 6
   tickInterval: 0.25
-  usesStacks: 0
+  usesStacks: 1
   maxStacks: 10
   buffApplyCooldown: 0.2
   eventBindings:

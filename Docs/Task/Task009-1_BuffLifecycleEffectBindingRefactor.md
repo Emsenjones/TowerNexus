@@ -58,7 +58,6 @@ This task makes Fire the regression-validation content for the refactor. Cold an
 ## Out Of Scope
 
 - Task009 Cold and Frozen content.
-- Task011 Storm Shift relocation.
 - EffectZone or WindVortex work.
 - Behaviour Layer Phase 2 upgrades.
 

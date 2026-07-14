@@ -68,4 +68,4 @@ This task creates the visual and observation foundation required before Cold, El
 - Gameplay Effect execution VFX remains distinct from projectile impact VFX and spawns only when its Effect action succeeds.
 - Buff apply cooldown rejection causes no StatusBar or Effect execution VFX change.
 - Monster death, target arrival, reset, and destruction clear runtime states first, then clear presentation from one resulting Clear notification.
-- This foundation is stable before Task009, Task010, or Task013 begins implementation.
+- This foundation is stable before Task009, Task010, or Task012 begins implementation.

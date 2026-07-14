@@ -76,7 +76,7 @@ The runtime combat application of this trigger belongs to Task005 and later vert
 - FlameBurst overload.
 - Cold slow or Frozen.
 - Electric extra damage or Overcharged.
-- Windcut, WindVortex, or Storm Shift.
+- Windcut or WindVortex.
 - EffectZone runtime.
 - Visual status UI.
 - Elemental replacement or reroll upgrades.

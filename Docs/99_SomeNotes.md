@@ -83,10 +83,9 @@
    7. Cold and electric element slices
    8. Effect zone foundation
    9. Tower upgrade behavior layer Phase2 implementation;
-   10. Wind element and moving effect zone
+   10. Wind element and dedicated WindVortex
 8. Player Level up by resolving monsters;
 9. Level configuration design;
 10. Tap tower to pop up TowerInfoWindow;
 11. Develop Monster & Projectile object pool;
 12. (Optional)Phase3 Tower upgrade items: Hunting Arrow、Bouncing Shell、Resonance Orb、Missile Drone、Final Dive.
-

@@ -34,7 +34,6 @@ This is a Cold-specific safety foundation, not a generic movement modifier frame
 
 ## Out Of Scope
 
-- Storm Shift relocation.
 - Knockback, pull, stun, fear, or other movement controls.
 - Cold Elemental content.
 - Generic Elemental reaction framework.

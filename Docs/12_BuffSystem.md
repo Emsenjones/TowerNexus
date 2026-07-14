@@ -110,7 +110,7 @@ StackApplied bindings run only for a successful added stack, not first applicati
 | Fire | Burning applies persistent damage pressure | FlameBurst deals area damage around the owner | Tick and FlameBurst damage do not apply Burning by default |
 | Cold | Cold slows while active | Apply Frozen Buff | Slow and movement lock use safe Monster APIs |
 | Electric | ElectricShock makes later successful stacks deal configured extra damage | Overcharged is an instant multi-target LightningStrike execution | Lightning strikes do not apply ElectricShock by default |
-| Wind | A later successful stack creates WindVortex | Storm Shift requests relocation to a valid nearby node | Vortex and Storm Shift do not apply Windcut by default |
+| Wind | A later successful stack attacks up to one other nearby monster for authored extra damage | Max stacks spawn a persistent moving WindVortex at the owner | Wind attack and Vortex damage do not apply Windcut by default |
 
 ### 7.1 Fire
 
@@ -132,7 +132,9 @@ ElectricShock Overload invokes the instant Overcharged Effect. Overcharged uses 
 
 ### 7.4 Wind
 
-Windcut StackApplied invokes SpawnWindVortex. Its overload invokes instant Storm Shift, which requests Monster System relocation to a random valid nearby, walkable node reachable to the goal, followed by path recalculation. The Buff System does not modify Transform, grid node, or path state.
+Windcut StackApplied invokes a radius-based Effect that excludes its owner, randomly selects up to one remaining valid monster, and executes an authored single-target Wind attack. The initial Windcut application, pure refresh, cooldown-blocked application, Buff tick, and Protection-phase application do not run this Effect. When there is no other valid nearby monster, authored origin feedback may still play, but the owner is never used as a fallback damage target.
+
+Windcut Overload invokes SpawnWindVortex at the owner hit/reference position, then the existing Buff runtime enters Protection when configured. WindVortex is an Effect System-owned persistent gameplay entity; it moves itself directly between nearby valid monsters, independently ticks area damage, and never relocates a monster. The Buff System does not modify Transform, grid node, or path state.
 
 ## 8. Relationships And Scope
 

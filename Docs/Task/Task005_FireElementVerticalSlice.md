@@ -143,7 +143,6 @@ This task should not migrate base attack damage into DamageContext.
 - Wind Elemental content.
 - Overcharged.
 - WindVortex.
-- Storm Shift.
 - EffectZone foundation beyond what FlameBurst needs for instant area damage.
 - Magic Orb Splash.
 - Cannon Timed Shell.
