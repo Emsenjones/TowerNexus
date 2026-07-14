@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_ArcherTower_Elemental_GaleArrows
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: Gale Arrows
-  description: Attacks apply Wind Mark
+  description: Attacks apply Windcut
   icon: {fileID: 21300000, guid: a44011677a3d043cab104678815e0668, type: 3}
   towerFamily: 0
   requiredTowerLevel: 3

@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 0651ceca72b004143be1e865fac69aa4, type: 3}
   towerFamily: 3
   requiredTowerLevel: 2
-  upgradeLayer: 0
+  upgradeLayer: 1
   basicStatDeltas: []
   behaviourPackageType: 300
   piercingMaxHitCount: 3

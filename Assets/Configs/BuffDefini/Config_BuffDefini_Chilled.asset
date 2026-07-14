@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
   m_Name: Config_BuffDefini_Chilled
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
-  displayName: Cold
+  displayName: Chilled
   description: Reduces movement speed and applies Frozen at maximum stacks
   duration: 6
   tickInterval: 0.2
