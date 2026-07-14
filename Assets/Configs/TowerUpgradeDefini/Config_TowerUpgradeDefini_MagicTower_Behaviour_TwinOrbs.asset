@@ -19,7 +19,7 @@ MonoBehaviour:
   requiredTowerLevel: 2
   upgradeLayer: 1
   basicStatDeltas: []
-  behaviourPackageType: 300
+  behaviourPackageType: 200
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
   twinOrbsCount: 2
