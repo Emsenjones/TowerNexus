@@ -5,9 +5,21 @@ public static class EffectExecutor
 {
     private static readonly List<MonsterBehaviour> ResolvedTargets = new List<MonsterBehaviour>();
 
+    private struct EffectExecutionResult
+    {
+        public EffectExecutionResult(bool targetsResolved, bool executedAnyAction)
+        {
+            TargetsResolved = targetsResolved;
+            ExecutedAnyAction = executedAnyAction;
+        }
+
+        public bool TargetsResolved { get; }
+        public bool ExecutedAnyAction { get; }
+    }
+
     public static void Execute(EffectDefinition effectDefinition, EffectTriggerContext triggerContext)
     {
-        ExecuteWithResolvedTargets(effectDefinition, triggerContext, ResolvedTargets);
+        ExecuteInternal(effectDefinition, triggerContext, ResolvedTargets);
     }
 
     public static bool ExecuteWithResolvedTargets(
@@ -15,19 +27,28 @@ public static class EffectExecutor
         EffectTriggerContext triggerContext,
         List<MonsterBehaviour> resolvedTargets)
     {
+        return ExecuteInternal(effectDefinition, triggerContext, resolvedTargets).TargetsResolved;
+    }
+
+    private static EffectExecutionResult ExecuteInternal(
+        EffectDefinition effectDefinition,
+        EffectTriggerContext triggerContext,
+        List<MonsterBehaviour> resolvedTargets)
+    {
         if (effectDefinition == null || resolvedTargets == null)
         {
-            return false;
+            return default;
         }
 
         if (!effectDefinition.IsValid())
         {
-            return false;
+            return default;
         }
 
         if (!EffectTargetResolver.TryResolveTargets(effectDefinition, triggerContext, resolvedTargets))
         {
-            return false;
+            SpawnExecutionVfx(effectDefinition, triggerContext, resolvedTargets);
+            return default;
         }
 
         List<MonsterBehaviour> executionTargets = new List<MonsterBehaviour>(resolvedTargets);
@@ -40,12 +61,9 @@ public static class EffectExecutor
             executedAnyAction |= ExecuteAction(actions[i], triggerContext, executionTargets);
         }
 
-        if (executedAnyAction)
-        {
-            SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
-        }
+        SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
 
-        return true;
+        return new EffectExecutionResult(true, executedAnyAction);
     }
 
     private static bool ExecuteAction(
@@ -233,15 +251,20 @@ public static class EffectExecutor
         }
 
         List<MonsterBehaviour> candidateTargets = new List<MonsterBehaviour>();
+        List<MonsterBehaviour> childResolvedTargets = new List<MonsterBehaviour>(1);
 
         for (int i = 0; i < targets.Count; i++)
         {
             MonsterBehaviour target = targets[i];
 
-            if (EffectTargetResolver.IsValidMonsterTarget(target) && !candidateTargets.Contains(target))
+            if (!EffectTargetResolver.IsValidMonsterTarget(target) ||
+                (action.ExcludeTriggerContextTarget && target == triggerContext.TargetMonster) ||
+                candidateTargets.Contains(target))
             {
-                candidateTargets.Add(target);
+                continue;
             }
+
+            candidateTargets.Add(target);
         }
 
         bool executedAnyEffect = false;
@@ -258,7 +281,7 @@ public static class EffectExecutor
                 continue;
             }
 
-            EffectExecutor.Execute(
+            EffectExecutionResult childExecution = ExecuteInternal(
                 action.MultiTargetEffectDefinition,
                 new EffectTriggerContext(
                     triggerContext.TriggerType,
@@ -268,9 +291,10 @@ public static class EffectExecutor
                     true,
                     GetMonsterHitPosition(target),
                     triggerContext.ResolvedDamage,
-                    false));
+                    false),
+                childResolvedTargets);
 
-            executedAnyEffect = true;
+            executedAnyEffect |= childExecution.ExecutedAnyAction;
             remainingExecutionCount--;
         }
 
@@ -321,7 +345,7 @@ public static class EffectExecutor
     {
         if (EffectTargetResolver.IsValidMonsterTarget(triggerContext.TargetMonster))
         {
-            spawnPosition = EffectTargetResolver.GetMonsterHitPosition(triggerContext.TargetMonster);
+            spawnPosition = triggerContext.TargetMonster.transform.position;
             return true;
         }
 
@@ -368,7 +392,7 @@ public static class EffectExecutor
             return true;
         }
 
-        if (triggerContext.TargetMonster != null)
+        if (EffectTargetResolver.IsValidMonsterTarget(triggerContext.TargetMonster))
         {
             position = GetMonsterHitPosition(triggerContext.TargetMonster);
             return true;
@@ -378,7 +402,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (target != null)
+            if (EffectTargetResolver.IsValidMonsterTarget(target))
             {
                 position = GetMonsterHitPosition(target);
                 return true;

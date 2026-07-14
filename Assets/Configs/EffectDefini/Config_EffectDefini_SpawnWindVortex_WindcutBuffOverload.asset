@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_BurningBuffOverload
+  m_Name: Config_EffectDefini_SpawnWindVortex_WindcutBuffOverload
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Apply Fire overload damage
-  radius: 1
-  executionVfxPrefab: {fileID: 9219654916902913616, guid: be4a9dc4b48e440d3afee03e7c462923, type: 3}
+  displayName: Spawn a WindVortex on WindCutBuffOverload
+  radius: 0
+  executionVfxPrefab: {fileID: 0}
   actions:
-  - actionType: 0
-    damageAmount: 2
+  - actionType: 6
+    damageAmount: 0
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
     multiTargetEffectDefinition: {fileID: 0}
     targetCount: 1
     excludeTriggerTarget: 0
-    windVortexConfig: {fileID: 0}
+    windVortexConfig: {fileID: 11400000, guid: b4b4207c81b3b4f5fa2fc7283bfe2ef7, type: 2}

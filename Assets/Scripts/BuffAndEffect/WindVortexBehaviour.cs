@@ -111,7 +111,7 @@ public class WindVortexBehaviour : MonoBehaviour
             return;
         }
 
-        Vector3 targetPosition = EffectTargetResolver.GetMonsterHitPosition(currentTarget);
+        Vector3 targetPosition = currentTarget.transform.position;
         float arrivalThresholdSqr = config.ArrivalThreshold * config.ArrivalThreshold;
 
         if ((targetPosition - transform.position).sqrMagnitude <= arrivalThresholdSqr)

@@ -8,10 +8,7 @@ public static class ElementalApplication
         Vector3 applicationPosition,
         EffectTriggerType runtimeTriggerType)
     {
-        if (sourceTower == null ||
-            targetMonster == null ||
-            !targetMonster.gameObject.activeInHierarchy ||
-            targetMonster.IsDead())
+        if (sourceTower == null || !EffectTargetResolver.IsValidMonsterTarget(targetMonster))
         {
             return;
         }

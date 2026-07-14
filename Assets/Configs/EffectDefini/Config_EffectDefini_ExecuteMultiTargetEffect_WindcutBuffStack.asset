@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_BurningBuffOverload
+  m_Name: Config_EffectDefini_ExecuteMultiTargetEffect_WindcutBuffStack
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Apply Fire overload damage
+  displayName: Deal multiple effects on Stacks
   radius: 1
-  executionVfxPrefab: {fileID: 9219654916902913616, guid: be4a9dc4b48e440d3afee03e7c462923, type: 3}
+  executionVfxPrefab: {fileID: 3321206211796593786, guid: b8374902869304382bc99082358c35ad, type: 3}
   actions:
-  - actionType: 0
-    damageAmount: 2
+  - actionType: 5
+    damageAmount: 1
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
-    multiTargetEffectDefinition: {fileID: 0}
+    multiTargetEffectDefinition: {fileID: 11400000, guid: 76d8c6476cd9e4bf2b0f071d534bf3bc, type: 2}
     targetCount: 1
-    excludeTriggerTarget: 0
+    excludeTriggerTarget: 1
     windVortexConfig: {fileID: 0}

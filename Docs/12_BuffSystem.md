@@ -98,10 +98,12 @@ Rules:
 3. Multiple towers with the same ElementType contribute to the same shared Buff on a monster.
 4. Buff apply cooldown applies across those towers; a blocked application does not refresh, stack, or run stack Effects.
 5. Expiry before max removes the instance and loses its stacks.
-6. A successful stack reaching max runs Overload, then enters Protection when a protection duration is configured.
+6. A successful reapply reaching max runs StackApplied, then Overload, then enters Protection when a protection duration is configured.
 7. Protection blocks only the same BuffDefinition by default; other Elemental Buffs may still apply.
 
 StackApplied bindings run only for a successful added stack, not first application or pure refresh.
+
+This ordering is shared Buff runtime lifecycle behavior, not an Element-specific sequence. Wind and future Elemental content must use the same dispatcher rather than adding local sequencing.
 
 ## 7. First-Version Elemental Content Contracts
 
@@ -132,9 +134,9 @@ ElectricShock Overload invokes the instant Overcharged Effect. Overcharged uses 
 
 ### 7.4 Wind
 
-Windcut StackApplied invokes a radius-based Effect that excludes its owner, randomly selects up to one remaining valid monster, and executes an authored single-target Wind attack. The initial Windcut application, pure refresh, cooldown-blocked application, Buff tick, and Protection-phase application do not run this Effect. When there is no other valid nearby monster, authored origin feedback may still play, but the owner is never used as a fallback damage target.
+Windcut StackApplied invokes a radius-based Effect that excludes its owner, randomly selects up to one remaining valid monster, and executes an authored single-target Wind attack. The initial Windcut application, pure refresh, cooldown-blocked application, Buff tick, and Protection-phase application do not run this Effect. When there is no other valid nearby monster, a configured parent execution VFX still plays at the owner trigger position, but the owner is never used as a fallback damage target.
 
-Windcut Overload invokes SpawnWindVortex at the owner hit/reference position, then the existing Buff runtime enters Protection when configured. WindVortex is an Effect System-owned persistent gameplay entity; it moves itself directly between nearby valid monsters, independently ticks area damage, and never relocates a monster. The Buff System does not modify Transform, grid node, or path state.
+Windcut Overload invokes SpawnWindVortex at the owner Transform position, then the existing Buff runtime enters Protection when configured. WindVortex is an Effect System-owned persistent gameplay entity; it moves itself directly between nearby valid monsters, independently ticks area damage, and never relocates a monster. The Buff System does not modify Transform, grid node, or path state.
 
 ## 8. Relationships And Scope
 

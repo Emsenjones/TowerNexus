@@ -33,6 +33,10 @@ public class EffectAction
     [FormerlySerializedAs("overchargedStrikeCount")]
     [MinValue(1)]
     [SerializeField] private int targetCount = 1;
+    [FormerlySerializedAs("excludeTriggerContextTarget")]
+    [TitleGroup("Multi-Target Effect")]
+    [ShowIf(nameof(IsExecuteMultiTargetEffectAction))]
+    [SerializeField] private bool excludeTriggerTarget;
     [TitleGroup("Wind Vortex")]
     [ShowIf(nameof(IsSpawnWindVortexAction))]
     [SerializeField] private WindVortexConfig windVortexConfig;
@@ -44,6 +48,7 @@ public class EffectAction
     public bool IsMovementLocked => isMovementLocked;
     public EffectDefinition MultiTargetEffectDefinition => multiTargetEffectDefinition;
     public int TargetCount => Mathf.Max(1, targetCount);
+    public bool ExcludeTriggerContextTarget => excludeTriggerTarget;
     public WindVortexConfig WindVortexConfig => windVortexConfig;
 
     public bool IsValid()

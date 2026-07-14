@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_BurningBuffOverload
+  m_Name: Config_EffectDefini_ApplyBuff_Windcut
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Apply Fire overload damage
-  radius: 1
-  executionVfxPrefab: {fileID: 9219654916902913616, guid: be4a9dc4b48e440d3afee03e7c462923, type: 3}
+  displayName: Apply Windcut buff
+  radius: 0
+  executionVfxPrefab: {fileID: 0}
   actions:
-  - actionType: 0
-    damageAmount: 2
-    buffDefinition: {fileID: 0}
+  - actionType: 1
+    damageAmount: 0
+    buffDefinition: {fileID: 11400000, guid: 44c89c784cfee49cb8d98453428c23f4, type: 2}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
     multiTargetEffectDefinition: {fileID: 0}

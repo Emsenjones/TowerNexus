@@ -21,14 +21,14 @@ Implement the reviewed persistent, moving WindVortex gameplay entity and its nar
 
 - Add a dedicated WindVortexConfig referenced by the narrow SpawnWindVortex Effect action.
 - WindVortexConfig owns a complete runtime prefab with WindVortexBehaviour, lifetime, movement speed, target-search radius, damage radius, tick interval, arrival threshold, and on-tick EffectDefinition.
-- Spawn at the supplied owner hit/reference position and retain only source context required for on-tick Effect execution.
+- Spawn at the supplied owner Transform position and retain only source context required for on-tick Effect execution.
 - Do not yet wire the spawn action into Wind Elemental content.
 
 ### WindVortex Behavior
 
 - Start lifetime at spawn, even when no target exists. Expiry ends the entity before any further movement or tick execution in that frame.
 - Use the shared Effect target-validity contract: a target must be non-null, active, alive, and not otherwise resolved by Monster lifecycle cleanup.
-- Search for valid monsters in authored target-search radius; randomly lock one and move directly toward its current hit/reference position. Initialization, target invalidation, and arrival reacquire immediately; an idle Vortex searches again on a small fixed internal interval.
+- Search for valid monsters in authored target-search radius; randomly lock one and move directly toward its current Transform position. Initialization, target invalidation, and arrival reacquire immediately; an idle Vortex searches again on a small fixed internal interval.
 - Do not use Monster pathfinding or move any monster.
 - On arrival, immediately search again and prefer a new valid target when one exists. The reached target may be selected when it is the only valid candidate.
 - If a locked target dies, arrives, is destroyed, or otherwise becomes invalid, clear it and immediately search again.

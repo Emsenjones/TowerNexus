@@ -22,17 +22,24 @@ Complete Wind as the final first-version Elemental vertical slice, then audit th
 ### Shared Wind Data
 
 - Create one shared Windcut BuffDefinition and shared Wind Effect data.
-- Create the Wind apply Effect, StackApplied parent Effect, single-target directional Wind attack Effect, no-target origin feedback when authored, WindVortex Overload Effect, and Wind presentation data.
+- Create the Wind apply Effect, StackApplied parent Effect, single-target Wind attack Effect, WindVortex Overload Effect, and Wind presentation data.
 - Wind gameplay after application is independent of source tower identity.
+
+### Shared Execution Clarifications
+
+- A reapply that reaches Windcut max stacks preserves the shared lifecycle sequence: runtime stack update, StackApplied binding, Overload binding, then Protection. Wind introduces no local sequence outside MonsterBuffRuntime.
+- ExecuteMultiTargetEffect gains an optional trigger-context-target exclusion flag, defaulting to false. Wind enables it; existing content keeps its current behavior.
+- A configured EffectDefinition execution VFX always instantiates without changing its prefab rotation when the context supplies a world position, regardless of target resolution or Action success.
+- ExecuteMultiTargetEffect succeeds only when a selected child Effect executes at least one action successfully. Empty candidate sets, including sets emptied by trigger-target exclusion, are unsuccessful.
 
 ### Wind Behavior
 
 - First Wind application creates the initial Windcut stack only.
 - Each later successful stack refreshes duration, adds one stack, and invokes StackApplied.
 - StackApplied resolves nearby valid monsters from its authored radius, excludes the Windcut owner, randomly selects up to one remaining monster, and deals authored reaction damage through the single-target Wind attack Effect.
-- The Wind attack visual begins at the owner anchor and faces the selected target using local +Z forward. When no secondary target exists, origin feedback may play but no damage occurs and the owner is never a fallback target.
+- When no secondary target exists, a configured StackApplied parent execution VFX still plays at the owner trigger position, but no damage occurs and the owner is never a fallback target.
 - Cooldown-blocked application, pure refresh, Buff tick, and Protection-phase application neither add a stack nor run the Wind attack.
-- Reaching max stacks invokes Overload, which spawns WindVortex at the owner anchor; the same Windcut Buff then enters its existing Protection phase.
+- Reaching max stacks invokes Overload, which spawns WindVortex at the owner Transform position; the same Windcut Buff then enters its existing Protection phase.
 - Wind attack and WindVortex damage do not recursively apply Windcut or other Elemental stacks by default.
 
 ### Four-Tower Wind Content
@@ -47,6 +54,7 @@ Complete Wind as the final first-version Elemental vertical slice, then audit th
 - Confirm the complete matrix contains 16 Elemental TowerUpgradeDefinitions.
 - Confirm each definition matches its TowerFamily and ElementType and routes through shared Elemental Buff data.
 - Confirm each element is visible through Task007 feedback during gameplay validation.
+- Record the audit in a lightweight 4 by 4 completion matrix; do not create an editor or runtime audit framework.
 
 ## Shared Constraints
 
@@ -68,3 +76,4 @@ Complete Wind as the final first-version Elemental vertical slice, then audit th
 - WindVortex is created only by successful Windcut Overload and obeys the Task011 contract.
 - Wind reaction damage does not recursively apply Windcut stacks.
 - The Elemental Content Audit confirms all 16 Elemental TowerUpgradeDefinitions are present, correctly matched, and validated through their intended tower-family attack path.
+- The final audit result records UpgradeDefinition, TowerFamily, ElementType, shared Apply Effect, shared BuffDefinition, real attack entry, and Task007 feedback for every matrix cell.
