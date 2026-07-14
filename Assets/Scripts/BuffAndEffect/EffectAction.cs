@@ -33,6 +33,9 @@ public class EffectAction
     [FormerlySerializedAs("overchargedStrikeCount")]
     [MinValue(1)]
     [SerializeField] private int targetCount = 1;
+    [TitleGroup("Wind Vortex")]
+    [ShowIf(nameof(IsSpawnWindVortexAction))]
+    [SerializeField] private WindVortexConfig windVortexConfig;
 
     public EffectActionType ActionType => actionType;
     public int DamageAmount => Mathf.Max(0, damageAmount);
@@ -41,6 +44,7 @@ public class EffectAction
     public bool IsMovementLocked => isMovementLocked;
     public EffectDefinition MultiTargetEffectDefinition => multiTargetEffectDefinition;
     public int TargetCount => Mathf.Max(1, targetCount);
+    public WindVortexConfig WindVortexConfig => windVortexConfig;
 
     public bool IsValid()
     {
@@ -82,6 +86,20 @@ public class EffectAction
             }
         }
 
+        if (actionType == EffectActionType.SpawnWindVortex)
+        {
+            if (windVortexConfig == null)
+            {
+                Debug.LogWarning("Effect action is invalid: SpawnWindVortex requires a WindVortexConfig.");
+                return false;
+            }
+
+            if (!windVortexConfig.IsValid())
+            {
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -108,5 +126,10 @@ public class EffectAction
     private bool IsExecuteMultiTargetEffectAction()
     {
         return actionType == EffectActionType.ExecuteMultiTargetEffect;
+    }
+
+    private bool IsSpawnWindVortexAction()
+    {
+        return actionType == EffectActionType.SpawnWindVortex;
     }
 }

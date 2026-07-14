@@ -51,7 +51,7 @@ Complete Wind as the final first-version Elemental vertical slice, then audit th
 ## Shared Constraints
 
 - Do not create generic Elemental reaction, ElementalBuff inheritance, or moving EffectZone frameworks.
-- Keep Elemental behavior data-driven through BuffDefinition, EffectDefinition, and the dedicated WindVortexDefinition.
+- Keep Elemental behavior data-driven through BuffDefinition, EffectDefinition, and the dedicated WindVortexConfig.
 - Do not add multi-element towers, replacement, reroll, global upgrades, or rarity systems.
 
 ## Out Of Scope

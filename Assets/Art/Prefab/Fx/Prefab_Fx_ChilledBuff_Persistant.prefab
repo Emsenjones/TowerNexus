@@ -4718,7 +4718,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3467723752556581435}
   m_Layer: 0
-  m_Name: Prefab_Fx_ColdBuff_Persistant
+  m_Name: Prefab_Fx_ChilledBuff_Persistant
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

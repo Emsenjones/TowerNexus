@@ -72,6 +72,8 @@ public static class EffectExecutor
                 return ExecuteSetMovementLock(action, targets);
             case EffectActionType.ExecuteMultiTargetEffect:
                 return ExecuteMultiTargetEffect(action, triggerContext, targets);
+            case EffectActionType.SpawnWindVortex:
+                return ExecuteSpawnWindVortex(action, triggerContext);
             default:
                 Debug.LogWarning($"Effect executor cannot execute unsupported action type '{action.ActionType}'.");
                 return false;
@@ -98,7 +100,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (target == null || target.IsDead())
+            if (!EffectTargetResolver.IsValidMonsterTarget(target))
             {
                 continue;
             }
@@ -134,7 +136,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (target == null || target.IsDead())
+            if (!EffectTargetResolver.IsValidMonsterTarget(target))
             {
                 continue;
             }
@@ -169,7 +171,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (target != null && !target.IsDead() && target.SetMoveSpeedMultiplier(action.MoveSpeedMultiplier))
+            if (EffectTargetResolver.IsValidMonsterTarget(target) && target.SetMoveSpeedMultiplier(action.MoveSpeedMultiplier))
             {
                 updatedMoveSpeed = true;
             }
@@ -186,7 +188,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (target == null || target.IsDead())
+            if (!EffectTargetResolver.IsValidMonsterTarget(target))
             {
                 continue;
             }
@@ -208,7 +210,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (target == null || target.IsDead())
+            if (!EffectTargetResolver.IsValidMonsterTarget(target))
             {
                 continue;
             }
@@ -236,7 +238,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (target != null && target.gameObject.activeInHierarchy && !target.IsDead() && !candidateTargets.Contains(target))
+            if (EffectTargetResolver.IsValidMonsterTarget(target) && !candidateTargets.Contains(target))
             {
                 candidateTargets.Add(target);
             }
@@ -251,7 +253,7 @@ public static class EffectExecutor
             MonsterBehaviour target = candidateTargets[targetIndex];
             candidateTargets.RemoveAt(targetIndex);
 
-            if (target == null || !target.gameObject.activeInHierarchy || target.IsDead())
+            if (!EffectTargetResolver.IsValidMonsterTarget(target))
             {
                 continue;
             }
@@ -273,6 +275,64 @@ public static class EffectExecutor
         }
 
         return executedAnyEffect;
+    }
+
+    private static bool ExecuteSpawnWindVortex(
+        EffectAction action,
+        EffectTriggerContext triggerContext)
+    {
+        WindVortexConfig config = action != null ? action.WindVortexConfig : null;
+
+        if (config == null || !config.IsValid() ||
+            !TryGetWindVortexSpawnPosition(triggerContext, out Vector3 spawnPosition))
+        {
+            return false;
+        }
+
+        MonsterManager monsterManager = Object.FindFirstObjectByType<MonsterManager>();
+
+        if (monsterManager == null)
+        {
+            Debug.LogWarning("Effect executor cannot spawn WindVortex: MonsterManager was not found.");
+            return false;
+        }
+
+        GameObject windVortexObject = Object.Instantiate(config.WindVortexPrefab, spawnPosition, Quaternion.identity);
+
+        if (!windVortexObject.TryGetComponent(out WindVortexBehaviour windVortexBehaviour))
+        {
+            Debug.LogWarning("Effect executor cannot spawn WindVortex: runtime prefab is missing WindVortexBehaviour.", windVortexObject);
+            Object.Destroy(windVortexObject);
+            return false;
+        }
+
+        windVortexBehaviour.Initialize(
+            config,
+            monsterManager,
+            triggerContext.SourceTower,
+            triggerContext.SourceUpgrade);
+
+        return windVortexBehaviour.IsInitialized;
+    }
+
+    private static bool TryGetWindVortexSpawnPosition(
+        EffectTriggerContext triggerContext,
+        out Vector3 spawnPosition)
+    {
+        if (EffectTargetResolver.IsValidMonsterTarget(triggerContext.TargetMonster))
+        {
+            spawnPosition = EffectTargetResolver.GetMonsterHitPosition(triggerContext.TargetMonster);
+            return true;
+        }
+
+        if (triggerContext.HasTriggerPosition)
+        {
+            spawnPosition = triggerContext.TriggerPosition;
+            return true;
+        }
+
+        spawnPosition = default;
+        return false;
     }
 
     private static bool IsSuccessfulBuffApply(BuffApplyResult result)
@@ -331,7 +391,6 @@ public static class EffectExecutor
 
     private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
     {
-        Transform hitAnchor = monster.HitAnchor;
-        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
+        return EffectTargetResolver.GetMonsterHitPosition(monster);
     }
 }

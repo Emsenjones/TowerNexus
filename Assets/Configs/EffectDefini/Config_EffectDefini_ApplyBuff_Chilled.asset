@@ -10,16 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_ElectricityBuffOverload
+  m_Name: Config_EffectDefini_ApplyBuff_Chilled
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Deal damage on Stacks
+  displayName: Apply Cold buff
   radius: 0
-  executionVfxPrefab: {fileID: 8880723711465314379, guid: 9ea5d373b3107429ebdf2d31c3d421f0, type: 3}
+  executionVfxPrefab: {fileID: 0}
   actions:
-  - actionType: 0
-    damageAmount: 10
-    buffDefinition: {fileID: 0}
+  - actionType: 1
+    damageAmount: 0
+    buffDefinition: {fileID: 11400000, guid: e5e4aa3f395d3452a9d69215b703f764, type: 2}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
-    multiTargetEffectDefinition: {fileID: 0}
-    targetCount: 1

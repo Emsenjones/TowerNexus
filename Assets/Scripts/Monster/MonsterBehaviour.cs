@@ -45,6 +45,7 @@ public class MonsterBehaviour : MonoBehaviour
     public bool IsMoving => isMoving;
     public float MoveSpeedMultiplier => moveSpeedMultiplier;
     public bool IsMovementLocked => isMovementLocked;
+    public bool IsGameplayTargetable => isActiveAndEnabled && !isDead && !isCleaningUp;
     [TitleGroup("Buff Runtime")]
     [ShowInInspector, ReadOnly]
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveBuffSnapshots => buffRuntime != null ? buffRuntime.ActiveSnapshots : EmptyBuffSnapshots;

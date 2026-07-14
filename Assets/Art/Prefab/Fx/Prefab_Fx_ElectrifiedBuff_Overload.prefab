@@ -19622,7 +19622,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1115814666338923980}
   m_Layer: 0
-  m_Name: Prefab_Fx_ElectricityBuff_Overload
+  m_Name: Prefab_Fx_ElectrifiedBuff_Overload
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

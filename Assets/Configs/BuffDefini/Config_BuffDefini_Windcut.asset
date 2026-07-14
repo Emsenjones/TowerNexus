@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
-  m_Name: Config_BuffDefini_Wind
+  m_Name: Config_BuffDefini_Windcut
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Wind
   description: Sends damaging wind toward another enemy and pushes the monster backward

@@ -5,5 +5,6 @@ public enum EffectActionType
     SetMoveSpeedMultiplier = 2,
     ClearMoveSpeedMultiplier = 3,
     SetMovementLock = 4,
-    ExecuteMultiTargetEffect = 5
+    ExecuteMultiTargetEffect = 5,
+    SpawnWindVortex = 6
 }

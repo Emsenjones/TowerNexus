@@ -100,7 +100,7 @@ Windcut uses this action with target count one and trigger-target exclusion. Its
 
 SpawnEffectZone creates a world gameplay entity with its own duration, radius, tick interval, source context, and on-tick Effect. Gameplay timing is authoritative; VFX follows gameplay and never drives it.
 
-SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff Overload behavior and does not require a generic moving EffectZone abstraction. The action references a dedicated WindVortexDefinition rather than expanding EffectZone authoring prematurely.
+SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff Overload behavior and does not require a generic moving EffectZone abstraction. The action references a dedicated WindVortexConfig, whose complete runtime prefab contains WindVortexBehaviour, rather than expanding EffectZone authoring prematurely.
 
 ### 5.5 Movement And Path Actions
 
@@ -125,11 +125,11 @@ WindVortex is created only by a successful Windcut max-stack Overload through th
 WindVortex behavior:
 
 1. Spawn at the Wind Buff owner's current hit/reference position and start its authored lifetime immediately.
-2. Its dedicated WindVortexDefinition owns lifetime, movement speed, target-search radius, damage radius, damage tick interval, arrival threshold, on-tick EffectDefinition, and visual prefab.
+2. Its dedicated WindVortexConfig owns its complete runtime prefab, lifetime, movement speed, target-search radius, damage radius, damage tick interval, arrival threshold, and on-tick EffectDefinition.
 3. Randomly lock one valid monster in its target-search radius and move directly toward that monster's current hit/reference position. It does not use Monster pathfinding.
 4. On reaching the target anchor, immediately reacquire. Prefer a different valid monster when one exists; otherwise the reached monster may remain eligible.
-5. When the current target becomes invalid, immediately clear and reacquire. With no valid target, remain in place, continue visual presentation, and continue checking for candidates.
-6. At each authored damage tick, resolve every valid monster inside the independent damage radius and execute the on-tick Effect. A monster may be hit again on later ticks while it remains inside the area.
+5. When the current target becomes invalid, immediately clear and reacquire. With no valid target, remain in place, continue visual presentation, and check again on a small internal runtime interval; the interval is not first-version authoring data.
+6. At each authored damage tick, resolve every valid monster inside the independent damage radius and execute the single-target on-tick Effect once per target. A monster may be hit again on later ticks while it remains inside the area.
 7. Expire when its authored lifetime ends, regardless of whether it ever acquired a target.
 
 WindVortex owns this direct pursuit, target validity, lifetime, tick timing, and repeated area damage. Its on-tick Effect does not apply Windcut or trigger Elemental reactions by default. It does not move monsters or use Monster pathfinding.

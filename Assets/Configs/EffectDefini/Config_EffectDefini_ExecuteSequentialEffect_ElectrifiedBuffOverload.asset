@@ -10,14 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_ApplyBuff_Fire
+  m_Name: Config_EffectDefini_ExecuteSequentialEffect_ElectrifiedBuffOverload
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Apply Fire buff
-  radius: 0
+  displayName: Deal damage on Stacks
+  radius: 2
   executionVfxPrefab: {fileID: 0}
   actions:
-  - actionType: 1
-    damageAmount: 0
-    buffDefinition: {fileID: 11400000, guid: c11a5379aa3749ad83f0544cb3c03600, type: 2}
+  - actionType: 5
+    damageAmount: 2
+    buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
+    multiTargetEffectDefinition: {fileID: 11400000, guid: 95dd1ad3fb8954bcd8bd896979fbc5bd, type: 2}
+    targetCount: 4

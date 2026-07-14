@@ -3,6 +3,63 @@ using UnityEngine;
 
 public static class EffectTargetResolver
 {
+    public static bool IsValidMonsterTarget(MonsterBehaviour monster)
+    {
+        return monster != null && monster.IsGameplayTargetable;
+    }
+
+    public static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
+    {
+        if (monster == null)
+        {
+            return default;
+        }
+
+        Transform hitAnchor = monster.HitAnchor;
+        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
+    }
+
+    public static int CollectValidTargetsInRadius(
+        IReadOnlyList<MonsterBehaviour> aliveMonsters,
+        Vector3 center,
+        float radius,
+        MonsterBehaviour excludedMonster,
+        List<MonsterBehaviour> targets)
+    {
+        if (targets == null)
+        {
+            return 0;
+        }
+
+        targets.Clear();
+
+        if (aliveMonsters == null || radius < 0f)
+        {
+            return 0;
+        }
+
+        float radiusSqr = radius * radius;
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            MonsterBehaviour monster = aliveMonsters[i];
+
+            if (!IsValidMonsterTarget(monster) || monster == excludedMonster)
+            {
+                continue;
+            }
+
+            if ((GetMonsterHitPosition(monster) - center).sqrMagnitude > radiusSqr || targets.Contains(monster))
+            {
+                continue;
+            }
+
+            targets.Add(monster);
+        }
+
+        return targets.Count;
+    }
+
     public static bool TryResolveTargets(
         EffectDefinition effectDefinition,
         EffectTriggerContext triggerContext,
@@ -36,7 +93,7 @@ public static class EffectTargetResolver
     {
         MonsterBehaviour targetMonster = triggerContext.TargetMonster;
 
-        if (!IsValidTarget(targetMonster))
+        if (!IsValidMonsterTarget(targetMonster))
         {
             Debug.LogWarning("Effect target resolver cannot resolve single-target effect: target monster is missing or invalid.");
             return false;
@@ -65,37 +122,19 @@ public static class EffectTargetResolver
             return false;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
-        float radiusSqr = effectDefinition.Radius * effectDefinition.Radius;
-
-        for (int i = 0; i < aliveMonsters.Count; i++)
-        {
-            MonsterBehaviour monster = aliveMonsters[i];
-
-            if (!IsValidTarget(monster))
-            {
-                continue;
-            }
-
-            if ((GetMonsterHitPosition(monster) - center).sqrMagnitude > radiusSqr)
-            {
-                continue;
-            }
-
-            if (!targets.Contains(monster))
-            {
-                targets.Add(monster);
-            }
-        }
-
-        return targets.Count > 0;
+        return CollectValidTargetsInRadius(
+                   monsterManager.GetAliveMonsters(),
+                   center,
+                   effectDefinition.Radius,
+                   null,
+                   targets) > 0;
     }
 
     private static bool TryGetRadiusCenter(EffectTriggerContext triggerContext, out Vector3 center)
     {
         MonsterBehaviour targetMonster = triggerContext.TargetMonster;
 
-        if (IsValidTarget(targetMonster))
+        if (IsValidMonsterTarget(targetMonster))
         {
             center = GetMonsterHitPosition(targetMonster);
             return true;
@@ -111,16 +150,4 @@ public static class EffectTargetResolver
         return false;
     }
 
-    private static bool IsValidTarget(MonsterBehaviour monster)
-    {
-        return monster != null &&
-               monster.gameObject.activeInHierarchy &&
-               !monster.IsDead();
-    }
-
-    private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
-    {
-        Transform hitAnchor = monster.HitAnchor;
-        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
-    }
 }

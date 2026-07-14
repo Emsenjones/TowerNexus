@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
-  m_Name: Config_BuffDefini_Fire
+  m_Name: Config_BuffDefini_Burning
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Fire
   description: Deals periodic Fire damage and explodes at maximum stacks to damage
