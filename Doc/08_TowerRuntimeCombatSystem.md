@@ -23,7 +23,7 @@ It does not define what a tower is.
 
 It does not own tower placement, projectile movement, buff state, elemental stack rules, overload rules, monster health, or static tower configuration.
 
-For Elemental Layer content, the attacking runtime determines the real attack boundary and provides the current tower's Elemental apply Effect to Effect System. It does not expose a designer-selected trigger type for this path: projectile hit, orb contact, or shell impact are runtime facts, while the upgrade only declares the Elemental Effect to apply.
+For Elemental Layer content, the attacking runtime determines the real attack boundary and provides the current tower's Elemental apply Effect to Effect System. It does not expose a designer-selected trigger type for this path: projectile hit, orb contact, Position Impact, and Monster Hit are runtime facts, while the upgrade only declares the Elemental Effect to apply. An eligible application attempt is not globally gated by positive damage or DealDamage success.
 
 ---
 
@@ -36,6 +36,8 @@ The Tower Runtime Combat System owns:
 - Target selection execution
 - Attack cooldown management
 - Runtime stat resolution from base config plus tower upgrade state
+- Runtime Behaviour composition resolution from the source tower's complete applied package set
+- Immutable execution-option snapshots for released Attack Entities
 - Attack state transitions
 - Attack presentation request timing
 - Attack Entity release orchestration
@@ -142,7 +144,7 @@ Examples:
 
 - It creates and initializes a projectile, then Projectile System moves and resolves that projectile.
 - It releases a Magic Orb, then Magic Orb behavior owns orbit, contact detection, hit count, and lifetime from its release-time orbit center.
-- It releases a Drone, then Drone behavior owns movement, target orbit, battery, battery-end destruction, and projectile burst fire timing.
+- It releases a Drone, then Drone behavior owns movement, target orbit, battery, optional Final Dive, battery-end destruction, and projectile burst fire timing.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
 - It may trigger attack VFX hooks, but VFX components should own visual presentation only.
 
@@ -273,11 +275,12 @@ Tower Runtime Combat should not spawn monsters, move monsters, or own monster he
 
 Elemental attack handoff follows the actual attack behavior:
 
-- Archer projectile hit and Drone-fired projectile hit provide a single-target elemental application opportunity.
-- Magic Orb contact provides a single-target elemental application opportunity.
-- Cannon shell impact provides an area resolution opportunity; every valid monster resolved by that explosion may receive the Elemental application.
+- Archer projectile hit and Drone-fired projectile hit may provide single-target Elemental application opportunities.
+- Magic Orb contact may provide a single-target Elemental application opportunity.
+- Baseline Cannon arrival may provide one direct-target opportunity when a Monster Hit is resolved. Explosive Shell may independently provide one opportunity for every Monster resolved by its Position Impact explosion.
+- Reviewed Behaviour extensions such as Arcane Detonation, Arcane Field, Blast Rounds, Bouncing Shell, and Final Dive define their own explicit opportunity boundaries.
 
-These attack events may identify source tower, affected monster or impact position, and the elemental-application eligibility needed by Effect System. They do not execute Buff lifecycle, stack, overload, or reaction behavior themselves.
+These attack events may identify source tower, affected monster or impact position, and the elemental-application eligibility needed by Effect System. Damage amount and DealDamage success do not globally suppress an otherwise eligible attempt. These events do not execute Buff lifecycle, stack, overload, or reaction behavior themselves.
 
 ---
 
@@ -312,7 +315,7 @@ Projectile attack runtime is used by:
 - Arc Projectile
 - Projectile Attack Entities fired by Drone
 
-Recommended flow:
+Recommended single-projectile flow:
 
 ```text
 Cooldown ready
@@ -359,7 +362,9 @@ OnAttackAnimationRelease
 
 If no attack animation trigger is configured, Tower Runtime Combat may release the projectile immediately.
 
-If the pending target becomes invalid before the release moment, the pending attack should be canceled and the tower should return to Idle.
+Direction Projectile still depends on its release-time target or launch-direction contract and may cancel when its required pending target becomes invalid.
+
+Arc Projectile attacks consume captured positions. Once an Arc target position has been confirmed, later invalidation of the original Monster does not cancel release; the projectile continues toward the stored position.
 
 ---
 
@@ -373,12 +378,33 @@ When releasing a projectile, Tower Runtime Combat provides:
 - AttackConfig
 - Pending target
 - Pending target position
+- Immutable runtime options relevant to that projectile's execution
 
-ProjectileBehaviour then owns projectile runtime execution after initialization.
+ProjectileBehaviour then owns projectile runtime execution after initialization. It should not receive or interpret the complete TowerUpgradeState. Tower Runtime resolves the source tower's complete Behaviour composition and passes only the relevant options, such as piercing state, tracking state, Explosive Shell state, remaining bounce count, initial-release identity, and Elemental context.
 
 Direction Projectile and Arc Projectile may use the same Tower Runtime Combat release flow while Projectile System handles their different movement behavior.
 
 Projectile prefab roots should follow the project-wide orientation convention of local +Y Up and local +Z Forward. Tower Runtime Combat creates and initializes the projectile, while ProjectileBehaviour owns aligning the projectile root's local +Z axis to its movement direction.
+
+## 9.3 Cannon Position Snapshots And Twin Shells
+
+Baseline Cannon selects targets before attack presentation and captures target-position snapshots when entering WaitingForAnimationRelease.
+
+Twin Shells changes the initial release count only:
+
+```text
+Two or more valid Monsters
+    -> select two different Monsters using the tower's normal target-selection semantics
+    -> capture two independent target-position snapshots
+
+Exactly one valid Monster
+    -> capture one target-position snapshot
+    -> release one Shell
+```
+
+The Animation Event releases the number of initial Shells represented by the stored snapshots. The attack uses one confirmation, one presentation sequence, and one cooldown. It does not retarget during the wait, cancel a confirmed position because the source Monster later becomes invalid, add a release delay, or require a spawn offset.
+
+Twin Shells is an initial-release rule. A Bouncing Shell child is initialized as a bounce child and never consumes the Twin Shells release multiplier again.
 
 ---
 
@@ -422,6 +448,8 @@ Magic Orb rules:
 - After cooldown, a new Magic Orb may be generated without checking older released Magic Orbs.
 - Magic Orb should start from a runtime-selected orbit angle so repeated releases do not all begin from the same point.
 
+Magic Orb completion should preserve a semantic end reason. Arcane Detonation responds only to normal HitCountExhausted and LifetimeExpired completion. Forced cleanup, battle end, owner invalidation, reset, and other non-gameplay cleanup do not trigger the Detonation.
+
 Magic Orb damage is owned by attack entity behavior in the first version.
 
 Magic Orb contact damage should be resolved from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
@@ -461,9 +489,9 @@ Orbit selected target at droneOrbitRadius
     ↓
 Fire projectile bursts
     ↓
-Consume battery while active
+Consume battery after Launching
     ↓
-When battery is depleted, explode in the air and despawn
+When battery is depleted, resolve Final Dive or aerial despawn
 ```
 
 Drone runtime rules:
@@ -472,6 +500,7 @@ Drone runtime rules:
 - If no valid monster exists inside AttackRange at release time, Drone Tower should not release a Drone and should not start cooldown.
 - Drone launches from AttackOrigin when available, but does not keep depending on AttackOrigin after release.
 - Drone first rises vertically from its release position to AttackConfig.droneFlightHeight above that position.
+- Launching does not consume battery and cannot trigger Final Dive.
 - Drone maintains configured flight height during active flight.
 - DroneBehaviour owns target selection while using AttackConfig.targetSelectionType.
 - Drone target selection only considers valid monsters inside the source tower AttackRange.
@@ -491,10 +520,10 @@ Drone runtime rules:
 - Drone-fired projectiles should spawn from the Drone FireAnchor when available.
 - Drone-fired projectile prefabs should follow the same local +Y Up and local +Z Forward root orientation convention as other Projectile System prefabs.
 - Drone-fired attack release VFX should spawn from the Drone FireAnchor when configured and face the selected target Monster direction.
-- Drone flight consumes battery.
+- Battery consumption begins after Launching, while the Drone is in active combat flight.
 - If the Drone's current target becomes invalid after launch, Drone should retarget to another valid monster inside the source tower AttackRange when possible.
 - If no valid monster remains inside AttackRange after launch, Drone should explode in the air and despawn.
-- When battery is depleted, Drone should explode in the air and despawn.
+- When battery is depleted without Final Dive, Drone should play VFX-only aerial explosion feedback and despawn.
 - Drone tower cooldown starts when the Drone is launched, not when the Drone is destroyed.
 - If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
@@ -508,6 +537,19 @@ Drone uses attackRange as the tower detect and launch range in the first version
 Drone projectile movement and projectile hit detection belong to Projectile System after projectile creation.
 
 Persistent status effects applied by future Drone projectiles or Drone battery-end effects should be delegated through Effect System to Buff System.
+
+Final Dive is an optional Behaviour-owned Drone state:
+
+```text
+Battery naturally depletes while Orbiting
+    -> validate current Orbiting target
+    -> invalid: play VFX-only aerial explosion and despawn
+    -> valid: lock the target reference, store its current hit position, and enter FinalDiving
+```
+
+FinalDiving stops ordinary projectile fire, never selects a different Monster, never returns to Orbiting, and no longer requires the locked target to remain inside the source tower AttackRange. While the target remains valid, the Drone pursues its current hit/reference position and refreshes a last-valid-position snapshot. If the target becomes invalid during the dive, the Drone continues toward that last valid position instead of reacquiring or canceling.
+
+Reaching the target produces Position Impact and Monster Hit before the Final Dive explosion. Reaching the last valid position after target invalidation produces Position Impact without Monster Hit, but the explosion still executes. The Drone despawns after impact resolution. Drone runtime owns movement and lifecycle; reusable area damage and Elemental opportunities may be delegated to Effect System.
 
 For Drone Tower, AttackOrigin acts as the Drone release point only. Released Drones should not depend on tower model child Transforms after launch.
 
@@ -632,7 +674,7 @@ FinalAttackInterval = Clamp(BaseAttackInterval + Sum(AttackIntervalDeltas))
 
 AttackInterval improvements may use negative deltas.
 
-Behaviour upgrades are active packages recorded on the tower instance. Tower Runtime Combat may coordinate those packages, but the actual behaviour should remain inside the corresponding runtime module instead of moving into TowerUpgradeSystem.
+Behaviour upgrades are active packages recorded on the tower instance. Tower Runtime Combat resolves composition from the complete applied package set, but each released Attack Entity receives only the immutable runtime options relevant to its own execution. Attack Entities should not inspect unrelated upgrade definitions or own the complete TowerUpgradeState. The actual behaviour remains inside the corresponding runtime module instead of moving into TowerUpgradeSystem.
 
 Effect System should own reusable Effect execution, and Buff System should own persistent Buff execution.
 
@@ -647,7 +689,7 @@ Examples:
 
 Tower Runtime Combat should delegate future complex effects instead of embedding buff-specific logic into tower combat code.
 
-Runtime Combat and Attack Entity behavior may provide trigger context that includes source tower, source upgrade, target monster, trigger position, impact position, resolved damage, and stack eligibility when relevant.
+Runtime Combat and Attack Entity behavior may provide trigger context that includes source tower, source upgrade, target monster, trigger position, impact position, resolved damage, and Elemental eligibility when relevant. Position Impact and Monster Hit remain independent facts. Elemental application is an explicitly authorized attack result and is not globally conditional on positive damage or successful DealDamage.
 
 The first-version damage direction remains that base attack damage can use the existing direct damage path. Effect System and Buff System may run additional Effect, Buff, Zone, and Elemental results around that path without forcing an immediate DamageContext migration.
 

@@ -324,6 +324,18 @@ If a tower owns both Piercing Arrow and Scatter Arrow, the intended result is th
 
 Behaviour upgrades are composable by default in v1.
 
+Reviewed composition results include:
+
+- Piercing Arrow + Scatter Arrow: every scattered Arrow may pierce.
+- Piercing Arrow + Hunting Arrow: a surviving Arrow reacquires after each hit until its piercing count is exhausted.
+- Scatter Arrow + Hunting Arrow: every scattered Arrow tracks independently.
+- Twin Shells + Explosive Shell: every released initial Shell may execute its own explosion.
+- Twin Shells + Bouncing Shell: every released initial Shell owns an independent bounce chain.
+- Explosive Shell + Bouncing Shell: each valid landing completes its explosion before selecting the next bounce target in the same frame.
+- Twin Orbs + Arcane Detonation: every Orb independently detonates on normal completion.
+- Twin Drones + Blast Rounds: every Drone fires Blast Rounds.
+- Twin Drones + Final Dive: every Drone independently resolves its own battery-end Final Dive.
+
 The first version does not define upgrade-exclusion rules where applying one upgrade prevents another different upgrade from being applied later.
 
 If a future design needs upgrade exclusion, that rule should be added as an explicit reviewed contract instead of being assumed by the current upgrade model.
@@ -350,8 +362,14 @@ Examples of Behaviour Layer package parameters:
 
 - Archer Piercing Arrow finite piercing hit count
 - Archer Scatter Arrow angle offset
+- Cannon Explosive Shell area Effect reference
+- Cannon Bouncing Shell search radius and maximum bounce count
 - Magic Twin Orbs orb count and starting angle offset
+- Magic Arcane Detonation area Effect reference
+- Magic Arcane Field radius, tick interval, and tick Effect reference
 - Drone Twin Drones drone count and takeoff delay
+- Drone Blast Rounds area Effect reference
+- Drone Final Dive impact Effect reference
 
 TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
@@ -459,67 +477,87 @@ TowerUpgradeSystem applies the upgrade and records that the tower owns the behav
 
 TowerUpgradeSystem should not become a behaviour manager.
 
-Examples:
+The final first-version Behaviour content set is:
 
-| Tower | Example                  |
-|---|--------------------------|
-| Archer Tower | Multi-shot               |
-| Archer Tower | Pierce                   |
-| Cannon Tower | Larger explosion radius  |
-| Cannon Tower | Secondary explosion      |
-| Magic Tower | Additional Orb           |
-| Magic Tower | Hit to trigger Explosion |
-| Magic Tower | Consecutive Hit Bonus    |
-| Drone Tower | Dual Drones              |
-| Drone Tower | Missile Attack           |
-
-Current design-reference upgrade ideas:
-
-| Tower | Lv1 Ideas | Lv2 Ideas |
+| Tower | Behaviour Upgrades | Identity |
 |---|---|---|
-| Archer Tower | Damage Bonus, Attack Interval | Piercing Arrow, Scatter Arrow, Hunting Arrow |
-| Cannon Tower | Damage Bonus, Attack Interval | Bouncing Shell, Burning Shell, Timed Shell |
-| Magic Tower | Orb Rotation Speed, Damage Bonus | Twin Orbs, Orb Splash, Resonance Orb |
-| Drone Tower | Damage Bonus, Drone Burst Cooldown | Twin Drones, Missile Drone, Final Dive |
+| Archer Tower | Piercing Arrow, Scatter Arrow, Hunting Arrow | Penetration, projectile count, tracking |
+| Cannon Tower | Explosive Shell, Twin Shells, Bouncing Shell | Area impact, multi-target release, local chaining |
+| Magic Tower | Twin Orbs, Arcane Detonation, Arcane Field | Entity count, normal-completion explosion, persistent tower field |
+| Drone Tower | Twin Drones, Blast Rounds, Final Dive | Entity count, projectile explosion, Drone lifecycle attack |
 
-These upgrade ideas are design references for framework extensibility. They are not part of the current implementation scope unless a later Task Document explicitly adopts them.
+Runtime composition is resolved from the source tower's complete applied Behaviour package set. Each released Attack Entity receives only the immutable resolved options relevant to its own execution. A Projectile, Magic Orb, or Drone does not need to own or interpret the complete TowerUpgradeState or unrelated Behaviour definitions.
 
-Behaviour Layer implementation should be grouped by runtime dependency, not only by tower family.
+Behaviour Layer package identity should be typed. Behaviour parameters live on their corresponding TowerUpgradeDefinition and are consumed by the runtime module that owns the behavior. Reusable target resolution and Effect execution should remain in Effect System, while persistent Buff state remains in Buff System.
 
-Low-dependency behaviour packages may be implemented inside their corresponding tower runtime path when they only change attack shape, attack count, or released attack entities.
+### Archer Behaviour Upgrades
 
-Examples:
+Piercing Arrow grants finite per-projectile hit count and hit-history behavior. Every newly resolved Monster Hit consumes one hit, may dispatch direct damage, and provides one explicit Elemental application opportunity. Reaching the maximum hit count ends the Arrow.
 
-- Archer Piercing Arrow
-- Archer Scatter Arrow
-- Magic Twin Orbs
-- Drone Twin Drones
+Scatter Arrow releases multiple independent Arrow projectiles from one attack. Each Arrow owns its own movement, hit detection, piercing state, hit history, lifetime, damage result, and Elemental opportunities. Buff apply cooldown and Protection decide whether simultaneous attempts against the same Monster produce more than one successful application.
 
-Behaviour Layer packages may provide behaviour parameters consumed by the corresponding runtime path. For example, Archer Piercing Arrow may provide a finite piercing hit count used when initializing projectile-level piercing.
+Hunting Arrow changes Arrow flight into tracking behavior. It tracks one target inside the source tower's resolved AttackRange, reacquires when that target dies, becomes invalid, leaves range, or is hit by a surviving Piercing Arrow, excludes the current Arrow's hit history, and selects the nearest candidate relative to the Arrow. With no candidate it continues along its current direction and may reacquire later until lifetime expires. Tracking movement itself does not periodically apply Elemental Buffs; actual Monster Hits use the Arrow attack boundary.
 
-Behaviour Layer package identity should be typed. Runtime checks should ask whether the placed tower owns a specific Behaviour package type, then read the applied upgrade definition for that package type when behaviour parameters are needed.
+### Cannon Behaviour Upgrades
 
-TowerUpgradeSystem remains responsible for upgrade ownership, validation, and application only. It should not execute piercing, scatter release, Magic Orb count changes, Drone count changes, or other Behaviour Layer gameplay effects.
+The baseline Cannon Shell captures a target position, produces Position Impact on arrival, and searches for at most one nearby direct target within ProjectileConfig.hitDistanceThreshold.
 
-Behaviour Layer upgrades that need reusable gameplay effects may define Effect bindings. For example, an impact-based Cannon behaviour may bind projectile impact to a shared effect or zone-spawn definition instead of hardcoding duplicate area-query or tick logic inside the Cannon runtime.
+Explosive Shell adds an area Effect at Position Impact. It does not replace the baseline direct Monster Hit. A direct target may therefore receive direct damage plus explosion damage and two independent Elemental application attempts. The explosion executes even when no direct Monster Hit is resolved.
 
-Effect-backed behaviour packages should wait for the Effect System foundation when they need reusable area damage, delayed area damage, or repeated area damage over duration.
+Twin Shells modifies initial release count:
 
-Examples:
+```text
+Two or more valid Monsters
+    -> capture two different target-position snapshots
+    -> release two initial Shells
 
-- Cannon Burning Shell
-- Cannon Timed Shell
-- Magic Orb Splash
+Exactly one valid Monster
+    -> capture one target-position snapshot
+    -> release one initial Shell
+```
 
-Advanced behaviour packages should be reviewed after combat runtime and Effect System and Buff System contracts are stable when they require target reacquisition, chained projectile behaviour, tracking projectiles, per-target stack state, or Drone lifecycle changes.
+The attack uses one confirmation, one presentation sequence, and one cooldown. Confirmed target positions are not retargeted or canceled during the animation wait. Each released Shell owns independent direct, explosion, bounce, lifetime, and Elemental results. Bounce children never consume Twin Shells again.
 
-Examples:
+Bouncing Shell adds a finite local bounce chain. After a landing resolves a valid direct Monster Hit and completes any Explosive Shell damage, death, and target-state changes in the same frame, it searches within the authored `bounceSearchRadius` around the impact position. It excludes the chain hit history, chooses the nearest surviving valid Monster relative to that impact position, captures the target's current position, and creates one bounce child in the same frame. The package-owned `maxBounceCount` limits the chain. It does not use the source tower's full AttackRange or TargetSelectionType. No direct Monster Hit, no remaining bounce count, or no candidate ends the chain.
 
-- Archer Hunting Arrow
-- Cannon Bouncing Shell
-- Magic Resonance Orb
-- Drone Missile Drone
-- Drone Final Dive
+### Magic Behaviour Upgrades
+
+Twin Orbs releases two independent Magic Orb Attack Entities. Each Orb owns its own orbit angle, contact cooldowns, hit count, lifetime, damage results, and Elemental opportunities.
+
+Arcane Detonation executes one area Effect at the Orb's current world position only when the Orb ends through HitCountExhausted or LifetimeExpired. Forced cleanup, battle end, owner invalidation, and reset do not trigger it. Twin Orbs detonate independently. Every valid Monster resolved by a Detonation receives one explicit Elemental application opportunity.
+
+Arcane Field creates one tower-owned field immediately when the upgrade is applied. The Behaviour package owns field radius and tick interval; its referenced EffectDefinition owns reusable damage and execution feedback. The field follows the tower, has no independent first-version duration, does not duplicate when other upgrades are applied, and ends with tower destruction, removal, or battle cleanup. Each tick resolves every valid Monster inside the field and provides one 100% Elemental application attempt per target. V1 has no per-target Elemental chance parameter.
+
+### Drone Behaviour Upgrades
+
+Twin Drones releases two independent Drone Attack Entities. Each Drone owns its own movement, target, orbit, burst timing, battery, projectile attacks, and optional Final Dive lifecycle.
+
+Blast Rounds adds an area Effect after a Drone projectile's primary direct hit. It is additive rather than replacing direct damage. The primary target may receive direct damage plus explosion damage and two independent Elemental application attempts. Every other valid explosion target receives its own explosion opportunity.
+
+Final Dive adds a battery-end Drone state. Launching does not consume battery. When battery naturally depletes while Orbiting, an invalid current target produces VFX-only aerial despawn. A valid target is locked and the Drone enters FinalDiving, stops firing, pursues the target's current hit position without returning to Orbiting or selecting another Monster, and refreshes a last-valid-position snapshot. If the target becomes invalid during the dive, the Drone continues toward that last valid position. Arrival always produces Position Impact and executes the Final Dive explosion; a still-valid contacted target also produces Monster Hit. The Drone despawns after impact resolution.
+
+### Elemental Opportunity Audit
+
+Behaviour Layer creates explicit Elemental application opportunities; it does not guarantee successful stacks. Damage amount and DealDamage success do not globally gate an otherwise eligible attempt.
+
+| Upgrade | Elemental Application Opportunity |
+|---|---|
+| Piercing Arrow | Once for each new Monster Hit resolved by the Arrow |
+| Scatter Arrow | Independently for every released Arrow's resolved Monster Hits |
+| Hunting Arrow | No periodic application from tracking; actual Monster Hits follow Arrow rules |
+| Explosive Shell | Direct target and every explosion target resolve independent attempts; the center may receive both |
+| Twin Shells | Every released initial Shell resolves independently |
+| Bouncing Shell | Every bounce child resolves its own direct and inherited explosion opportunities |
+| Twin Orbs | Every Orb contact resolves independently |
+| Arcane Detonation | Once for every valid Monster resolved by a normal-completion Detonation |
+| Arcane Field | Once per valid Monster per field tick at 100% eligibility in V1 |
+| Twin Drones | Every Drone's projectile hits resolve independently |
+| Blast Rounds | Primary direct target and every explosion target resolve independent attempts |
+| Final Dive | Once for every valid Monster resolved by the impact explosion |
+
+BuffApplyCooldown, Protection, and Buff runtime decide whether each attempt applies, refreshes, stacks, or is blocked. Ordinary child Effects, Buff lifecycle Effects, periodic Elemental damage, reactions, zones, and overload results do not inherit eligibility unless a future reviewed Behaviour explicitly grants it.
+
+TowerUpgradeSystem remains responsible for upgrade ownership, validation, and application only. It does not execute piercing, scatter release, target tracking, Shell impacts, bounce chains, Magic Orb lifecycle, Arcane Field ticks, Drone attacks, or Final Dive.
 
 Damage upgrade examples should modify runtime damage bonuses rather than overwrite TowerLevelConfig.basicDamage. TowerLevelConfig.basicDamage remains the tower's level-based base stat.
 
@@ -548,7 +586,9 @@ Elemental Layer upgrades are intended to make path segments smarter and more dan
 
 Each tower may receive one Elemental Layer upgrade in the first version.
 
-Tower-owned attack events from elemental towers may apply Elemental debuff stacks through Effect System and Buff System when their runtime context explicitly allows Elemental stack application. Multiple towers whose active Elemental upgrades share the same ElementType stack the same Elemental debuff on the same monster and can eventually trigger overload.
+Tower-owned primary attacks and reviewed Behaviour attack extensions may apply Elemental debuff stacks through Effect System and Buff System when their runtime context explicitly allows Elemental application. Multiple towers whose active Elemental upgrades share the same ElementType stack the same Elemental debuff on the same monster and can eventually trigger overload.
+
+Elemental opportunity is independent from Damage amount and DealDamage success. A valid resolved attack target may receive an application attempt even when the associated damage value is zero or damage execution is unsuccessful. The opportunity still needs an explicitly authorized attack boundary and a valid target; technical type alone does not grant eligibility.
 
 Reaction-generated damage, buff tick damage, EffectZone tick damage, and overload damage should not apply elemental stacks by default. Elemental stacking should remain tied to explicitly eligible tower-owned attack events unless a future reviewed upgrade explicitly expands that rule.
 
@@ -577,7 +617,7 @@ FlameBurst overload
 Elemental Layer content is split between tower-specific upgrade authoring and shared Elemental Buff data:
 
 - Each Elemental TowerUpgradeDefinition declares its TowerFamily, ElementType, and one Elemental apply effect.
-- Tower runtime decides when that effect is executed and which monster or explosion-resolved monsters receive it.
+- Tower runtime and the owning Attack Entity decide when that effect is executed and which valid targets receive it according to the reviewed primary-attack or Behaviour contract.
 - One shared BuffDefinition owns the persistent Elemental Buff data for each ElementType, including periodic, stack, and overload Effect references, Buff apply cooldown, Protection duration, and first-version Buff visual references.
 - After a Buff is applied, its tick damage, overload, status presentation, and persistent Buff VFX no longer vary by the tower that applied it.
 
@@ -587,7 +627,7 @@ Buff apply cooldown prevents the same elemental debuff from stacking too quickly
 
 First application of an elemental debuff should apply the debuff only. If the monster already has that elemental debuff and an eligible tower-owned attack event successfully adds one stack, the StackApplied Buff event binding may execute. A pure refresh should not trigger stack effects. After a successful stack increase, the system checks whether max stacks have been reached; if yes, overload executes and the Buff enters Protection phase when configured.
 
-Archer and Drone projectile hits, Magic Orb contact, and Cannon impact each provide different attack timing. Cannon Elemental application must reach every valid monster resolved by the shell explosion; it must not depend on a direct target monster or apply only at the impact center.
+Archer and Drone projectile hits, Magic Orb contact, Cannon direct arrival, Behaviour explosions, Arcane Field ticks, and Final Dive each provide different reviewed attack timing. Their explicit opportunity boundaries are defined in the Behaviour audit above. Position Impact Effects may resolve area targets without a direct Monster Hit, while Monster-targeted results require valid resolved Monsters.
 
 Purpose:
 

@@ -22,7 +22,7 @@ The Buff System owns:
 - Buff lifecycle-to-Effect bindings
 - Active Buff status presentation data and persistent Buff VFX lifecycle
 
-It does not own Effect target resolution or action execution, tower attack timing, projectile behavior, Monster pathfinding, or direct Monster Transform and movement-state mutation. Lifecycle Effects request Monster System APIs through Effect actions.
+It does not own Effect target resolution or action execution, tower attack timing, Behaviour Elemental eligibility, projectile behavior, Monster pathfinding, or direct Monster Transform and movement-state mutation. Lifecycle Effects request Monster System APIs through Effect actions.
 
 ## 3. Definitions And Runtime State
 
@@ -48,6 +48,8 @@ An instance includes definition reference, owner monster, remaining duration, ti
 Max stacks, Buff apply cooldown, and Protection are authored only for stackable Buffs; a stackable Buff has max stacks of at least two. Non-stackable Buffs do not expose stack, overload, or Protection authoring. PeriodicTick remains valid for either model when tick interval is positive.
 
 Applications return explicit results such as Applied, Refreshed, Stacked, BlockedByBuffApplyCooldown, BlockedByProtectionPhase, or Invalid.
+
+Buff System receives application requests after another system has resolved the relevant target and eligibility. It does not inspect the associated damage amount or DealDamage result. Zero damage, non-positive damage, or unsuccessful damage execution is not a Buff-level reason to reject an otherwise valid application request.
 
 ## 4. Lifecycle Effect Bindings
 
@@ -83,6 +85,8 @@ EffectDefinition execution VFX is separate: it is short-lived feedback for an ex
 ## 6. Elemental Buff Rules
 
 Each ElementType has one shared Elemental BuffDefinition. Tower-family Elemental upgrades only declare which Elemental apply Effect their attacks may execute. Once a Buff exists on a monster, its behavior comes solely from that shared definition.
+
+Tower Runtime Combat and reviewed Behaviour attack extensions decide when application attempts are produced. Multiple Attack Entities, direct-plus-explosion combinations, bounce children, Arcane Field ticks, and other reviewed attack results may submit multiple attempts against the same Monster. Buff System evaluates each request independently through BuffApplyCooldown, Protection, and current instance state; it does not add an attack-level hard deduplication rule.
 
 First-version Elemental Buffs are Burning, Cold, ElectricShock, and Windcut. Each is stackable and has Stacking and Protection phases:
 
@@ -141,11 +145,11 @@ Windcut Overload invokes SpawnWindVortex at the owner Transform position, then t
 ## 8. Relationships And Scope
 
 - Effect System executes lifecycle-bound Effects and owns their targeting and actions.
-- Tower Upgrade System owns Elemental authoring, eligibility, and application rules, not Buff runtime behavior.
-- Tower Runtime Combat supplies the Elemental apply Effect at the real attack boundary.
+- Tower Upgrade System owns Elemental authoring and upgrade application rules, not Buff runtime behavior.
+- Tower Runtime Combat and reviewed Behaviour runtime decide attack-boundary eligibility and supply the Elemental apply Effect at that boundary.
 - Monster System owns movement, pathfinding, lifecycle cleanup, and safe requested operations.
 
-The foundation is implemented in staged Task Documents: Effect trigger/action work, Buff runtime, shared Elemental entry, feedback, lifecycle bindings, then Cold, Electric, and Wind slices. Direct base attack damage remains independent until a DamageContext migration is explicitly reviewed.
+The implemented foundation is recorded by this System contract: Effect trigger/action work, Buff runtime, shared Elemental entry, feedback, lifecycle bindings, and the Cold, Electric, and Wind slices. Direct base attack damage remains independent unless a future DamageContext migration is explicitly reviewed.
 
 ## 9. Summary
 

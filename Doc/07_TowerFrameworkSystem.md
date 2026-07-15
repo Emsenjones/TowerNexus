@@ -425,7 +425,7 @@ Current first-version tower categories:
 | Category | Description |
 |---|---|
 | Archer | Fires fast straight-line arrows toward enemies |
-| Cannon | Launches arcing explosive shells toward enemy positions |
+| Cannon | Launches arcing shells toward captured enemy positions and resolves a nearby direct target on arrival |
 | Magic | Releases orbiting Magic Orb attack entities that contact enemies and consume hit count |
 | Drone | Launches an autonomous Drone attack entity that fights away from the tower and may spawn projectile attack entities |
 
@@ -510,7 +510,7 @@ Examples:
 | Tower | Attack Entity | Core Behavior |
 |---|---|---|
 | Archer Tower | Arrow | Fires low-damage direction projectiles with short range and high attack speed |
-| Cannon Tower | Shell | Fires slow arcing shells with long range; shells explode on arrival and deal area damage |
+| Cannon Tower | Shell | Fires slow arcing shells with long range toward captured positions; the baseline arrival resolves at most one nearby direct target |
 | Magic Tower | Magic Orb | Releases orbiting magic weapon behavior with contact damage and hit-count lifetime |
 | Drone Tower | Drone | Releases an autonomous drone that orbits selected target monsters, fires projectile bursts, consumes battery, air-explodes, and despawns |
 
@@ -553,21 +553,27 @@ Design intent:
 
 - Low attack speed
 - Long attack range
-- Projectile travels toward a selected enemy reference position
-- Projectile explodes when it reaches the target position or impact point
-- Explosion deals area damage to enemies within the explosion radius
-- Attack cooldown starts immediately after the shell is launched, not after explosion
+- Before attack presentation begins, the selected enemy reference position is captured as an immutable target-position snapshot
+- Projectile travels toward that captured position and does not require the original Monster to remain valid after release
+- Reaching the captured position always produces Position Impact
+- On arrival, projectile runtime searches for the nearest valid Monster around the impact position within ProjectileConfig.hitDistanceThreshold
+- When a Monster is found, the landing also produces Monster Hit and resolves direct damage against that Monster
+- When no Monster is found, there is no Monster-targeted direct result, but impact feedback and projectile cleanup still occur
+- Area explosion is not part of the baseline Cannon attack; Explosive Shell Behaviour upgrade content adds that result
+- Attack cooldown starts immediately after the shell is launched, not after impact
 
 The cannon projectile itself should be handled by projectile runtime logic.
 
+Position Impact and Monster Hit are independent facts. One Cannon landing may produce both, while a miss near the captured position may produce Position Impact only. Documents should preserve that semantic distinction without requiring a particular serialized Effect field layout.
 
-The explosion may be represented as an impact effect or area damage effect, but it should not be treated as a buff in the first version because it does not persist on enemies over time.
+When Explosive Shell is active, its explosion is an instant Position Impact Effect rather than a Buff. It may execute even when the baseline landing does not resolve a direct Monster Hit.
 
 VFX expectation:
 
 - May play an attack release VFX at AttackOrigin when the shell is released
 - May use optional projectile travel VFX on the projectile prefab, such as smoke, fire, sparks, or trail particles
-- Should play impact or explosion VFX when the projectile reaches its target position or impact point
+- Should play impact VFX when the projectile reaches its captured position
+- Explosive Shell may add explosion VFX at the same gameplay impact timing
 
 Explosion visuals should follow gameplay impact timing. Particle collision should not independently decide gameplay damage or projectile hit results.
 
@@ -621,10 +627,11 @@ Design intent:
 - The Drone orbits around the selected target monster
 - The Drone model local +Z faces the current planar movement direction while moving; during stable orbit this is the orbit tangent
 - The Drone fires straight projectile bursts while orbiting
-- Drone flight consumes battery
+- Launching does not consume battery; battery consumption begins after the Drone enters active combat flight
 - If the Drone's current target becomes invalid after launch, the Drone should retarget to another valid monster inside the source tower AttackRange when possible
 - If no valid monster remains inside AttackRange after launch, the Drone should end its task by exploding in the air and disappearing
-- When battery is depleted, the Drone explodes in the air and disappears
+- When battery is depleted without Final Dive, the Drone plays aerial explosion feedback and disappears
+- Final Dive Behaviour content may replace battery-end despawn with a target-locked dive and impact explosion
 - If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time
 
 Drone is an Attack Entity which may spawn Projectile Attack Entities.
@@ -641,7 +648,7 @@ Anchor expectation:
 
 VFX expectation:
 
-- The Drone visual should support launching, orbiting, firing, battery-end explosion, and despawn states
+- The Drone visual should support launching, orbiting, firing, optional Final Dive, battery-end explosion, and despawn states
 - Drone active flight presentation may include a lightweight local propeller spin
 - Propeller spin should be active while the Drone is launched and moving
 - Drone model active facing assumes local +Z points forward along the current planar movement direction.
@@ -808,8 +815,11 @@ Typically uses:
 Notes:
 
 - The selected target's monster-side hit/reference anchor provides the target position snapshot.
+- Arc flight continues toward that snapshot even if the original target later becomes invalid.
+- Reaching the snapshot produces Position Impact. Projectile runtime then searches for the nearest valid Monster around the impact position within ProjectileConfig.hitDistanceThreshold; finding one also produces Monster Hit.
+- ProjectileConfig.hitDistanceThreshold therefore acts as the Arc arrival tolerance and the impact-position Monster query radius in the first version.
 - Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
-- Explosion radius and area damage behavior belong to the Projectile System and Effect System, not AttackConfig.
+- The baseline Arc projectile resolves at most one direct target. Explosion radius and area damage belong to Behaviour content executed through Projectile and Effect responsibilities, not AttackConfig.
 - Attack cooldown starts immediately after the projectile is launched.
 
 VFX notes:
@@ -835,7 +845,7 @@ Notes:
 - Tracking Projectile follows projectile-style cooldown timing.
 - Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Attack cooldown starts immediately after the projectile is released.
-- Tracking projectile runtime is reserved for later projectile-style attack implementations.
+- Tracking projectile runtime supports reviewed projectile-style Behaviour content such as Hunting Arrow. Tracking target acquisition, hit history, range limits, and lifetime remain Projectile runtime responsibilities.
 
 VFX notes:
 
@@ -1010,17 +1020,19 @@ First-version recommendation:
 | Tower | Effect/Buff Usage |
 |---|---|
 | Archer | No buff/effect required; projectile collision applies direct damage |
-| Cannon | Projectile impact may trigger an AreaDamageEffect; no buff required |
+| Cannon | Baseline arrival may resolve one direct Monster; Explosive Shell and similar reviewed Behaviour content may add a Position Impact area Effect |
 | Magic | No buff required; Magic Orb contact damage is owned by attack entity behavior |
 | Drone | No buff required; Drone-fired projectile damage follows projectile attack entity rules |
 
 Guideline:
 
 - Use Projectile runtime logic for projectile movement and collision.
-- Use Effect logic for instant gameplay events such as explosion damage or area damage calculation.
+- Use Effect logic for reviewed instant gameplay events such as Behaviour-owned explosion damage or area damage calculation.
 - Use Buff logic only when a gameplay state is attached to a unit over time, such as poison, slow, burn, weaken, or armor reduction.
 
-Cannon Tower explosion should be treated as an instant area damage effect rather than a buff.
+Position Impact and Monster Hit should remain distinct runtime facts. An eligible tower-owned attack or Behaviour attack extension may request Elemental application independently of its DealDamage result; Buff cooldown and Protection decide the final application outcome.
+
+Cannon Tower explosion Behaviour content should be treated as an instant area damage Effect rather than a Buff.
 
 ---
 

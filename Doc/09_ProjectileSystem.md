@@ -30,6 +30,8 @@ The Projectile System owns:
 - Impact event generation
 - Projectile-specific impact VFX triggering
 - Direct single-target hit dispatch for projectile-to-monster impacts
+- Position Impact and Monster Hit fact generation
+- Reviewed projectile-local Behaviour execution, including piercing, Hunting tracking, and Bouncing Shell runtime state
 - Projectile destruction
 
 ### Does Not Own
@@ -159,9 +161,16 @@ Lifetime Timer
 Projectile Config
 Attack Config
 Attack Damage
+Relevant Immutable Behaviour Options
+Elemental Context
+Projectile Hit History When Required
+Remaining Bounce Count When Required
+Initial-Release Or Bounce-Child Identity When Required
 ```
 
 Runtime state should never be stored inside configuration assets.
+
+Projectile runtime receives only the resolved immutable options relevant to its own execution. It should not receive or interpret the source tower's complete TowerUpgradeState or unrelated Behaviour definitions.
 
 When a projectile needs a monster-side target or hit reference position, that position should come from the Monster System hit/reference anchor concept.
 
@@ -192,7 +201,7 @@ Recommended first-version fields:
 
 | projectilePrefab | GameObject | Projectile prefab reference |
 | projectileSpeed | float | Projectile movement speed (Unity units per second) |
-| hitDistanceThreshold | float | Distance threshold used by projectile direct monster hit detection |
+| hitDistanceThreshold | float | Projectile hit/arrival threshold; Arc projectiles also use it as the one-time Monster query radius around the impact position |
 | maxLifetime | float | Maximum projectile lifetime before forced cleanup |
 | impactEffectDefinition | EffectDefinition | Optional gameplay effect triggered on impact |
 | impactVfxPrefab | GameObject | Optional visual effect prefab spawned when impact occurs |
@@ -200,8 +209,9 @@ Recommended first-version fields:
 Notes:
 
 - projectileSpeed controls how quickly the projectile reaches its target.
-- hitDistanceThreshold controls direct monster hit checks for projectile types that can hit monsters directly.
-- hitDistanceThreshold <= 0 disables direct monster hit checks. Projectile types that should only resolve impact effects, such as Cannon-style impact projectiles, may use this to avoid duplicate direct-hit damage.
+- hitDistanceThreshold controls direct Monster hit checks for projectile types that contact Monsters directly.
+- For an Arc projectile, hitDistanceThreshold is both the arrival tolerance around the captured target position and the radius of the one-time nearest-valid-Monster query centered on the resulting impact position.
+- A baseline Cannon Shell requires a positive hitDistanceThreshold so its Position Impact can resolve at most one nearby Monster for direct damage. It does not disable that query merely because an optional impact Effect is present.
 - maxLifetime prevents projectiles from existing forever if impact does not occur.
 - Projectile prefab roots are expected to use local +Y as Up and local +Z as Forward.
 - ProjectileBehaviour should rotate the projectile so its local +Z direction points toward the movement direction.
@@ -227,12 +237,16 @@ Direct Damage
 No impact effect required.
 
 ```text
-Cannonball
+Baseline Cannon Shell
     ↓
-AreaDamageEffect
+Position Impact
+    ↓
+Nearest-valid-Monster query within hitDistanceThreshold
+    ↓
+Optional direct Monster Hit
 ```
 
-Impact effect required.
+No impact Effect required. Explosive Shell may add an AreaDamageEffect after the baseline direct result.
 
 Design Principle:
 
@@ -295,6 +309,16 @@ Hit Monster
 
 The selected target may define the initial launch direction, but the projectile is not required to remain locked to that target after launch.
 
+Hunting Arrow changes this flight behavior into reviewed tracking behavior. Each Hunting projectile owns its target reference, hit history, remaining piercing count, and lifetime:
+
+- The current target must be valid and inside the source tower's resolved AttackRange.
+- Target death, invalidation, or leaving that range triggers reacquisition.
+- Candidates must be inside the source tower's resolved AttackRange and absent from the projectile's hit history.
+- The nearest candidate is measured from the projectile's current position.
+- After a Piercing hit, a surviving projectile reacquires using the same rules.
+- With no candidate, the projectile continues along its current direction and may reacquire later until lifetime expires.
+- Tracking movement itself does not periodically apply Elemental Buffs; actual resolved Monster Hits use the Arrow attack boundary.
+
 ---
 
 ### Arc Flight
@@ -309,9 +333,17 @@ Spawn
 Travel Along Arc
     ↓
 Reach Target Position
+    ↓
+Produce Position Impact
+    ↓
+Search Nearest Valid Monster Around Impact Position
 ```
 
 Arc height is provided by AttackConfig.arcHeight.
+
+Arc flight consumes an immutable target-position snapshot. Later invalidation of the Monster that supplied the snapshot does not cancel or redirect the projectile.
+
+ProjectileConfig.hitDistanceThreshold acts as the Arc arrival tolerance and the radius of the one-time nearest-Monster query centered on the impact position. Finding a Monster produces Monster Hit and permits baseline direct-hit dispatch. Finding no Monster leaves Position Impact valid, permits presentation and reviewed Position Impact Effects, and then ends the projectile without a Monster-targeted direct result.
 
 ---
 
@@ -329,7 +361,7 @@ Track Target Or Target Reference
 Hit Monster Or Expire
 ```
 
-Tracking flight is useful for future missiles, homing shots, and Drone-fired projectile variants.
+Tracking flight supports Hunting Arrow and may support future missiles, homing shots, and Drone-fired projectile variants.
 
 Tracking projectiles still belong to Projectile System after they are created and initialized. Tower Runtime Combat or the spawning Attack Entity provides the source, target information, and AttackConfig data.
 
@@ -399,7 +431,9 @@ Reach Target Position
 Trigger Impact Event
 ```
 
-For target-position projectile behavior, the target position is provided by the Tower Runtime Combat System. When the target is a monster, that position should represent the monster-side hit/reference position.
+For target-position projectile behavior, the target position is provided by the Tower Runtime Combat System. When the target is a monster, that position should represent the monster-side hit/reference position captured at attack confirmation.
+
+Reaching that position produces Position Impact regardless of whether a valid Monster remains nearby. A separate impact-position query may also resolve Monster Hit. One landing may therefore produce both facts or Position Impact only.
 
 ---
 
@@ -411,7 +445,7 @@ The Projectile System does not determine complex gameplay results beyond its sim
 
 ## 10. Impact Event Triggering
 
-When a projectile hits a valid target or arrives at a valid position, it generates an impact event.
+When a projectile hits a valid target or arrives at a valid position, it generates the corresponding runtime facts and impact context.
 
 Example:
 
@@ -427,7 +461,7 @@ The Projectile System may directly dispatch single-target damage when a projecti
 
 This exception exists to keep simple projectile attacks lightweight.
 
-For projectile types that use direct hit damage and also author an impact EffectDefinition, direct hit damage executes first. The optional impact EffectDefinition then executes as additional gameplay effect using the generated trigger context.
+For projectile types that use direct hit damage and also author a Position Impact Effect, direct hit damage executes first. The optional Effect then executes as an additional gameplay result using the generated trigger context. Explosive Shell deliberately uses this additive rule, so a direct target may also be included in the explosion.
 
 Projectile System should use the final resolved damage value provided by Tower Runtime Combat or the spawning Attack Entity. It should not own the formula that combines TowerLevelConfig.basicDamage and tower upgrade runtime damage bonuses, and it should not apply damage multipliers.
 
@@ -443,17 +477,42 @@ Cannonball
     ↓
 Reach Target Position
     ↓
-Impact Event
+Position Impact
     ↓
-Impact EffectDefinition
+Optional Monster Hit
+    ↓
+Optional Behaviour Position Impact Effect
 
-Cannon-style projectiles that should not apply direct single-target damage can disable direct monster hit checks by setting hitDistanceThreshold <= 0, then deal damage only through the authored impact EffectDefinition radius query.
+The baseline Cannon Shell does not require an impact gameplay Effect. It performs one nearest-Monster query around the impact position and may dispatch one direct hit. Explosive Shell adds a Position Impact area Effect without replacing that direct result.
 
 The Projectile System should not directly apply buffs.
 
 For complex impact behavior such as area damage, Buff application, chained Effects, Elemental stack rules, overload rules, or future special mechanics, the Projectile System should generate impact or hit trigger context and delegate execution to Effect System.
 
+Elemental application eligibility is supplied explicitly by the reviewed tower-owned attack or Behaviour extension. A valid opportunity is not globally gated by positive damage or DealDamage success. Projectile System does not own the resulting Buff cooldown, Protection, stack, or overload outcome.
+
 Projectile impact VFX remains presentation-only and belongs to ProjectileConfig and Projectile System impact playback. It should not be routed through Effect System or Buff System.
+
+### Bouncing Shell
+
+Bouncing Shell is a reviewed Shell runtime extension, not a generic SpawnProjectile Effect action or a generic ricochet framework.
+
+After a Shell landing resolves a valid direct Monster Hit:
+
+```text
+Resolve direct Monster Hit
+    -> execute Explosive Shell when active
+    -> complete explosion damage, death, and target-state updates in the same frame
+    -> search around the current impact position using the authored bounceSearchRadius
+    -> exclude Monsters already hit by the current bounce chain
+    -> choose the nearest surviving valid Monster relative to the impact position
+    -> capture that Monster's current hit/reference position
+    -> create one bounce child in the same frame
+```
+
+No direct Monster Hit or no remaining candidate ends the bounce chain. Bounce selection does not use the source tower's full AttackRange or TargetSelectionType. It has no Coroutine, next-frame wait, or release delay.
+
+The bounce child receives relevant immutable runtime options: source context, resolved damage, Projectile configuration, Explosive Shell state, Elemental context, remaining bounce count, chain hit history, and bounce-child identity. It does not receive the complete TowerUpgradeState and does not consume Twin Shells again.
 
 ---
 
@@ -468,6 +527,7 @@ Responsible for:
 - Providing target information
 - Providing AttackConfig data
 - Providing calculated damage context when projectile damage is resolved through Projectile System
+- Resolving source Behaviour composition and providing only relevant immutable projectile options
 
 ---
 
@@ -534,12 +594,14 @@ The first version supports:
 - Impact Event Triggering
 - Projectile-level piercing state when granted by an Archer Behaviour package
 - Finite piercing hit count for projectile-level piercing
+- Hunting Arrow target tracking and reacquisition
+- Reviewed Bouncing Shell local bounce behavior
 
 The first version intentionally excludes these projectile patterns:
 
 - Chain Projectiles
 - Split Projectiles
-- Ricochet Projectiles
+- Generic ricochet frameworks beyond the reviewed Bouncing Shell behavior
 
 Those excluded projectile patterns may be added in future versions.
 

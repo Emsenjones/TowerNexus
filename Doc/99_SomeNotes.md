@@ -88,4 +88,4 @@
 9. Level configuration design;
 10. Tap tower to pop up TowerInfoWindow;
 11. Develop Monster & Projectile object pool;
-12. (Optional)Phase3 Tower upgrade items: Hunting Arrow、Bouncing Shell、Resonance Orb、Missile Drone、Final Dive.
+12. Tower Upgrade Behaviour Layer final content and future implementation scope are owned by `10_TowerUpgradeSystem.md`; do not maintain a parallel upgrade list in this note.

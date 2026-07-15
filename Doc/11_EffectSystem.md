@@ -27,7 +27,7 @@ The Effect System owns:
 - Reusable area, delayed, and repeated gameplay execution
 - EffectZone timing and on-tick Effect execution
 - Reviewed specialized effect entities, including WindVortex
-- The baseline recursion and elemental-application eligibility rule
+- Elemental-eligibility enforcement and non-inheritance rules after an attack producer explicitly authorizes an application
 
 It does not own persistent Buff lifetime, stack count, Protection phase, status UI, persistent Buff VFX, tower target selection, attack cadence, projectile movement or collision, Monster pathfinding implementation, or Monster reward and arrival flow.
 
@@ -47,11 +47,13 @@ EffectDefinition is the source of truth for reusable gameplay Effect data. Behav
 
 ## 4. Trigger Context And Targeting
 
-EffectTriggerContext is created when a gameplay event requires Effect execution. Typical producers are projectile impact, attack-entity hit, Magic Orb contact, Drone projectile hit, EffectZone tick, Buff lifecycle binding, and elemental max-stack overload.
+EffectTriggerContext is created when a gameplay event requires Effect execution. Typical producers are projectile Position Impact, Monster Hit, Magic Orb contact, Drone projectile hit, reviewed Behaviour execution, EffectZone tick, Buff lifecycle binding, and elemental max-stack overload.
 
 First-version trigger types are OnHit, OnImpact, OnBuffApplied, OnBuffTick, OnBuffStackApplied, OnMaxStack, OnBuffEnteredProtection, OnBuffRemoved, and OnZoneTick. Elemental tower attacks use their actual runtime attack event with an explicit elemental-application eligibility flag; they do not need a designer-authored elemental trigger type.
 
 Context may carry source tower, source upgrade, target monster, trigger or impact position, zone radius, resolved damage, attack-entity identity, element type, and elemental-application eligibility. A position must have explicit validity such as `HasTriggerPosition`; `Vector3.zero` is not a missing-position sentinel.
+
+Position Impact and Monster Hit are independent semantic facts. Position Impact means an Attack Entity reached its intended gameplay position and does not require a resolved Monster. Monster Hit requires a valid Monster. One Cannon or Final Dive landing may produce both facts, while an empty landing may produce Position Impact only. The System contract does not require these facts to become separate serialized Effect fields; the implementation may represent them through trigger context and reviewed runtime entry points.
 
 First-version targeting remains simple:
 
@@ -82,11 +84,15 @@ DealDamage is instant Effect damage. It supports area impact damage, Burning tic
 
 Reaction-generated damage does not apply Elemental stacks by default.
 
+DealDamage result does not globally control whether another explicitly eligible Elemental ApplyBuff action may execute. Zero damage, non-positive resolved damage, or unsuccessful damage execution does not suppress a separately authorized application attempt.
+
 ### 5.2 ApplyBuff
 
 ApplyBuff is the only first-version link from an Effect to persistent Buff state. It executes on resolved targets and preserves source tower and source upgrade context when present. It may apply Burning, Cold, ElectricShock, Windcut, Frozen, or future BuffDefinitions.
 
 The Buff System owns the resulting instance lifecycle. Effects do not update a Buff's duration, stacks, Protection, UI, or persistent VFX directly.
+
+When ApplyBuff represents an Elemental application opportunity, the runtime context must explicitly authorize that opportunity. Its execution is independent from a sibling DealDamage action's amount or success. BuffApplyCooldown, Protection, and Buff runtime decide whether the request applies, refreshes, stacks, or is blocked.
 
 ### 5.3 ExecuteMultiTargetEffect
 
@@ -112,9 +118,21 @@ Movement actions request Monster System-owned behavior. The first version has on
 
 Frozen uses `SetMovementLock(true)` and `SetMovementLock(false)`. Monster System resolves the lock through the same effective-speed path as the multiplier, with the lock taking priority and producing effective speed zero.
 
+### 5.7 Behaviour-Backed Effects
+
+Explosive Shell, Blast Rounds, Arcane Detonation, Arcane Field ticks, and Final Dive explosion use Effect System for reusable target resolution and gameplay actions, while their trigger timing and lifecycle stay with their owning Attack Entity or tower runtime.
+
+Explosive Shell is an additive Position Impact Effect after the baseline Cannon direct result. Blast Rounds is an additive area Effect after a Drone projectile direct hit. Arcane Detonation executes only after reviewed normal Magic Orb completion. Final Dive explosion executes at its Position Impact even when no Monster Hit remains. Each of these explicitly reviewed Behaviour results may provide Elemental eligibility to its resolved targets independently from DealDamage success.
+
+Arcane Field is not a generic EffectZone ownership transfer. Tower runtime owns the tower-attached field instance, follow behavior, uniqueness, and cleanup. Effect System resolves and executes each tick. Every valid target resolved by a V1 field tick receives one 100% Elemental application attempt; this exception is explicit to Arcane Field and does not broaden OnZoneTick or periodic Effect defaults.
+
+Bouncing Shell remains Projectile runtime behavior. Effect System may execute its landing explosion, but it does not gain a generic SpawnProjectile action or own bounce target selection, chain history, child creation, or remaining bounce count.
+
 ## 6. Elemental Eligibility And Recursion
 
-Only tower-owned attack events whose runtime context explicitly allows Elemental stack application apply Elemental stacks by default.
+Only tower-owned primary attacks and reviewed Behaviour attack extensions whose runtime context explicitly allows Elemental application may apply Elemental Buffs by default. Technical origin as a Projectile, Attack Entity, or Effect does not grant eligibility.
+
+Eligibility is independent from damage amount and DealDamage success. It still requires the reviewed attack boundary and valid resolved target defined by the owning Behaviour contract.
 
 Burning ticks, FlameBurst, Electric extra damage, LightningStrike, WindVortex, EffectZone ticks, overload damage, and Buff ticks do not recursively apply Elemental stacks. A future exception is separate reviewed upgrade content, not an implicit baseline behavior.
 
@@ -141,12 +159,12 @@ WindVortex owns this direct pursuit, target validity, lifetime, tick timing, and
 ## 8. Relationships And Scope
 
 - Tower Upgrade System owns authoring, eligibility, and application rules. It does not execute Effects.
-- Tower Runtime Combat decides attack timing and target scope, then provides the current Elemental apply Effect and context at the real attack boundary.
+- Tower Runtime Combat and the owning Attack Entity decide attack timing and target scope, then provide the current Elemental apply Effect and explicit eligibility context at the real attack boundary.
 - Projectile System owns movement, collision, simple direct hit damage, and projectile impact VFX; it may emit Effect trigger context for complex outcomes.
 - Buff System owns persistent Buff runtime state and invokes Effects from Buff lifecycle bindings.
 - Monster System owns health, movement, pathfinding, death, arrival, anchors, and safe movement/path operations.
 
-Effect-backed Behaviour Layer upgrades wait for this Effect foundation and the relevant Buff foundation when they need reusable area damage, delayed damage, repeated damage, or persistent state.
+Effect-backed Behaviour Layer upgrades consume this Effect foundation and, where persistent state is required, the relevant Buff foundation. Their System-level trigger, target, ordering, and Elemental-eligibility contracts remain owned by the corresponding Behaviour content definition.
 
 ## 9. Summary
 

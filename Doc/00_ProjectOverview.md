@@ -267,7 +267,7 @@ Responsible for:
 - Attack cooldown management
 - Attack Entity spawning or control
 - Magic Orb lifecycle orchestration
-- Drone launch, target orbit, burst fire, return, and recharge orchestration
+- Drone launch, target orbit, burst fire, Final Dive, and despawn orchestration
 - Attack execution
 - Attack presentation request timing
 - Attack visual effect hook triggering
@@ -285,7 +285,9 @@ Tower Runtime Combat consumes the current active AttackOrigin and tower model pr
 
 Projectile lifecycle execution belongs to Projectile System when the Attack Entity is a projectile.
 
-Attack Entities may emit gameplay trigger context when they hit, contact, or impact a monster or position. Runtime Combat and Attack Entities should not own Buff, Effect, elemental stack, or overload rules.
+Attack Entities may emit gameplay trigger context when they hit, contact, or impact a monster or position. Position Impact and Monster Hit are independent semantic facts: an attack may reach its intended position without resolving a Monster, or may produce both facts in the same landing.
+
+Tower-owned primary attacks and explicitly reviewed Behaviour attack extensions may create Elemental application opportunities at their real attack boundaries. Elemental eligibility is explicit and is not inferred from Projectile, Attack Entity, Effect, or positive-damage status. Damage amount and DealDamage success do not globally gate an otherwise eligible Elemental application attempt. Runtime Combat and Attack Entities provide the relevant context but do not own Buff lifetime, stack, Protection, or overload rules.
 
 ---
 
@@ -318,6 +320,8 @@ Current first-version projectile flight behaviors:
 Future projectile-style attacks should extend this shared framework whenever practical.
 
 Projectile prefab roots follow the shared runtime orientation convention: local +Y Up and local +Z Forward.
+
+The baseline Cannon Shell is an Arc projectile that travels toward a captured target-position snapshot. On arrival it may resolve one nearby Monster for direct damage; area explosion is Behaviour upgrade content rather than an intrinsic Cannon baseline rule.
 
 ---
 
@@ -445,7 +449,7 @@ Use the System Documents as the source of truth for each area:
 | Reusable Effect execution, target resolution, and EffectZone behavior | `11_EffectSystem.md` |
 | Persistent Buff state, lifecycle bindings, and Elemental rules | `12_BuffSystem.md` |
 
-Task Documents under `Docs/Task/` are temporary implementation references.
+Task Documents under `Doc/Task/` are temporary implementation references.
 
 After a Task implementation is completed, its Task Document may be removed while the corresponding System Document remains as the long-term reference.
 
