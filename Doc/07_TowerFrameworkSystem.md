@@ -631,7 +631,7 @@ Design intent:
 - If the Drone's current target becomes invalid after launch, the Drone should retarget to another valid monster inside the source tower AttackRange when possible
 - If no valid monster remains inside AttackRange after launch, the Drone should end its task by exploding in the air and disappearing
 - When battery is depleted without Final Dive, the Drone plays aerial explosion feedback and disappears
-- Final Dive Behaviour content may replace battery-end despawn with a target-locked dive and impact explosion
+- Final Dive Behaviour content may replace battery-end despawn with a target-locked dive. Its Position Impact performs one local nearest-valid-Monster direct query before the additive impact explosion
 - If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time
 
 Drone is an Attack Entity which may spawn Projectile Attack Entities.

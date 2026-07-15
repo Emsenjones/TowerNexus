@@ -328,7 +328,7 @@ Reviewed composition results include:
 
 - Piercing Arrow + Scatter Arrow: every scattered Arrow may pierce.
 - Piercing Arrow + Hunting Arrow: a surviving Arrow reacquires after each hit until its piercing count is exhausted.
-- Scatter Arrow + Hunting Arrow: every scattered Arrow tracks independently.
+- Scatter Arrow + Hunting Arrow: every scattered Arrow resolves its own initial target and then tracks independently. Initial selection prefers different valid Monsters when alternatives exist and permits target reuse when distinct candidates are insufficient.
 - Twin Shells + Explosive Shell: every released initial Shell may execute its own explosion.
 - Twin Shells + Bouncing Shell: every released initial Shell owns an independent bounce chain.
 - Explosive Shell + Bouncing Shell: each valid landing completes its explosion before selecting the next bounce target in the same frame.
@@ -369,7 +369,7 @@ Examples of Behaviour Layer package parameters:
 - Magic Arcane Field radius, tick interval, and tick Effect reference
 - Drone Twin Drones drone count and takeoff delay
 - Drone Blast Rounds area Effect reference
-- Drone Final Dive impact Effect reference
+- Drone Final Dive positive `finalDiveHitThreshold` and impact Effect reference
 
 TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
@@ -496,7 +496,7 @@ Piercing Arrow grants finite per-projectile hit count and hit-history behavior. 
 
 Scatter Arrow releases multiple independent Arrow projectiles from one attack. Each Arrow owns its own movement, hit detection, piercing state, hit history, lifetime, damage result, and Elemental opportunities. Buff apply cooldown and Protection decide whether simultaneous attempts against the same Monster produce more than one successful application.
 
-Hunting Arrow changes Arrow flight into tracking behavior. It tracks one target inside the source tower's resolved AttackRange, reacquires when that target dies, becomes invalid, leaves range, or is hit by a surviving Piercing Arrow, excludes the current Arrow's hit history, and selects the nearest candidate relative to the Arrow. With no candidate it continues along its current direction and may reacquire later until lifetime expires. Tracking movement itself does not periodically apply Elemental Buffs; actual Monster Hits use the Arrow attack boundary.
+Hunting Arrow changes Arrow flight into tracking behavior. It tracks one target inside the source tower's resolved AttackRange, reacquires when that target dies, becomes invalid, leaves range, or is hit by a surviving Piercing Arrow, excludes the current Arrow's hit history, and selects the nearest candidate relative to the Arrow. With no candidate it continues along its current direction and may reacquire later until lifetime expires. When combined with Scatter Arrow, every released Arrow resolves its own initial target; selection prefers different valid Monsters when alternatives exist and permits reuse when there are fewer valid Monsters than Arrows. Each Arrow then owns independent tracking, hit history, remaining piercing count, lifetime, and Elemental opportunities. Tracking movement itself does not periodically apply Elemental Buffs; actual Monster Hits use the Arrow attack boundary.
 
 ### Cannon Behaviour Upgrades
 
@@ -518,7 +518,7 @@ Exactly one valid Monster
 
 The attack uses one confirmation, one presentation sequence, and one cooldown. Confirmed target positions are not retargeted or canceled during the animation wait. Each released Shell owns independent direct, explosion, bounce, lifetime, and Elemental results. Bounce children never consume Twin Shells again.
 
-Bouncing Shell adds a finite local bounce chain. After a landing resolves a valid direct Monster Hit and completes any Explosive Shell damage, death, and target-state changes in the same frame, it searches within the authored `bounceSearchRadius` around the impact position. It excludes the chain hit history, chooses the nearest surviving valid Monster relative to that impact position, captures the target's current position, and creates one bounce child in the same frame. The package-owned `maxBounceCount` limits the chain. It does not use the source tower's full AttackRange or TargetSelectionType. No direct Monster Hit, no remaining bounce count, or no candidate ends the chain.
+Bouncing Shell adds a finite local bounce chain. After a landing resolves a valid direct Monster Hit, it completes every immediate result of that landing in the same frame: direct damage, the direct Elemental attempt, any Explosive Shell actions, explosion-target Elemental attempts, and synchronous Buff, overload, death, or target-state consequences. Only then does it search within the authored `bounceSearchRadius` around the impact position. It excludes the chain hit history, chooses the nearest surviving valid Monster relative to that impact position, captures the target's current position, and creates one bounce child in the same frame. The package-owned `maxBounceCount` limits the chain. It does not use the source tower's full AttackRange or TargetSelectionType. No direct Monster Hit, no remaining bounce count, or no candidate ends the chain.
 
 ### Magic Behaviour Upgrades
 
@@ -534,7 +534,9 @@ Twin Drones releases two independent Drone Attack Entities. Each Drone owns its 
 
 Blast Rounds adds an area Effect after a Drone projectile's primary direct hit. It is additive rather than replacing direct damage. The primary target may receive direct damage plus explosion damage and two independent Elemental application attempts. Every other valid explosion target receives its own explosion opportunity.
 
-Final Dive adds a battery-end Drone state. Launching does not consume battery. When battery naturally depletes while Orbiting, an invalid current target produces VFX-only aerial despawn. A valid target is locked and the Drone enters FinalDiving, stops firing, pursues the target's current hit position without returning to Orbiting or selecting another Monster, and refreshes a last-valid-position snapshot. If the target becomes invalid during the dive, the Drone continues toward that last valid position. Arrival always produces Position Impact and executes the Final Dive explosion; a still-valid contacted target also produces Monster Hit. The Drone despawns after impact resolution.
+Final Dive adds a battery-end Drone state. Launching does not consume battery. When battery naturally depletes while Orbiting, an invalid current target produces VFX-only aerial despawn. A valid target is locked and the Drone enters FinalDiving, stops firing, pursues the target's current hit position without returning to Orbiting or selecting another Monster, and refreshes a last-valid-position snapshot. If the target becomes invalid during the dive, the Drone continues toward that last valid position. Entering the package-owned positive `finalDiveHitThreshold` around the current destination produces Position Impact.
+
+At Position Impact, Final Dive searches for the nearest valid Monster within `finalDiveHitThreshold` around the actual impact position. A resolved Monster receives direct damage from the Drone's release-time resolved attack damage and one direct Elemental application opportunity. No resolved Monster means no direct damage or direct opportunity. After that optional direct result, the authored Final Dive explosion always executes. Every valid explosion target resolves its own damage and Elemental opportunity; the direct target may therefore receive both results. The Drone despawns after all synchronous impact results complete.
 
 ### Elemental Opportunity Audit
 
@@ -553,7 +555,7 @@ Behaviour Layer creates explicit Elemental application opportunities; it does no
 | Arcane Field | Once per valid Monster per field tick at 100% eligibility in V1 |
 | Twin Drones | Every Drone's projectile hits resolve independently |
 | Blast Rounds | Primary direct target and every explosion target resolve independent attempts |
-| Final Dive | Once for every valid Monster resolved by the impact explosion |
+| Final Dive | The optional nearest direct target and every explosion target resolve independent attempts; the direct target may receive both |
 
 BuffApplyCooldown, Protection, and Buff runtime decide whether each attempt applies, refreshes, stacks, or is blocked. Ordinary child Effects, Buff lifecycle Effects, periodic Elemental damage, reactions, zones, and overload results do not inherit eligibility unless a future reviewed Behaviour explicitly grants it.
 
