@@ -55,6 +55,8 @@ Context may carry source tower, source upgrade, target monster, trigger or impac
 
 Position Impact and Monster Hit are independent semantic facts. Position Impact means an Attack Entity reached its intended gameplay position and does not require a resolved Monster. Monster Hit requires a valid Monster. One Cannon or Final Dive landing may produce both facts, while an empty landing may produce Position Impact only. The System contract does not require these facts to become separate serialized Effect fields; the implementation may represent them through trigger context and reviewed runtime entry points.
 
+When a landing produces both facts, the runtime may retain the optional direct Monster in its attack-specific impact payload while creating the Position Impact Effect context with no target Monster and an explicitly valid impact position. This keeps an area Position Impact Effect centered on the landing because normal Effect targeting otherwise prefers a valid target Monster's hit/reference anchor over the trigger position. Any direct Monster Elemental opportunity is dispatched separately.
+
 First-version targeting remains simple:
 
 ```text

@@ -201,7 +201,7 @@ Recommended first-version fields:
 
 | projectilePrefab | GameObject | Projectile prefab reference |
 | projectileSpeed | float | Projectile movement speed (Unity units per second) |
-| hitDistanceThreshold | float | Projectile hit/arrival threshold; Arc projectiles also use it as the one-time Monster query radius around the impact position |
+| hitDistanceThreshold | float | Direct-hit threshold; for Arc projectiles, the one-time Monster query radius around the completed landing position |
 | maxLifetime | float | Maximum projectile lifetime before forced cleanup |
 | impactEffectDefinition | EffectDefinition | Optional gameplay effect triggered on impact |
 | impactVfxPrefab | GameObject | Optional visual effect prefab spawned when impact occurs |
@@ -210,7 +210,7 @@ Notes:
 
 - projectileSpeed controls how quickly the projectile reaches its target.
 - hitDistanceThreshold controls direct Monster hit checks for projectile types that contact Monsters directly.
-- For an Arc projectile, hitDistanceThreshold is both the arrival tolerance around the captured target position and the radius of the one-time nearest-valid-Monster query centered on the resulting impact position.
+- Arc arrival is determined by completing its normalized travel progress and snapping exactly to the captured target-position snapshot. For an Arc projectile, hitDistanceThreshold is only the radius of the one-time nearest-valid-Monster query centered on that completed landing position.
 - A baseline Cannon Shell requires a positive hitDistanceThreshold so its Position Impact can resolve at most one nearby Monster for direct damage. It does not disable that query merely because an optional impact Effect is present.
 - maxLifetime prevents projectiles from existing forever if impact does not occur.
 - Projectile prefab roots are expected to use local +Y as Up and local +Z as Forward.
@@ -341,9 +341,11 @@ Search Nearest Valid Monster Around Impact Position
 
 Arc height is provided by AttackConfig.arcHeight.
 
-Arc flight consumes an immutable target-position snapshot. Later invalidation of the Monster that supplied the snapshot does not cancel or redirect the projectile.
+Arc flight consumes an explicitly present immutable target-position snapshot; `Vector3.zero` remains a valid destination and is not a missing-position sentinel. Later invalidation of the Monster that supplied the snapshot does not cancel or redirect the projectile. A nonpositive Arc hitDistanceThreshold is rejected before projectile instantiation and defensively rejected again during projectile initialization.
 
-ProjectileConfig.hitDistanceThreshold acts as the Arc arrival tolerance and the radius of the one-time nearest-Monster query centered on the impact position. Finding a Monster produces Monster Hit and permits baseline direct-hit dispatch. Finding no Monster leaves Position Impact valid, permits presentation and reviewed Position Impact Effects, and then ends the projectile without a Monster-targeted direct result.
+Arc flight reaches normalized progress one, snaps exactly to its immutable target-position snapshot, and then produces Position Impact. ProjectileConfig.hitDistanceThreshold is only the radius of the one-time nearest-Monster query centered on that completed landing position. The query uses Monster hit/reference anchors, includes the exact threshold boundary, and selects at most one nearest gameplay-targetable Monster while preserving Monster Manager order for equal distances. Finding a Monster produces Monster Hit and permits baseline direct-hit dispatch. Finding no Monster leaves Position Impact valid, permits presentation and reviewed Position Impact Effects, and then ends the projectile without a Monster-targeted direct result.
+
+An Arc impact payload may retain the optional direct Monster together with the actual impact position. Its Position Impact Effect context keeps `TargetMonster` empty and supplies the actual impact position explicitly, so later area Effects remain centered on the landing rather than shifting to that Monster's hit/reference anchor. The direct Monster's Elemental opportunity is dispatched separately.
 
 ---
 

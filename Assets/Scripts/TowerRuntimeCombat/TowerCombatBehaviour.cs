@@ -25,6 +25,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private MonsterBehaviour currentTarget;
     private MonsterBehaviour pendingProjectileTarget;
     private Vector3 pendingProjectileTargetPosition;
+    private bool hasPendingProjectileTargetPosition;
     private MonsterBehaviour pendingDroneTarget;
     private AttackArchetype pendingAttackArchetype;
     private float cooldownTimer;
@@ -33,6 +34,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool hasLoggedMissingMagicOrbPrefab;
     private bool hasLoggedMissingDronePrefab;
     private bool hasLoggedMissingAttackOrigin;
+    private bool hasLoggedInvalidArcHitDistanceThreshold;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, AttackArchetype> OnUnsupportedAttackEntity;
@@ -58,12 +60,14 @@ public class TowerCombatBehaviour : MonoBehaviour
         currentTarget = null;
         pendingProjectileTarget = null;
         pendingProjectileTargetPosition = Vector3.zero;
+        hasPendingProjectileTargetPosition = false;
         pendingDroneTarget = null;
         pendingAttackArchetype = default;
         hasLoggedUnsupportedAttackEntity = false;
         hasLoggedMissingMagicOrbPrefab = false;
         hasLoggedMissingDronePrefab = false;
         hasLoggedMissingAttackOrigin = false;
+        hasLoggedInvalidArcHitDistanceThreshold = false;
         missingBehaviourPackageWarnings.Clear();
         attackState = TowerAttackState.Idle;
     }
@@ -219,7 +223,8 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         if (attackState == TowerAttackState.WaitingForAnimationRelease)
         {
-            if (!IsValidTarget(pendingProjectileTarget) || !IsInAttackRange(pendingProjectileTarget))
+            if (pendingAttackArchetype != AttackArchetype.ArcProjectile &&
+                (!IsValidTarget(pendingProjectileTarget) || !IsInAttackRange(pendingProjectileTarget)))
             {
                 ResetPendingAttackState();
             }
@@ -228,6 +233,15 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         if (cooldownTimer > 0f)
+        {
+            return;
+        }
+
+        ProjectileConfig configuredProjectile = attackConfig.ProjectileConfig;
+
+        if (attackConfig.AttackArchetype == AttackArchetype.ArcProjectile &&
+            configuredProjectile != null &&
+            !IsArcHitDistanceThresholdValid(configuredProjectile))
         {
             return;
         }
@@ -241,6 +255,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         pendingProjectileTarget = currentTarget;
         pendingProjectileTargetPosition = GetMonsterHitPosition(currentTarget);
+        hasPendingProjectileTargetPosition = true;
         pendingAttackArchetype = attackConfig.AttackArchetype;
         attackState = TowerAttackState.WaitingForAnimationRelease;
 
@@ -256,7 +271,10 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        if (!IsValidTarget(pendingProjectileTarget))
+        bool isArcProjectile = pendingAttackArchetype == AttackArchetype.ArcProjectile;
+
+        if ((!isArcProjectile && !IsValidTarget(pendingProjectileTarget)) ||
+            (isArcProjectile && !hasPendingProjectileTargetPosition))
         {
             ResetPendingAttackState();
             return;
@@ -271,6 +289,12 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
+        if (isArcProjectile && !IsArcHitDistanceThresholdValid(projectileConfig))
+        {
+            ResetPendingAttackState();
+            return;
+        }
+
         Transform origin = GetAttackOrigin();
 
         if (origin == null)
@@ -280,9 +304,10 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         ProjectileRuntimeOptions projectileRuntimeOptions = CreateProjectileRuntimeOptions();
+        MonsterBehaviour projectileTarget = isArcProjectile ? null : pendingProjectileTarget;
         bool releasedProjectile = IsArcherScatterArrowActive()
             ? TryReleaseScatterProjectiles(projectileConfig, origin, projectileRuntimeOptions)
-            : TryReleaseProjectile(projectileConfig, origin, pendingProjectileTargetPosition, pendingProjectileTarget, projectileRuntimeOptions);
+            : TryReleaseProjectile(projectileConfig, origin, pendingProjectileTargetPosition, projectileTarget, projectileRuntimeOptions);
 
         if (!releasedProjectile)
         {
@@ -405,6 +430,27 @@ public class TowerCombatBehaviour : MonoBehaviour
                attackConfig.AttackArchetype == AttackArchetype.DirectionProjectile;
     }
 
+    private bool IsArcHitDistanceThresholdValid(ProjectileConfig projectileConfig)
+    {
+        if (projectileConfig != null && projectileConfig.HitDistanceThreshold > 0f)
+        {
+            return true;
+        }
+
+        if (!hasLoggedInvalidArcHitDistanceThreshold)
+        {
+            hasLoggedInvalidArcHitDistanceThreshold = true;
+            UnityEngine.Object warningContext = projectileConfig != null
+                ? (UnityEngine.Object)projectileConfig
+                : this;
+            Debug.LogWarning(
+                "Tower combat cannot release Arc projectile: hit distance threshold must be greater than zero.",
+                warningContext);
+        }
+
+        return false;
+    }
+
     private void StartAttackCooldown()
     {
         cooldownTimer = ResolveCombatStats().AttackInterval;
@@ -414,6 +460,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         pendingProjectileTarget = null;
         pendingProjectileTargetPosition = Vector3.zero;
+        hasPendingProjectileTargetPosition = false;
         pendingDroneTarget = null;
         pendingAttackArchetype = default;
         attackState = TowerAttackState.Idle;

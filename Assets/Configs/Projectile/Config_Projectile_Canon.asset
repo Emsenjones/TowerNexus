@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileConfig
   projectilePrefab: {fileID: 389160941822607755, guid: 97060cd06ba0c4272b519291bdddd705, type: 3}
   projectileSpeed: 2
-  hitDistanceThreshold: 0.2
+  hitDistanceThreshold: 0.4
   maxLifetime: 10
-  impactEffectDefinition: {fileID: 11400000, guid: 4a883e7be44054865adbdc9fc2a2d9f1, type: 2}
-  impactVfxPrefab: {fileID: 0}
+  impactEffectDefinition: {fileID: 0}
+  impactVfxPrefab: {fileID: 8745290934763731026, guid: 619d0858c0ae14fbba017a2ff1955c2b, type: 3}

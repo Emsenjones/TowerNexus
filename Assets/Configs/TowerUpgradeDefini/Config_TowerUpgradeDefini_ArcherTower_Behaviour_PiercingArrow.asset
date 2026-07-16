@@ -26,6 +26,15 @@ MonoBehaviour:
   twinOrbsStartingAngleOffset: 180
   twinDronesCount: 2
   twinDronesTakeOffDelay: 0.15
+  explosiveShellEffect: {fileID: 0}
+  bounceSearchRadius: 1
+  maxBounceCount: 1
+  arcaneDetonationEffect: {fileID: 0}
+  arcaneFieldRadius: 1
+  arcaneFieldTickInterval: 1
+  arcaneFieldTickEffect: {fileID: 0}
+  blastRoundsEffect: {fileID: 0}
+  finalDiveHitThreshold: 1
+  finalDiveExplosionEffect: {fileID: 0}
   elementType: 0
   elementalApplyEffect: {fileID: 0}
-  effectBindings: []

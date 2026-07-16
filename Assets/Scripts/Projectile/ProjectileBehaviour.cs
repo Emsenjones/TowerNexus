@@ -14,7 +14,6 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 launchDirection;
     private Vector3 startPosition;
     private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
-    private readonly List<MonsterBehaviour> resolvedImpactTargets = new List<MonsterBehaviour>();
     private ProjectileRuntimeOptions runtimeOptions;
     private int attackDamage;
     private float elapsedLifetime;
@@ -128,6 +127,18 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool CanInitializeArcFlight()
     {
+        if (monsterManager == null)
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize Arc flight: monster manager is null.", this);
+            return false;
+        }
+
+        if (projectileConfig.HitDistanceThreshold <= 0f)
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize Arc flight: hit distance threshold must be greater than zero.", projectileConfig);
+            return false;
+        }
+
         return true;
     }
 
@@ -230,11 +241,12 @@ public class ProjectileBehaviour : MonoBehaviour
 
         FaceMoveDirection(moveDirection);
 
-        if (progress < 1f && Vector3.Distance(transform.position, targetPosition) > projectileConfig.HitDistanceThreshold)
+        if (progress < 1f)
         {
             return;
         }
 
+        transform.position = targetPosition;
         ImpactArcProjectile();
     }
 
@@ -367,13 +379,31 @@ public class ProjectileBehaviour : MonoBehaviour
         {
             return;
         }
+
         hasImpacted = true;
-        RaiseImpact(null, targetPosition);
+        Vector3 impactPosition = transform.position;
+        MonsterBehaviour hitMonster = null;
+
+        if (TryResolveArcImpactTarget(impactPosition, out MonsterBehaviour resolvedMonster))
+        {
+            hitMonster = resolvedMonster;
+            hitMonster.TakeDamage(attackDamage);
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                hitMonster,
+                impactPosition);
+        }
+
+        RaiseImpact(hitMonster, impactPosition);
         DestroyProjectile();
     }
 
     private void RaiseImpact(MonsterBehaviour hitMonster, Vector3 impactPosition)
     {
+        bool isArcPositionImpact = flightArchetype == AttackArchetype.ArcProjectile;
+        EffectDefinition impactEffectDefinition = isArcPositionImpact
+            ? null
+            : projectileConfig.ImpactEffectDefinition;
         ProjectileImpactContext impactContext = new ProjectileImpactContext(
             sourceTower,
             projectileConfig,
@@ -381,7 +411,7 @@ public class ProjectileBehaviour : MonoBehaviour
             hitMonster,
             impactPosition,
             attackDamage,
-            projectileConfig.ImpactEffectDefinition
+            impactEffectDefinition
         );
 
         PlayImpactVfx(impactContext.ImpactPosition);
@@ -389,27 +419,12 @@ public class ProjectileBehaviour : MonoBehaviour
         EffectTriggerContext effectTriggerContext = CreateEffectTriggerContext(hitMonster, impactPosition);
         OnEffectTriggerContextCreated?.Invoke(effectTriggerContext);
 
-        if (flightArchetype != AttackArchetype.ArcProjectile)
-        {
-            EffectExecutor.Execute(projectileConfig.ImpactEffectDefinition, effectTriggerContext);
-            return;
-        }
-
-        if (!EffectExecutor.ExecuteWithResolvedTargets(
-                projectileConfig.ImpactEffectDefinition,
-                effectTriggerContext,
-                resolvedImpactTargets))
+        if (isArcPositionImpact)
         {
             return;
         }
 
-        for (int i = 0; i < resolvedImpactTargets.Count; i++)
-        {
-            ElementalApplication.TryApplyFromTowerAttack(
-                sourceTower,
-                resolvedImpactTargets[i],
-                impactPosition);
-        }
+        EffectExecutor.Execute(impactEffectDefinition, effectTriggerContext);
     }
 
     private EffectTriggerContext CreateEffectTriggerContext(
@@ -419,7 +434,7 @@ public class ProjectileBehaviour : MonoBehaviour
         return new EffectTriggerContext(
             sourceTower: sourceTower,
             sourceUpgrade: null,
-            targetMonster: hitMonster,
+            targetMonster: flightArchetype == AttackArchetype.ArcProjectile ? null : hitMonster,
             hasTriggerPosition: true,
             triggerPosition: triggerPosition,
             resolvedDamage: attackDamage,
@@ -447,6 +462,45 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         return direction.normalized;
+    }
+
+    private bool TryResolveArcImpactTarget(
+        Vector3 impactPosition,
+        out MonsterBehaviour hitMonster)
+    {
+        hitMonster = null;
+
+        if (monsterManager == null || projectileConfig == null || projectileConfig.HitDistanceThreshold <= 0f)
+        {
+            return false;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        float hitDistanceThresholdSqr = projectileConfig.HitDistanceThreshold * projectileConfig.HitDistanceThreshold;
+        float nearestDistanceSqr = float.MaxValue;
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            MonsterBehaviour monster = aliveMonsters[i];
+
+            if (monster == null || !monster.IsGameplayTargetable)
+            {
+                continue;
+            }
+
+            float distanceSqr =
+                (EffectTargetResolver.GetMonsterHitPosition(monster) - impactPosition).sqrMagnitude;
+
+            if (distanceSqr > hitDistanceThresholdSqr || distanceSqr >= nearestDistanceSqr)
+            {
+                continue;
+            }
+
+            hitMonster = monster;
+            nearestDistanceSqr = distanceSqr;
+        }
+
+        return hitMonster != null;
     }
 
     private bool TryGetDirectionProjectileHit(out MonsterBehaviour hitMonster)
