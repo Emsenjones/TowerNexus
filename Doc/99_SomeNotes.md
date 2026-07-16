@@ -75,17 +75,17 @@
    6. *Archer/Cannon/MagicOrb/Drone tower behavior layer Phase1 implementation;
 7. Buff and Effect system implementation:
    1. *Effect trigger and Binding foundation;
-   2. *Definition action and targeting foundation
-   3. *Monster buff runtime foundation
-   4. *Elemental upgrade profile and eligibility
-   5. *Fire element vertical slice
-   6. *Monster Slow And Frozen Control API
-   7. *Cold and electric element slices
-   8. Effect zone foundation
+   2. *Definition action and targeting foundation;
+   3. *Monster buff runtime foundation;
+   4. *Elemental upgrade profile and eligibility;
+   5. *Fire element vertical slice;
+   6. *Monster Slow And Frozen Control API;
+   7. *Cold and electric element slices;
+   8. *Wind element and dedicated WindVortex
    9. Tower upgrade behavior layer Phase2 implementation;
-   10. *Wind element and dedicated WindVortex
-8. Player Level up by resolving monsters;
-9. Level configuration design;
-10. Tap tower to pop up TowerInfoWindow;
-11. Develop Monster & Projectile object pool;
-12. Tower Upgrade Behaviour Layer final content and future implementation scope are owned by `10_TowerUpgradeSystem.md`; do not maintain a parallel upgrade list in this note.
+8. Map prefab generation;
+9. Player Level up by resolving monsters;
+10. Level configuration design;
+11. Tap tower to pop up TowerInfoWindow;
+12. Develop Monster & Projectile object pool;
+13. Tower Upgrade Behaviour Layer final content and future implementation scope are owned by `10_TowerUpgradeSystem.md`; do not maintain a parallel upgrade list in this note.

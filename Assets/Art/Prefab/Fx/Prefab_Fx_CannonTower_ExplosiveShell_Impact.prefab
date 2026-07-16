@@ -4666,7 +4666,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5637500646516549740}
   m_Layer: 0
-  m_Name: Prefab_Fx_CannonTower_Projectile_Impact
+  m_Name: Prefab_Fx_CannonTower_ExplosiveShell_Impact
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

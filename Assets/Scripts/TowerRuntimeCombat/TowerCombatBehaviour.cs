@@ -34,6 +34,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool hasLoggedMissingDronePrefab;
     private bool hasLoggedMissingAttackOrigin;
     private bool hasLoggedInvalidArcHitDistanceThreshold;
+    private bool hasLoggedInvalidExplosiveShellEffect;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, AttackArchetype> OnUnsupportedAttackEntity;
@@ -67,6 +68,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedMissingDronePrefab = false;
         hasLoggedMissingAttackOrigin = false;
         hasLoggedInvalidArcHitDistanceThreshold = false;
+        hasLoggedInvalidExplosiveShellEffect = false;
         missingBehaviourPackageWarnings.Clear();
         attackState = TowerAttackState.Idle;
     }
@@ -489,11 +491,33 @@ public class TowerCombatBehaviour : MonoBehaviour
     private ProjectileRuntimeOptions CreateProjectileRuntimeOptions()
     {
         bool canPierce = IsArcherPiercingArrowActive();
+        TowerUpgradeDefinition explosiveShellSourceUpgrade = null;
+        EffectDefinition explosiveShellEffect = null;
+
+        if (IsCannonArcProjectileRelease() &&
+            HasBehaviourPackage(TowerBehaviourPackageType.CannonExplosiveShell) &&
+            TryGetBehaviourPackageUpgrade(
+                TowerBehaviourPackageType.CannonExplosiveShell,
+                out TowerUpgradeDefinition resolvedExplosiveShellUpgrade))
+        {
+            explosiveShellSourceUpgrade = resolvedExplosiveShellUpgrade;
+            explosiveShellEffect = resolvedExplosiveShellUpgrade.ExplosiveShellEffect;
+
+            if (explosiveShellEffect == null && !hasLoggedInvalidExplosiveShellEffect)
+            {
+                hasLoggedInvalidExplosiveShellEffect = true;
+                Debug.LogWarning(
+                    "Tower combat resolved Cannon Explosive Shell, but its EffectDefinition is missing. Explosion gameplay is disabled for this release.",
+                    resolvedExplosiveShellUpgrade);
+            }
+        }
 
         return new ProjectileRuntimeOptions(
             canPierce,
             canPierce ? GetPiercingArrowMaxHitCount() : 1,
-            isBounceChild: false
+            isBounceChild: false,
+            explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,
+            explosiveShellEffect: explosiveShellEffect
         );
     }
 
@@ -1022,10 +1046,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private int ResolveCannonMaxInitialShellCount()
     {
-        if (towerDefinition == null ||
-            towerDefinition.TowerFamily != TowerFamily.Cannon ||
-            attackConfig == null ||
-            attackConfig.AttackArchetype != AttackArchetype.ArcProjectile ||
+        if (!IsCannonArcProjectileRelease() ||
             !HasBehaviourPackage(TowerBehaviourPackageType.CannonMultiShells))
         {
             return 1;
@@ -1036,6 +1057,14 @@ public class TowerCombatBehaviour : MonoBehaviour
             out TowerUpgradeDefinition upgradeDefinition)
             ? upgradeDefinition.MultiShellsMaxInitialShellCount
             : 1;
+    }
+
+    private bool IsCannonArcProjectileRelease()
+    {
+        return towerDefinition != null &&
+               towerDefinition.TowerFamily == TowerFamily.Cannon &&
+               attackConfig != null &&
+               attackConfig.AttackArchetype == AttackArchetype.ArcProjectile;
     }
 
     private int GetMultiOrbsCount()

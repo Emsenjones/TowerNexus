@@ -1,8 +1,8 @@
 # Task005 - Cannon Explosive Shell
 
-Status: Ready for implementation
+Status: Implementation complete; Unity Play Mode validation pending
 
-Depends on: Task003
+Depends on: Task003; integrates with Task004
 
 ## 1. Goal
 
@@ -23,7 +23,7 @@ Implement Explosive Shell as an additive Position Impact Effect after the Cannon
 - Execute the Explosive Shell Effect at Position Impact regardless of direct-target resolution.
 - Expose every valid explosion target for an independent Elemental opportunity.
 - Preserve synchronous direct-before-explosion ordering.
-- Support every initial Shell released by Twin Shells without special-case composition code.
+- Support every initial Shell released by Multi Shells without special-case composition code.
 
 ## 4. Out of Scope
 
@@ -71,7 +71,7 @@ The explosion executes even when no direct Monster Hit exists. A direct Monster 
 - No direct target still permits explosion damage and Elemental attempts.
 - A surviving center Monster may receive direct plus explosion damage.
 - Direct and explosion Elemental attempts are independent and not gated by positive damage.
-- Twin Shells causes each initial Shell to execute its own explosion.
+- Multi Shells causes each initial Shell to execute its own explosion.
 - BuffApplyCooldown and Protection, not projectile code, decide whether two attempts both apply.
 - Impact and explosion VFX do not change gameplay success.
 
@@ -79,7 +79,7 @@ The explosion executes even when no direct Monster Hit exists. A direct Monster 
 
 - Test direct target inside explosion radius, outside direct threshold but inside explosion radius, and no Monsters.
 - Test zero direct damage, zero Effect damage fallback, cooldown blocking, and Protection blocking.
-- Test Twin Shells with overlapping and separated impact positions.
+- Test Multi Shells with overlapping and separated impact positions.
 - Verify target resolution and VFX occur once per impact.
 - Run `git diff --check` and confirm ProjectileConfig baseline remains non-explosive.
 

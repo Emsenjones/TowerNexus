@@ -14,6 +14,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 launchDirection;
     private Vector3 startPosition;
     private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
+    private readonly List<MonsterBehaviour> resolvedExplosiveShellTargets = new List<MonsterBehaviour>();
     private ProjectileRuntimeOptions runtimeOptions;
     private int attackDamage;
     private float elapsedLifetime;
@@ -56,6 +57,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
         startPosition = transform.position;
         piercedMonsters.Clear();
+        resolvedExplosiveShellTargets.Clear();
         elapsedLifetime = 0f;
         hasImpacted = false;
         hasLoggedUnsupportedTrackingFlight = false;
@@ -395,7 +397,39 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         RaiseImpact(hitMonster, impactPosition);
+        ExecuteExplosiveShellImpact(impactPosition);
         DestroyProjectile();
+    }
+
+    private void ExecuteExplosiveShellImpact(Vector3 impactPosition)
+    {
+        EffectDefinition explosiveShellEffect = runtimeOptions.ExplosiveShellEffect;
+
+        if (explosiveShellEffect == null)
+        {
+            return;
+        }
+
+        EffectExecutor.ExecuteWithResolvedTargets(
+            explosiveShellEffect,
+            new EffectTriggerContext(
+                sourceTower: sourceTower,
+                sourceUpgrade: runtimeOptions.ExplosiveShellSourceUpgrade,
+                targetMonster: null,
+                hasTriggerPosition: true,
+                triggerPosition: impactPosition,
+                resolvedDamage: attackDamage,
+                // Elemental Buff actions stay gated here; non-elemental authored Buff actions may still execute.
+                allowsElementalApplication: false),
+            resolvedExplosiveShellTargets);
+
+        for (int i = 0; i < resolvedExplosiveShellTargets.Count; i++)
+        {
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                resolvedExplosiveShellTargets[i],
+                impactPosition);
+        }
     }
 
     private void RaiseImpact(MonsterBehaviour hitMonster, Vector3 impactPosition)
