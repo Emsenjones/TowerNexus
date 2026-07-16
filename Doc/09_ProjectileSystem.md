@@ -514,7 +514,7 @@ Resolve direct Monster Hit
 
 No direct Monster Hit or no remaining candidate ends the bounce chain. Bounce selection does not use the source tower's full AttackRange or TargetSelectionType. It has no Coroutine, next-frame wait, or release delay.
 
-The bounce child receives relevant immutable runtime options: source context, resolved damage, Projectile configuration, Explosive Shell state, Elemental context, remaining bounce count, chain hit history, and bounce-child identity. It does not receive the complete TowerUpgradeState and does not consume Twin Shells again.
+The bounce child receives relevant immutable runtime options: source context, resolved damage, Projectile configuration, Explosive Shell state, Elemental context, remaining bounce count, chain hit history, and bounce-child identity. It does not receive the complete TowerUpgradeState and does not consume Multi Shells again.
 
 ---
 

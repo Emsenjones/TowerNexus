@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: df3ea5ae6f6e543e192da7b6606ad3a9
+guid: ffbd99f4130624fe19a29633e89824f3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 3409048153424740130
-    second: Icon_Buff_Frozen_0
+      213: -4739095765345036013
+    second: Icon_CannonTower_TwinShells_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -72,7 +72,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 128
+    maxTextureSize: 256
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 0
@@ -100,13 +100,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Icon_Buff_Frozen_0
+      name: Icon_CannonTower_TwinShells_0
       rect:
         serializedVersion: 2
-        x: 5
-        y: 4
-        width: 119
-        height: 119
+        x: 59
+        y: 35
+        width: 186
+        height: 212
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +115,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 22f351fcb3f5f4f20800000000000000
-      internalID: 3409048153424740130
+      spriteID: 3191d0e92895b3eb0800000000000000
+      internalID: -4739095765345036013
       vertices: []
       indices: 
       edges: []
@@ -135,7 +135,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Icon_Buff_Frozen_0: 3409048153424740130
+      Icon_CannonTower_TwinShells_0: -4739095765345036013
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

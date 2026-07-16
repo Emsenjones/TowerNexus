@@ -231,7 +231,7 @@ Runtime upgrade state should answer:
 
 Applying a TowerUpgradeDefinition records that upgrade on the target tower.
 
-V1 does not impose a quantity limit on upgrades within the same Required Tower Level category for Basic or Behaviour upgrades. A tower may receive multiple different Basic upgrades and multiple different Behaviour upgrades as long as it satisfies the category unlock and duplicate rules.
+V1 does not impose a quantity limit on upgrades within the same Required Tower Level category for Basic or Behaviour upgrades. A tower may receive multiple different Basic upgrades and multiple different Behaviour upgrades as long as it satisfies the category unlock and duplicate rules. However, one tower may own at most one Behaviour upgrade for each non-None `TowerBehaviourPackageType`; V1 does not define package replacement, priority, aggregation, or sequencing.
 
 The first Elemental Layer rule is exclusive per tower: a tower may own at most one Elemental Layer upgrade unless a future reviewed rule explicitly allows replacement or multi-element towers.
 
@@ -305,6 +305,8 @@ Invalid Targets:
 
 A tower cannot receive the same Upgrade twice.
 
+A tower also cannot receive a second Behaviour upgrade whose non-None `TowerBehaviourPackageType` is already active on that tower, even when it is represented by a different Upgrade asset. Multiple assets may author the same package type globally, but they cannot coexist on one tower in V1.
+
 The duplicate restriction is per tower, not global.
 
 Example:
@@ -328,10 +330,10 @@ Reviewed composition results include:
 - Piercing Arrow + Scatter Arrow: every scattered Arrow may pierce.
 - Piercing Arrow + Hunting Arrow: a surviving Arrow reacquires after each hit until its piercing count is exhausted.
 - Scatter Arrow + Hunting Arrow: every scattered Arrow resolves its own initial target and then tracks independently. Initial selection prefers different valid Monsters when alternatives exist and permits target reuse when distinct candidates are insufficient.
-- Twin Shells + Explosive Shell: every released initial Shell may execute its own explosion.
-- Twin Shells + Bouncing Shell: every released initial Shell owns an independent bounce chain.
+- Multi Shells + Explosive Shell: every released initial Shell may execute its own explosion.
+- Multi Shells + Bouncing Shell: every released initial Shell owns an independent bounce chain.
 - Explosive Shell + Bouncing Shell: each valid landing completes its explosion before selecting the next bounce target in the same frame.
-- Twin Orbs + Arcane Detonation: every Orb independently detonates on normal completion.
+- Multi Orbs + Arcane Detonation: every Orb independently detonates on normal completion.
 - Twin Drones + Blast Rounds: every Drone fires Blast Rounds.
 - Twin Drones + Final Dive: every Drone independently resolves its own battery-end Final Dive.
 
@@ -363,7 +365,7 @@ Examples of Behaviour Layer package parameters:
 - Archer Scatter Arrow angle offset
 - Cannon Explosive Shell area Effect reference
 - Cannon Bouncing Shell search radius and maximum bounce count
-- Magic Twin Orbs orb count and starting angle offset
+- Magic Multi Orbs count; runtime derives an even `360 / count` starting-angle step
 - Magic Arcane Detonation area Effect reference
 - Magic Arcane Field radius, tick interval, and tick Effect reference
 - Drone Twin Drones drone count and takeoff delay
@@ -483,8 +485,8 @@ The final first-version Behaviour content set is:
 | Tower | Behaviour Upgrades | Identity |
 |---|---|---|
 | Archer Tower | Piercing Arrow, Scatter Arrow, Hunting Arrow | Penetration, projectile count, tracking |
-| Cannon Tower | Explosive Shell, Twin Shells, Bouncing Shell | Area impact, multi-target release, local chaining |
-| Magic Tower | Twin Orbs, Arcane Detonation, Arcane Field | Entity count, normal-completion explosion, persistent tower field |
+| Cannon Tower | Explosive Shell, Multi Shells, Bouncing Shell | Area impact, multi-target release, local chaining |
+| Magic Tower | Multi Orbs, Arcane Detonation, Arcane Field | Entity count, normal-completion explosion, persistent tower field |
 | Drone Tower | Twin Drones, Blast Rounds, Final Dive | Entity count, projectile explosion, Drone lifecycle attack |
 
 Runtime composition is resolved from the source tower's complete applied Behaviour package set. Each released Attack Entity receives only the immutable resolved options relevant to its own execution. A Projectile, Magic Orb, or Drone does not need to own or interpret the complete TowerUpgradeState or unrelated Behaviour definitions.
@@ -505,27 +507,27 @@ The baseline Cannon Shell captures a target position, produces Position Impact o
 
 Explosive Shell adds an area Effect at Position Impact. It does not replace the baseline direct Monster Hit. A direct target may therefore receive direct damage plus explosion damage and two independent Elemental application attempts. The explosion executes even when no direct Monster Hit is resolved.
 
-Twin Shells modifies initial release count:
+Multi Shells modifies initial release count:
 
 ```text
-Two or more valid Monsters
-    -> capture two different target-position snapshots
-    -> release two initial Shells
+Multiple valid Monsters
+    -> capture different target-position snapshots up to the authored maximum
+    -> release one initial Shell per captured snapshot
 
 Exactly one valid Monster
     -> capture one target-position snapshot
     -> release one initial Shell
 ```
 
-The attack uses one confirmation, one presentation sequence, and one cooldown. Confirmed target positions are not retargeted or canceled during the animation wait. Each released Shell owns independent direct, explosion, bounce, lifetime, and Elemental results. Bounce children never consume Twin Shells again.
+The package owns `multiShellsMaxInitialShellCount`, with a minimum and default of `2`. The attack uses one confirmation, one presentation sequence, one release-time damage and runtime-options snapshot, and one cooldown. Confirmed target positions are not retargeted or canceled during the animation wait. Each released Shell owns independent direct, explosion, bounce, lifetime, and Elemental results. Bounce children never consume Multi Shells again.
 
 Bouncing Shell adds a finite local bounce chain. After a landing resolves a valid direct Monster Hit, it completes every immediate result of that landing in the same frame: direct damage, the direct Elemental attempt, any Explosive Shell actions, explosion-target Elemental attempts, and synchronous Buff, overload, death, or target-state consequences. Only then does it search within the authored `bounceSearchRadius` around the impact position. It excludes the chain hit history, chooses the nearest surviving valid Monster relative to that impact position, captures the target's current position, and creates one bounce child in the same frame. The package-owned `maxBounceCount` limits the chain. It does not use the source tower's full AttackRange or TargetSelectionType. No direct Monster Hit, no remaining bounce count, or no candidate ends the chain.
 
 ### Magic Behaviour Upgrades
 
-Twin Orbs releases two independent Magic Orb Attack Entities. Each Orb owns its own orbit angle, contact cooldowns, hit count, lifetime, damage results, and Elemental opportunities.
+Multi Orbs releases the authored number of independent Magic Orb Attack Entities, with a minimum and default count of `2`. Runtime chooses one random base starting angle and distributes the Orbs evenly using a `360 / count` angle step. Each Orb owns its own orbit angle, contact cooldowns, hit count, lifetime, damage results, and Elemental opportunities.
 
-Arcane Detonation executes one area Effect at the Orb's current world position only when the Orb ends through HitCountExhausted or LifetimeExpired. Forced cleanup, battle end, owner invalidation, and reset do not trigger it. Twin Orbs detonate independently. Every valid Monster resolved by a Detonation receives one explicit Elemental application opportunity.
+Arcane Detonation executes one area Effect at the Orb's current world position only when the Orb ends through HitCountExhausted or LifetimeExpired. Forced cleanup, battle end, owner invalidation, and reset do not trigger it. Multi Orbs detonate independently. Every valid Monster resolved by a Detonation receives one explicit Elemental application opportunity.
 
 Arcane Field creates one tower-owned field immediately when the upgrade is applied. The Behaviour package owns field radius and tick interval; its referenced EffectDefinition owns reusable damage and execution feedback. The field follows the tower, has no independent first-version duration, does not duplicate when other upgrades are applied, and ends with tower destruction, removal, or battle cleanup. Each tick resolves every valid Monster inside the field and provides one 100% Elemental application attempt per target. V1 has no per-target Elemental chance parameter.
 
@@ -549,9 +551,9 @@ Behaviour Layer creates explicit Elemental application opportunities; it does no
 | Scatter Arrow | Independently for every released Arrow's resolved Monster Hits |
 | Hunting Arrow | No periodic application from tracking; actual Monster Hits follow Arrow rules |
 | Explosive Shell | Direct target and every explosion target resolve independent attempts; the center may receive both |
-| Twin Shells | Every released initial Shell resolves independently |
+| Multi Shells | Every released initial Shell resolves independently |
 | Bouncing Shell | Every bounce child resolves its own direct and inherited explosion opportunities |
-| Twin Orbs | Every Orb contact resolves independently |
+| Multi Orbs | Every Orb contact resolves independently |
 | Arcane Detonation | Once for every valid Monster resolved by a normal-completion Detonation |
 | Arcane Field | Once per valid Monster per field tick at 100% eligibility in V1 |
 | Twin Drones | Every Drone's projectile hits resolve independently |

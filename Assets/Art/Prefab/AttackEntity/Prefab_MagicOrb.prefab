@@ -4878,6 +4878,7 @@ Transform:
   m_Children:
   - {fileID: 4795314342691932148}
   - {fileID: 8087449282788131396}
+  - {fileID: 152676874764463687}
   m_Father: {fileID: 3477535013260121024}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &3908715399756029844
@@ -4908,10 +4909,9 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1.2, y: 1.2, z: 1.2}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 152676874764463687}
+  m_Children: []
   m_Father: {fileID: 1038759008162582146}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &4985617140461874514
@@ -9877,7 +9877,7 @@ GameObject:
   - component: {fileID: 7571449972166563921}
   - component: {fileID: 3150502980904161649}
   m_Layer: 1
-  m_Name: Particle_Tail
+  m_Name: Fx_OrbTail
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -9896,7 +9896,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8087449282788131396}
+  m_Father: {fileID: 1038759008162582146}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!198 &8396622555408656506
 ParticleSystem:

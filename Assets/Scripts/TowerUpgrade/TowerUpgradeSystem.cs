@@ -112,6 +112,14 @@ public class TowerUpgradeSystem : MonoBehaviour
             return false;
         }
 
+        if (upgradeDefinition.UpgradeLayer == TowerUpgradeLayer.Behaviour &&
+            upgradeDefinition.BehaviourPackageType != TowerBehaviourPackageType.None &&
+            targetTower.HasBehaviourPackage(upgradeDefinition.BehaviourPackageType))
+        {
+            failureReason = $"Target tower already has Behaviour package '{upgradeDefinition.BehaviourPackageType}'.";
+            return false;
+        }
+
         if (upgradeDefinition.UpgradeLayer == TowerUpgradeLayer.Elemental &&
             targetTower.HasElementalUpgrade())
         {

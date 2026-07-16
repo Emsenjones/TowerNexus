@@ -6,7 +6,7 @@ public enum TowerBehaviourPackageType
     ArcherScatterArrow = 101,
     ArcherHuntingArrow = 102,
 
-    MagicTwinOrbs = 200,
+    MagicMultiOrbs = 200,
     MagicArcaneDetonation = 201,
     MagicArcaneField = 202,
 
@@ -15,6 +15,6 @@ public enum TowerBehaviourPackageType
     DroneFinalDive = 302,
 
     CannonExplosiveShell = 400,
-    CannonTwinShells = 401,
+    CannonMultiShells = 401,
     CannonBouncingShell = 402
 }

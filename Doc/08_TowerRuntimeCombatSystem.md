@@ -386,25 +386,25 @@ Direction Projectile and Arc Projectile may use the same Tower Runtime Combat re
 
 Projectile prefab roots should follow the project-wide orientation convention of local +Y Up and local +Z Forward. Tower Runtime Combat creates and initializes the projectile, while ProjectileBehaviour owns aligning the projectile root's local +Z axis to its movement direction.
 
-## 9.3 Cannon Position Snapshots And Twin Shells
+## 9.3 Cannon Position Snapshots And Multi Shells
 
 Baseline Cannon selects targets before attack presentation and captures target-position snapshots when entering WaitingForAnimationRelease.
 
-Twin Shells changes the initial release count only:
+Multi Shells changes the initial release count only:
 
 ```text
-Two or more valid Monsters
-    -> select two different Monsters using the tower's normal target-selection semantics
-    -> capture two independent target-position snapshots
+Multiple valid Monsters
+    -> select different Monsters using the tower's normal target-selection semantics
+    -> capture independent target-position snapshots up to the authored maximum
 
 Exactly one valid Monster
     -> capture one target-position snapshot
     -> release one Shell
 ```
 
-The Animation Event releases the number of initial Shells represented by the stored snapshots. The attack uses one confirmation, one presentation sequence, and one cooldown. It does not retarget during the wait, cancel a confirmed position because the source Monster later becomes invalid, add a release delay, or require a spawn offset.
+`CannonMultiShells` owns a `multiShellsMaxInitialShellCount` value with a minimum and default of `2`. The Animation Event releases the number of initial Shells represented by the stored snapshots, capped by that confirmed value. The attack uses one confirmation, one presentation sequence, one release-time damage snapshot, one immutable runtime-options snapshot, and one cooldown. It does not retarget during the wait, cancel a confirmed position because the source Monster later becomes invalid, add a release delay, or require a spawn offset.
 
-Twin Shells is an initial-release rule. A Bouncing Shell child is initialized as a bounce child and never consumes the Twin Shells release multiplier again.
+Multi Shells is an initial-release rule. A Bouncing Shell child is initialized as a bounce child and never consumes the Multi Shells release multiplier again.
 
 ---
 

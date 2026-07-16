@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "TowerUpgradeDefinition",
@@ -39,13 +40,11 @@ public class TowerUpgradeDefinition : ScriptableObject
     [ShowIf(nameof(IsArcherScatterArrow))]
     [MinValue(0f)]
     [SerializeField] private float scatterAngleOffset = 15f;
-    [TitleGroup("Behaviour Layer/Magic Twin Orbs")]
-    [ShowIf(nameof(IsMagicTwinOrbs))]
-    [MinValue(1)]
-    [SerializeField] private int twinOrbsCount = 2;
-    [TitleGroup("Behaviour Layer/Magic Twin Orbs")]
-    [ShowIf(nameof(IsMagicTwinOrbs))]
-    [SerializeField] private float twinOrbsStartingAngleOffset = 180f;
+    [FormerlySerializedAs("twinOrbsCount")]
+    [TitleGroup("Behaviour Layer/Magic Multi Orbs")]
+    [ShowIf(nameof(IsMagicMultiOrbs))]
+    [MinValue(2)]
+    [SerializeField] private int multiOrbsCount = 2;
     [TitleGroup("Behaviour Layer/Drone Twin Drones")]
     [ShowIf(nameof(IsDroneTwinDrones))]
     [MinValue(1)]
@@ -57,6 +56,11 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Behaviour Layer/Cannon Explosive Shell")]
     [ShowIf(nameof(IsCannonExplosiveShell))]
     [SerializeField] private EffectDefinition explosiveShellEffect;
+    [FormerlySerializedAs("twinShellsMaxInitialShellCount")]
+    [TitleGroup("Behaviour Layer/Cannon Multi Shells")]
+    [ShowIf(nameof(IsCannonMultiShells))]
+    [MinValue(2)]
+    [SerializeField] private int multiShellsMaxInitialShellCount = 2;
     [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
     [ShowIf(nameof(IsCannonBouncingShell))]
     [MinValue(0.01f)]
@@ -107,11 +111,11 @@ public class TowerUpgradeDefinition : ScriptableObject
     public TowerBehaviourPackageType BehaviourPackageType => behaviourPackageType;
     public int PiercingMaxHitCount => Mathf.Max(1, piercingMaxHitCount);
     public float ScatterAngleOffset => Mathf.Max(0f, scatterAngleOffset);
-    public int TwinOrbsCount => Mathf.Clamp(twinOrbsCount, 1, 2);
-    public float TwinOrbsStartingAngleOffset => twinOrbsStartingAngleOffset;
+    public int MultiOrbsCount => Mathf.Max(2, multiOrbsCount);
     public int TwinDronesCount => Mathf.Clamp(twinDronesCount, 1, 2);
     public float TwinDronesTakeOffDelay => Mathf.Max(0f, twinDronesTakeOffDelay);
     public EffectDefinition ExplosiveShellEffect => explosiveShellEffect;
+    public int MultiShellsMaxInitialShellCount => Mathf.Max(2, multiShellsMaxInitialShellCount);
     public float BounceSearchRadius => Mathf.Max(0.01f, bounceSearchRadius);
     public int MaxBounceCount => Mathf.Max(1, maxBounceCount);
     public EffectDefinition ArcaneDetonationEffect => arcaneDetonationEffect;
@@ -234,7 +238,7 @@ public class TowerUpgradeDefinition : ScriptableObject
             case TowerBehaviourPackageType.ArcherScatterArrow:
             case TowerBehaviourPackageType.ArcherHuntingArrow:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Archer);
-            case TowerBehaviourPackageType.MagicTwinOrbs:
+            case TowerBehaviourPackageType.MagicMultiOrbs:
             case TowerBehaviourPackageType.MagicArcaneDetonation:
             case TowerBehaviourPackageType.MagicArcaneField:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Magic);
@@ -243,7 +247,7 @@ public class TowerUpgradeDefinition : ScriptableObject
             case TowerBehaviourPackageType.DroneFinalDive:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Drone);
             case TowerBehaviourPackageType.CannonExplosiveShell:
-            case TowerBehaviourPackageType.CannonTwinShells:
+            case TowerBehaviourPackageType.CannonMultiShells:
             case TowerBehaviourPackageType.CannonBouncingShell:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Cannon);
             case TowerBehaviourPackageType.None:
@@ -281,9 +285,9 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
-        if (IsMagicTwinOrbs() && (twinOrbsCount < 1 || twinOrbsCount > 2))
+        if (IsMagicMultiOrbs() && multiOrbsCount < 2)
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Twin Orbs count must be between 1 and 2 in v1.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Orbs count must be at least 2.");
             isValid = false;
         }
 
@@ -302,6 +306,12 @@ public class TowerUpgradeDefinition : ScriptableObject
         if (IsCannonExplosiveShell() &&
             !ValidateRequiredAreaEffect(explosiveShellEffect, "Explosive Shell", logWarnings))
         {
+            isValid = false;
+        }
+
+        if (IsCannonMultiShells() && multiShellsMaxInitialShellCount < 2)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Shells maximum initial Shell count must be at least 2.");
             isValid = false;
         }
 
@@ -486,10 +496,10 @@ public class TowerUpgradeDefinition : ScriptableObject
                behaviourPackageType == TowerBehaviourPackageType.ArcherScatterArrow;
     }
 
-    private bool IsMagicTwinOrbs()
+    private bool IsMagicMultiOrbs()
     {
         return IsBehaviourLayerUpgrade() &&
-               behaviourPackageType == TowerBehaviourPackageType.MagicTwinOrbs;
+               behaviourPackageType == TowerBehaviourPackageType.MagicMultiOrbs;
     }
 
     private bool IsDroneTwinDrones()
@@ -502,6 +512,12 @@ public class TowerUpgradeDefinition : ScriptableObject
     {
         return IsBehaviourLayerUpgrade() &&
                behaviourPackageType == TowerBehaviourPackageType.CannonExplosiveShell;
+    }
+
+    private bool IsCannonMultiShells()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.CannonMultiShells;
     }
 
     private bool IsCannonBouncingShell()

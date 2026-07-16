@@ -62,7 +62,7 @@ Package-specific authoring:
 |---|---|
 | Archer Hunting Arrow | No V1 parameter |
 | Cannon Explosive Shell | Area `EffectDefinition` |
-| Cannon Twin Shells | No V1 parameter; initial release count is fixed by contract |
+| Cannon Twin Shells | `twinShellsMaxInitialShellCount`, minimum and default `2` |
 | Cannon Bouncing Shell | Positive `bounceSearchRadius`, positive `maxBounceCount` |
 | Magic Arcane Detonation | Area `EffectDefinition` |
 | Magic Arcane Field | Positive radius, positive tick interval, tick `EffectDefinition` |
@@ -112,7 +112,7 @@ Before deleting `effectBindings`, inspect every serialized `TowerUpgradeDefiniti
 - Required Effect references are validated.
 - Area Effects reject nonpositive Effect radius; Arcane Field rejects a non-single-target tick Effect.
 - `bounceSearchRadius`, `maxBounceCount`, Arcane Field radius/tick interval, and `finalDiveHitThreshold` reject nonpositive authored values.
-- Hunting Arrow and Twin Shells introduce no redundant V1 numeric fields.
+- Hunting Arrow introduces no redundant V1 numeric field; Twin Shells exposes one validated maximum initial-Shell count.
 - Existing Piercing Arrow, Scatter Arrow, Twin Orbs, and Twin Drones assets remain readable and valid.
 - Generic Upgrade `EffectBindings`, `EffectBindingExecutor`, and `EffectTriggerType` are removed.
 - `EffectTriggerContext`, `EffectExecutor`, `BuffEventType`, and `BuffEventBinding` remain active.

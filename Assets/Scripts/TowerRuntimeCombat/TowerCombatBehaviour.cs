@@ -8,8 +8,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 {
     private const int DefaultPiercingArrowMaxHitCount = 3;
     private const float DefaultScatterArrowAngleOffset = 15f;
-    private const int DefaultTwinOrbsCount = 2;
-    private const float DefaultTwinOrbsStartingAngleOffset = 180f;
+    private const int DefaultMultiOrbsCount = 2;
     private const int DefaultTwinDronesCount = 2;
     private const float DefaultTwinDronesTakeOffDelay = 0.6f;
 
@@ -18,6 +17,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private TowerBehaviour towerBehaviour;
 
     private readonly List<MonsterBehaviour> detectedEnemies = new List<MonsterBehaviour>();
+    private readonly List<Vector3> pendingCannonInitialShellTargetPositions = new List<Vector3>();
     private readonly HashSet<TowerBehaviourPackageType> missingBehaviourPackageWarnings = new HashSet<TowerBehaviourPackageType>();
 
     private TowerDefinition towerDefinition;
@@ -25,7 +25,6 @@ public class TowerCombatBehaviour : MonoBehaviour
     private MonsterBehaviour currentTarget;
     private MonsterBehaviour pendingProjectileTarget;
     private Vector3 pendingProjectileTargetPosition;
-    private bool hasPendingProjectileTargetPosition;
     private MonsterBehaviour pendingDroneTarget;
     private AttackArchetype pendingAttackArchetype;
     private float cooldownTimer;
@@ -60,7 +59,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         currentTarget = null;
         pendingProjectileTarget = null;
         pendingProjectileTargetPosition = Vector3.zero;
-        hasPendingProjectileTargetPosition = false;
+        pendingCannonInitialShellTargetPositions.Clear();
         pendingDroneTarget = null;
         pendingAttackArchetype = default;
         hasLoggedUnsupportedAttackEntity = false;
@@ -254,8 +253,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         pendingProjectileTarget = currentTarget;
-        pendingProjectileTargetPosition = GetMonsterHitPosition(currentTarget);
-        hasPendingProjectileTargetPosition = true;
+        CapturePendingProjectileTargetPositions(currentTarget);
         pendingAttackArchetype = attackConfig.AttackArchetype;
         attackState = TowerAttackState.WaitingForAnimationRelease;
 
@@ -274,7 +272,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         bool isArcProjectile = pendingAttackArchetype == AttackArchetype.ArcProjectile;
 
         if ((!isArcProjectile && !IsValidTarget(pendingProjectileTarget)) ||
-            (isArcProjectile && !hasPendingProjectileTargetPosition))
+            (isArcProjectile && pendingCannonInitialShellTargetPositions.Count == 0))
         {
             ResetPendingAttackState();
             return;
@@ -303,13 +301,33 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
+        int attackDamage = ResolveCombatStats().AttackDamage;
         ProjectileRuntimeOptions projectileRuntimeOptions = CreateProjectileRuntimeOptions();
-        MonsterBehaviour projectileTarget = isArcProjectile ? null : pendingProjectileTarget;
-        bool releasedProjectile = IsArcherScatterArrowActive()
-            ? TryReleaseScatterProjectiles(projectileConfig, origin, projectileRuntimeOptions)
-            : TryReleaseProjectile(projectileConfig, origin, pendingProjectileTargetPosition, projectileTarget, projectileRuntimeOptions);
+        int releasedProjectileCount;
 
-        if (!releasedProjectile)
+        if (isArcProjectile)
+        {
+            releasedProjectileCount = ReleasePendingArcProjectiles(
+                projectileConfig,
+                origin,
+                attackDamage,
+                projectileRuntimeOptions);
+        }
+        else
+        {
+            bool releasedProjectile = IsArcherScatterArrowActive()
+                ? TryReleaseScatterProjectiles(projectileConfig, origin, attackDamage, projectileRuntimeOptions)
+                : TryReleaseProjectile(
+                    projectileConfig,
+                    origin,
+                    pendingProjectileTargetPosition,
+                    pendingProjectileTarget,
+                    attackDamage,
+                    projectileRuntimeOptions);
+            releasedProjectileCount = releasedProjectile ? 1 : 0;
+        }
+
+        if (releasedProjectileCount == 0)
         {
             ResetPendingAttackState();
             return;
@@ -321,9 +339,66 @@ public class TowerCombatBehaviour : MonoBehaviour
         ResetPendingAttackState();
     }
 
+    private void CapturePendingProjectileTargetPositions(MonsterBehaviour firstTarget)
+    {
+        pendingCannonInitialShellTargetPositions.Clear();
+        pendingProjectileTargetPosition = GetMonsterHitPosition(firstTarget);
+
+        if (attackConfig.AttackArchetype != AttackArchetype.ArcProjectile)
+        {
+            return;
+        }
+
+        int maxInitialShellCount = ResolveCannonMaxInitialShellCount();
+        HashSet<MonsterBehaviour> selectedTargets = new HashSet<MonsterBehaviour>
+        {
+            firstTarget
+        };
+        pendingCannonInitialShellTargetPositions.Add(pendingProjectileTargetPosition);
+
+        while (pendingCannonInitialShellTargetPositions.Count < maxInitialShellCount)
+        {
+            MonsterBehaviour additionalTarget = SelectTarget(selectedTargets);
+
+            if (!IsValidTarget(additionalTarget))
+            {
+                break;
+            }
+
+            selectedTargets.Add(additionalTarget);
+            pendingCannonInitialShellTargetPositions.Add(GetMonsterHitPosition(additionalTarget));
+        }
+    }
+
+    private int ReleasePendingArcProjectiles(
+        ProjectileConfig projectileConfig,
+        Transform origin,
+        int attackDamage,
+        ProjectileRuntimeOptions projectileRuntimeOptions)
+    {
+        int releasedCount = 0;
+
+        for (int i = 0; i < pendingCannonInitialShellTargetPositions.Count; i++)
+        {
+            if (TryReleaseProjectile(
+                    projectileConfig,
+                    origin,
+                    pendingCannonInitialShellTargetPositions[i],
+                    null,
+                    attackDamage,
+                    projectileRuntimeOptions))
+            {
+                releasedCount++;
+            }
+        }
+
+        return releasedCount;
+    }
+
     private bool TryReleaseScatterProjectiles(
         ProjectileConfig projectileConfig,
         Transform origin,
+        int attackDamage,
         ProjectileRuntimeOptions projectileRuntimeOptions)
     {
         Vector3 centerDirection = pendingProjectileTargetPosition - origin.position;
@@ -340,18 +415,21 @@ public class TowerCombatBehaviour : MonoBehaviour
             origin,
             pendingProjectileTargetPosition,
             pendingProjectileTarget,
+            attackDamage,
             projectileRuntimeOptions);
 
         bool releasedLeft = TryReleaseProjectileInDirection(
             projectileConfig,
             origin,
             Quaternion.AngleAxis(-GetScatterArrowAngleOffset(), Vector3.up) * centerDirection,
+            attackDamage,
             projectileRuntimeOptions);
 
         bool releasedRight = TryReleaseProjectileInDirection(
             projectileConfig,
             origin,
             Quaternion.AngleAxis(GetScatterArrowAngleOffset(), Vector3.up) * centerDirection,
+            attackDamage,
             projectileRuntimeOptions);
 
         return releasedCenter || releasedLeft || releasedRight;
@@ -361,6 +439,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         ProjectileConfig projectileConfig,
         Transform origin,
         Vector3 direction,
+        int attackDamage,
         ProjectileRuntimeOptions projectileRuntimeOptions)
     {
         if (direction.sqrMagnitude <= 0.0001f)
@@ -369,7 +448,13 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         Vector3 targetPosition = origin.position + direction.normalized;
-        return TryReleaseProjectile(projectileConfig, origin, targetPosition, pendingProjectileTarget, projectileRuntimeOptions);
+        return TryReleaseProjectile(
+            projectileConfig,
+            origin,
+            targetPosition,
+            pendingProjectileTarget,
+            attackDamage,
+            projectileRuntimeOptions);
     }
 
     private bool TryReleaseProjectile(
@@ -377,6 +462,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         Transform origin,
         Vector3 targetPosition,
         MonsterBehaviour target,
+        int attackDamage,
         ProjectileRuntimeOptions projectileRuntimeOptions)
     {
         GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, origin.position, Quaternion.identity);
@@ -393,7 +479,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             attackConfig,
             target,
             targetPosition,
-            ResolveCombatStats().AttackDamage,
+            attackDamage,
             runtimeOptions: projectileRuntimeOptions
         );
 
@@ -406,7 +492,8 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         return new ProjectileRuntimeOptions(
             canPierce,
-            canPierce ? GetPiercingArrowMaxHitCount() : 1
+            canPierce ? GetPiercingArrowMaxHitCount() : 1,
+            isBounceChild: false
         );
     }
 
@@ -460,7 +547,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         pendingProjectileTarget = null;
         pendingProjectileTargetPosition = Vector3.zero;
-        hasPendingProjectileTargetPosition = false;
+        pendingCannonInitialShellTargetPositions.Clear();
         pendingDroneTarget = null;
         pendingAttackArchetype = default;
         attackState = TowerAttackState.Idle;
@@ -518,8 +605,8 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
-        bool releasedMagicOrb = IsMagicTwinOrbsActive()
-            ? TryReleaseTwinMagicOrbs(origin, resolvedStats)
+        bool releasedMagicOrb = IsMagicMultiOrbsActive()
+            ? TryReleaseMultiMagicOrbs(origin, resolvedStats)
             : TryReleaseMagicOrb(origin, resolvedStats);
 
         if (!releasedMagicOrb)
@@ -533,15 +620,16 @@ public class TowerCombatBehaviour : MonoBehaviour
         ResetPendingAttackState();
     }
 
-    private bool TryReleaseTwinMagicOrbs(Transform origin, ResolvedTowerCombatStats resolvedStats)
+    private bool TryReleaseMultiMagicOrbs(Transform origin, ResolvedTowerCombatStats resolvedStats)
     {
         float baseStartingOrbitAngle = UnityEngine.Random.Range(0f, 360f);
-        int orbCount = GetTwinOrbsCount();
+        int orbCount = GetMultiOrbsCount();
+        float orbitAngleStep = 360f / orbCount;
         bool releasedAnyOrb = false;
 
         for (int i = 0; i < orbCount; i++)
         {
-            float startingOrbitAngle = baseStartingOrbitAngle + GetTwinOrbsStartingAngleOffset() * i;
+            float startingOrbitAngle = baseStartingOrbitAngle + orbitAngleStep * i;
             releasedAnyOrb |= TryReleaseMagicOrb(origin, resolvedStats, startingOrbitAngle);
         }
 
@@ -573,10 +661,10 @@ public class TowerCombatBehaviour : MonoBehaviour
         return magicOrbBehaviour.IsInitialized;
     }
 
-    private bool IsMagicTwinOrbsActive()
+    private bool IsMagicMultiOrbsActive()
     {
         return IsMagicOrbRelease() &&
-               HasBehaviourPackage(TowerBehaviourPackageType.MagicTwinOrbs);
+               HasBehaviourPackage(TowerBehaviourPackageType.MagicMultiOrbs);
     }
 
     private bool IsMagicOrbRelease()
@@ -762,9 +850,10 @@ public class TowerCombatBehaviour : MonoBehaviour
         OnUnsupportedAttackEntity?.Invoke(this, attackConfig.AttackArchetype);
     }
 
-    private MonsterBehaviour SelectTarget()
+    private MonsterBehaviour SelectTarget(ISet<MonsterBehaviour> excludedTargets = null)
     {
-        if (detectedEnemies.Count == 0)
+        if (detectedEnemies.Count == 0 ||
+            (excludedTargets != null && excludedTargets.Count >= detectedEnemies.Count))
         {
             return null;
         }
@@ -772,18 +861,18 @@ public class TowerCombatBehaviour : MonoBehaviour
         switch (attackConfig.TargetSelectionType)
         {
             case TargetSelectionType.HighestHealth:
-                return SelectHighestHealthTarget();
+                return SelectHighestHealthTarget(excludedTargets);
             case TargetSelectionType.LowestHealth:
-                return SelectLowestHealthTarget();
+                return SelectLowestHealthTarget(excludedTargets);
             case TargetSelectionType.Random:
-                return detectedEnemies[Random.Range(0, detectedEnemies.Count)];
+                return SelectRandomTarget(excludedTargets);
             case TargetSelectionType.Nearest:
             default:
-                return SelectNearestTarget();
+                return SelectNearestTarget(excludedTargets);
         }
     }
 
-    private MonsterBehaviour SelectNearestTarget()
+    private MonsterBehaviour SelectNearestTarget(ISet<MonsterBehaviour> excludedTargets)
     {
         MonsterBehaviour selectedTarget = null;
         float bestDistanceSqr = float.MaxValue;
@@ -791,6 +880,12 @@ public class TowerCombatBehaviour : MonoBehaviour
         for (int i = 0; i < detectedEnemies.Count; i++)
         {
             MonsterBehaviour monster = detectedEnemies[i];
+
+            if (excludedTargets != null && excludedTargets.Contains(monster))
+            {
+                continue;
+            }
+
             Transform origin = GetAttackOrigin();
 
             if (origin == null)
@@ -810,7 +905,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         return selectedTarget;
     }
 
-    private MonsterBehaviour SelectHighestHealthTarget()
+    private MonsterBehaviour SelectHighestHealthTarget(ISet<MonsterBehaviour> excludedTargets)
     {
         MonsterBehaviour selectedTarget = null;
         int bestHealth = int.MinValue;
@@ -818,6 +913,11 @@ public class TowerCombatBehaviour : MonoBehaviour
         for (int i = 0; i < detectedEnemies.Count; i++)
         {
             MonsterBehaviour monster = detectedEnemies[i];
+
+            if (excludedTargets != null && excludedTargets.Contains(monster))
+            {
+                continue;
+            }
 
             if (monster.CurrentHealth > bestHealth)
             {
@@ -829,7 +929,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         return selectedTarget;
     }
 
-    private MonsterBehaviour SelectLowestHealthTarget()
+    private MonsterBehaviour SelectLowestHealthTarget(ISet<MonsterBehaviour> excludedTargets)
     {
         MonsterBehaviour selectedTarget = null;
         int bestHealth = int.MaxValue;
@@ -837,6 +937,11 @@ public class TowerCombatBehaviour : MonoBehaviour
         for (int i = 0; i < detectedEnemies.Count; i++)
         {
             MonsterBehaviour monster = detectedEnemies[i];
+
+            if (excludedTargets != null && excludedTargets.Contains(monster))
+            {
+                continue;
+            }
 
             if (monster.CurrentHealth < bestHealth)
             {
@@ -846,6 +951,37 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         return selectedTarget;
+    }
+
+    private MonsterBehaviour SelectRandomTarget(ISet<MonsterBehaviour> excludedTargets)
+    {
+        int availableTargetCount = detectedEnemies.Count - (excludedTargets?.Count ?? 0);
+
+        if (availableTargetCount <= 0)
+        {
+            return null;
+        }
+
+        int selectedAvailableIndex = Random.Range(0, availableTargetCount);
+
+        for (int i = 0; i < detectedEnemies.Count; i++)
+        {
+            MonsterBehaviour monster = detectedEnemies[i];
+
+            if (excludedTargets != null && excludedTargets.Contains(monster))
+            {
+                continue;
+            }
+
+            if (selectedAvailableIndex == 0)
+            {
+                return monster;
+            }
+
+            selectedAvailableIndex--;
+        }
+
+        return null;
     }
 
     private bool IsInAttackRange(MonsterBehaviour monster)
@@ -884,22 +1020,31 @@ public class TowerCombatBehaviour : MonoBehaviour
             : DefaultScatterArrowAngleOffset;
     }
 
-    private int GetTwinOrbsCount()
+    private int ResolveCannonMaxInitialShellCount()
     {
+        if (towerDefinition == null ||
+            towerDefinition.TowerFamily != TowerFamily.Cannon ||
+            attackConfig == null ||
+            attackConfig.AttackArchetype != AttackArchetype.ArcProjectile ||
+            !HasBehaviourPackage(TowerBehaviourPackageType.CannonMultiShells))
+        {
+            return 1;
+        }
+
         return TryGetBehaviourPackageUpgrade(
-            TowerBehaviourPackageType.MagicTwinOrbs,
+            TowerBehaviourPackageType.CannonMultiShells,
             out TowerUpgradeDefinition upgradeDefinition)
-            ? upgradeDefinition.TwinOrbsCount
-            : DefaultTwinOrbsCount;
+            ? upgradeDefinition.MultiShellsMaxInitialShellCount
+            : 1;
     }
 
-    private float GetTwinOrbsStartingAngleOffset()
+    private int GetMultiOrbsCount()
     {
         return TryGetBehaviourPackageUpgrade(
-            TowerBehaviourPackageType.MagicTwinOrbs,
+            TowerBehaviourPackageType.MagicMultiOrbs,
             out TowerUpgradeDefinition upgradeDefinition)
-            ? upgradeDefinition.TwinOrbsStartingAngleOffset
-            : DefaultTwinOrbsStartingAngleOffset;
+            ? upgradeDefinition.MultiOrbsCount
+            : DefaultMultiOrbsCount;
     }
 
     private int GetTwinDronesCount()
