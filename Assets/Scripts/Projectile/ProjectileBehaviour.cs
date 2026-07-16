@@ -351,8 +351,7 @@ public class ProjectileBehaviour : MonoBehaviour
         ElementalApplication.TryApplyFromTowerAttack(
             sourceTower,
             hitMonster,
-            transform.position,
-            EffectTriggerType.OnHit);
+            transform.position);
         RaiseImpact(hitMonster, transform.position);
     }
 
@@ -409,8 +408,7 @@ public class ProjectileBehaviour : MonoBehaviour
             ElementalApplication.TryApplyFromTowerAttack(
                 sourceTower,
                 resolvedImpactTargets[i],
-                impactPosition,
-                EffectTriggerType.OnImpact);
+                impactPosition);
         }
     }
 
@@ -418,19 +416,14 @@ public class ProjectileBehaviour : MonoBehaviour
         MonsterBehaviour hitMonster,
         Vector3 triggerPosition)
     {
-        EffectTriggerType triggerType = hitMonster != null
-            ? EffectTriggerType.OnHit
-            : EffectTriggerType.OnImpact;
-
         return new EffectTriggerContext(
-            triggerType,
-            sourceTower,
-            null,
-            hitMonster,
-            true,
-            triggerPosition,
-            attackDamage,
-            false
+            sourceTower: sourceTower,
+            sourceUpgrade: null,
+            targetMonster: hitMonster,
+            hasTriggerPosition: true,
+            triggerPosition: triggerPosition,
+            resolvedDamage: attackDamage,
+            allowsElementalApplication: false
         );
     }
 

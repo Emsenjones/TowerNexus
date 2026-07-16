@@ -54,6 +54,41 @@ public class TowerUpgradeDefinition : ScriptableObject
     [ShowIf(nameof(IsDroneTwinDrones))]
     [MinValue(0f)]
     [SerializeField] private float twinDronesTakeOffDelay = 0.15f;
+    [TitleGroup("Behaviour Layer/Cannon Explosive Shell")]
+    [ShowIf(nameof(IsCannonExplosiveShell))]
+    [SerializeField] private EffectDefinition explosiveShellEffect;
+    [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
+    [ShowIf(nameof(IsCannonBouncingShell))]
+    [MinValue(0.01f)]
+    [SerializeField] private float bounceSearchRadius = 1f;
+    [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
+    [ShowIf(nameof(IsCannonBouncingShell))]
+    [MinValue(1)]
+    [SerializeField] private int maxBounceCount = 1;
+    [TitleGroup("Behaviour Layer/Magic Arcane Detonation")]
+    [ShowIf(nameof(IsMagicArcaneDetonation))]
+    [SerializeField] private EffectDefinition arcaneDetonationEffect;
+    [TitleGroup("Behaviour Layer/Magic Arcane Field")]
+    [ShowIf(nameof(IsMagicArcaneField))]
+    [MinValue(0.01f)]
+    [SerializeField] private float arcaneFieldRadius = 1f;
+    [TitleGroup("Behaviour Layer/Magic Arcane Field")]
+    [ShowIf(nameof(IsMagicArcaneField))]
+    [MinValue(0.01f)]
+    [SerializeField] private float arcaneFieldTickInterval = 1f;
+    [TitleGroup("Behaviour Layer/Magic Arcane Field")]
+    [ShowIf(nameof(IsMagicArcaneField))]
+    [SerializeField] private EffectDefinition arcaneFieldTickEffect;
+    [TitleGroup("Behaviour Layer/Drone Blast Rounds")]
+    [ShowIf(nameof(IsDroneBlastRounds))]
+    [SerializeField] private EffectDefinition blastRoundsEffect;
+    [TitleGroup("Behaviour Layer/Drone Final Dive")]
+    [ShowIf(nameof(IsDroneFinalDive))]
+    [MinValue(0.01f)]
+    [SerializeField] private float finalDiveHitThreshold = 1f;
+    [TitleGroup("Behaviour Layer/Drone Final Dive")]
+    [ShowIf(nameof(IsDroneFinalDive))]
+    [SerializeField] private EffectDefinition finalDiveExplosionEffect;
 
     [TitleGroup("Elemental Layer")]
     [ShowIf(nameof(IsElementalLayerUpgrade))]
@@ -61,10 +96,6 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Elemental Layer")]
     [ShowIf(nameof(IsElementalLayerUpgrade))]
     [SerializeField] private EffectDefinition elementalApplyEffect;
-
-    [TitleGroup("Effect Bindings")]
-    [ShowIf(nameof(CanAuthorEffectBindings))]
-    [SerializeField] private List<EffectBinding> effectBindings = new List<EffectBinding>();
 
     public string DisplayName => displayName;
     public string Description => description;
@@ -74,13 +105,22 @@ public class TowerUpgradeDefinition : ScriptableObject
     public TowerUpgradeLayer UpgradeLayer => upgradeLayer;
     public IReadOnlyList<TowerUpgradeStatDelta> BasicStatDeltas => basicStatDeltas;
     public TowerBehaviourPackageType BehaviourPackageType => behaviourPackageType;
-    public IReadOnlyList<EffectBinding> EffectBindings => effectBindings;
     public int PiercingMaxHitCount => Mathf.Max(1, piercingMaxHitCount);
     public float ScatterAngleOffset => Mathf.Max(0f, scatterAngleOffset);
     public int TwinOrbsCount => Mathf.Clamp(twinOrbsCount, 1, 2);
     public float TwinOrbsStartingAngleOffset => twinOrbsStartingAngleOffset;
     public int TwinDronesCount => Mathf.Clamp(twinDronesCount, 1, 2);
     public float TwinDronesTakeOffDelay => Mathf.Max(0f, twinDronesTakeOffDelay);
+    public EffectDefinition ExplosiveShellEffect => explosiveShellEffect;
+    public float BounceSearchRadius => Mathf.Max(0.01f, bounceSearchRadius);
+    public int MaxBounceCount => Mathf.Max(1, maxBounceCount);
+    public EffectDefinition ArcaneDetonationEffect => arcaneDetonationEffect;
+    public float ArcaneFieldRadius => Mathf.Max(0.01f, arcaneFieldRadius);
+    public float ArcaneFieldTickInterval => Mathf.Max(0.01f, arcaneFieldTickInterval);
+    public EffectDefinition ArcaneFieldTickEffect => arcaneFieldTickEffect;
+    public EffectDefinition BlastRoundsEffect => blastRoundsEffect;
+    public float FinalDiveHitThreshold => Mathf.Max(0.01f, finalDiveHitThreshold);
+    public EffectDefinition FinalDiveExplosionEffect => finalDiveExplosionEffect;
     public ElementType ElementType => elementType;
     public EffectDefinition ElementalApplyEffect => elementalApplyEffect;
 
@@ -99,7 +139,7 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
-        if (!IsRequiredLevelContentValid(logWarnings))
+        if (!IsLayerContentValid(logWarnings))
         {
             isValid = false;
         }
@@ -109,20 +149,14 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
-        if (!AreEffectBindingsValid(logWarnings))
-        {
-            isValid = false;
-        }
-
         return isValid;
     }
 
-    private bool IsRequiredLevelContentValid(bool logWarnings)
+    private bool IsLayerContentValid(bool logWarnings)
     {
         bool isValid = true;
         bool hasBasicStatDeltas = basicStatDeltas != null && basicStatDeltas.Count > 0;
         bool hasBehaviourPackageType = behaviourPackageType != TowerBehaviourPackageType.None;
-        bool hasEffectBindings = HasEffectBindings();
 
         if (IsBasicLayerUpgrade())
         {
@@ -137,18 +171,12 @@ public class TowerUpgradeDefinition : ScriptableObject
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Basic layer upgrades should not define a behaviour package type.");
                 isValid = false;
             }
-
-            if (hasEffectBindings)
-            {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Basic layer upgrades should not define Effect bindings.");
-                isValid = false;
-            }
         }
         else if (IsBehaviourLayerUpgrade())
         {
-            if (!hasBehaviourPackageType && !hasEffectBindings)
+            if (!hasBehaviourPackageType)
             {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Behaviour layer upgrades need a behaviour package type, at least one Effect binding, or both.");
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Behaviour layer upgrades need a behaviour package type.");
                 isValid = false;
             }
 
@@ -193,12 +221,6 @@ public class TowerUpgradeDefinition : ScriptableObject
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades need a direct Elemental apply effect.");
                 isValid = false;
             }
-
-            if (hasEffectBindings)
-            {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades must not define generic Effect bindings.");
-                isValid = false;
-            }
         }
 
         return isValid;
@@ -210,11 +232,20 @@ public class TowerUpgradeDefinition : ScriptableObject
         {
             case TowerBehaviourPackageType.ArcherPiercingArrow:
             case TowerBehaviourPackageType.ArcherScatterArrow:
+            case TowerBehaviourPackageType.ArcherHuntingArrow:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Archer);
             case TowerBehaviourPackageType.MagicTwinOrbs:
+            case TowerBehaviourPackageType.MagicArcaneDetonation:
+            case TowerBehaviourPackageType.MagicArcaneField:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Magic);
             case TowerBehaviourPackageType.DroneTwinDrones:
+            case TowerBehaviourPackageType.DroneBlastRounds:
+            case TowerBehaviourPackageType.DroneFinalDive:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Drone);
+            case TowerBehaviourPackageType.CannonExplosiveShell:
+            case TowerBehaviourPackageType.CannonTwinShells:
+            case TowerBehaviourPackageType.CannonBouncingShell:
+                return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Cannon);
             case TowerBehaviourPackageType.None:
                 return true;
             default:
@@ -230,7 +261,7 @@ public class TowerUpgradeDefinition : ScriptableObject
             return true;
         }
 
-        Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: behaviour package '{behaviourPackageType}' requires TowerFamily '{expectedTowerFamily}'.");
+        Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' uses behaviour package '{behaviourPackageType}' with TowerFamily '{towerFamily}'; expected TowerFamily '{expectedTowerFamily}'.");
         return false;
     }
 
@@ -265,6 +296,120 @@ public class TowerUpgradeDefinition : ScriptableObject
         if (IsDroneTwinDrones() && twinDronesTakeOffDelay < 0f)
         {
             Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Twin Drones takeoff delay cannot be negative.");
+            isValid = false;
+        }
+
+        if (IsCannonExplosiveShell() &&
+            !ValidateRequiredAreaEffect(explosiveShellEffect, "Explosive Shell", logWarnings))
+        {
+            isValid = false;
+        }
+
+        if (IsCannonBouncingShell() && bounceSearchRadius <= 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell search radius must be greater than zero.");
+            isValid = false;
+        }
+
+        if (IsCannonBouncingShell() && maxBounceCount <= 0)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell max bounce count must be greater than zero.");
+            isValid = false;
+        }
+
+        if (IsMagicArcaneDetonation() &&
+            !ValidateRequiredAreaEffect(arcaneDetonationEffect, "Arcane Detonation", logWarnings))
+        {
+            isValid = false;
+        }
+
+        if (IsMagicArcaneField() && arcaneFieldRadius <= 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Arcane Field radius must be greater than zero.");
+            isValid = false;
+        }
+
+        if (IsMagicArcaneField() && arcaneFieldTickInterval <= 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Arcane Field tick interval must be greater than zero.");
+            isValid = false;
+        }
+
+        if (IsMagicArcaneField() &&
+            !ValidateRequiredSingleTargetEffect(arcaneFieldTickEffect, "Arcane Field tick", logWarnings))
+        {
+            isValid = false;
+        }
+
+        if (IsDroneBlastRounds() &&
+            !ValidateRequiredAreaEffect(blastRoundsEffect, "Blast Rounds", logWarnings))
+        {
+            isValid = false;
+        }
+
+        if (IsDroneFinalDive() && finalDiveHitThreshold <= 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Final Dive hit threshold must be greater than zero.");
+            isValid = false;
+        }
+
+        if (IsDroneFinalDive() &&
+            !ValidateRequiredAreaEffect(finalDiveExplosionEffect, "Final Dive explosion", logWarnings))
+        {
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private bool ValidateRequiredAreaEffect(
+        EffectDefinition effectDefinition,
+        string packageDisplayName,
+        bool logWarnings)
+    {
+        if (effectDefinition == null)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} requires an EffectDefinition.");
+            return false;
+        }
+
+        bool isValid = effectDefinition.IsValid();
+
+        if (!isValid)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} EffectDefinition failed validation.");
+        }
+
+        if (effectDefinition.Radius <= 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} requires an area EffectDefinition with radius greater than zero.");
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private bool ValidateRequiredSingleTargetEffect(
+        EffectDefinition effectDefinition,
+        string packageDisplayName,
+        bool logWarnings)
+    {
+        if (effectDefinition == null)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} requires an EffectDefinition.");
+            return false;
+        }
+
+        bool isValid = effectDefinition.IsValid();
+
+        if (!isValid)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} EffectDefinition failed validation.");
+        }
+
+        if (effectDefinition.Radius != 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} requires a single-target EffectDefinition with radius zero.");
             isValid = false;
         }
 
@@ -314,41 +459,6 @@ public class TowerUpgradeDefinition : ScriptableObject
         return isValid;
     }
 
-    private bool AreEffectBindingsValid(bool logWarnings)
-    {
-        if (effectBindings == null)
-        {
-            return true;
-        }
-
-        bool isValid = true;
-
-        for (int i = 0; i < effectBindings.Count; i++)
-        {
-            EffectBinding effectBinding = effectBindings[i];
-
-            if (effectBinding == null)
-            {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Effect binding at index {i} is missing.");
-                isValid = false;
-                continue;
-            }
-
-            if (!effectBinding.IsValid())
-            {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Effect binding at index {i} is missing a valid EffectDefinition.");
-                isValid = false;
-            }
-        }
-
-        return isValid;
-    }
-
-    private bool HasEffectBindings()
-    {
-        return effectBindings != null && effectBindings.Count > 0;
-    }
-
     private bool IsBasicLayerUpgrade()
     {
         return upgradeLayer == TowerUpgradeLayer.Basic;
@@ -364,29 +474,64 @@ public class TowerUpgradeDefinition : ScriptableObject
         return upgradeLayer == TowerUpgradeLayer.Elemental;
     }
 
-    private bool CanAuthorEffectBindings()
-    {
-        return IsBehaviourLayerUpgrade();
-    }
-
     private bool IsArcherPiercingArrow()
     {
-        return behaviourPackageType == TowerBehaviourPackageType.ArcherPiercingArrow;
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.ArcherPiercingArrow;
     }
 
     private bool IsArcherScatterArrow()
     {
-        return behaviourPackageType == TowerBehaviourPackageType.ArcherScatterArrow;
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.ArcherScatterArrow;
     }
 
     private bool IsMagicTwinOrbs()
     {
-        return behaviourPackageType == TowerBehaviourPackageType.MagicTwinOrbs;
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.MagicTwinOrbs;
     }
 
     private bool IsDroneTwinDrones()
     {
-        return behaviourPackageType == TowerBehaviourPackageType.DroneTwinDrones;
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.DroneTwinDrones;
+    }
+
+    private bool IsCannonExplosiveShell()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.CannonExplosiveShell;
+    }
+
+    private bool IsCannonBouncingShell()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.CannonBouncingShell;
+    }
+
+    private bool IsMagicArcaneDetonation()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.MagicArcaneDetonation;
+    }
+
+    private bool IsMagicArcaneField()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.MagicArcaneField;
+    }
+
+    private bool IsDroneBlastRounds()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.DroneBlastRounds;
+    }
+
+    private bool IsDroneFinalDive()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.DroneFinalDive;
     }
 
     private void Warn(bool logWarnings, string message)

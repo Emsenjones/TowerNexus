@@ -174,9 +174,8 @@ TowerUpgradeDefinition may define:
 - Required tower level
 - Upgrade Layer
 - Basic Layer stat deltas
-- Behaviour Layer package
+- Behaviour Layer package identity and package-specific authoring data
 - Elemental Layer element type and elemental apply effect
-- Generic Effect bindings for Behaviour gameplay
 - Authoring validation metadata
 
 Required Tower Level is a code-facing unlock requirement.
@@ -373,9 +372,11 @@ Examples of Behaviour Layer package parameters:
 
 TowerUpgradeSystem should validate and record upgrade ownership only. It should not execute Behaviour Layer gameplay or interpret package parameters beyond content validation.
 
+Behaviour Layer uses reviewed typed packages. Each package owns its required authoring values and Effect references on its TowerUpgradeDefinition. The corresponding runtime implementation owns fixed trigger timing, target rules, execution order, and Elemental opportunities. Designers do not independently bind arbitrary trigger types to Behaviour upgrades.
+
 Elemental Layer identity should use a typed ElementType rather than a free-form string. Each Elemental Layer upgrade also declares one Elemental apply Effect. Runtime systems ask the tower upgrade state whether a tower owns an Elemental upgrade, then provide that apply Effect at the real attack boundary for Effect System execution.
 
-Effect bindings remain available for generic trigger-driven Behaviour content. They describe which gameplay trigger may execute which Effect definition. Elemental Layer content does not expose a designer-selected TriggerType in v1: its runtime producer decides whether the real event is a hit, contact, impact, or area resolution. Basic Layer upgrades should not define Effect bindings in the first version because Basic Layer remains a pure numerical layer.
+Elemental Layer content also does not expose a designer-selected trigger type in v1. Its runtime producer decides whether the real event is a hit, contact, impact, or area resolution and supplies the direct Elemental apply Effect at that boundary. Basic Layer remains a pure numerical layer and exposes no gameplay Effect authoring.
 
 ---
 
@@ -461,7 +462,7 @@ Purpose:
 - Provide reliable power growth
 - Create a stable progression foundation
 
-Basic Layer upgrades should not define gameplay trigger bindings such as OnHit or OnImpact in the first version. If an upgrade needs trigger-driven gameplay, it belongs in Behaviour Layer or Elemental Layer.
+Basic Layer upgrades should not define gameplay Effect execution in the first version. If an upgrade needs trigger-driven gameplay, it belongs in a reviewed Behaviour package or the Elemental Layer.
 
 ---
 

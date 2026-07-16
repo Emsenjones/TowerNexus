@@ -258,36 +258,14 @@ public class MonsterBuffRuntime
         EffectExecutor.Execute(
             effectDefinition,
             new EffectTriggerContext(
-                GetTriggerType(eventType),
-                buffInstance.SourceTower,
-                buffInstance.SourceUpgrade,
-                buffOwner,
-                true,
-                triggerPosition,
-                0,
-                false)
+                sourceTower: buffInstance.SourceTower,
+                sourceUpgrade: buffInstance.SourceUpgrade,
+                targetMonster: buffOwner,
+                hasTriggerPosition: true,
+                triggerPosition: triggerPosition,
+                resolvedDamage: 0,
+                allowsElementalApplication: false)
         );
-    }
-
-    private static EffectTriggerType GetTriggerType(BuffEventType eventType)
-    {
-        switch (eventType)
-        {
-            case BuffEventType.Applied:
-                return EffectTriggerType.OnBuffApplied;
-            case BuffEventType.PeriodicTick:
-                return EffectTriggerType.OnBuffTick;
-            case BuffEventType.StackApplied:
-                return EffectTriggerType.OnBuffStackApplied;
-            case BuffEventType.Overload:
-                return EffectTriggerType.OnMaxStack;
-            case BuffEventType.EnteredProtection:
-                return EffectTriggerType.OnBuffEnteredProtection;
-            case BuffEventType.Removed:
-                return EffectTriggerType.OnBuffRemoved;
-            default:
-                return EffectTriggerType.OnBuffTick;
-        }
     }
 
     private static bool IsSuccessfulApplyResult(BuffApplyResult result)

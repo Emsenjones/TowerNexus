@@ -5,8 +5,7 @@ public static class ElementalApplication
     public static void TryApplyFromTowerAttack(
         TowerInstance sourceTower,
         MonsterBehaviour targetMonster,
-        Vector3 applicationPosition,
-        EffectTriggerType runtimeTriggerType)
+        Vector3 applicationPosition)
     {
         if (sourceTower == null || !EffectTargetResolver.IsValidMonsterTarget(targetMonster))
         {
@@ -23,13 +22,12 @@ public static class ElementalApplication
         EffectExecutor.Execute(
             elementalUpgradeDefinition.ElementalApplyEffect,
             new EffectTriggerContext(
-                runtimeTriggerType,
-                sourceTower,
-                elementalUpgradeDefinition,
-                targetMonster,
-                true,
-                applicationPosition,
-                0,
-                true));
+                sourceTower: sourceTower,
+                sourceUpgrade: elementalUpgradeDefinition,
+                targetMonster: targetMonster,
+                hasTriggerPosition: true,
+                triggerPosition: applicationPosition,
+                resolvedDamage: 0,
+                allowsElementalApplication: true));
     }
 }

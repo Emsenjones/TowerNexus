@@ -70,7 +70,7 @@ Removed covers natural expiry, explicit removal, Clear, monster death, target ar
 
 Validation rejects StackApplied, Overload, or EnteredProtection bindings on a non-stackable Buff, and rejects PeriodicTick when tick interval is nonpositive.
 
-Behaviour Layer EffectBindings remain for external tower events such as OnHit. Elemental Layer authoring provides its Elemental apply Effect at the runtime-selected attack boundary. Buff lifecycle bindings decide what an already-active Buff does afterward.
+Behaviour packages provide package-specific Effect references to their reviewed runtime boundaries. Elemental Layer authoring provides its Elemental apply Effect at the runtime-selected attack boundary. Buff lifecycle bindings use `BuffEventType` to decide what an already-active Buff does afterward; they are not a generic attack-trigger authoring path.
 
 ## 5. Buff Feedback
 

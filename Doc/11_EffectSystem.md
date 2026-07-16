@@ -43,13 +43,13 @@ Effects request Monster System capabilities for damage, slow, and movement lock.
 | EffectZone | A world gameplay entity that lasts, finds targets, and executes an on-tick Effect |
 | WindVortex | A reviewed specialized moving effect entity, not a generic moving-zone requirement |
 
-EffectDefinition is the source of truth for reusable gameplay Effect data. Behaviour Layer bindings, projectile gameplay impact effects, and Buff lifecycle bindings reference EffectDefinitions. A Buff never directly references another Buff: a Buff lifecycle binding invokes an Effect, and an ApplyBuff action links that Effect to the target BuffDefinition.
+EffectDefinition is the source of truth for reusable gameplay Effect data. Behaviour package authoring, projectile gameplay impact configuration, and Buff lifecycle bindings reference EffectDefinitions. A Buff never directly references another Buff: a Buff lifecycle binding invokes an Effect, and an ApplyBuff action links that Effect to the target BuffDefinition.
 
 ## 4. Trigger Context And Targeting
 
-EffectTriggerContext is created when a gameplay event requires Effect execution. Typical producers are projectile Position Impact, Monster Hit, Magic Orb contact, Drone projectile hit, reviewed Behaviour execution, EffectZone tick, Buff lifecycle binding, and elemental max-stack overload.
+EffectTriggerContext is created when an explicit runtime boundary requires Effect execution. Typical producers are projectile Position Impact, Monster Hit, Magic Orb contact, Drone projectile hit, reviewed Behaviour execution, EffectZone tick, Buff lifecycle execution, and elemental max-stack overload.
 
-First-version trigger types are OnHit, OnImpact, OnBuffApplied, OnBuffTick, OnBuffStackApplied, OnMaxStack, OnBuffEnteredProtection, OnBuffRemoved, and OnZoneTick. Elemental tower attacks use their actual runtime attack event with an explicit elemental-application eligibility flag; they do not need a designer-authored elemental trigger type.
+The first version does not serialize or transport one shared trigger enum. Producers express event semantics through their reviewed runtime entry points, then construct EffectTriggerContext with only the execution data that Effect System consumes. Elemental tower attacks use their actual runtime attack event with an explicit elemental-application eligibility flag.
 
 Context may carry source tower, source upgrade, target monster, trigger or impact position, zone radius, resolved damage, attack-entity identity, element type, and elemental-application eligibility. A position must have explicit validity such as `HasTriggerPosition`; `Vector3.zero` is not a missing-position sentinel.
 
@@ -124,7 +124,7 @@ Explosive Shell, Blast Rounds, Arcane Detonation, Arcane Field ticks, and Final 
 
 Explosive Shell is an additive Position Impact Effect after the baseline Cannon direct result. Blast Rounds is an additive area Effect after a Drone projectile direct hit. Arcane Detonation executes only after reviewed normal Magic Orb completion. Final Dive first performs its Behaviour-owned local direct-target result, then executes its additive explosion at Position Impact even when no direct Monster Hit was resolved. The optional Final Dive direct target and every explosion target receive independent Elemental opportunities. Each of these explicitly reviewed Behaviour results may provide Elemental eligibility to its resolved targets independently from DealDamage success.
 
-Arcane Field is not a generic EffectZone ownership transfer. Tower runtime owns the tower-attached field instance, follow behavior, uniqueness, and cleanup. Effect System resolves and executes each tick. Every valid target resolved by a V1 field tick receives one 100% Elemental application attempt; this exception is explicit to Arcane Field and does not broaden OnZoneTick or periodic Effect defaults.
+Arcane Field is not a generic EffectZone ownership transfer. Tower runtime owns the tower-attached field instance, follow behavior, uniqueness, and cleanup. Effect System resolves and executes each tick. Every valid target resolved by a V1 field tick receives one 100% Elemental application attempt; this exception is explicit to Arcane Field and does not broaden ordinary zone-tick or periodic Effect defaults.
 
 Bouncing Shell remains Projectile runtime behavior. Effect System may execute its landing explosion, but it does not gain a generic SpawnProjectile action or own bounce target selection, chain history, child creation, or remaining bounce count.
 

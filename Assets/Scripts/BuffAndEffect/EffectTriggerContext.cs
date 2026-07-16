@@ -3,7 +3,6 @@ using UnityEngine;
 public struct EffectTriggerContext
 {
     public EffectTriggerContext(
-        EffectTriggerType triggerType,
         TowerInstance sourceTower,
         TowerUpgradeDefinition sourceUpgrade,
         MonsterBehaviour targetMonster,
@@ -12,7 +11,6 @@ public struct EffectTriggerContext
         int resolvedDamage,
         bool allowsElementalApplication)
     {
-        TriggerType = triggerType;
         SourceTower = sourceTower;
         SourceUpgrade = sourceUpgrade;
         TargetMonster = targetMonster;
@@ -22,12 +20,12 @@ public struct EffectTriggerContext
         AllowsElementalApplication = allowsElementalApplication;
     }
 
-    public EffectTriggerType TriggerType { get; }
     public TowerInstance SourceTower { get; }
     public TowerUpgradeDefinition SourceUpgrade { get; }
     public MonsterBehaviour TargetMonster { get; }
     public bool HasTriggerPosition { get; }
-    // TriggerPosition is valid only when HasTriggerPosition is true. OnHit uses the hit/target position, OnImpact uses the impact position.
+    // TriggerPosition is valid only when HasTriggerPosition is true.
+    // Producers provide the relevant hit, impact, owner, or zone position.
     public Vector3 TriggerPosition { get; }
     public int ResolvedDamage { get; }
     public bool AllowsElementalApplication { get; }

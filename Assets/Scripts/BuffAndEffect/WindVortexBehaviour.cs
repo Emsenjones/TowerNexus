@@ -217,14 +217,13 @@ public class WindVortexBehaviour : MonoBehaviour
             EffectExecutor.Execute(
                 config.OnTickEffectDefinition,
                 new EffectTriggerContext(
-                    EffectTriggerType.OnZoneTick,
-                    sourceTower,
-                    sourceUpgrade,
-                    target,
-                    true,
-                    transform.position,
-                    0,
-                    false));
+                    sourceTower: sourceTower,
+                    sourceUpgrade: sourceUpgrade,
+                    targetMonster: target,
+                    hasTriggerPosition: true,
+                    triggerPosition: transform.position,
+                    resolvedDamage: 0,
+                    allowsElementalApplication: false));
         }
     }
 

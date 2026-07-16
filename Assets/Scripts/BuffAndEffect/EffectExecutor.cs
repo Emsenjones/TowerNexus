@@ -284,14 +284,13 @@ public static class EffectExecutor
             EffectExecutionResult childExecution = ExecuteInternal(
                 action.MultiTargetEffectDefinition,
                 new EffectTriggerContext(
-                    triggerContext.TriggerType,
-                    triggerContext.SourceTower,
-                    triggerContext.SourceUpgrade,
-                    target,
-                    true,
-                    GetMonsterHitPosition(target),
-                    triggerContext.ResolvedDamage,
-                    false),
+                    sourceTower: triggerContext.SourceTower,
+                    sourceUpgrade: triggerContext.SourceUpgrade,
+                    targetMonster: target,
+                    hasTriggerPosition: true,
+                    triggerPosition: GetMonsterHitPosition(target),
+                    resolvedDamage: triggerContext.ResolvedDamage,
+                    allowsElementalApplication: false),
                 childResolvedTargets);
 
             executedAnyEffect |= childExecution.ExecutedAnyAction;
