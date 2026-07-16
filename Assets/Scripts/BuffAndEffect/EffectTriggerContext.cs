@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public struct EffectTriggerContext
+public readonly struct EffectTriggerContext
 {
     public EffectTriggerContext(
         TowerInstance sourceTower,

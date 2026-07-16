@@ -66,6 +66,8 @@ radius > 0 + neither center: do nothing and warn
 
 Radius inclusion uses the Monster System hit/reference anchor.
 
+When a caller requests the resolved-target output, Effect execution clears that output before validation or resolution. A false result leaves it empty. A true result exposes the complete target snapshot for that execution independently from whether any authored action succeeds.
+
 ## 5. EffectDefinition Actions
 
 | Action | Responsibility |
@@ -78,13 +80,15 @@ Radius inclusion uses the Monster System hit/reference anchor.
 | SetMoveSpeedMultiplier / ClearMoveSpeedMultiplier | Set or clear the first-version move-speed multiplier through Monster System |
 | SetMovementLock | Set the first-version movement-lock state through Monster System |
 
+Every authored action executes once in authored order. Earlier action success or failure does not suppress later sibling actions; aggregate success must be evaluated without short-circuiting action execution.
+
 ### 5.1 DealDamage
 
 DealDamage is instant Effect damage. It supports area impact damage, Burning tick damage, FlameBurst, Electric extra damage, LightningStrike, WindVortex hits, and EffectZone ticks. An action may use a positive authored amount or fall back to resolved damage carried by its trigger context.
 
 Reaction-generated damage does not apply Elemental stacks by default.
 
-DealDamage result does not globally control whether another explicitly eligible Elemental ApplyBuff action may execute. Zero damage, non-positive resolved damage, or unsuccessful damage execution does not suppress a separately authorized application attempt.
+DealDamage result does not globally control whether another explicitly eligible Elemental ApplyBuff action may execute. Zero damage, non-positive resolved damage, or unsuccessful damage execution does not suppress a separately authorized application attempt. If damage kills or removes a target before the later action boundary, that target is no longer gameplay-targetable; skipping its Buff request is lifecycle invalidation, not damage-result gating.
 
 ### 5.2 ApplyBuff
 
@@ -92,7 +96,7 @@ ApplyBuff is the only first-version link from an Effect to persistent Buff state
 
 The Buff System owns the resulting instance lifecycle. Effects do not update a Buff's duration, stacks, Protection, UI, or persistent VFX directly.
 
-When ApplyBuff represents an Elemental application opportunity, the runtime context must explicitly authorize that opportunity. Its execution is independent from a sibling DealDamage action's amount or success. BuffApplyCooldown, Protection, and Buff runtime decide whether the request applies, refreshes, stacks, or is blocked.
+Non-elemental ApplyBuff actions are not gated by `AllowsElementalApplication`. Any ApplyBuff action whose BuffDefinition has a non-None ElementType requires the runtime context to explicitly authorize the opportunity. Its execution is independent from a sibling DealDamage action's amount or success while still requiring a gameplay-targetable Monster. BuffApplyCooldown, Protection, and Buff runtime decide whether the request applies, refreshes, stacks, or is blocked.
 
 ### 5.3 ExecuteMultiTargetEffect
 
@@ -132,7 +136,7 @@ Bouncing Shell remains Projectile runtime behavior. Effect System may execute it
 
 Only tower-owned primary attacks and reviewed Behaviour attack extensions whose runtime context explicitly allows Elemental application may apply Elemental Buffs by default. Technical origin as a Projectile, Attack Entity, or Effect does not grant eligibility.
 
-Eligibility is independent from damage amount and DealDamage success. It still requires the reviewed attack boundary and valid resolved target defined by the owning Behaviour contract.
+Eligibility is independent from damage amount and DealDamage success. It still requires the reviewed attack boundary and a resolved target that remains gameplay-targetable at the application boundary defined by the owning Behaviour contract.
 
 Burning ticks, FlameBurst, Electric extra damage, LightningStrike, WindVortex, EffectZone ticks, overload damage, and Buff ticks do not recursively apply Elemental stacks. A future exception is separate reviewed upgrade content, not an implicit baseline behavior.
 

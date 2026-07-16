@@ -49,7 +49,7 @@ Max stacks, Buff apply cooldown, and Protection are authored only for stackable 
 
 Applications return explicit results such as Applied, Refreshed, Stacked, BlockedByBuffApplyCooldown, BlockedByProtectionPhase, or Invalid.
 
-Buff System receives application requests after another system has resolved the relevant target and eligibility. It does not inspect the associated damage amount or DealDamage result. Zero damage, non-positive damage, or unsuccessful damage execution is not a Buff-level reason to reject an otherwise valid application request.
+Buff System receives application requests after another system has resolved the relevant target and eligibility. It does not inspect the associated damage amount or DealDamage result. Zero damage, non-positive damage, or unsuccessful damage execution is not a Buff-level reason to reject an otherwise valid application request. A Monster killed or removed before the request is no longer a valid Buff target; this is lifecycle invalidation rather than damage-result gating.
 
 ## 4. Lifecycle Effect Bindings
 

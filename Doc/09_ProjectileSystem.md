@@ -489,7 +489,7 @@ The Projectile System should not directly apply buffs.
 
 For complex impact behavior such as area damage, Buff application, chained Effects, Elemental stack rules, overload rules, or future special mechanics, the Projectile System should generate impact or hit trigger context and delegate execution to Effect System.
 
-Elemental application eligibility is supplied explicitly by the reviewed tower-owned attack or Behaviour extension. A valid opportunity is not globally gated by positive damage or DealDamage success. Projectile System does not own the resulting Buff cooldown, Protection, stack, or overload outcome.
+Elemental application eligibility is supplied explicitly by the reviewed tower-owned attack or Behaviour extension. A valid opportunity is not globally gated by positive damage or DealDamage success. Direct damage still resolves first; if it kills or removes the Monster, the target is no longer gameplay-targetable at the following Elemental boundary and receives no Buff request. Projectile System does not own the resulting Buff cooldown, Protection, stack, or overload outcome.
 
 Projectile impact VFX remains presentation-only and belongs to ProjectileConfig and Projectile System impact playback. It should not be routed through Effect System or Buff System.
 

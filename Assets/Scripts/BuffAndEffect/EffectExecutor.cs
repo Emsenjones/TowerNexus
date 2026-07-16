@@ -35,7 +35,14 @@ public static class EffectExecutor
         EffectTriggerContext triggerContext,
         List<MonsterBehaviour> resolvedTargets)
     {
-        if (effectDefinition == null || resolvedTargets == null)
+        if (resolvedTargets == null)
+        {
+            return default;
+        }
+
+        resolvedTargets.Clear();
+
+        if (effectDefinition == null)
         {
             return default;
         }
@@ -58,6 +65,7 @@ public static class EffectExecutor
 
         for (int i = 0; i < actions.Count; i++)
         {
+            // Non-short-circuit aggregation preserves authored action order even after a successful action.
             executedAnyAction |= ExecuteAction(actions[i], triggerContext, executionTargets);
         }
 

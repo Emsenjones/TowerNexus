@@ -1,4 +1,4 @@
-public struct ProjectileRuntimeOptions
+public readonly struct ProjectileRuntimeOptions
 {
     public bool CanPierce { get; }
     public int MaxPierceHitCount { get; }

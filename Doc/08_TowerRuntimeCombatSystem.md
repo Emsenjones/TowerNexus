@@ -280,7 +280,7 @@ Elemental attack handoff follows the actual attack behavior:
 - Baseline Cannon arrival may provide one direct-target opportunity when a Monster Hit is resolved. Explosive Shell may independently provide one opportunity for every Monster resolved by its Position Impact explosion.
 - Reviewed Behaviour extensions such as Arcane Detonation, Arcane Field, Blast Rounds, Bouncing Shell, and Final Dive define their own explicit opportunity boundaries.
 
-These attack events may identify source tower, affected monster or impact position, and the elemental-application eligibility needed by Effect System. Damage amount and DealDamage success do not globally suppress an otherwise eligible attempt. These events do not execute Buff lifecycle, stack, overload, or reaction behavior themselves.
+These attack events may identify source tower, affected monster or impact position, and the elemental-application eligibility needed by Effect System. Damage amount and DealDamage success do not globally suppress an otherwise eligible attempt. A Monster killed or removed before the Elemental application boundary is no longer gameplay-targetable and receives no Buff request; this is lifecycle invalidation rather than damage-result gating. These events do not execute Buff lifecycle, stack, overload, or reaction behavior themselves.
 
 ---
 
@@ -691,7 +691,7 @@ Examples:
 
 Tower Runtime Combat should delegate future complex effects instead of embedding buff-specific logic into tower combat code.
 
-Runtime Combat and Attack Entity behavior may provide trigger context that includes source tower, source upgrade, target monster, trigger position, impact position, resolved damage, and Elemental eligibility when relevant. Position Impact and Monster Hit remain independent facts. Elemental application is an explicitly authorized attack result and is not globally conditional on positive damage or successful DealDamage.
+Runtime Combat and Attack Entity behavior may provide trigger context that includes source tower, source upgrade, target monster, trigger position, impact position, resolved damage, and Elemental eligibility when relevant. Position Impact and Monster Hit remain independent facts. Elemental application is an explicitly authorized attack result and is not globally conditional on positive damage or successful DealDamage, but its target must still be gameplay-targetable at the reviewed application boundary.
 
 The first-version damage direction remains that base attack damage can use the existing direct damage path. Effect System and Buff System may run additional Effect, Buff, Zone, and Elemental results around that path without forcing an immediate DamageContext migration.
 
