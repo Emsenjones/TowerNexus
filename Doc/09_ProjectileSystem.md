@@ -499,22 +499,22 @@ Projectile impact VFX remains presentation-only and belongs to ProjectileConfig 
 
 Bouncing Shell is a reviewed Shell runtime extension, not a generic SpawnProjectile Effect action or a generic ricochet framework.
 
-After a Shell landing resolves a valid direct Monster Hit:
+After a Shell reaches its Position Impact, with or without a direct Monster Hit:
 
 ```text
-Resolve direct Monster Hit
+Resolve optional direct Monster Hit
     -> execute Explosive Shell when active
     -> complete explosion damage, death, and target-state updates in the same frame
     -> search around the current impact position using the authored bounceSearchRadius
     -> exclude Monsters already hit by the current bounce chain
-    -> choose the nearest surviving valid Monster relative to the impact position
+    -> apply the Bouncing Shell package's authored selection type to the surviving local candidates
     -> capture that Monster's current hit/reference position
     -> create one bounce child in the same frame
 ```
 
-No direct Monster Hit or no remaining candidate ends the bounce chain. Bounce selection does not use the source tower's full AttackRange or TargetSelectionType. It has no Coroutine, next-frame wait, or release delay.
+No remaining bounce count or no surviving local candidate ends the bounce chain. Direct Monster Hit and positive direct damage are not required. Bounce selection does not use the source tower's full AttackRange or the source AttackConfig's TargetSelectionType. The package-owned selector supports Nearest, HighestHealth, LowestHealth, and Random among candidates that already passed local radius and history filtering. It has no Coroutine, next-frame wait, or release delay.
 
-The bounce child receives relevant immutable runtime options: source context, resolved damage, Projectile configuration, Explosive Shell state, Elemental context, remaining bounce count, chain hit history, and bounce-child identity. It does not receive the complete TowerUpgradeState and does not consume Multi Shells again.
+The bounce child receives relevant immutable runtime options: source context, resolved damage, Projectile configuration, Explosive Shell state, remaining bounce count, chain hit history, bounce arc height, bounce target-selection type, and bounce-child identity. The initial Shell uses the Cannon AttackConfig arc height; only bounce children use the package-authored bounce arc height. A child does not receive the complete TowerUpgradeState, does not re-resolve Cannon Behaviour packages, and does not consume Multi Shells again. Elemental application retains the existing sourceTower lookup path; snapshotting Elemental upgrade state is outside this behavior.
 
 ---
 

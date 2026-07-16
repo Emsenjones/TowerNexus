@@ -493,6 +493,10 @@ public class TowerCombatBehaviour : MonoBehaviour
         bool canPierce = IsArcherPiercingArrowActive();
         TowerUpgradeDefinition explosiveShellSourceUpgrade = null;
         EffectDefinition explosiveShellEffect = null;
+        float bounceSearchRadius = 0f;
+        int remainingBounceCount = 0;
+        float bounceArcHeight = 0f;
+        TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest;
 
         if (IsCannonArcProjectileRelease() &&
             HasBehaviourPackage(TowerBehaviourPackageType.CannonExplosiveShell) &&
@@ -512,12 +516,28 @@ public class TowerCombatBehaviour : MonoBehaviour
             }
         }
 
+        if (IsCannonArcProjectileRelease() &&
+            HasBehaviourPackage(TowerBehaviourPackageType.CannonBouncingShell) &&
+            TryGetBehaviourPackageUpgrade(
+                TowerBehaviourPackageType.CannonBouncingShell,
+                out TowerUpgradeDefinition resolvedBouncingShellUpgrade))
+        {
+            bounceSearchRadius = resolvedBouncingShellUpgrade.BounceSearchRadius;
+            remainingBounceCount = resolvedBouncingShellUpgrade.MaxBounceCount;
+            bounceArcHeight = resolvedBouncingShellUpgrade.BounceArcHeight;
+            bounceTargetSelectionType = resolvedBouncingShellUpgrade.BounceTargetSelectionType;
+        }
+
         return new ProjectileRuntimeOptions(
             canPierce,
             canPierce ? GetPiercingArrowMaxHitCount() : 1,
             isBounceChild: false,
             explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,
-            explosiveShellEffect: explosiveShellEffect
+            explosiveShellEffect: explosiveShellEffect,
+            bounceSearchRadius: bounceSearchRadius,
+            remainingBounceCount: remainingBounceCount,
+            bounceArcHeight: bounceArcHeight,
+            bounceTargetSelectionType: bounceTargetSelectionType
         );
     }
 

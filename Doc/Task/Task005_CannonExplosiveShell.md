@@ -1,6 +1,6 @@
 # Task005 - Cannon Explosive Shell
 
-Status: Implementation complete; Unity Play Mode validation pending
+Status: Completed
 
 Depends on: Task003; integrates with Task004
 

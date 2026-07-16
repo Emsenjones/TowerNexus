@@ -83,6 +83,7 @@
    7. *Cold and electric element slices;
    8. *Wind element and dedicated WindVortex
    9. Tower upgrade behavior layer Phase2 implementation;
+   10. Elemental application should be saved as the snapshot;
 8. Map prefab generation;
 9. Player Level up by resolving monsters;
 10. Level configuration design;

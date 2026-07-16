@@ -69,6 +69,13 @@ public class TowerUpgradeDefinition : ScriptableObject
     [ShowIf(nameof(IsCannonBouncingShell))]
     [MinValue(1)]
     [SerializeField] private int maxBounceCount = 1;
+    [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
+    [ShowIf(nameof(IsCannonBouncingShell))]
+    [MinValue(0f)]
+    [SerializeField] private float bounceArcHeight = 1f;
+    [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
+    [ShowIf(nameof(IsCannonBouncingShell))]
+    [SerializeField] private TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest;
     [TitleGroup("Behaviour Layer/Magic Arcane Detonation")]
     [ShowIf(nameof(IsMagicArcaneDetonation))]
     [SerializeField] private EffectDefinition arcaneDetonationEffect;
@@ -118,6 +125,8 @@ public class TowerUpgradeDefinition : ScriptableObject
     public int MultiShellsMaxInitialShellCount => Mathf.Max(2, multiShellsMaxInitialShellCount);
     public float BounceSearchRadius => Mathf.Max(0.01f, bounceSearchRadius);
     public int MaxBounceCount => Mathf.Max(1, maxBounceCount);
+    public float BounceArcHeight => Mathf.Max(0f, bounceArcHeight);
+    public TargetSelectionType BounceTargetSelectionType => bounceTargetSelectionType;
     public EffectDefinition ArcaneDetonationEffect => arcaneDetonationEffect;
     public float ArcaneFieldRadius => Mathf.Max(0.01f, arcaneFieldRadius);
     public float ArcaneFieldTickInterval => Mathf.Max(0.01f, arcaneFieldTickInterval);
@@ -324,6 +333,12 @@ public class TowerUpgradeDefinition : ScriptableObject
         if (IsCannonBouncingShell() && maxBounceCount <= 0)
         {
             Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell max bounce count must be greater than zero.");
+            isValid = false;
+        }
+
+        if (IsCannonBouncingShell() && bounceArcHeight < 0f)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell arc height cannot be negative.");
             isValid = false;
         }
 

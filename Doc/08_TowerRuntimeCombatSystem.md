@@ -305,6 +305,8 @@ TargetSelectionType is used by:
 
 TargetSelectionType is not used by first-version Magic Orb behavior because the orb detects monster contact while orbiting.
 
+Bouncing Shell reuses the same enum as a package-authored value, but Projectile Runtime applies that separate selector only after local bounce-radius and chain-history filtering. It does not reuse the source AttackConfig selection value and does not ask Tower Runtime to select the bounce target.
+
 ---
 
 # 9. Projectile Attack Runtime

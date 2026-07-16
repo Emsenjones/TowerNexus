@@ -15,6 +15,8 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 startPosition;
     private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> resolvedExplosiveShellTargets = new List<MonsterBehaviour>();
+    private readonly List<MonsterBehaviour> bounceCandidates = new List<MonsterBehaviour>();
+    private readonly HashSet<MonsterBehaviour> bounceHitHistory = new HashSet<MonsterBehaviour>();
     private ProjectileRuntimeOptions runtimeOptions;
     private int attackDamage;
     private float elapsedLifetime;
@@ -43,7 +45,8 @@ public class ProjectileBehaviour : MonoBehaviour
         Vector3 targetPosition,
         int attackDamage,
         AttackArchetype? flightArchetypeOverride = null,
-        ProjectileRuntimeOptions runtimeOptions = default)
+        ProjectileRuntimeOptions runtimeOptions = default,
+        IReadOnlyCollection<MonsterBehaviour> inheritedBounceHitHistory = null)
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
@@ -58,6 +61,8 @@ public class ProjectileBehaviour : MonoBehaviour
         startPosition = transform.position;
         piercedMonsters.Clear();
         resolvedExplosiveShellTargets.Clear();
+        bounceCandidates.Clear();
+        CopyBounceHitHistory(inheritedBounceHitHistory);
         elapsedLifetime = 0f;
         hasImpacted = false;
         hasLoggedUnsupportedTrackingFlight = false;
@@ -237,7 +242,10 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         float progress = Mathf.Clamp01(elapsedLifetime / arcTravelTime);
         Vector3 nextPosition = Vector3.Lerp(startPosition, targetPosition, progress);
-        nextPosition.y += Mathf.Sin(progress * Mathf.PI) * attackConfig.ArcHeight;
+        float arcHeight = runtimeOptions.IsBounceChild
+            ? runtimeOptions.BounceArcHeight
+            : attackConfig.ArcHeight;
+        nextPosition.y += Mathf.Sin(progress * Mathf.PI) * arcHeight;
         Vector3 moveDirection = nextPosition - transform.position;
         transform.position = nextPosition;
 
@@ -389,6 +397,7 @@ public class ProjectileBehaviour : MonoBehaviour
         if (TryResolveArcImpactTarget(impactPosition, out MonsterBehaviour resolvedMonster))
         {
             hitMonster = resolvedMonster;
+            bounceHitHistory.Add(hitMonster);
             hitMonster.TakeDamage(attackDamage);
             ElementalApplication.TryApplyFromTowerAttack(
                 sourceTower,
@@ -398,7 +407,26 @@ public class ProjectileBehaviour : MonoBehaviour
 
         RaiseImpact(hitMonster, impactPosition);
         ExecuteExplosiveShellImpact(impactPosition);
+        TryReleaseBounceChild(impactPosition);
         DestroyProjectile();
+    }
+
+    private void CopyBounceHitHistory(IReadOnlyCollection<MonsterBehaviour> inheritedBounceHitHistory)
+    {
+        bounceHitHistory.Clear();
+
+        if (inheritedBounceHitHistory == null)
+        {
+            return;
+        }
+
+        foreach (MonsterBehaviour monster in inheritedBounceHitHistory)
+        {
+            if (monster != null)
+            {
+                bounceHitHistory.Add(monster);
+            }
+        }
     }
 
     private void ExecuteExplosiveShellImpact(Vector3 impactPosition)
@@ -430,6 +458,171 @@ public class ProjectileBehaviour : MonoBehaviour
                 resolvedExplosiveShellTargets[i],
                 impactPosition);
         }
+    }
+
+    private bool TryReleaseBounceChild(Vector3 impactPosition)
+    {
+        if (runtimeOptions.RemainingBounceCount <= 0 ||
+            runtimeOptions.BounceSearchRadius <= 0f ||
+            !TryResolveBounceTarget(impactPosition, out MonsterBehaviour bounceTarget))
+        {
+            return false;
+        }
+
+        Vector3 bounceTargetPosition = EffectTargetResolver.GetMonsterHitPosition(bounceTarget);
+        return TryCreateBounceChild(impactPosition, bounceTargetPosition);
+    }
+
+    private bool TryResolveBounceTarget(
+        Vector3 impactPosition,
+        out MonsterBehaviour bounceTarget)
+    {
+        bounceTarget = null;
+
+        if (monsterManager == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        float searchRadiusSqr = runtimeOptions.BounceSearchRadius * runtimeOptions.BounceSearchRadius;
+        bounceCandidates.Clear();
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            MonsterBehaviour monster = aliveMonsters[i];
+
+            if (!EffectTargetResolver.IsValidMonsterTarget(monster) ||
+                bounceHitHistory.Contains(monster))
+            {
+                continue;
+            }
+
+            float distanceSqr =
+                (EffectTargetResolver.GetMonsterHitPosition(monster) - impactPosition).sqrMagnitude;
+
+            if (distanceSqr > searchRadiusSqr)
+            {
+                continue;
+            }
+
+            bounceCandidates.Add(monster);
+        }
+
+        if (bounceCandidates.Count == 0)
+        {
+            return false;
+        }
+
+        bounceTarget = SelectBounceTarget(impactPosition);
+        return bounceTarget != null;
+    }
+
+    private MonsterBehaviour SelectBounceTarget(Vector3 impactPosition)
+    {
+        switch (runtimeOptions.BounceTargetSelectionType)
+        {
+            case TargetSelectionType.HighestHealth:
+                return SelectBounceTargetByHealth(selectHighest: true);
+            case TargetSelectionType.LowestHealth:
+                return SelectBounceTargetByHealth(selectHighest: false);
+            case TargetSelectionType.Random:
+                return bounceCandidates[UnityEngine.Random.Range(0, bounceCandidates.Count)];
+            case TargetSelectionType.Nearest:
+            default:
+                return SelectNearestBounceTarget(impactPosition);
+        }
+    }
+
+    private MonsterBehaviour SelectNearestBounceTarget(Vector3 impactPosition)
+    {
+        MonsterBehaviour selectedTarget = null;
+        float nearestDistanceSqr = float.MaxValue;
+
+        for (int i = 0; i < bounceCandidates.Count; i++)
+        {
+            MonsterBehaviour candidate = bounceCandidates[i];
+            float distanceSqr =
+                (EffectTargetResolver.GetMonsterHitPosition(candidate) - impactPosition).sqrMagnitude;
+
+            if (distanceSqr >= nearestDistanceSqr)
+            {
+                continue;
+            }
+
+            selectedTarget = candidate;
+            nearestDistanceSqr = distanceSqr;
+        }
+
+        return selectedTarget;
+    }
+
+    private MonsterBehaviour SelectBounceTargetByHealth(bool selectHighest)
+    {
+        MonsterBehaviour selectedTarget = bounceCandidates[0];
+
+        for (int i = 1; i < bounceCandidates.Count; i++)
+        {
+            MonsterBehaviour candidate = bounceCandidates[i];
+            bool isBetter = selectHighest
+                ? candidate.CurrentHealth > selectedTarget.CurrentHealth
+                : candidate.CurrentHealth < selectedTarget.CurrentHealth;
+
+            if (isBetter)
+            {
+                selectedTarget = candidate;
+            }
+        }
+
+        return selectedTarget;
+    }
+
+    private bool TryCreateBounceChild(
+        Vector3 impactPosition,
+        Vector3 bounceTargetPosition)
+    {
+        if (projectileConfig == null || projectileConfig.ProjectilePrefab == null)
+        {
+            return false;
+        }
+
+        GameObject childObject = Instantiate(
+            projectileConfig.ProjectilePrefab,
+            impactPosition,
+            Quaternion.identity);
+
+        if (!childObject.TryGetComponent(out ProjectileBehaviour childProjectile))
+        {
+            childProjectile = childObject.AddComponent<ProjectileBehaviour>();
+        }
+
+        childProjectile.Initialize(
+            sourceTower,
+            monsterManager,
+            projectileConfig,
+            attackConfig,
+            targetMonster: null,
+            targetPosition: bounceTargetPosition,
+            attackDamage: attackDamage,
+            flightArchetypeOverride: AttackArchetype.ArcProjectile,
+            runtimeOptions: CreateBounceChildRuntimeOptions(),
+            inheritedBounceHitHistory: bounceHitHistory);
+
+        return childProjectile.IsInitialized;
+    }
+
+    private ProjectileRuntimeOptions CreateBounceChildRuntimeOptions()
+    {
+        return new ProjectileRuntimeOptions(
+            canPierce: false,
+            maxPierceHitCount: 1,
+            isBounceChild: true,
+            explosiveShellSourceUpgrade: runtimeOptions.ExplosiveShellSourceUpgrade,
+            explosiveShellEffect: runtimeOptions.ExplosiveShellEffect,
+            bounceSearchRadius: runtimeOptions.BounceSearchRadius,
+            remainingBounceCount: runtimeOptions.RemainingBounceCount - 1,
+            bounceArcHeight: runtimeOptions.BounceArcHeight,
+            bounceTargetSelectionType: runtimeOptions.BounceTargetSelectionType);
     }
 
     private void RaiseImpact(MonsterBehaviour hitMonster, Vector3 impactPosition)

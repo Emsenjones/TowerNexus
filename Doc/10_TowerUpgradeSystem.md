@@ -364,7 +364,7 @@ Examples of Behaviour Layer package parameters:
 - Archer Piercing Arrow finite piercing hit count
 - Archer Scatter Arrow angle offset
 - Cannon Explosive Shell area Effect reference
-- Cannon Bouncing Shell search radius and maximum bounce count
+- Cannon Bouncing Shell search radius, maximum bounce count, bounce-child arc height, and local target-selection type
 - Magic Multi Orbs count; runtime derives an even `360 / count` starting-angle step
 - Magic Arcane Detonation area Effect reference
 - Magic Arcane Field radius, tick interval, and tick Effect reference
@@ -521,7 +521,7 @@ Exactly one valid Monster
 
 The package owns `multiShellsMaxInitialShellCount`, with a minimum and default of `2`. The attack uses one confirmation, one presentation sequence, one release-time damage and runtime-options snapshot, and one cooldown. Confirmed target positions are not retargeted or canceled during the animation wait. Each released Shell owns independent direct, explosion, bounce, lifetime, and Elemental results. Bounce children never consume Multi Shells again.
 
-Bouncing Shell adds a finite local bounce chain. After a landing resolves a valid direct Monster Hit, it completes every immediate result of that landing in the same frame: direct damage, the direct Elemental attempt, any Explosive Shell actions, explosion-target Elemental attempts, and synchronous Buff, overload, death, or target-state consequences. Only then does it search within the authored `bounceSearchRadius` around the impact position. It excludes the chain hit history, chooses the nearest surviving valid Monster relative to that impact position, captures the target's current position, and creates one bounce child in the same frame. The package-owned `maxBounceCount` limits the chain. It does not use the source tower's full AttackRange or TargetSelectionType. No direct Monster Hit, no remaining bounce count, or no candidate ends the chain.
+Bouncing Shell adds a finite local Position Impact chain. After every landing it completes all immediate results in the same frame: any direct damage and direct Elemental attempt, any Explosive Shell actions, explosion-target Elemental attempts, and synchronous Buff, overload, death, or target-state consequences. Only then does it search within the authored `bounceSearchRadius` around the impact position. It excludes direct Monsters already resolved by the chain, applies the package-owned `bounceTargetSelectionType` to the surviving local candidates, captures the selected target's current position, and creates one bounce child in the same frame. The selector supports Nearest, HighestHealth, LowestHealth, and Random without widening eligibility beyond the local radius. The package-owned `maxBounceCount` limits the chain, and `bounceArcHeight` controls bounce-child flight while the initial Shell continues to use AttackConfig.ArcHeight. It does not use the source tower's full AttackRange or the source AttackConfig's TargetSelectionType. Direct Monster Hit and positive direct damage are not required; no remaining bounce count or no candidate ends the chain. Bounce children inherit Cannon Behaviour snapshots, while Elemental application retains the existing sourceTower lookup semantics.
 
 ### Magic Behaviour Upgrades
 

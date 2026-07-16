@@ -132,7 +132,7 @@ Explosive Shell is an additive Position Impact Effect after the baseline Cannon 
 
 Arcane Field is not a generic EffectZone ownership transfer. Tower runtime owns the tower-attached field instance, follow behavior, uniqueness, and cleanup. Effect System resolves and executes each tick. Every valid target resolved by a V1 field tick receives one 100% Elemental application attempt; this exception is explicit to Arcane Field and does not broaden ordinary zone-tick or periodic Effect defaults.
 
-Bouncing Shell remains Projectile runtime behavior. Effect System may execute its landing explosion, but it does not gain a generic SpawnProjectile action or own bounce target selection, chain history, child creation, or remaining bounce count.
+Bouncing Shell remains Projectile runtime behavior triggered after Position Impact results complete, whether or not that landing resolved a direct Monster Hit. Effect System may execute its landing explosion, but it does not gain a generic SpawnProjectile action or own bounce target selection, chain history, child creation, or remaining bounce count.
 
 ## 6. Elemental Eligibility And Recursion
 
