@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AttackConfig
   attackArchetype: 2
   attackRange: 1.5
-  attackInterval: 8
+  attackInterval: 5
   targetSelectionType: 1
   projectileConfig: {fileID: 0}
   arcHeight: 1
@@ -22,8 +22,8 @@ MonoBehaviour:
   magicOrbRotationSpeed: 90
   magicOrbOrbitRadius: 1
   magicOrbContactDistance: 0.4
-  magicOrbMaxHitCount: 10
-  magicOrbMaxLifetime: 8
+  magicOrbMaxHitCount: 5
+  magicOrbMaxLifetime: 10
   magicOrbSameTargetHitCooldown: 0.5
   magicOrbPrefab: {fileID: 5932105996875227893, guid: ddbc56afe56b5423287d527e7c7b5b88, type: 3}
   droneBatteryDuration: 5

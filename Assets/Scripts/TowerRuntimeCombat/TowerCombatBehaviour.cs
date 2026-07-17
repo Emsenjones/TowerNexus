@@ -21,6 +21,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private readonly List<Vector3> pendingCannonInitialShellTargetPositions = new List<Vector3>();
     private readonly MonsterBehaviour[] pendingHuntingTargets = new MonsterBehaviour[HuntingArrowSlotCount];
     private readonly HashSet<TowerBehaviourPackageType> missingBehaviourPackageWarnings = new HashSet<TowerBehaviourPackageType>();
+    private readonly HashSet<MagicOrbBehaviour> activeMagicOrbs = new HashSet<MagicOrbBehaviour>();
 
     private TowerDefinition towerDefinition;
     private AttackConfig attackConfig;
@@ -37,6 +38,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool hasLoggedMissingAttackOrigin;
     private bool hasLoggedInvalidArcHitDistanceThreshold;
     private bool hasLoggedInvalidExplosiveShellEffect;
+    private bool hasLoggedInvalidArcaneDetonationEffect;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, AttackArchetype> OnUnsupportedAttackEntity;
@@ -49,6 +51,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     public void Initialize(TowerInstance towerInstance, MonsterManager monsterManager)
     {
+        ForceCleanupTrackedMagicOrbs();
         CleanupActiveVfx();
 
         this.towerInstance = towerInstance;
@@ -67,6 +70,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedMissingAttackOrigin = false;
         hasLoggedInvalidArcHitDistanceThreshold = false;
         hasLoggedInvalidExplosiveShellEffect = false;
+        hasLoggedInvalidArcaneDetonationEffect = false;
         missingBehaviourPackageWarnings.Clear();
     }
 
@@ -102,11 +106,13 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private void OnDisable()
     {
+        ForceCleanupTrackedMagicOrbs();
         CleanupActiveVfx();
     }
 
     private void OnDestroy()
     {
+        ForceCleanupTrackedMagicOrbs();
         CleanupActiveVfx();
     }
 
@@ -797,9 +803,10 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
+        MagicOrbRuntimeOptions runtimeOptions = CreateMagicOrbRuntimeOptions();
         bool releasedMagicOrb = IsMagicMultiOrbsActive()
-            ? TryReleaseMultiMagicOrbs(origin, resolvedStats)
-            : TryReleaseMagicOrb(origin, resolvedStats);
+            ? TryReleaseMultiMagicOrbs(origin, resolvedStats, runtimeOptions)
+            : TryReleaseMagicOrb(origin, resolvedStats, runtimeOptions);
 
         if (!releasedMagicOrb)
         {
@@ -812,7 +819,10 @@ public class TowerCombatBehaviour : MonoBehaviour
         ResetPendingAttackState();
     }
 
-    private bool TryReleaseMultiMagicOrbs(Transform origin, ResolvedTowerCombatStats resolvedStats)
+    private bool TryReleaseMultiMagicOrbs(
+        Transform origin,
+        ResolvedTowerCombatStats resolvedStats,
+        MagicOrbRuntimeOptions runtimeOptions)
     {
         float baseStartingOrbitAngle = UnityEngine.Random.Range(0f, 360f);
         int orbCount = GetMultiOrbsCount();
@@ -822,7 +832,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         for (int i = 0; i < orbCount; i++)
         {
             float startingOrbitAngle = baseStartingOrbitAngle + orbitAngleStep * i;
-            releasedAnyOrb |= TryReleaseMagicOrb(origin, resolvedStats, startingOrbitAngle);
+            releasedAnyOrb |= TryReleaseMagicOrb(origin, resolvedStats, runtimeOptions, startingOrbitAngle);
         }
 
         return releasedAnyOrb;
@@ -831,6 +841,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool TryReleaseMagicOrb(
         Transform origin,
         ResolvedTowerCombatStats resolvedStats,
+        MagicOrbRuntimeOptions runtimeOptions,
         float? startingOrbitAngle = null)
     {
         GameObject magicOrbObject = Instantiate(attackConfig.MagicOrbPrefab, origin.position, Quaternion.identity);
@@ -846,11 +857,83 @@ public class TowerCombatBehaviour : MonoBehaviour
             monsterManager,
             attackConfig,
             resolvedStats,
+            runtimeOptions,
             origin,
             startingOrbitAngle
         );
 
-        return magicOrbBehaviour.IsInitialized;
+        if (!magicOrbBehaviour.IsInitialized)
+        {
+            return false;
+        }
+
+        magicOrbBehaviour.OnEnded += HandleMagicOrbEnded;
+        activeMagicOrbs.Add(magicOrbBehaviour);
+        return true;
+    }
+
+    private MagicOrbRuntimeOptions CreateMagicOrbRuntimeOptions()
+    {
+        TowerUpgradeDefinition arcaneDetonationSourceUpgrade = null;
+        EffectDefinition arcaneDetonationEffect = null;
+
+        if (IsMagicOrbRelease() &&
+            HasBehaviourPackage(TowerBehaviourPackageType.MagicArcaneDetonation) &&
+            TryGetBehaviourPackageUpgrade(
+                TowerBehaviourPackageType.MagicArcaneDetonation,
+                out TowerUpgradeDefinition resolvedArcaneDetonationUpgrade))
+        {
+            arcaneDetonationSourceUpgrade = resolvedArcaneDetonationUpgrade;
+            arcaneDetonationEffect = resolvedArcaneDetonationUpgrade.ArcaneDetonationEffect;
+
+            if (arcaneDetonationEffect == null && !hasLoggedInvalidArcaneDetonationEffect)
+            {
+                hasLoggedInvalidArcaneDetonationEffect = true;
+                Debug.LogWarning(
+                    "Tower combat resolved Magic Arcane Detonation, but its EffectDefinition is missing. Detonation gameplay is disabled for this release.",
+                    resolvedArcaneDetonationUpgrade);
+            }
+        }
+
+        return new MagicOrbRuntimeOptions(
+            arcaneDetonationSourceUpgrade,
+            arcaneDetonationEffect);
+    }
+
+    private void HandleMagicOrbEnded(MagicOrbBehaviour magicOrbBehaviour)
+    {
+        if (magicOrbBehaviour == null)
+        {
+            return;
+        }
+
+        magicOrbBehaviour.OnEnded -= HandleMagicOrbEnded;
+        activeMagicOrbs.Remove(magicOrbBehaviour);
+    }
+
+    private void ForceCleanupTrackedMagicOrbs()
+    {
+        if (activeMagicOrbs.Count == 0)
+        {
+            return;
+        }
+
+        List<MagicOrbBehaviour> magicOrbSnapshot = new List<MagicOrbBehaviour>(activeMagicOrbs);
+
+        for (int i = 0; i < magicOrbSnapshot.Count; i++)
+        {
+            MagicOrbBehaviour magicOrbBehaviour = magicOrbSnapshot[i];
+
+            if (magicOrbBehaviour == null)
+            {
+                continue;
+            }
+
+            magicOrbBehaviour.ForceCleanup();
+            magicOrbBehaviour.OnEnded -= HandleMagicOrbEnded;
+        }
+
+        activeMagicOrbs.Clear();
     }
 
     private bool IsMagicMultiOrbsActive()

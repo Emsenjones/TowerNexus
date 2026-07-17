@@ -7,6 +7,7 @@ public class MagicOrbBehaviour : MonoBehaviour
     private TowerInstance sourceTower;
     private MonsterManager monsterManager;
     private AttackConfig attackConfig;
+    private MagicOrbRuntimeOptions runtimeOptions;
     private Vector3 orbitCenterPosition;
     private int attackDamage;
     private float rotationSpeed;
@@ -17,6 +18,7 @@ public class MagicOrbBehaviour : MonoBehaviour
     private bool hasEnded;
 
     private readonly Dictionary<MonsterBehaviour, float> monsterHitCooldownEnds = new Dictionary<MonsterBehaviour, float>();
+    private readonly List<MonsterBehaviour> resolvedArcaneDetonationTargets = new List<MonsterBehaviour>();
 
     public event Action<MagicOrbBehaviour> OnEnded;
 
@@ -31,12 +33,14 @@ public class MagicOrbBehaviour : MonoBehaviour
         MonsterManager monsterManager,
         AttackConfig attackConfig,
         ResolvedTowerCombatStats resolvedStats,
+        MagicOrbRuntimeOptions runtimeOptions,
         Transform orbitCenter,
         float? startingOrbitAngle = null)
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
         this.attackConfig = attackConfig;
+        this.runtimeOptions = runtimeOptions;
         orbitCenterPosition = orbitCenter != null ? orbitCenter.position : transform.position;
 
         attackDamage = resolvedStats.AttackDamage;
@@ -44,12 +48,14 @@ public class MagicOrbBehaviour : MonoBehaviour
         remainingHitCount = resolvedStats.MagicOrbMaxHitCount;
         orbitAngle = startingOrbitAngle ?? UnityEngine.Random.Range(0f, 360f);
         elapsedLifetime = 0f;
+        isInitialized = false;
         hasEnded = false;
         monsterHitCooldownEnds.Clear();
+        resolvedArcaneDetonationTargets.Clear();
 
         if (!CanInitialize())
         {
-            Destroy(gameObject);
+            CleanupOrb();
             return;
         }
 
@@ -93,11 +99,17 @@ public class MagicOrbBehaviour : MonoBehaviour
             return;
         }
 
+        if (sourceTower == null)
+        {
+            CleanupOrb();
+            return;
+        }
+
         elapsedLifetime += Time.deltaTime;
 
         if (elapsedLifetime >= attackConfig.MagicOrbMaxLifetime)
         {
-            EndOrb();
+            CompleteOrb();
             return;
         }
 
@@ -158,7 +170,7 @@ public class MagicOrbBehaviour : MonoBehaviour
 
         if (remainingHitCount <= 0)
         {
-            EndOrb();
+            CompleteOrb();
         }
     }
 
@@ -181,7 +193,22 @@ public class MagicOrbBehaviour : MonoBehaviour
                !monster.IsDead();
     }
 
-    private void EndOrb()
+    public void ForceCleanup()
+    {
+        CleanupOrb();
+    }
+
+    private void CompleteOrb()
+    {
+        EndOrb(triggerDetonation: true);
+    }
+
+    private void CleanupOrb()
+    {
+        EndOrb(triggerDetonation: false);
+    }
+
+    private void EndOrb(bool triggerDetonation)
     {
         if (hasEnded)
         {
@@ -190,7 +217,50 @@ public class MagicOrbBehaviour : MonoBehaviour
 
         hasEnded = true;
         isInitialized = false;
+
+        if (triggerDetonation && sourceTower != null)
+        {
+            ExecuteArcaneDetonation(transform.position);
+        }
+
         OnEnded?.Invoke(this);
         Destroy(gameObject);
+    }
+
+    private void ExecuteArcaneDetonation(Vector3 detonationPosition)
+    {
+        EffectDefinition detonationEffect = runtimeOptions.ArcaneDetonationEffect;
+
+        if (detonationEffect == null)
+        {
+            return;
+        }
+
+        EffectExecutor.ExecuteWithResolvedTargets(
+            detonationEffect,
+            new EffectTriggerContext(
+                sourceTower: sourceTower,
+                sourceUpgrade: runtimeOptions.ArcaneDetonationSourceUpgrade,
+                targetMonster: null,
+                hasTriggerPosition: true,
+                triggerPosition: detonationPosition,
+                resolvedDamage: attackDamage,
+                allowsElementalApplication: false),
+            resolvedArcaneDetonationTargets);
+
+        for (int i = 0; i < resolvedArcaneDetonationTargets.Count; i++)
+        {
+            MonsterBehaviour target = resolvedArcaneDetonationTargets[i];
+
+            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+            {
+                continue;
+            }
+
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                target,
+                detonationPosition);
+        }
     }
 }

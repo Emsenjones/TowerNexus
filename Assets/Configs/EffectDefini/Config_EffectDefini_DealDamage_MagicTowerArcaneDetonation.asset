@@ -10,20 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_LockMovement_FrozenBuff
+  m_Name: Config_EffectDefini_DealDamage_MagicTowerArcaneDetonation
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Lock the monster's movement
-  radius: 0
-  executionVfxPrefab: {fileID: 3883803129119705023, guid: b72c66c5b481e48fa8534bef30347ba5, type: 3}
-  executionVfxMode: 0
-  playResolvedExecutionFeedback: 0
+  displayName: Magic Orb detonates in an arcane blast upon expiring
+  radius: 0.5
+  executionVfxPrefab: {fileID: 5537275441999820816, guid: 56b52938655cb4e2baefcdea891ec239, type: 3}
   actions:
-  - actionType: 4
-    damageAmount: 0
-    buffDefinition: {fileID: 11400000, guid: e5e4aa3f395d3452a9d69215b703f764, type: 2}
+  - actionType: 0
+    damageAmount: 10
+    buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
-    isMovementLocked: 1
+    isMovementLocked: 0
     multiTargetEffectDefinition: {fileID: 0}
     targetCount: 1
-    excludeTriggerContextTarget: 0
+    excludeTriggerTarget: 0
     windVortexConfig: {fileID: 0}
