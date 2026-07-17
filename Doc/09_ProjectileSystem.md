@@ -309,14 +309,14 @@ Hit Monster
 
 The selected target may define the initial launch direction, but the projectile is not required to remain locked to that target after launch.
 
-Hunting Arrow changes this flight behavior into reviewed tracking behavior. Each Hunting projectile owns its target reference, hit history, remaining piercing count, and lifetime:
+Hunting Arrow changes this flight behavior into reviewed locked-target tracking. Tower runtime captures the authoritative main target position and fixed Center, Left, and Right target slots at confirmation, then supplies the release-time TrackingRangeOrigin and TrackingRange. Each assigned Hunting projectile owns one locked target, hit history, remaining piercing count, and lifetime:
 
-- The current target must be valid and inside the source tower's resolved AttackRange.
-- Target death, invalidation, or leaving that range triggers reacquisition.
-- Candidates must be inside the source tower's resolved AttackRange and absent from the projectile's hit history.
-- The nearest candidate is measured from the projectile's current position.
-- After a Piercing hit, a surviving projectile reacquires using the same rules.
-- With no candidate, the projectile continues along its current direction and may reacquire later until lifetime expires.
+- The locked target must remain gameplay-targetable, registered with MonsterManager, and inside the snapshotted TrackingRange.
+- The Arrow itself must remain inside the same TrackingRange while tracking.
+- Tracking checks only the locked target and uses overshoot-safe movement toward its current HitAnchor.
+- Hitting the locked target, target invalidation, either range failure, or losing MonsterManager registration permanently transitions the Arrow to Direction flight.
+- A surviving Piercing Arrow continues ordinary Direction hits after that transition; source range no longer affects Piercing or projectile collision.
+- Tracking never reacquires and never becomes active again after Direction fallback.
 - Tracking movement itself does not periodically apply Elemental Buffs; actual resolved Monster Hits use the Arrow attack boundary.
 
 ---
@@ -596,7 +596,7 @@ The first version supports:
 - Impact Event Triggering
 - Projectile-level piercing state when granted by an Archer Behaviour package
 - Finite piercing hit count for projectile-level piercing
-- Hunting Arrow target tracking and reacquisition
+- Hunting Arrow locked-target tracking and one-way Direction fallback
 - Reviewed Bouncing Shell local bounce behavior
 
 The first version intentionally excludes these projectile patterns:

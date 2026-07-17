@@ -11,6 +11,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private const int DefaultMultiOrbsCount = 2;
     private const int DefaultTwinDronesCount = 2;
     private const float DefaultTwinDronesTakeOffDelay = 0.6f;
+    private const int HuntingArrowSlotCount = 3;
 
     [SerializeField] private TowerInstance towerInstance;
     private MonsterManager monsterManager;
@@ -18,6 +19,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     private readonly List<MonsterBehaviour> detectedEnemies = new List<MonsterBehaviour>();
     private readonly List<Vector3> pendingCannonInitialShellTargetPositions = new List<Vector3>();
+    private readonly MonsterBehaviour[] pendingHuntingTargets = new MonsterBehaviour[HuntingArrowSlotCount];
     private readonly HashSet<TowerBehaviourPackageType> missingBehaviourPackageWarnings = new HashSet<TowerBehaviourPackageType>();
 
     private TowerDefinition towerDefinition;
@@ -58,11 +60,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         cooldownTimer = 0f;
         currentTarget = null;
-        pendingProjectileTarget = null;
-        pendingProjectileTargetPosition = Vector3.zero;
-        pendingCannonInitialShellTargetPositions.Clear();
-        pendingDroneTarget = null;
-        pendingAttackArchetype = default;
+        ResetPendingAttackState();
         hasLoggedUnsupportedAttackEntity = false;
         hasLoggedMissingMagicOrbPrefab = false;
         hasLoggedMissingDronePrefab = false;
@@ -70,7 +68,6 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedInvalidArcHitDistanceThreshold = false;
         hasLoggedInvalidExplosiveShellEffect = false;
         missingBehaviourPackageWarnings.Clear();
-        attackState = TowerAttackState.Idle;
     }
 
     public void OnAttackAnimationRelease()
@@ -273,8 +270,7 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         bool isArcProjectile = pendingAttackArchetype == AttackArchetype.ArcProjectile;
 
-        if ((!isArcProjectile && !IsValidTarget(pendingProjectileTarget)) ||
-            (isArcProjectile && pendingCannonInitialShellTargetPositions.Count == 0))
+        if (isArcProjectile && pendingCannonInitialShellTargetPositions.Count == 0)
         {
             ResetPendingAttackState();
             return;
@@ -303,8 +299,23 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        int attackDamage = ResolveCombatStats().AttackDamage;
-        ProjectileRuntimeOptions projectileRuntimeOptions = CreateProjectileRuntimeOptions();
+        ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
+
+        if (!isArcProjectile &&
+            (!IsRegisteredGameplayTarget(pendingProjectileTarget) ||
+             !IsInRange(
+                 origin.position,
+                 GetMonsterHitPosition(pendingProjectileTarget),
+                 resolvedStats.AttackRange)))
+        {
+            ResetPendingAttackState();
+            return;
+        }
+
+        int attackDamage = resolvedStats.AttackDamage;
+        ProjectileRuntimeOptions projectileRuntimeOptions = CreateProjectileRuntimeOptions(
+            origin.position,
+            resolvedStats.AttackRange);
         int releasedProjectileCount;
 
         if (isArcProjectile)
@@ -317,15 +328,32 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
         else
         {
-            bool releasedProjectile = IsArcherScatterArrowActive()
-                ? TryReleaseScatterProjectiles(projectileConfig, origin, attackDamage, projectileRuntimeOptions)
-                : TryReleaseProjectile(
+            bool releasedProjectile;
+
+            if (IsArcherScatterArrowActive())
+            {
+                releasedProjectile = TryReleaseScatterProjectiles(
+                    projectileConfig,
+                    origin,
+                    attackDamage,
+                    resolvedStats.AttackRange,
+                    projectileRuntimeOptions);
+            }
+            else
+            {
+                bool isHuntingArrow = IsArcherHuntingArrowActive();
+                releasedProjectile = TryReleaseProjectile(
                     projectileConfig,
                     origin,
                     pendingProjectileTargetPosition,
                     pendingProjectileTarget,
                     attackDamage,
-                    projectileRuntimeOptions);
+                    projectileRuntimeOptions,
+                    isHuntingArrow
+                        ? (AttackArchetype?)AttackArchetype.TrackingProjectile
+                        : null);
+            }
+
             releasedProjectileCount = releasedProjectile ? 1 : 0;
         }
 
@@ -335,7 +363,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        StartAttackCooldown();
+        StartAttackCooldown(resolvedStats.AttackInterval);
         PlayAttackReleaseVfx();
         OnProjectileReleased?.Invoke(this, pendingProjectileTarget);
         ResetPendingAttackState();
@@ -345,6 +373,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         pendingCannonInitialShellTargetPositions.Clear();
         pendingProjectileTargetPosition = GetMonsterHitPosition(firstTarget);
+        CapturePendingHuntingTargets(firstTarget);
 
         if (attackConfig.AttackArchetype != AttackArchetype.ArcProjectile)
         {
@@ -369,6 +398,41 @@ public class TowerCombatBehaviour : MonoBehaviour
 
             selectedTargets.Add(additionalTarget);
             pendingCannonInitialShellTargetPositions.Add(GetMonsterHitPosition(additionalTarget));
+        }
+    }
+
+    private void CapturePendingHuntingTargets(MonsterBehaviour firstTarget)
+    {
+        Array.Clear(pendingHuntingTargets, 0, pendingHuntingTargets.Length);
+
+        if (!IsArcherHuntingArrowActive())
+        {
+            return;
+        }
+
+        pendingHuntingTargets[0] = firstTarget;
+
+        if (!IsArcherScatterArrowActive())
+        {
+            return;
+        }
+
+        HashSet<MonsterBehaviour> selectedTargets = new HashSet<MonsterBehaviour>
+        {
+            firstTarget
+        };
+
+        for (int slotIndex = 1; slotIndex < pendingHuntingTargets.Length; slotIndex++)
+        {
+            MonsterBehaviour additionalTarget = SelectTarget(selectedTargets);
+
+            if (!IsValidTarget(additionalTarget))
+            {
+                break;
+            }
+
+            pendingHuntingTargets[slotIndex] = additionalTarget;
+            selectedTargets.Add(additionalTarget);
         }
     }
 
@@ -401,6 +465,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         ProjectileConfig projectileConfig,
         Transform origin,
         int attackDamage,
+        float trackingRange,
         ProjectileRuntimeOptions projectileRuntimeOptions)
     {
         Vector3 centerDirection = pendingProjectileTargetPosition - origin.position;
@@ -412,29 +477,94 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         centerDirection.Normalize();
 
-        bool releasedCenter = TryReleaseProjectile(
-            projectileConfig,
-            origin,
-            pendingProjectileTargetPosition,
-            pendingProjectileTarget,
-            attackDamage,
-            projectileRuntimeOptions);
+        Vector3 leftDirection =
+            Quaternion.AngleAxis(-GetScatterArrowAngleOffset(), Vector3.up) * centerDirection;
+        Vector3 rightDirection =
+            Quaternion.AngleAxis(GetScatterArrowAngleOffset(), Vector3.up) * centerDirection;
+        bool isHuntingArrow = IsArcherHuntingArrowActive();
 
-        bool releasedLeft = TryReleaseProjectileInDirection(
-            projectileConfig,
-            origin,
-            Quaternion.AngleAxis(-GetScatterArrowAngleOffset(), Vector3.up) * centerDirection,
-            attackDamage,
-            projectileRuntimeOptions);
+        bool releasedCenter = isHuntingArrow
+            ? TryReleaseHuntingScatterSlot(
+                0,
+                centerDirection,
+                projectileConfig,
+                origin,
+                attackDamage,
+                trackingRange,
+                projectileRuntimeOptions)
+            : TryReleaseProjectile(
+                projectileConfig,
+                origin,
+                pendingProjectileTargetPosition,
+                pendingProjectileTarget,
+                attackDamage,
+                projectileRuntimeOptions);
 
-        bool releasedRight = TryReleaseProjectileInDirection(
-            projectileConfig,
-            origin,
-            Quaternion.AngleAxis(GetScatterArrowAngleOffset(), Vector3.up) * centerDirection,
-            attackDamage,
-            projectileRuntimeOptions);
+        bool releasedLeft = isHuntingArrow
+            ? TryReleaseHuntingScatterSlot(
+                1,
+                leftDirection,
+                projectileConfig,
+                origin,
+                attackDamage,
+                trackingRange,
+                projectileRuntimeOptions)
+            : TryReleaseProjectileInDirection(
+                projectileConfig,
+                origin,
+                leftDirection,
+                attackDamage,
+                projectileRuntimeOptions);
+
+        bool releasedRight = isHuntingArrow
+            ? TryReleaseHuntingScatterSlot(
+                2,
+                rightDirection,
+                projectileConfig,
+                origin,
+                attackDamage,
+                trackingRange,
+                projectileRuntimeOptions)
+            : TryReleaseProjectileInDirection(
+                projectileConfig,
+                origin,
+                rightDirection,
+                attackDamage,
+                projectileRuntimeOptions);
 
         return releasedCenter || releasedLeft || releasedRight;
+    }
+
+    private bool TryReleaseHuntingScatterSlot(
+        int slotIndex,
+        Vector3 fallbackDirection,
+        ProjectileConfig projectileConfig,
+        Transform origin,
+        int attackDamage,
+        float trackingRange,
+        ProjectileRuntimeOptions projectileRuntimeOptions)
+    {
+        MonsterBehaviour lockedTarget = pendingHuntingTargets[slotIndex];
+
+        if (IsRegisteredGameplayTarget(lockedTarget) &&
+            IsInRange(origin.position, GetMonsterHitPosition(lockedTarget), trackingRange))
+        {
+            return TryReleaseProjectile(
+                projectileConfig,
+                origin,
+                GetMonsterHitPosition(lockedTarget),
+                lockedTarget,
+                attackDamage,
+                projectileRuntimeOptions,
+                AttackArchetype.TrackingProjectile);
+        }
+
+        return TryReleaseProjectileInDirection(
+            projectileConfig,
+            origin,
+            fallbackDirection,
+            attackDamage,
+            projectileRuntimeOptions);
     }
 
     private bool TryReleaseProjectileInDirection(
@@ -465,7 +595,8 @@ public class TowerCombatBehaviour : MonoBehaviour
         Vector3 targetPosition,
         MonsterBehaviour target,
         int attackDamage,
-        ProjectileRuntimeOptions projectileRuntimeOptions)
+        ProjectileRuntimeOptions projectileRuntimeOptions,
+        AttackArchetype? flightArchetypeOverride = null)
     {
         GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, origin.position, Quaternion.identity);
 
@@ -482,13 +613,16 @@ public class TowerCombatBehaviour : MonoBehaviour
             target,
             targetPosition,
             attackDamage,
+            flightArchetypeOverride: flightArchetypeOverride,
             runtimeOptions: projectileRuntimeOptions
         );
 
         return projectileBehaviour.IsInitialized;
     }
 
-    private ProjectileRuntimeOptions CreateProjectileRuntimeOptions()
+    private ProjectileRuntimeOptions CreateProjectileRuntimeOptions(
+        Vector3 trackingRangeOrigin,
+        float trackingRange)
     {
         bool canPierce = IsArcherPiercingArrowActive();
         TowerUpgradeDefinition explosiveShellSourceUpgrade = null;
@@ -537,7 +671,9 @@ public class TowerCombatBehaviour : MonoBehaviour
             bounceSearchRadius: bounceSearchRadius,
             remainingBounceCount: remainingBounceCount,
             bounceArcHeight: bounceArcHeight,
-            bounceTargetSelectionType: bounceTargetSelectionType
+            bounceTargetSelectionType: bounceTargetSelectionType,
+            trackingRangeOrigin: trackingRangeOrigin,
+            trackingRange: trackingRange
         );
     }
 
@@ -551,6 +687,12 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         return IsArcherProjectileRelease() &&
                HasBehaviourPackage(TowerBehaviourPackageType.ArcherScatterArrow);
+    }
+
+    private bool IsArcherHuntingArrowActive()
+    {
+        return IsArcherProjectileRelease() &&
+               HasBehaviourPackage(TowerBehaviourPackageType.ArcherHuntingArrow);
     }
 
     private bool IsArcherProjectileRelease()
@@ -587,11 +729,17 @@ public class TowerCombatBehaviour : MonoBehaviour
         cooldownTimer = ResolveCombatStats().AttackInterval;
     }
 
+    private void StartAttackCooldown(float attackInterval)
+    {
+        cooldownTimer = Mathf.Max(0f, attackInterval);
+    }
+
     private void ResetPendingAttackState()
     {
         pendingProjectileTarget = null;
         pendingProjectileTargetPosition = Vector3.zero;
         pendingCannonInitialShellTargetPositions.Clear();
+        Array.Clear(pendingHuntingTargets, 0, pendingHuntingTargets.Length);
         pendingDroneTarget = null;
         pendingAttackArchetype = default;
         attackState = TowerAttackState.Idle;
@@ -1038,7 +1186,38 @@ public class TowerCombatBehaviour : MonoBehaviour
         }
 
         float attackRange = ResolveCombatStats().AttackRange;
-        return Vector3.Distance(origin.position, GetMonsterHitPosition(monster)) <= attackRange;
+        return IsInRange(origin.position, GetMonsterHitPosition(monster), attackRange);
+    }
+
+    private bool IsRegisteredGameplayTarget(MonsterBehaviour monster)
+    {
+        if (monster == null || !monster.IsGameplayTargetable || monsterManager == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            if (aliveMonsters[i] == monster)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsInRange(Vector3 origin, Vector3 targetPosition, float range)
+    {
+        if (range <= 0f)
+        {
+            return false;
+        }
+
+        float rangeSqr = range * range;
+        return (targetPosition - origin).sqrMagnitude <= rangeSqr;
     }
 
     private ResolvedTowerCombatStats ResolveCombatStats()

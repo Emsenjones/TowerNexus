@@ -845,7 +845,7 @@ Notes:
 - Tracking Projectile follows projectile-style cooldown timing.
 - Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Attack cooldown starts immediately after the projectile is released.
-- Tracking projectile runtime supports reviewed projectile-style Behaviour content such as Hunting Arrow. Tracking target acquisition, hit history, range limits, and lifetime remain Projectile runtime responsibilities.
+- Tracking projectile runtime supports reviewed projectile-style Behaviour content such as Hunting Arrow. Tower runtime captures the authoritative main position and fixed initial target slots at confirmation, then supplies a release-time range snapshot. Projectile runtime tracks only its locked target and permanently falls back to Direction flight after the first hit or any target/Arrow range-validity failure; it does not reacquire.
 
 VFX notes:
 

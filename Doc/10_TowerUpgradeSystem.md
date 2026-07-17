@@ -328,8 +328,8 @@ Behaviour upgrades are composable by default in v1.
 Reviewed composition results include:
 
 - Piercing Arrow + Scatter Arrow: every scattered Arrow may pierce.
-- Piercing Arrow + Hunting Arrow: a surviving Arrow reacquires after each hit until its piercing count is exhausted.
-- Scatter Arrow + Hunting Arrow: every scattered Arrow resolves its own initial target and then tracks independently. Initial selection prefers different valid Monsters when alternatives exist and permits target reuse when distinct candidates are insufficient.
+- Piercing Arrow + Hunting Arrow: the Arrow tracks only its locked initial target; after that hit or a tracking-validity failure, a surviving Piercing Arrow continues ordinary Direction hits until its piercing count is exhausted.
+- Scatter Arrow + Hunting Arrow: Tower runtime assigns distinct initial targets without replacement to fixed Center, Left, and Right slots at confirmation. Unassigned or invalid secondary slots preserve their corresponding confirmation-time Scatter directions. Tracking never reacquires.
 - Multi Shells + Explosive Shell: every released initial Shell may execute its own explosion.
 - Multi Shells + Bouncing Shell: every released initial Shell owns an independent bounce chain.
 - Explosive Shell + Bouncing Shell: each valid landing completes its explosion before selecting the next bounce target in the same frame.
@@ -499,7 +499,7 @@ Piercing Arrow grants finite per-projectile hit count and hit-history behavior. 
 
 Scatter Arrow releases multiple independent Arrow projectiles from one attack. Each Arrow owns its own movement, hit detection, piercing state, hit history, lifetime, damage result, and Elemental opportunities. Buff apply cooldown and Protection decide whether simultaneous attempts against the same Monster produce more than one successful application.
 
-Hunting Arrow changes Arrow flight into tracking behavior. It tracks one target inside the source tower's resolved AttackRange, reacquires when that target dies, becomes invalid, leaves range, or is hit by a surviving Piercing Arrow, excludes the current Arrow's hit history, and selects the nearest candidate relative to the Arrow. With no candidate it continues along its current direction and may reacquire later until lifetime expires. When combined with Scatter Arrow, every released Arrow resolves its own initial target; selection prefers different valid Monsters when alternatives exist and permits reuse when there are fewer valid Monsters than Arrows. Each Arrow then owns independent tracking, hit history, remaining piercing count, lifetime, and Elemental opportunities. Tracking movement itself does not periodically apply Elemental Buffs; actual Monster Hits use the Arrow attack boundary.
+Hunting Arrow changes one assigned Arrow flight into locked-target tracking. Tower runtime captures the authoritative main target position and fixed Center, Left, and Right target slots at confirmation, without target replacement or reuse, then snapshots TrackingRangeOrigin and resolved TrackingRange at release. An assigned Arrow tracks only its locked target while both remain inside that range. Hitting the target, target invalidation, loss of MonsterManager registration, or either range failure permanently transitions the Arrow to ordinary Direction flight with no reacquisition. When combined with Scatter Arrow, unassigned or invalid secondary slots preserve their confirmation-time Scatter directions. Each Arrow owns independent hit history, remaining piercing count, lifetime, and Elemental opportunities; surviving Piercing remains active after Hunting ends. Tracking movement itself does not periodically apply Elemental Buffs; actual Monster Hits use the Arrow attack boundary.
 
 ### Cannon Behaviour Upgrades
 

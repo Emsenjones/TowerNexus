@@ -23,7 +23,6 @@ public class ProjectileBehaviour : MonoBehaviour
     private float arcTravelTime;
     private bool isInitialized;
     private bool hasImpacted;
-    private bool hasLoggedUnsupportedTrackingFlight;
 
     public event Action<ProjectileImpactContext> OnImpact;
     public event Action<EffectTriggerContext> OnEffectTriggerContextCreated;
@@ -65,7 +64,6 @@ public class ProjectileBehaviour : MonoBehaviour
         CopyBounceHitHistory(inheritedBounceHitHistory);
         elapsedLifetime = 0f;
         hasImpacted = false;
-        hasLoggedUnsupportedTrackingFlight = false;
 
         if (!CanInitialize())
         {
@@ -151,6 +149,30 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool CanInitializeTrackingFlight()
     {
+        if (monsterManager == null)
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: monster manager is null.", this);
+            return false;
+        }
+
+        if (projectileConfig.HitDistanceThreshold <= 0f)
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: hit distance threshold must be greater than zero.", projectileConfig);
+            return false;
+        }
+
+        if (runtimeOptions.TrackingRange <= 0f)
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: tracking range must be greater than zero.", this);
+            return false;
+        }
+
+        if (!IsValidTrackingTarget(targetMonster) || !IsInsideTrackingRange(GetMonsterHitPosition(targetMonster)))
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: locked target is invalid or outside tracking range.", this);
+            return false;
+        }
+
         return true;
     }
 
@@ -183,8 +205,8 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool InitializeTrackingFlight()
     {
-        LogUnsupportedTrackingFlight();
-        return false;
+        launchDirection = CalculateLaunchDirection(GetMonsterHitPosition(targetMonster));
+        return true;
     }
 
     private void Update()
@@ -262,19 +284,41 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void UpdateTrackingFlight()
     {
-        LogUnsupportedTrackingFlight();
-        DestroyProjectile();
-    }
-
-    private void LogUnsupportedTrackingFlight()
-    {
-        if (hasLoggedUnsupportedTrackingFlight)
+        if (!IsInsideTrackingRange(transform.position) ||
+            !IsValidTrackingTarget(targetMonster))
         {
+            TransitionTrackingToDirection();
             return;
         }
 
-        hasLoggedUnsupportedTrackingFlight = true;
-        Debug.LogWarning("Projectile tracking flight is not implemented yet. Tracking projectiles are reserved for a later runtime task.", this);
+        Vector3 lockedTargetPosition = GetMonsterHitPosition(targetMonster);
+
+        if (!IsInsideTrackingRange(lockedTargetPosition))
+        {
+            TransitionTrackingToDirection();
+            return;
+        }
+
+        Vector3 toTarget = lockedTargetPosition - transform.position;
+        float distanceToTarget = toTarget.magnitude;
+
+        if (distanceToTarget <= projectileConfig.HitDistanceThreshold)
+        {
+            ImpactTrackingTarget();
+            return;
+        }
+
+        launchDirection = toTarget / distanceToTarget;
+        float travelDistance = Mathf.Min(
+            projectileConfig.ProjectileSpeed * Time.deltaTime,
+            distanceToTarget);
+        transform.position += launchDirection * travelDistance;
+        FaceMoveDirection(launchDirection);
+
+        if (IsWithinHitDistance(targetMonster))
+        {
+            ImpactTrackingTarget();
+        }
     }
 
     private float CalculateArcTravelTime()
@@ -312,13 +356,32 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         if (!isInitialized ||
             hasImpacted ||
-            flightArchetype != AttackArchetype.DirectionProjectile ||
             hitCollider == null)
         {
             return;
         }
 
         MonsterBehaviour hitMonster = hitCollider.GetComponentInParent<MonsterBehaviour>();
+
+        if (flightArchetype == AttackArchetype.TrackingProjectile)
+        {
+            if (hitMonster != targetMonster ||
+                !IsInsideTrackingRange(transform.position) ||
+                !IsValidTrackingTarget(targetMonster) ||
+                !IsInsideTrackingRange(GetMonsterHitPosition(targetMonster)) ||
+                !IsWithinHitDistance(targetMonster))
+            {
+                return;
+            }
+
+            ImpactTrackingTarget();
+            return;
+        }
+
+        if (flightArchetype != AttackArchetype.DirectionProjectile)
+        {
+            return;
+        }
 
         if (!IsDirectHitEnabled())
         {
@@ -336,6 +399,34 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         ImpactDirectionProjectile(hitMonster);
+    }
+
+    private void ImpactTrackingTarget()
+    {
+        MonsterBehaviour lockedTarget = targetMonster;
+        ImpactDirectionProjectile(lockedTarget);
+
+        if (!hasImpacted && flightArchetype == AttackArchetype.TrackingProjectile)
+        {
+            TransitionTrackingToDirection();
+        }
+    }
+
+    private void TransitionTrackingToDirection()
+    {
+        if (flightArchetype != AttackArchetype.TrackingProjectile)
+        {
+            return;
+        }
+
+        if (launchDirection.sqrMagnitude <= 0.0001f)
+        {
+            launchDirection = transform.forward;
+        }
+
+        launchDirection.Normalize();
+        targetMonster = null;
+        flightArchetype = AttackArchetype.DirectionProjectile;
     }
 
     private void ImpactDirectionProjectile(MonsterBehaviour hitMonster)
@@ -812,6 +903,37 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         return false;
+    }
+
+    private bool IsValidTrackingTarget(MonsterBehaviour monster)
+    {
+        if (monster == null || !monster.IsGameplayTargetable || monsterManager == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            if (aliveMonsters[i] == monster)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsInsideTrackingRange(Vector3 position)
+    {
+        if (runtimeOptions.TrackingRange <= 0f)
+        {
+            return false;
+        }
+
+        float trackingRangeSqr = runtimeOptions.TrackingRange * runtimeOptions.TrackingRange;
+        return (position - runtimeOptions.TrackingRangeOrigin).sqrMagnitude <= trackingRangeSqr;
     }
 
     private static bool IsValidTarget(MonsterBehaviour monster)

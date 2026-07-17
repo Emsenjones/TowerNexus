@@ -1,3 +1,5 @@
+using UnityEngine;
+
 public readonly struct ProjectileRuntimeOptions
 {
     public bool CanPierce { get; }
@@ -10,6 +12,8 @@ public readonly struct ProjectileRuntimeOptions
     public int RemainingBounceCount { get; }
     public float BounceArcHeight { get; }
     public TargetSelectionType BounceTargetSelectionType { get; }
+    public Vector3 TrackingRangeOrigin { get; }
+    public float TrackingRange { get; }
 
     public ProjectileRuntimeOptions(
         bool canPierce,
@@ -20,7 +24,9 @@ public readonly struct ProjectileRuntimeOptions
         float bounceSearchRadius = 0f,
         int remainingBounceCount = 0,
         float bounceArcHeight = 0f,
-        TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest)
+        TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest,
+        Vector3 trackingRangeOrigin = default,
+        float trackingRange = 0f)
     {
         CanPierce = canPierce;
         MaxPierceHitCount = maxPierceHitCount;
@@ -31,5 +37,7 @@ public readonly struct ProjectileRuntimeOptions
         RemainingBounceCount = remainingBounceCount;
         BounceArcHeight = bounceArcHeight;
         BounceTargetSelectionType = bounceTargetSelectionType;
+        TrackingRangeOrigin = trackingRangeOrigin;
+        TrackingRange = trackingRange;
     }
 }
