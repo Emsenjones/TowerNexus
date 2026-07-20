@@ -15,6 +15,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 startPosition;
     private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> resolvedExplosiveShellTargets = new List<MonsterBehaviour>();
+    private readonly List<MonsterBehaviour> resolvedBlastRoundsTargets = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> bounceCandidates = new List<MonsterBehaviour>();
     private readonly HashSet<MonsterBehaviour> bounceHitHistory = new HashSet<MonsterBehaviour>();
     private ProjectileRuntimeOptions runtimeOptions;
@@ -60,6 +61,7 @@ public class ProjectileBehaviour : MonoBehaviour
         startPosition = transform.position;
         piercedMonsters.Clear();
         resolvedExplosiveShellTargets.Clear();
+        resolvedBlastRoundsTargets.Clear();
         bounceCandidates.Clear();
         CopyBounceHitHistory(inheritedBounceHitHistory);
         elapsedLifetime = 0f;
@@ -460,12 +462,45 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void ApplyDirectionProjectileImpact(MonsterBehaviour hitMonster)
     {
+        Vector3 impactPosition = transform.position;
         hitMonster.TakeDamage(attackDamage);
         ElementalApplication.TryApplyFromTowerAttack(
             sourceTower,
             hitMonster,
-            transform.position);
-        RaiseImpact(hitMonster, transform.position);
+            impactPosition);
+        RaiseImpact(hitMonster, impactPosition);
+        ExecuteBlastRoundsImpact(impactPosition);
+    }
+
+    private void ExecuteBlastRoundsImpact(Vector3 impactPosition)
+    {
+        EffectDefinition blastRoundsEffect = runtimeOptions.BlastRoundsEffect;
+
+        if (blastRoundsEffect == null)
+        {
+            return;
+        }
+
+        EffectExecutor.ExecuteWithResolvedTargets(
+            blastRoundsEffect,
+            new EffectTriggerContext(
+                sourceTower: sourceTower,
+                sourceUpgrade: runtimeOptions.BlastRoundsSourceUpgrade,
+                targetMonster: null,
+                hasTriggerPosition: true,
+                triggerPosition: impactPosition,
+                resolvedDamage: attackDamage,
+                // Elemental Buff actions stay gated here; Blast Rounds grants explicit opportunities below.
+                allowsElementalApplication: false),
+            resolvedBlastRoundsTargets);
+
+        for (int i = 0; i < resolvedBlastRoundsTargets.Count; i++)
+        {
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                resolvedBlastRoundsTargets[i],
+                impactPosition);
+        }
     }
 
     private void FinishDirectionProjectileAfterImpact()

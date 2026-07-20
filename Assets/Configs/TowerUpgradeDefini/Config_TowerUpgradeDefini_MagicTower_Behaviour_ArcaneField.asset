@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
-  m_Name: Config_TowerUpgradeDefini_MagicTower_Behaviour_MagicArcaneDetonation
+  m_Name: Config_TowerUpgradeDefini_MagicTower_Behaviour_ArcaneField
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
-  displayName: MagicArcaneDetonation
+  displayName: Arcane Field
   description: Orb explodes on expiry
-  icon: {fileID: 21300000, guid: 35523d5a70c804015b40e8414601ad2f, type: 3}
+  icon: {fileID: 21300000, guid: 552abccece44d4a2abac96edec82fd25, type: 3}
   towerFamily: 2
   requiredTowerLevel: 2
   upgradeLayer: 1
   basicStatDeltas: []
-  behaviourPackageType: 201
+  behaviourPackageType: 202
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
   multiOrbsCount: 2
@@ -31,10 +31,11 @@ MonoBehaviour:
   maxBounceCount: 1
   bounceArcHeight: 1
   bounceTargetSelectionType: 0
-  arcaneDetonationEffect: {fileID: 11400000, guid: 4371e7a8319dc4873b6c2aa2797d7835, type: 2}
-  arcaneFieldRadius: 1
-  arcaneFieldTickInterval: 1
-  arcaneFieldTickEffect: {fileID: 0}
+  arcaneDetonationEffect: {fileID: 0}
+  arcaneFieldRadius: 1.5
+  arcaneFieldTickInterval: 0.5
+  arcaneFieldTickEffect: {fileID: 11400000, guid: e9156fdd4375b41a086b1febe4bb3e96, type: 2}
+  magicArcaneFieldVfxPrefab: {fileID: 1505402801219553238, guid: f33809e029e81449ea40b12334e34f35, type: 3}
   blastRoundsEffect: {fileID: 0}
   finalDiveHitThreshold: 1
   finalDiveExplosionEffect: {fileID: 0}

@@ -14,6 +14,8 @@ public readonly struct ProjectileRuntimeOptions
     public TargetSelectionType BounceTargetSelectionType { get; }
     public Vector3 TrackingRangeOrigin { get; }
     public float TrackingRange { get; }
+    public TowerUpgradeDefinition BlastRoundsSourceUpgrade { get; }
+    public EffectDefinition BlastRoundsEffect { get; }
 
     public ProjectileRuntimeOptions(
         bool canPierce,
@@ -26,7 +28,9 @@ public readonly struct ProjectileRuntimeOptions
         float bounceArcHeight = 0f,
         TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest,
         Vector3 trackingRangeOrigin = default,
-        float trackingRange = 0f)
+        float trackingRange = 0f,
+        TowerUpgradeDefinition blastRoundsSourceUpgrade = null,
+        EffectDefinition blastRoundsEffect = null)
     {
         CanPierce = canPierce;
         MaxPierceHitCount = maxPierceHitCount;
@@ -39,5 +43,7 @@ public readonly struct ProjectileRuntimeOptions
         BounceTargetSelectionType = bounceTargetSelectionType;
         TrackingRangeOrigin = trackingRangeOrigin;
         TrackingRange = trackingRange;
+        BlastRoundsSourceUpgrade = blastRoundsSourceUpgrade;
+        BlastRoundsEffect = blastRoundsEffect;
     }
 }

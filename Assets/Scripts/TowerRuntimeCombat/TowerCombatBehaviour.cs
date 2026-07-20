@@ -41,6 +41,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool hasLoggedInvalidArcHitDistanceThreshold;
     private bool hasLoggedInvalidExplosiveShellEffect;
     private bool hasLoggedInvalidArcaneDetonationEffect;
+    private bool hasLoggedInvalidBlastRoundsEffect;
     private bool hasLoggedMissingMagicArcaneFieldVfxPrefab;
     private bool hasLoggedInvalidMagicArcaneFieldVfxPrefab;
 
@@ -76,6 +77,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedInvalidArcHitDistanceThreshold = false;
         hasLoggedInvalidExplosiveShellEffect = false;
         hasLoggedInvalidArcaneDetonationEffect = false;
+        hasLoggedInvalidBlastRoundsEffect = false;
         hasLoggedMissingMagicArcaneFieldVfxPrefab = false;
         hasLoggedInvalidMagicArcaneFieldVfxPrefab = false;
         missingBehaviourPackageWarnings.Clear();
@@ -1235,14 +1237,15 @@ public class TowerCombatBehaviour : MonoBehaviour
         Quaternion releaseRotation = origin.rotation;
         MonsterBehaviour initialTarget = pendingDroneTarget;
         ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
+        DroneRuntimeOptions runtimeOptions = CreateDroneRuntimeOptions();
 
-        if (!TryReleaseDrone(releasePosition, releaseRotation, initialTarget, resolvedStats))
+        if (!TryReleaseDrone(releasePosition, releaseRotation, initialTarget, resolvedStats, runtimeOptions))
         {
             ResetPendingAttackState();
             return;
         }
 
-        ScheduleDelayedTwinDrones(releasePosition, releaseRotation, initialTarget, resolvedStats);
+        ScheduleDelayedTwinDrones(releasePosition, releaseRotation, initialTarget, resolvedStats, runtimeOptions);
         StartAttackCooldown();
         ResetPendingAttackState();
     }
@@ -1251,7 +1254,8 @@ public class TowerCombatBehaviour : MonoBehaviour
         Vector3 releasePosition,
         Quaternion releaseRotation,
         MonsterBehaviour initialTarget,
-        ResolvedTowerCombatStats resolvedStats)
+        ResolvedTowerCombatStats resolvedStats,
+        DroneRuntimeOptions runtimeOptions)
     {
         if (!IsDroneTwinDronesActive())
         {
@@ -1263,7 +1267,13 @@ public class TowerCombatBehaviour : MonoBehaviour
 
         for (int i = 1; i < droneCount; i++)
         {
-            StartCoroutine(ReleaseDelayedDrone(releasePosition, releaseRotation, initialTarget, resolvedStats, takeOffDelay * i));
+            StartCoroutine(ReleaseDelayedDrone(
+                releasePosition,
+                releaseRotation,
+                initialTarget,
+                resolvedStats,
+                runtimeOptions,
+                takeOffDelay * i));
         }
     }
 
@@ -1272,6 +1282,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         Quaternion releaseRotation,
         MonsterBehaviour initialTarget,
         ResolvedTowerCombatStats resolvedStats,
+        DroneRuntimeOptions runtimeOptions,
         float delay)
     {
         if (delay > 0f)
@@ -1279,14 +1290,15 @@ public class TowerCombatBehaviour : MonoBehaviour
             yield return new WaitForSeconds(delay);
         }
 
-        TryReleaseDrone(releasePosition, releaseRotation, initialTarget, resolvedStats);
+        TryReleaseDrone(releasePosition, releaseRotation, initialTarget, resolvedStats, runtimeOptions);
     }
 
     private bool TryReleaseDrone(
         Vector3 releasePosition,
         Quaternion releaseRotation,
         MonsterBehaviour initialTarget,
-        ResolvedTowerCombatStats resolvedStats)
+        ResolvedTowerCombatStats resolvedStats,
+        DroneRuntimeOptions runtimeOptions)
     {
         GameObject droneObject = Instantiate(attackConfig.DronePrefab, releasePosition, releaseRotation);
 
@@ -1300,6 +1312,7 @@ public class TowerCombatBehaviour : MonoBehaviour
             towerInstance,
             monsterManager,
             attackConfig,
+            runtimeOptions,
             resolvedStats,
             releasePosition,
             releaseRotation,
@@ -1307,6 +1320,34 @@ public class TowerCombatBehaviour : MonoBehaviour
         );
 
         return droneBehaviour.IsInitialized;
+    }
+
+    private DroneRuntimeOptions CreateDroneRuntimeOptions()
+    {
+        TowerUpgradeDefinition blastRoundsSourceUpgrade = null;
+        EffectDefinition blastRoundsEffect = null;
+
+        if (IsDroneRelease() &&
+            HasBehaviourPackage(TowerBehaviourPackageType.DroneBlastRounds) &&
+            TryGetBehaviourPackageUpgrade(
+                TowerBehaviourPackageType.DroneBlastRounds,
+                out TowerUpgradeDefinition resolvedBlastRoundsUpgrade))
+        {
+            blastRoundsSourceUpgrade = resolvedBlastRoundsUpgrade;
+            blastRoundsEffect = resolvedBlastRoundsUpgrade.BlastRoundsEffect;
+
+            if (blastRoundsEffect == null && !hasLoggedInvalidBlastRoundsEffect)
+            {
+                hasLoggedInvalidBlastRoundsEffect = true;
+                Debug.LogWarning(
+                    "Tower combat resolved Drone Blast Rounds, but its EffectDefinition is missing. Explosion gameplay is disabled for this release.",
+                    resolvedBlastRoundsUpgrade);
+            }
+        }
+
+        return new DroneRuntimeOptions(
+            blastRoundsSourceUpgrade,
+            blastRoundsEffect);
     }
 
     private bool IsDroneTwinDronesActive()

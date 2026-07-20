@@ -19,6 +19,7 @@ public class DroneBehaviour : MonoBehaviour
     private TowerInstance sourceTower;
     private MonsterManager monsterManager;
     private AttackConfig attackConfig;
+    private DroneRuntimeOptions runtimeOptions;
     private Vector3 releasePosition;
     private MonsterBehaviour currentTarget;
     private int attackDamage;
@@ -46,6 +47,7 @@ public class DroneBehaviour : MonoBehaviour
         TowerInstance sourceTower,
         MonsterManager monsterManager,
         AttackConfig attackConfig,
+        DroneRuntimeOptions runtimeOptions,
         ResolvedTowerCombatStats resolvedStats,
         Vector3 releasePosition,
         Quaternion releaseRotation,
@@ -54,6 +56,7 @@ public class DroneBehaviour : MonoBehaviour
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
         this.attackConfig = attackConfig;
+        this.runtimeOptions = runtimeOptions;
         this.releasePosition = releasePosition;
 
         currentTarget = initialTarget;
@@ -305,7 +308,12 @@ public class DroneBehaviour : MonoBehaviour
             target,
             targetPosition,
             attackDamage,
-            AttackArchetype.DirectionProjectile
+            AttackArchetype.DirectionProjectile,
+            new ProjectileRuntimeOptions(
+                canPierce: false,
+                maxPierceHitCount: 1,
+                blastRoundsSourceUpgrade: runtimeOptions.BlastRoundsSourceUpgrade,
+                blastRoundsEffect: runtimeOptions.BlastRoundsEffect)
         );
 
         if (!projectileBehaviour.IsInitialized)
