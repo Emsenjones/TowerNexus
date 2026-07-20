@@ -6,7 +6,8 @@ using Random = UnityEngine.Random;
 public enum DroneRuntimeState
 {
     Launching,
-    Orbiting
+    Orbiting,
+    FinalDiving
 }
 
 public class DroneBehaviour : MonoBehaviour
@@ -15,6 +16,9 @@ public class DroneBehaviour : MonoBehaviour
     [SerializeField] private Transform propellerTransform;
     [SerializeField] private Vector3 propellerSpinAxis = Vector3.forward;
     [SerializeField, Min(0f)] private float propellerSpinSpeedDegreesPerSecond = 1080f;
+    [SerializeField] private GameObject aerialDespawnVfxPrefab;
+
+    private readonly List<MonsterBehaviour> resolvedFinalDiveExplosionTargets = new List<MonsterBehaviour>();
 
     private TowerInstance sourceTower;
     private MonsterManager monsterManager;
@@ -29,8 +33,10 @@ public class DroneBehaviour : MonoBehaviour
     private int orbitDirection = 1;
     private float batteryTimer;
     private float burstTimer;
+    private Vector3 lastValidFinalDiveHitPosition;
     private int burstShotsRemaining;
     private bool hasReachedOrbitPath;
+    private bool hasResolvedFinalDiveImpact;
     private bool isInitialized;
     private bool hasLoggedMissingFireAnchor;
 
@@ -68,7 +74,9 @@ public class DroneBehaviour : MonoBehaviour
         batteryTimer = resolvedStats.DroneBatteryDuration;
         ResetBurstState();
         hasReachedOrbitPath = false;
+        hasResolvedFinalDiveImpact = false;
         hasLoggedMissingFireAnchor = false;
+        resolvedFinalDiveExplosionTargets.Clear();
 
         if (!CanInitialize())
         {
@@ -162,6 +170,9 @@ public class DroneBehaviour : MonoBehaviour
             case DroneRuntimeState.Orbiting:
                 UpdateOrbiting();
                 break;
+            case DroneRuntimeState.FinalDiving:
+                UpdateFinalDiving();
+                break;
         }
 
         UpdatePropellerSpin();
@@ -169,14 +180,6 @@ public class DroneBehaviour : MonoBehaviour
 
     private void UpdateLaunching()
     {
-        DrainBattery();
-
-        if (batteryTimer <= 0f)
-        {
-            Despawn();
-            return;
-        }
-
         MoveTowards(GetLaunchPosition());
 
         if (!IsAtPosition(GetLaunchPosition()))
@@ -190,7 +193,7 @@ public class DroneBehaviour : MonoBehaviour
 
             if (!IsValidTargetInRange(currentTarget))
             {
-                Despawn();
+                AerialDespawn();
                 return;
             }
         }
@@ -204,7 +207,7 @@ public class DroneBehaviour : MonoBehaviour
 
         if (batteryTimer <= 0f)
         {
-            Despawn();
+            ResolveBatteryDepletion();
             return;
         }
 
@@ -214,7 +217,7 @@ public class DroneBehaviour : MonoBehaviour
 
             if (!IsValidTargetInRange(currentTarget))
             {
-                Despawn();
+                AerialDespawn();
                 return;
             }
 
@@ -240,6 +243,132 @@ public class DroneBehaviour : MonoBehaviour
         }
 
         UpdateBurstFire();
+    }
+
+    private void ResolveBatteryDepletion()
+    {
+        if (!runtimeOptions.IsFinalDiveEnabled ||
+            !EffectTargetResolver.IsValidMonsterTarget(currentTarget))
+        {
+            AerialDespawn();
+            return;
+        }
+
+        lastValidFinalDiveHitPosition = EffectTargetResolver.GetMonsterHitPosition(currentTarget);
+        hasResolvedFinalDiveImpact = false;
+        ResetBurstState();
+        SetState(DroneRuntimeState.FinalDiving);
+    }
+
+    private void UpdateFinalDiving()
+    {
+        Vector3 destination = lastValidFinalDiveHitPosition;
+
+        if (EffectTargetResolver.IsValidMonsterTarget(currentTarget))
+        {
+            destination = EffectTargetResolver.GetMonsterHitPosition(currentTarget);
+            lastValidFinalDiveHitPosition = destination;
+        }
+
+        MoveTowards(destination);
+
+        float hitThreshold = runtimeOptions.FinalDiveHitThreshold;
+
+        if ((transform.position - destination).sqrMagnitude <= hitThreshold * hitThreshold)
+        {
+            ResolveFinalDiveImpact();
+        }
+    }
+
+    private void ResolveFinalDiveImpact()
+    {
+        if (hasResolvedFinalDiveImpact)
+        {
+            return;
+        }
+
+        hasResolvedFinalDiveImpact = true;
+        Vector3 impactPosition = transform.position;
+
+        if (TryResolveFinalDiveDirectTarget(impactPosition, out MonsterBehaviour directTarget))
+        {
+            directTarget.TakeDamage(attackDamage);
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                directTarget,
+                impactPosition);
+        }
+
+        EffectExecutor.ExecuteWithResolvedTargets(
+            runtimeOptions.FinalDiveExplosionEffect,
+            new EffectTriggerContext(
+                sourceTower: sourceTower,
+                sourceUpgrade: runtimeOptions.FinalDiveSourceUpgrade,
+                targetMonster: null,
+                hasTriggerPosition: true,
+                triggerPosition: impactPosition,
+                resolvedDamage: attackDamage,
+                allowsElementalApplication: false),
+            resolvedFinalDiveExplosionTargets);
+
+        for (int i = 0; i < resolvedFinalDiveExplosionTargets.Count; i++)
+        {
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                resolvedFinalDiveExplosionTargets[i],
+                impactPosition);
+        }
+
+        Despawn();
+    }
+
+    private bool TryResolveFinalDiveDirectTarget(
+        Vector3 impactPosition,
+        out MonsterBehaviour directTarget)
+    {
+        directTarget = null;
+
+        if (monsterManager == null || runtimeOptions.FinalDiveHitThreshold <= 0f)
+        {
+            return false;
+        }
+
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        float hitThresholdSqr = runtimeOptions.FinalDiveHitThreshold * runtimeOptions.FinalDiveHitThreshold;
+        float nearestDistanceSqr = float.MaxValue;
+
+        for (int i = 0; i < aliveMonsters.Count; i++)
+        {
+            MonsterBehaviour monster = aliveMonsters[i];
+
+            if (!EffectTargetResolver.IsValidMonsterTarget(monster))
+            {
+                continue;
+            }
+
+            float distanceSqr =
+                (EffectTargetResolver.GetMonsterHitPosition(monster) - impactPosition).sqrMagnitude;
+
+            if (distanceSqr > hitThresholdSqr || distanceSqr >= nearestDistanceSqr)
+            {
+                continue;
+            }
+
+            directTarget = monster;
+            nearestDistanceSqr = distanceSqr;
+        }
+
+        return directTarget != null;
+    }
+
+    private void AerialDespawn()
+    {
+        if (aerialDespawnVfxPrefab != null)
+        {
+            Instantiate(aerialDespawnVfxPrefab, transform.position, Quaternion.identity);
+        }
+
+        Despawn();
     }
 
     private void Despawn()
@@ -620,7 +749,8 @@ public class DroneBehaviour : MonoBehaviour
     private static bool ShouldSpinPropeller(DroneRuntimeState state)
     {
         return state == DroneRuntimeState.Launching ||
-               state == DroneRuntimeState.Orbiting;
+               state == DroneRuntimeState.Orbiting ||
+               state == DroneRuntimeState.FinalDiving;
     }
 
     private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)

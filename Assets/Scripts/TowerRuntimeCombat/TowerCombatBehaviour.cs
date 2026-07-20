@@ -42,6 +42,7 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool hasLoggedInvalidExplosiveShellEffect;
     private bool hasLoggedInvalidArcaneDetonationEffect;
     private bool hasLoggedInvalidBlastRoundsEffect;
+    private bool hasLoggedInvalidFinalDiveConfiguration;
     private bool hasLoggedMissingMagicArcaneFieldVfxPrefab;
     private bool hasLoggedInvalidMagicArcaneFieldVfxPrefab;
 
@@ -78,6 +79,7 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedInvalidExplosiveShellEffect = false;
         hasLoggedInvalidArcaneDetonationEffect = false;
         hasLoggedInvalidBlastRoundsEffect = false;
+        hasLoggedInvalidFinalDiveConfiguration = false;
         hasLoggedMissingMagicArcaneFieldVfxPrefab = false;
         hasLoggedInvalidMagicArcaneFieldVfxPrefab = false;
         missingBehaviourPackageWarnings.Clear();
@@ -1326,6 +1328,9 @@ public class TowerCombatBehaviour : MonoBehaviour
     {
         TowerUpgradeDefinition blastRoundsSourceUpgrade = null;
         EffectDefinition blastRoundsEffect = null;
+        TowerUpgradeDefinition finalDiveSourceUpgrade = null;
+        float finalDiveHitThreshold = 0f;
+        EffectDefinition finalDiveExplosionEffect = null;
 
         if (IsDroneRelease() &&
             HasBehaviourPackage(TowerBehaviourPackageType.DroneBlastRounds) &&
@@ -1345,9 +1350,36 @@ public class TowerCombatBehaviour : MonoBehaviour
             }
         }
 
+        if (IsDroneRelease() &&
+            HasBehaviourPackage(TowerBehaviourPackageType.DroneFinalDive) &&
+            TryGetBehaviourPackageUpgrade(
+                TowerBehaviourPackageType.DroneFinalDive,
+                out TowerUpgradeDefinition resolvedFinalDiveUpgrade))
+        {
+            float resolvedHitThreshold = resolvedFinalDiveUpgrade.FinalDiveHitThreshold;
+            EffectDefinition resolvedExplosionEffect = resolvedFinalDiveUpgrade.FinalDiveExplosionEffect;
+
+            if (resolvedHitThreshold > 0f && resolvedExplosionEffect != null)
+            {
+                finalDiveSourceUpgrade = resolvedFinalDiveUpgrade;
+                finalDiveHitThreshold = resolvedHitThreshold;
+                finalDiveExplosionEffect = resolvedExplosionEffect;
+            }
+            else if (!hasLoggedInvalidFinalDiveConfiguration)
+            {
+                hasLoggedInvalidFinalDiveConfiguration = true;
+                Debug.LogWarning(
+                    "Tower combat resolved Drone Final Dive, but it requires a positive hit threshold and an explosion EffectDefinition. Final Dive is disabled for this release.",
+                    resolvedFinalDiveUpgrade);
+            }
+        }
+
         return new DroneRuntimeOptions(
             blastRoundsSourceUpgrade,
-            blastRoundsEffect);
+            blastRoundsEffect,
+            finalDiveSourceUpgrade,
+            finalDiveHitThreshold,
+            finalDiveExplosionEffect);
     }
 
     private bool IsDroneTwinDronesActive()

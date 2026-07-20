@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_CannonTowerExplosiveShell
+  m_Name: Config_EffectDefini_DealDamage_MagicTowerArcaneFieldOnTick
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Shell impacts trigger an additional explosion
-  radius: 1
-  executionVfxPrefab: {fileID: 5422278016793439621, guid: 87cfc2084e94f49fd97d99c44a19a204, type: 3}
+  displayName: The Magic Arcan field deals damage to targets in the range
+  radius: 0
+  executionVfxPrefab: {fileID: 0}
   actions:
   - actionType: 0
-    damageAmount: 10
+    damageAmount: 1
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0

@@ -10,14 +10,14 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_BlastRoundImpact
+  m_Name: Config_EffectDefini_DealDamage_DroneTowerFinalDiveImpact
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Balst Round impact
-  radius: 0.5
-  executionVfxPrefab: {fileID: 6854730149069825895, guid: 3937a78c107134852abc806bef4e8e62, type: 3}
+  displayName: Deal damage on Stacks
+  radius: 1
+  executionVfxPrefab: {fileID: 4243979002228035779, guid: fb1811978a8f749eda670bf2172a50d8, type: 3}
   actions:
   - actionType: 0
-    damageAmount: 1
+    damageAmount: 12
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0

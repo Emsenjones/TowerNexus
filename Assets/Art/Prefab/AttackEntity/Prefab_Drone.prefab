@@ -81,6 +81,7 @@ MonoBehaviour:
   propellerTransform: {fileID: 1827786373825279271}
   propellerSpinAxis: {x: 0, y: 0, z: 1}
   propellerSpinSpeedDegreesPerSecond: 1080
+  aerialDespawnVfxPrefab: {fileID: 5036833036385757105, guid: d7a1f9c8b32e4a6ab1d0e5f7c9a23456, type: 3}
 --- !u!1 &8934873267081905200
 GameObject:
   m_ObjectHideFlags: 0
