@@ -367,7 +367,7 @@ Examples of Behaviour Layer package parameters:
 - Cannon Bouncing Shell search radius, maximum bounce count, bounce-child arc height, and local target-selection type
 - Magic Multi Orbs count; runtime derives an even `360 / count` starting-angle step
 - Magic Arcane Detonation area Effect reference
-- Magic Arcane Field radius, tick interval, and tick Effect reference
+- Magic Arcane Field radius, tick interval, tick Effect reference, and VFX prefab whose root contains MagicArcaneFieldBehaviour
 - Drone Twin Drones drone count and takeoff delay
 - Drone Blast Rounds area Effect reference
 - Drone Final Dive positive `finalDiveHitThreshold` and impact Effect reference
@@ -529,7 +529,7 @@ Multi Orbs releases the authored number of independent Magic Orb Attack Entities
 
 Arcane Detonation executes one area Effect at the Orb's current world position only when the Orb ends through HitCountExhausted or LifetimeExpired. Forced cleanup, battle end, owner invalidation, and reset do not trigger it. Multi Orbs detonate independently. Every valid Monster resolved by a Detonation receives one explicit Elemental application opportunity.
 
-Arcane Field creates one tower-owned field immediately when the upgrade is applied. The Behaviour package owns field radius and tick interval; its referenced EffectDefinition owns reusable damage and execution feedback. The field follows the tower, has no independent first-version duration, does not duplicate when other upgrades are applied, and ends with tower destruction, removal, or battle cleanup. Each tick resolves every valid Monster inside the field and provides one 100% Elemental application attempt per target. V1 has no per-target Elemental chance parameter.
+Arcane Field creates one tower-owned field immediately when the upgrade is applied. Its TowerUpgradeDefinition owns field radius, tick interval, tick Effect reference, and the Magic Arcane Field VFX prefab whose root contains MagicArcaneFieldBehaviour. The instantiated prefab becomes the concrete field runtime instance. It is parented to and follows the tower, and its local X/Z scale is set to the applied field radius while its authored local Y scale is preserved. It has no independent first-version duration, does not duplicate when other upgrades are applied, and ends with tower destruction, removal, or battle cleanup. Each tick resolves every valid Monster inside the field and provides one 100% Elemental application attempt per target. V1 has no per-target Elemental chance parameter.
 
 ### Drone Behaviour Upgrades
 
@@ -661,7 +661,7 @@ Tower Placement System should not decide tower level-up rules or apply tower upg
 
 ## Tower Framework System
 
-Tower Framework System owns TowerDefinition and the per-level TowerDefinition config data consumed by TowerUpgradeSystem.
+Tower Framework System owns TowerDefinition and its per-level config data. TowerUpgradeSystem owns the Arcane Field package identity, parameters, and package-specific VFX prefab reference.
 
 ## Battle HUD UI System
 

@@ -65,13 +65,13 @@ Package-specific authoring:
 | Cannon Multi Shells | `multiShellsMaxInitialShellCount`, minimum and default `2` |
 | Cannon Bouncing Shell | Positive `bounceSearchRadius`, positive `maxBounceCount`, nonnegative `bounceArcHeight`, `bounceTargetSelectionType` |
 | Magic Arcane Detonation | Area `EffectDefinition` |
-| Magic Arcane Field | Positive radius, positive tick interval, tick `EffectDefinition` |
+| Magic Arcane Field | Positive radius, positive tick interval, tick `EffectDefinition`, VFX prefab with `MagicArcaneFieldBehaviour` on its root |
 | Drone Blast Rounds | Area `EffectDefinition` |
 | Drone Final Dive | Positive `finalDiveHitThreshold`, impact explosion `EffectDefinition` |
 
 `maxBounceCount` means the maximum number of bounce children after one initial Shell. It does not include the initial Shell.
 
-Explosive Shell, Arcane Detonation, Blast Rounds, and Final Dive require valid area Effects with positive radius. Arcane Field instead owns its positive area radius and tick interval directly; its tick Effect must be valid and single-target with radius zero.
+Explosive Shell, Arcane Detonation, Blast Rounds, and Final Dive require valid area Effects with positive radius. Arcane Field instead owns its positive area radius and tick interval directly; its tick Effect must be valid and single-target with radius zero, and its required VFX prefab must contain MagicArcaneFieldBehaviour on the root.
 
 ## 5. Out of Scope
 
@@ -98,7 +98,7 @@ Explosive Shell, Arcane Detonation, Blast Rounds, and Final Dive require valid a
 
 After code implementation, the user must be able to author eight Behaviour upgrade assets with the correct TowerFamily and package type.
 
-Required references and values must be visible only for their matching package. No asset needs to be created by this task, but validation must clearly identify missing Effects, nonpositive radii or intervals, invalid bounce counts, and TowerFamily mismatches.
+Required references and values must be visible only for their matching package. No asset needs to be created by this task, but validation must clearly identify missing Effects or the Arcane Field VFX prefab, an Arcane Field prefab missing its required root Behaviour, nonpositive radii or intervals, invalid bounce counts, and TowerFamily mismatches.
 
 Before deleting `effectBindings`, inspect every serialized `TowerUpgradeDefinition` asset. If any list is non-empty, stop this task and report the asset for explicit migration. When every list is empty, do not bulk reserialize assets merely to remove the stale empty YAML key.
 
@@ -111,6 +111,7 @@ Before deleting `effectBindings`, inspect every serialized `TowerUpgradeDefiniti
 - Package-specific fields remain hidden after an asset is switched from Behaviour to Basic or Elemental Layer.
 - Required Effect references are validated.
 - Area Effects reject nonpositive Effect radius; Arcane Field rejects a non-single-target tick Effect.
+- Arcane Field rejects a missing VFX prefab or a prefab without MagicArcaneFieldBehaviour on its root.
 - `bounceSearchRadius`, `maxBounceCount`, Arcane Field radius/tick interval, and `finalDiveHitThreshold` reject nonpositive authored values; `bounceArcHeight` rejects negative values.
 - Hunting Arrow introduces no redundant V1 numeric field; Multi Shells exposes one validated maximum initial-Shell count.
 - Existing Piercing Arrow, Scatter Arrow, Twin Orbs, and Twin Drones assets remain readable and valid.

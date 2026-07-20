@@ -114,7 +114,7 @@ Tower level base stat growth should be configured in TowerDefinition through per
 
 Upgrade definition references are owned by the Tower Upgrade System and should not be mixed with basic TowerDefinition attack configuration unless a later implementation explicitly requires a shared lookup.
 
-TowerUpgradeDefinition content should stay outside TowerDefinition and AttackConfig. TowerDefinition owns tower identity, base prefab/config references, and per-level base stat and presentation data. AttackConfig owns immutable default attack configuration. Tower upgrade runtime state tracks per-instance upgrade state, damage bonuses, stat deltas, and behaviour package activation.
+TowerUpgradeDefinition content should stay outside TowerDefinition and AttackConfig. TowerDefinition owns tower identity, base prefab/config references, and per-level base stat and presentation data. AttackConfig owns immutable default attack configuration. TowerUpgradeDefinition owns package-specific authoring and runtime prefab references, while tower upgrade runtime state tracks per-instance upgrade state, damage bonuses, stat deltas, and behaviour package activation.
 
 Suggested TowerLevelConfig fields include:
 
@@ -608,6 +608,10 @@ VFX expectation:
 - The Magic Orb visual should follow the runtime orbit path
 - Contact VFX may play when the Magic Orb successfully hits a monster
 - The Magic Orb visual should stop or despawn when the Magic Orb lifetime ends
+- The Magic Arcane Field TowerUpgradeDefinition provides one VFX prefab whose root contains MagicArcaneFieldBehaviour
+- The Arcane Field prefab is instantiated as a child of the owning tower only while the Arcane Field package is active
+- The Arcane Field VFX prefab uses local X/Z scale `1` as authored radius `1`; runtime sets local X/Z scale to the applied Arcane Field radius while preserving local Y scale
+- Nested particle, mesh, material, and shader content remains presentation-only; MagicArcaneFieldBehaviour owns field timing and gameplay execution
 
 Magic Orb VFX is presentation-only and must not apply damage, search targets, or determine hit results.
 
@@ -1091,6 +1095,7 @@ Included:
 - Tower prefab visual structure contract
 - TowerVisualController ownership and API direction
 - Optional AttackConfig VFX and Attack Entity prefab references for attack release, Magic Orb, and Drone attacks
+- Magic Arcane Field Behaviour-package VFX/runtime prefab structure contract
 
 Excluded:
 
@@ -1099,7 +1104,7 @@ Excluded:
 - Buff implementation
 - Upgrade application logic
 - Draft generation rules
-- Runtime VFX spawning, binding, playback, and cleanup
+- Generic runtime VFX spawning, binding, playback, and cleanup beyond explicitly reviewed runtime-prefab contracts
 - Final VFX prefab authoring and particle polish
 - Particle collision driven combat logic
 

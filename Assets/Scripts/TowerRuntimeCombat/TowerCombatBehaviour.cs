@@ -23,6 +23,8 @@ public class TowerCombatBehaviour : MonoBehaviour
     private readonly HashSet<TowerBehaviourPackageType> missingBehaviourPackageWarnings = new HashSet<TowerBehaviourPackageType>();
     private readonly HashSet<MagicOrbBehaviour> activeMagicOrbs = new HashSet<MagicOrbBehaviour>();
 
+    private TowerInstance subscribedUpgradeTowerInstance;
+    private MagicArcaneFieldBehaviour activeMagicArcaneField;
     private TowerDefinition towerDefinition;
     private AttackConfig attackConfig;
     private MonsterBehaviour currentTarget;
@@ -39,6 +41,8 @@ public class TowerCombatBehaviour : MonoBehaviour
     private bool hasLoggedInvalidArcHitDistanceThreshold;
     private bool hasLoggedInvalidExplosiveShellEffect;
     private bool hasLoggedInvalidArcaneDetonationEffect;
+    private bool hasLoggedMissingMagicArcaneFieldVfxPrefab;
+    private bool hasLoggedInvalidMagicArcaneFieldVfxPrefab;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
     public event Action<TowerCombatBehaviour, AttackArchetype> OnUnsupportedAttackEntity;
@@ -51,8 +55,9 @@ public class TowerCombatBehaviour : MonoBehaviour
 
     public void Initialize(TowerInstance towerInstance, MonsterManager monsterManager)
     {
+        UnsubscribeFromUpgradeNotifications();
+        CleanupMagicArcaneField();
         ForceCleanupTrackedMagicOrbs();
-        CleanupActiveVfx();
 
         this.towerInstance = towerInstance;
         this.monsterManager = monsterManager;
@@ -71,7 +76,12 @@ public class TowerCombatBehaviour : MonoBehaviour
         hasLoggedInvalidArcHitDistanceThreshold = false;
         hasLoggedInvalidExplosiveShellEffect = false;
         hasLoggedInvalidArcaneDetonationEffect = false;
+        hasLoggedMissingMagicArcaneFieldVfxPrefab = false;
+        hasLoggedInvalidMagicArcaneFieldVfxPrefab = false;
         missingBehaviourPackageWarnings.Clear();
+
+        SubscribeToUpgradeNotifications();
+        EnsureArcaneFieldExists();
     }
 
     public void OnAttackAnimationRelease()
@@ -104,23 +114,30 @@ public class TowerCombatBehaviour : MonoBehaviour
         CacheOptionalReferences();
     }
 
+    private void OnEnable()
+    {
+        SubscribeToUpgradeNotifications();
+        EnsureArcaneFieldExists();
+    }
+
     private void OnDisable()
     {
+        UnsubscribeFromUpgradeNotifications();
+        CleanupMagicArcaneField();
         ForceCleanupTrackedMagicOrbs();
-        CleanupActiveVfx();
     }
 
     private void OnDestroy()
     {
+        UnsubscribeFromUpgradeNotifications();
+        CleanupMagicArcaneField();
         ForceCleanupTrackedMagicOrbs();
-        CleanupActiveVfx();
     }
 
     private void Update()
     {
         if (!CanRunCombat())
         {
-            CleanupActiveVfx();
             return;
         }
 
@@ -936,6 +953,204 @@ public class TowerCombatBehaviour : MonoBehaviour
         activeMagicOrbs.Clear();
     }
 
+    private void SubscribeToUpgradeNotifications()
+    {
+        if (towerInstance == null)
+        {
+            towerInstance = GetComponent<TowerInstance>();
+        }
+
+        if (subscribedUpgradeTowerInstance == towerInstance)
+        {
+            return;
+        }
+
+        UnsubscribeFromUpgradeNotifications();
+
+        if (towerInstance == null)
+        {
+            return;
+        }
+
+        subscribedUpgradeTowerInstance = towerInstance;
+        subscribedUpgradeTowerInstance.OnUpgradeRecorded += HandleUpgradeRecorded;
+    }
+
+    private void UnsubscribeFromUpgradeNotifications()
+    {
+        if (subscribedUpgradeTowerInstance == null)
+        {
+            return;
+        }
+
+        subscribedUpgradeTowerInstance.OnUpgradeRecorded -= HandleUpgradeRecorded;
+        subscribedUpgradeTowerInstance = null;
+    }
+
+    private void HandleUpgradeRecorded(TowerUpgradeDefinition _)
+    {
+        EnsureArcaneFieldExists();
+    }
+
+    private void EnsureArcaneFieldExists()
+    {
+        if (IsCurrentArcaneField(activeMagicArcaneField))
+        {
+            return;
+        }
+
+        if (activeMagicArcaneField != null)
+        {
+            activeMagicArcaneField.Cleanup();
+            activeMagicArcaneField = null;
+        }
+
+        MagicArcaneFieldBehaviour existingField = FindAttachedMagicArcaneField();
+
+        if (IsCurrentArcaneField(existingField))
+        {
+            activeMagicArcaneField = existingField;
+            return;
+        }
+
+        if (towerInstance == null ||
+            !towerInstance.TryGetBehaviourPackageUpgrade(
+                TowerBehaviourPackageType.MagicArcaneField,
+                out TowerUpgradeDefinition arcaneFieldUpgrade))
+        {
+            if (existingField != null)
+            {
+                existingField.Cleanup();
+            }
+
+            return;
+        }
+
+        if (monsterManager == null)
+        {
+            monsterManager = FindFirstObjectByType<MonsterManager>();
+        }
+
+        MagicArcaneFieldRuntimeOptions runtimeOptions = new MagicArcaneFieldRuntimeOptions(
+            arcaneFieldUpgrade,
+            arcaneFieldUpgrade.ArcaneFieldRadius,
+            arcaneFieldUpgrade.ArcaneFieldTickInterval,
+            arcaneFieldUpgrade.ArcaneFieldTickEffect,
+            arcaneFieldUpgrade.MagicArcaneFieldVfxPrefab);
+
+        MagicArcaneFieldBehaviour field = existingField;
+
+        if (field == null && !TryInstantiateMagicArcaneField(runtimeOptions.VfxPrefab, out field))
+        {
+            return;
+        }
+
+        field.Cleanup();
+
+        if (!field.Initialize(towerInstance, monsterManager, runtimeOptions))
+        {
+            field.Cleanup();
+            activeMagicArcaneField = null;
+            return;
+        }
+
+        activeMagicArcaneField = field;
+    }
+
+    private bool IsCurrentArcaneField(MagicArcaneFieldBehaviour field)
+    {
+        return field != null &&
+               field.IsInitialized &&
+               field.SourceTower == towerInstance &&
+               field.SourceUpgrade != null &&
+               field.SourceUpgrade.BehaviourPackageType == TowerBehaviourPackageType.MagicArcaneField &&
+               towerInstance != null &&
+               field.transform != transform &&
+               field.transform.IsChildOf(transform) &&
+               towerInstance.HasUpgrade(field.SourceUpgrade);
+    }
+
+    private void CleanupMagicArcaneField()
+    {
+        MagicArcaneFieldBehaviour field = activeMagicArcaneField != null
+            ? activeMagicArcaneField
+            : FindAttachedMagicArcaneField();
+
+        if (field != null)
+        {
+            field.Cleanup();
+        }
+
+        activeMagicArcaneField = null;
+    }
+
+    private MagicArcaneFieldBehaviour FindAttachedMagicArcaneField()
+    {
+        MagicArcaneFieldBehaviour[] fields = GetComponentsInChildren<MagicArcaneFieldBehaviour>(true);
+        MagicArcaneFieldBehaviour selectedField = null;
+
+        for (int i = 0; i < fields.Length; i++)
+        {
+            MagicArcaneFieldBehaviour field = fields[i];
+
+            if (field == null || field.transform == transform)
+            {
+                continue;
+            }
+
+            if (selectedField == null)
+            {
+                selectedField = field;
+                continue;
+            }
+
+            field.Cleanup();
+        }
+
+        return selectedField;
+    }
+
+    private bool TryInstantiateMagicArcaneField(
+        GameObject fieldVfxPrefab,
+        out MagicArcaneFieldBehaviour field)
+    {
+        field = null;
+
+        if (fieldVfxPrefab == null)
+        {
+            if (!hasLoggedMissingMagicArcaneFieldVfxPrefab)
+            {
+                hasLoggedMissingMagicArcaneFieldVfxPrefab = true;
+                Debug.LogWarning(
+                    "Tower combat cannot activate Magic Arcane Field: the applied TowerUpgradeDefinition has no Magic Arcane Field VFX prefab.",
+                    this);
+            }
+
+            return false;
+        }
+
+        GameObject fieldObject = Instantiate(fieldVfxPrefab, transform);
+        fieldObject.transform.localPosition = Vector3.zero;
+        fieldObject.transform.localRotation = Quaternion.identity;
+
+        if (!fieldObject.TryGetComponent(out field))
+        {
+            if (!hasLoggedInvalidMagicArcaneFieldVfxPrefab)
+            {
+                hasLoggedInvalidMagicArcaneFieldVfxPrefab = true;
+                Debug.LogWarning(
+                    "Tower combat cannot activate Magic Arcane Field: its VFX prefab root requires MagicArcaneFieldBehaviour.",
+                    fieldVfxPrefab);
+            }
+
+            fieldObject.SetActive(false);
+            Destroy(fieldObject);
+            return false;
+        }
+
+        return true;
+    }
+
     private bool IsMagicMultiOrbsActive()
     {
         return IsMagicOrbRelease() &&
@@ -1468,10 +1683,6 @@ public class TowerCombatBehaviour : MonoBehaviour
             default:
                 return Quaternion.identity;
         }
-    }
-
-    private void CleanupActiveVfx()
-    {
     }
 
     private void CleanupVfxOutsideCurrentArchetype()

@@ -1,6 +1,6 @@
 # Task009 - Magic Arcane Field
 
-Status: Ready for implementation
+Status: Runtime implementation complete; Unity prefab authoring and Play Mode validation pending
 
 Depends on: Task002
 
@@ -10,6 +10,7 @@ Implement Arcane Field as one tower-owned persistent field that activates immedi
 
 ## 2. Source Documents
 
+- `Doc/07_TowerFrameworkSystem.md`
 - `Doc/08_TowerRuntimeCombatSystem.md`
 - `Doc/10_TowerUpgradeSystem.md`
 - `Doc/11_EffectSystem.md`
@@ -21,6 +22,9 @@ Implement Arcane Field as one tower-owned persistent field that activates immedi
 - Ensure the field exists exactly once immediately after application.
 - Keep activation/reconciliation idempotent when other upgrades are applied later.
 - Resolve package radius, tick interval, and tick Effect from the applied definition.
+- Resolve the Magic Arcane Field VFX prefab from the applied TowerUpgradeDefinition.
+- Instantiate or reuse that prefab as a child of the tower and require MagicArcaneFieldBehaviour on its root.
+- Set the field prefab root's local X/Z scale to the applied field radius while preserving its authored local Y scale.
 - Follow the owning tower position.
 - Begin the first tick after one complete authored tick interval.
 - At each tick, resolve every valid Monster within the package-owned radius.
@@ -34,6 +38,7 @@ Implement Arcane Field as one tower-owned persistent field that activates immedi
 - Independent duration or expiry.
 - Per-target chance authoring.
 - Reusing generic EffectZone ownership for the tower-attached field.
+- Adding MagicArcaneFieldBehaviour dynamically to the tower or using a runtime AddComponent fallback when the VFX prefab is invalid.
 - Granting Elemental eligibility to ordinary OnZoneTick or periodic Effects.
 - A generic upgrade-activation event framework beyond the smallest notification/reconciliation needed here.
 
@@ -42,7 +47,9 @@ Implement Arcane Field as one tower-owned persistent field that activates immedi
 ```text
 Arcane Field upgrade successfully applied
     -> EnsureArcaneFieldExists()
-    -> one tower-owned field runtime
+    -> instantiate or reuse the applied package's Magic Arcane Field VFX prefab
+    -> require MagicArcaneFieldBehaviour on the prefab root
+    -> one tower-owned field runtime child
     -> follow owner
     -> every tick interval:
         -> collect every valid Monster inside field radius
@@ -54,8 +61,9 @@ Calling the ensure path repeatedly must return the same active field instead of 
 
 ## 6. Ownership Contract
 
-- Tower runtime owns field instance identity, activation, follow behavior, timer, uniqueness, and cleanup.
-- The Behaviour package owns radius and tick interval.
+- The Arcane Field TowerUpgradeDefinition owns radius, tick interval, tick Effect, and the Magic Arcane Field VFX prefab reference.
+- Tower runtime owns field instance identity, prefab instantiation/reuse, activation, follow behavior, timer, uniqueness, and cleanup.
+- MagicArcaneFieldBehaviour on the VFX prefab root owns tick execution; nested VFX content is presentation-only.
 - Effect System owns reusable tick actions and execution feedback.
 - Effect target-resolution utilities may be reused for the package radius.
 - Buff System owns the outcome of each application attempt.
@@ -65,6 +73,9 @@ Calling the ensure path repeatedly must return the same active field instead of 
 - Create or configure a Magic Arcane Field upgrade asset.
 - Author a positive field radius and tick interval.
 - Assign a valid single-target tick EffectDefinition; the field runtime supplies the multi-target radius and invokes the Effect once per target.
+- Create the Magic Arcane Field VFX prefab and attach MagicArcaneFieldBehaviour to its root.
+- Author the VFX at local X/Z scale `1` for radius `1`; runtime applies the configured radius scale.
+- Assign that prefab to the Magic Arcane Field TowerUpgradeDefinition.
 - Configure the desired tick damage and execution VFX on the Effect.
 - No independent duration, chance field, or generic EffectZone prefab is required.
 
@@ -72,8 +83,10 @@ Calling the ensure path repeatedly must return the same active field instead of 
 
 - Applying Arcane Field to a deployed tower activates it immediately without waiting for an attack.
 - Exactly one field exists per owning tower.
+- The field instance comes from the applied TowerUpgradeDefinition VFX prefab and retains MagicArcaneFieldBehaviour on its root.
 - Applying any later upgrade does not create another field.
 - The field remains centered on the moving/placed tower.
+- The field VFX local X/Z scale matches ArcaneFieldRadius and its local Y scale remains prefab-authored.
 - The first tick occurs after one full interval and subsequent ticks follow the authored cadence.
 - Every valid Monster inside radius is processed once per tick.
 - Monsters outside radius are not processed.
@@ -86,6 +99,8 @@ Calling the ensure path repeatedly must return the same active field instead of 
 
 - Apply Arcane Field before and during combat, then apply other upgrades.
 - Count field instances after repeated reconciliation.
+- Confirm the instantiated field is a child of the owning tower and comes from the configured TowerUpgradeDefinition VFX prefab.
+- Disable and re-enable the tower, then verify the same inactive field child is reinitialized instead of duplicated.
 - Move or replace the tower and verify ownership/cleanup behavior.
 - Exercise zero, one, and multiple Monsters crossing the radius between ticks.
 - Test zero damage, cooldown, Protection, death during a tick, and battle cleanup.

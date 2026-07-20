@@ -43,6 +43,7 @@ The Tower Runtime Combat System owns:
 - Attack Entity release orchestration
 - Projectile creation and initialization
 - Magic Orb release orchestration
+- Magic Arcane Field prefab instantiation, reconciliation, ticking, and cleanup
 - Drone release orchestration
 - Direct damage dispatch coordination
 - Effect trigger context coordination at attack hit, contact, or impact boundaries
@@ -462,6 +463,32 @@ MagicOrbBehaviour executes orbit movement, contact detection, hit count consumpt
 
 Persistent status effects applied by future Magic Orb upgrades should be delegated through Effect System to Buff System.
 
+## 10.1 Magic Arcane Field Runtime
+
+Arcane Field is one tower-owned persistent runtime instantiated immediately after its Behaviour package is successfully applied.
+
+The applied Magic Arcane Field TowerUpgradeDefinition provides the VFX prefab reference. The prefab root must contain MagicArcaneFieldBehaviour. Tower Runtime Combat owns exactly-once instantiation, reconciliation, parenting to the owning tower, and cleanup; it must not add MagicArcaneFieldBehaviour dynamically to the tower or create a generic EffectZone.
+
+Recommended activation flow:
+
+```text
+Arcane Field upgrade recorded
+    ↓
+Reconcile the owning tower
+    ↓
+Reuse an existing initialized or inactive field child when available
+    ↓
+Otherwise instantiate the applied package's magicArcaneFieldVfxPrefab as a tower child
+    ↓
+Require MagicArcaneFieldBehaviour on the prefab root
+    ↓
+Initialize from the applied package radius, tick interval, and tick Effect
+```
+
+The field prefab remains centered on and follows the owning tower through parent-child Transform ownership. On every initialization or reinitialization, MagicArcaneFieldBehaviour sets the prefab root's local X/Z scale to the applied package radius and preserves its authored local Y scale. A prefab at local X/Z scale `1` therefore represents field radius `1`. Cleanup deactivates the field runtime and its complete VFX object. Re-enable reconciliation may reactivate and reinitialize the same child instead of creating a duplicate. Tower destruction destroys the child with its owner.
+
+MagicArcaneFieldBehaviour owns the field timer, target collection, per-target tick Effect request, and explicit per-target Elemental opportunity. Visual children may present the field but must not use particle collision, animation events, or VFX callbacks to decide targets, damage, Buff applications, or tick cadence.
+
 ---
 
 # 11. Drone Runtime
@@ -743,7 +770,7 @@ Excluded:
 - Projectile travel VFX
 - Buff lifetime implementation
 - Tower upgrade application rules
-- Concrete tower upgrade behaviour package implementation
+- Unreviewed tower upgrade behaviour package implementation outside the explicitly documented Behaviour contracts
 - Object pooling
 - Final VFX prefab authoring and particle polish
 - Particle collision driven combat logic

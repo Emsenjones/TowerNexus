@@ -90,6 +90,10 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Behaviour Layer/Magic Arcane Field")]
     [ShowIf(nameof(IsMagicArcaneField))]
     [SerializeField] private EffectDefinition arcaneFieldTickEffect;
+    [TitleGroup("Behaviour Layer/Magic Arcane Field")]
+    [ShowIf(nameof(IsMagicArcaneField))]
+    [Required]
+    [SerializeField] private GameObject magicArcaneFieldVfxPrefab;
     [TitleGroup("Behaviour Layer/Drone Blast Rounds")]
     [ShowIf(nameof(IsDroneBlastRounds))]
     [SerializeField] private EffectDefinition blastRoundsEffect;
@@ -131,6 +135,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     public float ArcaneFieldRadius => Mathf.Max(0.01f, arcaneFieldRadius);
     public float ArcaneFieldTickInterval => Mathf.Max(0.01f, arcaneFieldTickInterval);
     public EffectDefinition ArcaneFieldTickEffect => arcaneFieldTickEffect;
+    public GameObject MagicArcaneFieldVfxPrefab => magicArcaneFieldVfxPrefab;
     public EffectDefinition BlastRoundsEffect => blastRoundsEffect;
     public float FinalDiveHitThreshold => Mathf.Max(0.01f, finalDiveHitThreshold);
     public EffectDefinition FinalDiveExplosionEffect => finalDiveExplosionEffect;
@@ -366,6 +371,11 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
+        if (IsMagicArcaneField() && !ValidateMagicArcaneFieldVfxPrefab(logWarnings))
+        {
+            isValid = false;
+        }
+
         if (IsDroneBlastRounds() &&
             !ValidateRequiredAreaEffect(blastRoundsEffect, "Blast Rounds", logWarnings))
         {
@@ -439,6 +449,23 @@ public class TowerUpgradeDefinition : ScriptableObject
         }
 
         return isValid;
+    }
+
+    private bool ValidateMagicArcaneFieldVfxPrefab(bool logWarnings)
+    {
+        if (magicArcaneFieldVfxPrefab == null)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Magic Arcane Field requires a VFX prefab.");
+            return false;
+        }
+
+        if (!magicArcaneFieldVfxPrefab.TryGetComponent(out MagicArcaneFieldBehaviour _))
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Magic Arcane Field VFX prefab requires MagicArcaneFieldBehaviour on its root.");
+            return false;
+        }
+
+        return true;
     }
 
     private bool AreBasicStatDeltasValid(bool logWarnings)

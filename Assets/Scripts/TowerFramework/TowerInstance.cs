@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -17,6 +18,8 @@ public class TowerInstance : MonoBehaviour
     public int BasicDamage => CurrentLevelConfig != null ? CurrentLevelConfig.BasicDamage : 0;
     public IReadOnlyList<GridNodeBehaviour> OccupiedNodes => occupiedNodes;
     public IReadOnlyList<TowerUpgradeDefinition> AppliedUpgrades => upgradeState.AppliedUpgrades;
+
+    public event Action<TowerUpgradeDefinition> OnUpgradeRecorded;
 
     public void Initialize(TowerDefinition towerDefinition, List<GridNodeBehaviour> occupiedNodes)
     {
@@ -123,6 +126,12 @@ public class TowerInstance : MonoBehaviour
 
     public bool TryRecordUpgrade(TowerUpgradeDefinition upgradeDefinition)
     {
-        return upgradeState.TryRecordUpgrade(upgradeDefinition);
+        if (!upgradeState.TryRecordUpgrade(upgradeDefinition))
+        {
+            return false;
+        }
+
+        OnUpgradeRecorded?.Invoke(upgradeDefinition);
+        return true;
     }
 }

@@ -80,11 +80,10 @@
    4. *Elemental upgrade profile and eligibility;
    5. *Fire element vertical slice;
    6. *Monster Slow And Frozen Control API;
-   7. *Cold and electric element slices;
+   7. *Cold Tower upgrade behavior layer Phase2 implementation;and electric element slices;
    8. *Wind element and dedicated WindVortex
-   9. Tower upgrade behavior layer Phase2 implementation;
-   10. Elemental application should be saved as the snapshot;
-   11. Small refactor TowerCombatBehaviour: adding projectiles/AttackEntities count detection;
+   9. Elemental application should be saved as the snapshot;
+   10. Small refactor TowerCombatBehaviour: adding projectiles/AttackEntities count detection;
 8. Map prefab generation;
 9. Player Level up by resolving monsters;
 10. Level configuration design;
