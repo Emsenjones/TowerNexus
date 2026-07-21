@@ -11,7 +11,7 @@ This system answers:
 - When a placed tower can attack
 - Which monsters are valid targets
 - Which target should be selected
-- Which attack archetype or Attack Entity behavior should execute
+- Which concrete TowerCombatBehaviour runtime executes
 - When Attack Entities or projectiles are created
 - When direct runtime damage is applied
 - When attack hit, contact, or impact events can provide context for reusable Effect execution
@@ -35,9 +35,12 @@ The Tower Runtime Combat System owns:
 - Enemy detection within attack range
 - Target selection execution
 - Attack cooldown management
-- Runtime stat resolution from base config plus tower upgrade state
+- Runtime stat resolution from prefab-authored base values plus tower level and upgrade state
 - Runtime Behaviour composition resolution from the source tower's complete applied package set
-- Immutable execution-option snapshots for released Attack Entities
+- Typed runtime data construction for released Attack Entities
+- Selective Live Refresh for active owned Attack Entities after approved level or upgrade changes
+- Immutable entity history, progress, captured positions, and release-only decisions
+- Release-group identity for retrofit behaviors such as Hunting Arrow, Multi Orbs, and Twin Drones
 - Attack state transitions
 - Attack presentation request timing
 - Attack Entity release orchestration
@@ -52,7 +55,7 @@ The Tower Runtime Combat System owns:
 The Tower Runtime Combat System does not own:
 
 - TowerDefinition structure
-- AttackConfig field definitions
+- Tower Framework combat-component field definitions
 - TowerVisualController ownership
 - Tower model replacement
 - AttackOrigin fallback resolution
@@ -73,7 +76,7 @@ Recommended ownership boundary:
 
 | System | Owns |
 |---|---|
-| Tower Framework System | TowerDefinition, AttackConfig, attack archetype definitions, target selection definitions |
+| Tower Framework System | TowerDefinition, Tower Base Prefab combat-component contract, attack archetype definitions, target selection definitions |
 | Tower Placement System | Tower placement workflow, footprint validation, GridNode occupation |
 | Tower Runtime Combat System | Tower attack state, target selection execution, resolved runtime stats, cooldowns, attack execution |
 | Projectile System | Projectile movement, hit detection, impact event triggering, projectile destruction |
@@ -96,14 +99,14 @@ Example:
 ```text
 TowerDefinition
     ↓
-AttackConfig
+Tower Base Prefab
     ↓
-TowerCombatBehaviour
+Concrete TowerCombatBehaviour
     ↓
 Runtime Attack Execution
 ```
 
-AttackConfig should not store runtime combat state.
+The prefab-authored combat component stores immutable base authoring values, not live combat state.
 
 Runtime state belongs to the tower instance currently fighting in the battlefield.
 
@@ -123,12 +126,14 @@ If Cannon Tower
     Fire Cannonball
 ```
 
-Good:
+Reviewed first-version direction:
 
 ```text
-Read AttackConfig.attackArchetype
-    ↓
-Release Arrow, Shell, Magic Orb, or Drone Attack Entity behavior
+TowerCombatBehaviour
+    -> DirectionProjectileCombatBehaviour
+    -> ArcProjectileCombatBehaviour
+    -> MagicOrbCombatBehaviour
+    -> DroneCombatBehaviour
 ```
 
 Tower categories describe design identity.
@@ -153,19 +158,28 @@ Examples:
 
 # 4. Runtime Entry Point
 
-The recommended runtime entry point is:
+The shared runtime entry-point type is:
 
 ```text
 TowerCombatBehaviour
 ```
 
-Each placed tower that can attack should have one TowerCombatBehaviour.
+Each placed tower that can attack must have one compatible concrete TowerCombatBehaviour subtype.
+
+```text
+TowerCombatBehaviour
+    -> DirectionProjectileCombatBehaviour
+    -> ArcProjectileCombatBehaviour
+    -> MagicOrbCombatBehaviour
+    -> DroneCombatBehaviour
+```
+
+The abstract base owns shared lifecycle, common authored fields, upgrade/level notifications, cooldown coordination, presentation requests, and owned-entity registration. Each concrete subtype owns its archetype-specific release orchestration, authored parameters, and Behaviour-package resolution.
 
 TowerCombatBehaviour is initialized from:
 
 - TowerInstance
 - TowerDefinition
-- AttackConfig
 - MonsterManager
 - Optional tower model presentation entry resolved by the tower runtime
 - Current active AttackOrigin transform resolved by the tower runtime
@@ -176,7 +190,7 @@ Recommended runtime references:
 |---|---|
 | TowerInstance | Provides the placed tower instance and TowerDefinition |
 | TowerDefinition | Provides static tower data |
-| AttackConfig | Provides attack behavior configuration |
+| Concrete TowerCombatBehaviour | Provides common and archetype-specific prefab-authored base combat values |
 | MonsterManager | Provides alive monsters for detection |
 | Tower Model Presentation | Receives attack presentation requests and applies model-local presentation parameters |
 | Current Active AttackOrigin | Provides attack range origin and projectile spawn position |
@@ -203,7 +217,7 @@ Tower Runtime Combat may maintain the following runtime state per tower:
 - Cooldown timer
 - Current attack state
 
-This state should never be stored in TowerDefinition or AttackConfig.
+This state should never be stored in TowerDefinition or static prefab-authored combat fields.
 
 Recommended attack states:
 
@@ -225,19 +239,17 @@ Update cooldown timer
     ↓
 Detect enemies within attackRange
     ↓
-Read AttackConfig.attackArchetype
-    ↓
-Execute matching attack update
+Execute the concrete combat component's attack update
 ```
 
-The attack archetype determines the update branch:
+The concrete component determines the runtime branch:
 
-| AttackArchetype | Runtime Branch |
+| Component | Runtime Branch |
 |---|---|
-| Direction Projectile | Projectile attack update |
-| Arc Projectile | Projectile attack update |
-| Magic Orb | Magic Orb release update |
-| Drone | Drone release update |
+| DirectionProjectileCombatBehaviour | Archer projectile attack update |
+| ArcProjectileCombatBehaviour | Cannon projectile attack update |
+| MagicOrbCombatBehaviour | Magic Orb release update |
+| DroneCombatBehaviour | Drone release update |
 
 ## 6.1 Cooldown Timing
 
@@ -287,7 +299,7 @@ These attack events may identify source tower, affected monster or impact positi
 
 # 8. Target Selection
 
-Target selection is executed by Tower Runtime Combat using TargetSelectionType from AttackConfig.
+Target selection is executed by Tower Runtime Combat using the TargetSelectionType authored on the relevant concrete combat component.
 
 Recommended first-version target selection rules:
 
@@ -306,7 +318,38 @@ TargetSelectionType is used by:
 
 TargetSelectionType is not used by first-version Magic Orb behavior because the orb detects monster contact while orbiting.
 
-Bouncing Shell reuses the same enum as a package-authored value, but Projectile Runtime applies that separate selector only after local bounce-radius and chain-history filtering. It does not reuse the source AttackConfig selection value and does not ask Tower Runtime to select the bounce target.
+Bouncing Shell reuses the same enum as a package-authored value, but Projectile Runtime applies that separate selector only after local bounce-radius and chain-history filtering. It does not reuse the source combat component's normal selection value and does not ask Tower Runtime to select the bounce target.
+
+---
+
+## 8.1 Runtime Data Timing And Upgrade Refresh
+
+Runtime combat data uses four explicit timing categories:
+
+| Category | Contract |
+|---|---|
+| Static Authoring | Prefab or ScriptableObject data that does not change during a battle |
+| Release Snapshot | A creation decision that applies only to releases confirmed after the upgrade |
+| Live Refresh | Future behavior on an already active owned Attack Entity is refreshed after the approved level or upgrade change |
+| Entity State | Consumed history, timers, captured positions, progress, and completed results that upgrades never overwrite |
+
+The source TowerInstance publishes successful level and upgrade changes. The owning combat component re-resolves relevant data and refreshes registered active entities. Attack Entities do not poll the complete TowerUpgradeState every frame.
+
+Live Refresh replaces only approved future-facing values. It never resets elapsed lifetime, hit history, bounce history, completed results, flight progress, current target-state transitions, or already-consumed counters. Additive capacity upgrades adjust remaining state by their delta: Magic Orb remaining hit count gains the applied max-hit-count delta, and Drone remaining battery gains the applied battery-duration delta.
+
+AttackRange is Live Refresh. Tower detection and target selection use the current resolved range. Active Hunting Arrows and Drones receive the new resolved range, while an Arc Shell's captured landing position and a Tracking Arrow's range origin remain immutable entity data.
+
+AttackInterval is Live Refresh at the tower scheduler. When an interval upgrade is applied during an active cooldown, runtime scales the remaining cooldown by the ratio between the new and old resolved intervals instead of resetting or granting a free attack.
+
+Damage changes from Tower Level or Basic Layer upgrades refresh all active owned Attack Entities whose damage result has not yet resolved.
+
+Behaviour timing is package-specific:
+
+- Piercing Arrow, Hunting Arrow conversion, Explosive Shell, pre-chain Bouncing Shell, Arcane Detonation, Blast Rounds, Final Dive, and active-entity-relevant Elemental opportunities may affect already active entities.
+- Scatter Arrow and Multi Shells remain release-only creation decisions.
+- Multi Orbs and Twin Drones retrofit each still-active pre-upgrade single-entity release group with exactly one companion entity.
+
+Retrofit behavior requires an owner-local ReleaseGroupId. Scatter Arrow members additionally keep stable Center, Left, and Right slot identity. A group records whether its Hunting, Orb companion, or Drone companion retrofit has already been applied so repeated notifications cannot duplicate entities.
 
 ---
 
@@ -378,10 +421,10 @@ When releasing a projectile, Tower Runtime Combat provides:
 - Source TowerInstance
 - MonsterManager
 - ProjectileConfig
-- AttackConfig
+- Projectile flight identity and typed base runtime data from the concrete combat component
 - Pending target
 - Pending target position
-- Immutable runtime options relevant to that projectile's execution
+- Relevant refreshable Behaviour options and immutable entity-state inputs
 
 ProjectileBehaviour then owns projectile runtime execution after initialization. It should not receive or interpret the complete TowerUpgradeState. Tower Runtime resolves the source tower's complete Behaviour composition and passes only the relevant options, such as piercing state, tracking state, Explosive Shell state, remaining bounce count, initial-release identity, and Elemental context.
 
@@ -405,9 +448,9 @@ Exactly one valid Monster
     -> release one Shell
 ```
 
-`CannonMultiShells` owns a `multiShellsMaxInitialShellCount` value with a minimum and default of `2`. The Animation Event releases the number of initial Shells represented by the stored snapshots, capped by that confirmed value. The attack uses one confirmation, one presentation sequence, one release-time damage snapshot, one immutable runtime-options snapshot, and one cooldown. It does not retarget during the wait, cancel a confirmed position because the source Monster later becomes invalid, add a release delay, or require a spawn offset.
+`CannonMultiShells` owns a `multiShellsMaxInitialShellCount` value with a minimum and default of `2`. The Animation Event releases the number of initial Shells represented by the stored snapshots, capped by that confirmed value. The attack uses one confirmation, one presentation sequence, one cooldown, and immutable target-position snapshots. Multi Shells itself is Release Snapshot and never retroactively duplicates an airborne Shell. Damage, Explosive Shell, and an initial Shell's not-yet-started Bouncing Shell capability may receive approved Live Refresh before Position Impact. It does not retarget during the wait, cancel a confirmed position because the source Monster later becomes invalid, add a release delay, or require a spawn offset.
 
-Multi Shells is an initial-release rule. A Bouncing Shell child is initialized as a bounce child and never consumes the Multi Shells release multiplier again.
+Multi Shells is an initial-release rule. A Bouncing Shell child is initialized as a bounce child and never consumes the Multi Shells release multiplier again. Once the initial Shell completes its first Position Impact and begins a bounce chain, that chain's remaining count, history, arc height, and selector remain the chain contract and are not refreshed by later notifications.
 
 ---
 
@@ -451,15 +494,15 @@ Magic Orb rules:
 - After cooldown, a new Magic Orb may be generated without checking older released Magic Orbs.
 - Magic Orb should start from a runtime-selected orbit angle so repeated releases do not all begin from the same point.
 
-Magic Orb completion should preserve a semantic end reason. Arcane Detonation responds only to normal HitCountExhausted and LifetimeExpired completion. Forced cleanup, battle end, owner invalidation, reset, and other non-gameplay cleanup do not trigger the Detonation.
+Magic Orb has two semantic outcomes: normal gameplay completion may trigger Arcane Detonation, while technical cleanup never triggers it. Hit-count exhaustion and lifetime expiry are normal completion. Forced cleanup, battle end, owner invalidation, and reset are cleanup.
 
 Magic Orb damage is owned by attack entity behavior in the first version.
 
 Magic Orb contact damage should be resolved from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 
-Magic Orb combat parameters such as orbit radius, contact distance, same-target hit cooldown, and maximum lifetime belong to AttackConfig because they define shared attack rules.
+Magic Orb base combat parameters `magicOrbPrefab`, `magicOrbOrbitRadius`, `magicOrbContactDistance`, `magicOrbSameTargetHitCooldown`, `magicOrbMaxHitCount`, `magicOrbRotationSpeed`, and `magicOrbMaxLifetime` are authored on MagicOrbCombatBehaviour. At release it builds typed Orb runtime data. MagicOrbBehaviour executes orbit movement, contact detection, hit-count consumption, and lifetime without reading a shared cross-archetype configuration asset.
 
-MagicOrbBehaviour executes orbit movement, contact detection, hit count consumption, and lifetime using AttackConfig data.
+When Multi Orbs is applied, every still-active pre-upgrade single-Orb release group receives exactly one companion Orb. The companion is created at the same orbit center at the angle opposite the existing Orb's current angle, uses current resolved stats, and owns a new independent hit budget, lifetime, and target-cooldown history. Existing Orb state is unchanged. Future releases create the authored Orb count normally. ReleaseGroupId and an applied-retrofit guard prevent duplicate companions.
 
 Persistent status effects applied by future Magic Orb upgrades should be delegated through Effect System to Buff System.
 
@@ -528,23 +571,23 @@ Drone runtime rules:
 - Drone Tower runtime should release a Drone prefab from the current active AttackOrigin when a Drone attack is confirmed.
 - If no valid monster exists inside AttackRange at release time, Drone Tower should not release a Drone and should not start cooldown.
 - Drone launches from AttackOrigin when available, but does not keep depending on AttackOrigin after release.
-- Drone first rises vertically from its release position to AttackConfig.droneFlightHeight above that position.
+- Drone first rises vertically from its release position to the DroneCombatBehaviour-authored droneFlightHeight above that position.
 - Launching does not consume battery and cannot trigger Final Dive.
 - Drone maintains configured flight height during active flight.
-- DroneBehaviour owns target selection while using AttackConfig.targetSelectionType.
+- DroneBehaviour owns target selection while using the targetSelectionType supplied by DroneCombatBehaviour.
 - Drone target selection only considers valid monsters inside the source tower AttackRange.
-- Drone movement speed should use AttackConfig.droneFlightSpeed.
-- Drone orbits around the selected target using AttackConfig.droneOrbitRadius.
+- Drone movement speed should use the DroneCombatBehaviour-authored droneFlightSpeed.
+- Drone orbits around the selected target using the DroneCombatBehaviour-authored droneOrbitRadius.
 - Drone orbit angular speed should be derived from droneFlightSpeed and droneOrbitRadius rather than configured separately.
 - When entering Orbiting or retargeting, Drone should choose orbit direction from the tangent direction around the target that is closer to the Drone's current local +Z forward direction.
-- Drone orbit direction is runtime state and should not be configured on AttackConfig.
+- Drone orbit direction is runtime state and should not be configured as static authoring.
 - Whenever the Drone is moving, runtime should rotate the Drone root Transform so local +Z faces the current planar movement direction.
 - Runtime should not apply model-specific rotation offsets; imported model orientation should be corrected inside the Drone prefab's VisualRoot.
 - Rotation toward movement direction should happen immediately in the first version, without turn-speed smoothing.
 - During stable Orbiting, Drone model local +Z should face the current orbit tangent / flight direction rather than the target center.
 - Drone fires straight projectile bursts in the first version.
-- Drone burst fire should use AttackConfig.droneBurstCount, droneBurstInterval, and droneBurstCooldown.
-- Drone-fired projectile data should come from AttackConfig.droneProjectileConfig.
+- Drone burst fire should use DroneCombatBehaviour-authored droneBurstCount and droneBurstInterval plus the current resolved droneBurstCooldown.
+- Drone-fired projectile data should come from DroneCombatBehaviour.droneProjectileConfig.
 - Drone-fired projectile damage should be resolved from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Drone-fired projectiles should spawn from the Drone FireAnchor when available.
 - Drone-fired projectile prefabs should follow the same local +Y Up and local +Z Forward root orientation convention as other Projectile System prefabs.
@@ -563,6 +606,10 @@ Drone runtime rules:
 
 Drone uses attackRange as the tower detect and launch range in the first version.
 
+When Twin Drones is applied, every still-active pre-upgrade single-Drone release group schedules exactly one companion launch from the tower's current AttackOrigin. The companion uses the package-authored takeoff delay, selects a valid target at its actual launch time, and receives current resolved stats with a full independent battery and burst state. The original Drone is unchanged. This retrofit does not reset or replace the tower's current attack cooldown. Future releases create the authored Drone count normally.
+
+Drone damage, AttackRange, remaining battery by additive delta, resolved burst cooldown, Blast Rounds, and Final Dive are Live Refresh for still-active relevant entities. A refresh never resets the Drone's current state, target history, orbit progress, already-consumed battery, burst shots remaining, or completed results. Blast Rounds also refreshes Drone-fired projectiles that are already airborne and have not resolved their hit.
+
 Drone projectile movement and projectile hit detection belong to Projectile System after projectile creation.
 
 Persistent status effects applied by future Drone projectiles or Drone battery-end effects should be delegated through Effect System to Buff System.
@@ -578,7 +625,7 @@ Battery naturally depletes while Orbiting
 
 FinalDiving stops ordinary projectile fire, never selects a different Monster, never returns to Orbiting, and no longer requires the locked target to remain inside the source tower AttackRange. While the target remains valid, the Drone pursues its current hit/reference position and refreshes a last-valid-position snapshot. If the target becomes invalid during the dive, the Drone continues toward that last valid position instead of reacquiring or canceling. Reaching the active destination means entering the package-owned positive `finalDiveHitThreshold`; exact Transform equality is not required.
 
-Arrival always produces Position Impact. Drone runtime then searches around the actual impact position within `finalDiveHitThreshold` and selects the nearest valid Monster, if one exists. A resolved Monster produces Monster Hit, receives direct damage from the Drone's release-time resolved attack damage, and receives one direct Elemental application opportunity. The direct result is optional: reaching a last-valid position with no nearby Monster still produces Position Impact without Monster Hit or direct damage.
+Arrival always produces Position Impact. Drone runtime then searches around the actual impact position within `finalDiveHitThreshold` and selects the nearest valid Monster, if one exists. A resolved Monster produces Monster Hit, receives the Drone's current refreshed resolved attack damage, and receives one direct Elemental application opportunity. The direct result is optional: reaching a last-valid position with no nearby Monster still produces Position Impact without Monster Hit or direct damage.
 
 After the optional direct result completes, the authored Final Dive explosion always executes at the impact position. Every valid explosion target resolves its own explosion damage and Elemental application opportunity, so one Monster may receive both direct and explosion results. The Drone despawns only after all synchronous impact results complete. Drone runtime owns movement, local direct-target resolution, and lifecycle; reusable area damage and explosion-target resolution belong to Effect System.
 
@@ -620,7 +667,7 @@ Tower Runtime Combat should not cache or search for spawned tower model presenta
 
 Tower Runtime Combat may expose attack lifecycle hooks for VFX and presentation systems.
 
-AttackConfig.attackReleaseVfxPrefab may be spawned as a one-shot presentation effect when a tower attack or Attack Entity release is confirmed.
+The relevant combat component's attackReleaseVfxPrefab may be spawned as a one-shot presentation effect when a tower attack or Attack Entity release is confirmed.
 
 For Direction Projectile attacks, attackReleaseVfxPrefab should face the projectile launch direction. Drone-fired projectile release VFX follows the same direction-projectile rule and should face the selected target Monster direction from the Drone FireAnchor. Other attack archetypes should spawn attackReleaseVfxPrefab with the prefab's default direction unless that archetype later defines its own orientation rule.
 
@@ -692,9 +739,9 @@ The first-version damage formula is:
 FinalDamage = TowerLevelConfig.basicDamage + RuntimeDamageBonus
 ```
 
-Tower level data owns the basic damage value. Tower upgrade runtime state may add instance-specific damage bonuses. Other runtime stats are resolved from immutable base configuration plus same-type additive upgrade deltas, then clamped before combat uses them.
+Tower level data owns the basic damage value. Tower upgrade runtime state may add instance-specific damage bonuses. Other runtime stats are resolved from immutable prefab-authored base values plus same-type additive upgrade deltas, then clamped before combat uses them.
 
-AttackConfig does not define a runtime damage multiplier. Final damage comes from resolved runtime combat stats.
+The combat component does not define a runtime damage multiplier. Final damage comes from resolved runtime combat stats.
 
 Example first-version stat direction:
 
@@ -705,7 +752,7 @@ FinalAttackInterval = Clamp(BaseAttackInterval + Sum(AttackIntervalDeltas))
 
 AttackInterval improvements may use negative deltas.
 
-Behaviour upgrades are active packages recorded on the tower instance. Tower Runtime Combat resolves composition from the complete applied package set, but each released Attack Entity receives only the immutable runtime options relevant to its own execution. Attack Entities should not inspect unrelated upgrade definitions or own the complete TowerUpgradeState. The actual behaviour remains inside the corresponding runtime module instead of moving into TowerUpgradeSystem.
+Behaviour upgrades are active packages recorded on the tower instance. Tower Runtime Combat resolves composition from the complete applied package set. Each Attack Entity receives only its relevant typed runtime data, which may contain both immutable entity state and explicitly refreshable future-facing values. Attack Entities should not inspect unrelated upgrade definitions or own the complete TowerUpgradeState. The actual behaviour remains inside the corresponding runtime module instead of moving into TowerUpgradeSystem.
 
 Effect System should own reusable Effect execution, and Buff System should own persistent Buff execution.
 
@@ -730,7 +777,7 @@ The first-version damage direction remains that base attack damage can use the e
 
 Tower Placement System creates or places the runtime tower object.
 
-After placement, the tower may receive or already contain TowerCombatBehaviour.
+The Tower Base Prefab must already contain the compatible concrete TowerCombatBehaviour subtype.
 
 Tower Placement System may initialize TowerCombatBehaviour with TowerInstance and MonsterManager references.
 
@@ -749,7 +796,8 @@ Tower Placement System should not:
 Included:
 
 - TowerCombatBehaviour runtime entry point
-- AttackConfig consumption
+- Four concrete archetype-specific TowerCombatBehaviour subtypes
+- Prefab-authored common and archetype-specific combat fields
 - Enemy detection
 - Target selection
 - Attack cooldowns
@@ -759,6 +807,7 @@ Included:
 - Drone release orchestration
 - Resolved runtime stat consumption
 - Active behaviour package coordination
+- Owned Attack Entity registration, release-group identity, and selective Live Refresh
 - Attack presentation request timing
 - Runtime presentation hooks
 
@@ -781,6 +830,6 @@ Excluded:
 
 Tower Runtime Combat is the live execution layer for placed towers.
 
-It consumes TowerDefinition and AttackConfig, manages runtime combat state, selects targets, runs cooldowns, executes attack archetypes, releases Attack Entities, creates projectiles, and coordinates simple damage dispatch.
+It consumes TowerDefinition, prefab-authored combat fields, TowerLevelConfig, and placed-tower upgrade state; manages runtime combat state; selects targets; runs cooldowns; releases Attack Entities; refreshes approved future behavior on active owned entities; creates projectiles; and coordinates simple damage dispatch.
 
 It should remain between Tower Framework data and downstream runtime systems without taking over placement, projectile lifecycle, monster lifecycle, or buff state ownership.

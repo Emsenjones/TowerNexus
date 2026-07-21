@@ -50,12 +50,11 @@ Key runtime rules:
 
 # 3. Configuration Strategy
 
-Tower Nexus uses Unity ScriptableObject assets as the primary configuration solution.
+Tower Nexus uses Unity ScriptableObject assets for reusable gameplay definitions and prefab-authored MonoBehaviour fields for tower combat configuration that is configured once per Tower Base Prefab.
 
 Current first-version configuration assets include:
 
 - TowerDefinition
-- AttackConfig
 - TowerLevelConfig
 - MonsterDefinition
 - ProjectileConfig
@@ -63,11 +62,11 @@ Current first-version configuration assets include:
 - BuffDefinition
 - TowerUpgradeDefinition
 
-Presentation-oriented prefab references may live in the configuration asset that owns the runtime event.
+Presentation-oriented prefab references may live on the prefab component or configuration asset that owns the runtime event.
 
 Examples:
 
-- AttackConfig owns tower attack presentation hooks such as attack release VFX.
+- The relevant TowerCombatBehaviour component owns tower attack presentation hooks such as attack release VFX.
 - The tower visual ownership path owns tower-side success feedback hooks such as model spawn or upgrade-applied VFX.
 - ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
 - Gameplay Effect data owns reusable gameplay effect rules and optional execution VFX feedback. It should not be required for purely visual projectile impact feedback.
@@ -78,14 +77,17 @@ Current combat configuration dependency flow:
 ```text
 TowerDefinition
     ↓
-AttackConfig
+Tower Base Prefab
+    ↓
+DirectionProjectileCombatBehaviour / ArcProjectileCombatBehaviour /
+MagicOrbCombatBehaviour / DroneCombatBehaviour
     ↓
 ProjectileConfig
 ```
 
 ProjectileConfig may reference EffectDefinition for projectile impact results that need reusable gameplay Effect execution.
 
-TowerUpgradeDefinition owns runtime upgrade content such as Basic stat deltas, Behaviour packages, Elemental identity, and Elemental apply-effect references. Generic Effect bindings remain available for trigger-driven Behaviour content. Upgrade content should not be mixed into TowerDefinition or AttackConfig.
+TowerUpgradeDefinition owns runtime upgrade content such as Basic stat deltas, Behaviour packages, Elemental identity, and Elemental apply-effect references. Upgrade content remains separate from TowerDefinition and the prefab-authored immutable base combat fields. The relevant combat runtime resolves applied upgrades over those base values and selectively refreshes active owned Attack Entities when the approved upgrade semantics require it.
 
 Current first-version tower lineup:
 
@@ -234,12 +236,12 @@ Defines shared tower data and configuration references.
 Responsible for:
 
 - TowerDefinition
-- AttackConfig
 - TowerLevelConfig
 - Attack archetypes
 - Attack Entity concepts
 - Target selection types
-- Attack presentation configuration
+- Tower combat component authoring contract
+- Attack presentation configuration on the relevant combat component
 - Tower model presentation contract
 - Tower prefab structure
 - Tower visual structure
@@ -257,11 +259,12 @@ Tower-side visual feedback is presentation-only. Deploy success and tower level-
 
 ## 5.7 Tower Runtime Combat System
 
-Consumes TowerDefinition and AttackConfig data and converts them into runtime combat behavior.
+Consumes TowerDefinition, prefab-authored combat data, and placed-tower upgrade state and converts them into runtime combat behavior.
 
 Responsible for:
 
 - Runtime tower combat state
+- Common TowerCombatBehaviour lifecycle and four archetype-specific derived runtime components
 - Enemy detection
 - Target selection
 - Attack cooldown management
@@ -274,6 +277,7 @@ Responsible for:
 - Current active AttackOrigin consumption
 - Projectile creation and initialization
 - Damage dispatch coordination
+- Owned Attack Entity grouping, cleanup, and selective Live Refresh after level or upgrade changes
 
 Tower Runtime Combat decides when an attack happens.
 

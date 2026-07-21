@@ -17,7 +17,7 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 0fe1b9ffb3d0c431fb465429727a21c3, type: 3}
   towerFamily: 3
   requiredTowerLevel: 2
-  upgradeLayer: 1
+  upgradeLayer: 2
   basicStatDeltas: []
   behaviourPackageType: 301
   piercingMaxHitCount: 3
@@ -36,7 +36,7 @@ MonoBehaviour:
   arcaneFieldTickInterval: 1
   arcaneFieldTickEffect: {fileID: 0}
   magicArcaneFieldVfxPrefab: {fileID: 0}
-  blastRoundsEffect: {fileID: 11400000, guid: be2b731d051c841169262af1dc317f23, type: 2}
+  blastRoundsEffect: {fileID: 0}
   finalDiveHitThreshold: 1
   finalDiveExplosionEffect: {fileID: 0}
   elementType: 1

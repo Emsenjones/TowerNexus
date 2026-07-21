@@ -103,4 +103,4 @@ No remaining bounce count or no candidate ends the chain. A direct Monster Hit i
 
 ## 10. Review Note
 
-Task012 owns final composition regression only. It must not replace this local chain with a generic combination framework.
+Task014 owns final composition regression only. It must not replace this local chain with a generic combination framework.

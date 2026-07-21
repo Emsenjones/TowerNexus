@@ -57,7 +57,7 @@ These responsibilities belong to other systems.
 
 The Projectile System should remain independent from tower-specific logic.
 
-Projectile behaviour should be determined by AttackConfig and projectile-style Attack Entity behavior rather than tower type.
+Projectile behaviour should be determined by the flight identity and typed runtime data supplied by the spawning combat runtime, rather than by branching on tower type.
 
 Bad:
 
@@ -72,18 +72,18 @@ If Cannon Tower
 Good:
 
 ```text
-Read AttackConfig.attackArchetype
+Receive projectile flight identity
     ↓
 Spawn Projectile
     ↓
 Execute Matching Projectile Behaviour
 ```
 
-Projectile movement style is determined by the projectile-style Attack Entity behavior selected by AttackConfig.
+Projectile movement style is determined by the explicit Direction, Arc, or Tracking flight identity supplied at initialization.
 
 ProjectileConfig should never contain a movement type field.
 
-Movement ownership belongs to AttackConfig and the Attack Entity behavior to avoid duplicate configuration and conflicting runtime behavior.
+Movement ownership belongs to Projectile System after the spawning runtime supplies the selected flight identity and required inputs.
 
 The Projectile System should only care about projectile runtime execution.
 
@@ -93,7 +93,7 @@ Examples:
 
 - Archer Tower spawns Arrow projectile Attack Entities.
 - Cannon Tower spawns Shell projectile Attack Entities.
-- Drone is an Attack Entity which may spawn Projectile Attack Entities using AttackConfig.droneProjectileConfig.
+- Drone is an Attack Entity which may spawn Projectile Attack Entities using the ProjectileConfig supplied by DroneCombatBehaviour.
 
 Magic Orb and Drone themselves are Attack Entities, but they do not have to use the full projectile impact lifecycle unless their behavior is implemented as projectile-style movement and hit resolution.
 
@@ -159,9 +159,8 @@ Target Position
 Current Position
 Lifetime Timer
 Projectile Config
-Attack Config
 Attack Damage
-Relevant Immutable Behaviour Options
+Relevant Refreshable Behaviour Options
 Elemental Context
 Projectile Hit History When Required
 Remaining Bounce Count When Required
@@ -170,7 +169,9 @@ Initial-Release Or Bounce-Child Identity When Required
 
 Runtime state should never be stored inside configuration assets.
 
-Projectile runtime receives only the resolved immutable options relevant to its own execution. It should not receive or interpret the source tower's complete TowerUpgradeState or unrelated Behaviour definitions.
+Projectile runtime receives only the resolved typed data relevant to its own execution. Future-facing values such as unresolved damage, Piercing, Hunting conversion, Explosive Shell, pre-chain Bouncing Shell, Blast Rounds, and current TrackingRange may receive approved Live Refresh. It should not receive or interpret the source tower's complete TowerUpgradeState or unrelated Behaviour definitions.
+
+Captured landing positions, launch direction, TrackingRangeOrigin, elapsed lifetime, hit history, bounce history, flight progress, completed results, and an already-started bounce chain are immutable Entity State and are never reset by upgrade refresh.
 
 When a projectile needs a monster-side target or hit reference position, that position should come from the Monster System hit/reference anchor concept.
 
@@ -182,7 +183,7 @@ The first version introduces a lightweight ProjectileConfig.
 
 ProjectileConfig is responsible for projectile-specific runtime data and visual behavior.
 
-ProjectileConfig should not duplicate data already owned by Tower Framework, AttackConfig, Tower Runtime Combat, or the spawning Attack Entity.
+ProjectileConfig should not duplicate data already owned by Tower Framework, the concrete TowerCombatBehaviour, Tower Runtime Combat, or the spawning Attack Entity.
 
 Examples of data that should remain outside ProjectileConfig:
 
@@ -251,8 +252,8 @@ No impact Effect required. Explosive Shell may add an AreaDamageEffect after the
 Design Principle:
 
 ```text
-AttackConfig
-    Owns immutable default attack configuration
+Concrete TowerCombatBehaviour
+    Owns prefab-authored base attack configuration
 
 TowerLevelConfig
     Owns per-level basic damage
@@ -309,15 +310,17 @@ Hit Monster
 
 The selected target may define the initial launch direction, but the projectile is not required to remain locked to that target after launch.
 
-Hunting Arrow changes this flight behavior into reviewed locked-target tracking. Tower runtime captures the authoritative main target position and fixed Center, Left, and Right target slots at confirmation, then supplies the release-time TrackingRangeOrigin and TrackingRange. Each assigned Hunting projectile owns one locked target, hit history, remaining piercing count, and lifetime:
+Hunting Arrow changes this flight behavior into reviewed locked-target tracking. For attacks released after Hunting is active, Tower runtime captures the authoritative main target position and fixed Center, Left, and Right target slots at confirmation, then supplies TrackingRangeOrigin and current resolved TrackingRange. Each assigned Hunting projectile owns one locked target, hit history, remaining piercing count, and lifetime:
 
-- The locked target must remain gameplay-targetable, registered with MonsterManager, and inside the snapshotted TrackingRange.
+- The locked target must remain gameplay-targetable, registered with MonsterManager, and inside the current refreshed TrackingRange around the immutable TrackingRangeOrigin.
 - The Arrow itself must remain inside the same TrackingRange while tracking.
 - Tracking checks only the locked target and uses overshoot-safe movement toward its current HitAnchor.
 - Hitting the locked target, target invalidation, either range failure, or losing MonsterManager registration permanently transitions the Arrow to Direction flight.
 - A surviving Piercing Arrow continues ordinary Direction hits after that transition; source range no longer affects Piercing or projectile collision.
 - Tracking never reacquires and never becomes active again after Direction fallback.
 - Tracking movement itself does not periodically apply Elemental Buffs; actual resolved Monster Hits use the Arrow attack boundary.
+
+Hunting Arrow is also Live Refresh for still-active Archer Arrows. Applying the package treats the upgrade moment as a virtual confirmation: the owner groups active non-impacted Arrows by ReleaseGroupId, preserves stable Center/Left/Right slot identity, assigns distinct valid locked targets when possible using current tower targeting rules, and converts only successfully assigned Arrows from their current position into Tracking flight. An Arrow without a valid assignment keeps Direction flight. This retrofit never resets direction history, Piercing history, elapsed lifetime, or completed hits, and it remains subject to the same one-way Tracking-to-Direction fallback.
 
 ---
 
@@ -339,7 +342,7 @@ Produce Position Impact
 Search Nearest Valid Monster Around Impact Position
 ```
 
-Arc height is provided by AttackConfig.arcHeight.
+Arc height is provided by ArcProjectileCombatBehaviour.arcHeight for an initial Shell. A bounce child uses the Bouncing Shell package's authored bounceArcHeight.
 
 Arc flight consumes an explicitly present immutable target-position snapshot; `Vector3.zero` remains a valid destination and is not a missing-position sentinel. Later invalidation of the Monster that supplied the snapshot does not cancel or redirect the projectile. A nonpositive Arc hitDistanceThreshold is rejected before projectile instantiation and defensively rejected again during projectile initialization.
 
@@ -365,7 +368,7 @@ Hit Monster Or Expire
 
 Tracking flight supports Hunting Arrow and may support future missiles, homing shots, and Drone-fired projectile variants.
 
-Tracking projectiles still belong to Projectile System after they are created and initialized. Tower Runtime Combat or the spawning Attack Entity provides the source, target information, and AttackConfig data.
+Tracking projectiles still belong to Projectile System after they are created and initialized. Tower Runtime Combat or the spawning Attack Entity provides source, target, flight identity, and typed runtime data.
 
 ---
 
@@ -512,9 +515,11 @@ Resolve optional direct Monster Hit
     -> create one bounce child in the same frame
 ```
 
-No remaining bounce count or no surviving local candidate ends the bounce chain. Direct Monster Hit and positive direct damage are not required. Bounce selection does not use the source tower's full AttackRange or the source AttackConfig's TargetSelectionType. The package-owned selector supports Nearest, HighestHealth, LowestHealth, and Random among candidates that already passed local radius and history filtering. It has no Coroutine, next-frame wait, or release delay.
+No remaining bounce count or no surviving local candidate ends the bounce chain. Direct Monster Hit and positive direct damage are not required. Bounce selection does not use the source tower's full AttackRange or the source combat component's normal TargetSelectionType. The package-owned selector supports Nearest, HighestHealth, LowestHealth, and Random among candidates that already passed local radius and history filtering. It has no Coroutine, next-frame wait, or release delay.
 
-The bounce child receives relevant immutable runtime options: source context, resolved damage, Projectile configuration, Explosive Shell state, remaining bounce count, chain hit history, bounce arc height, bounce target-selection type, and bounce-child identity. The initial Shell uses the Cannon AttackConfig arc height; only bounce children use the package-authored bounce arc height. A child does not receive the complete TowerUpgradeState, does not re-resolve Cannon Behaviour packages, and does not consume Multi Shells again. Elemental application retains the existing sourceTower lookup path; snapshotting Elemental upgrade state is outside this behavior.
+An initial airborne Shell may receive Live Refresh for unresolved damage, Explosive Shell, and Bouncing Shell before its first Position Impact. Once that Position Impact begins a bounce chain, the chain's remaining count, hit history, bounce arc height, and target-selection type become immutable Entity State. Later refresh does not extend or rewrite an active chain.
+
+The bounce child receives relevant typed runtime data: source context, current unresolved damage, Projectile configuration, Explosive Shell state, remaining bounce count, chain hit history, bounce arc height, bounce target-selection type, and bounce-child identity. The initial Shell uses ArcProjectileCombatBehaviour.arcHeight; only bounce children use the package-authored bounce arc height. A child does not receive the complete TowerUpgradeState, does not re-resolve unrelated Cannon Behaviour packages, and does not consume Multi Shells again. Elemental application retains the live sourceTower lookup path.
 
 ---
 
@@ -527,9 +532,9 @@ Responsible for:
 - Creating projectiles
 - Initializing projectile runtime state
 - Providing target information
-- Providing AttackConfig data
+- Providing flight identity and relevant typed runtime data
 - Providing calculated damage context when projectile damage is resolved through Projectile System
-- Resolving source Behaviour composition and providing only relevant immutable projectile options
+- Resolving source Behaviour composition and providing only relevant refreshable options plus immutable Entity State
 
 ---
 

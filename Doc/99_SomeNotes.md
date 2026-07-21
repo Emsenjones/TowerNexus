@@ -81,9 +81,11 @@
    5. *Fire element vertical slice;
    6. *Monster Slow And Frozen Control API;
    7. *Cold Tower upgrade behavior layer Phase2 implementation;and electric element slices;
-   8. *Wind element and dedicated WindVortex
-   9. Elemental application should be saved as the snapshot;
-   10. Small refactor TowerCombatBehaviour: adding projectiles/AttackEntities count detection;
+   8. *Wind element and dedicated WindVortex;
+   9. *Phase 2 BehaviourLayer implementation;
+   10. Clarify live read data and snapshot data in runtime;
+   11. Refactor TowerCombatDefinition and speparet AttackConfig based on AttackArchetype;
+   12. Magic tower and Drone tower add AttackEntity maximum count limitation;
 8. Map prefab generation;
 9. Player Level up by resolving monsters;
 10. Level configuration design;

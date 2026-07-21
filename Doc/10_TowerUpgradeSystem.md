@@ -108,7 +108,7 @@ The first-version damage direction is:
 FinalDamage = TowerLevelConfig.basicDamage + RuntimeDamageBonus
 ```
 
-Exact stat fields may evolve with AttackConfig and TowerRuntimeCombatSystem implementation needs.
+Exact stat fields may evolve with the concrete TowerCombatBehaviour component and TowerRuntimeCombatSystem implementation needs.
 
 ## 3.2 Tower Level-Up Request
 
@@ -165,7 +165,7 @@ TowerUpgradeDefinition represents one independent tower upgrade option.
 
 Each TowerUpgradeDefinition belongs to one TowerFamily and declares a Required Tower Level.
 
-TowerUpgradeDefinition should not be attached to AttackConfig. AttackConfig remains the immutable default combat configuration template. TowerUpgradeDefinition represents upgrade content that may be applied to a tower instance during a battle.
+TowerUpgradeDefinition remains separate from the prefab-authored base combat data on the tower's concrete TowerCombatBehaviour component. TowerUpgradeDefinition represents upgrade content that may be applied to a tower instance during a battle.
 
 TowerUpgradeDefinition may define:
 
@@ -261,6 +261,18 @@ Archer B
 - Damage Bonus
 - Rapid Fire
 ```
+
+## 4.3 Runtime Change Notification
+
+Recording an upgrade or applying a tower level is an authoritative state change. After the state change succeeds, the tower runtime must be notified so it can:
+
+- Resolve the tower's new current combat values.
+- Refresh tower-owned targeting and cooldown state.
+- Refresh eligible active Attack Entities according to the timing contract in this document and Tower Runtime Combat System.
+- Create an immediate persistent runtime such as Arcane Field when the package contract requires it.
+- Add a companion Attack Entity to an eligible existing release group when Hunting Arrow, Multi Orbs, or Twin Drones requires live retrofit.
+
+TowerUpgradeSystem owns validation, state recording, and the notification boundary. The corresponding combat runtime remains responsible for executing the refresh or package behavior. Recording an upgrade must not require destroying and recreating the tower or indiscriminately removing its active Attack Entities.
 
 ---
 
@@ -458,6 +470,18 @@ AttackInterval improvements may use negative deltas.
 
 Runtime stat resolution should clamp final values so invalid or extreme content cannot break combat behavior.
 
+Successful Basic Layer and tower-level changes use the following first-version runtime propagation rules:
+
+- Attack Range refreshes immediately for tower target acquisition and for active Hunting Arrow and Drone range checks. Existing TrackingRangeOrigin values and captured Cannon target positions remain unchanged.
+- Attack Interval refreshes immediately. If the tower is already cooling down, its remaining cooldown preserves the same completion ratio under the new interval rather than restarting or receiving a free attack.
+- Damage refreshes immediately for unresolved hits from active Arrows, Shells, Magic Orbs, Drones, and their eligible attack extensions. Damage that has already resolved is never replayed.
+- Magic Orb rotation speed refreshes immediately for active Orbs.
+- Magic Orb max hit count refreshes active Orbs by delta: add the resolved maximum change to each Orb's remaining hit count without clearing hit history or resetting it to a new maximum.
+- Drone battery duration refreshes active Drones by delta: add the resolved duration change to the remaining battery without resetting the Drone to full battery.
+- Drone burst cooldown refreshes active Drones' future burst cadence. A currently running burst cooldown preserves its completion ratio under the new value.
+
+These rules distinguish a live resolved value from immutable entity history. Hit history, consumed hits, elapsed lifetime, captured positions, and already completed Effects are not reconstructed when a numerical upgrade changes.
+
 Purpose:
 
 - Improve tower efficiency
@@ -489,17 +513,38 @@ The final first-version Behaviour content set is:
 | Magic Tower | Multi Orbs, Arcane Detonation, Arcane Field | Entity count, normal-completion explosion, persistent tower field |
 | Drone Tower | Twin Drones, Blast Rounds, Final Dive | Entity count, projectile explosion, Drone lifecycle attack |
 
-Runtime composition is resolved from the source tower's complete applied Behaviour package set. Each released Attack Entity receives only the immutable resolved options relevant to its own execution. A Projectile, Magic Orb, or Drone does not need to own or interpret the complete TowerUpgradeState or unrelated Behaviour definitions.
+Runtime composition is resolved from the source tower's complete applied Behaviour package set. Each Attack Entity receives typed runtime data relevant to its own execution. Fields marked Live Refresh may be updated through the owning tower runtime; Release Snapshot values and immutable entity history remain local to that entity. A Projectile, Magic Orb, or Drone does not need to own or interpret the complete TowerUpgradeState or unrelated Behaviour definitions.
+
+Behaviour timing is package-specific:
+
+| Package | Active-entity behavior when the upgrade is applied |
+|---|---|
+| Piercing Arrow | Refresh existing Arrows immediately; add the package hit-count delta without clearing hit history |
+| Scatter Arrow | Release Snapshot; do not create missing side Arrows for an existing release |
+| Hunting Arrow | Live retrofit eligible existing Arrow release groups through virtual confirmation |
+| Explosive Shell | Refresh airborne Shells before Position Impact |
+| Multi Shells | Release Snapshot; do not create additional Shells for an existing release |
+| Bouncing Shell | Refresh only an initial Shell that has not reached its first Position Impact; an active bounce chain remains unchanged |
+| Multi Orbs | Add one companion Orb to each eligible existing single-Orb release group |
+| Arcane Detonation | Refresh active Orbs that have not completed |
+| Arcane Field | Create the tower-owned field immediately |
+| Twin Drones | Launch one companion Drone from the tower for each eligible existing single-Drone release group |
+| Blast Rounds | Refresh active Drones and already airborne unresolved Drone projectiles |
+| Final Dive | Refresh active Drones before their battery-end resolution |
+
+Live retrofit uses a stable `ReleaseGroupId` plus package-specific slot identity so repeated refreshes are idempotent. It adds only the missing behavior or companion entity and preserves the original entity's elapsed lifetime, history, timers, and already-resolved results.
 
 Behaviour Layer package identity should be typed. Behaviour parameters live on their corresponding TowerUpgradeDefinition and are consumed by the runtime module that owns the behavior. Reusable target resolution and Effect execution should remain in Effect System, while persistent Buff state remains in Buff System.
 
 ### Archer Behaviour Upgrades
 
-Piercing Arrow grants finite per-projectile hit count and hit-history behavior. Every newly resolved Monster Hit consumes one hit, may dispatch direct damage, and provides one explicit Elemental application opportunity. Reaching the maximum hit count ends the Arrow.
+Piercing Arrow grants finite per-projectile hit count and hit-history behavior. Every newly resolved Monster Hit consumes one hit, may dispatch direct damage, and provides one explicit Elemental application opportunity. Reaching the maximum hit count ends the Arrow. Applying Piercing Arrow refreshes active Arrows by adding the package hit-count delta to their remaining count; it does not clear previous hits or reset remaining count from the new maximum.
 
-Scatter Arrow releases multiple independent Arrow projectiles from one attack. Each Arrow owns its own movement, hit detection, piercing state, hit history, lifetime, damage result, and Elemental opportunities. Buff apply cooldown and Protection decide whether simultaneous attempts against the same Monster produce more than one successful application.
+Scatter Arrow releases multiple independent Arrow projectiles from one attack. Each Arrow owns its own movement, hit detection, piercing state, hit history, lifetime, damage result, and Elemental opportunities. Buff apply cooldown and Protection decide whether simultaneous attempts against the same Monster produce more than one successful application. Scatter Arrow is a Release Snapshot package and never supplements an already released Arrow group with side Arrows.
 
-Hunting Arrow changes one assigned Arrow flight into locked-target tracking. Tower runtime captures the authoritative main target position and fixed Center, Left, and Right target slots at confirmation, without target replacement or reuse, then snapshots TrackingRangeOrigin and resolved TrackingRange at release. An assigned Arrow tracks only its locked target while both remain inside that range. Hitting the target, target invalidation, loss of MonsterManager registration, or either range failure permanently transitions the Arrow to ordinary Direction flight with no reacquisition. When combined with Scatter Arrow, unassigned or invalid secondary slots preserve their confirmation-time Scatter directions. Each Arrow owns independent hit history, remaining piercing count, lifetime, and Elemental opportunities; surviving Piercing remains active after Hunting ends. Tracking movement itself does not periodically apply Elemental Buffs; actual Monster Hits use the Arrow attack boundary.
+Hunting Arrow changes one assigned Arrow flight into locked-target tracking. Tower runtime captures the authoritative main target position and fixed Center, Left, and Right target slots at confirmation without target replacement or reuse. TrackingRangeOrigin is immutable per release, while the resolved TrackingRange refreshes when Attack Range changes. An assigned Arrow tracks only its locked target while both remain inside that range. Hitting the target, target invalidation, loss of MonsterManager registration, or either range failure permanently transitions the Arrow to ordinary Direction flight with no reacquisition. When combined with Scatter Arrow, unassigned or invalid secondary slots preserve their confirmation-time Scatter directions. Each Arrow owns independent hit history, remaining piercing count, lifetime, and Elemental opportunities; surviving Piercing remains active after Hunting ends. Tracking movement itself does not periodically apply Elemental Buffs; actual Monster Hits use the Arrow attack boundary.
+
+When Hunting Arrow is applied while Arrows are active, each eligible release group performs one virtual confirmation using its stable Center, Left, and Right slots. Existing Arrows receive distinct valid targets where possible; a slot with no valid target remains Direction flight. The retrofit does not restart movement, lifetime, hit history, Piercing state, or already-resolved hits, and the normal one-way tracking-to-direction fallback still applies.
 
 ### Cannon Behaviour Upgrades
 
@@ -519,13 +564,17 @@ Exactly one valid Monster
     -> release one initial Shell
 ```
 
-The package owns `multiShellsMaxInitialShellCount`, with a minimum and default of `2`. The attack uses one confirmation, one presentation sequence, one release-time damage and runtime-options snapshot, and one cooldown. Confirmed target positions are not retargeted or canceled during the animation wait. Each released Shell owns independent direct, explosion, bounce, lifetime, and Elemental results. Bounce children never consume Multi Shells again.
+The package owns `multiShellsMaxInitialShellCount`, with a minimum and default of `2`. The attack uses one confirmation, one presentation sequence, one cooldown, and captured target positions. Confirmed target positions are not retargeted or canceled during the animation wait. Multi Shells is Release Snapshot and never creates additional Shells for an existing release group. Each released Shell owns independent direct, explosion, bounce, lifetime, and Elemental results. Bounce children never consume Multi Shells again.
 
-Bouncing Shell adds a finite local Position Impact chain. After every landing it completes all immediate results in the same frame: any direct damage and direct Elemental attempt, any Explosive Shell actions, explosion-target Elemental attempts, and synchronous Buff, overload, death, or target-state consequences. Only then does it search within the authored `bounceSearchRadius` around the impact position. It excludes direct Monsters already resolved by the chain, applies the package-owned `bounceTargetSelectionType` to the surviving local candidates, captures the selected target's current position, and creates one bounce child in the same frame. The selector supports Nearest, HighestHealth, LowestHealth, and Random without widening eligibility beyond the local radius. The package-owned `maxBounceCount` limits the chain, and `bounceArcHeight` controls bounce-child flight while the initial Shell continues to use AttackConfig.ArcHeight. It does not use the source tower's full AttackRange or the source AttackConfig's TargetSelectionType. Direct Monster Hit and positive direct damage are not required; no remaining bounce count or no candidate ends the chain. Bounce children inherit Cannon Behaviour snapshots, while Elemental application retains the existing sourceTower lookup semantics.
+Bouncing Shell adds a finite local Position Impact chain. After every landing it completes all immediate results in the same frame: any direct damage and direct Elemental attempt, any Explosive Shell actions, explosion-target Elemental attempts, and synchronous Buff, overload, death, or target-state consequences. Only then does it search within the authored `bounceSearchRadius` around the impact position. It excludes direct Monsters already resolved by the chain, applies the package-owned `bounceTargetSelectionType` to the surviving local candidates, captures the selected target's current position, and creates one bounce child in the same frame. The selector supports Nearest, HighestHealth, LowestHealth, and Random without widening eligibility beyond the local radius. The package-owned `maxBounceCount` limits the chain, and `bounceArcHeight` controls bounce-child flight while the initial Shell continues to use the ArcProjectileCombatBehaviour's authored initial arc height. It does not use the source tower's full AttackRange or the component's tower target-selection type. Direct Monster Hit and positive direct damage are not required; no remaining bounce count or no candidate ends the chain.
+
+Applying Bouncing Shell may refresh an initial airborne Shell only before its first Position Impact. The first Position Impact fixes the chain contract: remaining bounce count, resolved-target history, bounce arc height, search radius, and local selector remain unchanged for that chain. Damage and Explosive Shell eligibility may still refresh for unresolved impacts according to their own contracts.
 
 ### Magic Behaviour Upgrades
 
 Multi Orbs releases the authored number of independent Magic Orb Attack Entities, with a minimum and default count of `2`. Runtime chooses one random base starting angle and distributes the Orbs evenly using a `360 / count` angle step. Each Orb owns its own orbit angle, contact cooldowns, hit count, lifetime, damage results, and Elemental opportunities.
+
+When Multi Orbs is applied, every eligible active pre-upgrade single-Orb release group receives exactly one companion Orb. The companion starts opposite the existing Orb's current angle around the same orbit center, uses current resolved stats, and owns independent hit count, lifetime, and contact cooldown state. The original Orb is not reset. Future releases use the normal Multi Orbs release contract.
 
 Arcane Detonation executes one area Effect at the Orb's current world position only when the Orb ends through HitCountExhausted or LifetimeExpired. Forced cleanup, battle end, owner invalidation, and reset do not trigger it. Multi Orbs detonate independently. Every valid Monster resolved by a Detonation receives one explicit Elemental application opportunity.
 
@@ -535,11 +584,13 @@ Arcane Field creates one tower-owned field immediately when the upgrade is appli
 
 Twin Drones releases two independent Drone Attack Entities. Each Drone owns its own movement, target, orbit, burst timing, battery, projectile attacks, and optional Final Dive lifecycle.
 
+When Twin Drones is applied, every eligible active pre-upgrade single-Drone release group receives exactly one companion Drone. After the package-authored takeoff delay, the companion launches from the tower's current AttackOrigin and selects its target at actual takeoff. It uses current resolved stats and owns a full independent battery, burst cooldown, movement, target, and optional Final Dive lifecycle. The original Drone and the tower's current attack cooldown are not reset. Future releases use the normal Twin Drones release contract.
+
 Blast Rounds adds an area Effect after a Drone projectile's primary direct hit. It is additive rather than replacing direct damage. The primary target may receive direct damage plus explosion damage and two independent Elemental application attempts. Every other valid explosion target receives its own explosion opportunity.
 
 Final Dive adds a battery-end Drone state. Launching does not consume battery. When battery naturally depletes while Orbiting, an invalid current target produces VFX-only aerial despawn. A valid target is locked and the Drone enters FinalDiving, stops firing, pursues the target's current hit position without returning to Orbiting or selecting another Monster, and refreshes a last-valid-position snapshot. If the target becomes invalid during the dive, the Drone continues toward that last valid position. Entering the package-owned positive `finalDiveHitThreshold` around the current destination produces Position Impact.
 
-At Position Impact, Final Dive searches for the nearest valid Monster within `finalDiveHitThreshold` around the actual impact position. A resolved Monster receives direct damage from the Drone's release-time resolved attack damage and one direct Elemental application opportunity. No resolved Monster means no direct damage or direct opportunity. After that optional direct result, the authored Final Dive explosion always executes. Every valid explosion target resolves its own damage and Elemental opportunity; the direct target may therefore receive both results. The Drone despawns after all synchronous impact results complete.
+At Position Impact, Final Dive searches for the nearest valid Monster within `finalDiveHitThreshold` around the actual impact position. A resolved Monster receives the Drone's current refreshed direct damage and one direct Elemental application opportunity. No resolved Monster means no direct damage or direct opportunity. After that optional direct result, the authored Final Dive explosion always executes. Every valid explosion target resolves its own damage and Elemental opportunity; the direct target may therefore receive both results. The Drone despawns after all synchronous impact results complete.
 
 ### Elemental Opportunity Audit
 
@@ -590,6 +641,8 @@ Examples:
 Elemental Layer upgrades are intended to make path segments smarter and more dangerous through same-element tower coverage.
 
 Each tower may receive one Elemental Layer upgrade in the first version.
+
+Elemental Layer is Live Refresh at the real attack boundary. If an Elemental upgrade is applied while an Arrow, Shell, Magic Orb, Drone, or Drone-fired projectile is already active, its later eligible unresolved hit, contact, Position Impact, area resolution, or lifecycle result uses the tower's current Elemental profile. Earlier resolved events are not replayed, and immutable movement, target, history, and timer state is not changed.
 
 Tower-owned primary attacks and reviewed Behaviour attack extensions may apply Elemental debuff stacks through Effect System and Buff System when their runtime context explicitly allows Elemental application. Multiple towers whose active Elemental upgrades share the same ElementType stack the same Elemental debuff on the same monster and can eventually trigger overload.
 
@@ -661,7 +714,7 @@ Tower Placement System should not decide tower level-up rules or apply tower upg
 
 ## Tower Framework System
 
-Tower Framework System owns TowerDefinition and its per-level config data. TowerUpgradeSystem owns the Arcane Field package identity, parameters, and package-specific VFX prefab reference.
+Tower Framework System owns TowerDefinition, its per-level config data, and the prefab-authored concrete TowerCombatBehaviour contract. TowerUpgradeSystem owns upgrade definitions, including the Arcane Field package identity, parameters, and package-specific VFX prefab reference.
 
 ## Battle HUD UI System
 

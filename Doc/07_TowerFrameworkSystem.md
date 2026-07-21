@@ -35,8 +35,9 @@ The Tower Framework System owns:
 - Tower categories
 - Attack archetype definitions
 - Target selection definitions
-- Shared tower configuration references
-- Static attack VFX configuration references
+- Tower Base Prefab combat-component contract
+- Common and archetype-specific combat authoring fields
+- Static attack VFX configuration references on combat components
 - Tower prefab structure contract
 - Tower visual structure contract
 - Tower visual VFX anchor contract
@@ -107,14 +108,13 @@ Recommended fields:
 | description | string | Tower description |
 | icon | Sprite | UI icon |
 | towerPrefab | GameObject | Runtime tower prefab |
-| attackConfig | AttackConfig | Attack configuration reference |
 | towerLevelConfigs | List<TowerLevelConfig> | Optional per-level base stat and presentation data consumed by Tower Upgrade System |
 
 Tower level base stat growth should be configured in TowerDefinition through per-level config data.
 
-Upgrade definition references are owned by the Tower Upgrade System and should not be mixed with basic TowerDefinition attack configuration unless a later implementation explicitly requires a shared lookup.
+Upgrade definition references are owned by the Tower Upgrade System and should not be mixed with TowerDefinition identity or per-level presentation data.
 
-TowerUpgradeDefinition content should stay outside TowerDefinition and AttackConfig. TowerDefinition owns tower identity, base prefab/config references, and per-level base stat and presentation data. AttackConfig owns immutable default attack configuration. TowerUpgradeDefinition owns package-specific authoring and runtime prefab references, while tower upgrade runtime state tracks per-instance upgrade state, damage bonuses, stat deltas, and behaviour package activation.
+TowerDefinition owns tower identity, the Tower Base Prefab reference, and per-level base stat and presentation data. The Tower Base Prefab's concrete TowerCombatBehaviour component owns immutable base combat authoring. TowerUpgradeDefinition owns package-specific authoring and upgrade runtime prefab references, while tower upgrade runtime state tracks per-instance upgrades, damage bonuses, stat deltas, and behaviour package activation.
 
 Suggested TowerLevelConfig fields include:
 
@@ -447,23 +447,19 @@ Towers orchestrate combat while Attack Entities execute combat behavior.
 
 Attack Entity is a design and runtime concept. It does not require every implementation stage to have a dedicated code class with that name.
 
-Current code may still use an attack archetype enum to select the first-version execution branch. The long-term conceptual split is:
+Tower combat authoring and orchestration use one concrete TowerCombatBehaviour subtype per first-version attack archetype:
 
 ```text
-Attack Entity kind
-    -> Projectile
-    -> Magic Orb
-    -> Drone
-
-Projectile flight behavior
-    -> Direction
-    -> Arc
-    -> Tracking
+TowerCombatBehaviour
+    -> DirectionProjectileCombatBehaviour
+    -> ArcProjectileCombatBehaviour
+    -> MagicOrbCombatBehaviour
+    -> DroneCombatBehaviour
 ```
 
-Projectile-style Attack Entities share Projectile System runtime behavior, while Magic Orb and Drone use their own Attack Entity runtime behavior.
+The concrete component type is the Tower Base Prefab's attack-runtime identity. `AttackArchetype` remains useful for Projectile flight identity such as Direction, Arc, and Tracking, but Tower authoring does not require a separate serialized archetype selector that can disagree with the component type.
 
-Future refactors may separate Attack Entity kind from projectile flight behavior in code, but this is not required before Effect System foundation work.
+Projectile-style Attack Entities share Projectile System runtime behavior, while Magic Orb and Drone use their own Attack Entity runtime behavior.
 
 Tower responsibilities:
 
@@ -664,313 +660,74 @@ VFX expectation:
 
 Drone VFX is presentation-only and must not own target selection, battery rules, projectile hit detection, or damage.
 
-# 8. Attack Configuration
+# 8. Tower Combat Component Authoring
 
-Attack Configuration defines the static combat-related data consumed by the Tower Runtime Combat System.
-
-TowerDefinition should not directly store combat parameters.
-
-Instead, TowerDefinition references an AttackConfig through attackConfig.
-
-Example:
+Static tower combat data is configured once on the concrete TowerCombatBehaviour component attached to each Tower Base Prefab. TowerDefinition references the prefab; it does not reference a separate AttackConfig asset.
 
 ```text
-TowerDefinition
-    ↓
-attackConfig
-    ↓
-AttackConfig
-    ↓
-TowerRuntimeCombatSystem
+TowerDefinition.towerPrefab
+    -> concrete TowerCombatBehaviour component
+    -> prefab-authored base combat values and Attack Entity references
+    -> Tower Runtime Combat execution
 ```
 
-This separation allows multiple towers to share the same attack configuration while keeping runtime combat logic independent from tower framework data.
+This ownership keeps one-off combat configuration beside the runtime that consumes it and prevents unrelated archetype fields from sharing one authoring asset.
 
----
+## 8.1 Common TowerCombatBehaviour Fields
 
-## 8.1 AttackConfig Purpose
-
-AttackConfig defines:
-
-- Attack range
-- Attack interval
-- Target selection rules
-- Projectile references
-- Projectile trajectory parameters
-- Attack Entity behavior parameters
-- Animator parameter names for attack presentation requests
-- Optional attack VFX prefab references
-
-AttackConfig does not contain runtime state.
-
-Runtime state belongs to Tower Runtime Combat System.
-
-Examples of runtime state:
-
-- Current target
-- Cooldown timer
-- Attack Entity lifetime state
-- Detected enemies
-- Attack execution state
-
----
-
-## 8.2 Recommended AttackConfig Fields
-
-Recommended first-version fields:
-
-AttackConfig assets are referenced directly by TowerDefinition. They should not maintain a hand-authored attack config id unless a future persistence, external-data, or lookup requirement needs a stable id. Debug output should use the ScriptableObject asset name.
+The abstract TowerCombatBehaviour base owns fields shared by tower attack orchestration:
 
 | Field | Type | Description |
 |---|---|---|
-| attackArchetype | AttackArchetype | Attack behavior type |
-| attackRange | float | Maximum attack range |
-| attackInterval | float | Time between successful Attack Entity releases |
-| targetSelectionType | TargetSelectionType | Target selection rule |
-| projectileConfig | ProjectileConfig | Direct projectile configuration reference |
-| arcHeight | float | Arc projectile trajectory height |
-| magicOrbRotationSpeed | float | Rotation speed for Magic Orb behavior |
-| magicOrbMaxHitCount | int | Maximum number of successful hits before a Magic Orb disappears |
-| magicOrbMaxLifetime | float | Maximum lifetime before a released Magic Orb disappears, even if remaining hit count is greater than zero |
-| sameTargetHitCooldown | float | Cooldown before the same Magic Orb may hit the same monster again |
-| magicOrbOrbitRadius | float | Orbit radius used by Magic Orb movement |
-| magicOrbContactDistance | float | Contact distance used by Magic Orb hit detection |
-| droneBatteryDuration | float | Maximum active flight duration before Drone air-explodes and despawns |
-| droneOrbitRadius | float | Orbit radius around the selected target monster |
-| droneFlightSpeed | float | Drone movement speed for launch, approach, and orbit |
-| droneFlightHeight | float | Height offset above the Drone release position maintained during active Drone flight |
-| droneBurstCount | int | Number of projectiles fired in one Drone burst |
-| droneBurstInterval | float | Time between projectiles within one Drone burst |
-| droneBurstCooldown | float | Cooldown between Drone bursts |
-| droneProjectileConfig | ProjectileConfig | Projectile configuration used by Drone-fired projectiles |
-| attackReleaseVfxPrefab | GameObject | Optional one-shot VFX prefab spawned when a tower attack or attack entity release is confirmed |
-| magicOrbPrefab | GameObject | Optional Magic Orb attack entity prefab |
-| dronePrefab | GameObject | Optional Drone attack entity prefab |
+| attackRange | float | Base target-detection and launch range before runtime upgrade deltas |
+| attackInterval | float | Base time between successful Attack Entity releases before runtime upgrade deltas |
+| targetSelectionType | TargetSelectionType | Normal tower/Drone target-selection rule when used by the concrete archetype |
+| attackReleaseVfxPrefab | GameObject | Optional one-shot release VFX used at the reviewed release boundary |
 
-AttackConfig should not define a damage multiplier. Final runtime damage is resolved from TowerLevelConfig.basicDamage plus tower upgrade runtime damage bonuses.
+The base component also owns shared runtime coordination contracts, but it does not serialize current targets, cooldowns, active-entity histories, or applied upgrades.
 
-Not every attack archetype requires every field.
+Attack animation parameter names remain model-presentation-local and do not belong to the combat component.
 
-Unused fields should be hidden in the Inspector whenever practical.
+## 8.2 Concrete Combat Components
 
-Editor tooling may use Odin Inspector conditional display features to show only fields relevant to the selected AttackArchetype.
+Each Tower Base Prefab must author exactly one compatible concrete component:
 
-Attack VFX fields are optional. Empty VFX references should not block combat execution.
+| Component | Tower | Additional Authored Fields |
+|---|---|---|
+| DirectionProjectileCombatBehaviour | Archer | projectileConfig |
+| ArcProjectileCombatBehaviour | Cannon | projectileConfig, arcHeight |
+| MagicOrbCombatBehaviour | Magic | magicOrbPrefab, magicOrbRotationSpeed, magicOrbOrbitRadius, magicOrbContactDistance, magicOrbMaxHitCount, magicOrbMaxLifetime, magicOrbSameTargetHitCooldown |
+| DroneCombatBehaviour | Drone | dronePrefab, droneProjectileConfig, droneBatteryDuration, droneOrbitRadius, droneFlightSpeed, droneFlightHeight, droneBurstCount, droneBurstInterval, droneBurstCooldown |
 
-Attack VFX references are static presentation configuration only. They must not define gameplay damage, targeting rules, cooldown logic, projectile hit detection, or buff behavior.
+The component type is authoritative. Tower authoring does not serialize a second AttackArchetype selector that can disagree with it.
 
-Attack animation parameter names belong to the current tower model presentation entry. Tower Runtime Combat requests attack presentation from the resolved model presentation entry instead of hardcoding animator parameter names.
+TowerDefinition validation should confirm that its Tower Base Prefab contains the expected concrete combat component for the configured TowerFamily. A missing or mismatched component is an authoring error and should not be repaired by adding an untyped base TowerCombatBehaviour at runtime.
 
-Recommended naming convention:
+## 8.3 Runtime Data Construction
 
-| Field | Recommended Value |
-|---|---|
-| attackAnimatorTriggerName | Attack |
-
-Most tower model presentation entries should follow the same naming convention to simplify animator setup and runtime combat implementation.
-
-However, animator parameter names remain configurable per tower model presentation entry.
-
----
-
-## 8.3 AttackConfig Usage By Archetype
-
-Different attack archetypes consume different AttackConfig fields.
-
-### Direction Projectile
-
-Typically uses:
-
-- attackRange
-- attackInterval
-- projectileConfig
-- targetSelectionType
-- attackReleaseVfxPrefab
-
-Notes:
-
-- targetSelectionType is used by the tower to select an initial target before firing.
-- The selected target's monster-side hit/reference anchor provides the launch direction for the projectile.
-- After launch, direction projectile hit detection belongs to the Projectile System.
-- The projectile may hit any valid monster encountered during flight, not only the originally selected target.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
-- Attack cooldown starts immediately after the projectile is released.
-- The projectile should be destroyed by projectile runtime logic when it exceeds its maximum lifetime.
-
-VFX notes:
-
-- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released and should face the projectile launch direction.
-- Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
-- Projectile impact VFX should usually be handled by projectile impact logic.
-
----
-
-### Arc Projectile
-
-Typically uses:
-
-- attackRange
-- attackInterval
-- projectileConfig
-- arcHeight
-- targetSelectionType
-- attackReleaseVfxPrefab
-
-Notes:
-
-- The selected target's monster-side hit/reference anchor provides the target position snapshot.
-- Arc flight continues toward that snapshot even if the original target later becomes invalid.
-- Reaching the snapshot produces Position Impact. Projectile runtime then searches for the nearest valid Monster around the impact position within ProjectileConfig.hitDistanceThreshold; finding one also produces Monster Hit.
-- ProjectileConfig.hitDistanceThreshold therefore acts as the Arc arrival tolerance and the impact-position Monster query radius in the first version.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
-- The baseline Arc projectile resolves at most one direct target. Explosion radius and area damage belong to Behaviour content executed through Projectile and Effect responsibilities, not AttackConfig.
-- Attack cooldown starts immediately after the projectile is launched.
-
-VFX notes:
-
-- attackReleaseVfxPrefab may be played at AttackOrigin when the projectile is released and should use the VFX prefab's default direction.
-- Projectile travel VFX should usually live on the projectile prefab or ProjectileConfig.
-- Explosion or impact VFX should follow projectile impact timing.
-
----
-
-### Tracking Projectile
-
-Typically uses:
-
-- attackRange
-- attackInterval
-- projectileConfig
-- targetSelectionType
-- attackReleaseVfxPrefab
-
-Notes:
-
-- Tracking Projectile follows projectile-style cooldown timing.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
-- Attack cooldown starts immediately after the projectile is released.
-- Tracking projectile runtime supports reviewed projectile-style Behaviour content such as Hunting Arrow. Tower runtime captures the authoritative main position and fixed initial target slots at confirmation, then supplies a release-time range snapshot. Projectile runtime tracks only its locked target and permanently falls back to Direction flight after the first hit or any target/Arrow range-validity failure; it does not reacquire.
-
-VFX notes:
-
-- attackReleaseVfxPrefab may be played when the projectile is released. Until Tracking Projectile defines its own orientation rule, it should use the VFX prefab's default direction.
-- Projectile travel and impact VFX should follow Projectile System timing.
-
----
-
-### Magic Orb
-
-Typically uses:
-
-- attackRange
-- attackInterval
-- magicOrbRotationSpeed
-- magicOrbOrbitRadius
-- magicOrbContactDistance
-- magicOrbMaxHitCount
-- magicOrbMaxLifetime
-- sameTargetHitCooldown
-- attackReleaseVfxPrefab
-- magicOrbPrefab
-
-Notes:
-
-- magicOrbRotationSpeed controls how quickly the Magic Orb rotates around its release-time center.
-- magicOrbOrbitRadius controls the Magic Orb attack path around its release-time center.
-- magicOrbContactDistance controls Magic Orb contact hit detection.
-- magicOrbMaxHitCount controls how many successful hits the active Magic Orb can perform before disappearing.
-- magicOrbMaxLifetime controls how long a released Magic Orb can remain active before disappearing, even if remaining hit count is greater than zero.
-- sameTargetHitCooldown controls how soon the same Magic Orb may hit the same monster again.
-- attackInterval controls the cooldown before the tower may release another Magic Orb.
-- Magic Orb cooldown starts when the Magic Orb is generated.
-- Older Magic Orbs do not block later Magic Orb releases.
-- Magic Orb should spawn at a runtime-selected orbit angle.
-- Final damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
-- Magic Orb behavior does not require targetSelectionType in the first version.
-- Magic Orb combat parameters should be configured on AttackConfig so MagicOrbBehaviour remains a runtime executor.
-- attackReleaseVfxPrefab may be played at AttackOrigin when the Magic Orb is generated and should use the VFX prefab's default direction.
-
-VFX notes:
-
-- magicOrbPrefab may contain visual references for orbiting and contact feedback.
-- Magic Orb VFX should not own damage, target search, orbit hit rules, or hit validation.
-
----
-
-### Drone
-
-Typically uses:
-
-- attackRange
-- attackInterval
-- targetSelectionType
-- droneBatteryDuration
-- droneOrbitRadius
-- droneFlightSpeed
-- droneFlightHeight
-- droneBurstCount
-- droneBurstInterval
-- droneBurstCooldown
-- droneProjectileConfig
-- attackReleaseVfxPrefab
-- dronePrefab
-
-Notes:
-
-- targetSelectionType is used by DroneBehaviour when the Drone chooses a target.
-- attackInterval controls how often Drone Tower may release a new Drone after a successful launch.
-- droneBatteryDuration controls how long the released Drone can remain active before air-exploding and despawning.
-- droneOrbitRadius controls the Drone's orbit distance around the selected target monster.
-- droneFlightSpeed controls Drone launch, approach, and orbit movement.
-- droneFlightHeight controls the height offset above the Drone release position maintained during active Drone flight.
-- Drone orbit direction should be chosen at runtime when entering Orbiting or retargeting, based on which tangent direction is closer to the Drone's current local +Z forward direction.
-- Drone orbit direction should not be configured on AttackConfig.
-- Whenever the Drone is moving, Drone model local +Z should face the current planar movement direction. During stable Orbiting this is the selected orbit tangent / flight direction.
-- Drone-fired projectiles and attack release VFX should still aim at the selected monster hit position from the Drone FireAnchor, independent of Drone body movement-facing.
-- droneBurstCount, droneBurstInterval, and droneBurstCooldown control Drone-specific burst fire timing.
-- Drone uses attackRange as the tower detect and launch range in the first version. Dedicated Drone engage or leash ranges may be added later if needed.
-- Drone target selection only considers valid monsters inside the source tower attackRange.
-- If no valid monster is available before Drone release, Drone Tower should remain idle and should not start cooldown.
-- If a released Drone loses its current target, it should retarget to another valid monster inside the source tower attackRange when possible.
-- If no valid monster remains after release, the released Drone should air-explode and despawn.
-- Drone is an Attack Entity which may spawn Projectile Attack Entities.
-- Projectiles fired by Drone should use droneProjectileConfig and Projectile System behavior.
-- Final Drone-fired projectile damage is calculated from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
-- Drone battery and battery-end destruction behavior should belong to Drone attack entity runtime logic.
-- Drone Tower should use AttackOrigin as the Drone release point in the first version.
-- Released Drones should not depend on tower model child Transforms after launch.
-- Drone FireAnchor should come from the Drone prefab or DroneBehaviour, not AttackConfig.
-
-Drone tower cooldown timing starts when the Drone is successfully launched. Drone projectile fire timing is controlled by droneBurstCount, droneBurstInterval, and droneBurstCooldown.
-If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time.
-
-VFX notes:
-
-- dronePrefab may contain visual references for launch, orbit, projectile firing, battery-end explosion, and despawn presentation.
-- attackReleaseVfxPrefab may be reused for Drone-fired attack release VFX, should spawn at the Drone FireAnchor, and should face the selected target Monster direction.
-- Drone VFX should not own target selection, battery rules, projectile hit detection, or damage.
-
----
-
-## 8.4 Runtime Consumption
-
-The Tower Framework System only defines AttackConfig data.
-
-Runtime attack execution belongs to the Tower Runtime Combat System.
-
-Example:
+Attack Entity behavior classes do not read the combat MonoBehaviour continuously. At release, the concrete combat component combines its immutable authored base values with the placed tower's current level and upgrade state, then constructs only the typed runtime data relevant to the released entity.
 
 ```text
-TowerDefinition
-    ↓
-AttackConfig
-    ↓
-TowerRuntimeCombatSystem
-    ↓
-Attack Execution
+Prefab-authored combat fields
+    + TowerLevelConfig
+    + applied TowerUpgradeDefinitions
+    -> resolved typed runtime data
+    -> Projectile / Magic Orb / Drone initialization
 ```
 
-The Tower Runtime Combat System is responsible for consuming AttackConfig data and converting it into runtime combat behavior.
+Owned Attack Entities may later receive selective replacement runtime data when an approved level or upgrade change is Live Refresh. They do not receive the complete TowerUpgradeState and do not inspect unrelated TowerUpgradeDefinitions.
+
+## 8.4 Archetype Notes
+
+Direction Projectile uses the shared range, interval, target selection, release VFX, and its ProjectileConfig. The selected target defines the initial direction; Projectile System owns flight and hit resolution after release.
+
+Arc Projectile uses the same common fields plus ProjectileConfig and the Arc component's authored arcHeight. It captures an immutable landing position. Explosion and bounce behavior remain package-owned rather than base Arc authoring.
+
+Magic Orb uses common range and interval for tower release orchestration. Magic-specific authored fields define its base orbit, contact, hit-budget, lifetime, and prefab rules. Applied upgrades may selectively refresh damage, rotation speed, remaining hit budget by delta, and reviewed Behaviour options on active Orbs.
+
+Drone uses common range, interval, target selection, and release VFX plus its Drone-specific authored fields. Drone-local movement, targeting, battery, burst, and Final Dive state remain owned by Drone runtime after release. Applied upgrades may selectively refresh approved future Drone behavior without replacing already-consumed entity history.
+
+Attack VFX fields are optional and presentation-only. Empty references must not block combat execution or own gameplay decisions.
 
 ---
 
@@ -1058,7 +815,7 @@ Requests TowerBehaviour-owned TowerVisualController to update placement preview,
 
 ## Tower Runtime Combat System
 
-Uses TowerDefinition, AttackConfig, and resolved tower upgrade state to determine attack archetypes, final runtime stats, and combat behavior.
+Uses TowerDefinition, the concrete prefab-authored TowerCombatBehaviour component, and resolved tower upgrade state to determine final runtime stats and combat behavior.
 
 Consumes the current active AttackOrigin resolved through the owning tower runtime and TowerVisualController path.
 
@@ -1094,7 +851,8 @@ Included:
 - Basic relationship between tower attacks, effects, and buffs
 - Tower prefab visual structure contract
 - TowerVisualController ownership and API direction
-- Optional AttackConfig VFX and Attack Entity prefab references for attack release, Magic Orb, and Drone attacks
+- Abstract TowerCombatBehaviour authoring contract and four first-version concrete component types
+- Optional combat-component VFX and Attack Entity prefab references for projectile, Magic Orb, and Drone attacks
 - Magic Arcane Field Behaviour-package VFX/runtime prefab structure contract
 
 Excluded:

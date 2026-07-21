@@ -386,7 +386,7 @@ For a valid empty deployable area, the active Tower Preview should display:
 - The tower's permanent base visual.
 - The tower model for the dragged Tower Draft item's resolved deployment level.
 - Whole-preview material tint and transparency applied to TowerBaseVisualRoot and the spawned tower model.
-- Attack range preview based on the tower's AttackConfig attackRange.
+- Attack range preview based on the Tower Base Prefab's authored TowerCombatBehaviour attackRange.
 
 Current first-version Tower Draft configuration may resolve all new tower deployment results to Lv1, but Tower Placement System should use the Draft item's resolved deployment level instead of hardcoding Lv1.
 
@@ -498,18 +498,22 @@ When a Draft item drag operation begins:
 Attack range preview uses:
 
 ```text
-TowerDefinition
-    ↓
-AttackConfig
-    ↓
-attackRange
+New Tower Preview
+    -> TowerDefinition.towerPrefab
+    -> prefab-authored TowerCombatBehaviour base attackRange
+
+Deployed Tower
+    -> placed TowerCombatBehaviour
+    -> current resolved live AttackRange
 ```
 
 Runtime rendering direction:
 
 - Each Tower Base Prefab may provide an `AttackRangePreview` child.
 - The `AttackRangePreview` child should contain a circular mesh whose radius is 1 when local scale is 1.
-- TowerVisualController scales `AttackRangePreview` uniformly to `attackRange`.
+- TowerVisualController scales `AttackRangePreview` uniformly to the requested range.
+- A temporary undeployed preview uses the authored base range from the combat component on `TowerDefinition.towerPrefab`.
+- A deployed tower uses its current resolved AttackRange, including applied Basic Layer range deltas.
 - TowerVisualController shows or hides `AttackRangePreview` during Draft item drag lifecycle.
 - AttackRangePreview may provide lightweight prefab-authored looping presentation while the preview is visible.
 - TowerVisualController should not generate placement validation data or affect combat range logic.

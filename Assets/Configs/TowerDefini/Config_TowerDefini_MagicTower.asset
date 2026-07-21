@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
   towerFamily: 2
   displayName: Magic Tower
-  description: Drone pursuit fire
+  description: Orbiting magic orb
   icon: {fileID: -6222716414409381310, guid: 10cbcc51943ea4b4aa154f8a8adf0bec, type: 3}
   towerPrefab: {fileID: 6027618472494872927, guid: 5b7ed8402f4fc4e9bbbfc43e6ae17d24, type: 3}
   attackConfig: {fileID: 11400000, guid: 1f45c942290de471f8a105f3bf885357, type: 2}
