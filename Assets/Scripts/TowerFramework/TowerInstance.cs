@@ -19,7 +19,8 @@ public class TowerInstance : MonoBehaviour
     public IReadOnlyList<GridNodeBehaviour> OccupiedNodes => occupiedNodes;
     public IReadOnlyList<TowerUpgradeDefinition> AppliedUpgrades => upgradeState.AppliedUpgrades;
 
-    public event Action<TowerUpgradeDefinition> OnUpgradeRecorded;
+    public event Action<TowerInstance, TowerUpgradeDefinition> OnUpgradeRecorded;
+    public event Action<TowerInstance, int, int> OnLevelChanged;
 
     public void Initialize(TowerDefinition towerDefinition, List<GridNodeBehaviour> occupiedNodes)
     {
@@ -83,7 +84,14 @@ public class TowerInstance : MonoBehaviour
             return false;
         }
 
+        if (currentLevel == level)
+        {
+            return true;
+        }
+
+        int previousLevel = currentLevel;
         currentLevel = level;
+        OnLevelChanged?.Invoke(this, previousLevel, currentLevel);
         return true;
     }
 
@@ -131,7 +139,7 @@ public class TowerInstance : MonoBehaviour
             return false;
         }
 
-        OnUpgradeRecorded?.Invoke(upgradeDefinition);
+        OnUpgradeRecorded?.Invoke(this, upgradeDefinition);
         return true;
     }
 }

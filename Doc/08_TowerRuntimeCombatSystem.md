@@ -40,7 +40,9 @@ The Tower Runtime Combat System owns:
 - Typed runtime data construction for released Attack Entities
 - Selective Live Refresh for active owned Attack Entities after approved level or upgrade changes
 - Immutable entity history, progress, captured positions, and release-only decisions
-- Release-group identity for retrofit behaviors such as Hunting Arrow, Multi Orbs, and Twin Drones
+- Release-group identity for Hunting Arrow and synchronized Multi Orbs membership
+- Active Drone registration and maximum-capacity gating
+- Idempotent forced cleanup of owned Attack Entities during reinitialization or Unity teardown
 - Attack state transitions
 - Attack presentation request timing
 - Attack Entity release orchestration
@@ -226,6 +228,28 @@ Recommended attack states:
 | Idle | Tower is not currently executing an attack |
 | WaitingForAnimationRelease | Tower has prepared an attack and is waiting for the animation release moment |
 
+## 5.1 Confirmation And Animation-Release Data Boundary
+
+Entering `WaitingForAnimationRelease` locks only the release topology and confirmation data for that attack:
+
+- Archer assigns the owner-local ReleaseGroupId at confirmation and stores it in the pending attack. A failed release may leave an unused ID.
+- Scatter Arrow locks whether the group contains Center, Left, and Right Arrow slots. A single Arrow has only Center.
+- Regardless of whether Hunting Arrow is already active, Archer captures one distinct candidate target and one fallback direction for every confirmed slot.
+- Multi Shells locks the number of initial Shells and their captured target-position snapshots.
+- An upgrade applied during the animation wait does not add or remove members from that pending release and does not recapture Cannon target positions.
+
+Pending attacks do not receive typed active-entity mutation. At the Animation Event, Archer and Cannon create entities from the latest cached/package state while preserving the pending topology and snapshots:
+
+- Archer reads current Damage, Piercing Arrow, and Hunting Arrow. If Hunting is active, it revalidates each captured candidate as still registered, gameplay-targetable, and inside current resolved AttackRange. Center remains the authoritative main target and cancels the whole pending release if invalid. An invalid Left or Right candidate uses that slot's confirmation-time fallback direction. The Animation Event does not perform free retargeting. TrackingRangeOrigin comes from the actual release origin.
+- Cannon reads current Damage, Explosive Shell, and pre-first-impact Bouncing Shell. It still releases only the confirmed Shell count toward the captured target positions.
+- Magic and Drone resolve all of their current initialization values when their pending entity/group is actually released; they have no retroactive mutation before an entity exists.
+
+If a level-up replaces the tower model while an attack is waiting for its Animation Event, the newly resolved `TowerModelPresentation` takes over that same pending attack. Runtime requests the new model's attack trigger without recapturing topology, targets, or positions. If the new presentation cannot accept the trigger, the pending attack releases immediately from the newly resolved current AttackOrigin. A delayed Animation Event from the destroyed model is harmless because release changes the combat state and duplicate events are ignored.
+
+Pending topology fields have only four write boundaries: confirmation, cancellation, successful release, and technical cleanup.
+
+This split prevents animation latency from making future-facing runtime values stale without retroactively rewriting the attack that the tower already confirmed.
+
 ---
 
 # 6. Update Flow
@@ -263,9 +287,13 @@ First-version tower attacks start cooldown when their Attack Entity is successfu
 - Magic Orb cooldown starts when the Magic Orb is generated.
 - Drone cooldown starts when the Drone is launched.
 
-After release, Projectile, Magic Orb, and Drone Attack Entities own their own lifecycle. Tower Runtime Combat should not wait for projectile impact, Magic Orb hit-count depletion, Drone battery depletion, or Drone destruction before starting the next attack interval.
+After release, Projectile Attack Entities own their lifecycle and do not delay the next Archer/Cannon interval. Magic and Drone use additional scheduler gates because their Attack Entities are longer lived:
 
-Drone uses resolved attack interval for tower-side release cadence. Drone battery timing remains Drone-local lifetime behavior, while Drone projectile fire timing is controlled by resolved Drone burst stats plus static Drone burst configuration.
+- Magic cooldown still starts on successful group release and runs while that group is active, but another group requires both cooldown readiness and completion of the current group.
+- Drone cooldown still starts on each successful launch and runs while Drones are active, but another launch also requires active Drone count below the currently resolved maximum.
+- A blocked ready cooldown remains at zero. When the blocking group/capacity condition clears, the normal target/release path may proceed and only a successful new release restarts cooldown.
+
+Drone battery timing remains Drone-local lifetime behavior, while Drone projectile fire timing is controlled by resolved Drone burst stats plus static Drone burst configuration.
 
 ---
 
@@ -333,13 +361,41 @@ Runtime combat data uses four explicit timing categories:
 | Live Refresh | Future behavior on an already active owned Attack Entity is refreshed after the approved level or upgrade change |
 | Entity State | Consumed history, timers, captured positions, progress, and completed results that upgrades never overwrite |
 
-The source TowerInstance publishes successful level and upgrade changes. The owning combat component re-resolves relevant data and refreshes registered active entities. Attack Entities do not poll the complete TowerUpgradeState every frame.
+The source TowerInstance publishes `OnLevelChanged(previousLevel, currentLevel)` only after a successful actual level transition and keeps `OnUpgradeRecorded` as the accepted-upgrade boundary. Rejected requests and no-op same-level requests publish no notification. The owning combat component re-resolves relevant data and refreshes registered active entities. Attack Entities do not poll the complete TowerUpgradeState every frame.
+
+Initialization completes in this order: detach and clean the old session; bind and validate the explicit owner; resolve/cache the baseline; initialize or recover subtype state; mark the session active; then subscribe. `OnEnable` before valid explicit initialization does not subscribe. Every handler verifies that the session is active and the notification source is the bound owner, so an event cannot observe a half-initialized subtype.
+
+AttackOrigin absence only blocks target scheduling and release. Runtime invalidation is limited to a destroyed bound TowerInstance, TowerDefinition identity or family mismatch, or unavailable MonsterManager. Invalidation cleanup runs once, resets cooldown to ready, invalidates cached refresh values, and unsubscribes. Later active frames only attempt recovery. Recovery may reacquire MonsterManager and then rebuild subtype/common baselines before subscribing, but it never replaces the owner through `GetComponent<TowerInstance>()`. A TowerInstance reinitialized with a different TowerDefinition requires explicit combat `Initialize`.
+
+Each combat runtime caches its current resolved common values and only the small package-derived family values needed for a delta, such as Archer's resolved Piercing maximum with an absent-package baseline of `1`. Notification handling follows one ordered transaction:
+
+```text
+oldValues = cached resolved values
+    -> resolve newValues from the already-mutated TowerInstance
+    -> replace the cache with newValues
+    -> adjust tower scheduler state
+    -> dispatch typed refresh data or the exact package command to snapshots of eligible owned entities
+```
+
+Updating the cache before entity dispatch makes two accepted changes in the same frame chain from the immediately preceding resolved state instead of reusing a stale baseline. A level notification refreshes common level-derived values; a Basic Layer notification refreshes only fields actually authored by that definition; a Behaviour Layer notification dispatches only the matching package reconciliation; and an Elemental Layer notification performs no mutable entity refresh because Elemental remains a live lookup at the real attack boundary.
+
+One Basic definition may contain multiple stat deltas. Magic therefore receives one atomic affected-field payload: optional new Damage, optional new Rotation Speed, and a remaining-hit-count delta. The group applies every present value, then the hit delta, then evaluates completion once.
+
+Before dispatch, the owner snapshots each relevant active registry. Entity-local guards reject ended, disabled, already-impacted, or otherwise ineligible refresh. Completion or unregister during iteration must not skip another snapshot member, replay an end path, or mutate the collection being iterated.
 
 Live Refresh replaces only approved future-facing values. It never resets elapsed lifetime, hit history, bounce history, completed results, flight progress, current target-state transitions, or already-consumed counters. Additive capacity upgrades adjust remaining state by their delta: Magic Orb remaining hit count gains the applied max-hit-count delta, and Drone remaining battery gains the applied battery-duration delta.
 
-AttackRange is Live Refresh. Tower detection and target selection use the current resolved range. Active Hunting Arrows and Drones receive the new resolved range, while an Arc Shell's captured landing position and a Tracking Arrow's range origin remain immutable entity data.
+AttackRange is Live Refresh. Tower detection and target selection use the current resolved range. Active Hunting Arrows and Drones receive the new resolved range, while an Arc Shell's captured landing position, a Tracking Arrow's range origin, and a Drone's release-time range origin remain immutable entity data.
 
-AttackInterval is Live Refresh at the tower scheduler. When an interval upgrade is applied during an active cooldown, runtime scales the remaining cooldown by the ratio between the new and old resolved intervals instead of resetting or granting a free attack.
+AttackInterval is Live Refresh at the tower scheduler. Let `remainingCooldown` be the current non-negative time remaining. Refresh uses the following exact rule after old and new intervals are resolved and clamped:
+
+```text
+remainingCooldown <= 0        -> leave it ready at 0
+oldInterval > 0               -> remainingCooldown *= newInterval / oldInterval
+oldInterval <= 0              -> remainingCooldown = 0
+```
+
+The result is clamped to a non-negative value. A new interval of zero completes the cooldown, but release remains owned by the next normal Update/scheduler pass; notification dispatch does not directly release an Attack Entity.
 
 Damage changes from Tower Level or Basic Layer upgrades refresh all active owned Attack Entities whose damage result has not yet resolved.
 
@@ -347,9 +403,18 @@ Behaviour timing is package-specific:
 
 - Piercing Arrow, Hunting Arrow conversion, Explosive Shell, pre-chain Bouncing Shell, Arcane Detonation, Blast Rounds, Final Dive, and active-entity-relevant Elemental opportunities may affect already active entities.
 - Scatter Arrow and Multi Shells remain release-only creation decisions.
-- Multi Orbs and Twin Drones retrofit each still-active pre-upgrade single-entity release group with exactly one companion entity.
+- Multi Orbs adds missing synchronized mirror members to the one active pre-upgrade Orb group; added members join its existing shared lifecycle rather than receiving an independent full lifetime.
+- Multi Drones changes the tower scheduler's maximum active capacity. It does not create a delayed companion, bypass cooldown, or batch-fill open capacity.
 
-Retrofit behavior requires an owner-local ReleaseGroupId. Scatter Arrow members additionally keep stable Center, Left, and Right slot identity. A group records whether its Hunting, Orb companion, or Drone companion retrofit has already been applied so repeated notifications cannot duplicate entities.
+Retrofit behavior requires an owner-local monotonically assigned `ReleaseGroupId` for Archer release groups and Magic Orb groups. Every Archer group preserves stable `Center`, `Left`, and `Right` slot identity; a single-Arrow group uses `Center`. Hunting retrofit consumes a permanent per-group reconciliation guard. A Tracking Arrow that later falls back to Direction has also permanently consumed its Hunting opportunity and is never reconsidered by a later range, level, or package notification. An Orb group records its applied Multi Orbs membership so repeated reconciliation cannot duplicate mirror members. Drone capacity uses active-entity registration rather than companion release-group identity.
+
+Piercing Arrow owns explicit remaining hit capacity rather than deriving future capacity only from a replacement maximum. Live refresh adds `newResolvedMaximum - oldResolvedMaximum` once, preserves the existing Monster hit set, and never restores already consumed hits.
+
+Magic group-wide common-value refresh is committed atomically. A max-hit-count delta is applied once to every active member's independent remaining count, then the group checks whether any member is exhausted and completes at most once. Multi Orbs retrofit creates missing candidates inactive and unbound. Staged candidates do not belong to active membership, tick, resolve contact, notify the group on disable/destroy, or appear at the prefab origin. After all candidates validate, the group rechecks that it is active, non-terminal, and still needs those slots; it then attaches owner/slot/angle/world position in one commit and activates every added member together. A newly committed member starts with the current resolved per-member maximum; existing members keep their consumed hits and remaining counts, so the retrofit cannot postpone an original member's exhaustion. Failure cleans only inactive candidates and leaves the original members, offsets, remaining counts, phase, and lifetime unchanged.
+
+Drone burst timing has three explicit phases: `ReadyToStartBurst`, `BetweenShots`, and `InterBurstCooldown`. A refreshed cooldown value becomes the value for every future burst, but only an active `InterBurstCooldown` timer is ratio-scaled. The final shot always enters `InterBurstCooldown`, including when the cooldown is zero; only the next normal Drone Update may begin another burst.
+
+Drone Battery Duration delta applies only while the Drone is `Launching` or `Orbiting`; it is clamped without resolving battery end in the notification callback. A zero result is handled on the next normal Drone Update: Launching performs aerial despawn and cannot begin Final Dive, while Orbiting follows the normal battery-end branch. A one-way `hasResolvedBatteryEnd` guard is set before that branch; after it is set, Battery and Final Dive refresh cannot rewrite the result. A `FinalDiving` Drone therefore ignores both. Blast Rounds may update an active Drone's future shots and its already-airborne unresolved projectiles. Final Dive may update only before battery-end resolution.
 
 ---
 
@@ -461,48 +526,53 @@ Magic Orb behavior represents a released orbiting Attack Entity created by Magic
 Recommended Magic Orb flow:
 
 ```text
-Cooldown ready
+Cooldown ready and no active Orb group
     ↓
-Spawn Magic Orb
+Create one Magic Orb release group
     ↓
 Capture release-time orbit center from current active AttackOrigin
     ↓
 Start cooldown
     ↓
-Orbit around release-time center
+Advance one shared lifetime and orbit phase
     ↓
-Contact detection against monsters
+Every member orbits at its fixed angle offset and checks contact independently
     ↓
-Apply damage on successful contact
+Apply that member's damage and Elemental opportunity on successful contact
     ↓
-Decrease hit count
+Decrease that member's independent remaining hit count
     ↓
-If hit count reaches zero or maximum lifetime is reached, despawn Magic Orb
+When any member exhausts its hit count, or lifetime expires, complete every member together
+    ↓
+If Arcane Detonation is active, detonate every member at its current position
+    ↓
+Despawn the complete group
 ```
 
 Magic Orb rules:
 
-- Magic Orb rotates around its release-time orbit center.
-- Magic Orb checks distance to monsters.
-- Contact deals damage.
-- Magic Orb has a configurable maximum hit count.
-- Hit count decreases after each successful hit.
-- The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed.
-- When hit count reaches zero, the Magic Orb disappears.
-- When maximum lifetime is reached, the Magic Orb disappears even if remaining hit count is greater than zero.
-- Cooldown starts when the Magic Orb is generated.
-- After cooldown, a new Magic Orb may be generated without checking older released Magic Orbs.
-- Magic Orb should start from a runtime-selected orbit angle so repeated releases do not all begin from the same point.
+- Magic Tower owns at most one active Magic Orb release group.
+- The group captures one release-time orbit center and owns one runtime-selected orbit phase.
+- Members use fixed evenly spaced angle offsets around that shared phase, so mirrors remain synchronized without drift.
+- The group owns one shared lifetime and completion reason; every member owns an independent remaining hit count initialized from the same resolved maximum.
+- Every successful member contact deals that member's damage, resolves that member's Elemental opportunity, and consumes one hit from only that member.
+- Each member keeps independent per-target same-target cooldown history, so different mirrors may resolve independent contacts against the same Monster.
+- Exhaustion of any member's hit count and shared maximum-lifetime expiry are normal group completion.
+- Cooldown starts when the group is successfully generated and continues while it is active.
+- A new group requires cooldown readiness, no active group, and the normal valid-target release condition.
+- Cooldown remains ready at zero if it finishes before the active group; group completion does not restart cooldown by itself.
 
-Magic Orb has two semantic outcomes: normal gameplay completion may trigger Arcane Detonation, while technical cleanup never triggers it. Hit-count exhaustion and lifetime expiry are normal completion. Forced cleanup, battle end, owner invalidation, and reset are cleanup.
+Magic Orb group completion has two semantic outcomes: normal gameplay completion may trigger Arcane Detonation once per member, while technical cleanup never triggers it. Initialization failure, combat reinitialization, component/GameObject disable, scene teardown, and owner-reference invalidation are cleanup. The first version does not define player demolition, Monster-driven Tower destruction, or a separate battle-reset gameplay path.
 
 Magic Orb damage is owned by attack entity behavior in the first version.
 
 Magic Orb contact damage should be resolved from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 
-Magic Orb base combat parameters `magicOrbPrefab`, `magicOrbOrbitRadius`, `magicOrbContactDistance`, `magicOrbSameTargetHitCooldown`, `magicOrbMaxHitCount`, `magicOrbRotationSpeed`, and `magicOrbMaxLifetime` are authored on MagicOrbCombatBehaviour. At release it builds typed Orb runtime data. MagicOrbBehaviour executes orbit movement, contact detection, hit-count consumption, and lifetime without reading a shared cross-archetype configuration asset.
+`MagicOrbCombatBehaviour` authors the Magic Orb prefab reference and owns the single-active-group scheduler. The Magic Orb entity prefab root authors rotation speed, orbit radius, contact distance, max hit count, max lifetime, and same-target cooldown through `MagicOrbBehaviour`. Runtime group state combines those base values with the source tower's resolved stats without reading a shared cross-archetype configuration asset.
 
-When Multi Orbs is applied, every still-active pre-upgrade single-Orb release group receives exactly one companion Orb. The companion is created at the same orbit center at the angle opposite the existing Orb's current angle, uses current resolved stats, and owns a new independent hit budget, lifetime, and target-cooldown history. Existing Orb state is unchanged. Future releases create the authored Orb count normally. ReleaseGroupId and an applied-retrofit guard prevent duplicate companions.
+Multi Orbs represents synchronized members of one lifecycle group. Its package-authored desired member count has a minimum of `2`. A new group distributes members evenly using `360 / count` fixed offsets. Every member starts with the same resolved maximum hit count but consumes its own remaining count. When any member exhausts its count, the complete group ends. When applied to an active single-Orb group, runtime adds `desiredCount - currentCount` missing mirrors around the group's current phase. Added members join the existing orbit center, elapsed lifetime, resolved group values, and completion reason and start with the current resolved per-member maximum. They do not reset the original member's remaining count or extend the shared lifetime, so they cannot postpone the original member's completion. Member contact cooldown histories and actual contact/Elemental results remain independent. ReleaseGroupId and desired-membership reconciliation prevent duplicates.
+
+If Arcane Detonation is applied while a group is active, the incomplete group gains Detonation eligibility without exploding immediately. On its later normal completion, every active member detonates at its own current world position before the complete group disappears. Technical cleanup removes the complete group with no Detonation.
 
 Persistent status effects applied by future Magic Orb upgrades should be delegated through Effect System to Buff System.
 
@@ -541,7 +611,7 @@ Drone behavior represents a released autonomous Attack Entity launched by Drone 
 Recommended Drone flow:
 
 ```text
-Cooldown ready
+Cooldown ready and active Drone count below resolved maximum
     ↓
 Select target inside tower AttackRange
     ↓
@@ -568,16 +638,22 @@ When battery is depleted, resolve Final Dive or aerial despawn
 
 Drone runtime rules:
 
-- Drone Tower runtime should release a Drone prefab from the current active AttackOrigin when a Drone attack is confirmed.
+- `DroneCombatBehaviour` authors `defaultMaximumDroneCount`, with a minimum and default of `1`.
+- The currently resolved maximum is the base value unless the applied Multi Drones Behaviour package provides its override maximum.
+- Drone Tower runtime should release one Drone prefab from the current active AttackOrigin when a Drone attack is confirmed.
+- Each successful scheduler pass launches at most one Drone; open capacity is not batch-filled.
+- A launch requires cooldown readiness and active Drone count below the currently resolved maximum.
 - If no valid monster exists inside AttackRange at release time, Drone Tower should not release a Drone and should not start cooldown.
+- If cooldown is ready while the tower is at capacity, cooldown remains at zero and the tower waits.
+- When an owned Drone ends, capacity is released. If cooldown is already ready, the normal target-confirmation path may launch one replacement and only that successful launch restarts cooldown.
 - Drone launches from AttackOrigin when available, but does not keep depending on AttackOrigin after release.
-- Drone first rises vertically from its release position to the DroneCombatBehaviour-authored droneFlightHeight above that position.
+- Drone first rises vertically from its release position to the DroneBehaviour-prefab-authored droneFlightHeight above that position.
 - Launching does not consume battery and cannot trigger Final Dive.
 - Drone maintains configured flight height during active flight.
 - DroneBehaviour owns target selection while using the targetSelectionType supplied by DroneCombatBehaviour.
 - Drone target selection only considers valid monsters inside the source tower AttackRange.
-- Drone movement speed should use the DroneCombatBehaviour-authored droneFlightSpeed.
-- Drone orbits around the selected target using the DroneCombatBehaviour-authored droneOrbitRadius.
+- Drone movement speed should use the DroneBehaviour-prefab-authored droneFlightSpeed.
+- Drone orbits around the selected target using the DroneBehaviour-prefab-authored droneOrbitRadius.
 - Drone orbit angular speed should be derived from droneFlightSpeed and droneOrbitRadius rather than configured separately.
 - When entering Orbiting or retargeting, Drone should choose orbit direction from the tangent direction around the target that is closer to the Drone's current local +Z forward direction.
 - Drone orbit direction is runtime state and should not be configured as static authoring.
@@ -586,8 +662,8 @@ Drone runtime rules:
 - Rotation toward movement direction should happen immediately in the first version, without turn-speed smoothing.
 - During stable Orbiting, Drone model local +Z should face the current orbit tangent / flight direction rather than the target center.
 - Drone fires straight projectile bursts in the first version.
-- Drone burst fire should use DroneCombatBehaviour-authored droneBurstCount and droneBurstInterval plus the current resolved droneBurstCooldown.
-- Drone-fired projectile data should come from DroneCombatBehaviour.droneProjectileConfig.
+- Drone burst fire should use DroneBehaviour-prefab-authored droneBurstCount and droneBurstInterval plus the current resolved droneBurstCooldown.
+- Drone-fired projectile data should come from the DroneBehaviour-prefab-authored droneProjectileConfig.
 - Drone-fired projectile damage should be resolved from the source tower's current TowerLevelConfig.basicDamage and resolved runtime damage bonus.
 - Drone-fired projectiles should spawn from the Drone FireAnchor when available.
 - Drone-fired projectile prefabs should follow the same local +Y Up and local +Z Forward root orientation convention as other Projectile System prefabs.
@@ -597,7 +673,7 @@ Drone runtime rules:
 - If no valid monster remains inside AttackRange after launch, Drone should explode in the air and despawn.
 - When battery is depleted without Final Dive, Drone should play VFX-only aerial explosion feedback and despawn.
 - Drone tower cooldown starts when the Drone is launched, not when the Drone is destroyed.
-- If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time.
+- Multiple Drones may exist only when the currently resolved maximum active count is greater than one.
 - Drone is an Attack Entity which may spawn Projectile Attack Entities.
 - Drone runtime may own lightweight Drone-local presentation such as propeller visual spinning.
 - Propeller visual spinning should be active while Drone is launched and moving.
@@ -606,11 +682,13 @@ Drone runtime rules:
 
 Drone uses attackRange as the tower detect and launch range in the first version.
 
-When Twin Drones is applied, every still-active pre-upgrade single-Drone release group schedules exactly one companion launch from the tower's current AttackOrigin. The companion uses the package-authored takeoff delay, selects a valid target at its actual launch time, and receives current resolved stats with a full independent battery and burst state. The original Drone is unchanged. This retrofit does not reset or replace the tower's current attack cooldown. Future releases create the authored Drone count normally.
+Multi Drones is a Behaviour Layer package that owns `overrideMaximumDroneCount`, an absolute value with a minimum of `2`. While the package is absent, runtime uses `DroneCombatBehaviour.defaultMaximumDroneCount`. Applying Multi Drones changes the scheduler capacity immediately but does not launch a companion directly, reset cooldown, bypass target validation, or fill all available slots. If cooldown is already ready and capacity is available, the normal scheduler may launch one Drone. The package replaces the former Twin Drones count/delay model.
 
 Drone damage, AttackRange, remaining battery by additive delta, resolved burst cooldown, Blast Rounds, and Final Dive are Live Refresh for still-active relevant entities. A refresh never resets the Drone's current state, target history, orbit progress, already-consumed battery, burst shots remaining, or completed results. Blast Rounds also refreshes Drone-fired projectiles that are already airborne and have not resolved their hit.
 
 Drone projectile movement and projectile hit detection belong to Projectile System after projectile creation.
+
+The owning combat runtime registers every released Drone and Drone-fired Projectile. `Initialize`, `OnDisable`, and `OnDestroy` cancel pending release work and force-clean all still-owned entities. Forced cleanup does not trigger Final Dive, projectile Impact, damage, Behaviour Effects, Elemental opportunities, or other normal completion results. Repeated end/unregister/cleanup calls are idempotent.
 
 Persistent status effects applied by future Drone projectiles or Drone battery-end effects should be delegated through Effect System to Buff System.
 

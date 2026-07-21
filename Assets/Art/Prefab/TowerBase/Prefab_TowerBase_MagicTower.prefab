@@ -474,10 +474,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 6027618472494872927}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 622c4a1faaa434bf08af843ac4b86746, type: 3}
+  m_Script: {fileID: 11500000, guid: a91d0412b85f4f04ba6dd9f2ff12e106, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerCombatBehaviour
-  towerInstance: {fileID: -433500401635524606}
+  m_EditorClassIdentifier: Assembly-CSharp::MagicOrbCombatBehaviour
+  attackRange: 1.5
+  attackInterval: 8
+  targetSelectionType: 1
+  attackReleaseVfxPrefab: {fileID: 0}
+  magicOrbPrefab: {fileID: 5932105996875227893, guid: ddbc56afe56b5423287d527e7c7b5b88, type: 3}
 --- !u!114 &1540486833460176063
 MonoBehaviour:
   m_ObjectHideFlags: 0

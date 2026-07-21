@@ -51,6 +51,12 @@ public class TowerBehaviour : MonoBehaviour
         }
 
         visualController.SetTowerVisual(levelConfig.TowerModelPrefab);
+
+        if (TryGetComponent(out TowerCombatBehaviour combatBehaviour))
+        {
+            combatBehaviour.OnTowerPresentationReplaced();
+        }
+
         return true;
     }
 

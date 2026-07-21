@@ -15,10 +15,10 @@ MonoBehaviour:
   displayName: Frozen
   description: Prevents the monster from moving for a short duration
   duration: 6
-  tickInterval: 0.2
+  tickInterval: 0.4
   usesStacks: 0
   maxStacks: 10
-  buffApplyCooldown: 0.2
+  buffApplyCooldown: 0.4
   eventBindings:
   - eventType: 3
     effectDefinition: {fileID: 11400000, guid: a4a5d4689f0e244f6a281de550de3db5, type: 2}

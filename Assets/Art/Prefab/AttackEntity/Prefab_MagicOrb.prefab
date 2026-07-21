@@ -4847,6 +4847,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 003ad1ec08671497fb7cbd9bcaddf100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbBehaviour
+  rotationSpeed: 180
+  orbitRadius: 0.75
+  contactDistance: 0.25
+  maxHitCount: 3
+  maxLifetime: 5
+  sameTargetHitCooldown: 0.5
 --- !u!1 &3170343543818680394
 GameObject:
   m_ObjectHideFlags: 0
@@ -9819,6 +9825,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 003ad1ec08671497fb7cbd9bcaddf100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbBehaviour
+  rotationSpeed: 180
+  orbitRadius: 0.75
+  contactDistance: 0.25
+  maxHitCount: 3
+  maxLifetime: 5
+  sameTargetHitCooldown: 0.5
 --- !u!1 &5932105996875227893
 GameObject:
   m_ObjectHideFlags: 0
@@ -9864,6 +9876,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 003ad1ec08671497fb7cbd9bcaddf100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbBehaviour
+  rotationSpeed: 180
+  orbitRadius: 1
+  contactDistance: 0.5
+  maxHitCount: 6
+  maxLifetime: 6
+  sameTargetHitCooldown: 0.2
 --- !u!1 &7702116986669340077
 GameObject:
   m_ObjectHideFlags: 0
@@ -14711,3 +14729,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 003ad1ec08671497fb7cbd9bcaddf100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbBehaviour
+  rotationSpeed: 180
+  orbitRadius: 0.75
+  contactDistance: 0.25
+  maxHitCount: 3
+  maxLifetime: 5
+  sameTargetHitCooldown: 0.5

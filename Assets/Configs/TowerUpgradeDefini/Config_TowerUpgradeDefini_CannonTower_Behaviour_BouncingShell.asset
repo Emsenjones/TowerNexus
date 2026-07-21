@@ -23,18 +23,18 @@ MonoBehaviour:
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
   multiOrbsCount: 2
-  twinDronesCount: 2
-  twinDronesTakeOffDelay: 0.15
+  overrideMaximumDroneCount: 2
   explosiveShellEffect: {fileID: 0}
   multiShellsMaxInitialShellCount: 2
   bounceSearchRadius: 2
   maxBounceCount: 1
   bounceArcHeight: 1
-  bounceTargetSelectionType: 3
+  bounceTargetSelectionType: 1
   arcaneDetonationEffect: {fileID: 0}
   arcaneFieldRadius: 1
   arcaneFieldTickInterval: 1
   arcaneFieldTickEffect: {fileID: 0}
+  magicArcaneFieldVfxPrefab: {fileID: 0}
   blastRoundsEffect: {fileID: 0}
   finalDiveHitThreshold: 1
   finalDiveExplosionEffect: {fileID: 0}

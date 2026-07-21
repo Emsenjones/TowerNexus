@@ -16,16 +16,16 @@ MonoBehaviour:
   description: Successful additional stacks strike another nearby monster and maximum
     stacks summon a WindVortex
   duration: 6
-  tickInterval: 0.25
+  tickInterval: 0.4
   usesStacks: 1
   maxStacks: 10
-  buffApplyCooldown: 0.2
+  buffApplyCooldown: 0.4
   eventBindings:
   - eventType: 1
     effectDefinition: {fileID: 11400000, guid: 29e58a45004874b7096c5aea42eb267c, type: 2}
   - eventType: 2
     effectDefinition: {fileID: 11400000, guid: c43813cc7dc7a402caada409dfa937c5, type: 2}
   elementType: 4
-  protectionDuration: 5
+  protectionDuration: 10
   statusIcon: {fileID: 21300000, guid: 1fa45f16b07e04dcd99f69e43224ef14, type: 3}
   persistentBuffVfxPrefab: {fileID: 6688347132472252476, guid: 374ad7c29acc847d7b6fef39985df910, type: 3}

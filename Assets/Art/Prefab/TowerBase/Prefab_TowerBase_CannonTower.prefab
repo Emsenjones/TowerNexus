@@ -381,10 +381,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1820178305229058407}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 622c4a1faaa434bf08af843ac4b86746, type: 3}
+  m_Script: {fileID: 11500000, guid: a91d0412b85f4f04ba6dd9f2ff12e105, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerCombatBehaviour
-  towerInstance: {fileID: 1025514080300142389}
+  m_EditorClassIdentifier: Assembly-CSharp::ArcProjectileCombatBehaviour
+  attackRange: 4
+  attackInterval: 5
+  targetSelectionType: 1
+  attackReleaseVfxPrefab: {fileID: 1703296453783264684, guid: c322bec26b475401b9e70147095b03fb, type: 3}
+  projectileConfig: {fileID: 11400000, guid: 8f0e12318c23b49ab8f62ef06ffb01f7, type: 2}
+  arcHeight: 2
 --- !u!114 &6033357621024793606
 MonoBehaviour:
   m_ObjectHideFlags: 0

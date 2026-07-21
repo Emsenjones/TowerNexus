@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 public enum DroneRuntimeState
@@ -10,8 +12,65 @@ public enum DroneRuntimeState
     FinalDiving
 }
 
+public enum DroneBurstPhase
+{
+    ReadyToStartBurst,
+    BetweenShots,
+    InterBurstCooldown
+}
+
+public readonly struct DroneStatRefresh
+{
+    public DroneStatRefresh(
+        bool refreshDamage,
+        int newDamage,
+        bool refreshAttackRange,
+        float newAttackRange,
+        float batteryDurationDelta,
+        bool refreshBurstCooldown,
+        float newBurstCooldown)
+    {
+        RefreshDamage = refreshDamage;
+        NewDamage = newDamage;
+        RefreshAttackRange = refreshAttackRange;
+        NewAttackRange = newAttackRange;
+        BatteryDurationDelta = batteryDurationDelta;
+        RefreshBurstCooldown = refreshBurstCooldown;
+        NewBurstCooldown = newBurstCooldown;
+    }
+
+    public bool RefreshDamage { get; }
+    public int NewDamage { get; }
+    public bool RefreshAttackRange { get; }
+    public float NewAttackRange { get; }
+    public float BatteryDurationDelta { get; }
+    public bool RefreshBurstCooldown { get; }
+    public float NewBurstCooldown { get; }
+    public bool HasAnyChange =>
+        RefreshDamage ||
+        RefreshAttackRange ||
+        !Mathf.Approximately(BatteryDurationDelta, 0f) ||
+        RefreshBurstCooldown;
+}
+
 public class DroneBehaviour : MonoBehaviour
 {
+    [Required]
+    [SerializeField] private ProjectileConfig projectileConfig;
+    [MinValue(0.01f)]
+    [SerializeField] private float batteryDuration = 5f;
+    [MinValue(0.01f)]
+    [SerializeField] private float orbitRadius = 1.5f;
+    [MinValue(0.01f)]
+    [SerializeField] private float flightSpeed = 3f;
+    [MinValue(0f)]
+    [SerializeField] private float flightHeight = 1f;
+    [MinValue(1)]
+    [SerializeField] private int burstCount = 3;
+    [MinValue(0f)]
+    [SerializeField] private float burstInterval = 0.1f;
+    [MinValue(0f)]
+    [SerializeField] private float burstCooldown = 0.5f;
     [SerializeField] private Transform fireAnchor;
     [SerializeField] private Transform propellerTransform;
     [SerializeField] private Vector3 propellerSpinAxis = Vector3.forward;
@@ -22,37 +81,62 @@ public class DroneBehaviour : MonoBehaviour
 
     private TowerInstance sourceTower;
     private MonsterManager monsterManager;
-    private AttackConfig attackConfig;
-    private DroneRuntimeOptions runtimeOptions;
+    private DroneReleaseData releaseData;
+    private TowerUpgradeDefinition blastRoundsSourceUpgrade;
+    private TowerUpgradeDefinition finalDiveSourceUpgrade;
+    private EffectDefinition blastRoundsEffect;
+    private EffectDefinition finalDiveExplosionEffect;
     private Vector3 releasePosition;
     private MonsterBehaviour currentTarget;
     private int attackDamage;
     private float attackRange;
-    private float droneBurstCooldown;
+    private float currentBurstCooldown;
+    private float finalDiveHitThreshold;
     private float orbitAngleRadians;
     private int orbitDirection = 1;
     private float batteryTimer;
     private float burstTimer;
     private Vector3 lastValidFinalDiveHitPosition;
     private int burstShotsRemaining;
+    private DroneBurstPhase burstPhase;
     private bool hasReachedOrbitPath;
     private bool hasResolvedFinalDiveImpact;
+    private bool hasResolvedBatteryEnd;
     private bool isInitialized;
+    private bool hasEnded;
     private bool hasLoggedMissingFireAnchor;
 
     public event Action<DroneBehaviour, DroneRuntimeState> OnStateChanged;
+    public event Action<ProjectileBehaviour> OnProjectileReleased;
+    public event Action<DroneBehaviour> OnEnded;
 
     public TowerInstance SourceTower => sourceTower;
-    public AttackConfig AttackConfig => attackConfig;
+    public DroneReleaseData ReleaseData => releaseData;
     public Transform FireAnchor => fireAnchor != null ? fireAnchor : transform;
     public MonsterBehaviour CurrentTarget => currentTarget;
     public DroneRuntimeState State { get; private set; } = DroneRuntimeState.Launching;
+    public DroneBurstPhase BurstPhase => burstPhase;
     public bool IsInitialized => isInitialized;
+    public float BaseBatteryDuration => batteryDuration;
+    public float BaseBurstCooldown => burstCooldown;
+
+    public bool IsAuthoredConfigurationValid()
+    {
+        return projectileConfig != null &&
+               projectileConfig.IsValid() &&
+               batteryDuration > 0f &&
+               orbitRadius > 0f &&
+               flightSpeed > 0f &&
+               flightHeight >= 0f &&
+               burstCount > 0 &&
+               burstInterval >= 0f &&
+               burstCooldown >= 0f;
+    }
 
     public void Initialize(
         TowerInstance sourceTower,
         MonsterManager monsterManager,
-        AttackConfig attackConfig,
+        DroneReleaseData releaseData,
         DroneRuntimeOptions runtimeOptions,
         ResolvedTowerCombatStats resolvedStats,
         Vector3 releasePosition,
@@ -61,20 +145,26 @@ public class DroneBehaviour : MonoBehaviour
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
-        this.attackConfig = attackConfig;
-        this.runtimeOptions = runtimeOptions;
+        this.releaseData = releaseData;
+        blastRoundsSourceUpgrade = runtimeOptions.BlastRoundsSourceUpgrade;
+        blastRoundsEffect = runtimeOptions.BlastRoundsEffect;
+        finalDiveSourceUpgrade = runtimeOptions.FinalDiveSourceUpgrade;
+        finalDiveHitThreshold = runtimeOptions.FinalDiveHitThreshold;
+        finalDiveExplosionEffect = runtimeOptions.FinalDiveExplosionEffect;
         this.releasePosition = releasePosition;
 
         currentTarget = initialTarget;
         attackDamage = resolvedStats.AttackDamage;
         attackRange = resolvedStats.AttackRange;
-        droneBurstCooldown = resolvedStats.DroneBurstCooldown;
+        currentBurstCooldown = resolvedStats.DroneBurstCooldown;
         orbitAngleRadians = 0f;
         orbitDirection = 1;
         batteryTimer = resolvedStats.DroneBatteryDuration;
         ResetBurstState();
         hasReachedOrbitPath = false;
         hasResolvedFinalDiveImpact = false;
+        hasResolvedBatteryEnd = false;
+        hasEnded = false;
         hasLoggedMissingFireAnchor = false;
         resolvedFinalDiveExplosionTargets.Clear();
 
@@ -98,19 +188,13 @@ public class DroneBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackConfig == null)
-        {
-            Debug.LogWarning("Drone cannot initialize: attack config is null.", this);
-            return false;
-        }
-
         if (!IsValidTargetInRange(currentTarget))
         {
             Debug.LogWarning("Drone cannot initialize: initial target is invalid or outside source tower attack range.", this);
             return false;
         }
 
-        if (attackConfig.DroneProjectileConfig == null || attackConfig.DroneProjectileConfig.ProjectilePrefab == null)
+        if (projectileConfig == null || projectileConfig.ProjectilePrefab == null)
         {
             Debug.LogWarning("Drone cannot initialize: drone projectile config or prefab is missing.", this);
             return false;
@@ -122,31 +206,31 @@ public class DroneBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackConfig.DroneFlightSpeed <= 0f)
+        if (flightSpeed <= 0f)
         {
             Debug.LogWarning("Drone cannot initialize: drone flight speed must be greater than zero.", this);
             return false;
         }
 
-        if (attackConfig.DroneOrbitRadius <= 0f)
+        if (orbitRadius <= 0f)
         {
             Debug.LogWarning("Drone cannot initialize: drone orbit radius must be greater than zero.", this);
             return false;
         }
 
-        if (attackConfig.DroneBurstCount <= 0)
+        if (burstCount <= 0)
         {
             Debug.LogWarning("Drone cannot initialize: drone burst count must be greater than zero.", this);
             return false;
         }
 
-        if (attackConfig.DroneBurstInterval < 0f)
+        if (burstInterval < 0f)
         {
             Debug.LogWarning("Drone cannot initialize: drone burst interval cannot be negative.", this);
             return false;
         }
 
-        if (droneBurstCooldown < 0f)
+        if (currentBurstCooldown < 0f)
         {
             Debug.LogWarning("Drone cannot initialize: drone burst cooldown cannot be negative.", this);
             return false;
@@ -178,8 +262,115 @@ public class DroneBehaviour : MonoBehaviour
         UpdatePropellerSpin();
     }
 
+    private void OnDisable()
+    {
+        if (isInitialized && !hasEnded)
+        {
+            ForceCleanup();
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (isInitialized && !hasEnded)
+        {
+            NotifyEndedWithoutDestroy();
+        }
+    }
+
+    public void ForceCleanup()
+    {
+        EndDrone();
+    }
+
+    public void ApplyStatRefresh(DroneStatRefresh refresh)
+    {
+        if (!isInitialized || hasEnded || !refresh.HasAnyChange)
+        {
+            return;
+        }
+
+        if (refresh.RefreshDamage)
+        {
+            attackDamage = Mathf.Max(0, refresh.NewDamage);
+        }
+
+        if (refresh.RefreshAttackRange)
+        {
+            attackRange = Mathf.Max(0f, refresh.NewAttackRange);
+        }
+
+        if (!hasResolvedBatteryEnd &&
+            (State == DroneRuntimeState.Launching || State == DroneRuntimeState.Orbiting) &&
+            !Mathf.Approximately(refresh.BatteryDurationDelta, 0f))
+        {
+            batteryTimer = Mathf.Max(0f, batteryTimer + refresh.BatteryDurationDelta);
+        }
+
+        if (refresh.RefreshBurstCooldown)
+        {
+            RefreshBurstCooldown(refresh.NewBurstCooldown);
+        }
+    }
+
+    public void RefreshBlastRounds(
+        TowerUpgradeDefinition sourceUpgrade,
+        EffectDefinition effectDefinition)
+    {
+        if (!isInitialized || hasEnded)
+        {
+            return;
+        }
+
+        blastRoundsSourceUpgrade = sourceUpgrade;
+        blastRoundsEffect = effectDefinition;
+    }
+
+    public void RefreshFinalDive(
+        TowerUpgradeDefinition sourceUpgrade,
+        float hitThreshold,
+        EffectDefinition explosionEffect)
+    {
+        if (!isInitialized || hasEnded || hasResolvedBatteryEnd)
+        {
+            return;
+        }
+
+        finalDiveSourceUpgrade = sourceUpgrade;
+        finalDiveHitThreshold = Mathf.Max(0f, hitThreshold);
+        finalDiveExplosionEffect = explosionEffect;
+    }
+
+    private void RefreshBurstCooldown(float resolvedBurstCooldown)
+    {
+        float previousBurstCooldown = currentBurstCooldown;
+        currentBurstCooldown = Mathf.Max(0f, resolvedBurstCooldown);
+
+        if (burstPhase != DroneBurstPhase.InterBurstCooldown)
+        {
+            return;
+        }
+
+        if (burstTimer <= 0f)
+        {
+            burstTimer = 0f;
+            return;
+        }
+
+        burstTimer = previousBurstCooldown > 0f
+            ? Mathf.Max(0f, burstTimer * currentBurstCooldown / previousBurstCooldown)
+            : 0f;
+    }
+
     private void UpdateLaunching()
     {
+        if (batteryTimer <= 0f)
+        {
+            hasResolvedBatteryEnd = true;
+            AerialDespawn();
+            return;
+        }
+
         MoveTowards(GetLaunchPosition());
 
         if (!IsAtPosition(GetLaunchPosition()))
@@ -247,7 +438,14 @@ public class DroneBehaviour : MonoBehaviour
 
     private void ResolveBatteryDepletion()
     {
-        if (!runtimeOptions.IsFinalDiveEnabled ||
+        if (hasResolvedBatteryEnd)
+        {
+            return;
+        }
+
+        hasResolvedBatteryEnd = true;
+
+        if (!IsFinalDiveEnabled() ||
             !EffectTargetResolver.IsValidMonsterTarget(currentTarget))
         {
             AerialDespawn();
@@ -258,6 +456,13 @@ public class DroneBehaviour : MonoBehaviour
         hasResolvedFinalDiveImpact = false;
         ResetBurstState();
         SetState(DroneRuntimeState.FinalDiving);
+    }
+
+    private bool IsFinalDiveEnabled()
+    {
+        return finalDiveSourceUpgrade != null &&
+               finalDiveHitThreshold > 0f &&
+               finalDiveExplosionEffect != null;
     }
 
     private void UpdateFinalDiving()
@@ -272,7 +477,7 @@ public class DroneBehaviour : MonoBehaviour
 
         MoveTowards(destination);
 
-        float hitThreshold = runtimeOptions.FinalDiveHitThreshold;
+        float hitThreshold = finalDiveHitThreshold;
 
         if ((transform.position - destination).sqrMagnitude <= hitThreshold * hitThreshold)
         {
@@ -300,10 +505,10 @@ public class DroneBehaviour : MonoBehaviour
         }
 
         EffectExecutor.ExecuteWithResolvedTargets(
-            runtimeOptions.FinalDiveExplosionEffect,
+            finalDiveExplosionEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
-                sourceUpgrade: runtimeOptions.FinalDiveSourceUpgrade,
+                sourceUpgrade: finalDiveSourceUpgrade,
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
@@ -328,13 +533,13 @@ public class DroneBehaviour : MonoBehaviour
     {
         directTarget = null;
 
-        if (monsterManager == null || runtimeOptions.FinalDiveHitThreshold <= 0f)
+        if (monsterManager == null || finalDiveHitThreshold <= 0f)
         {
             return false;
         }
 
         IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
-        float hitThresholdSqr = runtimeOptions.FinalDiveHitThreshold * runtimeOptions.FinalDiveHitThreshold;
+        float hitThresholdSqr = finalDiveHitThreshold * finalDiveHitThreshold;
         float nearestDistanceSqr = float.MaxValue;
 
         for (int i = 0; i < aliveMonsters.Count; i++)
@@ -373,10 +578,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private void Despawn()
     {
-        currentTarget = null;
-        isInitialized = false;
-        ResetBurstState();
-        Destroy(gameObject);
+        EndDrone();
     }
 
     private void DrainBattery()
@@ -386,30 +588,68 @@ public class DroneBehaviour : MonoBehaviour
 
     private void UpdateBurstFire()
     {
-        burstTimer = Mathf.Max(0f, burstTimer - Time.deltaTime);
-
-        if (burstTimer > 0f)
+        switch (burstPhase)
         {
-            return;
-        }
+            case DroneBurstPhase.BetweenShots:
+                burstTimer = Mathf.Max(0f, burstTimer - Time.deltaTime);
 
+                if (burstTimer > 0f)
+                {
+                    return;
+                }
+
+                FireNextBurstShot();
+                return;
+            case DroneBurstPhase.InterBurstCooldown:
+                burstTimer = Mathf.Max(0f, burstTimer - Time.deltaTime);
+
+                if (burstTimer > 0f)
+                {
+                    return;
+                }
+
+                burstPhase = DroneBurstPhase.ReadyToStartBurst;
+                StartBurst();
+                return;
+            case DroneBurstPhase.ReadyToStartBurst:
+            default:
+                StartBurst();
+                return;
+        }
+    }
+
+    private void StartBurst()
+    {
+        burstShotsRemaining = Mathf.Max(1, burstCount);
+        FireNextBurstShot();
+    }
+
+    private void FireNextBurstShot()
+    {
         if (burstShotsRemaining <= 0)
         {
-            burstShotsRemaining = Mathf.Max(1, attackConfig.DroneBurstCount);
+            burstShotsRemaining = Mathf.Max(1, burstCount);
         }
 
         FireProjectile(currentTarget);
         burstShotsRemaining--;
 
-        burstTimer = burstShotsRemaining > 0
-            ? Mathf.Max(0f, attackConfig.DroneBurstInterval)
-            : droneBurstCooldown;
+        if (burstShotsRemaining > 0)
+        {
+            burstPhase = DroneBurstPhase.BetweenShots;
+            burstTimer = Mathf.Max(0f, burstInterval);
+            return;
+        }
+
+        burstPhase = DroneBurstPhase.InterBurstCooldown;
+        burstTimer = currentBurstCooldown;
     }
 
     private void ResetBurstState()
     {
         burstTimer = 0f;
         burstShotsRemaining = 0;
+        burstPhase = DroneBurstPhase.ReadyToStartBurst;
     }
 
     private void FireProjectile(MonsterBehaviour target)
@@ -419,10 +659,9 @@ public class DroneBehaviour : MonoBehaviour
             return;
         }
 
-        ProjectileConfig droneProjectileConfig = attackConfig.DroneProjectileConfig;
         Transform spawnAnchor = GetFireAnchor();
         Vector3 targetPosition = GetMonsterHitPosition(target);
-        GameObject projectileObject = Instantiate(droneProjectileConfig.ProjectilePrefab, spawnAnchor.position, Quaternion.identity);
+        GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, spawnAnchor.position, Quaternion.identity);
 
         if (!projectileObject.TryGetComponent(out ProjectileBehaviour projectileBehaviour))
         {
@@ -432,17 +671,16 @@ public class DroneBehaviour : MonoBehaviour
         projectileBehaviour.Initialize(
             sourceTower,
             monsterManager,
-            droneProjectileConfig,
-            attackConfig,
+            projectileConfig,
             target,
             targetPosition,
             attackDamage,
-            AttackArchetype.DirectionProjectile,
-            new ProjectileRuntimeOptions(
+            flightType: ProjectileFlightType.Direction,
+            runtimeOptions: new ProjectileRuntimeOptions(
                 canPierce: false,
                 maxPierceHitCount: 1,
-                blastRoundsSourceUpgrade: runtimeOptions.BlastRoundsSourceUpgrade,
-                blastRoundsEffect: runtimeOptions.BlastRoundsEffect)
+                blastRoundsSourceUpgrade: blastRoundsSourceUpgrade,
+                blastRoundsEffect: blastRoundsEffect)
         );
 
         if (!projectileBehaviour.IsInitialized)
@@ -450,7 +688,37 @@ public class DroneBehaviour : MonoBehaviour
             return;
         }
 
+        OnProjectileReleased?.Invoke(projectileBehaviour);
         PlayAttackReleaseVfx(spawnAnchor, targetPosition);
+    }
+
+    private void EndDrone()
+    {
+        if (hasEnded)
+        {
+            return;
+        }
+
+        hasEnded = true;
+        isInitialized = false;
+        currentTarget = null;
+        ResetBurstState();
+        OnEnded?.Invoke(this);
+        Destroy(gameObject);
+    }
+
+    private void NotifyEndedWithoutDestroy()
+    {
+        if (hasEnded)
+        {
+            return;
+        }
+
+        hasEnded = true;
+        isInitialized = false;
+        currentTarget = null;
+        ResetBurstState();
+        OnEnded?.Invoke(this);
     }
 
     private Transform GetFireAnchor()
@@ -471,7 +739,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private void PlayAttackReleaseVfx(Transform spawnAnchor, Vector3 targetPosition)
     {
-        if (attackConfig.AttackReleaseVfxPrefab == null)
+        if (releaseData.AttackReleaseVfxPrefab == null)
         {
             return;
         }
@@ -481,7 +749,7 @@ public class DroneBehaviour : MonoBehaviour
             ? Quaternion.LookRotation(direction.normalized, Vector3.up)
             : Quaternion.identity;
 
-        Instantiate(attackConfig.AttackReleaseVfxPrefab, spawnAnchor.position, rotation);
+        Instantiate(releaseData.AttackReleaseVfxPrefab, spawnAnchor.position, rotation);
     }
 
     private MonsterBehaviour SelectTarget()
@@ -504,7 +772,7 @@ public class DroneBehaviour : MonoBehaviour
             return null;
         }
 
-        switch (attackConfig.TargetSelectionType)
+        switch (releaseData.TargetSelectionType)
         {
             case TargetSelectionType.HighestHealth:
                 return SelectHighestHealthTarget(candidates);
@@ -634,7 +902,7 @@ public class DroneBehaviour : MonoBehaviour
     private Vector3 CalculateOrbitPosition(MonsterBehaviour target)
     {
         Vector3 targetPosition = GetMonsterHitPosition(target);
-        float orbitRadius = Mathf.Max(attackConfig.DroneOrbitRadius, 0.01f);
+        float orbitRadius = Mathf.Max(this.orbitRadius, 0.01f);
         Vector3 orbitOffset = new Vector3(
             Mathf.Cos(orbitAngleRadians),
             0f,
@@ -647,8 +915,8 @@ public class DroneBehaviour : MonoBehaviour
 
     private void AdvanceOrbitAngle()
     {
-        float orbitRadius = Mathf.Max(attackConfig.DroneOrbitRadius, 0.01f);
-        float angularSpeed = attackConfig.DroneFlightSpeed / orbitRadius;
+        float orbitRadius = Mathf.Max(this.orbitRadius, 0.01f);
+        float angularSpeed = flightSpeed / orbitRadius;
         orbitAngleRadians += orbitDirection * angularSpeed * Time.deltaTime;
     }
 
@@ -668,7 +936,7 @@ public class DroneBehaviour : MonoBehaviour
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
-            attackConfig.DroneFlightSpeed * Time.deltaTime
+            flightSpeed * Time.deltaTime
         );
     }
 
@@ -712,7 +980,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private float GetActiveFlightHeight()
     {
-        return releasePosition.y + attackConfig.DroneFlightHeight;
+        return releasePosition.y + flightHeight;
     }
 
     private void SetState(DroneRuntimeState state)

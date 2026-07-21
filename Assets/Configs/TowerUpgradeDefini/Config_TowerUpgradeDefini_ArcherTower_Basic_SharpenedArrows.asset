@@ -26,8 +26,7 @@ MonoBehaviour:
   scatterAngleOffset: 15
   twinOrbsCount: 2
   twinOrbsStartingAngleOffset: 180
-  twinDronesCount: 2
-  twinDronesTakeOffDelay: 0.15
+  overrideMaximumDroneCount: 2
   elementType: 0
   elementalApplyEffect: {fileID: 0}
   effectBindings: []

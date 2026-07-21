@@ -10,7 +10,7 @@ public enum TowerBehaviourPackageType
     MagicArcaneDetonation = 201,
     MagicArcaneField = 202,
 
-    DroneTwinDrones = 300,
+    DroneMultiDrones = 300,
     DroneBlastRounds = 301,
     DroneFinalDive = 302,
 

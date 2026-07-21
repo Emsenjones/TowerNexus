@@ -7,7 +7,9 @@ public static class TowerRuntimeStatResolver
     public const float MinimumDroneBatteryDuration = 0.01f;
     public const float MinimumDroneBurstCooldown = 0f;
 
-    public static ResolvedTowerCombatStats Resolve(TowerInstance towerInstance, AttackConfig attackConfig)
+    public static ResolvedTowerCombatStats Resolve(
+        TowerInstance towerInstance,
+        TowerCombatBaseStats baseStats)
     {
         float attackRangeDelta = 0f;
         float attackIntervalDelta = 0f;
@@ -38,22 +40,16 @@ public static class TowerRuntimeStatResolver
             }
         }
 
-        float baseAttackRange = attackConfig != null ? attackConfig.AttackRange : 0f;
-        float baseAttackInterval = attackConfig != null ? attackConfig.AttackInterval : 0f;
-        float baseMagicOrbRotationSpeed = attackConfig != null ? attackConfig.MagicOrbRotationSpeed : 0f;
-        int baseMagicOrbMaxHitCount = attackConfig != null ? attackConfig.MagicOrbMaxHitCount : 1;
-        float baseDroneBatteryDuration = attackConfig != null ? attackConfig.DroneBatteryDuration : MinimumDroneBatteryDuration;
-        float baseDroneBurstCooldown = attackConfig != null ? attackConfig.DroneBurstCooldown : 0f;
         int basicDamage = towerInstance != null ? towerInstance.BasicDamage : 0;
 
         return new ResolvedTowerCombatStats(
-            Mathf.Max(0f, baseAttackRange + attackRangeDelta),
-            Mathf.Max(MinimumAttackInterval, baseAttackInterval + attackIntervalDelta),
+            Mathf.Max(0f, baseStats.AttackRange + attackRangeDelta),
+            Mathf.Max(MinimumAttackInterval, baseStats.AttackInterval + attackIntervalDelta),
             Mathf.Max(0, basicDamage + Mathf.RoundToInt(damageBonus)),
-            Mathf.Max(0f, baseMagicOrbRotationSpeed + magicOrbRotationSpeedDelta),
-            Mathf.Max(1, baseMagicOrbMaxHitCount + Mathf.RoundToInt(magicOrbMaxHitCountDelta)),
-            Mathf.Max(MinimumDroneBatteryDuration, baseDroneBatteryDuration + droneBatteryDurationDelta),
-            Mathf.Max(MinimumDroneBurstCooldown, baseDroneBurstCooldown + droneBurstCooldownDelta)
+            Mathf.Max(0f, baseStats.MagicOrbRotationSpeed + magicOrbRotationSpeedDelta),
+            Mathf.Max(1, baseStats.MagicOrbMaxHitCount + Mathf.RoundToInt(magicOrbMaxHitCountDelta)),
+            Mathf.Max(MinimumDroneBatteryDuration, baseStats.DroneBatteryDuration + droneBatteryDurationDelta),
+            Mathf.Max(MinimumDroneBurstCooldown, baseStats.DroneBurstCooldown + droneBurstCooldownDelta)
         );
     }
 

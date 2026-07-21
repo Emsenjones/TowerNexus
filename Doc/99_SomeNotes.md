@@ -83,12 +83,13 @@
    7. *Cold Tower upgrade behavior layer Phase2 implementation;and electric element slices;
    8. *Wind element and dedicated WindVortex;
    9. *Phase 2 BehaviourLayer implementation;
-   10. Clarify live read data and snapshot data in runtime;
-   11. Refactor TowerCombatDefinition and speparet AttackConfig based on AttackArchetype;
-   12. Magic tower and Drone tower add AttackEntity maximum count limitation;
+   10. *Clarify live read data and snapshot data in runtime;
+   11. *Refactor TowerCombatDefinition and speparet AttackConfig based on AttackArchetype;
+   12. *Magic tower and Drone tower add AttackEntity maximum count limitation;
 8. Map prefab generation;
-9. Player Level up by resolving monsters;
-10. Level configuration design;
-11. Tap tower to pop up TowerInfoWindow;
-12. Develop Monster & Projectile object pool;
-13. Tower Upgrade Behaviour Layer final content and future implementation scope are owned by `10_TowerUpgradeSystem.md`; do not maintain a parallel upgrade list in this note.
+9. Camera movement;
+10. Player Level up by resolving monsters;
+11. Level configuration design;
+12. Design a function which players can remove Tower pending items;
+13. Tap tower to pop up TowerInfoWindow;
+14. Develop Monster & Projectile object pool;

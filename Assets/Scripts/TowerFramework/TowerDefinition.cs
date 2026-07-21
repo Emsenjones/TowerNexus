@@ -25,10 +25,6 @@ public class TowerDefinition : ScriptableObject
     [Required]
     [SerializeField] private GameObject towerPrefab;
 
-    [TitleGroup("Combat Configuration")]
-    [Required]
-    [SerializeField] private AttackConfig attackConfig;
-
     [TitleGroup("Level Configuration")]
     [SerializeField] private List<TowerLevelConfig> towerLevelConfigs = new List<TowerLevelConfig>();
 
@@ -37,7 +33,6 @@ public class TowerDefinition : ScriptableObject
     public string Description => description;
     public Sprite Icon => icon;
     public GameObject TowerPrefab => towerPrefab;
-    public AttackConfig AttackConfig => attackConfig;
     public IReadOnlyList<TowerLevelConfig> TowerLevelConfigs => towerLevelConfigs;
 
     public TowerLevelConfig GetLevelConfig(int level)
@@ -68,15 +63,11 @@ public class TowerDefinition : ScriptableObject
             return false;
         }
 
-        if (attackConfig == null)
+        if (!TryGetCombatBehaviour(out _, out string combatFailureReason))
         {
-            Debug.LogWarning($"Tower definition '{GetDebugName()}' is invalid: attack config is not assigned.", this);
-            return false;
-        }
-
-        if (!attackConfig.IsValid())
-        {
-            Debug.LogWarning($"Tower definition '{GetDebugName()}' is invalid: attack config is invalid.", attackConfig);
+            Debug.LogWarning(
+                $"Tower definition '{GetDebugName()}' is invalid: {combatFailureReason}",
+                this);
             return false;
         }
 
@@ -96,6 +87,66 @@ public class TowerDefinition : ScriptableObject
 
         if (!AreTowerLevelConfigsValid())
         {
+            return false;
+        }
+
+        return true;
+    }
+
+    public bool TryGetCombatBehaviour(
+        out TowerCombatBehaviour combatBehaviour,
+        out string failureReason)
+    {
+        combatBehaviour = null;
+        failureReason = string.Empty;
+
+        if (towerPrefab == null)
+        {
+            failureReason = "tower prefab is not assigned.";
+            return false;
+        }
+
+        TowerCombatBehaviour[] rootCombatBehaviours =
+            towerPrefab.GetComponents<TowerCombatBehaviour>();
+        TowerCombatBehaviour[] allCombatBehaviours =
+            towerPrefab.GetComponentsInChildren<TowerCombatBehaviour>(true);
+
+        if (rootCombatBehaviours.Length == 0)
+        {
+            failureReason = allCombatBehaviours.Length > 0
+                ? "combat component must be on the Tower Base Prefab root, not a child."
+                : "Tower Base Prefab root is missing a concrete combat component.";
+            return false;
+        }
+
+        if (rootCombatBehaviours.Length != 1 || allCombatBehaviours.Length != 1)
+        {
+            failureReason = "Tower Base Prefab must contain exactly one combat component on its root.";
+            return false;
+        }
+
+        combatBehaviour = rootCombatBehaviours[0];
+
+        if (combatBehaviour == null)
+        {
+            failureReason = "Tower Base Prefab combat component is missing its script.";
+            return false;
+        }
+
+        if (combatBehaviour.SupportedTowerFamily != towerFamily)
+        {
+            failureReason =
+                $"combat component '{combatBehaviour.GetType().Name}' supports " +
+                $"'{combatBehaviour.SupportedTowerFamily}', not '{towerFamily}'.";
+            combatBehaviour = null;
+            return false;
+        }
+
+        if (!combatBehaviour.IsAuthoredConfigurationValid())
+        {
+            failureReason =
+                $"combat component '{combatBehaviour.GetType().Name}' has invalid authored data.";
+            combatBehaviour = null;
             return false;
         }
 

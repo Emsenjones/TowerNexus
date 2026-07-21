@@ -63,6 +63,14 @@ public class TowerDeployController : MonoBehaviour
             return false;
         }
 
+        if (!towerDefinition.TryGetCombatBehaviour(out _, out string combatFailureReason))
+        {
+            Debug.LogWarning(
+                $"Tower deploy controller cannot deploy tower: {combatFailureReason}",
+                towerDefinition);
+            return false;
+        }
+
         if (placementValidator == null)
         {
             Debug.LogWarning("Tower deploy controller cannot deploy tower: placement validator is not assigned.", this);
@@ -101,7 +109,11 @@ public class TowerDeployController : MonoBehaviour
 
         if (!towerObject.TryGetComponent(out TowerCombatBehaviour towerCombatBehaviour))
         {
-            towerCombatBehaviour = towerObject.AddComponent<TowerCombatBehaviour>();
+            Debug.LogWarning(
+                "Tower deploy controller rejected instantiated tower: validated root combat component is missing.",
+                towerObject);
+            Destroy(towerObject);
+            return false;
         }
 
         towerCombatBehaviour.Initialize(towerInstance, monsterManager);

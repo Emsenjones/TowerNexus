@@ -1,214 +1,213 @@
 using System;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
+
+public readonly struct MagicOrbStatRefresh
+{
+    public MagicOrbStatRefresh(
+        bool refreshDamage,
+        int newDamage,
+        bool refreshRotationSpeed,
+        float newRotationSpeed,
+        int remainingHitCountDelta)
+    {
+        RefreshDamage = refreshDamage;
+        NewDamage = newDamage;
+        RefreshRotationSpeed = refreshRotationSpeed;
+        NewRotationSpeed = newRotationSpeed;
+        RemainingHitCountDelta = remainingHitCountDelta;
+    }
+
+    public bool RefreshDamage { get; }
+    public int NewDamage { get; }
+    public bool RefreshRotationSpeed { get; }
+    public float NewRotationSpeed { get; }
+    public int RemainingHitCountDelta { get; }
+    public bool HasAnyChange =>
+        RefreshDamage || RefreshRotationSpeed || RemainingHitCountDelta != 0;
+}
 
 public class MagicOrbBehaviour : MonoBehaviour
 {
-    private TowerInstance sourceTower;
-    private MonsterManager monsterManager;
-    private AttackConfig attackConfig;
-    private MagicOrbRuntimeOptions runtimeOptions;
-    private Vector3 orbitCenterPosition;
-    private int attackDamage;
-    private float rotationSpeed;
+    [MinValue(0f)]
+    [SerializeField] private float rotationSpeed = 180f;
+    [MinValue(0f)]
+    [SerializeField] private float orbitRadius = 0.75f;
+    [MinValue(0f)]
+    [SerializeField] private float contactDistance = 0.25f;
+    [MinValue(1)]
+    [SerializeField] private int maxHitCount = 3;
+    [MinValue(0.01f)]
+    [SerializeField] private float maxLifetime = 5f;
+    [MinValue(0f)]
+    [SerializeField] private float sameTargetHitCooldown = 0.5f;
+
+    private readonly Dictionary<MonsterBehaviour, float> monsterHitCooldownEnds =
+        new Dictionary<MonsterBehaviour, float>();
+
+    private MagicOrbGroupRuntime ownerGroup;
+    private int memberSlot;
     private int remainingHitCount;
-    private float orbitAngle;
-    private float elapsedLifetime;
+    private float angleOffset;
     private bool isInitialized;
     private bool hasEnded;
 
-    private readonly Dictionary<MonsterBehaviour, float> monsterHitCooldownEnds = new Dictionary<MonsterBehaviour, float>();
-    private readonly List<MonsterBehaviour> resolvedArcaneDetonationTargets = new List<MonsterBehaviour>();
-
-    public event Action<MagicOrbBehaviour> OnEnded;
-
-    public TowerInstance SourceTower => sourceTower;
-    public AttackConfig AttackConfig => attackConfig;
-    public Vector3 OrbitCenterPosition => orbitCenterPosition;
+    public TowerInstance SourceTower => ownerGroup != null ? ownerGroup.SourceTower : null;
+    public Vector3 OrbitCenterPosition => ownerGroup != null
+        ? ownerGroup.OrbitCenterPosition
+        : transform.position;
     public int RemainingHitCount => remainingHitCount;
     public bool IsInitialized => isInitialized;
+    public int MemberSlot => memberSlot;
+    public float AngleOffset => angleOffset;
+    public float BaseRotationSpeed => rotationSpeed;
+    public float BaseOrbitRadius => orbitRadius;
+    public float BaseContactDistance => contactDistance;
+    public int BaseMaxHitCount => maxHitCount;
+    public float BaseMaxLifetime => maxLifetime;
+    public float BaseSameTargetHitCooldown => sameTargetHitCooldown;
 
-    public void Initialize(
-        TowerInstance sourceTower,
-        MonsterManager monsterManager,
-        AttackConfig attackConfig,
-        ResolvedTowerCombatStats resolvedStats,
-        MagicOrbRuntimeOptions runtimeOptions,
-        Transform orbitCenter,
-        float? startingOrbitAngle = null)
+    public bool IsAuthoredConfigurationValid()
     {
-        this.sourceTower = sourceTower;
-        this.monsterManager = monsterManager;
-        this.attackConfig = attackConfig;
-        this.runtimeOptions = runtimeOptions;
-        orbitCenterPosition = orbitCenter != null ? orbitCenter.position : transform.position;
+        return rotationSpeed >= 0f &&
+               orbitRadius >= 0f &&
+               contactDistance >= 0f &&
+               maxHitCount > 0 &&
+               maxLifetime > 0f &&
+               sameTargetHitCooldown >= 0f;
+    }
 
-        attackDamage = resolvedStats.AttackDamage;
-        rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
-        remainingHitCount = resolvedStats.MagicOrbMaxHitCount;
-        orbitAngle = startingOrbitAngle ?? UnityEngine.Random.Range(0f, 360f);
-        elapsedLifetime = 0f;
-        isInitialized = false;
-        hasEnded = false;
+    internal bool Initialize(
+        MagicOrbGroupRuntime initializedOwnerGroup,
+        int initializedMemberSlot,
+        float initializedAngleOffset,
+        int initializedRemainingHitCount)
+    {
+        ownerGroup = initializedOwnerGroup;
+        memberSlot = initializedMemberSlot;
+        angleOffset = initializedAngleOffset;
+        remainingHitCount = Mathf.Max(0, initializedRemainingHitCount);
         monsterHitCooldownEnds.Clear();
-        resolvedArcaneDetonationTargets.Clear();
+        hasEnded = false;
+        isInitialized = ownerGroup != null && memberSlot >= 0 && remainingHitCount > 0;
 
-        if (!CanInitialize())
+        if (isInitialized)
         {
-            CleanupOrb();
+            return true;
+        }
+
+        ForceCleanupFromGroup();
+        return false;
+    }
+
+    internal bool CanAttachAsStagedMember()
+    {
+        return ownerGroup == null &&
+               !isInitialized &&
+               !hasEnded &&
+               !gameObject.activeSelf;
+    }
+
+    internal void AttachCommittedMember(
+        MagicOrbGroupRuntime initializedOwnerGroup,
+        int initializedMemberSlot,
+        float initializedAngleOffset,
+        int initializedRemainingHitCount)
+    {
+        ownerGroup = initializedOwnerGroup;
+        memberSlot = initializedMemberSlot;
+        angleOffset = initializedAngleOffset;
+        remainingHitCount = Mathf.Max(0, initializedRemainingHitCount);
+        monsterHitCooldownEnds.Clear();
+        hasEnded = false;
+        isInitialized = ownerGroup != null && memberSlot >= 0 && remainingHitCount > 0;
+    }
+
+    internal void ActivateCommittedMember()
+    {
+        if (isInitialized && !hasEnded)
+        {
+            gameObject.SetActive(true);
+        }
+    }
+
+    internal bool IsTargetOnCooldown(MonsterBehaviour monster, float currentTime)
+    {
+        return monsterHitCooldownEnds.TryGetValue(monster, out float cooldownEndTime) &&
+               currentTime < cooldownEndTime;
+    }
+
+    internal void RecordContact(MonsterBehaviour monster, float cooldownEndTime)
+    {
+        monsterHitCooldownEnds[monster] = cooldownEndTime;
+    }
+
+    internal void ApplyRemainingHitCountDelta(int delta)
+    {
+        if (!isInitialized || hasEnded || delta == 0)
+        {
             return;
         }
 
-        isInitialized = true;
-        UpdateOrbitPosition();
+        remainingHitCount = Mathf.Max(0, remainingHitCount + delta);
     }
 
-    private bool CanInitialize()
+    internal bool TryConsumeHit()
     {
-        if (monsterManager == null)
+        if (!isInitialized || hasEnded || remainingHitCount <= 0)
         {
-            Debug.LogWarning("Magic orb cannot initialize: monster manager is null.", this);
             return false;
         }
 
-        if (attackConfig == null)
-        {
-            Debug.LogWarning("Magic orb cannot initialize: attack config is null.", this);
-            return false;
-        }
-
-        if (remainingHitCount <= 0)
-        {
-            Debug.LogWarning("Magic orb cannot initialize: max hit count must be greater than zero.", this);
-            return false;
-        }
-
-        if (attackConfig.MagicOrbMaxLifetime <= 0f)
-        {
-            Debug.LogWarning("Magic orb cannot initialize: max lifetime must be greater than zero.", this);
-            return false;
-        }
-
+        remainingHitCount--;
         return true;
     }
 
-    private void Update()
+    internal void SetGroupPosition(Vector3 worldPosition)
     {
-        if (!isInitialized || hasEnded)
+        if (isInitialized && !hasEnded)
+        {
+            transform.position = worldPosition;
+        }
+    }
+
+    internal void CompleteFromGroup()
+    {
+        EndFromGroup();
+    }
+
+    internal void ForceCleanupFromGroup()
+    {
+        EndFromGroup();
+    }
+
+    private void OnDisable()
+    {
+        NotifyUnexpectedInvalidation();
+    }
+
+    private void OnDestroy()
+    {
+        NotifyUnexpectedInvalidation();
+    }
+
+    private void NotifyUnexpectedInvalidation()
+    {
+        if (!isInitialized || hasEnded || ownerGroup == null)
         {
             return;
         }
 
-        if (sourceTower == null)
-        {
-            CleanupOrb();
-            return;
-        }
-
-        elapsedLifetime += Time.deltaTime;
-
-        if (elapsedLifetime >= attackConfig.MagicOrbMaxLifetime)
-        {
-            CompleteOrb();
-            return;
-        }
-
-        UpdateOrbitPosition();
-        TryHitMonsters();
+        MagicOrbGroupRuntime group = ownerGroup;
+        hasEnded = true;
+        isInitialized = false;
+        ownerGroup = null;
+        monsterHitCooldownEnds.Clear();
+        group.HandleUnexpectedMemberInvalidation(this);
     }
 
-    private void UpdateOrbitPosition()
-    {
-        orbitAngle += rotationSpeed * Time.deltaTime;
-        float angleRadians = orbitAngle * Mathf.Deg2Rad;
-        Vector3 offset = new Vector3(Mathf.Cos(angleRadians), 0f, Mathf.Sin(angleRadians)) * attackConfig.MagicOrbOrbitRadius;
-        transform.position = orbitCenterPosition + offset;
-    }
-
-    private void TryHitMonsters()
-    {
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
-        float contactDistanceSqr = attackConfig.MagicOrbContactDistance * attackConfig.MagicOrbContactDistance;
-
-        for (int i = 0; i < aliveMonsters.Count; i++)
-        {
-            MonsterBehaviour monster = aliveMonsters[i];
-
-            if (!IsValidTarget(monster))
-            {
-                continue;
-            }
-
-            if (IsTargetOnCooldown(monster))
-            {
-                continue;
-            }
-
-            if ((GetMonsterHitPosition(monster) - transform.position).sqrMagnitude > contactDistanceSqr)
-            {
-                continue;
-            }
-
-            HitMonster(monster);
-
-            if (hasEnded)
-            {
-                return;
-            }
-        }
-    }
-
-    private void HitMonster(MonsterBehaviour monster)
-    {
-        monster.TakeDamage(attackDamage);
-        ElementalApplication.TryApplyFromTowerAttack(
-            sourceTower,
-            monster,
-            GetMonsterHitPosition(monster));
-        monsterHitCooldownEnds[monster] = Time.time + attackConfig.MagicOrbSameTargetHitCooldown;
-        remainingHitCount--;
-
-        if (remainingHitCount <= 0)
-        {
-            CompleteOrb();
-        }
-    }
-
-    private bool IsTargetOnCooldown(MonsterBehaviour monster)
-    {
-        return monsterHitCooldownEnds.TryGetValue(monster, out float cooldownEndTime) &&
-               Time.time < cooldownEndTime;
-    }
-
-    private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
-    {
-        Transform hitAnchor = monster.HitAnchor;
-        return hitAnchor != null ? hitAnchor.position : monster.transform.position;
-    }
-
-    private static bool IsValidTarget(MonsterBehaviour monster)
-    {
-        return monster != null &&
-               monster.gameObject.activeInHierarchy &&
-               !monster.IsDead();
-    }
-
-    public void ForceCleanup()
-    {
-        CleanupOrb();
-    }
-
-    private void CompleteOrb()
-    {
-        EndOrb(triggerDetonation: true);
-    }
-
-    private void CleanupOrb()
-    {
-        EndOrb(triggerDetonation: false);
-    }
-
-    private void EndOrb(bool triggerDetonation)
+    private void EndFromGroup()
     {
         if (hasEnded)
         {
@@ -217,50 +216,467 @@ public class MagicOrbBehaviour : MonoBehaviour
 
         hasEnded = true;
         isInitialized = false;
-
-        if (triggerDetonation && sourceTower != null)
-        {
-            ExecuteArcaneDetonation(transform.position);
-        }
-
-        OnEnded?.Invoke(this);
+        ownerGroup = null;
+        monsterHitCooldownEnds.Clear();
         Destroy(gameObject);
     }
+}
 
-    private void ExecuteArcaneDetonation(Vector3 detonationPosition)
+internal sealed class MagicOrbGroupRuntime
+{
+    private readonly List<MagicOrbBehaviour> members = new List<MagicOrbBehaviour>();
+    private readonly List<Vector3> completionPositions = new List<Vector3>();
+    private readonly List<MonsterBehaviour> resolvedArcaneDetonationTargets =
+        new List<MonsterBehaviour>();
+
+    private readonly TowerInstance sourceTower;
+    private readonly MonsterManager monsterManager;
+    private readonly Vector3 orbitCenterPosition;
+    private readonly float orbitRadius;
+    private readonly float contactDistance;
+    private readonly float maxLifetime;
+    private readonly float sameTargetHitCooldown;
+
+    private TowerUpgradeDefinition arcaneDetonationSourceUpgrade;
+    private EffectDefinition arcaneDetonationEffect;
+    private int attackDamage;
+    private int resolvedMaxHitCount;
+    private float rotationSpeed;
+    private float orbitPhase;
+    private float elapsedLifetime;
+    private bool isActive;
+    private bool hasEnded;
+
+    public event Action<MagicOrbGroupRuntime> OnEnded;
+
+    public MagicOrbGroupRuntime(
+        long releaseGroupId,
+        TowerInstance sourceTower,
+        MonsterManager monsterManager,
+        MagicOrbRuntimeOptions runtimeOptions,
+        Vector3 orbitCenterPosition,
+        float initialOrbitPhase,
+        ResolvedTowerCombatStats resolvedStats,
+        MagicOrbBehaviour authoredOrb)
     {
-        EffectDefinition detonationEffect = runtimeOptions.ArcaneDetonationEffect;
+        ReleaseGroupId = releaseGroupId;
+        this.sourceTower = sourceTower;
+        this.monsterManager = monsterManager;
+        this.orbitCenterPosition = orbitCenterPosition;
+        attackDamage = resolvedStats.AttackDamage;
+        rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
+        resolvedMaxHitCount = resolvedStats.MagicOrbMaxHitCount;
+        arcaneDetonationSourceUpgrade = runtimeOptions.ArcaneDetonationSourceUpgrade;
+        arcaneDetonationEffect = runtimeOptions.ArcaneDetonationEffect;
+        orbitRadius = authoredOrb != null ? authoredOrb.BaseOrbitRadius : -1f;
+        contactDistance = authoredOrb != null ? authoredOrb.BaseContactDistance : -1f;
+        maxLifetime = authoredOrb != null ? authoredOrb.BaseMaxLifetime : 0f;
+        sameTargetHitCooldown = authoredOrb != null
+            ? authoredOrb.BaseSameTargetHitCooldown
+            : -1f;
+        orbitPhase = initialOrbitPhase;
+    }
 
-        if (detonationEffect == null)
+    public long ReleaseGroupId { get; }
+    public TowerInstance SourceTower => sourceTower;
+    public Vector3 OrbitCenterPosition => orbitCenterPosition;
+    public int MemberCount => members.Count;
+    public bool IsActive => isActive && !hasEnded;
+
+    public bool CanInitialize()
+    {
+        return sourceTower != null &&
+               monsterManager != null &&
+               resolvedMaxHitCount > 0 &&
+               rotationSpeed >= 0f &&
+               orbitRadius >= 0f &&
+               contactDistance >= 0f &&
+               maxLifetime > 0f &&
+               sameTargetHitCooldown >= 0f;
+    }
+
+    public bool TryAddMember(MagicOrbBehaviour member, int memberSlot, int desiredMemberCount)
+    {
+        if (hasEnded ||
+            isActive ||
+            member == null ||
+            memberSlot != members.Count ||
+            desiredMemberCount <= 0)
+        {
+            return false;
+        }
+
+        float angleOffset = 360f / desiredMemberCount * memberSlot;
+
+        if (!member.Initialize(
+                this,
+                memberSlot,
+                angleOffset,
+                resolvedMaxHitCount))
+        {
+            return false;
+        }
+
+        members.Add(member);
+        SetMemberPosition(member);
+        return true;
+    }
+
+    public bool Activate(int expectedMemberCount)
+    {
+        if (hasEnded ||
+            !CanInitialize() ||
+            expectedMemberCount <= 0 ||
+            members.Count != expectedMemberCount)
+        {
+            ForceCleanup();
+            return false;
+        }
+
+        isActive = true;
+        UpdateMemberPositions();
+        return true;
+    }
+
+    public void Tick(float deltaTime)
+    {
+        if (!IsActive)
         {
             return;
         }
 
-        EffectExecutor.ExecuteWithResolvedTargets(
-            detonationEffect,
-            new EffectTriggerContext(
-                sourceTower: sourceTower,
-                sourceUpgrade: runtimeOptions.ArcaneDetonationSourceUpgrade,
-                targetMonster: null,
-                hasTriggerPosition: true,
-                triggerPosition: detonationPosition,
-                resolvedDamage: attackDamage,
-                allowsElementalApplication: false),
-            resolvedArcaneDetonationTargets);
-
-        for (int i = 0; i < resolvedArcaneDetonationTargets.Count; i++)
+        if (sourceTower == null || monsterManager == null)
         {
-            MonsterBehaviour target = resolvedArcaneDetonationTargets[i];
+            ForceCleanup();
+            return;
+        }
 
-            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+        elapsedLifetime += Mathf.Max(0f, deltaTime);
+
+        if (elapsedLifetime >= maxLifetime)
+        {
+            CompleteNormally();
+            return;
+        }
+
+        orbitPhase += rotationSpeed * Mathf.Max(0f, deltaTime);
+        UpdateMemberPositions();
+        ResolveContactsInStableOrder();
+    }
+
+    public void ApplyStatRefresh(MagicOrbStatRefresh refresh)
+    {
+        if (!IsActive || !refresh.HasAnyChange)
+        {
+            return;
+        }
+
+        if (refresh.RefreshDamage)
+        {
+            attackDamage = Mathf.Max(0, refresh.NewDamage);
+        }
+
+        if (refresh.RefreshRotationSpeed)
+        {
+            rotationSpeed = Mathf.Max(0f, refresh.NewRotationSpeed);
+        }
+
+        if (refresh.RemainingHitCountDelta != 0)
+        {
+            resolvedMaxHitCount = Mathf.Max(
+                1,
+                resolvedMaxHitCount + refresh.RemainingHitCountDelta);
+
+            bool shouldComplete = false;
+
+            for (int i = 0; i < members.Count; i++)
             {
-                continue;
+                MagicOrbBehaviour member = members[i];
+
+                if (member == null)
+                {
+                    continue;
+                }
+
+                member.ApplyRemainingHitCountDelta(refresh.RemainingHitCountDelta);
+                shouldComplete |= member.RemainingHitCount <= 0;
             }
 
-            ElementalApplication.TryApplyFromTowerAttack(
-                sourceTower,
-                target,
-                detonationPosition);
+            if (shouldComplete)
+            {
+                CompleteNormally();
+            }
+        }
+    }
+
+    public void EnableArcaneDetonation(
+        TowerUpgradeDefinition sourceUpgrade,
+        EffectDefinition effectDefinition)
+    {
+        if (!IsActive)
+        {
+            return;
+        }
+
+        arcaneDetonationSourceUpgrade = sourceUpgrade;
+        arcaneDetonationEffect = effectDefinition;
+    }
+
+    public bool TryCommitStagedMembers(
+        IReadOnlyList<MagicOrbBehaviour> stagedMembers,
+        int desiredMemberCount)
+    {
+        if (!IsActive ||
+            stagedMembers == null ||
+            desiredMemberCount <= members.Count ||
+            stagedMembers.Count != desiredMemberCount - members.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < stagedMembers.Count; i++)
+        {
+            MagicOrbBehaviour candidate = stagedMembers[i];
+
+            if (candidate == null || !candidate.CanAttachAsStagedMember())
+            {
+                return false;
+            }
+        }
+
+        int firstNewSlot = members.Count;
+
+        for (int i = 0; i < stagedMembers.Count; i++)
+        {
+            MagicOrbBehaviour candidate = stagedMembers[i];
+            int slot = firstNewSlot + i;
+            float angleOffset = 360f / desiredMemberCount * slot;
+            candidate.AttachCommittedMember(
+                this,
+                slot,
+                angleOffset,
+                resolvedMaxHitCount);
+            members.Add(candidate);
+            SetMemberPosition(candidate);
+        }
+
+        for (int i = 0; i < stagedMembers.Count; i++)
+        {
+            stagedMembers[i].ActivateCommittedMember();
+        }
+
+        return true;
+    }
+
+    public void ForceCleanup()
+    {
+        if (hasEnded)
+        {
+            return;
+        }
+
+        hasEnded = true;
+        isActive = false;
+        TeardownMembers(technicalCleanup: true);
+        OnEnded?.Invoke(this);
+    }
+
+    public void HandleUnexpectedMemberInvalidation(MagicOrbBehaviour member)
+    {
+        if (hasEnded || member == null || !members.Contains(member))
+        {
+            return;
+        }
+
+        ForceCleanup();
+    }
+
+    private void ResolveContactsInStableOrder()
+    {
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+
+        for (int memberIndex = 0; memberIndex < members.Count; memberIndex++)
+        {
+            MagicOrbBehaviour member = members[memberIndex];
+
+            if (member == null || !member.IsInitialized)
+            {
+                ForceCleanup();
+                return;
+            }
+
+            for (int monsterIndex = 0; monsterIndex < aliveMonsters.Count; monsterIndex++)
+            {
+                MonsterBehaviour monster = aliveMonsters[monsterIndex];
+
+                if (!IsCandidateContact(member, monster))
+                {
+                    continue;
+                }
+
+                if (TryResolveMemberContact(member, monster) && !IsActive)
+                {
+                    return;
+                }
+            }
+        }
+    }
+
+    private bool IsCandidateContact(MagicOrbBehaviour member, MonsterBehaviour monster)
+    {
+        if (!EffectTargetResolver.IsValidMonsterTarget(monster) ||
+            member.IsTargetOnCooldown(monster, Time.time))
+        {
+            return false;
+        }
+
+        float contactDistanceSqr = contactDistance * contactDistance;
+        Vector3 monsterPosition = EffectTargetResolver.GetMonsterHitPosition(monster);
+        return (monsterPosition - member.transform.position).sqrMagnitude <= contactDistanceSqr;
+    }
+
+    private bool TryResolveMemberContact(MagicOrbBehaviour member, MonsterBehaviour monster)
+    {
+        if (!IsActive ||
+            member == null ||
+            !member.IsInitialized ||
+            member.RemainingHitCount <= 0 ||
+            !EffectTargetResolver.IsValidMonsterTarget(monster) ||
+            member.IsTargetOnCooldown(monster, Time.time))
+        {
+            return false;
+        }
+
+        Vector3 hitPosition = EffectTargetResolver.GetMonsterHitPosition(monster);
+
+        if ((hitPosition - member.transform.position).sqrMagnitude >
+            contactDistance * contactDistance)
+        {
+            return false;
+        }
+
+        monster.TakeDamage(attackDamage);
+        ElementalApplication.TryApplyFromTowerAttack(sourceTower, monster, hitPosition);
+        member.RecordContact(monster, Time.time + sameTargetHitCooldown);
+
+        if (!member.TryConsumeHit())
+        {
+            return false;
+        }
+
+        if (member.RemainingHitCount <= 0)
+        {
+            CompleteNormally();
+        }
+
+        return true;
+    }
+
+    private void CompleteNormally()
+    {
+        if (hasEnded)
+        {
+            return;
+        }
+
+        hasEnded = true;
+        isActive = false;
+        CaptureCompletionPositions();
+        ExecuteArcaneDetonations();
+        TeardownMembers(technicalCleanup: false);
+        OnEnded?.Invoke(this);
+    }
+
+    private void CaptureCompletionPositions()
+    {
+        completionPositions.Clear();
+
+        for (int i = 0; i < members.Count; i++)
+        {
+            MagicOrbBehaviour member = members[i];
+            completionPositions.Add(member != null ? member.transform.position : orbitCenterPosition);
+        }
+    }
+
+    private void ExecuteArcaneDetonations()
+    {
+        if (arcaneDetonationEffect == null || sourceTower == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < completionPositions.Count; i++)
+        {
+            Vector3 detonationPosition = completionPositions[i];
+            resolvedArcaneDetonationTargets.Clear();
+
+            EffectExecutor.ExecuteWithResolvedTargets(
+                arcaneDetonationEffect,
+                new EffectTriggerContext(
+                    sourceTower: sourceTower,
+                    sourceUpgrade: arcaneDetonationSourceUpgrade,
+                    targetMonster: null,
+                    hasTriggerPosition: true,
+                    triggerPosition: detonationPosition,
+                    resolvedDamage: attackDamage,
+                    allowsElementalApplication: false),
+                resolvedArcaneDetonationTargets);
+
+            for (int targetIndex = 0;
+                 targetIndex < resolvedArcaneDetonationTargets.Count;
+                 targetIndex++)
+            {
+                MonsterBehaviour target = resolvedArcaneDetonationTargets[targetIndex];
+
+                if (EffectTargetResolver.IsValidMonsterTarget(target))
+                {
+                    ElementalApplication.TryApplyFromTowerAttack(
+                        sourceTower,
+                        target,
+                        detonationPosition);
+                }
+            }
+        }
+    }
+
+    private void UpdateMemberPositions()
+    {
+        for (int i = 0; i < members.Count; i++)
+        {
+            SetMemberPosition(members[i]);
+        }
+    }
+
+    private void SetMemberPosition(MagicOrbBehaviour member)
+    {
+        float angleRadians = (orbitPhase + member.AngleOffset) * Mathf.Deg2Rad;
+        Vector3 offset = new Vector3(
+            Mathf.Cos(angleRadians),
+            0f,
+            Mathf.Sin(angleRadians)) * orbitRadius;
+        member.SetGroupPosition(orbitCenterPosition + offset);
+    }
+
+    private void TeardownMembers(bool technicalCleanup)
+    {
+        List<MagicOrbBehaviour> snapshot = new List<MagicOrbBehaviour>(members);
+        members.Clear();
+
+        for (int i = 0; i < snapshot.Count; i++)
+        {
+            MagicOrbBehaviour member = snapshot[i];
+
+            if (member != null)
+            {
+                if (technicalCleanup)
+                {
+                    member.ForceCleanupFromGroup();
+                }
+                else
+                {
+                    member.CompleteFromGroup();
+                }
+            }
         }
     }
 }

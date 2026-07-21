@@ -77,6 +77,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 807812766b7c4465a1aa70908d8ef1a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DroneBehaviour
+  projectileConfig: {fileID: 11400000, guid: 6a58c9e1d15b348c2b43499f6a6e273b, type: 2}
+  batteryDuration: 10
+  orbitRadius: 1.5
+  flightSpeed: 3
+  flightHeight: 1
+  burstCount: 4
+  burstInterval: 0.1
+  burstCooldown: 1
   fireAnchor: {fileID: 2326441832793177826}
   propellerTransform: {fileID: 1827786373825279271}
   propellerSpinAxis: {x: 0, y: 0, z: 1}

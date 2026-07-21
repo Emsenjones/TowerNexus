@@ -23,8 +23,7 @@ MonoBehaviour:
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
   multiOrbsCount: 2
-  twinDronesCount: 2
-  twinDronesTakeOffDelay: 0.15
+  overrideMaximumDroneCount: 2
   explosiveShellEffect: {fileID: 11400000, guid: 4a883e7be44054865adbdc9fc2a2d9f1, type: 2}
   multiShellsMaxInitialShellCount: 2
   bounceSearchRadius: 1

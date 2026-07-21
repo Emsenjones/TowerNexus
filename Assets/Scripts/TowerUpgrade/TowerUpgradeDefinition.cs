@@ -45,14 +45,11 @@ public class TowerUpgradeDefinition : ScriptableObject
     [ShowIf(nameof(IsMagicMultiOrbs))]
     [MinValue(2)]
     [SerializeField] private int multiOrbsCount = 2;
-    [TitleGroup("Behaviour Layer/Drone Twin Drones")]
-    [ShowIf(nameof(IsDroneTwinDrones))]
-    [MinValue(1)]
-    [SerializeField] private int twinDronesCount = 2;
-    [TitleGroup("Behaviour Layer/Drone Twin Drones")]
-    [ShowIf(nameof(IsDroneTwinDrones))]
-    [MinValue(0f)]
-    [SerializeField] private float twinDronesTakeOffDelay = 0.15f;
+    [FormerlySerializedAs("twinDronesCount")]
+    [TitleGroup("Behaviour Layer/Drone Multi Drones")]
+    [ShowIf(nameof(IsDroneMultiDrones))]
+    [MinValue(2)]
+    [SerializeField] private int overrideMaximumDroneCount = 2;
     [TitleGroup("Behaviour Layer/Cannon Explosive Shell")]
     [ShowIf(nameof(IsCannonExplosiveShell))]
     [SerializeField] private EffectDefinition explosiveShellEffect;
@@ -123,8 +120,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     public int PiercingMaxHitCount => Mathf.Max(1, piercingMaxHitCount);
     public float ScatterAngleOffset => Mathf.Max(0f, scatterAngleOffset);
     public int MultiOrbsCount => Mathf.Max(2, multiOrbsCount);
-    public int TwinDronesCount => Mathf.Clamp(twinDronesCount, 1, 2);
-    public float TwinDronesTakeOffDelay => Mathf.Max(0f, twinDronesTakeOffDelay);
+    public int OverrideMaximumDroneCount => Mathf.Max(2, overrideMaximumDroneCount);
     public EffectDefinition ExplosiveShellEffect => explosiveShellEffect;
     public int MultiShellsMaxInitialShellCount => Mathf.Max(2, multiShellsMaxInitialShellCount);
     public float BounceSearchRadius => Mathf.Max(0.01f, bounceSearchRadius);
@@ -256,7 +252,7 @@ public class TowerUpgradeDefinition : ScriptableObject
             case TowerBehaviourPackageType.MagicArcaneDetonation:
             case TowerBehaviourPackageType.MagicArcaneField:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Magic);
-            case TowerBehaviourPackageType.DroneTwinDrones:
+            case TowerBehaviourPackageType.DroneMultiDrones:
             case TowerBehaviourPackageType.DroneBlastRounds:
             case TowerBehaviourPackageType.DroneFinalDive:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Drone);
@@ -305,15 +301,9 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
-        if (IsDroneTwinDrones() && (twinDronesCount < 1 || twinDronesCount > 2))
+        if (IsDroneMultiDrones() && overrideMaximumDroneCount < 2)
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Twin Drones count must be between 1 and 2 in v1.");
-            isValid = false;
-        }
-
-        if (IsDroneTwinDrones() && twinDronesTakeOffDelay < 0f)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Twin Drones takeoff delay cannot be negative.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Drones override maximum count must be at least 2.");
             isValid = false;
         }
 
@@ -544,10 +534,10 @@ public class TowerUpgradeDefinition : ScriptableObject
                behaviourPackageType == TowerBehaviourPackageType.MagicMultiOrbs;
     }
 
-    private bool IsDroneTwinDrones()
+    private bool IsDroneMultiDrones()
     {
         return IsBehaviourLayerUpgrade() &&
-               behaviourPackageType == TowerBehaviourPackageType.DroneTwinDrones;
+               behaviourPackageType == TowerBehaviourPackageType.DroneMultiDrones;
     }
 
     private bool IsCannonExplosiveShell()

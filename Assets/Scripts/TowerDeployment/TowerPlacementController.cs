@@ -699,12 +699,24 @@ public class TowerPlacementController : MonoBehaviour
 
     private void ShowAttackRangePreview(TowerBehaviour tower)
     {
-        if (tower == null)
+        if (tower == null || tower.VisualController == null)
         {
             return;
         }
 
-        ShowAttackRangePreview(tower.VisualController, tower.TowerInstance != null ? tower.TowerInstance.TowerDefinition : null);
+        TowerCombatBehaviour combatBehaviour = tower.GetComponent<TowerCombatBehaviour>();
+
+        if (combatBehaviour == null)
+        {
+            return;
+        }
+
+        float resolvedAttackRange = combatBehaviour.CurrentResolvedAttackRange;
+
+        if (resolvedAttackRange > 0f)
+        {
+            tower.VisualController.ShowAttackRangePreview(resolvedAttackRange);
+        }
     }
 
     private void ShowAttackRangePreview(TowerVisualController visualController, TowerDefinition towerDefinition)
@@ -721,12 +733,15 @@ public class TowerPlacementController : MonoBehaviour
     {
         attackRange = 0f;
 
-        if (towerDefinition == null || towerDefinition.AttackConfig == null)
+        if (towerDefinition == null ||
+            !towerDefinition.TryGetCombatBehaviour(
+                out TowerCombatBehaviour combatBehaviour,
+                out _))
         {
             return false;
         }
 
-        attackRange = towerDefinition.AttackConfig.AttackRange;
+        attackRange = combatBehaviour.BaseAttackRange;
         return attackRange > 0f;
     }
 

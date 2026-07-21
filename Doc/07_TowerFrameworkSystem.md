@@ -426,8 +426,8 @@ Current first-version tower categories:
 |---|---|
 | Archer | Fires fast straight-line arrows toward enemies |
 | Cannon | Launches arcing shells toward captured enemy positions and resolves a nearby direct target on arrival |
-| Magic | Releases orbiting Magic Orb attack entities that contact enemies and consume hit count |
-| Drone | Launches an autonomous Drone attack entity that fights away from the tower and may spawn projectile attack entities |
+| Magic | Maintains one active synchronized Magic Orb release group whose members own independent hit counts and complete together when any member exhausts its count |
+| Drone | Launches autonomous Drone attack entities up to its currently resolved active-capacity limit; each Drone may spawn projectile attack entities |
 
 Future categories may include:
 
@@ -457,7 +457,7 @@ TowerCombatBehaviour
     -> DroneCombatBehaviour
 ```
 
-The concrete component type is the Tower Base Prefab's attack-runtime identity. `AttackArchetype` remains useful for Projectile flight identity such as Direction, Arc, and Tracking, but Tower authoring does not require a separate serialized archetype selector that can disagree with the component type.
+The concrete component type is the Tower Base Prefab's attack-runtime identity. `ProjectileFlightType` expresses only Direction, Arc, and Tracking Projectile movement; Tower authoring does not require a separate serialized archetype selector that can disagree with the component type.
 
 Projectile-style Attack Entities share Projectile System runtime behavior, while Magic Orb and Drone use their own Attack Entity runtime behavior.
 
@@ -481,6 +481,18 @@ Attack Entity responsibilities:
 Tower decides when an attack happens.
 
 Attack Entity decides how the attack behaves.
+
+The owning combat runtime keeps a narrow registry of released entities so scheduler capacity, later Selective Live Refresh, and technical teardown share one ownership boundary. `Initialize`, `OnDisable`, and `OnDestroy` force-clean every still-owned Projectile, Magic Orb group, Drone, and Drone-fired Projectile after canceling pending release work. Forced cleanup produces no Impact, damage, Behaviour Effect, Elemental opportunity, Arcane Detonation, Final Dive, or other gameplay completion result. Repeated cleanup and unregister calls are idempotent.
+
+`TowerInstance` publishes accepted state changes through two narrow notifications: `OnUpgradeRecorded` for one recorded upgrade and `OnLevelChanged(previousLevel, currentLevel)` for one actual level transition. Rejected requests and same-level no-ops publish nothing. The combat runtime, not TowerInstance or TowerUpgradeSystem, owns cached resolved combat values, scheduler ratio/delta adjustment, typed active-entity refresh, and package-specific reconciliation.
+
+The combat component changes its bound TowerInstance only through explicit combat `Initialize`. It must not replace the bound owner through a later component lookup. A destroyed bound TowerInstance, a changed TowerDefinition identity or TowerFamily mismatch on that same instance, or an unavailable MonsterManager invalidates the runtime session. A missing AttackOrigin is only a release-scheduler gate: it does not invalidate the session or clean already released entities.
+
+Entering technical invalidation unsubscribes and cleans runtime state once, resets the scheduler, and invalidates the refresh baseline. While invalid, later frames may retry reference recovery without repeating teardown. Recovery may reacquire MonsterManager, but it may not silently replace the owner or accept a TowerInstance that was reinitialized with another TowerDefinition; that case requires explicit combat `Initialize`. Re-enable or recovery establishes the current resolved state as a new baseline before subscribing, so changes made while the technical session was inactive are not replayed against removed entities.
+
+Refresh dispatch snapshots the owner's active registries before iteration. Concrete combat subtypes receive only a protected snapshot seam, never the mutable registry itself. Released entities accept only relevant typed values or package commands and reject refresh after ending, disabling, Position Impact, battery-end branch resolution, or another package-specific immutable boundary. Initialization option structs remain immutable release inputs; approved Live Refresh values are copied into entity-owned mutable runtime fields. Attack Entities never retain or interpret the complete TowerUpgradeState.
+
+This cleanup contract covers initialization failure, combat reinitialization, component/GameObject disable, scene teardown, and owner-reference invalidation. The first version has no player demolition or Monster-driven Tower destruction rule; those are not current gameplay cleanup scenarios.
 
 Current first-version Attack Entities:
 
@@ -507,8 +519,8 @@ Examples:
 |---|---|---|
 | Archer Tower | Arrow | Fires low-damage direction projectiles with short range and high attack speed |
 | Cannon Tower | Shell | Fires slow arcing shells with long range toward captured positions; the baseline arrival resolves at most one nearby direct target |
-| Magic Tower | Magic Orb | Releases orbiting magic weapon behavior with contact damage and hit-count lifetime |
-| Drone Tower | Drone | Releases an autonomous drone that orbits selected target monsters, fires projectile bursts, consumes battery, air-explodes, and despawns |
+| Magic Tower | Magic Orb Group | Maintains one synchronized group of orbiting magic weapons with contact damage and shared group completion |
+| Drone Tower | Drone | Releases autonomous drones one at a time up to the currently resolved maximum active count; each Drone orbits selected targets, fires projectile bursts, consumes battery, air-explodes, and despawns |
 
 ---
 
@@ -581,19 +593,24 @@ Magic Tower uses an orbiting Magic Orb attack entity.
 
 Design intent:
 
-- The tower releases Magic Orb attack entities on its attack interval
-- Each Magic Orb rotates around the release-time center captured from AttackOrigin
+- The tower owns at most one active Magic Orb release group
+- A successful group release starts the tower cooldown
+- A new group requires both cooldown readiness and completion of the previous group
+- If cooldown becomes ready while the group remains active, cooldown stays ready and the tower waits
+- If the group completes before cooldown becomes ready, the tower waits for the remaining cooldown
+- Each group rotates around the release-time center captured from AttackOrigin
 - The Magic Orb checks distance to monsters while orbiting
 - Contact deals damage
-- The Magic Orb has a configurable maximum hit count
-- Hit count decreases after each successful hit
+- Every member receives the currently resolved configurable maximum hit count
+- A successful contact decreases only that member's remaining hit count once
 - The same monster cannot be hit again by the same Magic Orb until sameTargetHitCooldown has elapsed
-- When hit count reaches zero, the Magic Orb disappears
-- When maximum lifetime is reached, the Magic Orb disappears even if remaining hit count is greater than zero
-- Cooldown starts when the Magic Orb is generated
-- After cooldown, the tower may generate a new Magic Orb without checking older released Magic Orbs
-- Magic Orb should spawn at a runtime-selected orbit angle
-- May play an attack release VFX at AttackOrigin when the Magic Orb is generated
+- Orb members keep independent per-target contact cooldown history and independent contact/Elemental results
+- The group owns one shared lifetime, orbit phase, and completion reason while every member owns its remaining hit count
+- When any member's remaining hit count reaches zero or the shared maximum lifetime is reached, every member completes together
+- Multi Orbs adds synchronized mirror members with fixed angle offsets around the shared orbit phase
+- Arcane Detonation, when active, executes once per member at that member's current position immediately before the group disappears on normal completion
+- Technical cleanup removes the complete group without Arcane Detonation
+- May play an attack release VFX at AttackOrigin when the group is generated
 
 
 Magic Tower does not require buff configuration in the first version. Its damage is owned by Magic Orb attack entity behavior.
@@ -619,9 +636,14 @@ Drone Tower uses an autonomous Drone attack entity.
 
 Design intent:
 
-- When Drone Tower attacks, it releases a Drone prefab from AttackOrigin
+- DroneCombatBehaviour authors `defaultMaximumDroneCount`, with a minimum and default of `1`
+- Multi Drones may replace that base capacity with its package-authored override maximum
+- When Drone Tower attacks, it releases one Drone prefab from AttackOrigin
+- A release requires cooldown readiness and an active Drone count below the currently resolved maximum
 - Attack cooldown starts when the Drone is successfully launched
 - If no valid monster exists inside AttackRange at release time, Drone Tower should not launch a Drone and should not start cooldown
+- If cooldown becomes ready while active Drone count is at capacity, cooldown remains ready and the tower waits
+- When capacity becomes available, a ready tower may launch one Drone through its normal target-confirmation path and then restart cooldown
 - The Drone rises vertically from its release position to configured flight height
 - The Drone selects a target inside the source tower AttackRange
 - The Drone orbits around the selected target monster
@@ -632,7 +654,7 @@ Design intent:
 - If no valid monster remains inside AttackRange after launch, the Drone should end its task by exploding in the air and disappearing
 - When battery is depleted without Final Dive, the Drone plays aerial explosion feedback and disappears
 - Final Dive Behaviour content may replace battery-end despawn with a target-locked dive. Its Position Impact performs one local nearest-valid-Monster direct query before the additive impact explosion
-- If attackInterval is shorter than Drone lifetime, multiple released Drones may exist at the same time
+- Each successful scheduler pass launches at most one Drone; capacity is never filled as an immediate batch
 
 Drone is an Attack Entity which may spawn Projectile Attack Entities.
 
@@ -696,10 +718,12 @@ Each Tower Base Prefab must author exactly one compatible concrete component:
 |---|---|---|
 | DirectionProjectileCombatBehaviour | Archer | projectileConfig |
 | ArcProjectileCombatBehaviour | Cannon | projectileConfig, arcHeight |
-| MagicOrbCombatBehaviour | Magic | magicOrbPrefab, magicOrbRotationSpeed, magicOrbOrbitRadius, magicOrbContactDistance, magicOrbMaxHitCount, magicOrbMaxLifetime, magicOrbSameTargetHitCooldown |
-| DroneCombatBehaviour | Drone | dronePrefab, droneProjectileConfig, droneBatteryDuration, droneOrbitRadius, droneFlightSpeed, droneFlightHeight, droneBurstCount, droneBurstInterval, droneBurstCooldown |
+| MagicOrbCombatBehaviour | Magic | magicOrbPrefab |
+| DroneCombatBehaviour | Drone | dronePrefab, defaultMaximumDroneCount |
 
-The component type is authoritative. Tower authoring does not serialize a second AttackArchetype selector that can disagree with it.
+The Magic Orb entity prefab root owns rotation speed, orbit radius, contact distance, max hit count, max lifetime, and same-target cooldown through `MagicOrbBehaviour`. The Drone entity prefab root owns ProjectileConfig, battery duration, orbit radius, flight speed/height, burst count/interval/cooldown, and Drone-local presentation through `DroneBehaviour`.
+
+The component type is authoritative. Tower authoring does not serialize a second attack-archetype selector that can disagree with it.
 
 TowerDefinition validation should confirm that its Tower Base Prefab contains the expected concrete combat component for the configured TowerFamily. A missing or mismatched component is an authoring error and should not be repaired by adding an untyped base TowerCombatBehaviour at runtime.
 
@@ -723,9 +747,9 @@ Direction Projectile uses the shared range, interval, target selection, release 
 
 Arc Projectile uses the same common fields plus ProjectileConfig and the Arc component's authored arcHeight. It captures an immutable landing position. Explosion and bounce behavior remain package-owned rather than base Arc authoring.
 
-Magic Orb uses common range and interval for tower release orchestration. Magic-specific authored fields define its base orbit, contact, hit-budget, lifetime, and prefab rules. Applied upgrades may selectively refresh damage, rotation speed, remaining hit budget by delta, and reviewed Behaviour options on active Orbs.
+Magic Orb uses common range and interval for group release orchestration. Its entity prefab defines base orbit, contact, per-member hit-count, lifetime, and presentation rules. `MagicOrbCombatBehaviour` owns the single-active-group gate and mirror membership. Applied upgrades may selectively refresh damage, rotation speed, every active member's remaining hit count by delta, and reviewed Behaviour options on the active group.
 
-Drone uses common range, interval, target selection, and release VFX plus its Drone-specific authored fields. Drone-local movement, targeting, battery, burst, and Final Dive state remain owned by Drone runtime after release. Applied upgrades may selectively refresh approved future Drone behavior without replacing already-consumed entity history.
+Drone uses common range, interval, target selection, and release VFX plus `defaultMaximumDroneCount`. Drone-local movement, targeting, battery, burst, and Final Dive state remain owned by the Drone entity prefab/runtime after release. `DroneCombatBehaviour` owns active-count registration and capacity-gated one-at-a-time launches. Applied upgrades may selectively refresh approved future Drone behavior without replacing already-consumed entity history.
 
 Attack VFX fields are optional and presentation-only. Empty references must not block combat execution or own gameplay decisions.
 
@@ -754,7 +778,7 @@ Target selection may not be required by every attack archetype.
 
 Archetype usage:
 
-| AttackArchetype | Uses TargetSelectionType |
+| Runtime Attack Type | Uses TargetSelectionType |
 |---|---|
 | Direction Projectile | Yes |
 | Arc Projectile | Yes |
