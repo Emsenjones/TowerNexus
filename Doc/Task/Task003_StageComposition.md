@@ -117,9 +117,9 @@ Stage authoring validation must report:
 - Null or duplicate TowerUpgradeDefinition references
 - Referenced definitions that fail owner validation
 - Incoherent TowerFamily coverage between Tower and Upgrade pools
-- Map composition that fails Map validation
+- Map composition that fails Task001's reusable programmatic Map validation
 
-Validation must not repair referenced assets or silently substitute global content.
+Stage validation calls the Map-owned validation entry point and reports its aggregated errors and warnings in Stage context. It must not duplicate Map validation rules, repair referenced assets, or silently substitute global content.
 
 ## 11. Unity Authoring Checklist
 

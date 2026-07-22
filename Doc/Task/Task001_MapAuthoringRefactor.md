@@ -1,14 +1,16 @@
 # Task001 - Map Authoring Refactor
 
-Status: Ready for review
+Status: Script implementation complete; awaiting user Unity authoring and Play Mode acceptance
 
 Depends on: Current completed combat and placement baseline
 
 ## 1. Goal
 
-Refactor the existing handcrafted Map authoring path so one reusable Map template owns authored Grid Node data and obtains all generated presentation from one interchangeable `MapVisualTheme` asset.
+Refactor the Map authoring path so one reusable Map template owns authored Grid Node data and obtains all generated presentation from one interchangeable `MapVisualTheme` asset.
 
-The task must preserve runtime topology changes: Tower occupancy refreshes Tile connectivity but never creates authored Obstacles or replaces Spawn and Target presentation.
+This task is a clean break. It targets newly created Grid Node prefabs, MapVisualTheme assets, and Map prefabs. It does not migrate or preserve the legacy Map authoring path.
+
+Runtime topology changes remain supported: Tower occupancy refreshes Tile connectivity but never creates authored Obstacles or replaces Spawn and Target presentation.
 
 ## 2. Source Documents
 
@@ -17,35 +19,42 @@ The task must preserve runtime topology changes: Tower occupancy refreshes Tile 
 - `Doc/05_MonsterSystem.md`
 - `Doc/07_TowerPlacementSystem.md`
 
-The current System documents are authoritative for Base Walkable versus Runtime Occupied state, the approved generated hierarchy, deterministic presentation, and validation.
+The current System documents are authoritative for Base Walkable versus Runtime Occupied state, local-space grid mapping, the generated hierarchy, deterministic presentation, validation, and authoring/runtime refresh boundaries.
 
-## 3. Current State
+## 3. Clean-Break Boundary
 
-- `GridNodeBehaviour` stores one mutable `isWalkable` field and one `GridNodeType`.
-- Tower placement changes that same field, so authored terrain and runtime occupancy are not distinguishable.
-- `MapGeneratorBehaviour` stores twelve direct Tile prefab references.
-- Tile instances are generated directly below each Grid Node.
-- There is no theme asset, feature presentation, deterministic obstacle selection, authored/runtime refresh split, or Map validation command.
-- Node-dictionary rebuilding is exposed as a designer button.
+Task001 does not migrate old Map data or serialized references.
+
+- Do not preserve the legacy `isWalkable`, `generatedNodesParent`, or twelve direct Tile-prefab fields.
+- Do not use `FormerlySerializedAs`.
+- Do not add compatibility fields, legacy lookup, migration helpers, or old prefab-name cleanup.
+- Do not convert, repair, or save existing Map, Grid Node, GameManager, scene, generated-node, or ScriptableObject assets.
+- After the script refactor, legacy Map assets are not a supported runtime path.
+
+In particular, this task does not modify or migrate `prefab_GridNode.prefab`, `prefab_MapGenerator.prefab`, `prefab_GameManager.prefab`, `Main.unity`, or their existing generated nodes and references.
+
+After script implementation and static validation are complete, the user will create and configure the new Unity assets and perform Play Mode acceptance.
 
 ## 4. Required Authoring Model
 
 ### 4.1 MapVisualTheme
 
-Create one reusable `MapVisualTheme` ScriptableObject containing:
+Add one reusable `MapVisualTheme` ScriptableObject containing:
 
-- Direction-mask-to-Tile-prefab entries
+- Explicit direction-mask-to-Tile-prefab entries
 - Obstacle prefab list
 - Spawn prefab
 - Target prefab
 
-Each Tile entry owns an explicit orthogonal direction mask. List index must not be the semantic identity. Duplicate masks and unsupported required masks are invalid authoring.
+Direction masks use only the `Up`, `Down`, `Left`, and `Right` bits. The Theme must contain exactly one entry for each of the twelve supported masks in `Doc/04_MapSystem.md` and no other entries. A single-direction mask is not a supported formal entry.
 
-The current art contract contains the twelve masks listed in `Doc/04_MapSystem.md`. Single-direction dead ends continue to use the approved fallback and must be reported by validation.
+Every Tile prefab must be non-null. The Obstacle list must be non-empty, contain no null references, and contain no duplicate references. Spawn and Target prefabs must be non-null.
+
+A single-direction topology resolves to the `None` Tile fallback and is reported for the relevant Grid Node as a Map-validation warning.
 
 ### 4.2 Grid Node State
 
-`GridNodeBehaviour` must expose:
+`GridNodeBehaviour` exposes:
 
 - Grid Position
 - Base Walkable
@@ -53,10 +62,14 @@ The current art contract contains the twelve masks listed in `Doc/04_MapSystem.m
 - Effective `IsWalkable = BaseWalkable && !RuntimeOccupied`
 - Node Type
 - Visual Root
+- Tile Visual Root
+- Feature Visual Root
 
-Migrate the existing serialized `isWalkable` value into Base Walkable without losing authored Map data. Runtime Occupied starts false and is never serialized as authored terrain.
+Base Walkable and Node Type are serialized authored state. Runtime Occupied is runtime-only, starts false, and is not saved as authored Map data.
 
-### 4.3 Generated Hierarchy
+Provide explicit operations for initialization, authored-state changes, occupancy changes, runtime-state reset, Grid Position changes, and Node Type changes. Do not retain an ambiguous `SetWalkable` operation.
+
+### 4.3 Generated Hierarchy And Ownership
 
 Implement the approved hierarchy:
 
@@ -72,9 +85,19 @@ Map Root
                 └── SpawnOrTargetVisualInstance
 ```
 
-Generated refresh owns only these generated roots. Manually authored children outside them must survive refresh.
+Before a refresh may delete generated children, each Grid Node must satisfy all of the following:
 
-## 5. Authoring Operations
+- VisualRoot belongs to that Grid Node hierarchy.
+- TileVisualRoot and FeatureVisualRoot are descendants of VisualRoot.
+- TileVisualRoot and FeatureVisualRoot are different objects.
+- Neither root contains the other.
+- No root reference points into another Grid Node or outside NodesRoot.
+
+Refresh owns only the children of TileVisualRoot and FeatureVisualRoot. It must not remove decorations outside these roots, outside the Grid Node, or outside NodesRoot. Missing or unsafe roots are validation errors; scripts do not silently create or repair them.
+
+## 5. MapGenerator Authoring And Query Contract
+
+`MapGeneratorBehaviour` uses Width, Height, Node Size, Grid Node prefab, NodesRoot, MapVisualTheme, and Map Visual Seed.
 
 The designer-facing operations are:
 
@@ -83,89 +106,178 @@ The designer-facing operations are:
 - Refresh Map Visual
 - Validate Map
 
-Generate Map creates the rectangular Grid Node scaffold using Width, Height, Node Size, Grid Node prefab, and NodesRoot. It must preserve the existing explicit replacement intent before clearing an authored scaffold.
+Node-dictionary rebuilding is private/internal and is not a designer operation.
 
-Authoring Refresh rebuilds Tile and Feature presentation from Base Walkable and Node Type. Runtime Tile Refresh uses effective Is Walkable and updates only Tile presentation.
+### 5.1 Local-Space Mapping
 
-Node-dictionary rebuilding remains available internally but is no longer a designer button.
+- Grid X maps to NodesRoot local X.
+- Grid Y maps to NodesRoot local Z.
+- A generated node's local position is `(x * NodeSize, 0, y * NodeSize)`.
+- World-position lookup first uses `NodesRoot.InverseTransformPoint(worldPosition)`, then rounds local X and local Z by Node Size.
+- Translating or rotating Map Root or NodesRoot must not invalidate queries.
 
-## 6. Deterministic Presentation
+Task001 does not introduce multi-layer, irregular, or procedural Map rules.
 
-- Add one authored Map Visual Seed.
-- Obstacle selection uses seed, Grid Position, and visual category.
-- Repeating Authoring Refresh with unchanged data produces the same result.
-- Do not consume or mutate the global gameplay random stream.
-- Use a stable deterministic calculation rather than a process-dependent object hash.
+### 5.2 Dictionary Lifecycle
 
-Changing the seed may intentionally select different variants. Ordinary refresh must not reroll them.
+- Build the dictionary on `OnEnable`.
+- Synchronize it immediately after Generate Map and Clear Map.
+- Every public Map query passes through one `EnsureNodeDictionaryValid` path before reading cached nodes.
+- Public callers never need to rebuild the dictionary first.
+- Duplicate coordinates may be reported during rebuilding, but rebuilding must not destroy the hierarchy evidence used by validation.
+- A* obtains nodes and neighbors only through Map query APIs; it does not inspect `NodeDictionary.Count` or invoke rebuilding.
 
-## 7. Runtime Occupancy Integration
+Do not introduce a generic cache framework or additional service layer.
 
-- Tower placement commits Runtime Occupied instead of changing Base Walkable.
-- Effective walkability changes immediately after commit.
-- Map runtime refresh rebuilds Tile connectivity from effective walkability.
-- Obstacle, Spawn, and Target presentation remain untouched.
-- Monster path recalculation still begins only after accepted occupancy commit.
-- Placement simulation remains temporary and does not mutate either authored or committed runtime state.
+## 6. Atomic Generation And Refresh
 
-Any compatibility method named around `SetWalkable` must be migrated to an explicit Base Walkable or Runtime Occupied operation; do not retain an ambiguous write path.
+Generate Map, Refresh Map Visual, and Refresh Runtime Tile Visuals are destructive only after a complete preflight succeeds.
 
-## 8. Validation
+Generate Map preflight validates all required generator inputs and the Grid Node prefab hierarchy before clearing existing Grid Nodes.
 
-Validate at minimum:
+Refresh preflight scans every node that would be processed and aggregates all relevant failures before deleting any visual child. At minimum it validates:
 
-- Positive Width, Height, and Node Size
-- Required Grid Node prefab, NodesRoot, and MapVisualTheme
-- Exactly the required unique Tile masks and valid prefab references
-- Valid Obstacle list, Spawn prefab, and Target prefab
-- Grid Node count equal to Width multiplied by Height
-- Unique in-bounds Grid Positions with no missing coordinates
-- Exactly one Spawn and one Target
-- Base Walkable Spawn and Target nodes
-- At least one Base-Walkable Spawn-to-Target route
+- NodesRoot and MapVisualTheme
+- Every affected Grid Node and its safe root ownership
+- Every required Tile mask and its prefab
+- For Authoring Refresh, all required Obstacle, Spawn, and Target configuration
 
-Validation reports errors and relevant nodes without silently repairing authored data.
+If preflight fails, the operation reports all collected problems, performs no deletion or instantiation, and leaves every node's existing presentation unchanged. A refresh must never leave a partially updated Map.
 
-## 9. Migration And Unity Authoring Checklist
+After successful preflight:
 
-- Add the approved VisualRoot, TileVisualRoot, and FeatureVisualRoot structure to the Grid Node prefab.
-- Create the first MapVisualTheme asset and move the current twelve Tile references into explicit mask entries.
-- Assign Obstacle, Spawn, and Target presentation assets.
-- Migrate the current Map root from `generatedNodesParent` to NodesRoot without losing nodes.
-- Confirm current authored walkability migrates to Base Walkable.
-- Refresh and save the existing Map template/prefab only after visual and coordinate validation passes.
-- Confirm Tower placement changes Runtime Occupied and does not create Obstacles.
+- Authoring Refresh rebuilds Tile and Feature presentation from Base Walkable and Node Type.
+- Runtime Tile Refresh rebuilds only TileVisualRoot children from effective Is Walkable.
 
-Unless explicitly handed over, Codex owns scripts and documentation; the user owns final prefab/Inspector wiring, art-reference selection, and Unity visual acceptance.
+## 7. Deterministic Presentation
 
-## 10. Out Of Scope
+- Obstacle selection uses Map Visual Seed, Grid Position, and visual category.
+- Do not use `UnityEngine.Random` or `GetHashCode()`.
+- The same seed, coordinate, and category produce the same selection across refresh and reload.
+- Index calculation remains valid for negative intermediate values and `int.MinValue`.
+- Ordinary refresh never rerolls a variant; changing the seed may intentionally do so.
 
-- StageDefinition and Stage composition
+## 8. Runtime Occupancy Integration
+
+- Placement simulation continues to use a temporary blocked set and mutates neither Base Walkable nor Runtime Occupied.
+- Accepted placement commits Runtime Occupied instead of changing Base Walkable.
+- Effective walkability changes immediately after the commit.
+- Runtime Tile Refresh runs after occupancy commit and updates TileVisualRoot only.
+- Runtime refresh never modifies FeatureVisualRoot, creates an Obstacle, or replaces Spawn or Target presentation.
+- Monster path recalculation begins after occupancy commit and Runtime Tile Refresh.
+- Tower removal and redeployment remain out of scope.
+
+## 9. Reusable Map Validation
+
+Map validation must have one programmatic entry point that:
+
+- Does not depend on an Odin button or Unity Editor API
+- Returns an explicit valid/invalid result
+- Aggregates all errors and warnings
+- Can be reused by Task003 Stage validation without duplicating Map rules
+
+The Inspector Validate Map button only invokes this entry point and reports its result.
+
+Structural validation scans the NodesRoot hierarchy directly. It must not use a deduplicated node dictionary as its source of truth.
+
+Validation reports at minimum:
+
+- Non-positive Width, Height, or Node Size
+- Missing Grid Node prefab, NodesRoot, or MapVisualTheme
+- Invalid Grid Node prefab or instance root ownership
+- Tile entries with invalid bits, single-direction masks, unsupported masks, missing masks, duplicate masks, extra masks, or null prefabs
+- Empty Obstacle list, null or duplicate Obstacle prefabs, or missing Spawn/Target prefabs
+- Grid Node count different from Width multiplied by Height
+- Duplicate, missing, or out-of-bounds Grid Positions
+- Missing or multiple Spawn nodes
+- Missing or multiple Target nodes
+- Spawn or Target that is not Base Walkable
+- No Base-Walkable route from Spawn to Target
+- Single-direction topology, as a warning identifying the affected Grid Node
+
+Validation never silently repairs authored data.
+
+## 10. Implementation Scope
+
+Add:
+
+- `Assets/Scripts/Map/MapVisualTheme.cs`
+
+Modify:
+
+- `Assets/Scripts/Map/GridNodeBehaviour.cs`
+- `Assets/Scripts/Map/MapGeneratorBehaviour.cs`
+- `Assets/Scripts/Pathfinding/AStarPathfindingService.cs`
+- `Assets/Scripts/TowerDeployment/TowerDeployController.cs`
+- `Doc/Task/Task001_MapAuthoringRefactor.md`
+- `Doc/04_MapSystem.md` only where the stable local-space and validation contracts require synchronization
+
+Do not modify:
+
+- Any prefab, scene, existing Map, generated Grid Node, TileVisualInstance, or ScriptableObject asset
+- Task002 or Task003 implementation
+- Temporary bootstrap, compatibility path, test scene, or Stage Composition runtime
+
+## 11. Out Of Scope
+
+- Legacy data or asset migration
+- StageDefinition and Stage composition implementation
 - Multiple Spawn Routes or multiple Targets
 - Procedural Map-data generation
 - Destructible or special terrain
 - Partial-neighbor refresh optimization
 - New single-direction Tile art
 - Runtime replacement of authored Feature presentation
+- Tower removal or redeployment
 - Tower placement rule redesign
 
-## 11. Acceptance Criteria
+## 12. Acceptance Criteria
 
-- One Map template can switch themes without changing gameplay data.
+- One new Map template can switch themes without changing gameplay data.
 - Authored terrain and runtime Tower occupancy are separate state.
-- Generate, Clear, Authoring Refresh, Runtime Tile Refresh, and Validate follow their distinct contracts.
+- Generate Map and both refresh paths complete atomically or leave existing content untouched.
+- Root ownership validation prevents refresh from deleting content outside its owned roots.
+- MapVisualTheme accepts exactly the twelve supported masks and valid feature assets.
 - Authoring Refresh produces Tile, Obstacle, Spawn, and Target presentation under the approved roots.
 - Runtime occupancy refresh changes Tile presentation only.
 - Deterministic variants remain stable across repeated refresh and reload.
-- Current Map queries, A* pathfinding, placement simulation, occupancy commit, and Monster recalculation continue to work.
+- Every public Map query maintains its own dictionary lifecycle requirement.
+- A* no longer rebuilds or inspects the dictionary directly.
+- Placement simulation, occupancy commit, Runtime Tile Refresh, and Monster recalculation preserve the approved order.
+- Programmatic Map validation aggregates errors and warnings and is reusable by Task003.
 - Rebuild Node Dictionary is not exposed as a designer action.
-- No manual child outside generated roots is removed by refresh.
+- No legacy compatibility or migration path is added.
 
-## 12. Validation And Handoff
+## 13. Validation And Handoff
 
-- Run targeted compilation for the main Unity assembly.
-- Run `git diff --check` and distinguish pre-existing scene serialization whitespace from task changes.
-- In Unity, generate and refresh a small test Map, then repeat refresh to confirm deterministic output.
-- Validate walkable, blocked, Spawn, Target, unsupported dead-end, duplicate-coordinate, and disconnected-route cases.
-- Place a Tower and confirm only Tile presentation changes while authored Feature presentation remains stable.
-- Confirm existing Map prefab and scene references have no missing scripts or lost serialized data.
+Codex stops after script implementation and static validation.
+
+Run:
+
+```text
+dotnet build Assembly-CSharp.csproj --no-restore -m:1 -nr:false -p:LangVersion=8.0
+git diff --check
+```
+
+Within the modified scripts and Task001 documentation, confirm there is no remaining:
+
+- `SetWalkable`
+- `SetNodeWalkable`
+- `generatedNodesParent`
+- Twelve direct Tile-prefab fields
+- External `RebuildNodeDictionary` call
+- Legacy Tile-name cleanup
+- Old Map compatibility or migration path
+
+Legacy serialized fields that remain only in untouched prefab or scene YAML are not Task001 failures. Pre-existing `Main.unity` whitespace is reported separately and is not repaired in this task.
+
+After Implementation Complete, the user owns:
+
+- Creating the new Grid Node prefab and VisualRoot hierarchy
+- Creating and configuring the MapVisualTheme asset
+- Creating the new Map prefabs
+- Temporarily placing one new Map prefab in a scene
+- Temporarily wiring the current A*, MonsterSpawner, Tower Placement, and Tower Deployment Map references
+- Unity Play Mode, Runtime Occupancy, deterministic presentation, and visual acceptance
+
+These operations do not require Codex to modify or save `Main.unity`, `prefab_GameManager.prefab`, or another existing Unity asset.

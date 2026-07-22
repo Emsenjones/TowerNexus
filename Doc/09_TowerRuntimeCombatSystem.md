@@ -277,7 +277,7 @@ Arcane Field is one Tower-owned persistent field created when its Upgrade become
 
 - It follows the owning Tower.
 - It does not duplicate on unrelated changes.
-- Its authored radius, interval, Effect, and presentation come from the Upgrade definition.
+- Its complete runtime prefab comes from the Upgrade definition and owns its presentation. The prefab root's MagicArcaneFieldBehaviour owns its authored radius, interval, and tick Effect.
 - Each tick resolves valid Monsters inside its radius and grants the reviewed Elemental opportunity.
 - It ends when the owning combat session or Tower ends.
 

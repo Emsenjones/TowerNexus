@@ -39,7 +39,8 @@ public class EffectAction
     [SerializeField] private bool excludeTriggerTarget;
     [TitleGroup("Wind Vortex")]
     [ShowIf(nameof(IsSpawnWindVortexAction))]
-    [SerializeField] private WindVortexConfig windVortexConfig;
+    [Required]
+    [SerializeField] private GameObject windVortexPrefab;
 
     public EffectActionType ActionType => actionType;
     public int DamageAmount => Mathf.Max(0, damageAmount);
@@ -49,7 +50,7 @@ public class EffectAction
     public EffectDefinition MultiTargetEffectDefinition => multiTargetEffectDefinition;
     public int TargetCount => Mathf.Max(1, targetCount);
     public bool ExcludeTriggerContextTarget => excludeTriggerTarget;
-    public WindVortexConfig WindVortexConfig => windVortexConfig;
+    public GameObject WindVortexPrefab => windVortexPrefab;
 
     public bool IsValid()
     {
@@ -93,13 +94,19 @@ public class EffectAction
 
         if (actionType == EffectActionType.SpawnWindVortex)
         {
-            if (windVortexConfig == null)
+            if (windVortexPrefab == null)
             {
-                Debug.LogWarning("Effect action is invalid: SpawnWindVortex requires a WindVortexConfig.");
+                Debug.LogWarning("Effect action is invalid: SpawnWindVortex requires a runtime prefab.");
                 return false;
             }
 
-            if (!windVortexConfig.IsValid())
+            if (!windVortexPrefab.TryGetComponent(out WindVortexBehaviour windVortexBehaviour))
+            {
+                Debug.LogWarning("Effect action is invalid: SpawnWindVortex requires WindVortexBehaviour on the runtime prefab root.", windVortexPrefab);
+                return false;
+            }
+
+            if (!windVortexBehaviour.IsValid())
             {
                 return false;
             }

@@ -31,10 +31,7 @@ MonoBehaviour:
   bounceArcHeight: 1
   bounceTargetSelectionType: 0
   arcaneDetonationEffect: {fileID: 0}
-  arcaneFieldRadius: 1.5
-  arcaneFieldTickInterval: 0.5
-  arcaneFieldTickEffect: {fileID: 11400000, guid: e9156fdd4375b41a086b1febe4bb3e96, type: 2}
-  magicArcaneFieldVfxPrefab: {fileID: 1505402801219553238, guid: f33809e029e81449ea40b12334e34f35, type: 3}
+  magicArcaneFieldPrefab: {fileID: 1505402801219553238, guid: f33809e029e81449ea40b12334e34f35, type: 3}
   blastRoundsEffect: {fileID: 0}
   finalDiveHitThreshold: 1
   finalDiveExplosionEffect: {fileID: 0}

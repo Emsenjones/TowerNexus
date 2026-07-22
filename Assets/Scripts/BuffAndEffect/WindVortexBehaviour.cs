@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class WindVortexBehaviour : MonoBehaviour
@@ -8,7 +9,30 @@ public class WindVortexBehaviour : MonoBehaviour
     private readonly List<MonsterBehaviour> targetCandidates = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> damageTargets = new List<MonsterBehaviour>();
 
-    private WindVortexConfig config;
+    [TitleGroup("Lifetime")]
+    [MinValue(0.01f)]
+    [SerializeField] private float lifetime = 5f;
+
+    [TitleGroup("Movement")]
+    [MinValue(0.01f)]
+    [SerializeField] private float movementSpeed = 1f;
+    [TitleGroup("Movement")]
+    [MinValue(0f)]
+    [SerializeField] private float targetSearchRadius = 3f;
+    [TitleGroup("Movement")]
+    [MinValue(0.01f)]
+    [SerializeField] private float arrivalThreshold = 0.1f;
+
+    [TitleGroup("Damage")]
+    [MinValue(0f)]
+    [SerializeField] private float damageRadius = 1f;
+    [TitleGroup("Damage")]
+    [MinValue(0.01f)]
+    [SerializeField] private float tickInterval = 1f;
+    [TitleGroup("Damage")]
+    [Required]
+    [SerializeField] private EffectDefinition onTickEffectDefinition;
+
     private MonsterManager monsterManager;
     private TowerInstance sourceTower;
     private TowerUpgradeDefinition sourceUpgrade;
@@ -24,18 +48,16 @@ public class WindVortexBehaviour : MonoBehaviour
     public float RemainingLifetime => Mathf.Max(0f, remainingLifetime);
 
     public void Initialize(
-        WindVortexConfig config,
         MonsterManager monsterManager,
         TowerInstance sourceTower,
         TowerUpgradeDefinition sourceUpgrade)
     {
-        this.config = config;
         this.monsterManager = monsterManager;
         this.sourceTower = sourceTower;
         this.sourceUpgrade = sourceUpgrade;
         currentTarget = null;
         lastReachedTarget = null;
-        remainingLifetime = config != null ? config.Lifetime : 0f;
+        remainingLifetime = lifetime;
         damageTickTimer = 0f;
         idleTargetSearchTimer = 0f;
         isInitialized = false;
@@ -76,7 +98,7 @@ public class WindVortexBehaviour : MonoBehaviour
 
     private bool CanInitialize()
     {
-        if (config == null || !config.IsValid())
+        if (!IsValid())
         {
             return false;
         }
@@ -88,6 +110,37 @@ public class WindVortexBehaviour : MonoBehaviour
         }
 
         return true;
+    }
+
+    public bool IsValid()
+    {
+        bool isValid = true;
+
+        if (lifetime <= 0f || movementSpeed <= 0f || arrivalThreshold <= 0f || tickInterval <= 0f ||
+            targetSearchRadius < 0f || damageRadius < 0f)
+        {
+            Debug.LogWarning($"Wind vortex prefab '{name}' is invalid: lifetime, movement speed, arrival threshold, and tick interval must be positive; radii cannot be negative.", this);
+            isValid = false;
+        }
+
+        if (onTickEffectDefinition == null)
+        {
+            Debug.LogWarning($"Wind vortex prefab '{name}' is invalid: on-tick EffectDefinition is required.", this);
+            return false;
+        }
+
+        if (onTickEffectDefinition.Radius > 0f)
+        {
+            Debug.LogWarning($"Wind vortex prefab '{name}' is invalid: on-tick EffectDefinition must be single-target.", this);
+            isValid = false;
+        }
+
+        if (!onTickEffectDefinition.IsValid())
+        {
+            isValid = false;
+        }
+
+        return isValid;
     }
 
     private void UpdateTargetAndMovement(float deltaTime)
@@ -112,7 +165,7 @@ public class WindVortexBehaviour : MonoBehaviour
         }
 
         Vector3 targetPosition = currentTarget.transform.position;
-        float arrivalThresholdSqr = config.ArrivalThreshold * config.ArrivalThreshold;
+        float arrivalThresholdSqr = arrivalThreshold * arrivalThreshold;
 
         if ((targetPosition - transform.position).sqrMagnitude <= arrivalThresholdSqr)
         {
@@ -137,7 +190,7 @@ public class WindVortexBehaviour : MonoBehaviour
         transform.position = Vector3.MoveTowards(
             transform.position,
             targetPosition,
-            config.MovementSpeed * deltaTime);
+            movementSpeed * deltaTime);
     }
 
     private void UpdateIdleTargetSearch(float deltaTime)
@@ -161,7 +214,7 @@ public class WindVortexBehaviour : MonoBehaviour
         int candidateCount = EffectTargetResolver.CollectValidTargetsInRadius(
             aliveMonsters,
             transform.position,
-            config.TargetSearchRadius,
+            targetSearchRadius,
             excludedTarget,
             targetCandidates);
 
@@ -170,7 +223,7 @@ public class WindVortexBehaviour : MonoBehaviour
             candidateCount = EffectTargetResolver.CollectValidTargetsInRadius(
                 aliveMonsters,
                 transform.position,
-                config.TargetSearchRadius,
+                targetSearchRadius,
                 null,
                 targetCandidates);
         }
@@ -189,9 +242,9 @@ public class WindVortexBehaviour : MonoBehaviour
     {
         damageTickTimer += deltaTime;
 
-        while (damageTickTimer >= config.TickInterval)
+        while (damageTickTimer >= tickInterval)
         {
-            damageTickTimer -= config.TickInterval;
+            damageTickTimer -= tickInterval;
             ExecuteDamageTick();
         }
     }
@@ -201,7 +254,7 @@ public class WindVortexBehaviour : MonoBehaviour
         EffectTargetResolver.CollectValidTargetsInRadius(
             monsterManager.GetAliveMonsters(),
             transform.position,
-            config.DamageRadius,
+            damageRadius,
             null,
             damageTargets);
 
@@ -215,7 +268,7 @@ public class WindVortexBehaviour : MonoBehaviour
             }
 
             EffectExecutor.Execute(
-                config.OnTickEffectDefinition,
+                onTickEffectDefinition,
                 new EffectTriggerContext(
                     sourceTower: sourceTower,
                     sourceUpgrade: sourceUpgrade,

@@ -23,4 +23,4 @@ MonoBehaviour:
     isMovementLocked: 0
     multiTargetEffectDefinition: {fileID: 0}
     targetCount: 1
-    windVortexConfig: {fileID: 0}
+    windVortexPrefab: {fileID: 0}

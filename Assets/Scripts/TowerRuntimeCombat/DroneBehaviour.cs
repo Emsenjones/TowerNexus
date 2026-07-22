@@ -55,26 +55,44 @@ public readonly struct DroneStatRefresh
 
 public class DroneBehaviour : MonoBehaviour
 {
+    [TitleGroup("Projectile")]
     [Required]
     [SerializeField] private ProjectileConfig projectileConfig;
+
+    [TitleGroup("Lifetime")]
     [MinValue(0.01f)]
     [SerializeField] private float batteryDuration = 5f;
+
+    [TitleGroup("Flight")]
     [MinValue(0.01f)]
     [SerializeField] private float orbitRadius = 1.5f;
+    [TitleGroup("Flight")]
     [MinValue(0.01f)]
     [SerializeField] private float flightSpeed = 3f;
+    [TitleGroup("Flight")]
     [MinValue(0f)]
     [SerializeField] private float flightHeight = 1f;
+
+    [TitleGroup("Burst Fire")]
     [MinValue(1)]
     [SerializeField] private int burstCount = 3;
+    [TitleGroup("Burst Fire")]
     [MinValue(0f)]
     [SerializeField] private float burstInterval = 0.1f;
+    [TitleGroup("Burst Fire")]
     [MinValue(0f)]
     [SerializeField] private float burstCooldown = 0.5f;
+
+    [TitleGroup("Anchors")]
     [SerializeField] private Transform fireAnchor;
+
+    [TitleGroup("Presentation")]
     [SerializeField] private Transform propellerTransform;
+    [TitleGroup("Presentation")]
     [SerializeField] private Vector3 propellerSpinAxis = Vector3.forward;
+    [TitleGroup("Presentation")]
     [SerializeField, Min(0f)] private float propellerSpinSpeedDegreesPerSecond = 1080f;
+    [TitleGroup("Presentation")]
     [SerializeField] private GameObject aerialDespawnVfxPrefab;
 
     private readonly List<MonsterBehaviour> resolvedFinalDiveExplosionTargets = new List<MonsterBehaviour>();

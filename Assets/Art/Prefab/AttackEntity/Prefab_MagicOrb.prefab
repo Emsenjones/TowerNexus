@@ -4851,8 +4851,8 @@ MonoBehaviour:
   orbitRadius: 0.75
   contactDistance: 0.25
   maxHitCount: 3
-  maxLifetime: 5
   sameTargetHitCooldown: 0.5
+  maxLifetime: 5
 --- !u!1 &3170343543818680394
 GameObject:
   m_ObjectHideFlags: 0
@@ -9829,8 +9829,8 @@ MonoBehaviour:
   orbitRadius: 0.75
   contactDistance: 0.25
   maxHitCount: 3
-  maxLifetime: 5
   sameTargetHitCooldown: 0.5
+  maxLifetime: 5
 --- !u!1 &5932105996875227893
 GameObject:
   m_ObjectHideFlags: 0
@@ -9880,8 +9880,8 @@ MonoBehaviour:
   orbitRadius: 1
   contactDistance: 0.5
   maxHitCount: 6
+  sameTargetHitCooldown: 0.5
   maxLifetime: 6
-  sameTargetHitCooldown: 0.2
 --- !u!1 &7702116986669340077
 GameObject:
   m_ObjectHideFlags: 0
@@ -14733,5 +14733,5 @@ MonoBehaviour:
   orbitRadius: 0.75
   contactDistance: 0.25
   maxHitCount: 3
-  maxLifetime: 5
   sameTargetHitCooldown: 0.5
+  maxLifetime: 5

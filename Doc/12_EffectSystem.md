@@ -113,7 +113,7 @@ When a valid EffectDefinition has execution presentation, Effect System requests
 
 ### 5.5 SpawnWindVortex
 
-SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff Overload behavior and references a dedicated WindVortex configuration and complete runtime template rather than introducing a generic persistent-zone abstraction.
+SpawnWindVortex is deliberately narrow. It supports the reviewed Wind Buff Overload behavior and references a complete WindVortex runtime prefab rather than introducing a generic persistent-zone abstraction. The prefab root's WindVortexBehaviour owns the entity's authored runtime parameters.
 
 ### 5.6 Movement And Path Actions
 
@@ -148,7 +148,7 @@ WindVortex is created only by a successful Windcut max-stack Overload through th
 WindVortex behavior:
 
 1. Spawn at the Wind Buff owner's current world position and start its authored lifetime immediately.
-2. Its dedicated WindVortexConfig owns its complete runtime template, lifetime, movement speed, target-search radius, damage radius, damage tick interval, arrival threshold, and on-tick EffectDefinition.
+2. Its complete runtime prefab owns its presentation, while the root WindVortexBehaviour owns lifetime, movement speed, target-search radius, damage radius, damage tick interval, arrival threshold, and on-tick EffectDefinition.
 3. Randomly lock one valid Monster in its target-search radius and move directly toward that Monster's current world position. It does not use Monster pathfinding.
 4. On reaching the target position, immediately reacquire. Prefer a different valid Monster when one exists; otherwise the reached Monster may remain eligible.
 5. When the current target becomes invalid, immediately clear and reacquire. With no valid target, remain in place, continue visual presentation, and check again on a small internal runtime interval; the interval is not first-version authoring data.
@@ -172,7 +172,8 @@ Effect-backed Behaviour Layer upgrades consume this Effect foundation and, where
 Effect authoring validation should report at minimum:
 
 - Missing or empty EffectDefinition action data
-- Missing required child Effect, Buff, or WindVortex configuration
+- Missing required child Effect, Buff, or WindVortex runtime prefab
+- WindVortex runtime prefab without a valid WindVortexBehaviour on its root
 - Multi-target execution whose child is not single-target
 - Radius execution without a valid way to resolve its center
 - Invalid movement-speed multiplier or unsupported movement action combination

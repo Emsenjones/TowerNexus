@@ -312,9 +312,11 @@ public static class EffectExecutor
         EffectAction action,
         EffectTriggerContext triggerContext)
     {
-        WindVortexConfig config = action != null ? action.WindVortexConfig : null;
+        GameObject windVortexPrefab = action != null ? action.WindVortexPrefab : null;
 
-        if (config == null || !config.IsValid() ||
+        if (windVortexPrefab == null ||
+            !windVortexPrefab.TryGetComponent(out WindVortexBehaviour windVortexPrefabBehaviour) ||
+            !windVortexPrefabBehaviour.IsValid() ||
             !TryGetWindVortexSpawnPosition(triggerContext, out Vector3 spawnPosition))
         {
             return false;
@@ -328,7 +330,7 @@ public static class EffectExecutor
             return false;
         }
 
-        GameObject windVortexObject = Object.Instantiate(config.WindVortexPrefab, spawnPosition, Quaternion.identity);
+        GameObject windVortexObject = Object.Instantiate(windVortexPrefab, spawnPosition, Quaternion.identity);
 
         if (!windVortexObject.TryGetComponent(out WindVortexBehaviour windVortexBehaviour))
         {
@@ -338,7 +340,6 @@ public static class EffectExecutor
         }
 
         windVortexBehaviour.Initialize(
-            config,
             monsterManager,
             triggerContext.SourceTower,
             triggerContext.SourceUpgrade);

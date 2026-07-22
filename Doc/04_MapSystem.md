@@ -25,20 +25,22 @@ Map System does not own Stage flow, Tower placement rules, pathfinding algorithm
 
 # 2. Grid Contract
 
-The Map is an authored rectangular grid on the gameplay XZ plane.
+The Map is an authored rectangular grid on the NodesRoot local XZ plane.
 
-- Grid X maps to world X.
-- Grid Y maps to world Z.
-- World Y remains available for height.
+- Grid X maps to NodesRoot local X.
+- Grid Y maps to NodesRoot local Z.
+- Local Y remains available for height.
 - Node Size controls center-to-center spacing.
 - Orthogonal neighbors are traversable when effectively walkable.
 - Diagonal traversal is disabled.
 
 ```text
-World Position = (Grid X * Node Size, 0, Grid Y * Node Size)
+Node Local Position = (Grid X * Node Size, 0, Grid Y * Node Size)
 ```
 
-Equivalent engines must preserve grid coordinates, spacing, and neighbor semantics even when their world axes differ.
+World-position queries convert through NodesRoot local space before resolving the coordinate. Map Root or NodesRoot may be translated or rotated without changing grid identity or neighbor semantics.
+
+Equivalent engines must preserve the grid-local coordinate frame, spacing, and neighbor semantics even when their world axes differ. Multi-layer, irregular, and procedural Map rules are outside the current contract.
 
 ---
 
@@ -90,6 +92,10 @@ Ownership rules:
 - `FeatureVisualRoot` owns authored static feature presentation.
 - Manually authored decorations that must survive refresh stay outside generated roots.
 
+Before generated children may be removed, VisualRoot must belong to its Grid Node, TileVisualRoot and FeatureVisualRoot must be distinct descendants of VisualRoot, neither may contain the other, and no root may point into another Grid Node or outside NodesRoot.
+
+Refresh owns only TileVisualRoot children and FeatureVisualRoot children. Invalid ownership stops the refresh; it is never repaired by deleting or recreating roots.
+
 Tile and Feature presentation have intentionally different refresh lifecycles.
 
 ---
@@ -109,7 +115,7 @@ Changing the theme and performing authoring refresh replaces generated presentat
 
 Each Tile entry declares its supported orthogonal walkable-direction mask. List position alone is not semantic identity.
 
-The current art set supports twelve masks:
+The current art set supports exactly twelve masks:
 
 | Walkable Directions | Shape |
 |---|---|
@@ -126,7 +132,11 @@ The current art set supports twelve masks:
 | Up + Down + Right | Three-way |
 | Up + Down + Left | Three-way |
 
-Single-direction dead ends are not represented by the current set. Map content must avoid them or use an explicitly approved fallback.
+Tile entries use only the Up, Down, Left, and Right bits. Each supported mask appears exactly once; additional, duplicate, invalid-bit, and single-direction entries are invalid. Every Tile entry has a valid prefab.
+
+Single-direction dead ends are not represented by the current set. They resolve to the None Tile fallback and Map validation reports the affected Grid Node as a warning.
+
+The Obstacle list is non-empty and contains no null or duplicate references. Spawn and Target visuals are valid references.
 
 ## 5.2 Deterministic Variants
 
@@ -138,13 +148,17 @@ Obstacle and future Tile variants are deterministic from:
 
 The same seed and authored Grid Node data produce the same visual result. Ordinary refresh never rerolls variants; changing the seed may intentionally do so.
 
+Deterministic selection does not consume the gameplay random stream or depend on a process-specific object hash, and it produces a valid selection index for every supported integer input.
+
 ---
 
 # 6. Authoring Refresh
 
 Authoring refresh rebuilds both Tile and Feature presentation from authored state.
 
-For every Grid Node:
+Before changing presentation, authoring refresh validates all inputs needed by every affected Grid Node, including root ownership, Tile resolution, and Feature assets. If any error exists, it reports the collected failures and leaves the entire existing presentation unchanged.
+
+After a successful preflight, for every Grid Node:
 
 1. Clear generated Tile presentation.
 2. Resolve the direction mask from neighboring Base Walkable states.
@@ -178,6 +192,8 @@ Runtime refresh must not:
 - Remove or replace Spawn or Target presentation
 - Modify Base Walkable
 
+Runtime refresh also completes a full Tile-only preflight before removing any Tile presentation. A failure leaves all existing Tile and Feature presentation unchanged; partial refresh is invalid.
+
 The current version may refresh all Tile visuals after one topology change. Partial refresh of the changed nodes and orthogonal neighbors is an optimization that must preserve identical results.
 
 ---
@@ -201,7 +217,7 @@ The authoring surface contains:
 - Refresh Map Visual
 - Validate Map
 
-Generate Map replaces an existing generated scaffold and therefore requires explicit author intent. Runtime node lookup rebuilding is internal lifecycle behavior and is not exposed as a designer action.
+Generate Map replaces an existing generated scaffold and therefore requires explicit author intent. It validates its complete configuration and Grid Node template hierarchy before removing an existing scaffold. Runtime node lookup rebuilding is internal lifecycle behavior and is not exposed as a designer action.
 
 The current runtime loads the authored Map template. It does not regenerate Map data procedurally from a separate Map definition.
 
@@ -216,6 +232,8 @@ Map System provides:
 - Effective walkability queries
 - Spawn and Target queries
 - Temporary topology evaluation support
+
+World-position lookup resolves through NodesRoot local space. Public queries maintain their own internal lookup readiness; consumers do not rebuild or inspect Map lookup storage.
 
 Monster System chooses and executes the pathfinding algorithm. Tower Placement System chooses when to simulate or commit occupancy.
 
@@ -239,19 +257,25 @@ Map System does not choose the Stage, Wave content, Draft pools, or battle trans
 
 # 11. Validation
 
+Map validation is available through one reusable programmatic operation that returns valid/invalid state together with aggregated errors and warnings. Authoring UI reports this result, and Stage validation reuses the same operation rather than duplicating Map rules.
+
+Structural validation scans the NodesRoot hierarchy directly so duplicate coordinates and malformed nodes cannot be hidden by lookup storage.
+
 Map validation should report at minimum:
 
 - Non-positive Width, Height, or Node Size
 - Missing Grid Node template or NodesRoot
 - Missing MapVisualTheme
-- Missing, duplicate, or unsupported Tile masks
-- Invalid Obstacle, Spawn, or Target presentation references
+- Missing, duplicate, extra, invalid-bit, single-direction, or otherwise unsupported Tile masks
+- Null Tile prefabs; empty, null-containing, or duplicate Obstacle lists; missing Spawn or Target presentation references
+- Invalid or externally owned Visual, Tile, or Feature roots
 - Grid Node count different from Width multiplied by Height
 - Duplicate, missing, or out-of-bounds Grid Positions
 - Missing or multiple Spawn nodes
 - Missing or multiple Target nodes
 - Spawn or Target that is not Base Walkable
 - No Base-Walkable route from Spawn to Target
+- Single-direction topology as a warning identifying the affected Grid Node
 
 Warnings identify the relevant Map or Grid Node and never silently rewrite authored content.
 

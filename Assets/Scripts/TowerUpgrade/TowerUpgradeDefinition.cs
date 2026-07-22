@@ -76,21 +76,11 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Behaviour Layer/Magic Arcane Detonation")]
     [ShowIf(nameof(IsMagicArcaneDetonation))]
     [SerializeField] private EffectDefinition arcaneDetonationEffect;
-    [TitleGroup("Behaviour Layer/Magic Arcane Field")]
-    [ShowIf(nameof(IsMagicArcaneField))]
-    [MinValue(0.01f)]
-    [SerializeField] private float arcaneFieldRadius = 1f;
-    [TitleGroup("Behaviour Layer/Magic Arcane Field")]
-    [ShowIf(nameof(IsMagicArcaneField))]
-    [MinValue(0.01f)]
-    [SerializeField] private float arcaneFieldTickInterval = 1f;
-    [TitleGroup("Behaviour Layer/Magic Arcane Field")]
-    [ShowIf(nameof(IsMagicArcaneField))]
-    [SerializeField] private EffectDefinition arcaneFieldTickEffect;
+    [FormerlySerializedAs("magicArcaneFieldVfxPrefab")]
     [TitleGroup("Behaviour Layer/Magic Arcane Field")]
     [ShowIf(nameof(IsMagicArcaneField))]
     [Required]
-    [SerializeField] private GameObject magicArcaneFieldVfxPrefab;
+    [SerializeField] private GameObject magicArcaneFieldPrefab;
     [TitleGroup("Behaviour Layer/Drone Blast Rounds")]
     [ShowIf(nameof(IsDroneBlastRounds))]
     [SerializeField] private EffectDefinition blastRoundsEffect;
@@ -128,10 +118,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     public float BounceArcHeight => Mathf.Max(0f, bounceArcHeight);
     public TargetSelectionType BounceTargetSelectionType => bounceTargetSelectionType;
     public EffectDefinition ArcaneDetonationEffect => arcaneDetonationEffect;
-    public float ArcaneFieldRadius => Mathf.Max(0.01f, arcaneFieldRadius);
-    public float ArcaneFieldTickInterval => Mathf.Max(0.01f, arcaneFieldTickInterval);
-    public EffectDefinition ArcaneFieldTickEffect => arcaneFieldTickEffect;
-    public GameObject MagicArcaneFieldVfxPrefab => magicArcaneFieldVfxPrefab;
+    public GameObject MagicArcaneFieldPrefab => magicArcaneFieldPrefab;
     public EffectDefinition BlastRoundsEffect => blastRoundsEffect;
     public float FinalDiveHitThreshold => Mathf.Max(0.01f, finalDiveHitThreshold);
     public EffectDefinition FinalDiveExplosionEffect => finalDiveExplosionEffect;
@@ -343,25 +330,7 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
-        if (IsMagicArcaneField() && arcaneFieldRadius <= 0f)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Arcane Field radius must be greater than zero.");
-            isValid = false;
-        }
-
-        if (IsMagicArcaneField() && arcaneFieldTickInterval <= 0f)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Arcane Field tick interval must be greater than zero.");
-            isValid = false;
-        }
-
-        if (IsMagicArcaneField() &&
-            !ValidateRequiredSingleTargetEffect(arcaneFieldTickEffect, "Arcane Field tick", logWarnings))
-        {
-            isValid = false;
-        }
-
-        if (IsMagicArcaneField() && !ValidateMagicArcaneFieldVfxPrefab(logWarnings))
+        if (IsMagicArcaneField() && !ValidateMagicArcaneFieldPrefab(logWarnings))
         {
             isValid = false;
         }
@@ -414,44 +383,23 @@ public class TowerUpgradeDefinition : ScriptableObject
         return isValid;
     }
 
-    private bool ValidateRequiredSingleTargetEffect(
-        EffectDefinition effectDefinition,
-        string packageDisplayName,
-        bool logWarnings)
+    private bool ValidateMagicArcaneFieldPrefab(bool logWarnings)
     {
-        if (effectDefinition == null)
+        if (magicArcaneFieldPrefab == null)
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} requires an EffectDefinition.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Magic Arcane Field requires a runtime prefab.");
             return false;
         }
 
-        bool isValid = effectDefinition.IsValid();
-
-        if (!isValid)
+        if (!magicArcaneFieldPrefab.TryGetComponent(out MagicArcaneFieldBehaviour fieldBehaviour))
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} EffectDefinition failed validation.");
-        }
-
-        if (effectDefinition.Radius != 0f)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} requires a single-target EffectDefinition with radius zero.");
-            isValid = false;
-        }
-
-        return isValid;
-    }
-
-    private bool ValidateMagicArcaneFieldVfxPrefab(bool logWarnings)
-    {
-        if (magicArcaneFieldVfxPrefab == null)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Magic Arcane Field requires a VFX prefab.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Magic Arcane Field runtime prefab requires MagicArcaneFieldBehaviour on its root.");
             return false;
         }
 
-        if (!magicArcaneFieldVfxPrefab.TryGetComponent(out MagicArcaneFieldBehaviour _))
+        if (!fieldBehaviour.IsAuthoredConfigurationValid())
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Magic Arcane Field VFX prefab requires MagicArcaneFieldBehaviour on its root.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Magic Arcane Field prefab has invalid authored data.");
             return false;
         }
 

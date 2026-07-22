@@ -45,6 +45,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7f6e1c5383874992bec923be3601b1fe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicArcaneFieldBehaviour
+  radius: 1.5
+  tickInterval: 0.5
+  tickEffect: {fileID: 11400000, guid: e9156fdd4375b41a086b1febe4bb3e96, type: 2}
 --- !u!1 &3810119648730184324
 GameObject:
   m_ObjectHideFlags: 0

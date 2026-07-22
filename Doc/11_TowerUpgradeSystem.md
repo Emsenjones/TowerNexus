@@ -191,7 +191,7 @@ Live propagation rules are owned by Tower Runtime Combat System. Basic Layer doe
 
 # 9. Behaviour Layer
 
-Each Behaviour Layer Upgrade grants one typed package with the parameters required by that package. Package identity is not a free-form string.
+Each Behaviour Layer Upgrade grants one typed package. Upgrade-level parameters remain on the package definition, while a package that creates a self-contained runtime entity may reference a complete prefab whose root Behaviour owns that entity's local authored parameters. Package identity is not a free-form string.
 
 The first-version package set is:
 
@@ -205,12 +205,12 @@ The first-version package set is:
 | Cannon | Bouncing Shell | Bounce count, local radius, bounce Arc height, and local selector |
 | Magic | Multi Orbs | Desired synchronized member count |
 | Magic | Arcane Detonation | Normal-completion area Effect |
-| Magic | Arcane Field | Radius, tick interval, tick Effect, and field presentation |
+| Magic | Arcane Field | Complete field runtime prefab and presentation; its root Behaviour owns radius, tick interval, and tick Effect |
 | Drone | Multi Drones | Absolute maximum active Drone count |
 | Drone | Blast Rounds | Projectile-hit area Effect |
 | Drone | Final Dive | Positive arrival threshold and impact Effect |
 
-Package definitions own authoring values. Runtime owner documents define trigger timing, target resolution, state transitions, and result order.
+Package definitions own upgrade-level authoring values and complete runtime-prefab references. A referenced runtime prefab may own its entity-local authoring values through its root Behaviour. Runtime owner documents define trigger timing, target resolution, state transitions, and result order.
 
 ## 9.1 Timing When Applied
 

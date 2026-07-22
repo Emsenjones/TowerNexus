@@ -43,11 +43,6 @@ public class AStarPathfindingService : MonoBehaviour
             return new List<GridNodeBehaviour>();
         }
 
-        if (mapGenerator.NodeDictionary.Count == 0)
-        {
-            mapGenerator.RebuildNodeDictionary();
-        }
-
         HashSet<GridNodeBehaviour> blockedNodes = temporaryBlockedNodes != null
             ? new HashSet<GridNodeBehaviour>(temporaryBlockedNodes)
             : new HashSet<GridNodeBehaviour>();

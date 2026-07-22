@@ -24,4 +24,4 @@ MonoBehaviour:
     multiTargetEffectDefinition: {fileID: 0}
     targetCount: 1
     excludeTriggerTarget: 0
-    windVortexConfig: {fileID: 11400000, guid: b4b4207c81b3b4f5fa2fc7283bfe2ef7, type: 2}
+    windVortexPrefab: {fileID: 8058018288892792687, guid: f86a4e57d0f0645e595eef6f499759db, type: 3}

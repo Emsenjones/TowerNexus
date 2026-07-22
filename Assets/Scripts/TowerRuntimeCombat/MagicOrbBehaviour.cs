@@ -30,18 +30,26 @@ public readonly struct MagicOrbStatRefresh
 
 public class MagicOrbBehaviour : MonoBehaviour
 {
+    [TitleGroup("Orbit")]
     [MinValue(0f)]
     [SerializeField] private float rotationSpeed = 180f;
+    [TitleGroup("Orbit")]
     [MinValue(0f)]
     [SerializeField] private float orbitRadius = 0.75f;
+
+    [TitleGroup("Hits")]
     [MinValue(0f)]
     [SerializeField] private float contactDistance = 0.25f;
+    [TitleGroup("Hits")]
     [MinValue(1)]
     [SerializeField] private int maxHitCount = 3;
-    [MinValue(0.01f)]
-    [SerializeField] private float maxLifetime = 5f;
+    [TitleGroup("Hits")]
     [MinValue(0f)]
     [SerializeField] private float sameTargetHitCooldown = 0.5f;
+
+    [TitleGroup("Lifetime")]
+    [MinValue(0.01f)]
+    [SerializeField] private float maxLifetime = 5f;
 
     private readonly Dictionary<MonsterBehaviour, float> monsterHitCooldownEnds =
         new Dictionary<MonsterBehaviour, float>();

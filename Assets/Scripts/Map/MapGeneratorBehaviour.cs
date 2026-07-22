@@ -2,140 +2,142 @@ using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
+public sealed class MapValidationResult
+{
+    private readonly List<string> errors = new List<string>();
+    private readonly List<string> warnings = new List<string>();
+
+    public bool IsValid => errors.Count == 0;
+    public IReadOnlyList<string> Errors => errors;
+    public IReadOnlyList<string> Warnings => warnings;
+
+    internal void AddError(string message)
+    {
+        errors.Add(message);
+    }
+
+    internal void AddWarning(string message)
+    {
+        warnings.Add(message);
+    }
+}
+
 [ExecuteAlways]
 public class MapGeneratorBehaviour : MonoBehaviour
 {
+    private sealed class VisualRefreshItem
+    {
+        public GridNodeBehaviour Node;
+        public GameObject TilePrefab;
+        public GameObject FeaturePrefab;
+    }
+
+    private static readonly Vector2Int[] OrthogonalDirections =
+    {
+        Vector2Int.up,
+        Vector2Int.down,
+        Vector2Int.left,
+        Vector2Int.right
+    };
+
     [SerializeField] private int width = 10;
     [SerializeField] private int height = 10;
     [SerializeField] private float nodeSize = 1f;
-    [SerializeField] private GridNodeBehaviour nodePrefab;
-    [SerializeField] private Transform generatedNodesParent;
-    [Header("Tile Visual Prefabs")]
-    [SerializeField] private GameObject allDirectionsTilePrefab;
-    [SerializeField] private GameObject noDirectionsTilePrefab;
-    [SerializeField] private GameObject upDownTilePrefab;
-    [SerializeField] private GameObject leftRightTilePrefab;
-    [SerializeField] private GameObject upLeftTilePrefab;
-    [SerializeField] private GameObject upRightTilePrefab;
-    [SerializeField] private GameObject downLeftTilePrefab;
-    [SerializeField] private GameObject downRightTilePrefab;
-    [SerializeField] private GameObject downLeftRightTilePrefab;
-    [SerializeField] private GameObject upLeftRightTilePrefab;
-    [SerializeField] private GameObject upDownRightTilePrefab;
-    [SerializeField] private GameObject upDownLeftTilePrefab;
+    [SerializeField] private GameObject nodePrefab;
+    [SerializeField] private Transform nodesRoot;
+    [SerializeField] private MapVisualTheme mapVisualTheme;
+    [SerializeField] private int mapVisualSeed;
 
-    private const string GeneratedNodesParentName = "Nodes";
-    private const string TileVisualInstanceName = "TileVisualInstance";
+    private readonly Dictionary<Vector2Int, GridNodeBehaviour> nodeDictionary =
+        new Dictionary<Vector2Int, GridNodeBehaviour>();
 
-    private readonly Dictionary<Vector2Int, GridNodeBehaviour> nodeDictionary = new Dictionary<Vector2Int, GridNodeBehaviour>();
+    private bool nodeDictionaryDirty = true;
+    private int dictionaryHierarchyNodeCount;
 
     public int Width => width;
     public int Height => height;
-    public IReadOnlyDictionary<Vector2Int, GridNodeBehaviour> NodeDictionary => nodeDictionary;
+    public float NodeSize => nodeSize;
+    public Transform NodesRoot => nodesRoot;
+    public MapVisualTheme VisualTheme => mapVisualTheme;
 
     private void OnEnable()
     {
         RebuildNodeDictionary();
     }
 
-    [Button("Generate Map")]
-    public void GenerateMap()
+    private void OnValidate()
     {
-        if (nodePrefab == null)
+        nodeDictionaryDirty = true;
+    }
+
+    [Button("Generate Map")]
+    public bool GenerateMap()
+    {
+        MapValidationResult preflight = ValidateGeneratePreflight();
+
+        if (!preflight.IsValid)
         {
-            Debug.LogWarning("Map generation failed: node prefab is not assigned.", this);
-            return;
+            LogValidationResult("Map generation preflight failed", preflight);
+            return false;
         }
 
         ClearMap();
-
-        Transform parent = GetOrCreateGeneratedNodesParent();
 
         for (int x = 0; x < width; x++)
         {
             for (int y = 0; y < height; y++)
             {
                 Vector2Int gridPosition = new Vector2Int(x, y);
-                GridNodeBehaviour node = Instantiate(nodePrefab, parent);
+                GameObject nodeObject = Instantiate(nodePrefab, nodesRoot, false);
+                nodeObject.name = $"Node_{x}_{y}";
+                nodeObject.transform.localPosition = new Vector3(x * nodeSize, 0f, y * nodeSize);
+                nodeObject.transform.localRotation = Quaternion.identity;
 
-                node.transform.localPosition = new Vector3(x * nodeSize, 0f, y * nodeSize);
-                node.name = $"Node_{x}_{y}";
-                node.Initialize(gridPosition, true);
-
-                nodeDictionary[gridPosition] = node;
+                GridNodeBehaviour node = nodeObject.GetComponent<GridNodeBehaviour>();
+                node.Initialize(gridPosition, true, GridNodeType.Normal);
             }
         }
 
-        RefreshMapVisual();
+        RebuildNodeDictionary();
+        return RefreshMapVisual();
     }
 
     [Button("Clear Map")]
     public void ClearMap()
     {
-        nodeDictionary.Clear();
-
-        Transform parent = GetGeneratedNodesParent();
-
-        if (parent == null)
+        if (!IsNodesRootSafelyOwned())
         {
+            Debug.LogError(
+                "Clear Map refused: NodesRoot must be a child of this Map Generator and must not be a Grid Node.",
+                this);
             return;
         }
 
-        for (int i = parent.childCount - 1; i >= 0; i--)
+        if (nodesRoot != null)
         {
-            Transform child = parent.GetChild(i);
+            GridNodeBehaviour[] nodes = GetHierarchyNodes();
 
-            if (child.GetComponent<GridNodeBehaviour>() == null)
+            for (int i = nodes.Length - 1; i >= 0; i--)
             {
-                continue;
-            }
+                GridNodeBehaviour node = nodes[i];
 
-            if (Application.isPlaying)
-            {
-                Destroy(child.gameObject);
-            }
-            else
-            {
-                DestroyImmediate(child.gameObject);
+                if (node == null || HasGridNodeAncestorInsideNodesRoot(node))
+                {
+                    continue;
+                }
+
+                DestroyOwnedObject(node.gameObject);
             }
         }
-    }
 
-    [Button("Rebuild Node Dictionary")]
-    public void RebuildNodeDictionary()
-    {
         nodeDictionary.Clear();
-
-        Transform parent = GetGeneratedNodesParent();
-
-        if (parent == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < parent.childCount; i++)
-        {
-            Transform child = parent.GetChild(i);
-
-            if (!child.TryGetComponent(out GridNodeBehaviour node))
-            {
-                continue;
-            }
-
-            Vector2Int gridPosition = node.GridPosition;
-
-            if (nodeDictionary.ContainsKey(gridPosition))
-            {
-                Debug.LogWarning($"Map node dictionary rebuild skipped duplicate node at {gridPosition}.", child);
-                continue;
-            }
-
-            nodeDictionary.Add(gridPosition, node);
-        }
+        dictionaryHierarchyNodeCount = 0;
+        nodeDictionaryDirty = false;
     }
 
     public GridNodeBehaviour GetNode(Vector2Int gridPosition)
     {
+        EnsureNodeDictionaryValid();
         return nodeDictionary.TryGetValue(gridPosition, out GridNodeBehaviour node) ? node : null;
     }
 
@@ -146,18 +148,13 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
     public GridNodeBehaviour GetSpawnNode()
     {
-        if (nodeDictionary.Count == 0)
-        {
-            RebuildNodeDictionary();
-        }
+        EnsureNodeDictionaryValid();
 
-        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> nodeEntry in nodeDictionary)
+        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> entry in nodeDictionary)
         {
-            GridNodeBehaviour node = nodeEntry.Value;
-
-            if (node != null && node.NodeType == GridNodeType.Spawn)
+            if (entry.Value != null && entry.Value.NodeType == GridNodeType.Spawn)
             {
-                return node;
+                return entry.Value;
             }
         }
 
@@ -166,18 +163,13 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
     public GridNodeBehaviour GetTargetNode()
     {
-        if (nodeDictionary.Count == 0)
-        {
-            RebuildNodeDictionary();
-        }
+        EnsureNodeDictionaryValid();
 
-        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> nodeEntry in nodeDictionary)
+        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> entry in nodeDictionary)
         {
-            GridNodeBehaviour node = nodeEntry.Value;
-
-            if (node != null && node.NodeType == GridNodeType.Target)
+            if (entry.Value != null && entry.Value.NodeType == GridNodeType.Target)
             {
-                return node;
+                return entry.Value;
             }
         }
 
@@ -187,32 +179,24 @@ public class MapGeneratorBehaviour : MonoBehaviour
     public bool TryGetNodeByWorldPosition(Vector3 worldPosition, out GridNodeBehaviour node)
     {
         node = null;
+        EnsureNodeDictionaryValid();
 
-        if (nodeDictionary.Count == 0)
+        if (nodesRoot == null || nodeSize <= 0f)
         {
-            RebuildNodeDictionary();
-        }
-
-        if (nodeSize <= 0f)
-        {
-            Debug.LogWarning("Map query failed: node size must be greater than zero.", this);
             return false;
         }
 
-        Transform gridSpace = GetGridSpaceTransform();
-        Vector3 localPosition = gridSpace.InverseTransformPoint(worldPosition) - GetGridOriginLocalPosition(gridSpace);
-
+        Vector3 localPosition = nodesRoot.InverseTransformPoint(worldPosition);
         Vector2Int gridPosition = new Vector2Int(
             Mathf.RoundToInt(localPosition.x / nodeSize),
-            Mathf.RoundToInt(localPosition.z / nodeSize)
-        );
+            Mathf.RoundToInt(localPosition.z / nodeSize));
 
-        node = GetNode(gridPosition);
-        return node != null;
+        return nodeDictionary.TryGetValue(gridPosition, out node) && node != null;
     }
 
     public bool HasNode(Vector2Int gridPosition)
     {
+        EnsureNodeDictionaryValid();
         return nodeDictionary.ContainsKey(gridPosition);
     }
 
@@ -226,27 +210,16 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
     public List<GridNodeBehaviour> GetNeighborNodes(Vector2Int gridPosition)
     {
+        EnsureNodeDictionaryValid();
         List<GridNodeBehaviour> neighbors = new List<GridNodeBehaviour>();
-        Vector2Int[] directions =
+
+        for (int i = 0; i < OrthogonalDirections.Length; i++)
         {
-            Vector2Int.up,
-            Vector2Int.down,
-            Vector2Int.left,
-            Vector2Int.right
-        };
+            Vector2Int neighborPosition = gridPosition + OrthogonalDirections[i];
 
-        foreach (Vector2Int direction in directions)
-        {
-            Vector2Int neighborPosition = gridPosition + direction;
-
-            if (!IsInsideBounds(neighborPosition))
-            {
-                continue;
-            }
-
-            GridNodeBehaviour neighbor = GetNode(neighborPosition);
-
-            if (neighbor != null)
+            if (IsInsideBounds(neighborPosition) &&
+                nodeDictionary.TryGetValue(neighborPosition, out GridNodeBehaviour neighbor) &&
+                neighbor != null)
             {
                 neighbors.Add(neighbor);
             }
@@ -255,251 +228,811 @@ public class MapGeneratorBehaviour : MonoBehaviour
         return neighbors;
     }
 
-    public bool SetNodeWalkable(Vector2Int gridPosition, bool value)
+    [Button("Refresh Map Visual")]
+    public bool RefreshMapVisual()
     {
-        GridNodeBehaviour node = GetNode(gridPosition);
-
-        if (node == null)
+        if (!TryBuildVisualRefreshPlan(true, out List<VisualRefreshItem> refreshItems, out MapValidationResult preflight))
         {
+            LogValidationResult("Authoring visual refresh preflight failed", preflight);
             return false;
         }
 
-        node.SetWalkable(value);
-        RefreshMapVisual();
+        for (int i = 0; i < refreshItems.Count; i++)
+        {
+            VisualRefreshItem item = refreshItems[i];
+            ClearOwnedChildren(item.Node.TileVisualRoot);
+            ClearOwnedChildren(item.Node.FeatureVisualRoot);
+            CreateVisual(item.TilePrefab, item.Node.TileVisualRoot, "TileVisualInstance");
+
+            if (item.FeaturePrefab != null)
+            {
+                string featureName = item.Node.BaseWalkable
+                    ? item.Node.NodeType == GridNodeType.Spawn
+                        ? "SpawnVisualInstance"
+                        : "TargetVisualInstance"
+                    : "ObstacleVisualInstance";
+
+                CreateVisual(item.FeaturePrefab, item.Node.FeatureVisualRoot, featureName);
+            }
+        }
 
         return true;
     }
 
-    public bool SetNodeWalkable(int x, int y, bool value)
+    public bool RefreshRuntimeTileVisuals()
     {
-        return SetNodeWalkable(new Vector2Int(x, y), value);
-    }
-    [Button("Refresh Map Visual")]
-    public void RefreshMapVisual()
-    {
-        if (nodeDictionary.Count == 0)
+        if (!TryBuildVisualRefreshPlan(false, out List<VisualRefreshItem> refreshItems, out MapValidationResult preflight))
         {
-            RebuildNodeDictionary();
+            LogValidationResult("Runtime Tile visual refresh preflight failed", preflight);
+            return false;
         }
 
-        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> nodeEntry in nodeDictionary)
+        for (int i = 0; i < refreshItems.Count; i++)
         {
-            GridNodeBehaviour node = nodeEntry.Value;
+            VisualRefreshItem item = refreshItems[i];
+            ClearOwnedChildren(item.Node.TileVisualRoot);
+            CreateVisual(item.TilePrefab, item.Node.TileVisualRoot, "TileVisualInstance");
+        }
+
+        return true;
+    }
+
+    public MapValidationResult ValidateMap()
+    {
+        MapValidationResult result = new MapValidationResult();
+        ValidateBasicConfiguration(result, true);
+        ValidateTheme(result, true);
+
+        if (nodesRoot == null)
+        {
+            return result;
+        }
+
+        GridNodeBehaviour[] nodes = GetHierarchyNodes();
+        int expectedNodeCount = width > 0 && height > 0 ? width * height : 0;
+
+        if (nodes.Length != expectedNodeCount)
+        {
+            result.AddError($"Expected {expectedNodeCount} Grid Nodes but found {nodes.Length} under NodesRoot.");
+        }
+
+        Dictionary<Vector2Int, GridNodeBehaviour> uniqueNodes =
+            new Dictionary<Vector2Int, GridNodeBehaviour>();
+        List<GridNodeBehaviour> spawnNodes = new List<GridNodeBehaviour>();
+        List<GridNodeBehaviour> targetNodes = new List<GridNodeBehaviour>();
+
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            GridNodeBehaviour node = nodes[i];
 
             if (node == null)
             {
+                result.AddError("NodesRoot contains a missing Grid Node reference.");
                 continue;
             }
 
-            ClearNodeTileVisual(node.transform);
+            string nodeLabel = GetNodeLabel(node);
+            ValidateVisualRootOwnership(node, nodesRoot, result, nodeLabel);
 
-            GameObject tilePrefab = GetTileVisualPrefab(nodeEntry.Key);
-
-            if (tilePrefab == null)
+            if (node.transform.parent != nodesRoot)
             {
-                Debug.LogWarning($"Map visual refresh warning: no tile prefab matched node {nodeEntry.Key}.", this);
-                continue;
+                result.AddError($"{nodeLabel} must be a direct child of NodesRoot.");
             }
 
-            GameObject tileVisual = Instantiate(tilePrefab, node.transform);
-            tileVisual.name = "TileVisualInstance";
-            tileVisual.transform.localPosition = Vector3.zero;
-            tileVisual.transform.localRotation = Quaternion.identity;
-            tileVisual.transform.localScale = Vector3.one;
-        }
-    }
-
-    private GameObject GetTileVisualPrefab(Vector2Int gridPosition)
-    {
-        GridNodeBehaviour currentNode = GetNode(gridPosition);
-
-        if (currentNode == null || !currentNode.IsWalkable)
-        {
-            return noDirectionsTilePrefab;
-        }
-
-        bool up = IsDirectionWalkable(gridPosition + Vector2Int.up);
-        bool down = IsDirectionWalkable(gridPosition + Vector2Int.down);
-        bool left = IsDirectionWalkable(gridPosition + Vector2Int.left);
-        bool right = IsDirectionWalkable(gridPosition + Vector2Int.right);
-
-        int directionMask = 0;
-
-        if (up)
-        {
-            directionMask |= 1;
-        }
-
-        if (down)
-        {
-            directionMask |= 2;
-        }
-
-        if (left)
-        {
-            directionMask |= 4;
-        }
-
-        if (right)
-        {
-            directionMask |= 8;
-        }
-
-        switch (directionMask)
-        {
-            case 0:
-                return noDirectionsTilePrefab;
-            case 1:
-            case 2:
-            case 4:
-            case 8:
-                return noDirectionsTilePrefab;
-            case 1 | 2:
-                return upDownTilePrefab;
-            case 4 | 8:
-                return leftRightTilePrefab;
-            case 1 | 4:
-                return upLeftTilePrefab;
-            case 1 | 8:
-                return upRightTilePrefab;
-            case 2 | 4:
-                return downLeftTilePrefab;
-            case 2 | 8:
-                return downRightTilePrefab;
-            case 2 | 4 | 8:
-                return downLeftRightTilePrefab;
-            case 1 | 4 | 8:
-                return upLeftRightTilePrefab;
-            case 1 | 2 | 8:
-                return upDownRightTilePrefab;
-            case 1 | 2 | 4:
-                return upDownLeftTilePrefab;
-            case 1 | 2 | 4 | 8:
-                return allDirectionsTilePrefab;
-            default:
-                return noDirectionsTilePrefab;
-        }
-    }
-
-    private bool IsDirectionWalkable(Vector2Int gridPosition)
-    {
-        GridNodeBehaviour node = GetNode(gridPosition);
-        return node != null && node.IsWalkable;
-    }
-
-    private Transform GetGridSpaceTransform()
-    {
-        Transform parent = GetGeneratedNodesParent();
-        return parent != null ? parent : transform;
-    }
-
-    private Vector3 GetGridOriginLocalPosition(Transform gridSpace)
-    {
-        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> nodeEntry in nodeDictionary)
-        {
-            GridNodeBehaviour node = nodeEntry.Value;
-
-            if (node == null)
+            if (!IsInsideBounds(node.GridPosition))
             {
-                continue;
+                result.AddError($"{nodeLabel} has out-of-bounds coordinate {node.GridPosition}.");
             }
 
-            Vector3 nodeLocalPosition = gridSpace.InverseTransformPoint(node.WorldPosition);
-            return nodeLocalPosition - new Vector3(
-                nodeEntry.Key.x * nodeSize,
-                0f,
-                nodeEntry.Key.y * nodeSize
-            );
-        }
-
-        return Vector3.zero;
-    }
-
-    private void ClearNodeTileVisual(Transform nodeTransform)
-    {
-        for (int i = nodeTransform.childCount - 1; i >= 0; i--)
-        {
-            Transform child = nodeTransform.GetChild(i);
-
-            if (!IsGeneratedTileVisualChild(child))
+            if (uniqueNodes.ContainsKey(node.GridPosition))
             {
-                continue;
-            }
-
-            if (Application.isPlaying)
-            {
-                Destroy(child.gameObject);
+                result.AddError($"Duplicate Grid Node coordinate {node.GridPosition} includes {nodeLabel}.");
             }
             else
             {
-                DestroyImmediate(child.gameObject);
+                uniqueNodes.Add(node.GridPosition, node);
+            }
+
+            Vector3 expectedLocalPosition = new Vector3(
+                node.GridPosition.x * nodeSize,
+                0f,
+                node.GridPosition.y * nodeSize);
+
+            if (node.transform.parent == nodesRoot &&
+                (node.transform.localPosition - expectedLocalPosition).sqrMagnitude > 0.000001f)
+            {
+                result.AddError($"{nodeLabel} local position must be {expectedLocalPosition}.");
+            }
+
+            if (node.NodeType == GridNodeType.Spawn)
+            {
+                spawnNodes.Add(node);
+            }
+            else if (node.NodeType == GridNodeType.Target)
+            {
+                targetNodes.Add(node);
+            }
+
+            if (node.NodeType != GridNodeType.Normal && !node.BaseWalkable)
+            {
+                result.AddError($"{nodeLabel} is {node.NodeType} and must be Base Walkable.");
             }
         }
-    }
 
-    private bool IsGeneratedTileVisualChild(Transform child)
-    {
-        if (child.name.StartsWith(TileVisualInstanceName))
+        if (width > 0 && height > 0)
         {
-            return true;
+            for (int x = 0; x < width; x++)
+            {
+                for (int y = 0; y < height; y++)
+                {
+                    Vector2Int coordinate = new Vector2Int(x, y);
+
+                    if (!uniqueNodes.ContainsKey(coordinate))
+                    {
+                        result.AddError($"Missing Grid Node at coordinate {coordinate}.");
+                    }
+                }
+            }
         }
 
-        return IsLegacyTileVisualName(child.name);
+        if (spawnNodes.Count != 1)
+        {
+            result.AddError($"Map must contain exactly one Spawn node; found {spawnNodes.Count}.");
+        }
+
+        if (targetNodes.Count != 1)
+        {
+            result.AddError($"Map must contain exactly one Target node; found {targetNodes.Count}.");
+        }
+
+        AddSingleDirectionWarnings(nodes, uniqueNodes, result);
+
+        if (spawnNodes.Count == 1 && targetNodes.Count == 1 &&
+            spawnNodes[0].BaseWalkable && targetNodes[0].BaseWalkable &&
+            !HasBaseWalkableRoute(spawnNodes[0], targetNodes[0], uniqueNodes))
+        {
+            result.AddError("Map has no Base-Walkable route from Spawn to Target.");
+        }
+
+        return result;
     }
 
-    private bool IsLegacyTileVisualName(string childName)
+    [Button("Validate Map")]
+    private void ValidateMapFromInspector()
     {
-        return MatchesPrefabName(childName, allDirectionsTilePrefab) ||
-               MatchesPrefabName(childName, noDirectionsTilePrefab) ||
-               MatchesPrefabName(childName, upDownTilePrefab) ||
-               MatchesPrefabName(childName, leftRightTilePrefab) ||
-               MatchesPrefabName(childName, upLeftTilePrefab) ||
-               MatchesPrefabName(childName, upRightTilePrefab) ||
-               MatchesPrefabName(childName, downLeftTilePrefab) ||
-               MatchesPrefabName(childName, downRightTilePrefab) ||
-               MatchesPrefabName(childName, downLeftRightTilePrefab) ||
-               MatchesPrefabName(childName, upLeftRightTilePrefab) ||
-               MatchesPrefabName(childName, upDownRightTilePrefab) ||
-               MatchesPrefabName(childName, upDownLeftTilePrefab);
+        LogValidationResult("Map validation", ValidateMap());
     }
 
-    private bool MatchesPrefabName(string childName, GameObject prefab)
+    private MapValidationResult ValidateGeneratePreflight()
     {
-        if (prefab == null)
+        MapValidationResult result = new MapValidationResult();
+        ValidateBasicConfiguration(result, true);
+        ValidateTheme(result, true);
+
+        if (nodePrefab != null)
+        {
+            if (!nodePrefab.TryGetComponent(out GridNodeBehaviour gridNodePrefab))
+            {
+                result.AddError("Grid Node prefab must contain GridNodeBehaviour on its root GameObject.");
+            }
+            else
+            {
+                ValidateVisualRootOwnership(gridNodePrefab, null, result, "Grid Node prefab");
+            }
+
+            if (nodesRoot != null &&
+                (nodePrefab.transform == nodesRoot || nodePrefab.transform.IsChildOf(nodesRoot)))
+            {
+                result.AddError("Grid Node prefab reference must not point to an existing node inside NodesRoot.");
+            }
+        }
+
+        return result;
+    }
+
+    private bool TryBuildVisualRefreshPlan(
+        bool useAuthoredState,
+        out List<VisualRefreshItem> refreshItems,
+        out MapValidationResult result)
+    {
+        refreshItems = new List<VisualRefreshItem>();
+        result = new MapValidationResult();
+        ValidateBasicConfiguration(result, false);
+        ValidateTheme(result, useAuthoredState);
+
+        if (nodesRoot == null || mapVisualTheme == null)
         {
             return false;
         }
 
-        return childName == prefab.name || childName == $"{prefab.name}(Clone)";
-    }
+        GridNodeBehaviour[] nodes = GetHierarchyNodes();
+        Dictionary<Vector2Int, GridNodeBehaviour> uniqueNodes =
+            new Dictionary<Vector2Int, GridNodeBehaviour>();
 
-    private Transform GetGeneratedNodesParent()
-    {
-        if (generatedNodesParent != null && generatedNodesParent != transform)
+        for (int i = 0; i < nodes.Length; i++)
         {
-            return generatedNodesParent;
+            GridNodeBehaviour node = nodes[i];
+
+            if (node == null)
+            {
+                result.AddError("NodesRoot contains a missing Grid Node reference.");
+                continue;
+            }
+
+            ValidateVisualRootOwnership(node, nodesRoot, result, GetNodeLabel(node));
+
+            if (uniqueNodes.ContainsKey(node.GridPosition))
+            {
+                result.AddError($"Visual refresh cannot resolve duplicate coordinate {node.GridPosition}.");
+            }
+            else
+            {
+                uniqueNodes.Add(node.GridPosition, node);
+            }
+
+            if (useAuthoredState && node.NodeType != GridNodeType.Normal && !node.BaseWalkable)
+            {
+                result.AddError($"{GetNodeLabel(node)} is {node.NodeType} and must be Base Walkable before refresh.");
+            }
         }
 
-        return transform.Find(GeneratedNodesParentName);
-    }
-
-    private Transform GetOrCreateGeneratedNodesParent()
-    {
-        Transform parent = GetGeneratedNodesParent();
-
-        if (parent != null)
+        for (int i = 0; i < nodes.Length; i++)
         {
-            return parent;
+            GridNodeBehaviour node = nodes[i];
+
+            if (node == null)
+            {
+                continue;
+            }
+
+            MapTileDirectionMask topologyMask = ResolveDirectionMask(node, uniqueNodes, useAuthoredState);
+            MapTileDirectionMask tileMask = MapVisualTheme.IsSingleDirectionMask(topologyMask)
+                ? MapTileDirectionMask.None
+                : topologyMask;
+
+            if (!mapVisualTheme.TryGetTilePrefab(tileMask, out GameObject tilePrefab))
+            {
+                result.AddError($"{GetNodeLabel(node)} requires Tile mask {tileMask}, but no valid prefab resolves it.");
+            }
+
+            GameObject featurePrefab = null;
+
+            if (useAuthoredState)
+            {
+                if (!node.BaseWalkable)
+                {
+                    featurePrefab = mapVisualTheme.GetDeterministicObstaclePrefab(mapVisualSeed, node.GridPosition);
+
+                    if (featurePrefab == null)
+                    {
+                        result.AddError($"{GetNodeLabel(node)} requires an Obstacle prefab, but none resolves.");
+                    }
+                }
+                else if (node.NodeType == GridNodeType.Spawn)
+                {
+                    featurePrefab = mapVisualTheme.SpawnPrefab;
+                }
+                else if (node.NodeType == GridNodeType.Target)
+                {
+                    featurePrefab = mapVisualTheme.TargetPrefab;
+                }
+            }
+
+            refreshItems.Add(new VisualRefreshItem
+            {
+                Node = node,
+                TilePrefab = tilePrefab,
+                FeaturePrefab = featurePrefab
+            });
         }
 
-        GameObject parentObject = new GameObject(GeneratedNodesParentName);
-        Transform parentTransform = parentObject.transform;
-        parentTransform.SetParent(transform);
-        parentTransform.localPosition = Vector3.zero;
-        parentTransform.localRotation = Quaternion.identity;
-        parentTransform.localScale = Vector3.one;
+        return result.IsValid;
+    }
 
-        return parentTransform;
+    private void ValidateBasicConfiguration(MapValidationResult result, bool requireNodePrefab)
+    {
+        if (width <= 0)
+        {
+            result.AddError("Width must be greater than zero.");
+        }
+
+        if (height <= 0)
+        {
+            result.AddError("Height must be greater than zero.");
+        }
+
+        if (nodeSize <= 0f)
+        {
+            result.AddError("Node Size must be greater than zero.");
+        }
+
+        if (requireNodePrefab && nodePrefab == null)
+        {
+            result.AddError("Grid Node prefab is not assigned.");
+        }
+
+        if (nodesRoot == null)
+        {
+            result.AddError("NodesRoot is not assigned.");
+        }
+        else if (!IsNodesRootSafelyOwned())
+        {
+            result.AddError("NodesRoot must be a child of this Map Generator and must not be a Grid Node.");
+        }
+
+        if (mapVisualTheme == null)
+        {
+            result.AddError("MapVisualTheme is not assigned.");
+        }
+    }
+
+    private void ValidateTheme(MapValidationResult result, bool includeFeatures)
+    {
+        if (mapVisualTheme == null)
+        {
+            return;
+        }
+
+        IReadOnlyList<MapTileVisualEntry> entries = mapVisualTheme.TileVisualEntries;
+        Dictionary<MapTileDirectionMask, int> maskCounts =
+            new Dictionary<MapTileDirectionMask, int>();
+
+        if (entries == null)
+        {
+            result.AddError("MapVisualTheme Tile entries are null.");
+        }
+        else
+        {
+            for (int i = 0; i < entries.Count; i++)
+            {
+                MapTileVisualEntry entry = entries[i];
+
+                if (entry == null)
+                {
+                    result.AddError($"MapVisualTheme Tile entry {i} is null.");
+                    continue;
+                }
+
+                MapTileDirectionMask mask = entry.DirectionMask;
+
+                if (!MapVisualTheme.UsesOnlyDirectionBits(mask))
+                {
+                    result.AddError($"MapVisualTheme Tile entry {i} uses invalid direction bits: {(int)mask}.");
+                }
+
+                if (MapVisualTheme.IsSingleDirectionMask(mask))
+                {
+                    result.AddError($"MapVisualTheme Tile entry {i} uses unsupported single-direction mask {mask}.");
+                }
+
+                if (!MapVisualTheme.IsSupportedTileMask(mask))
+                {
+                    result.AddError($"MapVisualTheme Tile entry {i} uses unsupported mask {mask}.");
+                }
+
+                if (entry.Prefab == null)
+                {
+                    result.AddError($"MapVisualTheme Tile entry {i} ({mask}) has no prefab.");
+                }
+
+                maskCounts.TryGetValue(mask, out int count);
+                maskCounts[mask] = count + 1;
+            }
+        }
+
+        IReadOnlyList<MapTileDirectionMask> requiredMasks = MapVisualTheme.RequiredTileMasks;
+
+        for (int i = 0; i < requiredMasks.Count; i++)
+        {
+            MapTileDirectionMask requiredMask = requiredMasks[i];
+            maskCounts.TryGetValue(requiredMask, out int count);
+
+            if (count == 0)
+            {
+                result.AddError($"MapVisualTheme is missing required Tile mask {requiredMask}.");
+            }
+            else if (count > 1)
+            {
+                result.AddError($"MapVisualTheme contains {count} entries for Tile mask {requiredMask}; exactly one is required.");
+            }
+        }
+
+        if (entries != null && entries.Count != requiredMasks.Count)
+        {
+            result.AddError($"MapVisualTheme must contain exactly {requiredMasks.Count} Tile entries; found {entries.Count}.");
+        }
+
+        if (!includeFeatures)
+        {
+            return;
+        }
+
+        IReadOnlyList<GameObject> obstacles = mapVisualTheme.ObstaclePrefabs;
+
+        if (obstacles == null || obstacles.Count == 0)
+        {
+            result.AddError("MapVisualTheme Obstacle list must not be empty.");
+        }
+        else
+        {
+            HashSet<GameObject> uniqueObstacles = new HashSet<GameObject>();
+
+            for (int i = 0; i < obstacles.Count; i++)
+            {
+                GameObject obstacle = obstacles[i];
+
+                if (obstacle == null)
+                {
+                    result.AddError($"MapVisualTheme Obstacle entry {i} is null.");
+                }
+                else if (!uniqueObstacles.Add(obstacle))
+                {
+                    result.AddError($"MapVisualTheme contains duplicate Obstacle prefab {obstacle.name}.");
+                }
+            }
+        }
+
+        if (mapVisualTheme.SpawnPrefab == null)
+        {
+            result.AddError("MapVisualTheme Spawn prefab is not assigned.");
+        }
+
+        if (mapVisualTheme.TargetPrefab == null)
+        {
+            result.AddError("MapVisualTheme Target prefab is not assigned.");
+        }
+    }
+
+    private void ValidateVisualRootOwnership(
+        GridNodeBehaviour node,
+        Transform expectedNodesRoot,
+        MapValidationResult result,
+        string nodeLabel)
+    {
+        if (node == null)
+        {
+            result.AddError($"{nodeLabel} is missing.");
+            return;
+        }
+
+        Transform visualRoot = node.VisualRoot;
+        Transform tileRoot = node.TileVisualRoot;
+        Transform featureRoot = node.FeatureVisualRoot;
+
+        if (visualRoot == null)
+        {
+            result.AddError($"{nodeLabel} has no VisualRoot.");
+        }
+
+        if (tileRoot == null)
+        {
+            result.AddError($"{nodeLabel} has no TileVisualRoot.");
+        }
+
+        if (featureRoot == null)
+        {
+            result.AddError($"{nodeLabel} has no FeatureVisualRoot.");
+        }
+
+        if (visualRoot == null || tileRoot == null || featureRoot == null)
+        {
+            return;
+        }
+
+        if (!IsStrictDescendant(visualRoot, node.transform) ||
+            visualRoot.GetComponentInParent<GridNodeBehaviour>(true) != node)
+        {
+            result.AddError($"{nodeLabel} VisualRoot must belong exclusively to that Grid Node hierarchy.");
+        }
+
+        if (!IsStrictDescendant(tileRoot, visualRoot) ||
+            tileRoot.GetComponentInParent<GridNodeBehaviour>(true) != node)
+        {
+            result.AddError($"{nodeLabel} TileVisualRoot must be a descendant of its VisualRoot.");
+        }
+
+        if (!IsStrictDescendant(featureRoot, visualRoot) ||
+            featureRoot.GetComponentInParent<GridNodeBehaviour>(true) != node)
+        {
+            result.AddError($"{nodeLabel} FeatureVisualRoot must be a descendant of its VisualRoot.");
+        }
+
+        if (tileRoot == featureRoot)
+        {
+            result.AddError($"{nodeLabel} TileVisualRoot and FeatureVisualRoot must be different objects.");
+        }
+        else if (tileRoot.IsChildOf(featureRoot) || featureRoot.IsChildOf(tileRoot))
+        {
+            result.AddError($"{nodeLabel} TileVisualRoot and FeatureVisualRoot must not contain one another.");
+        }
+
+        if (expectedNodesRoot != null)
+        {
+            if (!IsStrictDescendant(node.transform, expectedNodesRoot) ||
+                !visualRoot.IsChildOf(expectedNodesRoot) ||
+                !tileRoot.IsChildOf(expectedNodesRoot) ||
+                !featureRoot.IsChildOf(expectedNodesRoot))
+            {
+                result.AddError($"{nodeLabel} root references must remain inside NodesRoot.");
+            }
+        }
+    }
+
+    private void EnsureNodeDictionaryValid()
+    {
+        if (nodesRoot == null)
+        {
+            nodeDictionary.Clear();
+            dictionaryHierarchyNodeCount = 0;
+            nodeDictionaryDirty = false;
+            return;
+        }
+
+        GridNodeBehaviour[] hierarchyNodes = GetHierarchyNodes();
+
+        if (!nodeDictionaryDirty && hierarchyNodes.Length == dictionaryHierarchyNodeCount)
+        {
+            bool matches = true;
+
+            for (int i = 0; i < hierarchyNodes.Length; i++)
+            {
+                GridNodeBehaviour node = hierarchyNodes[i];
+
+                if (node == null ||
+                    !nodeDictionary.TryGetValue(node.GridPosition, out GridNodeBehaviour cachedNode) ||
+                    cachedNode != node)
+                {
+                    matches = false;
+                    break;
+                }
+            }
+
+            if (matches)
+            {
+                return;
+            }
+        }
+
+        RebuildNodeDictionary(hierarchyNodes);
+    }
+
+    private void RebuildNodeDictionary()
+    {
+        RebuildNodeDictionary(GetHierarchyNodes());
+    }
+
+    private void RebuildNodeDictionary(GridNodeBehaviour[] hierarchyNodes)
+    {
+        nodeDictionary.Clear();
+        dictionaryHierarchyNodeCount = hierarchyNodes.Length;
+
+        for (int i = 0; i < hierarchyNodes.Length; i++)
+        {
+            GridNodeBehaviour node = hierarchyNodes[i];
+
+            if (node == null)
+            {
+                continue;
+            }
+
+            if (nodeDictionary.ContainsKey(node.GridPosition))
+            {
+                Debug.LogWarning(
+                    $"Map node lookup skipped duplicate coordinate {node.GridPosition} on {GetNodeLabel(node)}.",
+                    node);
+                continue;
+            }
+
+            nodeDictionary.Add(node.GridPosition, node);
+        }
+
+        nodeDictionaryDirty = false;
+    }
+
+    private GridNodeBehaviour[] GetHierarchyNodes()
+    {
+        return nodesRoot != null
+            ? nodesRoot.GetComponentsInChildren<GridNodeBehaviour>(true)
+            : new GridNodeBehaviour[0];
+    }
+
+    private MapTileDirectionMask ResolveDirectionMask(
+        GridNodeBehaviour node,
+        IReadOnlyDictionary<Vector2Int, GridNodeBehaviour> nodes,
+        bool useAuthoredState)
+    {
+        if (node == null || !IsWalkableForVisual(node, useAuthoredState))
+        {
+            return MapTileDirectionMask.None;
+        }
+
+        MapTileDirectionMask mask = MapTileDirectionMask.None;
+
+        if (IsDirectionWalkable(node.GridPosition + Vector2Int.up, nodes, useAuthoredState))
+        {
+            mask |= MapTileDirectionMask.Up;
+        }
+
+        if (IsDirectionWalkable(node.GridPosition + Vector2Int.down, nodes, useAuthoredState))
+        {
+            mask |= MapTileDirectionMask.Down;
+        }
+
+        if (IsDirectionWalkable(node.GridPosition + Vector2Int.left, nodes, useAuthoredState))
+        {
+            mask |= MapTileDirectionMask.Left;
+        }
+
+        if (IsDirectionWalkable(node.GridPosition + Vector2Int.right, nodes, useAuthoredState))
+        {
+            mask |= MapTileDirectionMask.Right;
+        }
+
+        return mask;
+    }
+
+    private bool IsDirectionWalkable(
+        Vector2Int gridPosition,
+        IReadOnlyDictionary<Vector2Int, GridNodeBehaviour> nodes,
+        bool useAuthoredState)
+    {
+        return nodes.TryGetValue(gridPosition, out GridNodeBehaviour node) &&
+               node != null &&
+               IsWalkableForVisual(node, useAuthoredState);
+    }
+
+    private static bool IsWalkableForVisual(GridNodeBehaviour node, bool useAuthoredState)
+    {
+        return useAuthoredState ? node.BaseWalkable : node.IsWalkable;
+    }
+
+    private void AddSingleDirectionWarnings(
+        GridNodeBehaviour[] nodes,
+        IReadOnlyDictionary<Vector2Int, GridNodeBehaviour> uniqueNodes,
+        MapValidationResult result)
+    {
+        for (int i = 0; i < nodes.Length; i++)
+        {
+            GridNodeBehaviour node = nodes[i];
+
+            if (node == null || !node.BaseWalkable)
+            {
+                continue;
+            }
+
+            MapTileDirectionMask mask = ResolveDirectionMask(node, uniqueNodes, true);
+
+            if (MapVisualTheme.IsSingleDirectionMask(mask))
+            {
+                result.AddWarning($"{GetNodeLabel(node)} has single-direction topology {mask} and will use the None Tile fallback.");
+            }
+        }
+    }
+
+    private static bool HasBaseWalkableRoute(
+        GridNodeBehaviour start,
+        GridNodeBehaviour target,
+        IReadOnlyDictionary<Vector2Int, GridNodeBehaviour> nodes)
+    {
+        Queue<GridNodeBehaviour> open = new Queue<GridNodeBehaviour>();
+        HashSet<GridNodeBehaviour> visited = new HashSet<GridNodeBehaviour>();
+        open.Enqueue(start);
+        visited.Add(start);
+
+        while (open.Count > 0)
+        {
+            GridNodeBehaviour current = open.Dequeue();
+
+            if (current == target)
+            {
+                return true;
+            }
+
+            for (int i = 0; i < OrthogonalDirections.Length; i++)
+            {
+                Vector2Int neighborPosition = current.GridPosition + OrthogonalDirections[i];
+
+                if (!nodes.TryGetValue(neighborPosition, out GridNodeBehaviour neighbor) ||
+                    neighbor == null ||
+                    !neighbor.BaseWalkable ||
+                    !visited.Add(neighbor))
+                {
+                    continue;
+                }
+
+                open.Enqueue(neighbor);
+            }
+        }
+
+        return false;
+    }
+
+    private bool HasGridNodeAncestorInsideNodesRoot(GridNodeBehaviour node)
+    {
+        Transform parent = node.transform.parent;
+
+        while (parent != null && parent != nodesRoot)
+        {
+            if (parent.TryGetComponent(out GridNodeBehaviour _))
+            {
+                return true;
+            }
+
+            parent = parent.parent;
+        }
+
+        return false;
+    }
+
+    private bool IsNodesRootSafelyOwned()
+    {
+        return nodesRoot != null &&
+               IsStrictDescendant(nodesRoot, transform) &&
+               nodesRoot.GetComponent<GridNodeBehaviour>() == null;
+    }
+
+    private static bool IsStrictDescendant(Transform child, Transform parent)
+    {
+        return child != null && parent != null && child != parent && child.IsChildOf(parent);
+    }
+
+    private static string GetNodeLabel(GridNodeBehaviour node)
+    {
+        return node != null ? $"Grid Node '{node.name}'" : "Grid Node";
+    }
+
+    private static void CreateVisual(GameObject prefab, Transform parent, string instanceName)
+    {
+        GameObject instance = Instantiate(prefab, parent, false);
+        instance.name = instanceName;
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = Quaternion.identity;
+        instance.transform.localScale = Vector3.one;
+    }
+
+    private static void ClearOwnedChildren(Transform root)
+    {
+        for (int i = root.childCount - 1; i >= 0; i--)
+        {
+            DestroyOwnedObject(root.GetChild(i).gameObject);
+        }
+    }
+
+    private static void DestroyOwnedObject(GameObject ownedObject)
+    {
+        if (ownedObject == null)
+        {
+            return;
+        }
+
+        if (Application.isPlaying)
+        {
+            ownedObject.SetActive(false);
+            Destroy(ownedObject);
+        }
+        else
+        {
+            DestroyImmediate(ownedObject);
+        }
+    }
+
+    private void LogValidationResult(string operation, MapValidationResult result)
+    {
+        for (int i = 0; i < result.Errors.Count; i++)
+        {
+            Debug.LogError($"{operation}: {result.Errors[i]}", this);
+        }
+
+        for (int i = 0; i < result.Warnings.Count; i++)
+        {
+            Debug.LogWarning($"{operation}: {result.Warnings[i]}", this);
+        }
+
+        if (result.IsValid)
+        {
+            Debug.Log(
+                $"{operation} succeeded with {result.Warnings.Count} warning(s).",
+                this);
+        }
     }
 }
-

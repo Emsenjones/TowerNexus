@@ -124,13 +124,13 @@ public class TowerDeployController : MonoBehaviour
 
             if (node != null)
             {
-                node.SetWalkable(false);
+                node.SetRuntimeOccupied(true);
             }
         }
 
         if (mapGenerator != null)
         {
-            mapGenerator.RefreshMapVisual();
+            mapGenerator.RefreshRuntimeTileVisuals();
         }
 
         if (monsterManager != null)

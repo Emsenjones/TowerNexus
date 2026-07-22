@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -6,27 +7,38 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
 {
     private readonly List<MonsterBehaviour> tickTargets = new List<MonsterBehaviour>();
 
+    [TitleGroup("Field")]
+    [MinValue(0.01f)]
+    [SerializeField] private float radius = 1f;
+
+    [TitleGroup("Tick")]
+    [MinValue(0.01f)]
+    [SerializeField] private float tickInterval = 1f;
+    [TitleGroup("Tick")]
+    [Required]
+    [SerializeField] private EffectDefinition tickEffect;
+
     private TowerInstance sourceTower;
     private MonsterManager monsterManager;
-    private MagicArcaneFieldRuntimeOptions runtimeOptions;
+    private TowerUpgradeDefinition sourceUpgrade;
     private float tickTimer;
     private bool isInitialized;
     private bool isCleaningUp;
 
     public TowerInstance SourceTower => sourceTower;
-    public TowerUpgradeDefinition SourceUpgrade => runtimeOptions.SourceUpgrade;
+    public TowerUpgradeDefinition SourceUpgrade => sourceUpgrade;
     public bool IsInitialized => isInitialized;
 
     public bool Initialize(
         TowerInstance sourceTower,
         MonsterManager monsterManager,
-        MagicArcaneFieldRuntimeOptions runtimeOptions)
+        TowerUpgradeDefinition sourceUpgrade)
     {
         ClearRuntimeState();
 
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
-        this.runtimeOptions = runtimeOptions;
+        this.sourceUpgrade = sourceUpgrade;
         tickTimer = 0f;
 
         if (!CanInitialize())
@@ -91,9 +103,9 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
 
         tickTimer += Time.deltaTime;
 
-        while (isInitialized && tickTimer >= runtimeOptions.TickInterval)
+        while (isInitialized && tickTimer >= tickInterval)
         {
-            tickTimer -= runtimeOptions.TickInterval;
+            tickTimer -= tickInterval;
             ExecuteTick();
         }
     }
@@ -102,21 +114,22 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     {
         if (sourceTower == null ||
             monsterManager == null ||
-            runtimeOptions.SourceUpgrade == null ||
-            runtimeOptions.Radius <= 0f ||
-            runtimeOptions.TickInterval <= 0f ||
-            runtimeOptions.TickEffect == null ||
-            runtimeOptions.VfxPrefab == null)
-        {
-            return false;
-        }
-
-        if (runtimeOptions.TickEffect.Radius > 0f || !runtimeOptions.TickEffect.IsValid())
+            sourceUpgrade == null ||
+            !IsAuthoredConfigurationValid())
         {
             return false;
         }
 
         return HasValidSource();
+    }
+
+    public bool IsAuthoredConfigurationValid()
+    {
+        return radius > 0f &&
+               tickInterval > 0f &&
+               tickEffect != null &&
+               tickEffect.Radius == 0f &&
+               tickEffect.IsValid();
     }
 
     private bool HasValidSource()
@@ -126,8 +139,8 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                sourceTower.gameObject.activeInHierarchy &&
                transform.IsChildOf(sourceTower.transform) &&
                monsterManager != null &&
-               runtimeOptions.SourceUpgrade != null &&
-               sourceTower.HasUpgrade(runtimeOptions.SourceUpgrade);
+               sourceUpgrade != null &&
+               sourceTower.HasUpgrade(sourceUpgrade);
     }
 
     private void ExecuteTick()
@@ -137,7 +150,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
         EffectTargetResolver.CollectValidTargetsInRadius(
             monsterManager.GetAliveMonsters(),
             fieldCenter,
-            runtimeOptions.Radius,
+            radius,
             null,
             tickTargets);
 
@@ -151,10 +164,10 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
             }
 
             EffectExecutor.Execute(
-                runtimeOptions.TickEffect,
+                tickEffect,
                 new EffectTriggerContext(
                     sourceTower: sourceTower,
-                    sourceUpgrade: runtimeOptions.SourceUpgrade,
+                    sourceUpgrade: sourceUpgrade,
                     targetMonster: target,
                     hasTriggerPosition: true,
                     triggerPosition: fieldCenter,
@@ -176,8 +189,8 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     private void ApplyRadiusScale()
     {
         Vector3 localScale = transform.localScale;
-        localScale.x = runtimeOptions.Radius;
-        localScale.z = runtimeOptions.Radius;
+        localScale.x = radius;
+        localScale.z = radius;
         transform.localScale = localScale;
     }
 
@@ -188,6 +201,6 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
         tickTargets.Clear();
         sourceTower = null;
         monsterManager = null;
-        runtimeOptions = default;
+        sourceUpgrade = null;
     }
 }

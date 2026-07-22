@@ -16,8 +16,8 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
     private bool hadGroupAtFrameStart;
     private bool hasLoggedMissingMagicOrbPrefab;
     private bool hasLoggedInvalidArcaneDetonationEffect;
-    private bool hasLoggedMissingMagicArcaneFieldVfxPrefab;
-    private bool hasLoggedInvalidMagicArcaneFieldVfxPrefab;
+    private bool hasLoggedMissingMagicArcaneFieldPrefab;
+    private bool hasLoggedInvalidMagicArcaneFieldPrefab;
 
     public override TowerFamily SupportedTowerFamily => TowerFamily.Magic;
 
@@ -73,8 +73,8 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         pendingMagicTarget = null;
         hasLoggedMissingMagicOrbPrefab = false;
         hasLoggedInvalidArcaneDetonationEffect = false;
-        hasLoggedMissingMagicArcaneFieldVfxPrefab = false;
-        hasLoggedInvalidMagicArcaneFieldVfxPrefab = false;
+        hasLoggedMissingMagicArcaneFieldPrefab = false;
+        hasLoggedInvalidMagicArcaneFieldPrefab = false;
         EnsureArcaneFieldExists();
     }
 
@@ -480,23 +480,16 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        MagicArcaneFieldRuntimeOptions runtimeOptions = new MagicArcaneFieldRuntimeOptions(
-            arcaneFieldUpgrade,
-            arcaneFieldUpgrade.ArcaneFieldRadius,
-            arcaneFieldUpgrade.ArcaneFieldTickInterval,
-            arcaneFieldUpgrade.ArcaneFieldTickEffect,
-            arcaneFieldUpgrade.MagicArcaneFieldVfxPrefab);
-
         MagicArcaneFieldBehaviour field = existingField;
 
-        if (field == null && !TryInstantiateMagicArcaneField(runtimeOptions.VfxPrefab, out field))
+        if (field == null && !TryInstantiateMagicArcaneField(arcaneFieldUpgrade.MagicArcaneFieldPrefab, out field))
         {
             return;
         }
 
         field.Cleanup();
 
-        if (!field.Initialize(TowerInstance, MonsterManager, runtimeOptions))
+        if (!field.Initialize(TowerInstance, MonsterManager, arcaneFieldUpgrade))
         {
             field.Cleanup();
             activeMagicArcaneField = null;
@@ -562,25 +555,25 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
     }
 
     private bool TryInstantiateMagicArcaneField(
-        GameObject fieldVfxPrefab,
+        GameObject fieldPrefab,
         out MagicArcaneFieldBehaviour field)
     {
         field = null;
 
-        if (fieldVfxPrefab == null)
+        if (fieldPrefab == null)
         {
-            if (!hasLoggedMissingMagicArcaneFieldVfxPrefab)
+            if (!hasLoggedMissingMagicArcaneFieldPrefab)
             {
-                hasLoggedMissingMagicArcaneFieldVfxPrefab = true;
+                hasLoggedMissingMagicArcaneFieldPrefab = true;
                 Debug.LogWarning(
-                    "Magic Arcane Field cannot activate: the applied upgrade has no VFX prefab.",
+                    "Magic Arcane Field cannot activate: the applied upgrade has no runtime prefab.",
                     this);
             }
 
             return false;
         }
 
-        GameObject fieldObject = Instantiate(fieldVfxPrefab, transform);
+        GameObject fieldObject = Instantiate(fieldPrefab, transform);
         fieldObject.transform.localPosition = Vector3.zero;
         fieldObject.transform.localRotation = Quaternion.identity;
 
@@ -589,12 +582,12 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             return true;
         }
 
-        if (!hasLoggedInvalidMagicArcaneFieldVfxPrefab)
+        if (!hasLoggedInvalidMagicArcaneFieldPrefab)
         {
-            hasLoggedInvalidMagicArcaneFieldVfxPrefab = true;
+            hasLoggedInvalidMagicArcaneFieldPrefab = true;
             Debug.LogWarning(
-                "Magic Arcane Field VFX prefab root requires MagicArcaneFieldBehaviour.",
-                fieldVfxPrefab);
+                "Magic Arcane Field runtime prefab root requires MagicArcaneFieldBehaviour.",
+                fieldPrefab);
         }
 
         fieldObject.SetActive(false);
