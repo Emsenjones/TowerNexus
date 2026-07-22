@@ -1,460 +1,258 @@
-# 1. Project Introduction
+# Tower Nexus - Project Overview
 
-Tower Nexus is a draft-driven tower defense roguelike focused on terrain manipulation, tower drafting, and runtime battlefield reshaping.
+---
 
-Unlike traditional tower defense games where towers only act as combat units, towers in Tower Nexus also function as physical obstacles that affect monster pathfinding and battlefield topology.
+# 1. Project Identity
 
-The core experience is built around meaningful placement decisions, path manipulation, random build creation, and gradual tower growth during each run.
+Tower Nexus is a tower-defense roguelite in which towers are both combat units and physical parts of the battlefield.
+
+The player builds a temporary strategy through Draft choices while tower placement changes monster movement routes. Each playable Stage combines one authored Map, one Monster Wave configuration, and the Tower and Tower Upgrade content available during that battle.
+
+The project is designed around four connected decisions:
+
+- Which Tower or Tower Upgrade to select
+- Where to place or improve a Tower
+- How placement changes battlefield topology
+- How Tower packages and Elemental effects compose during combat
+
+The guiding design principle is:
+
+> Meaningful decisions create unique battlefield stories.
 
 ---
 
 # 2. Core Gameplay Loop
 
-The core gameplay loop is:
+The battle loop is:
 
 ```text
-Load Map
-    ↓
-Spawn Monster Waves
-    ↓
-Monsters Pathfind Toward Target
-    ↓
-Player Drafts Towers / Upgrades
-    ↓
-Player Places Towers
-    ↓
-Towers Occupy Nodes And Attack Monsters
-    ↓
-Monsters Are Resolved
-    ↓
-ResolvedMonsterCount Advances Level Progress
-    ↓
-Player Level Up Triggers Draft
-    ↓
-Repeat Until Victory Or Failure
+Select Stage
+    -> Compose Stage Content
+    -> Spawn Monster Waves
+    -> Towers Resolve Combat
+    -> Resolved Monsters Advance Player Progress
+    -> Player Level-Up Opens Draft
+    -> Select Tower Or Tower Upgrade
+    -> Place Or Improve Tower
+    -> Battlefield And Build Evolve
+    -> Continue Until Victory Or Player Defeat
 ```
 
-Key runtime rules:
+Core battle rules:
 
-- Towers can attack monsters.
-- Towers occupy grid nodes.
-- Tower placement can change monster paths.
-- Path-blocking validation is part of the intended placement rule set and prevents fully blocking all valid monster routes when enabled.
-- Alive monsters recalculate paths when battlefield walkability changes.
-- Monsters are resolved when they are killed or when they reach the destination.
-- ResolvedMonsterCount advances player level progress.
-- Player health and player level progress are separate.
-- Player level-up triggers draft selection.
+- One selected Stage composition is active during one battle.
+- Monsters enter from the Map's Spawn node and attempt to reach its Target node.
+- A Monster that dies or reaches the Target is resolved exactly once.
+- Every Monster resolution advances player level progress by one.
+- A Monster reaching the Target also reduces player health by one.
+- Player level progress and player health are independent state.
+- Player level-up opens a Draft choice.
+- Placed Towers occupy Grid Nodes and can change effective walkability.
+- A legal placement must not violate occupancy or approved route rules.
+- Player health reaching zero stops the current battle simulation.
+
+Stage ordering, unlocking, victory transitions, defeat presentation, persistence, and Scene flow belong to a future Game Flow design.
 
 ---
 
-# 3. Configuration Strategy
+# 3. Configuration Model
 
-Tower Nexus uses Unity ScriptableObject assets for reusable gameplay definitions and prefab-authored MonoBehaviour fields for tower combat configuration that is configured once per Tower Base Prefab.
+Reusable gameplay content is data-driven. A concrete engine may represent definitions as data assets and reusable runtime structures as prefabs, templates, or equivalent authored objects.
 
-Current first-version configuration assets include:
+Current domain definitions include:
 
-- TowerDefinition
-- TowerLevelConfig
+- StageDefinition
+- MapVisualTheme
+- MonsterWaveConfig
 - MonsterDefinition
+- TowerDefinition and TowerLevelConfig
+- TowerUpgradeDefinition
 - ProjectileConfig
 - EffectDefinition
 - BuffDefinition
-- TowerUpgradeDefinition
 
-Presentation-oriented prefab references may live on the prefab component or configuration asset that owns the runtime event.
+Stage composition follows this relationship:
 
-Examples:
+```text
+StageDefinition
+    + Map Template
+        + MapVisualTheme
+    + MonsterWaveConfig
+    + Tower Draft Pool
+    + Tower Upgrade Draft Pool
+```
 
-- The relevant TowerCombatBehaviour component owns tower attack presentation hooks such as attack release VFX.
-- The tower visual ownership path owns tower-side success feedback hooks such as model spawn or upgrade-applied VFX.
-- ProjectileConfig owns projectile-specific presentation hooks such as optional impact VFX.
-- Gameplay Effect data owns reusable gameplay effect rules and optional execution VFX feedback. It should not be required for purely visual projectile impact feedback.
-- BuffDefinition owns shared Elemental Buff data and may hold first-version Buff status and persistent Buff VFX references. A Buff applies to a monster independently of which tower applied it.
+The demo is expected to contain at least five independently authored StageDefinitions. Each battle composes one selected StageDefinition.
 
-Current combat configuration dependency flow:
+Combat configuration follows this relationship:
 
 ```text
 TowerDefinition
-    ↓
-Tower Base Prefab
-    ↓
-DirectionProjectileCombatBehaviour / ArcProjectileCombatBehaviour /
-MagicOrbCombatBehaviour / DroneCombatBehaviour
-    ↓
-ProjectileConfig
+    + Per-Level Base Data
+    + Tower Runtime Template
+        + Base Combat Authoring
+        + Attack Entity References
+
+TowerUpgradeDefinition
+    + Eligibility And Layer Identity
+    + Stat Or Behaviour Package Data
+    + Optional Elemental Identity
 ```
 
-ProjectileConfig may reference EffectDefinition for projectile impact results that need reusable gameplay Effect execution.
-
-TowerUpgradeDefinition owns runtime upgrade content such as Basic stat deltas, Behaviour packages, Elemental identity, and Elemental apply-effect references. Upgrade content remains separate from TowerDefinition and the prefab-authored immutable base combat fields. The relevant combat runtime resolves applied upgrades over those base values and selectively refreshes active owned Attack Entities when the approved upgrade semantics require it.
-
-Current first-version tower lineup:
-
-- Archer Tower
-- Cannon Tower
-- Magic Tower
-- Drone Tower
-
-Archer Tower and Cannon Tower keep their existing functional direction.
-
-Magic Tower is redesigned around a persistent orbiting Magic Orb rather than a channel beam.
-
-Drone Tower is redesigned around an autonomous Drone that orbits selected target monsters and fires projectile bursts.
-
-Watch Tower is removed from the current first-version tower lineup and replaced by Drone Tower.
-
-Future versions may additionally introduce:
-
-- Specialized gameplay-entity configuration when a reviewed Effect requires it, such as a persistent zone or a moving elemental entity
-- PlayerLevelConfig
-- StageConfig
-
-Odin Inspector may be used to improve configuration editing workflows, validation, and editor usability.
-
-The first version does not use Excel export tools, CSV import pipelines, JSON generation workflows, or external data table workflows.
+Definitions store reusable authored truth. Per-instance runtime state, consumed history, timers, pending actions, and active entity state must not be written back into reusable definitions.
 
 ---
 
-# 4. Core Design Philosophy
+# 4. System Ownership
 
-The core design philosophy of Tower Nexus is:
+## 4.1 Stage System
 
-> Meaningful decisions create unique battlefield stories.
+Owns composition of the StageDefinition selected for the current battle. It establishes the active Map and supplies the selected Wave and Draft content before battle runtime begins.
 
-The game emphasizes:
+It does not own Stage ordering, unlock rules, victory flow, Map behavior, Wave execution, or Draft generation.
 
-- Terrain control
-- Strategic tower placement
-- Dynamic path manipulation
-- Draft-based build creation
-- Runtime adaptation
-- Spatial planning
+## 4.2 Player System
 
----
+Owns battle-local player level, level progress, health, level-up notification, and defeat state.
 
-# 5. Core Systems Overview
+It does not own Draft generation, UI presentation, Monster lifecycle, or Stage flow.
 
-## 5.1 Map System
+## 4.3 Battle HUD UI System
 
-Owns the grid-based battlefield foundation.
+Owns presentation and interaction for battle information, Draft choices, held Draft items, drag feedback, and placement feedback.
 
-Responsible for:
+It observes or forwards domain intent but does not own player state, Draft rules, placement validation, or combat outcomes.
 
-- Grid nodes
-- Walkability state
-- Runtime topology updates
-- Node queries
-- Map visual refresh
+## 4.4 Map System
 
-Does not own tower placement rules, monster AI, combat logic, or draft logic.
+Owns the authored grid battlefield, Grid Node state, effective walkability, spatial queries, Map presentation generation, runtime Tile topology refresh, and Map validation.
 
----
+It does not own Stage selection, pathfinding algorithms, Tower placement rules, Monster behavior, or battle flow.
 
-## 5.2 Player System
+## 4.5 Monster System
 
-Owns player runtime progression and survival state.
+Owns Wave execution, Monster spawning, health, movement, pathfinding, runtime state, death, Target arrival, resolution reporting, and Monster-local presentation state.
 
-Responsible for:
+It consumes Map data and Stage-selected Wave configuration without owning them.
 
-- Player level
-- ResolvedMonsterCount / level progress
-- HP
-- Level-up events
-- Player death / battle failure
+## 4.6 Draft System
 
-Other systems may react to player events, but Player System does not own tower placement, draft generation, monster movement, or UI implementation.
+Owns Draft candidate gathering, eligibility-aware weighting, pending reservation, sampling, displayed-choice deduplication, and Draft result creation.
 
----
+It consumes the Stage-specific Tower and Tower Upgrade pools and forwards the selected result to the appropriate gameplay owner.
 
-## 5.3 Battle HUD UI System
+## 4.7 Tower Placement System
 
-Owns runtime battle UI presentation.
+Owns drag placement intent, Grid alignment, placement preview, placement validation, Tower target intent, occupancy commit, and the resulting Map topology update request.
 
-The battle Canvas uses a Battle UI Root only as an authored composition and configuration-validation point. It groups the Battle HUD, monster status presentation, and damage-number presentation without becoming a gameplay service locator or a generic UI command router.
+It does not own Tower combat, Tower Upgrade eligibility, Map data, or pathfinding execution.
 
-Responsible for:
+## 4.8 Tower Framework System
 
-- Player battle info display
-- Draft window presentation
-- Pending tower deployment area
-- Placement feedback presentation
+Owns shared Tower identity, authored base data, Tower level data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
 
-The authored Draft Window remains present in the battle Canvas hierarchy while closed. Its runtime Draft choice items are transient.
+It defines what a Tower is, not how a placed Tower executes combat.
 
-Does not own player state, draft generation, placement validation, or combat logic.
+## 4.9 Tower Runtime Combat System
 
----
+Owns combat orchestration for placed Towers: target acquisition, attack timing, confirmation and release boundaries, Attack Entity release, active entity ownership, technical cleanup, and approved runtime refresh coordination.
 
-## 5.4 Draft System
+It decides when attacks are released. Released Attack Entities own their domain behavior.
 
-Owns runtime draft generation and draft result processing.
+## 4.10 Projectile System
 
-First-version draft categories:
+Owns projectile-style Attack Entities after release: movement, hit detection, lifetime, impact facts, projectile-specific results, presentation hooks, and completion.
 
-- Tower Draft
-- Tower Upgrade Draft
+It does not own Tower targeting, Tower cooldowns, reusable Effect execution, Buff lifecycle, or Monster health state.
 
-Responsible for:
+## 4.11 Tower Upgrade System
 
-- Listening to player level-up events
-- Generating draft choices
-- Processing draft selection
-- Creating draft results
-- Routing Tower Draft deployment or tower-level-up intent to the appropriate system
+Owns Tower growth and upgrade definitions, eligibility, layer capacity, duplicate rules, accepted state changes, and upgrade application.
 
-Tower Upgrade Draft choices are generated from eligible tower instance state, including TowerFamily, tower level, Required Tower Level eligibility, remaining upgrade slots, and upgrades already applied to each tower. Unconsumed Tower Upgrade Draft items already held in the Draft Item Interaction Area reduce future Tower Upgrade Draft capacity for the same upgrade or exclusive upgrade slot, so already selected upgrades are not over-offered before they are applied.
+It records what a Tower has gained. Runtime owners execute the resulting combat or presentation behavior.
 
-Future Elemental Layer upgrade choices should only enter the Tower Upgrade Draft pool when at least one deployed tower can legally receive that Elemental upgrade after pending reservation is applied. A typical first rule is that the battlefield must contain a tower that satisfies the required tower level, does not already own an Elemental upgrade, and does not have its Elemental capacity effectively reserved by a pending Tower Upgrade Draft item.
+## 4.12 Effect System
+
+Owns reusable one-shot gameplay resolution such as damage actions, target queries, Buff application requests, and the reviewed WindVortex entity.
+
+It does not own persistent Buff state, projectile flight, or source-system scheduling.
+
+## 4.13 Buff System
+
+Owns persistent Monster-attached state: duration, refresh, stacking, periodic timing, lifecycle bindings, Elemental overload, Protection, status presentation data, and persistent Buff presentation.
+
+It may request one-shot Effects but does not duplicate Effect execution.
 
 ---
 
-## 5.5 Tower Placement System
-
-Owns tower placement and runtime battlefield topology modification.
-
-Responsible for:
-
-- Drag and snap placement
-- Placement preview
-- Tower Draft level-up preview request flow
-- Attack range preview request flow during Draft item drag
-- Current Drag Operation cancellation flow
-- Placement validation
-- Occupied node detection
-- Walkability updates
-- Path-blocking validation integration with Monster System pathfinding
-
-Does not own tower combat, projectile behavior, effects, buffs, or upgrade logic.
-
----
-
-## 5.6 Tower Framework System
-
-Defines shared tower data and configuration references.
-
-Responsible for:
-
-- TowerDefinition
-- TowerLevelConfig
-- Attack archetypes
-- Attack Entity concepts
-- Target selection types
-- Tower combat component authoring contract
-- Attack presentation configuration on the relevant combat component
-- Tower model presentation contract
-- Tower prefab structure
-- Tower visual structure
-- Tower visual VFX anchors
-- TowerVisualController ownership direction
-- TowerAnchorSet
-- Center Anchor
-- Occupied Anchors
-
-Runtime placement, combat execution, projectile behavior, effect execution, and upgrade behavior are owned by their respective systems.
-
-Tower-side visual feedback is presentation-only. Deploy success and tower level-up model refresh may share a model spawn or refresh feedback category, while applying a TowerUpgradeDefinition may use a separate upgrade-applied feedback category. Gameplay systems decide whether the underlying action succeeds; tower-owned visual presentation handles the local feedback playback.
-
----
-
-## 5.7 Tower Runtime Combat System
-
-Consumes TowerDefinition, prefab-authored combat data, and placed-tower upgrade state and converts them into runtime combat behavior.
-
-Responsible for:
-
-- Runtime tower combat state
-- Common TowerCombatBehaviour lifecycle and four archetype-specific derived runtime components
-- Enemy detection
-- Target selection
-- Attack cooldown management
-- Attack Entity spawning or control
-- Magic Orb lifecycle orchestration
-- Drone launch, target orbit, burst fire, Final Dive, and despawn orchestration
-- Attack execution
-- Attack presentation request timing
-- Attack visual effect hook triggering
-- Current active AttackOrigin consumption
-- Projectile creation and initialization
-- Damage dispatch coordination
-- Owned Attack Entity grouping, cleanup, and selective Live Refresh after level or upgrade changes
-
-Tower Runtime Combat decides when an attack happens.
-
-Attack Entities decide how the attack behaves.
-
-Tower level data provides basic damage. Runtime upgrade state provides damage bonuses. Runtime combat and Attack Entity logic use resolved damage values before dispatching damage.
-
-Tower Runtime Combat consumes the current active AttackOrigin and tower model presentation entry resolved by the tower visual/runtime layer. It does not own tower model replacement, model presentation resolution, or AttackOrigin fallback resolution.
-
-Projectile lifecycle execution belongs to Projectile System when the Attack Entity is a projectile.
-
-Attack Entities may emit gameplay trigger context when they hit, contact, or impact a monster or position. Position Impact and Monster Hit are independent semantic facts: an attack may reach its intended position without resolving a Monster, or may produce both facts in the same landing.
-
-Tower-owned primary attacks and explicitly reviewed Behaviour attack extensions may create Elemental application opportunities at their real attack boundaries. Elemental eligibility is explicit and is not inferred from Projectile, Attack Entity, Effect, or positive-damage status. Damage amount and DealDamage success do not globally gate an otherwise eligible Elemental application attempt. Runtime Combat and Attack Entities provide the relevant context but do not own Buff lifetime, stack, Protection, or overload rules.
-
----
-
-## 5.8 Projectile System
-
-Manages projectile lifecycle after a projectile has been created and initialized by Tower Runtime Combat System.
-
-Responsible for:
-
-- Projectile movement
-- Projectile hit detection
-- Projectile lifetime management
-- Impact event generation
-- Projectile-specific impact visual effect triggering
-- Simple single-target projectile damage dispatch
-- Projectile destruction
-
-Does not own tower targeting, attack cooldowns, area damage resolution, buff application, or monster health logic.
-
-Projectile impact VFX is presentation-only and should not affect hit detection, damage dispatch, area damage execution, or projectile lifetime rules.
-
-Projectile is a shared runtime concept for projectile-style Attack Entities.
-
-Current first-version projectile flight behaviors:
-
-- Direction
-- Arc
-- Tracking
-
-Future projectile-style attacks should extend this shared framework whenever practical.
-
-Projectile prefab roots follow the shared runtime orientation convention: local +Y Up and local +Z Forward.
-
-The baseline Cannon Shell is an Arc projectile that travels toward a captured target-position snapshot. On arrival it may resolve one nearby Monster for direct damage; area explosion is Behaviour upgrade content rather than an intrinsic Cannon baseline rule.
-
----
-
-## 5.9 Effect System
-
-Handles reusable one-shot gameplay Effects, target resolution, EffectZone execution, and complex combat results beyond simple direct damage.
-
-Framework direction:
-
-- Trigger context consumption from Attack Entities, projectiles, zones, and buffs
-- Radius-based target resolution
-- Effect action execution
-- EffectZone duration, tick, and target resolution when zone gameplay is in scope
-- Specialized moving elemental gameplay entities when their reviewed behavior requires them
-
-Direct base attack damage does not need to migrate into Effect System immediately. The current direct damage path may remain simple while Effect System executes additional Effects, zone ticks, overload results, and other complex results.
-
-Projectile impact VFX is not owned by Effect System. It is configured through ProjectileConfig and triggered by Projectile System when impact occurs.
-
-Projectile impact feedback should not require gameplay Effect data. Gameplay Effect execution VFX belongs to EffectDefinition.
-
----
-
-## 5.10 Buff System
-
-Handles persistent Buff runtime state, lifecycle bindings, Elemental debuff stacking, overload, post-overload Protection, status UI data, and persistent Buff VFX.
-
-Framework direction:
-
-- BuffDefinition static configuration and Monster-owned runtime instances
-- Apply, refresh, stack, periodic tick, Protection, and removal rules
-- Lifecycle bindings that invoke EffectDefinitions
-- Shared Elemental Buff behavior after tower-owned attacks apply a Buff
-
-Buffs do not directly reference other Buffs. A lifecycle binding invokes an EffectDefinition, whose ApplyBuff action may apply a second Buff such as Frozen.
-
----
-
-## 5.11 Monster System
-
-Owns monster spawning, pathfinding, movement, runtime state, death flow, arrival flow, and monster resolution reporting.
-
-Responsible for:
-
-- Monster wave spawning
-- MonsterDefinition-driven configuration
-- Runtime pathfinding
-- Dynamic path recalculation
-- Movement toward target
-- Health and damage processing
-- Death handling
-- Monster resolution reporting
-- Player damage reporting when monsters reach the target
-- Monster status bar runtime presentation, including health and active Buff state display
-- Monster hit feedback presentation
-
----
-
-# 6. Current Runtime Architecture Direction
+# 5. Runtime Relationship
 
 ```text
-PlayerSystem
-    ↓ OnPlayerLevelUp
-DraftSystem
-    ↓ Draft Result
-BattleHUDUISystem
-    ↓ Drag / Selection Intent
-TowerPlacementSystem
-    ↓ Placement Or Target Intent
-TowerUpgradeSystem
-    ↓ Tower Level / Upgrade Application
-TowerRuntimeCombatSystem
-    ↓ Resolved Stats / Behaviour Execution
-ProjectileSystem
-    ↓ Hit Detection / Impact Event
-EffectSystem
-    ↓ One-shot Effect Resolution / ApplyBuff Requests
-BuffSystem
-    ↓ Persistent Buff / Elemental Resolution / Lifecycle Effect Requests
-MonsterSystem
+Selected StageDefinition
+    -> Stage Composition
+        -> Active Map
+        -> Monster Wave Configuration
+        -> Stage Draft Pools
 
-TowerPlacementSystem
-    ↓ Modify Walkability
-MapSystem
+Monster Resolution
+    -> Player Progress
+        -> Draft Request
+            -> Draft Choice
+                -> Placement Or Tower Upgrade Intent
 
-MonsterSystem
-    ↓ Monster Resolved
-PlayerSystem
+Tower Placement
+    -> Runtime Occupancy
+        -> Effective Walkability
+            -> Tile Topology Refresh
+            -> Monster Path Recalculation
 
-MonsterSystem
-    ↓ Pathfinding Queries
-MapSystem
+Tower Runtime Combat
+    -> Attack Entity
+        -> Projectile / Magic Orb / Drone Behavior
+            -> Effect Request
+                -> Buff Request Or One-Shot Result
+                    -> Monster State
 ```
 
-This separation is intended to:
-
-- Improve maintainability
-- Reduce system coupling
-- Clarify responsibility ownership
-- Simplify future feature expansion
-- Improve AI-assisted development workflows
+The arrows describe information or intent flow, not object ownership. Each receiving system remains responsible for validating and executing its own domain rules.
 
 ---
 
-# 7. Current Development Focus
+# 6. Documentation Contract
 
-ProjectOverview is intended to provide general project context and system relationship references.
+The complete `Doc/` folder is the long-term design source of truth. Another team should be able to reproduce approximately the same game and system behavior in a different programming language or game engine by following these documents.
 
-Detailed behavior, current scope, and task-level implementation notes should live in the dedicated System Documents and Task Documents.
+System Documents therefore describe:
 
-Use the System Documents as the source of truth for each area:
+- Purpose and ownership
+- Stable data and authoring contracts
+- Gameplay and runtime invariants
+- Inputs, outputs, and system boundaries
+- Validation rules
+- Approved scope and explicitly deferred topics
 
-| Area | System Document |
+They do not store task status, concrete method names, engine lifecycle callbacks, subscription order, third-party library choices, Inspector tooling, change history, or unapproved future brainstorming.
+
+Engine-specific structures remain only when they are intentional content-authoring contracts. Stable formulas, hierarchy semantics, data schemas, and behavior flows are valid System Document content because they are required to reproduce the design.
+
+Task Documents under `Doc/Task/` are implementation contracts for a bounded development slice. They may contain code-level decisions and may be retired after their durable design outcomes are synchronized back into the owning System Documents.
+
+---
+
+# 7. System Document Index
+
+| Area | Source Of Truth |
 |---|---|
-| Runtime player progression and survival | `01_PlayerSystem.md` |
-| Battle UI presentation | `02_BattleHUDUISystem.md` |
-| Grid, walkability, and map visuals | `03_MapSystem.md` |
-| Monster spawning, movement, pathfinding, health, and feedback | `04_MonsterSystem.md` |
-| Runtime draft generation and draft results | `05_DraftSystem.md` |
-| Tower placement and battlefield topology updates | `06_TowerPlacementSystem.md` |
-| Tower data, tower structure, attack configuration, and target selection types | `07_TowerFrameworkSystem.md` |
-| Runtime tower combat behavior | `08_TowerRuntimeCombatSystem.md` |
-| Projectile lifecycle and impact handling | `09_ProjectileSystem.md` |
-| Tower growth and upgrade concepts | `10_TowerUpgradeSystem.md` |
-| Reusable Effect execution, target resolution, and EffectZone behavior | `11_EffectSystem.md` |
-| Persistent Buff state, lifecycle bindings, and Elemental rules | `12_BuffSystem.md` |
-
-Task Documents under `Doc/Task/` are temporary implementation references.
-
-After a Task implementation is completed, its Task Document may be removed while the corresponding System Document remains as the long-term reference.
-
----
+| Stage composition and configuration distribution | `01_StageSystem.md` |
+| Player progression and survival | `02_PlayerSystem.md` |
+| Battle UI presentation and interaction | `03_BattleHUDUISystem.md` |
+| Grid, walkability, and Map presentation | `04_MapSystem.md` |
+| Monster waves, runtime, pathfinding, and resolution | `05_MonsterSystem.md` |
+| Draft generation and result ownership | `06_DraftSystem.md` |
+| Tower placement and runtime topology changes | `07_TowerPlacementSystem.md` |
+| Tower definitions, authoring, and shared structure | `08_TowerFrameworkSystem.md` |
+| Placed-Tower combat orchestration | `09_TowerRuntimeCombatSystem.md` |
+| Projectile lifecycle and impact behavior | `10_ProjectileSystem.md` |
+| Tower growth, upgrade eligibility, and application | `11_TowerUpgradeSystem.md` |
+| Reusable one-shot gameplay resolution | `12_EffectSystem.md` |
+| Persistent Buff and Elemental runtime state | `13_BuffSystem.md` |

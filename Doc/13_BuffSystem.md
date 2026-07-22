@@ -22,18 +22,18 @@ The Buff System owns:
 - Buff lifecycle-to-Effect bindings
 - Active Buff status presentation data and persistent Buff VFX lifecycle
 
-It does not own Effect target resolution or action execution, tower attack timing, Behaviour Elemental eligibility, projectile behavior, Monster pathfinding, or direct Monster Transform and movement-state mutation. Lifecycle Effects request Monster System APIs through Effect actions.
+It does not own Effect target resolution or action execution, Tower attack timing, Behaviour Elemental eligibility, projectile behavior, Monster pathfinding, or direct Monster position and movement-state mutation. Lifecycle Effects request Monster System capabilities through Effect actions.
 
 ## 3. Definitions And Runtime State
 
-Buff definitions are Inspector-assigned static ScriptableObject configuration. They include display name and description, ElementType when relevant, duration, tick interval when relevant, whether the Buff uses stacks, max stacks and Buff apply cooldown when stackable, lifecycle bindings, Protection duration when applicable, status icon, and persistent Buff VFX prefab.
+BuffDefinition is reusable authored configuration. It includes display identity, Elemental type when relevant, duration, optional tick interval, stack model, maximum stacks and apply cooldown when stackable, lifecycle bindings, optional Protection duration, status icon, and persistent presentation.
 
-Mutable runtime state never lives in the definition asset. A Monster owns plain C# Buff runtime state:
+Mutable runtime state never lives in the definition. Each Monster owns its active Buff runtime state:
 
 ```text
-MonsterBehaviour
-    -> MonsterBuffRuntime
-        -> List<MonsterBuffInstance>
+Monster
+    -> Active Buff Runtime
+        -> Buff Instances
 ```
 
 An instance includes definition reference, owner monster, remaining duration, tick timer, stack count, phase, and stackable-Buff apply-cooldown tracking. Source tower and source upgrade may be retained for diagnostics but never change shared Buff gameplay after application.
@@ -53,6 +53,8 @@ Buff System receives application requests after another system has resolved the 
 
 ## 4. Lifecycle Effect Bindings
 
+The lifecycle event names below are stable authoring identities, not required programming-language callback names.
+
 Buff lifecycle bindings are universal authoring slots. Each binding selects a timing event and an EffectDefinition. The EffectDefinition contains its actions; a Buff never directly applies another Buff.
 
 | Buff Event | Meaning |
@@ -70,15 +72,15 @@ Removed covers natural expiry, explicit removal, Clear, monster death, target ar
 
 Validation rejects StackApplied, Overload, or EnteredProtection bindings on a non-stackable Buff, and rejects PeriodicTick when tick interval is nonpositive.
 
-Behaviour packages provide package-specific Effect references to their reviewed runtime boundaries. Elemental Layer authoring provides its Elemental apply Effect at the runtime-selected attack boundary. Buff lifecycle bindings use `BuffEventType` to decide what an already-active Buff does afterward; they are not a generic attack-trigger authoring path.
+Behaviour packages provide package-specific Effect references to their reviewed runtime boundaries. Elemental Layer authoring provides its Elemental apply Effect at the runtime-selected attack boundary. Buff lifecycle event identity decides what an already-active Buff does afterward; lifecycle bindings are not a generic attack-trigger authoring path.
 
 ## 5. Buff Feedback
 
 MonsterStatusBar owns active-Buff UI. It shows one icon per active BuffDefinition and may show stack count above one. During Protection it keeps the icon but pulses alpha continuously from one to zero and back; no stack count appears.
 
-MonsterBuffVisualController owns persistent world-space Buff VFX. It attaches an authored Buff VFX to the monster hit/reference anchor, preserves one instance through stack, refresh, and Protection changes, and destroys it when the Buff leaves runtime state. Protection uses the UI pulse only in the first version.
+Monster-owned Buff visual presentation attaches an authored persistent visual to the Monster Hit Reference, preserves one instance through stack, refresh, and Protection changes, and removes it when the Buff leaves runtime state. Protection uses the UI emphasis only in the first version.
 
-MonsterBuffRuntime exposes read-only state snapshots and state-change notifications; it does not operate UI or ParticleSystem behavior. Clear removes all state first, then emits one notification so consumers rebuild from an empty snapshot.
+Buff runtime exposes read-only state snapshots and state-change notifications; it does not operate UI or visual playback. Clearing a Monster removes all Buff state first, then publishes one change so consumers rebuild from an empty snapshot.
 
 EffectDefinition execution VFX is separate: it is short-lived feedback for an executed Effect, not persistent Buff presentation.
 
@@ -114,7 +116,7 @@ This ordering is shared Buff runtime lifecycle behavior, not an Element-specific
 | Element | Normal phase | Overload | Boundary |
 |---|---|---|---|
 | Fire | Burning applies persistent damage pressure | FlameBurst deals area damage around the owner | Tick and FlameBurst damage do not apply Burning by default |
-| Cold | Cold slows while active | Apply Frozen Buff | Slow and movement lock use safe Monster APIs |
+| Cold | Cold slows while active | Apply Frozen Buff | Slow and movement lock use Monster-owned capabilities |
 | Electric | ElectricShock makes later successful stacks deal configured extra damage | Overcharged is an instant multi-target LightningStrike execution | Lightning strikes do not apply ElectricShock by default |
 | Wind | A later successful stack attacks up to one other nearby monster for authored extra damage | Max stacks spawn a persistent moving WindVortex at the owner | Wind attack and Vortex damage do not apply Windcut by default |
 
@@ -124,11 +126,11 @@ Burning PeriodicTick binds an Effect that deals persistent damage. Its max-stack
 
 ### 7.2 Cold And Frozen
 
-Cold's Applied binding invokes `SetMoveSpeedMultiplier`. Cold's EnteredProtection and Removed bindings invoke `ClearMoveSpeedMultiplier`.
+Cold's Applied binding requests its authored movement-speed reduction. EnteredProtection and Removed release that reduction.
 
 Cold max-stack Overload binds an Apply Frozen EffectDefinition. That Effect contains ApplyBuff(Frozen), which creates or refreshes Frozen through the ordinary Effect-to-Buff link.
 
-Frozen is non-Elemental and non-stackable. Its Applied binding invokes `SetMovementLock(true)`; its Removed binding invokes `SetMovementLock(false)`. Its duration, UI, and persistent VFX belong to its own runtime instance. Reapplying it refreshes that one instance without a parallel lock.
+Frozen is non-Elemental and non-stackable. Its Applied binding requests movement lock; its Removed binding releases that lock. Its duration, UI, and persistent presentation belong to its own runtime instance. Reapplying it refreshes that one instance without a parallel lock.
 
 ### 7.3 Electric
 
@@ -140,7 +142,7 @@ ElectricShock Overload invokes the instant Overcharged Effect. Overcharged uses 
 
 Windcut StackApplied invokes a radius-based Effect that excludes its owner, randomly selects up to one remaining valid monster, and executes an authored single-target Wind attack. The initial Windcut application, pure refresh, cooldown-blocked application, Buff tick, and Protection-phase application do not run this Effect. When there is no other valid nearby monster, a configured parent execution VFX still plays at the owner trigger position, but the owner is never used as a fallback damage target.
 
-Windcut Overload invokes SpawnWindVortex at the owner Transform position, then the existing Buff runtime enters Protection when configured. WindVortex is an Effect System-owned persistent gameplay entity; it moves itself directly between nearby valid monsters, independently ticks area damage, and never relocates a monster. The Buff System does not modify Transform, grid node, or path state.
+Windcut Overload invokes SpawnWindVortex at the owner's current world position, then the existing Buff runtime enters Protection when configured. WindVortex is an Effect System-owned persistent gameplay entity; it moves itself directly between nearby valid Monsters, independently ticks area damage, and never relocates a Monster. Buff System does not modify world position, Grid Node, or path state.
 
 ## 8. Relationships And Scope
 
@@ -149,8 +151,25 @@ Windcut Overload invokes SpawnWindVortex at the owner Transform position, then t
 - Tower Runtime Combat and reviewed Behaviour runtime decide attack-boundary eligibility and supply the Elemental apply Effect at that boundary.
 - Monster System owns movement, pathfinding, lifecycle cleanup, and safe requested operations.
 
-The implemented foundation is recorded by this System contract: Effect trigger/action work, Buff runtime, shared Elemental entry, feedback, lifecycle bindings, and the Cold, Electric, and Wind slices. Direct base attack damage remains independent unless a future DamageContext migration is explicitly reviewed.
+Direct base attack damage remains independent unless a future unified damage-context design is explicitly reviewed. The configuration relationship remains one-directional: Buff lifecycle bindings invoke Effects, and an Effect may request another Buff. BuffDefinitions never directly reference other BuffDefinitions.
 
-## 9. Summary
+## 9. Validation
 
-The Buff System is the persistent state layer. Its lifecycle slots make Buff behavior data-driven while Effects remain reusable execution inserts, preserving the one-directional `Buff -> Effect -> Buff` configuration chain.
+Buff authoring validation should report at minimum:
+
+- Non-positive duration
+- Stackable Buff with maximum stacks below two
+- Negative apply cooldown or Protection duration
+- Stack, Overload, or Protection bindings on a non-stackable Buff
+- Periodic binding with a non-positive tick interval
+- Missing EffectDefinition in an authored lifecycle binding
+- Elemental Buff without a valid Elemental type
+- Persistent presentation or status data that is configured but unusable
+
+Validation does not silently convert one runtime model into another.
+
+## 10. Approved Scope And Deferred Topics
+
+Current scope includes stackable and non-stackable Buffs, duration refresh, apply cooldown, periodic ticks, lifecycle Effects, Elemental stacking, Overload, Protection, status presentation, persistent presentation, and the Fire, Cold, Electric, and Wind content contracts.
+
+Deferred topics include multiple simultaneous speed modifiers, haste, Buff replacement priorities, natural-expiry-only events, dispel categories, cross-Buff dependency graphs, and recursive Elemental application.

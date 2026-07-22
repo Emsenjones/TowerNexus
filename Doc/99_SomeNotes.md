@@ -90,6 +90,7 @@
 9. Camera movement;
 10. Player Level up by resolving monsters;
 11. Level configuration design;
-12. Design a function which players can remove Tower pending items;
-13. Tap tower to pop up TowerInfoWindow;
-14. Develop Monster & Projectile object pool;
+12. Monster route display;
+13. Design a function which players can remove Tower pending items;
+14. Tap tower to pop up TowerInfoWindow;
+15. Develop Monster & Projectile object pool;
