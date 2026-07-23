@@ -28,6 +28,10 @@ public sealed class MapVisualTheme : ScriptableObject
     private static readonly MapTileDirectionMask[] SupportedTileMasks =
     {
         MapTileDirectionMask.None,
+        MapTileDirectionMask.Up,
+        MapTileDirectionMask.Down,
+        MapTileDirectionMask.Left,
+        MapTileDirectionMask.Right,
         MapTileDirectionMask.Up | MapTileDirectionMask.Down,
         MapTileDirectionMask.Left | MapTileDirectionMask.Right,
         MapTileDirectionMask.Up | MapTileDirectionMask.Left,
@@ -111,12 +115,6 @@ public sealed class MapVisualTheme : ScriptableObject
             MapTileDirectionMask.Right;
 
         return (directionMask & ~allDirectionBits) == 0;
-    }
-
-    public static bool IsSingleDirectionMask(MapTileDirectionMask directionMask)
-    {
-        int value = (int)directionMask;
-        return value != 0 && (value & (value - 1)) == 0;
     }
 
     private static int GetStableIndex(

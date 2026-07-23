@@ -37,6 +37,14 @@ MonoBehaviour:
     prefab: {fileID: 6120906901435857719, guid: 8a9d1d90f9410470792cd7254d03ca12, type: 3}
   - directionMask: 7
     prefab: {fileID: 4069340670300807731, guid: fbcc06f8e710b4517ab57dcd9311871e, type: 3}
+  - directionMask: 1
+    prefab: {fileID: 6248266414432938754, guid: 716ffbf8b427f4d0a89e90d3c0343ed4, type: 3}
+  - directionMask: 2
+    prefab: {fileID: 6248266414432938754, guid: 2a52890cbe03c451ab860da56c1e846c, type: 3}
+  - directionMask: 4
+    prefab: {fileID: 6248266414432938754, guid: 959f572d742bb412abddd013adf8fdfc, type: 3}
+  - directionMask: 8
+    prefab: {fileID: 6248266414432938754, guid: ba91c6d9835b14c84babaea1610df158, type: 3}
   obstaclePrefabs:
   - {fileID: 401846398684725772, guid: b4d68dce9d3ed4c048d0e33d05c52085, type: 3}
   - {fileID: 5566503396791366205, guid: 9bf96359201a54242b796665734c3df4, type: 3}

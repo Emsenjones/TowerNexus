@@ -71,6 +71,11 @@ public class MapGeneratorBehaviour : MonoBehaviour
     }
 
     [Button("Generate Map")]
+    private void GenerateMapFromInspector()
+    {
+        GenerateMap();
+    }
+
     public bool GenerateMap()
     {
         MapValidationResult preflight = ValidateGeneratePreflight();
@@ -229,6 +234,11 @@ public class MapGeneratorBehaviour : MonoBehaviour
     }
 
     [Button("Refresh Map Visual")]
+    private void RefreshMapVisualFromInspector()
+    {
+        RefreshMapVisual();
+    }
+
     public bool RefreshMapVisual()
     {
         if (!TryBuildVisualRefreshPlan(true, out List<VisualRefreshItem> refreshItems, out MapValidationResult preflight))
@@ -385,8 +395,6 @@ public class MapGeneratorBehaviour : MonoBehaviour
             result.AddError($"Map must contain exactly one Target node; found {targetNodes.Count}.");
         }
 
-        AddSingleDirectionWarnings(nodes, uniqueNodes, result);
-
         if (spawnNodes.Count == 1 && targetNodes.Count == 1 &&
             spawnNodes[0].BaseWalkable && targetNodes[0].BaseWalkable &&
             !HasBaseWalkableRoute(spawnNodes[0], targetNodes[0], uniqueNodes))
@@ -485,10 +493,8 @@ public class MapGeneratorBehaviour : MonoBehaviour
                 continue;
             }
 
-            MapTileDirectionMask topologyMask = ResolveDirectionMask(node, uniqueNodes, useAuthoredState);
-            MapTileDirectionMask tileMask = MapVisualTheme.IsSingleDirectionMask(topologyMask)
-                ? MapTileDirectionMask.None
-                : topologyMask;
+            MapTileDirectionMask tileMask =
+                ResolveDirectionMask(node, uniqueNodes, useAuthoredState);
 
             if (!mapVisualTheme.TryGetTilePrefab(tileMask, out GameObject tilePrefab))
             {
@@ -598,11 +604,6 @@ public class MapGeneratorBehaviour : MonoBehaviour
                 if (!MapVisualTheme.UsesOnlyDirectionBits(mask))
                 {
                     result.AddError($"MapVisualTheme Tile entry {i} uses invalid direction bits: {(int)mask}.");
-                }
-
-                if (MapVisualTheme.IsSingleDirectionMask(mask))
-                {
-                    result.AddError($"MapVisualTheme Tile entry {i} uses unsupported single-direction mask {mask}.");
                 }
 
                 if (!MapVisualTheme.IsSupportedTileMask(mask))
@@ -884,29 +885,6 @@ public class MapGeneratorBehaviour : MonoBehaviour
     private static bool IsWalkableForVisual(GridNodeBehaviour node, bool useAuthoredState)
     {
         return useAuthoredState ? node.BaseWalkable : node.IsWalkable;
-    }
-
-    private void AddSingleDirectionWarnings(
-        GridNodeBehaviour[] nodes,
-        IReadOnlyDictionary<Vector2Int, GridNodeBehaviour> uniqueNodes,
-        MapValidationResult result)
-    {
-        for (int i = 0; i < nodes.Length; i++)
-        {
-            GridNodeBehaviour node = nodes[i];
-
-            if (node == null || !node.BaseWalkable)
-            {
-                continue;
-            }
-
-            MapTileDirectionMask mask = ResolveDirectionMask(node, uniqueNodes, true);
-
-            if (MapVisualTheme.IsSingleDirectionMask(mask))
-            {
-                result.AddWarning($"{GetNodeLabel(node)} has single-direction topology {mask} and will use the None Tile fallback.");
-            }
-        }
     }
 
     private static bool HasBaseWalkableRoute(

@@ -46,11 +46,11 @@ Add one reusable `MapVisualTheme` ScriptableObject containing:
 - Spawn prefab
 - Target prefab
 
-Direction masks use only the `Up`, `Down`, `Left`, and `Right` bits. The Theme must contain exactly one entry for each of the twelve supported masks in `Doc/04_MapSystem.md` and no other entries. A single-direction mask is not a supported formal entry.
+Direction masks use only the `Up`, `Down`, `Left`, and `Right` bits. The Theme must contain exactly one entry for each of the sixteen supported masks in `Doc/04_MapSystem.md` and no other entries. Single-direction masks represent dead ends.
 
 Every Tile prefab must be non-null. The Obstacle list must be non-empty, contain no null references, and contain no duplicate references. Spawn and Target prefabs must be non-null.
 
-A single-direction topology resolves to the `None` Tile fallback and is reported for the relevant Grid Node as a Map-validation warning.
+Every topology mask, including each single-direction dead end, resolves through its matching Tile entry.
 
 ### 4.2 Grid Node State
 
@@ -185,7 +185,7 @@ Validation reports at minimum:
 - Non-positive Width, Height, or Node Size
 - Missing Grid Node prefab, NodesRoot, or MapVisualTheme
 - Invalid Grid Node prefab or instance root ownership
-- Tile entries with invalid bits, single-direction masks, unsupported masks, missing masks, duplicate masks, extra masks, or null prefabs
+- Tile entries with invalid bits, unsupported masks, missing masks, duplicate masks, extra masks, or null prefabs
 - Empty Obstacle list, null or duplicate Obstacle prefabs, or missing Spawn/Target prefabs
 - Grid Node count different from Width multiplied by Height
 - Duplicate, missing, or out-of-bounds Grid Positions
@@ -193,8 +193,6 @@ Validation reports at minimum:
 - Missing or multiple Target nodes
 - Spawn or Target that is not Base Walkable
 - No Base-Walkable route from Spawn to Target
-- Single-direction topology, as a warning identifying the affected Grid Node
-
 Validation never silently repairs authored data.
 
 ## 10. Implementation Scope
@@ -226,7 +224,6 @@ Do not modify:
 - Procedural Map-data generation
 - Destructible or special terrain
 - Partial-neighbor refresh optimization
-- New single-direction Tile art
 - Runtime replacement of authored Feature presentation
 - Tower removal or redeployment
 - Tower placement rule redesign
@@ -237,7 +234,7 @@ Do not modify:
 - Authored terrain and runtime Tower occupancy are separate state.
 - Generate Map and both refresh paths complete atomically or leave existing content untouched.
 - Root ownership validation prevents refresh from deleting content outside its owned roots.
-- MapVisualTheme accepts exactly the twelve supported masks and valid feature assets.
+- MapVisualTheme accepts exactly the sixteen supported masks and valid feature assets.
 - Authoring Refresh produces Tile, Obstacle, Spawn, and Target presentation under the approved roots.
 - Runtime occupancy refresh changes Tile presentation only.
 - Deterministic variants remain stable across repeated refresh and reload.

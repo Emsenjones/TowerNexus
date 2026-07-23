@@ -115,12 +115,16 @@ Changing the theme and performing authoring refresh replaces generated presentat
 
 Each Tile entry declares its supported orthogonal walkable-direction mask. List position alone is not semantic identity.
 
-The current art set supports exactly twelve masks:
+The current art set supports all sixteen masks:
 
 | Walkable Directions | Shape |
 |---|---|
 | Up + Down + Left + Right | Four-way |
 | None | Isolated |
+| Up | Dead end |
+| Down | Dead end |
+| Left | Dead end |
+| Right | Dead end |
 | Up + Down | Vertical |
 | Left + Right | Horizontal |
 | Up + Left | Corner |
@@ -132,9 +136,7 @@ The current art set supports exactly twelve masks:
 | Up + Down + Right | Three-way |
 | Up + Down + Left | Three-way |
 
-Tile entries use only the Up, Down, Left, and Right bits. Each supported mask appears exactly once; additional, duplicate, invalid-bit, and single-direction entries are invalid. Every Tile entry has a valid prefab.
-
-Single-direction dead ends are not represented by the current set. They resolve to the None Tile fallback and Map validation reports the affected Grid Node as a warning.
+Tile entries use only the Up, Down, Left, and Right bits. Each of the sixteen masks appears exactly once; additional, duplicate, and invalid-bit entries are invalid. Every Tile entry has a valid prefab.
 
 The Obstacle list is non-empty and contains no null or duplicate references. Spawn and Target visuals are valid references.
 
@@ -266,7 +268,7 @@ Map validation should report at minimum:
 - Non-positive Width, Height, or Node Size
 - Missing Grid Node template or NodesRoot
 - Missing MapVisualTheme
-- Missing, duplicate, extra, invalid-bit, single-direction, or otherwise unsupported Tile masks
+- Missing, duplicate, extra, invalid-bit, or otherwise unsupported Tile masks
 - Null Tile prefabs; empty, null-containing, or duplicate Obstacle lists; missing Spawn or Target presentation references
 - Invalid or externally owned Visual, Tile, or Feature roots
 - Grid Node count different from Width multiplied by Height
@@ -275,8 +277,6 @@ Map validation should report at minimum:
 - Missing or multiple Target nodes
 - Spawn or Target that is not Base Walkable
 - No Base-Walkable route from Spawn to Target
-- Single-direction topology as a warning identifying the affected Grid Node
-
 Warnings identify the relevant Map or Grid Node and never silently rewrite authored content.
 
 ---
@@ -285,4 +285,4 @@ Warnings identify the relevant Map or Grid Node and never silently rewrite autho
 
 Current scope includes rectangular handcrafted Maps, one Spawn, one Target, deterministic theme-based presentation, runtime Tower occupancy, Tile-only runtime refresh, and Map-template Stage composition.
 
-Deferred topics include single-direction Tile assets, Multiple Spawn Routes, multiple Targets, special terrain, destructible terrain, runtime authored-feature replacement, multi-layer terrain, and procedural Map-data generation.
+Deferred topics include Multiple Spawn Routes, multiple Targets, special terrain, destructible terrain, runtime authored-feature replacement, multi-layer terrain, and procedural Map-data generation.
