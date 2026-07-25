@@ -3,11 +3,26 @@ using UnityEngine;
 
 public class AStarPathfindingService : MonoBehaviour
 {
-    [SerializeField] private MapGeneratorBehaviour mapGenerator;
+    private MapGeneratorBehaviour mapGenerator;
 
-    public void Initialize(MapGeneratorBehaviour mapGenerator)
+    public MapGeneratorBehaviour ActiveMap => mapGenerator;
+    public bool HasActiveMap => mapGenerator != null;
+
+    public bool BindActiveMap(MapGeneratorBehaviour activeMap)
     {
-        this.mapGenerator = mapGenerator;
+        if (activeMap == null)
+        {
+            Debug.LogError("A* pathfinding service cannot bind a null Active Map.", this);
+            return false;
+        }
+
+        mapGenerator = activeMap;
+        return true;
+    }
+
+    public void ClearActiveMap()
+    {
+        mapGenerator = null;
     }
 
     public List<GridNodeBehaviour> FindPath(

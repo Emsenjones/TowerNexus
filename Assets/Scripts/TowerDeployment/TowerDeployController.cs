@@ -9,6 +9,20 @@ public class TowerDeployController : MonoBehaviour
     private BattleHUDUI battleHUDUI;
     private MapGeneratorBehaviour mapGenerator;
 
+    public bool IsConfiguredFor(
+        MapGeneratorBehaviour activeMap,
+        TowerPlacementValidator activePlacementValidator,
+        MonsterManager activeMonsterManager,
+        BattleHUDUI activeBattleHudUi)
+    {
+        return activeMap != null &&
+               mapGenerator == activeMap &&
+               placementValidator == activePlacementValidator &&
+               monsterManager == activeMonsterManager &&
+               battleHUDUI == activeBattleHudUi &&
+               deployedTowerRoot != null;
+    }
+
     public void Initialize(
         TowerPlacementValidator placementValidator,
         MapGeneratorBehaviour mapGenerator,

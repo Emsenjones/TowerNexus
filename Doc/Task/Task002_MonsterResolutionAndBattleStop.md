@@ -1,6 +1,6 @@
 # Task002 - Monster Resolution And Battle Stop
 
-Status: Ready for review
+Status: Script implementation complete; awaiting user Unity authoring and Play Mode acceptance
 
 Depends on: Current Player, Monster, Draft, placement, and combat baseline
 
@@ -152,6 +152,13 @@ Unless explicitly handed over, the user owns final Inspector wiring and Play Mod
 - Spawn Interval occurs only between instances in the same entry.
 
 ## 13. Validation And Handoff
+
+Implementation static validation completed on 2026-07-23:
+
+- Main Unity assembly build passed with zero warnings and zero errors.
+- Runtime scripts contain no active EXP, per-Monster reward, or variable Target-damage path; old EXP field names remain only inside explicit serialization migration attributes.
+- `ProgressAddController.cs` and its `.meta` retain the previous component GUID.
+- Unity asset YAML still contains pre-migration field names until the user-owned reserialization pass.
 
 - Run targeted compilation for the main Unity assembly.
 - Search scripts and current authored assets for stale `Exp`, `EXP`, `expReward`, and `damageToPlayer` semantics; explain any intentional historical text outside runtime content.

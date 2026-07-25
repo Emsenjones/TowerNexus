@@ -7,22 +7,82 @@ public class MonsterManager : MonoBehaviour
     [SerializeField] private PlayerSystem playerSystem;
 
     private readonly List<MonsterBehaviour> aliveMonsters = new List<MonsterBehaviour>();
+    private bool isBattleActive;
+
+    public bool IsBattleActive => isBattleActive;
 
     public IReadOnlyList<MonsterBehaviour> GetAliveMonsters()
     {
         return aliveMonsters;
     }
 
-    public void RegisterMonster(MonsterBehaviour monster)
+    public void BeginBattle()
     {
-        if (monster == null || aliveMonsters.Contains(monster))
+        isBattleActive = true;
+    }
+
+    public bool CanBeginBattle(out string failureReason)
+    {
+        if (pathfindingService == null)
         {
-            return;
+            failureReason = "A* pathfinding service is not assigned.";
+            return false;
+        }
+
+        if (!pathfindingService.HasActiveMap)
+        {
+            failureReason = "A* pathfinding has no Active Map.";
+            return false;
+        }
+
+        if (playerSystem == null)
+        {
+            failureReason = "Player System is not assigned.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public void CloseBattleGate()
+    {
+        isBattleActive = false;
+    }
+
+    public void ForceCleanupAllMonsters()
+    {
+        List<MonsterBehaviour> snapshot = new List<MonsterBehaviour>(aliveMonsters);
+
+        for (int i = 0; i < snapshot.Count; i++)
+        {
+            MonsterBehaviour monster = snapshot[i];
+
+            if (monster != null)
+            {
+                monster.ForceCleanup();
+            }
+        }
+
+        aliveMonsters.Clear();
+    }
+
+    public void StopBattle()
+    {
+        CloseBattleGate();
+        ForceCleanupAllMonsters();
+    }
+
+    public bool RegisterMonster(MonsterBehaviour monster)
+    {
+        if (!isBattleActive || monster == null || aliveMonsters.Contains(monster))
+        {
+            return false;
         }
 
         aliveMonsters.Add(monster);
-        monster.OnTargetReached += HandleMonsterTargetReached;
-        monster.OnDied += HandleMonsterDied;
+        monster.OnResolved += HandleMonsterResolved;
+        return true;
     }
 
     public void UnregisterMonster(MonsterBehaviour monster)
@@ -32,20 +92,30 @@ public class MonsterManager : MonoBehaviour
             return;
         }
 
-        monster.OnTargetReached -= HandleMonsterTargetReached;
-        monster.OnDied -= HandleMonsterDied;
+        monster.OnResolved -= HandleMonsterResolved;
         aliveMonsters.Remove(monster);
     }
 
     public void RecalculateAllMonsterPaths()
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         for (int i = aliveMonsters.Count - 1; i >= 0; i--)
         {
             MonsterBehaviour monster = aliveMonsters[i];
 
-            if (monster == null || monster.IsDead())
+            if (monster == null)
             {
                 aliveMonsters.RemoveAt(i);
+                continue;
+            }
+
+            if (monster.IsDead())
+            {
+                UnregisterMonster(monster);
                 continue;
             }
 
@@ -55,7 +125,7 @@ public class MonsterManager : MonoBehaviour
 
     public void RequestPathRecalculation(MonsterBehaviour monster)
     {
-        if (monster == null || monster.IsDead())
+        if (!isBattleActive || monster == null || monster.IsDead())
         {
             return;
         }
@@ -94,32 +164,30 @@ public class MonsterManager : MonoBehaviour
 
     private void OnDisable()
     {
+        isBattleActive = false;
+
         for (int i = 0; i < aliveMonsters.Count; i++)
         {
             MonsterBehaviour monster = aliveMonsters[i];
 
             if (monster != null)
             {
-                monster.OnTargetReached -= HandleMonsterTargetReached;
-                monster.OnDied -= HandleMonsterDied;
+                monster.OnResolved -= HandleMonsterResolved;
             }
         }
 
         aliveMonsters.Clear();
     }
 
-    private void HandleMonsterTargetReached(MonsterBehaviour monster)
+    private void HandleMonsterResolved(MonsterBehaviour monster, bool reachedTarget)
     {
-        if (playerSystem != null && monster != null && monster.Definition != null)
+        UnregisterMonster(monster);
+
+        if (!isBattleActive || playerSystem == null)
         {
-            playerSystem.ApplyDamage(monster.Definition.DamageToPlayer);
+            return;
         }
 
-        UnregisterMonster(monster);
-    }
-
-    private void HandleMonsterDied(MonsterBehaviour monster)
-    {
-        UnregisterMonster(monster);
+        playerSystem.TryResolveMonster(reachedTarget);
     }
 }

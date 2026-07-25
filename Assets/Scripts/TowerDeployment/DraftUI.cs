@@ -10,6 +10,7 @@ public class DraftUI : MonoBehaviour
 
     private readonly List<TowerDraftUIItem> draftItems = new List<TowerDraftUIItem>();
     private Action<DraftResult> onDraftSelected;
+    private bool isBattleActive;
 
     public bool IsOpen => rootObject != null && rootObject.activeSelf;
 
@@ -28,6 +29,11 @@ public class DraftUI : MonoBehaviour
 
     public void OpenDraft(List<DraftResult> draftResults, Action<DraftResult> onSelected)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         ClearDraftItems();
         onDraftSelected = onSelected;
 
@@ -115,8 +121,25 @@ public class DraftUI : MonoBehaviour
         }
     }
 
+    public void BeginBattle()
+    {
+        isBattleActive = true;
+    }
+
+    public void StopBattle()
+    {
+        isBattleActive = false;
+        CloseDraft();
+    }
+
     private void HandleDraftSelected(DraftResult draftResult)
     {
+        if (!isBattleActive)
+        {
+            CloseDraft();
+            return;
+        }
+
         if (draftResult == null || !draftResult.IsValid)
         {
             Debug.LogWarning("Draft UI cannot select draft result: draft result is invalid.", this);

@@ -108,8 +108,8 @@ When health reaches zero:
 ```text
 Enter Dead
     -> Stop Movement And Pathfinding
-    -> Present Death Feedback
     -> Report Monster Resolved
+    -> Present Death Feedback
     -> Remove Monster After Presentation Delay
 ```
 
@@ -122,12 +122,11 @@ When the Monster reaches the Target node:
 ```text
 Enter Arrived
     -> Stop Movement
-    -> Report Target Arrival
-    -> Report Monster Resolved
+    -> Report Monster Resolved With Target-Arrival Fact
     -> Remove Monster From Battlefield
 ```
 
-Monster System detects and reports Target arrival. Player System reduces health by one and decides the resulting defeat state.
+Monster System detects Target arrival and includes that fact in the Monster-resolution report. Player System reduces health by one and decides the resulting defeat state in the same atomic transaction that advances progress.
 
 ---
 
@@ -135,7 +134,7 @@ Monster System detects and reports Target arrival. Player System reduces health 
 
 A Monster resolves exactly once when it dies or reaches the Target. Every accepted resolution contributes exactly one point of Player progress.
 
-While the battle run is active, Monster System reports the resolution fact to Player System. Target arrival separately reports its arrival fact, which reduces Player health by one.
+While the battle run is active, Monster System reports one resolution fact to Player System. The report contains whether the Monster reached the Target. Player System uses that single report to update progress, level, health, and defeat coherently.
 
 Player System owns:
 

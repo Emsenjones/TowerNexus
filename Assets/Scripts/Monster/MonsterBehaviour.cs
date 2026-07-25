@@ -7,7 +7,6 @@ public class MonsterBehaviour : MonoBehaviour
 {
     [SerializeField] private MonsterDefinition definition;
     private MonsterManager monsterManager;
-    private PlayerSystem playerSystem;
     private DamageNumberManager damageNumberManager;
     [ShowInInspector, ReadOnly] private int currentHealth;
     [ShowInInspector, ReadOnly] private float currentMoveSpeed;
@@ -25,6 +24,7 @@ public class MonsterBehaviour : MonoBehaviour
     [ShowInInspector, ReadOnly] private GridNodeBehaviour targetNode;
     [ShowInInspector, ReadOnly] private bool isMoving;
     [ShowInInspector, ReadOnly] private bool isDead;
+    [ShowInInspector, ReadOnly] private bool isResolved;
     [ShowInInspector, ReadOnly] private bool isCleaningUp;
 
     private readonly List<GridNodeBehaviour> currentPath = new List<GridNodeBehaviour>();
@@ -45,13 +45,15 @@ public class MonsterBehaviour : MonoBehaviour
     public bool IsMoving => isMoving;
     public float MoveSpeedMultiplier => moveSpeedMultiplier;
     public bool IsMovementLocked => isMovementLocked;
-    public bool IsGameplayTargetable => isActiveAndEnabled && !isDead && !isCleaningUp;
+    public bool IsGameplayTargetable =>
+        isActiveAndEnabled && !isResolved && !isCleaningUp;
     [TitleGroup("Buff Runtime")]
     [ShowInInspector, ReadOnly]
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveBuffSnapshots => buffRuntime != null ? buffRuntime.ActiveSnapshots : EmptyBuffSnapshots;
 
     public event Action<MonsterBehaviour> OnTargetReached;
     public event Action<MonsterBehaviour> OnDied;
+    public event Action<MonsterBehaviour, bool> OnResolved;
     public event Action<MonsterBehaviour> OnDestroyed;
     public event Action<MonsterBehaviour, int, int> OnHealthChanged;
     public event Action<MonsterBehaviour> OnBuffStateChanged;
@@ -71,6 +73,7 @@ public class MonsterBehaviour : MonoBehaviour
         buffRuntime.Clear();
         CacheBuffVisualController();
         isDead = false;
+        isResolved = false;
         isCleaningUp = false;
         CacheAnimator();
         RefreshEffectiveMoveSpeed();
@@ -81,11 +84,9 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void SetRuntimeReferences(
         MonsterManager monsterManager,
-        PlayerSystem playerSystem,
         DamageNumberManager damageNumberManager = null)
     {
         this.monsterManager = monsterManager;
-        this.playerSystem = playerSystem;
         this.damageNumberManager = damageNumberManager;
     }
 
@@ -111,7 +112,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void SetPath(List<GridNodeBehaviour> path)
     {
-        if (isDead || isCleaningUp)
+        if (isResolved || isCleaningUp)
         {
             return;
         }
@@ -191,7 +192,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
-        if (damage <= 0 || isDead || isCleaningUp)
+        if (damage <= 0 || isResolved || isCleaningUp)
         {
             return;
         }
@@ -209,28 +210,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void Die()
     {
-        if (isDead || isCleaningUp)
-        {
-            return;
-        }
-
-        isCleaningUp = true;
-        buffRuntime?.Clear();
-        isDead = true;
-        StopMovement();
-        ClearMovementControls();
-        currentPath.Clear();
-        hitFeedback?.StopFeedback();
-        OnDied?.Invoke(this);
-
-        if (monsterManager != null)
-        {
-            monsterManager.UnregisterMonster(this);
-        }
-
-        PlayDeathAnimation();
-        RewardExp();
-        Destroy(gameObject, GetDeathDelay());
+        TryResolve(reachedTarget: false);
     }
 
     public bool IsDead()
@@ -245,7 +225,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     public BuffApplyOutcome ApplyBuffWithOutcome(BuffApplyRequest request)
     {
-        if (isDead || isCleaningUp)
+        if (isResolved || isCleaningUp)
         {
             return new BuffApplyOutcome(BuffApplyResult.Invalid, null, false, false);
         }
@@ -275,7 +255,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (isDead || isCleaningUp)
+        if (isResolved || isCleaningUp)
         {
             return;
         }
@@ -290,6 +270,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void OnDestroy()
     {
+        monsterManager?.UnregisterMonster(this);
         buffRuntime?.Clear();
         ClearMovementControls();
         if (buffRuntime != null)
@@ -415,25 +396,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void HandleTargetReached()
     {
-        if (isDead || isCleaningUp)
-        {
-            return;
-        }
-
-        isCleaningUp = true;
-        buffRuntime?.Clear();
-        StopMovement();
-        ClearMovementControls();
-        currentPath.Clear();
-        hitFeedback?.StopFeedback();
-        OnTargetReached?.Invoke(this);
-
-        if (monsterManager != null)
-        {
-            monsterManager.UnregisterMonster(this);
-        }
-
-        Destroy(gameObject);
+        TryResolve(reachedTarget: true);
     }
 
     private void SetWalkingAnimation(bool walking)
@@ -456,14 +419,52 @@ public class MonsterBehaviour : MonoBehaviour
         animator.SetTrigger(definition.DieTriggerName);
     }
 
-    private void RewardExp()
+    public void ForceCleanup()
     {
-        if (playerSystem == null || definition == null)
+        if (isCleaningUp)
         {
             return;
         }
 
-        playerSystem.AddExp(definition.ExpReward);
+        isCleaningUp = true;
+        isResolved = true;
+        StopGameplayState();
+        monsterManager?.UnregisterMonster(this);
+        Destroy(gameObject);
+    }
+
+    private void TryResolve(bool reachedTarget)
+    {
+        if (isResolved || isCleaningUp)
+        {
+            return;
+        }
+
+        isResolved = true;
+        isDead = !reachedTarget;
+        StopGameplayState();
+
+        OnResolved?.Invoke(this, reachedTarget);
+
+        if (reachedTarget)
+        {
+            OnTargetReached?.Invoke(this);
+            Destroy(gameObject);
+            return;
+        }
+
+        OnDied?.Invoke(this);
+        PlayDeathAnimation();
+        Destroy(gameObject, GetDeathDelay());
+    }
+
+    private void StopGameplayState()
+    {
+        buffRuntime?.Clear();
+        StopMovement();
+        ClearMovementControls();
+        currentPath.Clear();
+        hitFeedback?.StopFeedback();
     }
 
     private float GetDeathDelay()

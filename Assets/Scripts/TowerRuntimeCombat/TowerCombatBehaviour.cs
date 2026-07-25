@@ -37,6 +37,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     private bool hasCompletedSubtypeInitialization;
     private bool hasResolvedStatsCache;
     private bool isRuntimeSessionActive;
+    private bool isBattleActive;
     private bool hasLoggedMissingAttackOrigin;
 
     public event Action<TowerCombatBehaviour, MonsterBehaviour> OnProjectileReleased;
@@ -47,6 +48,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     public float CooldownTimer => cooldownTimer;
     public TowerAttackState AttackState => attackState;
     public bool IsAttacking => attackState != TowerAttackState.Idle;
+    public bool IsBattleActive => isBattleActive;
     public float BaseAttackRange => attackRange;
     public float BaseAttackInterval => attackInterval;
     public float CurrentResolvedAttackRange => ResolveCombatStats().AttackRange;
@@ -77,7 +79,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         hasLoggedMissingAttackOrigin = false;
         missingBehaviourPackageWarnings.Clear();
 
-        if (!isActiveAndEnabled)
+        if (!isBattleActive || !isActiveAndEnabled)
         {
             hasResolvedStatsCache = false;
             return;
@@ -96,9 +98,27 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         SubscribeToRuntimeNotifications();
     }
 
+    public void BeginBattle()
+    {
+        isBattleActive = true;
+        TryRecoverRuntimeSession();
+    }
+
+    public void StopBattle()
+    {
+        if (!isBattleActive && !isRuntimeSessionActive)
+        {
+            return;
+        }
+
+        isBattleActive = false;
+        DeactivateRuntimeSession(clearExplicitOwner: false);
+    }
+
     public void OnAttackAnimationRelease()
     {
-        if (!isRuntimeSessionActive ||
+        if (!isBattleActive ||
+            !isRuntimeSessionActive ||
             !TryValidateExplicitOwner() ||
             monsterManager == null ||
             !monsterManager.isActiveAndEnabled ||
@@ -112,7 +132,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     public void OnTowerPresentationReplaced()
     {
-        if (!isRuntimeSessionActive ||
+        if (!isBattleActive ||
+            !isRuntimeSessionActive ||
             !TryValidateExplicitOwner() ||
             !IsWaitingForAnimationRelease)
         {
@@ -149,7 +170,10 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     protected void OnEnable()
     {
-        TryRecoverRuntimeSession();
+        if (isBattleActive)
+        {
+            TryRecoverRuntimeSession();
+        }
     }
 
     protected void OnDisable()
@@ -573,7 +597,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     private bool EnsureRuntimeSession()
     {
-        if (!hasExplicitInitialization)
+        if (!isBattleActive || !hasExplicitInitialization)
         {
             return false;
         }
@@ -823,7 +847,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     private bool TryRecoverRuntimeSession()
     {
-        if (!isActiveAndEnabled ||
+        if (!isBattleActive ||
+            !isActiveAndEnabled ||
             isRuntimeSessionActive ||
             !TryValidateExplicitOwner() ||
             !TryResolveMonsterManager())
@@ -890,7 +915,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     private bool CanHandleNotification(TowerInstance sourceTower)
     {
-        return isRuntimeSessionActive &&
+        return isBattleActive &&
+               isRuntimeSessionActive &&
                hasResolvedStatsCache &&
                sourceTower != null &&
                sourceTower == towerInstance &&

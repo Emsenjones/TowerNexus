@@ -86,10 +86,10 @@
    10. *Clarify live read data and snapshot data in runtime;
    11. *Refactor TowerCombatDefinition and speparet AttackConfig based on AttackArchetype;
    12. *Magic tower and Drone tower add AttackEntity maximum count limitation;
-8. Map prefab generation;
-9. Camera movement;
-10. Player Level up by resolving monsters;
-11. Level configuration design;
+8. Battle stage framework implementation;
+9. Level display window;
+10. Camera movement;
+11. Player Level up by resolving monsters;
 12. Monster route display;
 13. Design a function which players can remove Tower pending items;
 14. Tap tower to pop up TowerInfoWindow;

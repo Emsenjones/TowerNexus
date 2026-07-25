@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public sealed class MapValidationResult
 {
@@ -41,7 +42,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
     };
 
     [SerializeField] private int width = 10;
-    [SerializeField] private int height = 10;
+    [SerializeField] private int lengh = 10;
     [SerializeField] private float nodeSize = 1f;
     [SerializeField] private GameObject nodePrefab;
     [SerializeField] private Transform nodesRoot;
@@ -55,7 +56,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
     private int dictionaryHierarchyNodeCount;
 
     public int Width => width;
-    public int Height => height;
+    public int Lengh => lengh;
     public float NodeSize => nodeSize;
     public Transform NodesRoot => nodesRoot;
     public MapVisualTheme VisualTheme => mapVisualTheme;
@@ -90,7 +91,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
         for (int x = 0; x < width; x++)
         {
-            for (int y = 0; y < height; y++)
+            for (int y = 0; y < lengh; y++)
             {
                 Vector2Int gridPosition = new Vector2Int(x, y);
                 GameObject nodeObject = Instantiate(nodePrefab, nodesRoot, false);
@@ -103,6 +104,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
             }
         }
 
+        ApplyGridCentering();
         RebuildNodeDictionary();
         return RefreshMapVisual();
     }
@@ -210,7 +212,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
         return gridPosition.x >= 0 &&
                gridPosition.x < width &&
                gridPosition.y >= 0 &&
-               gridPosition.y < height;
+               gridPosition.y < lengh;
     }
 
     public List<GridNodeBehaviour> GetNeighborNodes(Vector2Int gridPosition)
@@ -299,7 +301,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
         }
 
         GridNodeBehaviour[] nodes = GetHierarchyNodes();
-        int expectedNodeCount = width > 0 && height > 0 ? width * height : 0;
+        int expectedNodeCount = width > 0 && lengh > 0 ? width * lengh : 0;
 
         if (nodes.Length != expectedNodeCount)
         {
@@ -369,11 +371,11 @@ public class MapGeneratorBehaviour : MonoBehaviour
             }
         }
 
-        if (width > 0 && height > 0)
+        if (width > 0 && lengh > 0)
         {
             for (int x = 0; x < width; x++)
             {
-                for (int y = 0; y < height; y++)
+                for (int y = 0; y < lengh; y++)
                 {
                     Vector2Int coordinate = new Vector2Int(x, y);
 
@@ -542,7 +544,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
             result.AddError("Width must be greater than zero.");
         }
 
-        if (height <= 0)
+        if (lengh <= 0)
         {
             result.AddError("Height must be greater than zero.");
         }
@@ -947,6 +949,18 @@ public class MapGeneratorBehaviour : MonoBehaviour
         return nodesRoot != null &&
                IsStrictDescendant(nodesRoot, transform) &&
                nodesRoot.GetComponent<GridNodeBehaviour>() == null;
+    }
+
+    private void ApplyGridCentering()
+    {
+        Vector3 gridCenterInNodesRoot = new Vector3(
+            (width - 1) * nodeSize * 0.5f,
+            0f,
+            (lengh - 1) * nodeSize * 0.5f);
+        Vector3 gridCenterInWorld =
+            nodesRoot.TransformPoint(gridCenterInNodesRoot);
+
+        nodesRoot.position += transform.position - gridCenterInWorld;
     }
 
     private static bool IsStrictDescendant(Transform child, Transform parent)

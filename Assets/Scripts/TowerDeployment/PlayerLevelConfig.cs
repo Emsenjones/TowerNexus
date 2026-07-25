@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(
     fileName = "PlayerLevelConfig",
@@ -7,24 +8,25 @@ using UnityEngine;
 )]
 public class PlayerLevelConfig : ScriptableObject
 {
-    [Tooltip("EXP required to level up from current level to next level.")]
-    [SerializeField] private List<int> expRequiredPerLevel = new List<int>();
+    [Tooltip("Resolved progress required to level up from the current level to the next level.")]
+    [FormerlySerializedAs("expRequiredPerLevel")]
+    [SerializeField] private List<int> progressRequiredPerLevel = new List<int>();
 
-    public IReadOnlyList<int> ExpRequiredPerLevel => expRequiredPerLevel;
+    public IReadOnlyList<int> ProgressRequiredPerLevel => progressRequiredPerLevel;
 
-    public int GetRequiredExpForLevel(int currentLevel)
+    public int GetRequiredProgressForLevel(int currentLevel)
     {
-        if (!TryGetRequiredExpForLevel(currentLevel, out int requiredExp))
+        if (!TryGetRequiredProgressForLevel(currentLevel, out int requiredProgress))
         {
             return 0;
         }
 
-        return requiredExp;
+        return requiredProgress;
     }
 
-    public bool TryGetRequiredExpForLevel(int currentLevel, out int requiredExp)
+    public bool TryGetRequiredProgressForLevel(int currentLevel, out int requiredProgress)
     {
-        requiredExp = 0;
+        requiredProgress = 0;
 
         if (currentLevel < 1)
         {
@@ -32,25 +34,25 @@ public class PlayerLevelConfig : ScriptableObject
             return false;
         }
 
-        if (expRequiredPerLevel == null || expRequiredPerLevel.Count == 0)
+        if (progressRequiredPerLevel == null || progressRequiredPerLevel.Count == 0)
         {
-            Debug.LogWarning("Player level config has no EXP requirements configured.", this);
+            Debug.LogWarning("Player level config has no progress requirements configured.", this);
             return false;
         }
 
         int requirementIndex = currentLevel - 1;
 
-        if (requirementIndex >= expRequiredPerLevel.Count)
+        if (requirementIndex >= progressRequiredPerLevel.Count)
         {
             return false;
         }
 
-        requiredExp = expRequiredPerLevel[requirementIndex];
+        requiredProgress = progressRequiredPerLevel[requirementIndex];
 
-        if (requiredExp <= 0)
+        if (requiredProgress <= 0)
         {
-            Debug.LogWarning($"Invalid EXP requirement for level {currentLevel}: {requiredExp}. Requirement must be greater than 0.", this);
-            requiredExp = 0;
+            Debug.LogWarning($"Invalid progress requirement for level {currentLevel}: {requiredProgress}. Requirement must be greater than 0.", this);
+            requiredProgress = 0;
             return false;
         }
 

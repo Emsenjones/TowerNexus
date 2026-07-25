@@ -26,16 +26,16 @@ It does not own Monster resolution detection, Draft generation, battle UI, Tower
 | Current Level | Current battle progression level |
 | Resolved Progress | Progress retained toward the next level |
 | Current Health | Remaining player survival value |
-| Maximum Health | Health cap and normal battle start value |
+| Maximum Health | Runtime health cap supplied by the selected Stage and used as its full-health start value |
 | Defeated | Terminal player-survival state for the battle |
 
-Player progress and health are independent. A Monster reaching the Target may both advance progress and reduce health through two separate reports.
+Player progress and health are independent state resolved through one Monster-resolution report. The report contains whether that Monster reached the Target so Player System can update both values atomically.
 
 ---
 
 # 3. Resolved Monster Progression
 
-Monster System reports one resolution when a Monster dies or reaches the Target. Every accepted resolution contributes exactly one point of Player progress while the battle remains active.
+Monster System reports one resolution when a Monster dies or reaches the Target. The report includes the Target-arrival fact. Every accepted resolution contributes exactly one point of Player progress while the battle remains active.
 
 ```text
 Receive Monster Resolution
@@ -43,7 +43,15 @@ Receive Monster Resolution
     -> While Next-Level Requirement Is Met
         -> Subtract Requirement
         -> Increase Player Level
-        -> Publish Level-Up Opportunity
+    -> If Monster Reached Target
+        -> Reduce Current Health By One
+    -> Determine Defeat
+    -> Publish Coherent Progress, Level, And Health State
+    -> If Defeated
+        -> Publish Defeat
+        -> Do Not Publish Interactive Level-Up Opportunities
+    -> Otherwise
+        -> Publish Level-Up Opportunities
 ```
 
 Progress carries across multiple level thresholds. At maximum player level, additional resolution does not create further level-ups.
@@ -64,15 +72,19 @@ Requirements must be positive. Missing next-level data means the current level i
 
 # 4. Player Health And Defeat
 
-Monster System separately reports Target arrival when a Monster reaches the Target. Each accepted Target arrival reduces Player health by exactly one while the battle remains active.
+The Monster-resolution report contains whether the Monster reached the Target. Each accepted Target arrival reduces Player health by exactly one in the same transaction that advances resolved progress.
 
 ```text
-Receive Target Arrival
+Receive Monster Resolution With Target Arrival
+    -> Add One To Resolved Progress
+    -> Resolve Level Thresholds
     -> Reduce Current Health By One
     -> Clamp To Valid Range
     -> Health Reaches Zero
         -> Enter Defeated State Once
 ```
+
+All state mutation completes before observers receive state-change notifications. A Monster that causes defeat still contributes its progress and may cross a level threshold, but defeat suppresses any interactive Draft opportunity produced by that transaction.
 
 After defeat:
 
@@ -83,7 +95,7 @@ After defeat:
 
 Stopping the current battle does not imply a defeat screen, Stage transition, restart flow, or persistence rule. Game Flow will later decide what transition follows defeat.
 
-Each newly composed Stage battle starts with fresh Player level progress, health, and defeat state. Player state from a previous Stage battle is not reused.
+Each newly composed Stage battle starts with fresh Player level progress, defeat state, and the positive maximum health authored by its StageDefinition. Current health starts equal to that maximum. Player state and maximum health from a previous Stage battle are not reused.
 
 ---
 
@@ -104,7 +116,7 @@ Draft System consumes level-up opportunities. Battle HUD UI System consumes play
 
 Player configuration validation should report at minimum:
 
-- Non-positive maximum health
+- Rejection of a non-positive Stage-supplied maximum health
 - Starting health outside the valid range
 - Non-positive level requirements
 - Missing or ambiguous maximum-level progression data

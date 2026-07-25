@@ -4,8 +4,6 @@ using UnityEngine;
 public class DraftSystem : MonoBehaviour
 {
     [SerializeField] private PlayerSystem playerSystem;
-    [SerializeField] private TowerDefinitionDatabase towerDefinitionDatabase;
-    [SerializeField] private TowerUpgradeDatabase towerUpgradeDatabase;
     [SerializeField] private TowerUpgradeSystem towerUpgradeSystem;
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private BattleHUDUI battleHUDUI;
@@ -14,6 +12,12 @@ public class DraftSystem : MonoBehaviour
     private readonly List<DraftResult> draftChoices = new List<DraftResult>();
     private readonly List<DraftResult> draftPool = new List<DraftResult>();
     private readonly HashSet<Object> displayedIdentities = new HashSet<Object>();
+    private IReadOnlyList<TowerDefinition> towerDefinitions;
+    private IReadOnlyList<TowerUpgradeDefinition> upgradeDefinitions;
+    private bool isBattleActive;
+
+    public bool IsBattleActive => isBattleActive;
+    public bool HasStagePools => towerDefinitions != null && upgradeDefinitions != null;
 
     private void OnEnable()
     {
@@ -33,11 +37,110 @@ public class DraftSystem : MonoBehaviour
 
     private void HandleLevelUp(int newLevel)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         OpenTowerDraft();
+    }
+
+    public bool BindStagePools(
+        IReadOnlyList<TowerDefinition> selectedTowerDefinitions,
+        IReadOnlyList<TowerUpgradeDefinition> selectedUpgradeDefinitions)
+    {
+        if (selectedTowerDefinitions == null || selectedUpgradeDefinitions == null)
+        {
+            Debug.LogError(
+                "Draft system cannot bind Stage pools because one or both pools are null.",
+                this);
+            return false;
+        }
+
+        towerDefinitions = selectedTowerDefinitions;
+        upgradeDefinitions = selectedUpgradeDefinitions;
+        return true;
+    }
+
+    public bool CanBeginBattle(out string failureReason)
+    {
+        if (playerSystem == null)
+        {
+            failureReason = "Player System is not assigned.";
+            return false;
+        }
+
+        if (towerUpgradeSystem == null)
+        {
+            failureReason = "Tower Upgrade System is not assigned.";
+            return false;
+        }
+
+        if (towerPlacementController == null)
+        {
+            failureReason = "Tower Placement Controller is not assigned.";
+            return false;
+        }
+
+        if (battleHUDUI == null)
+        {
+            failureReason = "Battle HUD UI is not assigned.";
+            return false;
+        }
+
+        if (!HasStagePools)
+        {
+            failureReason = "Stage Draft pools are not bound.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public void BeginBattle()
+    {
+        isBattleActive = true;
+        battleHUDUI?.BeginBattle();
+    }
+
+    public void StopBattle()
+    {
+        isBattleActive = false;
+        draftChoices.Clear();
+        draftPool.Clear();
+        displayedIdentities.Clear();
+        battleHUDUI?.StopBattle();
+    }
+
+    public void ClearStageUi()
+    {
+        StopBattle();
+        battleHUDUI?.ClearStageRuntime();
+    }
+
+    public void ClearStagePools()
+    {
+        draftChoices.Clear();
+        draftPool.Clear();
+        displayedIdentities.Clear();
+        towerDefinitions = null;
+        upgradeDefinitions = null;
+    }
+
+    public void ClearStageRuntime()
+    {
+        ClearStageUi();
+        ClearStagePools();
     }
 
     private void OpenTowerDraft()
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         if (battleHUDUI == null)
         {
             Debug.LogWarning("Draft system cannot open draft: battle HUD UI is not assigned.", this);
@@ -88,16 +191,12 @@ public class DraftSystem : MonoBehaviour
 
     private void AddTowerDraftCandidates()
     {
-        if (towerDefinitionDatabase == null)
-        {
-            Debug.LogWarning("Draft system cannot generate tower draft candidates: tower definition database is not assigned.", this);
-            return;
-        }
-
-        IReadOnlyList<TowerDefinition> towerDefinitions = towerDefinitionDatabase.GetAllTowers();
-
         if (towerDefinitions == null)
         {
+            Debug.LogWarning(
+                "Draft system cannot generate Tower Draft candidates: " +
+                "the active Stage Tower pool is not bound.",
+                this);
             return;
         }
 
@@ -114,12 +213,13 @@ public class DraftSystem : MonoBehaviour
 
     private void AddTowerUpgradeDraftCandidates()
     {
-        if (towerUpgradeDatabase == null || towerUpgradeSystem == null || towerPlacementController == null)
+        if (upgradeDefinitions == null ||
+            towerUpgradeSystem == null ||
+            towerPlacementController == null)
         {
             return;
         }
 
-        IReadOnlyList<TowerUpgradeDefinition> upgradeDefinitions = towerUpgradeDatabase.GetAllUpgrades();
         IReadOnlyList<TowerInstance> deployedTowerInstances = towerPlacementController.DeployedTowerInstances;
 
         if (upgradeDefinitions == null || deployedTowerInstances == null)
@@ -227,6 +327,11 @@ public class DraftSystem : MonoBehaviour
 
     private void HandleDraftSelected(DraftResult draftResult)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         if (draftResult == null || !draftResult.IsValid)
         {
             Debug.LogWarning("Draft system cannot handle draft selection: draft result is invalid.", this);

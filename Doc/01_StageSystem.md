@@ -12,6 +12,7 @@ It owns:
 - Creation of the selected Map instance
 - Establishment of the Active Map
 - Distribution of the selected MonsterWaveConfig
+- Distribution of the selected Player maximum health
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
 - Establishment of a fresh battle-local Player runtime for the selected Stage
 - Completion and replacement of Stage-composed runtime content
@@ -29,6 +30,7 @@ StageDefinition is one reusable playable-Stage composition.
 | Data | Contract |
 |---|---|
 | Display Name | Optional player-facing Stage name |
+| Player Max Health | Positive health cap and full-health start value for this Stage battle |
 | Map Template | Authored Map used by this Stage |
 | Monster Wave Config | Wave sequence executed in this Stage |
 | Tower Draft Pool | TowerDefinitions allowed in this Stage's Drafts |
@@ -49,8 +51,9 @@ Receive Selected StageDefinition
     -> Establish Active Map
     -> Supply Map To Runtime Consumers
     -> Supply MonsterWaveConfig To Monster System
+    -> Supply Player Max Health To Player System
     -> Supply Draft Pools To Draft System
-    -> Reset Player Battle-Local State
+    -> Initialize Fresh Player Battle-Local State At Full Health
     -> Mark Stage Composition Ready
     -> Begin Battle Runtime
 ```
@@ -61,7 +64,7 @@ Each receiving system gets only the configuration slice it owns. Stage System is
 
 When replacing or ending a Stage composition, Stage System releases only the runtime objects and references created by that composition. Domain owners remain responsible for their own technical cleanup.
 
-Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next. Player System owns those values and their rules; Stage composition only establishes a fresh battle-local runtime before battle begins.
+Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next. StageDefinition authors the positive maximum-health value for the selected Stage. Player System owns the applied runtime maximum, current health, and their rules; Stage composition only supplies the authored value and establishes a fresh full-health runtime before battle begins.
 
 ---
 
@@ -72,7 +75,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 | Map System | Selected Map template and active-instance role | Grid state, spatial queries, Map presentation, and validation |
 | Monster System | Active Map and MonsterWaveConfig | Wave timing, spawning, pathfinding, movement, and resolution |
 | Draft System | Tower and Tower Upgrade pools | Candidate generation, reservation, sampling, and results |
-| Player System | Fresh Stage-battle initialization | Level progress, health, level-up, and defeat state |
+| Player System | Player Max Health and fresh Stage-battle initialization | Applied maximum health, current health, level progress, level-up, and defeat state |
 | Tower Upgrade System | No direct runtime mutation | Upgrade schema, eligibility, and application |
 | Tower Placement System | Active Map availability | Placement, occupancy commit, and topology requests |
 
@@ -84,6 +87,7 @@ Stage validation should report at minimum:
 
 - Missing or invalid Map template
 - Missing MonsterWaveConfig or invalid Wave content
+- Non-positive Player Max Health
 - Null or duplicate TowerDefinition references
 - Null or duplicate TowerUpgradeDefinition references
 - Referenced definitions that fail owner-system validation
@@ -100,6 +104,7 @@ Current scope includes:
 - Five or more authorable StageDefinitions
 - One selected Stage per battle runtime
 - One Map template and one MonsterWaveConfig per Stage
+- One positive Player Max Health value per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
 - Composition validation and pre-battle distribution
 - Fresh battle-local Player state for each composed Stage

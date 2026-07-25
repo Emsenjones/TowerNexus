@@ -4,7 +4,6 @@ using UnityEngine;
 public class TowerPlacementController : MonoBehaviour
 {
     private Camera placementCamera;
-    [SerializeField] private MapGeneratorBehaviour mapGenerator;
     [SerializeField] private Transform previewParent;
     [SerializeField] private TowerPlacementValidator placementValidator;
     [SerializeField] private TowerDeployController deployController;
@@ -15,6 +14,7 @@ public class TowerPlacementController : MonoBehaviour
     [SerializeField] private LayerMask placementRaycastMask = ~0;
     [SerializeField] private float placementRaycastDistance = 500f;
 
+    private MapGeneratorBehaviour mapGenerator;
     private TowerPlacementPreview currentPreview;
     private readonly List<TowerBehaviour> deployedTowers = new List<TowerBehaviour>();
     private readonly List<TowerInstance> deployedTowerInstances = new List<TowerInstance>();
@@ -29,6 +29,7 @@ public class TowerPlacementController : MonoBehaviour
     private bool isDragging;
     private bool isTowerTargetCandidateActive;
     private bool isLevelUpPreviewActive;
+    private bool isBattleActive;
     private bool missingCameraWarningLogged;
     private bool missingMapGeneratorWarningLogged;
 
@@ -39,23 +40,34 @@ public class TowerPlacementController : MonoBehaviour
     {
         get
         {
-            RegisterExistingDeployedTowers();
             RebuildDeployedTowerInstances();
             return deployedTowerInstances;
         }
     }
     public bool IsDragging => isDragging;
+    public bool IsBattleActive => isBattleActive;
+    public MapGeneratorBehaviour ActiveMap => mapGenerator;
 
     private void Awake()
     {
         if (placementCamera == null)
             placementCamera = Camera.main;
 
-        EnsureRuntimeDependencies();
+        EnsureStableRuntimeDependencies();
     }
 
     private void Update()
     {
+        if (!isBattleActive)
+        {
+            if (isDragging)
+            {
+                CancelPlacement();
+            }
+
+            return;
+        }
+
         if (!isDragging)
         {
             return;
@@ -87,6 +99,12 @@ public class TowerPlacementController : MonoBehaviour
 
     public void BeginDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
+        if (!isBattleActive)
+        {
+            draftedDraftEntry?.RestorePendingPosition();
+            return;
+        }
+
         if (draftResult == null || !draftResult.IsValid)
         {
             Debug.LogWarning("Tower placement controller cannot begin draft drag: draft result is invalid.", this);
@@ -110,8 +128,7 @@ public class TowerPlacementController : MonoBehaviour
     private void BeginTowerDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
         CancelPlacement();
-        EnsureRuntimeDependencies();
-        RegisterExistingDeployedTowers();
+        EnsureStableRuntimeDependencies();
 
         TowerDefinition towerDefinition = draftResult != null ? draftResult.TowerDefinition : null;
 
@@ -161,8 +178,7 @@ public class TowerPlacementController : MonoBehaviour
     private void BeginTowerUpgradeDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
         CancelPlacement();
-        EnsureRuntimeDependencies();
-        RegisterExistingDeployedTowers();
+        EnsureStableRuntimeDependencies();
 
         TowerUpgradeDefinition upgradeDefinition = draftResult != null ? draftResult.TowerUpgradeDefinition : null;
 
@@ -212,8 +228,171 @@ public class TowerPlacementController : MonoBehaviour
         isLevelUpPreviewActive = false;
     }
 
+    public bool BindActiveMap(MapGeneratorBehaviour activeMap)
+    {
+        if (activeMap == null)
+        {
+            Debug.LogError(
+                "Tower placement controller cannot bind a null Active Map.",
+                this);
+            return false;
+        }
+
+        EnsureStableRuntimeDependencies();
+
+        if (pathfindingService == null || pathfindingService.ActiveMap != activeMap)
+        {
+            Debug.LogError(
+                "Tower placement controller cannot bind an Active Map that differs " +
+                "from the A* pathfinding binding.",
+                this);
+            return false;
+        }
+
+        mapGenerator = activeMap;
+        ApplyMapBinding();
+        missingMapGeneratorWarningLogged = false;
+        return true;
+    }
+
+    public void ClearActiveMap()
+    {
+        CloseBattleGate();
+        mapGenerator = null;
+        ApplyMapBinding();
+        missingMapGeneratorWarningLogged = false;
+    }
+
+    public bool CanBeginBattle(out string failureReason)
+    {
+        EnsureStableRuntimeDependencies();
+
+        if (mapGenerator == null)
+        {
+            failureReason = "Active Map is not bound.";
+            return false;
+        }
+
+        if (pathfindingService == null ||
+            pathfindingService.ActiveMap != mapGenerator)
+        {
+            failureReason = "A* pathfinding is not bound to the same Active Map.";
+            return false;
+        }
+
+        if (monsterManager == null)
+        {
+            failureReason = "Monster Manager is not assigned.";
+            return false;
+        }
+
+        if (battleHUDUI == null)
+        {
+            failureReason = "Battle HUD UI is not assigned.";
+            return false;
+        }
+
+        if (towerUpgradeSystem == null)
+        {
+            failureReason = "Tower Upgrade System is not assigned.";
+            return false;
+        }
+
+        if (placementValidator == null ||
+            !placementValidator.IsConfiguredFor(
+                mapGenerator,
+                pathfindingService,
+                monsterManager))
+        {
+            failureReason = "Tower Placement Validator is not bound to Stage dependencies.";
+            return false;
+        }
+
+        if (deployController == null ||
+            !deployController.IsConfiguredFor(
+                mapGenerator,
+                placementValidator,
+                monsterManager,
+                battleHUDUI))
+        {
+            failureReason = "Tower Deploy Controller is not bound to Stage dependencies.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public void BeginBattle()
+    {
+        isBattleActive = true;
+        RemoveNullDeployedTowerEntries();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+            TowerCombatBehaviour combatBehaviour =
+                tower != null ? tower.GetComponent<TowerCombatBehaviour>() : null;
+            combatBehaviour?.BeginBattle();
+        }
+    }
+
+    public void CloseBattleGate()
+    {
+        isBattleActive = false;
+        CancelPlacement();
+    }
+
+    public void StopTrackedTowerCombat()
+    {
+        RemoveNullDeployedTowerEntries();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+            TowerCombatBehaviour combatBehaviour =
+                tower != null ? tower.GetComponent<TowerCombatBehaviour>() : null;
+            combatBehaviour?.StopBattle();
+        }
+    }
+
+    public void DestroyTrackedTowers()
+    {
+        CloseBattleGate();
+        ClearUpgradeTargetHighlights();
+        StopTrackedTowerCombat();
+
+        for (int i = deployedTowers.Count - 1; i >= 0; i--)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+
+            if (tower == null)
+            {
+                continue;
+            }
+
+            tower.gameObject.SetActive(false);
+            Destroy(tower.gameObject);
+        }
+
+        deployedTowers.Clear();
+        deployedTowerInstances.Clear();
+    }
+
+    public void StopBattle()
+    {
+        CloseBattleGate();
+        StopTrackedTowerCombat();
+    }
+
     private void CompletePlacement()
     {
+        if (!isBattleActive)
+        {
+            CancelPlacement();
+            return;
+        }
+
         if (battleHUDUI != null &&
             battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
         {
@@ -525,17 +704,10 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         deployedTowers.Add(tower);
-    }
 
-    private void RegisterExistingDeployedTowers()
-    {
-        RemoveNullDeployedTowerEntries();
-
-        TowerBehaviour[] towers = FindObjectsByType<TowerBehaviour>(FindObjectsSortMode.None);
-
-        for (int i = 0; i < towers.Length; i++)
+        if (isBattleActive)
         {
-            RegisterDeployedTower(towers[i]);
+            tower.GetComponent<TowerCombatBehaviour>()?.BeginBattle();
         }
     }
 
@@ -575,7 +747,7 @@ public class TowerPlacementController : MonoBehaviour
 
     private void ShowAttackRangePreviewsForCurrentDrag()
     {
-        RegisterExistingDeployedTowers();
+        RemoveNullDeployedTowerEntries();
 
         for (int i = 0; i < deployedTowers.Count; i++)
         {
@@ -598,7 +770,7 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
-        RegisterExistingDeployedTowers();
+        RemoveNullDeployedTowerEntries();
 
         for (int i = 0; i < deployedTowers.Count; i++)
         {
@@ -821,13 +993,8 @@ public class TowerPlacementController : MonoBehaviour
                hit.collider.transform.IsChildOf(currentPreview.transform);
     }
 
-    private void EnsureRuntimeDependencies()
+    private void EnsureStableRuntimeDependencies()
     {
-        if (mapGenerator == null)
-        {
-            mapGenerator = FindFirstObjectByType<MapGeneratorBehaviour>();
-        }
-
         if (battleHUDUI == null)
         {
             Debug.LogError("Tower placement controller requires an assigned BattleHUDUI reference.", this);
@@ -863,8 +1030,6 @@ public class TowerPlacementController : MonoBehaviour
             placementValidator = gameObject.AddComponent<TowerPlacementValidator>();
         }
 
-        placementValidator.Initialize(mapGenerator, pathfindingService, monsterManager);
-
         if (deployController == null)
         {
             deployController = GetComponent<TowerDeployController>();
@@ -873,6 +1038,21 @@ public class TowerPlacementController : MonoBehaviour
         if (deployController == null)
         {
             deployController = gameObject.AddComponent<TowerDeployController>();
+        }
+
+        ApplyMapBinding();
+    }
+
+    private void ApplyMapBinding()
+    {
+        if (placementValidator != null)
+        {
+            placementValidator.Initialize(mapGenerator, pathfindingService, monsterManager);
+        }
+
+        if (deployController == null)
+        {
+            return;
         }
 
         deployController.Initialize(placementValidator, mapGenerator, battleHUDUI, monsterManager);

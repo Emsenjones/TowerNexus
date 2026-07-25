@@ -12,11 +12,13 @@ public class BattleHUDUI : MonoBehaviour
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text hpText;
-    [SerializeField] private Slider expSlider;
+    [FormerlySerializedAs("expSlider")]
+    [SerializeField] private Slider progressSlider;
     [SerializeField] private Transform pendingDraftContainer;
     [SerializeField] private GameObject pendingDraftItemPrefab;
 
     private readonly List<PendingDraftUIItem> pendingDraftItems = new List<PendingDraftUIItem>();
+    private bool isBattleActive;
 
     public IReadOnlyList<PendingDraftUIItem> PendingDraftItems => pendingDraftItems;
 
@@ -42,25 +44,25 @@ public class BattleHUDUI : MonoBehaviour
         levelText.text = level.ToString();
     }
 
-    public void UpdateExp(float currentExp, float requiredExp)
+    public void UpdateProgress(float currentProgress, float requiredProgress)
     {
-        if (expSlider == null)
+        if (progressSlider == null)
         {
-            Debug.LogWarning("Battle HUD UI cannot update EXP: EXP slider is not assigned.", this);
+            Debug.LogWarning("Battle HUD UI cannot update progress: progress slider is not assigned.", this);
             return;
         }
 
-        if (requiredExp <= 0f)
+        if (requiredProgress <= 0f)
         {
-            expSlider.minValue = 0f;
-            expSlider.maxValue = 1f;
-            expSlider.value = 1f;
+            progressSlider.minValue = 0f;
+            progressSlider.maxValue = 1f;
+            progressSlider.value = 1f;
             return;
         }
 
-        expSlider.minValue = 0f;
-        expSlider.maxValue = requiredExp;
-        expSlider.value = Mathf.Clamp(currentExp, 0f, requiredExp);
+        progressSlider.minValue = 0f;
+        progressSlider.maxValue = requiredProgress;
+        progressSlider.value = Mathf.Clamp(currentProgress, 0f, requiredProgress);
     }
 
     public void UpdateHealth(int currentHealth, int maxHealth)
@@ -81,6 +83,11 @@ public class BattleHUDUI : MonoBehaviour
 
     public void AddPendingDraft(DraftResult draftResult)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         if (draftResult == null || !draftResult.IsValid)
         {
             Debug.LogWarning("Battle HUD UI cannot add pending draft: draft result is invalid.", this);
@@ -109,6 +116,7 @@ public class BattleHUDUI : MonoBehaviour
         }
 
         item.Initialize(draftResult, towerPlacementController);
+        item.BeginBattle();
         pendingDraftItems.Add(item);
     }
 
@@ -148,6 +156,11 @@ public class BattleHUDUI : MonoBehaviour
 
     public void OpenDraft(List<DraftResult> draftResults, Action<DraftResult> onSelected)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         if (draftUI == null)
         {
             Debug.LogWarning("Battle HUD UI cannot open draft: Draft UI is not assigned.", this);
@@ -155,6 +168,64 @@ public class BattleHUDUI : MonoBehaviour
         }
 
         draftUI.OpenDraft(draftResults, onSelected);
+    }
+
+    public void BeginBattle()
+    {
+        isBattleActive = true;
+        draftUI?.BeginBattle();
+
+        for (int i = pendingDraftItems.Count - 1; i >= 0; i--)
+        {
+            PendingDraftUIItem pendingItem = pendingDraftItems[i];
+
+            if (pendingItem == null)
+            {
+                pendingDraftItems.RemoveAt(i);
+                continue;
+            }
+
+            pendingItem.BeginBattle();
+        }
+    }
+
+    public void StopBattle()
+    {
+        isBattleActive = false;
+        draftUI?.StopBattle();
+
+        for (int i = pendingDraftItems.Count - 1; i >= 0; i--)
+        {
+            PendingDraftUIItem pendingItem = pendingDraftItems[i];
+
+            if (pendingItem == null)
+            {
+                pendingDraftItems.RemoveAt(i);
+                continue;
+            }
+
+            pendingItem.StopBattle();
+        }
+    }
+
+    public void ClearStageRuntime()
+    {
+        StopBattle();
+
+        for (int i = pendingDraftItems.Count - 1; i >= 0; i--)
+        {
+            PendingDraftUIItem pendingItem = pendingDraftItems[i];
+
+            if (pendingItem == null)
+            {
+                continue;
+            }
+
+            pendingItem.gameObject.SetActive(false);
+            Destroy(pendingItem.gameObject);
+        }
+
+        pendingDraftItems.Clear();
     }
 
     private void SubscribeToPlayerSystem()
@@ -165,8 +236,9 @@ public class BattleHUDUI : MonoBehaviour
         }
 
         playerSystem.OnLevelChanged += UpdateLevel;
-        playerSystem.OnExpChanged += HandleExpChanged;
+        playerSystem.OnProgressChanged += HandleProgressChanged;
         playerSystem.OnHealthChanged += UpdateHealth;
+        playerSystem.OnBattleStateInitialized += InitializeFromPlayerSystem;
     }
 
     private void UnsubscribeFromPlayerSystem()
@@ -177,8 +249,9 @@ public class BattleHUDUI : MonoBehaviour
         }
 
         playerSystem.OnLevelChanged -= UpdateLevel;
-        playerSystem.OnExpChanged -= HandleExpChanged;
+        playerSystem.OnProgressChanged -= HandleProgressChanged;
         playerSystem.OnHealthChanged -= UpdateHealth;
+        playerSystem.OnBattleStateInitialized -= InitializeFromPlayerSystem;
     }
 
     private void InitializeFromPlayerSystem()
@@ -189,12 +262,12 @@ public class BattleHUDUI : MonoBehaviour
         }
 
         UpdateLevel(playerSystem.CurrentLevel);
-        UpdateExp(playerSystem.CurrentExp, playerSystem.RequiredExp);
+        UpdateProgress(playerSystem.CurrentProgress, playerSystem.RequiredProgress);
         UpdateHealth(playerSystem.CurrentHealth, playerSystem.MaxHealth);
     }
 
-    private void HandleExpChanged(int currentExp, int requiredExp)
+    private void HandleProgressChanged(int currentProgress, int requiredProgress)
     {
-        UpdateExp(currentExp, requiredExp);
+        UpdateProgress(currentProgress, requiredProgress);
     }
 }

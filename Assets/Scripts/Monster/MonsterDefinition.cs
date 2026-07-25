@@ -10,8 +10,6 @@ public class MonsterDefinition : ScriptableObject
     [SerializeField] private GameObject monsterPrefab;
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] private int maxHealth = 1;
-    [SerializeField] private int expReward;
-    [SerializeField] private int damageToPlayer;
     [SerializeField] private string walkingBoolParameterName = "IsWalking";
     [SerializeField] private string getHitTriggerName;
     [SerializeField] private string dieTriggerName;
@@ -26,8 +24,6 @@ public class MonsterDefinition : ScriptableObject
     public GameObject MonsterPrefab => monsterPrefab;
     public float MoveSpeed => moveSpeed;
     public int MaxHealth => maxHealth;
-    public int ExpReward => expReward;
-    public int DamageToPlayer => damageToPlayer;
     public string WalkingBoolParameterName => walkingBoolParameterName;
     public string GetHitTriggerName => getHitTriggerName;
     public string DieTriggerName => dieTriggerName;

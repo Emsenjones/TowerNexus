@@ -23,6 +23,17 @@ public class TowerPlacementValidator : MonoBehaviour
         this.monsterManager = monsterManager;
     }
 
+    public bool IsConfiguredFor(
+        MapGeneratorBehaviour activeMap,
+        AStarPathfindingService activePathfindingService,
+        MonsterManager activeMonsterManager)
+    {
+        return activeMap != null &&
+               mapGenerator == activeMap &&
+               pathfindingService == activePathfindingService &&
+               monsterManager == activeMonsterManager;
+    }
+
     public bool TryGetOccupiedNodes(TowerPlacementPreview preview, out List<GridNodeBehaviour> occupiedNodes)
     {
         occupiedNodes = new List<GridNodeBehaviour>();

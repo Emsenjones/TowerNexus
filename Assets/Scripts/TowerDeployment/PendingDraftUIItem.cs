@@ -25,6 +25,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private bool originalParentUsesLayoutGroup;
     private bool hasStoredPendingPosition;
     private bool isDragVisualActive;
+    private bool isBattleActive;
 
     public DraftResult DraftResult => draftResult;
     public TowerDefinition TowerDefinition => draftResult != null ? draftResult.TowerDefinition : null;
@@ -68,8 +69,24 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
         this.placementController = placementController;
     }
 
+    public void BeginBattle()
+    {
+        isBattleActive = true;
+    }
+
+    public void StopBattle()
+    {
+        isBattleActive = false;
+        RestorePendingPosition();
+    }
+
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         if (eventData != null && eventData.button != PointerEventData.InputButton.Left)
         {
             return;
@@ -102,6 +119,11 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         if (eventData == null || eventData.button != PointerEventData.InputButton.Left)
         {
             return;
@@ -117,6 +139,11 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (!isBattleActive)
+        {
+            return;
+        }
+
         if (eventData == null || eventData.button != PointerEventData.InputButton.Left)
         {
             return;

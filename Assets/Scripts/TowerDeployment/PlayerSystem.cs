@@ -1,102 +1,181 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerSystem : MonoBehaviour
 {
     [SerializeField] private PlayerLevelConfig levelConfig;
     [SerializeField] private int currentLevel = 1;
-    [SerializeField] private int currentExp;
-    [SerializeField] private int maxHealth = 10;
+    [FormerlySerializedAs("currentExp")]
+    [SerializeField] private int currentProgress;
+    private int maxHealth = 1;
     [SerializeField] private int currentHealth = 10;
-    [SerializeField] private bool isDead;
+    [FormerlySerializedAs("isDead")]
+    [SerializeField] private bool isDefeated;
+
+    private readonly List<int> resolvedLevelUps = new List<int>();
+    private bool isBattleActive;
 
     public int CurrentLevel => currentLevel;
-    public int CurrentExp => currentExp;
-    public int RequiredExp => GetRequiredExp();
+    public int CurrentProgress => currentProgress;
+    public int RequiredProgress => GetRequiredProgress();
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
-    public bool IsDead => isDead;
+    public bool IsDefeated => isDefeated;
+    public bool IsBattleActive => isBattleActive;
 
+    public event Action OnBattleStateInitialized;
     public event Action<int> OnLevelChanged;
-    public event Action<int, int> OnExpChanged;
+    public event Action<int, int> OnProgressChanged;
     public event Action<int> OnLevelUp;
     public event Action<int, int> OnHealthChanged;
-    public event Action OnPlayerDead;
+    public event Action OnPlayerDefeated;
 
     private void Awake()
     {
-        EnsureValidRuntimeState();
+        EnsureValidConfigurationAndState();
+        isBattleActive = false;
     }
 
-    public void AddExp(int amount)
+    public bool TryInitializeFreshBattle(int stageMaxHealth)
     {
-        if (amount <= 0)
+        if (stageMaxHealth <= 0)
+        {
+            Debug.LogError(
+                $"Player system cannot initialize a fresh battle with invalid " +
+                $"maximum health {stageMaxHealth}.",
+                this);
+            return false;
+        }
+
+        isBattleActive = false;
+        maxHealth = stageMaxHealth;
+        currentLevel = 1;
+        currentProgress = 0;
+        currentHealth = maxHealth;
+        isDefeated = false;
+        resolvedLevelUps.Clear();
+        OnBattleStateInitialized?.Invoke();
+        return true;
+    }
+
+    public void BeginBattle()
+    {
+        if (isDefeated)
+        {
+            Debug.LogWarning("Player system cannot begin a battle while the player is defeated. Initialize fresh battle state first.", this);
+            return;
+        }
+
+        isBattleActive = true;
+    }
+
+    public void StopBattle()
+    {
+        isBattleActive = false;
+    }
+
+    public bool TryResolveMonster(bool reachedTarget)
+    {
+        if (!isBattleActive || isDefeated)
+        {
+            return false;
+        }
+
+        EnsureValidConfigurationAndState();
+        resolvedLevelUps.Clear();
+
+        currentProgress += 1;
+        ResolveLevelThresholds(resolvedLevelUps);
+
+        bool healthChanged = reachedTarget;
+
+        if (healthChanged)
+        {
+            currentHealth = Mathf.Max(0, currentHealth - 1);
+        }
+
+        bool enteredDefeat = currentHealth <= 0;
+
+        if (enteredDefeat)
+        {
+            isDefeated = true;
+        }
+
+        PublishResolvedState(healthChanged, enteredDefeat);
+        return true;
+    }
+
+    public void DebugAddProgress(int amount)
+    {
+        if (amount <= 0 || !isBattleActive || isDefeated)
         {
             return;
         }
 
-        EnsureValidRuntimeState();
+        EnsureValidConfigurationAndState();
+        resolvedLevelUps.Clear();
+        currentProgress += amount;
+        ResolveLevelThresholds(resolvedLevelUps);
 
-        currentExp += amount;
+        OnProgressChanged?.Invoke(currentProgress, RequiredProgress);
 
-        if (!TryLevelUp())
+        for (int i = 0; i < resolvedLevelUps.Count; i++)
         {
-            OnExpChanged?.Invoke(currentExp, RequiredExp);
+            int resolvedLevel = resolvedLevelUps[i];
+            OnLevelChanged?.Invoke(resolvedLevel);
+            OnLevelUp?.Invoke(resolvedLevel);
         }
     }
 
-    public void DebugAddExp(int amount)
+    private void PublishResolvedState(bool healthChanged, bool enteredDefeat)
     {
-        AddExp(amount);
-    }
+        OnProgressChanged?.Invoke(currentProgress, RequiredProgress);
 
-    public void ApplyDamage(int damage)
-    {
-        if (damage <= 0 || isDead)
+        for (int i = 0; i < resolvedLevelUps.Count; i++)
         {
+            OnLevelChanged?.Invoke(resolvedLevelUps[i]);
+        }
+
+        if (healthChanged)
+        {
+            OnHealthChanged?.Invoke(currentHealth, maxHealth);
+        }
+
+        if (enteredDefeat)
+        {
+            OnPlayerDefeated?.Invoke();
             return;
         }
 
-        EnsureValidRuntimeState();
-
-        currentHealth = Mathf.Max(0, currentHealth - damage);
-        OnHealthChanged?.Invoke(currentHealth, maxHealth);
-
-        if (currentHealth > 0)
+        for (int i = 0; i < resolvedLevelUps.Count; i++)
         {
-            return;
+            OnLevelUp?.Invoke(resolvedLevelUps[i]);
         }
-
-        isDead = true;
-        OnPlayerDead?.Invoke();
     }
 
-    private bool TryLevelUp()
+    private void ResolveLevelThresholds(List<int> levelUps)
     {
-        bool leveledUp = false;
-
-        while (TryGetRequiredExpForCurrentLevel(out int requiredExp) && currentExp >= requiredExp)
+        while (TryGetRequiredProgressForCurrentLevel(out int requiredProgress) &&
+               currentProgress >= requiredProgress)
         {
-            currentExp -= requiredExp;
+            currentProgress -= requiredProgress;
             currentLevel++;
-            leveledUp = true;
-
-            OnLevelUp?.Invoke(currentLevel);
-            OnLevelChanged?.Invoke(currentLevel);
-            OnExpChanged?.Invoke(currentExp, RequiredExp);
+            levelUps.Add(currentLevel);
         }
-
-        return leveledUp;
     }
 
-    private int GetRequiredExp()
+    private int GetRequiredProgress()
     {
-        return TryGetRequiredExpForCurrentLevel(out int requiredExp) ? requiredExp : 0;
+        return TryGetRequiredProgressForCurrentLevel(out int requiredProgress)
+            ? requiredProgress
+            : 0;
     }
 
-    private bool TryGetRequiredExpForCurrentLevel(out int requiredExp)
+    private bool TryGetRequiredProgressForCurrentLevel(out int requiredProgress)
     {
-        requiredExp = 0;
+        requiredProgress = 0;
 
         if (levelConfig == null)
         {
@@ -104,10 +183,10 @@ public class PlayerSystem : MonoBehaviour
             return false;
         }
 
-        return levelConfig.TryGetRequiredExpForLevel(currentLevel, out requiredExp);
+        return levelConfig.TryGetRequiredProgressForLevel(currentLevel, out requiredProgress);
     }
 
-    private void EnsureValidRuntimeState()
+    private void EnsureValidConfigurationAndState()
     {
         if (currentLevel < 1)
         {
@@ -115,10 +194,10 @@ public class PlayerSystem : MonoBehaviour
             currentLevel = 1;
         }
 
-        if (currentExp < 0)
+        if (currentProgress < 0)
         {
-            Debug.LogWarning($"Player EXP was invalid ({currentExp}) and has been reset to 0.", this);
-            currentExp = 0;
+            Debug.LogWarning($"Player progress was invalid ({currentProgress}) and has been reset to 0.", this);
+            currentProgress = 0;
         }
 
         if (maxHealth <= 0)
@@ -127,19 +206,11 @@ public class PlayerSystem : MonoBehaviour
             maxHealth = 1;
         }
 
-        if (currentHealth <= 0 && !isDead)
+        currentHealth = Mathf.Clamp(currentHealth, 0, maxHealth);
+
+        if (currentHealth <= 0 && !isDefeated)
         {
             currentHealth = maxHealth;
-        }
-
-        if (currentHealth > maxHealth)
-        {
-            currentHealth = maxHealth;
-        }
-
-        if (currentHealth < 0)
-        {
-            currentHealth = 0;
         }
     }
 }

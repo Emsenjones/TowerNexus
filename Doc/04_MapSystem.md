@@ -38,6 +38,8 @@ The Map is an authored rectangular grid on the NodesRoot local XZ plane.
 Node Local Position = (Grid X * Node Size, 0, Grid Y * Node Size)
 ```
 
+Map Root is the default framing origin for the complete grid. Generate Map translates NodesRoot so the midpoint between the first and last Grid Node centers coincides with Map Root, without changing any Grid Position or Grid Node local position.
+
 World-position queries convert through NodesRoot local space before resolving the coordinate. Map Root or NodesRoot may be translated or rotated without changing grid identity or neighbor semantics.
 
 Equivalent engines must preserve the grid-local coordinate frame, spacing, and neighbor semantics even when their world axes differ. Multi-layer, irregular, and procedural Map rules are outside the current contract.

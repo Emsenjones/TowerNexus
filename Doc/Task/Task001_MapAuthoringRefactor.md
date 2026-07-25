@@ -113,6 +113,8 @@ Node-dictionary rebuilding is private/internal and is not a designer operation.
 - Grid X maps to NodesRoot local X.
 - Grid Y maps to NodesRoot local Z.
 - A generated node's local position is `(x * NodeSize, 0, y * NodeSize)`.
+- Map Root is the default grid-center framing origin.
+- Generate Map translates NodesRoot so the midpoint between Grid Node `(0, 0)` and Grid Node `(Width - 1, Height - 1)` coincides with Map Root.
 - World-position lookup first uses `NodesRoot.InverseTransformPoint(worldPosition)`, then rounds local X and local Z by Node Size.
 - Translating or rotating Map Root or NodesRoot must not invalidate queries.
 
@@ -242,6 +244,7 @@ Do not modify:
 - A* no longer rebuilds or inspects the dictionary directly.
 - Placement simulation, occupancy commit, Runtime Tile Refresh, and Monster recalculation preserve the approved order.
 - Programmatic Map validation aggregates errors and warnings and is reusable by Task003.
+- Generated grids place their midpoint at Map Root without changing Grid Positions or Node local positions.
 - Rebuild Node Dictionary is not exposed as a designer action.
 - No legacy compatibility or migration path is added.
 
