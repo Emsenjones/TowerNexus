@@ -92,6 +92,10 @@ Create one `GameFlowUIRoot` with stable references to:
 - StageVictoryWindowView
 - StageDefeatWindowView
 
+GameFlowUIRoot remains active for the complete application lifecycle. A state
+with no fixed Game Flow presentation deactivates all four child views without
+deactivating the integration root or removing its state subscription.
+
 It observes Task003 state changes and applies one presentation state:
 
 | GameFlowState | Active Game Flow Presentation |
@@ -110,6 +114,14 @@ Before activating a new view:
 - Configure the target view from current read-only Game Flow data.
 - Enable target interaction only after configuration completes.
 
+State reconciliation is a presentation exception boundary. If hiding,
+Introduction population, target configuration, or activation throws:
+
+- Catch and log the presentation failure.
+- Hide and lock every fixed Game Flow view.
+- Do not let the exception escape into GameFlowController's guarded transition.
+- Do not mutate Game Flow state or manufacture another intent.
+
 GameFlowUIRoot forwards view intent into the matching GameFlowController request. It does not duplicate state validation.
 
 ## 7. Main Menu View
@@ -117,7 +129,7 @@ GameFlowUIRoot forwards view intent into the matching GameFlowController request
 The Main Menu is one full-screen interaction surface containing:
 
 - One Image filling the Canvas
-- One player-facing start message: `点击任意位置游戏开始`
+- One player-facing start message: `Tap anywhere to start`
 - One interaction covering the full Image
 
 The start message performs a slow repeating alpha pulse.
@@ -223,12 +235,12 @@ It contains:
 
 When another Stage exists:
 
-- Button label is `下一关`.
+- Button label is `Next Stage`.
 - Clicking emits Continue After Victory.
 
 When the completed Stage is final:
 
-- Button label is `返回主界面`.
+- Button label is `Back to Main Menu`.
 - Clicking still emits the same Continue After Victory intent.
 - Task003 decides that final Victory returns to MainMenu.
 
@@ -259,6 +271,7 @@ The view does not reset Player health or recompose the Stage directly.
 - Re-enable buttons only when the corresponding view is configured for a fresh valid state.
 - A hidden or inactive view cannot forward intent.
 - Re-enabling GameFlowUIRoot must reconcile to the current GameFlowState without duplicating listeners or transient items.
+- StagePreparing and Battle hide all four fixed child views while GameFlowUIRoot remains active and subscribed.
 
 ## 14. Battle UI Boundary
 
@@ -318,6 +331,13 @@ Report at minimum:
 
 Validation reports authoring problems without creating substitute UI, choosing a Stage, or starting Battle.
 
+Reference validation returns success or failure before Game Flow UI subscribes
+or reconciles. Missing core wiring leaves all available views hidden and locked,
+and GameFlowUIRoot creates no controller or view subscriptions. Introduction
+validation checks that its item prefab contains StageIntroductionUIItem and that
+the item has assigned name, description, and icon presentation references before
+any Stage content is populated.
+
 ## 17. Out Of Scope
 
 - Generic UIManager
@@ -347,8 +367,8 @@ Validation reports authoring problems without creating substitute UI, choosing a
 - Confirm starts the already prepared Stage exactly once.
 - A Stage without presentable Introduction content begins without an empty window.
 - Victory displays only StageVictoryWindowView.
-- Non-final Victory label is `下一关`.
-- Final Victory label is `返回主界面`.
+- Non-final Victory label is `Next Stage`.
+- Final Victory label is `Back to Main Menu`.
 - Defeat displays only StageDefeatWindowView.
 - Retry prepares the same Stage with fresh Player health.
 - Return releases current Stage runtime and shows MainMenuView.

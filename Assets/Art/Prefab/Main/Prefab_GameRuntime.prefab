@@ -1050,7 +1050,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3177142286291502680}
   m_Layer: 5
-  m_Name: BattleRoot
+  m_Name: BattleUIRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1707,7 +1707,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6348243497313832961}
   m_Layer: 5
-  m_Name: GameFlowRoot
+  m_Name: GameFlowUIRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
