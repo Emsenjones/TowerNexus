@@ -39,7 +39,7 @@ public class MonsterStatusUIItem : MonoBehaviour
         boundMonster.OnDestroyed += HandleMonsterRemoved;
         boundMonster.OnBuffStateChanged += HandleMonsterBuffStateChanged;
 
-        RefreshHealth(boundMonster.CurrentHealth, boundMonster.Definition != null ? boundMonster.Definition.MaxHealth : 0);
+        RefreshHealth(boundMonster.CurrentHealth, boundMonster.MaxHealth);
         RefreshBuffIcons(boundMonster.ActiveBuffSnapshots);
         UpdatePosition();
     }

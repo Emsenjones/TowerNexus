@@ -111,7 +111,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e72828944a3941e8a279205d0be4ad8f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
-  definition: {fileID: 11400000, guid: d1eec0e85cdc04f7583c3ec303854e0b, type: 2}
+  displayName: Orc
+  moveSpeed: 0.25
+  maxHealth: 300
+  walkingBoolParameterName: IsWalking
+  dieTriggerName: Die
+  deathDelay: 2
+  statusUiOffset: {x: 0, y: 0.8, z: 0}
+  damageNumberOffset: {x: 0, y: 0, z: 0}
   animator: {fileID: 2971079900529067286}
   hitFeedback: {fileID: -1253240442752861245}
   buffVisualController: {fileID: 6689644273834634516}
@@ -129,6 +136,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  getHitTriggerName: GetHit
+  enableHitFlash: 1
+  hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
+  hitFlashDuration: 0.08
   animator: {fileID: 2971079900529067286}
   hitFlashRenderers:
   - {fileID: 6660552170839345031}

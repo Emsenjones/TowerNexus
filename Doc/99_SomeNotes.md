@@ -87,10 +87,11 @@
    11. *Refactor TowerCombatDefinition and speparet AttackConfig based on AttackArchetype;
    12. *Magic tower and Drone tower add AttackEntity maximum count limitation;
 8. Battle stage framework implementation;
-9. Level display window;
-10. Camera movement;
-11. Player Level up by resolving monsters;
-12. Monster route display;
-13. Design a function which players can remove Tower pending items;
-14. Tap tower to pop up TowerInfoWindow;
-15. Develop Monster & Projectile object pool;
+9. Monster definition refactor;
+10. Level display window;
+11. Camera movement;
+12. Player Level up by resolving monsters;
+13. Monster route display;
+14. Design a function which players can remove Tower pending items;
+15. Tap tower to pop up TowerInfoWindow;
+16. Develop Monster & Projectile object pool;

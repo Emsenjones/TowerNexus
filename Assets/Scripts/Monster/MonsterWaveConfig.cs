@@ -94,15 +94,24 @@ public class MonsterWaveConfig : ScriptableObject
             return;
         }
 
-        if (spawnEntry.MonsterDefinition == null)
+        MonsterBehaviour monsterPrefab = spawnEntry.MonsterPrefab;
+
+        if (monsterPrefab == null)
         {
-            result.AddError($"{entryLabel} has no Monster Definition.");
+            result.AddError($"{entryLabel} has no Monster runtime prefab.");
         }
-        else if (!spawnEntry.MonsterDefinition.IsValid())
+        else if (monsterPrefab.transform.parent != null)
         {
             result.AddError(
-                $"{entryLabel} Monster Definition " +
-                $"'{spawnEntry.MonsterDefinition.name}' failed owner validation.");
+                $"{entryLabel} Monster runtime prefab '{monsterPrefab.name}' " +
+                "must reference MonsterBehaviour on the prefab root.");
+        }
+        else if (!monsterPrefab.TryValidateAuthoredConfiguration(
+                     out string monsterFailureReason))
+        {
+            result.AddError(
+                $"{entryLabel} Monster runtime prefab '{monsterPrefab.name}' " +
+                $"failed owner validation: {monsterFailureReason}");
         }
 
         if (spawnEntry.Count <= 0)

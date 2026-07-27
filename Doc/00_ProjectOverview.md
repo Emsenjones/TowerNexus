@@ -86,7 +86,6 @@ Current domain definitions include:
 - StageDefinition
 - MapVisualTheme
 - MonsterWaveConfig
-- MonsterDefinition
 - TowerDefinition and TowerLevelConfig
 - TowerUpgradeDefinition
 - ProjectileConfig
@@ -106,6 +105,21 @@ StageDefinition
     + Optional Stage Introduction Content
 ```
 
+Monster Wave configuration follows this relationship:
+
+```text
+MonsterWaveConfig
+    + Ordered Waves
+        + Ordered Spawn Entries
+            + Monster Runtime Template
+            + Count
+            + Spawn Interval
+```
+
+The demo uses one directly referenced runtime template for each unique Monster
+type. Separate balance definitions or multiple stat variants sharing one visual
+Monster are deferred until the content model requires them.
+
 The demo is expected to contain at least five independently authored StageDefinitions. Each battle composes one selected StageDefinition.
 
 Combat configuration follows this relationship:
@@ -123,7 +137,7 @@ TowerUpgradeDefinition
     + Optional Elemental Identity
 ```
 
-Definitions store reusable authored truth. Per-instance runtime state, consumed history, timers, pending actions, and active entity state must not be written back into reusable definitions.
+Definitions and runtime templates store reusable authored truth. Per-instance runtime state, consumed history, timers, pending actions, and active entity state must not be written back into reusable authored content.
 
 ---
 

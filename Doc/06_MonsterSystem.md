@@ -24,22 +24,35 @@ Monster System does not select the Stage, modify Player state directly, decide T
 
 ---
 
-# 2. Monster Definition
+# 2. Monster Runtime Template
 
-MonsterDefinition stores reusable Monster content. A runtime Monster instance owns current health, path state, movement state, Buff state, and resolution state.
+The demo uses one directly referenced Monster runtime template for each unique
+Monster type. The template owns that type's reusable authored baseline and
+presentation configuration. A spawned Monster instance owns current health,
+path state, movement state, Buff state, and resolution state.
 
 | Data | Contract |
 |---|---|
 | Display Name | Player-facing Monster name |
-| Runtime Template | Reusable authored Monster object |
 | Move Speed | Base movement speed |
 | Maximum Health | Initial health capacity |
 | Hit Reference | Optional authored reference point for targeting and presentation |
-| Presentation Configuration | Animation identities, visual feedback values, and presentation offsets required by this Monster type |
+| Movement And Death Presentation | Animation identities and death-presentation timing required by this Monster type |
+| Hit Feedback Configuration | Hit-reaction and flash authoring owned by the template's hit-feedback behavior |
+| Status UI Offset | Monster-specific placement offset for the combined health and active-Buff status display |
+| Damage Number Offset | Monster-specific placement offset for transient damage-number presentation |
 
-A stable Monster identifier is not required while content is referenced directly. One should be added only when persistence, external data, localization, or cross-session lookup requires it.
+Spawn Entries reference the runtime template directly. A separate Monster data
+definition is not required while one template represents one unique demo
+Monster type. Shared visual templates with multiple independent stat profiles
+are deferred until a concrete variant requirement exists.
 
-Runtime values must not be stored back into MonsterDefinition.
+A stable Monster identifier is not required while content is referenced
+directly. One should be added only when persistence, external data,
+localization, or cross-session lookup requires it.
+
+Runtime values must not be stored back into the reusable template or its
+authored component configuration.
 
 ---
 
@@ -58,7 +71,7 @@ Each Spawn Entry contains:
 
 | Data | Contract |
 |---|---|
-| Monster Definition | Monster type to spawn |
+| Monster Runtime Template | Unique Monster type to spawn |
 | Count | Number of instances |
 | Spawn Interval | Time between adjacent instances inside this entry; it adds no delay after the entry's final instance |
 
@@ -96,13 +109,19 @@ Arrived and Dead are terminal gameplay states. A terminal Monster cannot receive
 Spawn behavior is:
 
 ```text
-Create Monster At Spawn Node
-    -> Initialize Runtime State
-    -> Resolve Path To Target Node
+Resolve Required Spawn And Target Data
+    -> Establish A Usable Initial Route
+    -> Create The Authored Monster Template At Spawn
+    -> Initialize Runtime State From Its Authored Baseline
+    -> Register The Monster As Alive And Unresolved
     -> Enter Walk
 ```
 
-Failure to establish required Map data or an initial route is invalid runtime composition and must not silently start ordinary movement.
+Failure to establish required Map data, a usable initial route, a valid runtime
+instance, or alive-Monster registration is invalid runtime composition. Any
+partially created or registered Monster is cleaned up, Wave execution stops
+without normal-completion reporting, and Battle coordination receives a
+result-neutral technical failure.
 
 ## 4.2 Death
 
@@ -289,10 +308,9 @@ Exact typography, easing, animation channels, preview tools, and pooling strateg
 
 Monster and Wave authoring validation should report at minimum:
 
-- Missing Monster runtime template
+- Missing or invalid Monster runtime template in a Spawn Entry
 - Non-positive maximum health
 - Negative move speed, count, delay, or interval where invalid
-- Missing MonsterDefinition in a Spawn Entry
 - Empty or invalid Wave content
 - Normal spawning completion reported after cancellation, stop, or invalid Wave execution
 - Post-resolution alive-Monster state reported before Player resolution completes
@@ -309,6 +327,7 @@ Validation reports authored errors without silently rewriting content.
 Current scope includes:
 
 - One Spawn and one Target
+- One directly referenced runtime template per unique demo Monster type
 - Stage-selected Wave execution
 - Normal spawning-completion and post-resolution alive-Monster facts
 - A* pathfinding and dynamic recalculation
@@ -320,6 +339,7 @@ Current scope includes:
 
 Deferred topics include:
 
+- Multiple independent stat profiles sharing one visual Monster template
 - Multiple Spawn Routes and multiple Targets
 - Route identifiers and route-specific Wave entries
 - Boss and elite behavior

@@ -4,17 +4,17 @@ using UnityEngine;
 [Serializable]
 public class MonsterSpawnEntry
 {
-    [SerializeField] private MonsterDefinition monsterDefinition;
+    [SerializeField] private MonsterBehaviour monsterPrefab;
     [SerializeField] private int count = 1;
     [SerializeField] private float spawnInterval = 1f;
 
-    public MonsterDefinition MonsterDefinition => monsterDefinition;
+    public MonsterBehaviour MonsterPrefab => monsterPrefab;
     public int Count => count;
     public float SpawnInterval => spawnInterval;
 
     public bool IsValid()
     {
-        if (monsterDefinition == null)
+        if (monsterPrefab == null)
         {
             return false;
         }

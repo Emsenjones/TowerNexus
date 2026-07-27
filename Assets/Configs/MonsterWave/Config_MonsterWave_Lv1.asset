@@ -16,36 +16,36 @@ MonoBehaviour:
   - waveId: 1
     waveDelay: 5
     spawnEntries:
-    - monsterDefinition: {fileID: 11400000, guid: db8d70b2ee8114d0f99b92710a526ca7, type: 2}
+    - monsterPrefab: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
       count: 5
       spawnInterval: 2.5
-    - monsterDefinition: {fileID: 11400000, guid: 161fe01e8671842009e0d613b0a7b9da, type: 2}
+    - monsterPrefab: {fileID: 7699745774445016845, guid: 62fd2f6db0c024c02a5b236fc72ec53e, type: 3}
       count: 6
       spawnInterval: 2
-    - monsterDefinition: {fileID: 11400000, guid: ac0dd61ab1e094ab2970e9e64a9eff79, type: 2}
+    - monsterPrefab: {fileID: 3082340063008460101, guid: cbabe32a21d9843728ed0b40c5d4dd16, type: 3}
       count: 5
       spawnInterval: 2.5
   - waveId: 2
     waveDelay: 5
     spawnEntries:
-    - monsterDefinition: {fileID: 11400000, guid: 5ffd181566bc444e7b7942a0aeebdb44, type: 2}
+    - monsterPrefab: {fileID: 5918628833992865121, guid: fea114b78b71741fa89ac0ed135e6a17, type: 3}
       count: 5
       spawnInterval: 2.5
-    - monsterDefinition: {fileID: 11400000, guid: b761deff0969f465981d947df888786e, type: 2}
+    - monsterPrefab: {fileID: 5848973733325559065, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
       count: 5
       spawnInterval: 2.5
-    - monsterDefinition: {fileID: 11400000, guid: bc23fca48772e43708767f0c1a3c4c90, type: 2}
+    - monsterPrefab: {fileID: 5918628833992865121, guid: 013fd63c6df284007a43fae2a2ab273e, type: 3}
       count: 5
       spawnInterval: 2.5
   - waveId: 3
     waveDelay: 6
     spawnEntries:
-    - monsterDefinition: {fileID: 11400000, guid: d2993ab2f86f64a8eabd36088246867d, type: 2}
+    - monsterPrefab: {fileID: 6147167272419788473, guid: 11ae00977065c425f8298ca0e5e60680, type: 3}
       count: 5
       spawnInterval: 2.5
-    - monsterDefinition: {fileID: 11400000, guid: d865b995ba1b74b0b8985767141709f8, type: 2}
+    - monsterPrefab: {fileID: 5918628833992865121, guid: 23ee389ca1731497d91b2390db4e1745, type: 3}
       count: 5
       spawnInterval: 2.5
-    - monsterDefinition: {fileID: 11400000, guid: d1eec0e85cdc04f7583c3ec303854e0b, type: 2}
+    - monsterPrefab: {fileID: 5389729251801513952, guid: ef8b8f95e97d742a5a4982c0e73bb673, type: 3}
       count: 5
       spawnInterval: 2.5

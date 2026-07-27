@@ -255,7 +255,7 @@ public class MonsterSpawner : MonoBehaviour
                     }
 
                     if (!TrySpawnMonster(
-                            spawnEntry.MonsterDefinition,
+                            spawnEntry.MonsterPrefab,
                             out string failureReason))
                     {
                         FailSpawnExecution(
@@ -284,7 +284,7 @@ public class MonsterSpawner : MonoBehaviour
     }
 
     private bool TrySpawnMonster(
-        MonsterDefinition monsterDefinition,
+        MonsterBehaviour monsterPrefab,
         out string failureReason)
     {
         if (!isBattleActive)
@@ -293,9 +293,26 @@ public class MonsterSpawner : MonoBehaviour
             return false;
         }
 
-        if (monsterDefinition == null || !monsterDefinition.IsValid())
+        if (monsterPrefab == null)
         {
-            failureReason = "the Monster Definition is invalid.";
+            failureReason = "the Monster runtime prefab is missing.";
+            return false;
+        }
+
+        if (monsterPrefab.transform.parent != null)
+        {
+            failureReason =
+                $"Monster runtime prefab '{monsterPrefab.name}' must reference " +
+                "MonsterBehaviour on the prefab root.";
+            return false;
+        }
+
+        if (!monsterPrefab.TryValidateAuthoredConfiguration(
+                out string monsterFailureReason))
+        {
+            failureReason =
+                $"Monster runtime prefab '{monsterPrefab.name}' is invalid: " +
+                monsterFailureReason;
             return false;
         }
 
@@ -337,23 +354,30 @@ public class MonsterSpawner : MonoBehaviour
             return false;
         }
 
-        GameObject monsterObject = Instantiate(
-            monsterDefinition.MonsterPrefab,
+        MonsterBehaviour monsterBehaviour = Instantiate(
+            monsterPrefab,
             spawnNode.WorldPosition,
             Quaternion.identity,
             monsterRoot
         );
 
-        if (!monsterObject.TryGetComponent(out MonsterBehaviour monsterBehaviour))
+        if (monsterBehaviour == null)
         {
-            string monsterObjectName = monsterObject.name;
-            Destroy(monsterObject);
             failureReason =
-                $"prefab instance '{monsterObjectName}' has no MonsterBehaviour.";
+                $"Monster runtime prefab '{monsterPrefab.name}' could not be instantiated.";
             return false;
         }
 
-        monsterBehaviour.Initialize(monsterDefinition);
+        if (!monsterBehaviour.TryInitializeRuntime(
+                out string initializationFailureReason))
+        {
+            monsterBehaviour.ForceCleanup();
+            failureReason =
+                $"Monster runtime initialization failed: " +
+                initializationFailureReason;
+            return false;
+        }
+
         monsterBehaviour.SetRuntimeReferences(monsterManager, damageNumberManager);
         monsterBehaviour.SetCurrentNode(spawnNode);
         monsterBehaviour.SetTargetNode(targetNode);
@@ -366,7 +390,7 @@ public class MonsterSpawner : MonoBehaviour
             return false;
         }
 
-        CreateStatusUi(monsterBehaviour, monsterDefinition);
+        CreateStatusUi(monsterBehaviour);
         monsterBehaviour.SetPath(initialPath);
         failureReason = string.Empty;
         return true;
@@ -444,9 +468,9 @@ public class MonsterSpawner : MonoBehaviour
         spawnExecutionTerminalState = SpawnExecutionTerminalState.None;
     }
 
-    private void CreateStatusUi(MonsterBehaviour monsterBehaviour, MonsterDefinition monsterDefinition)
+    private void CreateStatusUi(MonsterBehaviour monsterBehaviour)
     {
-        if (monsterBehaviour == null || monsterDefinition == null)
+        if (monsterBehaviour == null)
         {
             return;
         }
@@ -457,6 +481,8 @@ public class MonsterSpawner : MonoBehaviour
             return;
         }
 
-        statusUiManager.CreateStatusUi(monsterBehaviour, monsterDefinition.HealthBarOffset);
+        statusUiManager.CreateStatusUi(
+            monsterBehaviour,
+            monsterBehaviour.StatusUiOffset);
     }
 }

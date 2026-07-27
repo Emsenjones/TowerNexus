@@ -12,27 +12,56 @@ public class MonsterHitFeedback : MonoBehaviour
 
     [SerializeField] private Animator animator;
     [SerializeField] private Renderer[] hitFlashRenderers;
+    [SerializeField] private string getHitTriggerName;
+    [SerializeField] private bool enableHitFlash = true;
+    [SerializeField] private Color hitFlashColor = Color.red;
+    [SerializeField] private float hitFlashDuration = 0.08f;
 
     private readonly List<MaterialColorBinding> colorBindings = new List<MaterialColorBinding>();
-    private MonsterDefinition definition;
     private Coroutine flashRoutine;
 
-    public void Initialize(MonsterDefinition definition)
+    public bool TryInitialize(out string failureReason)
     {
         StopFeedback();
-        this.definition = definition;
         CacheAnimator();
         CacheRenderers();
         CacheOriginalColors();
+
+        if (!TryValidateAuthoredConfiguration(out failureReason))
+        {
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public bool TryValidateAuthoredConfiguration(out string failureReason)
+    {
+        if (hitFlashDuration < 0f)
+        {
+            failureReason =
+                $"Hit Flash Duration cannot be negative; found {hitFlashDuration}.";
+            return false;
+        }
+
+        Animator resolvedAnimator =
+            animator != null ? animator : GetComponentInChildren<Animator>(true);
+
+        if (!string.IsNullOrEmpty(getHitTriggerName) &&
+            resolvedAnimator == null)
+        {
+            failureReason =
+                "Get-Hit Animator Trigger requires an Animator.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
     }
 
     public void PlayHitFeedback()
     {
-        if (definition == null)
-        {
-            return;
-        }
-
         PlayHitAnimation();
         PlayHitFlash();
     }
@@ -136,17 +165,17 @@ public class MonsterHitFeedback : MonoBehaviour
 
     private void PlayHitAnimation()
     {
-        if (animator == null || string.IsNullOrEmpty(definition.GetHitTriggerName))
+        if (animator == null || string.IsNullOrEmpty(getHitTriggerName))
         {
             return;
         }
 
-        if (!HasAnimatorTrigger(definition.GetHitTriggerName))
+        if (!HasAnimatorTrigger(getHitTriggerName))
         {
             return;
         }
 
-        animator.SetTrigger(definition.GetHitTriggerName);
+        animator.SetTrigger(getHitTriggerName);
     }
 
     private bool HasAnimatorTrigger(string triggerName)
@@ -173,7 +202,9 @@ public class MonsterHitFeedback : MonoBehaviour
 
     private void PlayHitFlash()
     {
-        if (!definition.EnableHitFlash || definition.HitFlashDuration <= 0f || colorBindings.Count == 0)
+        if (!enableHitFlash ||
+            hitFlashDuration <= 0f ||
+            colorBindings.Count == 0)
         {
             return;
         }
@@ -190,8 +221,8 @@ public class MonsterHitFeedback : MonoBehaviour
 
     private IEnumerator FlashRoutine()
     {
-        ApplyColor(definition.HitFlashColor);
-        yield return new WaitForSeconds(definition.HitFlashDuration);
+        ApplyColor(hitFlashColor);
+        yield return new WaitForSeconds(hitFlashDuration);
         RestoreOriginalColors();
         flashRoutine = null;
     }

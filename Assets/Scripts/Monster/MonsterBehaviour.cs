@@ -5,7 +5,16 @@ using Sirenix.OdinInspector;
 
 public class MonsterBehaviour : MonoBehaviour
 {
-    [SerializeField] private MonsterDefinition definition;
+    [SerializeField] private string displayName;
+    [SerializeField] private float moveSpeed = 1f;
+    [SerializeField] private int maxHealth = 1;
+    [SerializeField] private string walkingBoolParameterName = "IsWalking";
+    [SerializeField] private string dieTriggerName;
+    [SerializeField] private float deathDelay = 1f;
+    [SerializeField] private Vector3 statusUiOffset =
+        new Vector3(0f, 1.5f, 0f);
+    [SerializeField] private Vector3 damageNumberOffset =
+        new Vector3(0f, 1.5f, 0f);
     private MonsterManager monsterManager;
     private DamageNumberManager damageNumberManager;
     [ShowInInspector, ReadOnly] private int currentHealth;
@@ -33,9 +42,13 @@ public class MonsterBehaviour : MonoBehaviour
 
     private static readonly IReadOnlyList<MonsterBuffStateSnapshot> EmptyBuffSnapshots = Array.Empty<MonsterBuffStateSnapshot>();
 
-    public MonsterDefinition Definition => definition;
+    public string DisplayName =>
+        string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public int CurrentHealth => currentHealth;
+    public int MaxHealth => maxHealth;
     public float CurrentMoveSpeed => currentMoveSpeed;
+    public Vector3 StatusUiOffset => statusUiOffset;
+    public Vector3 DamageNumberOffset => damageNumberOffset;
     public Animator Animator => animator;
     public Transform HitAnchor => hitAnchor != null ? hitAnchor : transform;
     public GridNodeBehaviour CurrentNode => currentNode;
@@ -58,16 +71,14 @@ public class MonsterBehaviour : MonoBehaviour
     public event Action<MonsterBehaviour, int, int> OnHealthChanged;
     public event Action<MonsterBehaviour> OnBuffStateChanged;
 
-    public void Initialize(MonsterDefinition definition)
+    public bool TryInitializeRuntime(out string failureReason)
     {
-        if (definition == null)
+        if (!TryValidateAuthoredConfiguration(out failureReason))
         {
-            Debug.LogWarning("Monster behaviour cannot initialize: monster definition is null.", this);
-            return;
+            return false;
         }
 
-        this.definition = definition;
-        currentHealth = definition.MaxHealth;
+        currentHealth = maxHealth;
         ClearMovementControls();
         EnsureBuffRuntime();
         buffRuntime.Clear();
@@ -78,8 +89,69 @@ public class MonsterBehaviour : MonoBehaviour
         CacheAnimator();
         RefreshEffectiveMoveSpeed();
         CacheHitFeedback();
-        hitFeedback?.Initialize(definition);
+
+        if (!hitFeedback.TryInitialize(out failureReason))
+        {
+            return false;
+        }
+
         NotifyHealthChanged();
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public bool TryValidateAuthoredConfiguration(out string failureReason)
+    {
+        if (maxHealth <= 0)
+        {
+            failureReason =
+                $"Maximum Health must be positive; found {maxHealth}.";
+            return false;
+        }
+
+        if (moveSpeed < 0f)
+        {
+            failureReason =
+                $"Move Speed cannot be negative; found {moveSpeed}.";
+            return false;
+        }
+
+        if (deathDelay < 0f)
+        {
+            failureReason =
+                $"Death Delay cannot be negative; found {deathDelay}.";
+            return false;
+        }
+
+        Animator resolvedAnimator =
+            animator != null ? animator : GetComponentInChildren<Animator>(true);
+
+        if (resolvedAnimator == null)
+        {
+            failureReason = "an Animator is required.";
+            return false;
+        }
+
+        MonsterHitFeedback resolvedHitFeedback =
+            hitFeedback != null
+                ? hitFeedback
+                : GetComponentInChildren<MonsterHitFeedback>(true);
+
+        if (resolvedHitFeedback == null)
+        {
+            failureReason = "MonsterHitFeedback is required.";
+            return false;
+        }
+
+        if (!resolvedHitFeedback.TryValidateAuthoredConfiguration(
+                out failureReason))
+        {
+            failureReason = $"MonsterHitFeedback is invalid: {failureReason}";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
     }
 
     public void SetRuntimeReferences(
@@ -321,12 +393,7 @@ public class MonsterBehaviour : MonoBehaviour
     {
         if (hitFeedback == null)
         {
-            hitFeedback = GetComponentInChildren<MonsterHitFeedback>();
-        }
-
-        if (hitFeedback == null)
-        {
-            hitFeedback = gameObject.AddComponent<MonsterHitFeedback>();
+            hitFeedback = GetComponentInChildren<MonsterHitFeedback>(true);
         }
     }
 
@@ -339,7 +406,7 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void RefreshEffectiveMoveSpeed()
     {
-        float baseMoveSpeed = definition != null ? Mathf.Max(0f, definition.MoveSpeed) : 0f;
+        float baseMoveSpeed = Mathf.Max(0f, moveSpeed);
         currentMoveSpeed = isMovementLocked ? 0f : baseMoveSpeed * moveSpeedMultiplier;
         RefreshMovementAnimation();
     }
@@ -401,22 +468,22 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void SetWalkingAnimation(bool walking)
     {
-        if (animator == null || definition == null || string.IsNullOrEmpty(definition.WalkingBoolParameterName))
+        if (animator == null || string.IsNullOrEmpty(walkingBoolParameterName))
         {
             return;
         }
 
-        animator.SetBool(definition.WalkingBoolParameterName, walking);
+        animator.SetBool(walkingBoolParameterName, walking);
     }
 
     private void PlayDeathAnimation()
     {
-        if (animator == null || definition == null || string.IsNullOrEmpty(definition.DieTriggerName))
+        if (animator == null || string.IsNullOrEmpty(dieTriggerName))
         {
             return;
         }
 
-        animator.SetTrigger(definition.DieTriggerName);
+        animator.SetTrigger(dieTriggerName);
     }
 
     public void ForceCleanup()
@@ -469,33 +536,23 @@ public class MonsterBehaviour : MonoBehaviour
 
     private float GetDeathDelay()
     {
-        return definition != null ? Mathf.Max(0f, definition.DeathDelay) : 0f;
+        return Mathf.Max(0f, deathDelay);
     }
 
     private void NotifyHealthChanged()
     {
-        if (definition == null)
-        {
-            return;
-        }
-
-        OnHealthChanged?.Invoke(this, currentHealth, definition.MaxHealth);
+        OnHealthChanged?.Invoke(this, currentHealth, maxHealth);
     }
 
     private void ShowDamageNumber(int damage)
     {
-        if (definition == null)
-        {
-            return;
-        }
-
         if (damageNumberManager == null)
         {
             Debug.LogWarning("Monster behaviour cannot show damage number: damage number manager is not assigned.", this);
             return;
         }
 
-        Vector3 damageNumberPosition = transform.position + definition.DamageNumberOffset;
+        Vector3 damageNumberPosition = transform.position + damageNumberOffset;
         damageNumberManager.ShowDamage(damage, damageNumberPosition);
     }
 }
