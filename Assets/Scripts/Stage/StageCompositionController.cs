@@ -19,6 +19,8 @@ public class StageCompositionController : MonoBehaviour
     public bool IsCompositionReady { get; private set; }
     public bool IsPreparationInProgress => isPreparationInProgress;
     public bool HasBattleBegun { get; private set; }
+    public BattleRuntimeCoordinator BattleRuntimeCoordinator =>
+        battleRuntimeCoordinator;
 
     private void OnDisable()
     {

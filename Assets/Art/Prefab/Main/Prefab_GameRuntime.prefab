@@ -2584,6 +2584,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3261855449354590494}
   - component: {fileID: 2046345648947699159}
+  - component: {fileID: 4303056428248239281}
   m_Layer: 0
   m_Name: Prefab_GameRuntime
   m_TagString: Untagged
@@ -2626,6 +2627,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ExpAddController
   playerSystem: {fileID: 8439368486033747447}
   addedProgress: 60
+--- !u!114 &4303056428248239281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8939497704752416150}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05b0a208a0a48430cbf928209011d7d7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::GameFlowController
+  demoStages: []
+  stageCompositionController: {fileID: 4707264216546559258}
 --- !u!1 &9144787478559733843
 GameObject:
   m_ObjectHideFlags: 0
