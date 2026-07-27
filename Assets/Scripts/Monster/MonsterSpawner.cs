@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,6 +6,13 @@ using UnityEngine.Serialization;
 
 public class MonsterSpawner : MonoBehaviour
 {
+    private enum SpawnExecutionTerminalState
+    {
+        None = 0,
+        NormalCompletion = 1,
+        TechnicalFailure = 2
+    }
+
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterManager monsterManager;
     [FormerlySerializedAs("healthBarManager")]
@@ -16,10 +24,15 @@ public class MonsterSpawner : MonoBehaviour
     private MapGeneratorBehaviour mapGenerator;
     private Coroutine spawnRoutine;
     private bool isBattleActive;
+    private bool isSpawnExecutionRunning;
+    private SpawnExecutionTerminalState spawnExecutionTerminalState;
 
-    public bool IsSpawning => spawnRoutine != null;
+    public bool IsSpawning => isSpawnExecutionRunning;
     public bool IsBattleActive => isBattleActive;
     public bool HasStageBinding => waveConfig != null && mapGenerator != null;
+
+    public event Action OnAllSpawningCompleted;
+    public event Action<string> OnSpawningFailed;
 
     public bool BindStage(
         MapGeneratorBehaviour activeMap,
@@ -36,6 +49,7 @@ public class MonsterSpawner : MonoBehaviour
 
         mapGenerator = activeMap;
         waveConfig = selectedWaveConfig;
+        ResetSpawnExecutionState();
         return true;
     }
 
@@ -44,6 +58,7 @@ public class MonsterSpawner : MonoBehaviour
         StopBattle();
         mapGenerator = null;
         waveConfig = null;
+        ResetSpawnExecutionState();
     }
 
     public bool CanBeginBattle(out string failureReason)
@@ -84,6 +99,7 @@ public class MonsterSpawner : MonoBehaviour
 
     public void BeginBattle()
     {
+        ResetSpawnExecutionState();
         isBattleActive = true;
     }
 
@@ -103,10 +119,20 @@ public class MonsterSpawner : MonoBehaviour
             return false;
         }
 
-        if (spawnRoutine != null)
+        if (isSpawnExecutionRunning)
         {
-            StopCoroutine(spawnRoutine);
-            spawnRoutine = null;
+            Debug.LogError(
+                "Monster spawner cannot start because spawning is already running.",
+                this);
+            return false;
+        }
+
+        if (spawnExecutionTerminalState != SpawnExecutionTerminalState.None)
+        {
+            Debug.LogError(
+                "Monster spawner cannot restart a completed execution in the same battle.",
+                this);
+            return false;
         }
 
         if (!CanBeginBattle(out string failureReason))
@@ -117,8 +143,22 @@ public class MonsterSpawner : MonoBehaviour
             return false;
         }
 
-        spawnRoutine = StartCoroutine(SpawnWavesRoutine());
-        return spawnRoutine != null;
+        isSpawnExecutionRunning = true;
+        Coroutine startedRoutine = StartCoroutine(SpawnWavesRoutine());
+
+        if (isSpawnExecutionRunning && startedRoutine == null)
+        {
+            FailSpawnExecution(
+                "Unity did not return a Coroutine handle for the active execution.");
+        }
+
+        spawnRoutine = isSpawnExecutionRunning ? startedRoutine : null;
+
+        return spawnExecutionTerminalState !=
+                   SpawnExecutionTerminalState.TechnicalFailure &&
+               (isSpawnExecutionRunning ||
+                spawnExecutionTerminalState ==
+                    SpawnExecutionTerminalState.NormalCompletion);
     }
 
     private void OnDisable()
@@ -128,34 +168,45 @@ public class MonsterSpawner : MonoBehaviour
 
     public void StopSpawning()
     {
-        if (spawnRoutine == null)
+        Coroutine routineToStop = spawnRoutine;
+        spawnRoutine = null;
+        isSpawnExecutionRunning = false;
+
+        if (routineToStop == null)
         {
             return;
         }
 
-        StopCoroutine(spawnRoutine);
-        spawnRoutine = null;
+        StopCoroutine(routineToStop);
     }
 
     private IEnumerator SpawnWavesRoutine()
     {
-        IReadOnlyList<MonsterWaveEntry> waves = waveConfig.Waves;
+        IReadOnlyList<MonsterWaveEntry> waves =
+            waveConfig != null ? waveConfig.Waves : null;
+
+        if (waves == null || waves.Count == 0)
+        {
+            FailSpawnExecution(
+                "the selected Monster Wave Config has no Waves.");
+            yield break;
+        }
 
         for (int waveIndex = 0; waveIndex < waves.Count; waveIndex++)
         {
             if (!isBattleActive)
             {
-                break;
+                CancelSpawnExecution();
+                yield break;
             }
 
             MonsterWaveEntry wave = waves[waveIndex];
 
             if (wave == null)
             {
-                Debug.LogError(
-                    $"Monster spawner stopped because Wave entry {waveIndex} became invalid.",
-                    this);
-                break;
+                FailSpawnExecution(
+                    $"Wave entry {waveIndex} became invalid.");
+                yield break;
             }
 
             if (wave.WaveDelay > 0f)
@@ -164,7 +215,8 @@ public class MonsterSpawner : MonoBehaviour
 
                 if (!isBattleActive)
                 {
-                    break;
+                    CancelSpawnExecution();
+                    yield break;
                 }
             }
 
@@ -172,28 +224,25 @@ public class MonsterSpawner : MonoBehaviour
 
             if (spawnEntries == null || spawnEntries.Count == 0)
             {
-                Debug.LogError(
-                    $"Monster spawner stopped because Wave entry {waveIndex} has no Spawn Entries.",
-                    this);
-                break;
+                FailSpawnExecution(
+                    $"Wave entry {waveIndex} has no Spawn Entries.");
+                yield break;
             }
 
             for (int entryIndex = 0; entryIndex < spawnEntries.Count; entryIndex++)
             {
                 if (!isBattleActive)
                 {
-                    break;
+                    CancelSpawnExecution();
+                    yield break;
                 }
 
                 MonsterSpawnEntry spawnEntry = spawnEntries[entryIndex];
 
                 if (spawnEntry == null || !spawnEntry.IsValid())
                 {
-                    Debug.LogError(
-                        $"Monster spawner stopped because Spawn Entry {entryIndex} " +
-                        $"in Wave {waveIndex} became invalid.",
-                        this);
-                    spawnRoutine = null;
+                    FailSpawnExecution(
+                        $"Spawn Entry {entryIndex} in Wave {waveIndex} became invalid.");
                     yield break;
                 }
 
@@ -201,10 +250,19 @@ public class MonsterSpawner : MonoBehaviour
                 {
                     if (!isBattleActive)
                     {
-                        break;
+                        CancelSpawnExecution();
+                        yield break;
                     }
 
-                    SpawnMonster(spawnEntry.MonsterDefinition);
+                    if (!TrySpawnMonster(
+                            spawnEntry.MonsterDefinition,
+                            out string failureReason))
+                    {
+                        FailSpawnExecution(
+                            $"Monster {countIndex} in Spawn Entry {entryIndex}, " +
+                            $"Wave {waveIndex} failed: {failureReason}");
+                        yield break;
+                    }
 
                     bool hasMoreMonstersInEntry = countIndex < spawnEntry.Count - 1;
 
@@ -214,42 +272,69 @@ public class MonsterSpawner : MonoBehaviour
 
                         if (!isBattleActive)
                         {
-                            break;
+                            CancelSpawnExecution();
+                            yield break;
                         }
                     }
                 }
             }
         }
 
-        spawnRoutine = null;
+        CompleteSpawnExecution();
     }
 
-    private MonsterBehaviour SpawnMonster(MonsterDefinition monsterDefinition)
+    private bool TrySpawnMonster(
+        MonsterDefinition monsterDefinition,
+        out string failureReason)
     {
         if (!isBattleActive)
         {
-            return null;
+            failureReason = "the battle gate is closed.";
+            return false;
         }
 
         if (monsterDefinition == null || !monsterDefinition.IsValid())
         {
-            Debug.LogWarning("Monster spawner cannot spawn monster: monster definition is invalid.", this);
-            return null;
+            failureReason = "the Monster Definition is invalid.";
+            return false;
+        }
+
+        if (mapGenerator == null)
+        {
+            failureReason = "the Active Map binding is missing.";
+            return false;
         }
 
         GridNodeBehaviour spawnNode = mapGenerator.GetSpawnNode();
 
         if (spawnNode == null)
         {
-            Debug.LogWarning("Monster spawner cannot spawn monster: map has no spawn node.", mapGenerator);
-            return null;
+            failureReason = "the Active Map has no Spawn node.";
+            return false;
         }
 
         GridNodeBehaviour targetNode = mapGenerator.GetTargetNode();
 
         if (targetNode == null)
         {
-            Debug.LogWarning("Monster spawner cannot assign movement path: map has no target node.", mapGenerator);
+            failureReason = "the Active Map has no Target node.";
+            return false;
+        }
+
+        if (pathfindingService == null)
+        {
+            failureReason = "the A* pathfinding service is missing.";
+            return false;
+        }
+
+        List<GridNodeBehaviour> initialPath =
+            pathfindingService.FindPath(spawnNode, targetNode);
+
+        if (!IsUsableInitialPath(initialPath, targetNode))
+        {
+            failureReason =
+                "no usable initial route exists from Spawn to Target.";
+            return false;
         }
 
         GameObject monsterObject = Instantiate(
@@ -261,9 +346,11 @@ public class MonsterSpawner : MonoBehaviour
 
         if (!monsterObject.TryGetComponent(out MonsterBehaviour monsterBehaviour))
         {
-            Debug.LogWarning($"Monster spawner spawned prefab '{monsterObject.name}' without MonsterBehaviour.", monsterObject);
+            string monsterObjectName = monsterObject.name;
             Destroy(monsterObject);
-            return null;
+            failureReason =
+                $"prefab instance '{monsterObjectName}' has no MonsterBehaviour.";
+            return false;
         }
 
         monsterBehaviour.Initialize(monsterDefinition);
@@ -273,24 +360,88 @@ public class MonsterSpawner : MonoBehaviour
 
         if (monsterManager == null || !monsterManager.RegisterMonster(monsterBehaviour))
         {
-            Debug.LogWarning("Monster spawner cannot register monster because the Monster Manager is missing or the battle is inactive.", this);
             monsterBehaviour.ForceCleanup();
-            return null;
+            failureReason =
+                "the Monster Manager rejected runtime registration.";
+            return false;
         }
 
         CreateStatusUi(monsterBehaviour, monsterDefinition);
+        monsterBehaviour.SetPath(initialPath);
+        failureReason = string.Empty;
+        return true;
+    }
 
-        if (pathfindingService != null && targetNode != null)
+    private static bool IsUsableInitialPath(
+        IReadOnlyList<GridNodeBehaviour> initialPath,
+        GridNodeBehaviour targetNode)
+    {
+        if (initialPath == null ||
+            initialPath.Count == 0 ||
+            targetNode == null ||
+            initialPath[initialPath.Count - 1] != targetNode)
         {
-            List<GridNodeBehaviour> path = pathfindingService.FindPath(spawnNode, targetNode);
-            monsterBehaviour.SetPath(path);
-        }
-        else if (pathfindingService == null)
-        {
-            Debug.LogWarning("Monster spawner cannot assign movement path: pathfinding service is not assigned.", this);
+            return false;
         }
 
-        return monsterBehaviour;
+        for (int i = 0; i < initialPath.Count; i++)
+        {
+            if (initialPath[i] == null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void CompleteSpawnExecution()
+    {
+        if (!isSpawnExecutionRunning ||
+            spawnExecutionTerminalState != SpawnExecutionTerminalState.None)
+        {
+            return;
+        }
+
+        spawnExecutionTerminalState =
+            SpawnExecutionTerminalState.NormalCompletion;
+        isSpawnExecutionRunning = false;
+        spawnRoutine = null;
+        OnAllSpawningCompleted?.Invoke();
+    }
+
+    private void FailSpawnExecution(string failureReason)
+    {
+        if (!isSpawnExecutionRunning ||
+            spawnExecutionTerminalState != SpawnExecutionTerminalState.None)
+        {
+            return;
+        }
+
+        spawnExecutionTerminalState =
+            SpawnExecutionTerminalState.TechnicalFailure;
+        isSpawnExecutionRunning = false;
+        spawnRoutine = null;
+
+        string concreteReason = string.IsNullOrWhiteSpace(failureReason)
+            ? "an unspecified Wave execution failure occurred."
+            : failureReason;
+        Debug.LogError(
+            $"Monster spawner terminated Wave execution: {concreteReason}",
+            this);
+        OnSpawningFailed?.Invoke(concreteReason);
+    }
+
+    private void CancelSpawnExecution()
+    {
+        isSpawnExecutionRunning = false;
+        spawnRoutine = null;
+    }
+
+    private void ResetSpawnExecutionState()
+    {
+        StopSpawning();
+        spawnExecutionTerminalState = SpawnExecutionTerminalState.None;
     }
 
     private void CreateStatusUi(MonsterBehaviour monsterBehaviour, MonsterDefinition monsterDefinition)

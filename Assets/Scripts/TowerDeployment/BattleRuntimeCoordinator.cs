@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -12,14 +13,31 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private bool hasFreshPlayerState;
     private bool isBattlePrepared;
+    private bool hasNormalSpawningCompleted;
+    private bool hasEstablishedResult;
     public bool IsBattleActive { get; private set; }
     public bool IsBattlePrepared => isBattlePrepared;
+
+    public event Action<BattleResult> OnBattleResultPublished;
 
     private void OnEnable()
     {
         if (playerSystem != null)
         {
             playerSystem.OnPlayerDefeated += HandlePlayerDefeated;
+        }
+
+        if (monsterSpawner != null)
+        {
+            monsterSpawner.OnAllSpawningCompleted +=
+                HandleAllSpawningCompleted;
+            monsterSpawner.OnSpawningFailed += HandleSpawningFailed;
+        }
+
+        if (monsterManager != null)
+        {
+            monsterManager.OnMonsterResolutionCompleted +=
+                HandleMonsterResolutionCompleted;
         }
     }
 
@@ -28,6 +46,19 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         if (playerSystem != null)
         {
             playerSystem.OnPlayerDefeated -= HandlePlayerDefeated;
+        }
+
+        if (monsterSpawner != null)
+        {
+            monsterSpawner.OnAllSpawningCompleted -=
+                HandleAllSpawningCompleted;
+            monsterSpawner.OnSpawningFailed -= HandleSpawningFailed;
+        }
+
+        if (monsterManager != null)
+        {
+            monsterManager.OnMonsterResolutionCompleted -=
+                HandleMonsterResolutionCompleted;
         }
 
         ReleasePreparedBattleRuntime();
@@ -173,16 +204,20 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             Debug.LogError(
                 "Battle runtime coordinator failed to open every consumer battle gate.",
                 this);
-            CloseBattleAuthorityAndGates();
+            StopBattle();
             return false;
         }
 
-        if (!monsterSpawner.StartSpawning())
+        bool spawningStarted = monsterSpawner.StartSpawning();
+
+        if (!spawningStarted ||
+            !IsBattleActive ||
+            !AreConsumerGatesOpen())
         {
             Debug.LogError(
                 "Battle runtime coordinator failed to start the selected Monster Waves.",
                 this);
-            CloseBattleAuthorityAndGates();
+            StopBattle();
             return false;
         }
 
@@ -212,15 +247,14 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public void ReleasePreparedBattleRuntime()
     {
-        CloseBattleAuthorityAndGates();
+        StopBattle();
         draftSystem?.ClearStageUi();
-        monsterManager?.ForceCleanupAllMonsters();
-        towerPlacementController?.StopTrackedTowerCombat();
         towerPlacementController?.DestroyTrackedTowers();
         monsterSpawner?.ClearStageBinding();
         draftSystem?.ClearStagePools();
         towerPlacementController?.ClearActiveMap();
         pathfindingService?.ClearActiveMap();
+        ResetResultTracking();
     }
 
     private bool CanBeginPreparedBattle(out string failureReason)
@@ -332,6 +366,70 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void HandlePlayerDefeated()
     {
+        TryCompleteBattleResult(BattleResult.Defeat);
+    }
+
+    private void HandleAllSpawningCompleted()
+    {
+        if (!IsBattleActive || hasEstablishedResult)
+        {
+            return;
+        }
+
+        hasNormalSpawningCompleted = true;
+        TryCompleteVictory();
+    }
+
+    private void HandleMonsterResolutionCompleted()
+    {
+        TryCompleteVictory();
+    }
+
+    private void HandleSpawningFailed(string failureReason)
+    {
+        if (!IsBattleActive || hasEstablishedResult)
+        {
+            return;
+        }
+
+        Debug.LogError(
+            $"Battle runtime coordinator stopped after Monster Spawner failure: " +
+            $"{failureReason}",
+            this);
         StopBattle();
+    }
+
+    private void TryCompleteVictory()
+    {
+        if (!IsBattleActive ||
+            hasEstablishedResult ||
+            !hasNormalSpawningCompleted ||
+            monsterManager == null ||
+            monsterManager.AliveMonsterCount != 0 ||
+            playerSystem == null ||
+            playerSystem.IsDefeated)
+        {
+            return;
+        }
+
+        TryCompleteBattleResult(BattleResult.Victory);
+    }
+
+    private void TryCompleteBattleResult(BattleResult result)
+    {
+        if (!IsBattleActive || hasEstablishedResult)
+        {
+            return;
+        }
+
+        hasEstablishedResult = true;
+        StopBattle();
+        OnBattleResultPublished?.Invoke(result);
+    }
+
+    private void ResetResultTracking()
+    {
+        hasNormalSpawningCompleted = false;
+        hasEstablishedResult = false;
     }
 }

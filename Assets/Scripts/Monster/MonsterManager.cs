@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,6 +11,9 @@ public class MonsterManager : MonoBehaviour
     private bool isBattleActive;
 
     public bool IsBattleActive => isBattleActive;
+    public int AliveMonsterCount => aliveMonsters.Count;
+
+    public event Action OnMonsterResolutionCompleted;
 
     public IReadOnlyList<MonsterBehaviour> GetAliveMonsters()
     {
@@ -188,6 +192,9 @@ public class MonsterManager : MonoBehaviour
             return;
         }
 
-        playerSystem.TryResolveMonster(reachedTarget);
+        if (playerSystem.TryResolveMonster(reachedTarget))
+        {
+            OnMonsterResolutionCompleted?.Invoke();
+        }
     }
 }
