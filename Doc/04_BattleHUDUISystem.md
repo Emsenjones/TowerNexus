@@ -15,7 +15,7 @@ It presents:
 - Drag, placement, and Tower-target feedback
 - Battle notifications approved by future designs
 
-It observes gameplay state and forwards player intent. It does not own Player state, Draft generation, placement validation, Tower Upgrade rules, Map topology, Monster runtime, or combat results.
+It observes gameplay state and forwards player intent. It does not own Player state, Draft generation, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
 
 ---
 
@@ -28,6 +28,8 @@ The root is not a gameplay service locator and does not become the owner of chil
 The Draft Window remains an authored part of the battle UI while closed. Opening a Draft creates transient choice items; closing it removes only those transient items and returns the window to its closed state.
 
 Monster status displays and damage numbers remain owned by Monster System even when rendered on the same UI surface.
+
+Main menu, Stage Introduction, Stage Victory, and Stage Defeat presentation belong to Game Flow System. Sharing one visual canvas or screen with battle-local UI does not make those surfaces part of Battle HUD UI System.
 
 ---
 
@@ -150,11 +152,11 @@ Validation must not create gameplay state or silently replace authored UI.
 
 Current scope includes player information, Draft presentation, held Draft items, drag cancellation, placement feedback, and Tower target feedback.
 
-Deferred topics include:
+Game Flow System owns battle-result and Stage-transition presentation, including distinct Victory and Defeat interactions. Those surfaces are outside Battle HUD UI System rather than deferred Battle HUD features.
+
+Deferred Battle HUD topics include:
 
 - Wave and boss warnings
-- Battle result and Stage transition UI
-- Defeat presentation
 - Pause flow
 - Minimap
 - Player skills

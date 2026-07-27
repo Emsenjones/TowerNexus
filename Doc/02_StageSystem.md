@@ -15,6 +15,7 @@ It owns:
 - Distribution of the selected Player maximum health
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
 - Establishment of a fresh battle-local Player runtime for the selected Stage
+- Establishment of a prepared Stage boundary before battle gameplay begins
 - Completion and replacement of Stage-composed runtime content
 
 It coordinates domain owners without absorbing Map, Monster, Draft, Tower, or Game Flow rules.
@@ -35,10 +36,15 @@ StageDefinition is one reusable playable-Stage composition.
 | Monster Wave Config | Wave sequence executed in this Stage |
 | Tower Draft Pool | TowerDefinitions allowed in this Stage's Drafts |
 | Tower Upgrade Draft Pool | TowerUpgradeDefinitions allowed in this Stage's Drafts |
+| Show Stage Introduction | Whether the prepared Stage waits for Game Flow introduction confirmation |
+| Introduced Towers | TowerDefinitions presented as newly introduced in this Stage |
+| Introduced Tower Upgrades | TowerUpgradeDefinitions presented as newly introduced in this Stage |
 
 The asset or resource name is sufficient as authoring identity. A separate StageId is not required while selection uses direct references and no persistence or external lookup contract needs one.
 
 StageDefinition references content owned by other systems. It does not duplicate their rules.
+
+Introduction content explicitly authors presentation for this Stage. Introduced Towers must be members of the same Stage's Tower Draft Pool, and introduced Tower Upgrades must be members of the same Stage's Tower Upgrade Draft Pool. Stage System does not calculate introduction content by comparing adjacent Stages.
 
 ---
 
@@ -55,16 +61,18 @@ Receive Selected StageDefinition
     -> Supply Draft Pools To Draft System
     -> Initialize Fresh Player Battle-Local State At Full Health
     -> Mark Stage Composition Ready
+    -> Return Prepared Stage To Game Flow
+    -> Game Flow Completes Optional Introduction
     -> Begin Battle Runtime
 ```
 
-Monster Wave execution, Draft generation, Tower placement, and other battle runtime must not begin before Stage composition is ready.
+Monster Wave execution, Draft generation, Tower placement, and other battle runtime must not begin before Stage composition is ready. A prepared Stage remains inactive until Game Flow permits battle start after any configured introduction.
 
 Each receiving system gets only the configuration slice it owns. Stage System is not a general service locator.
 
 When replacing or ending a Stage composition, Stage System releases only the runtime objects and references created by that composition. Domain owners remain responsible for their own technical cleanup.
 
-Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next. StageDefinition authors the positive maximum-health value for the selected Stage. Player System owns the applied runtime maximum, current health, and their rules; Stage composition only supplies the authored value and establishes a fresh full-health runtime before battle begins.
+Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next or into a retry. StageDefinition authors the positive maximum-health value for the selected Stage. Player System owns the applied runtime maximum, current health, and their rules; Stage composition only supplies the authored value and establishes a fresh full-health runtime before the prepared Stage may begin.
 
 ---
 
@@ -72,6 +80,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 
 | System | Receives From Stage | Continues To Own |
 |---|---|---|
+| Game Flow System | Prepared Stage readiness and introduction content | Stage ordering, current position, start permission, and result transitions |
 | Map System | Selected Map template and active-instance role | Grid state, spatial queries, Map presentation, and validation |
 | Monster System | Active Map and MonsterWaveConfig | Wave timing, spawning, pathfinding, movement, and resolution |
 | Draft System | Tower and Tower Upgrade pools | Candidate generation, reservation, sampling, and results |
@@ -92,8 +101,14 @@ Stage validation should report at minimum:
 - Null or duplicate TowerUpgradeDefinition references
 - Referenced definitions that fail owner-system validation
 - Tower Upgrade content whose TowerFamily cannot be represented by the Stage Tower pool when that relationship is required
+- Introduction Tower content outside the Stage Tower Draft Pool
+- Introduction Upgrade content outside the Stage Tower Upgrade Draft Pool
+- Null or duplicate introduction content
+- Introduction requested without any presentable content
 
 Stage validation checks composition coherence. It does not silently repair referenced content or replace owner-system validation.
+
+An introduction requested with no presentable Tower or Upgrade content is a warning. It does not invalidate an otherwise playable Stage, and Game Flow may proceed directly from preparation to Battle.
 
 ---
 
@@ -106,15 +121,16 @@ Current scope includes:
 - One Map template and one MonsterWaveConfig per Stage
 - One positive Player Max Health value per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
+- Optional Stage Introduction content
 - Composition validation and pre-battle distribution
+- A prepared Stage boundary controlled by Game Flow
 - Fresh battle-local Player state for each composed Stage
 
-Deferred to future Game Flow design:
+Game Flow System owns the approved Demo Stage ordering, introduction, victory, defeat, next-Stage, retry, and return-to-main-menu rules.
 
-- Stage ordering and selection entry points
+Deferred Game Flow topics include:
+
 - Unlock rules
-- Victory and failure transitions
-- Automatic next-Stage flow
 - Save data and persistent Stage progress
 - Stage Selection UI
 - Scene transition strategy

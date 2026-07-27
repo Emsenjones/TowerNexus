@@ -13,7 +13,7 @@ It owns:
 - Current and maximum health
 - Level-up transitions
 - Defeat state
-- State-change notifications consumed by Draft and UI systems
+- State-change notifications consumed by battle result, Draft, and UI systems
 
 It does not own Monster resolution detection, Draft generation, battle UI, Tower placement, Stage flow, or combat.
 
@@ -93,9 +93,9 @@ After defeat:
 - Further Monster resolution does not advance player progress.
 - The current battle simulation stops producing new gameplay results.
 
-Stopping the current battle does not imply a defeat screen, Stage transition, restart flow, or persistence rule. Game Flow will later decide what transition follows defeat.
+Stopping the current battle does not itself choose a presentation or Stage transition. Game Flow System consumes the authoritative Defeat result and decides whether the player retries the current Stage or returns to the main menu.
 
-Each newly composed Stage battle starts with fresh Player level progress, defeat state, and the positive maximum health authored by its StageDefinition. Current health starts equal to that maximum. Player state and maximum health from a previous Stage battle are not reused.
+Each newly prepared Stage battle, including a retry, starts with fresh Player level progress, defeat state, and the positive maximum health authored by its StageDefinition. Current health starts equal to that maximum. Player state and maximum health from a previous Stage battle or failed attempt are not reused.
 
 ---
 
@@ -108,7 +108,7 @@ Player System exposes semantic notifications for:
 - Player health changed
 - Player entered defeated state
 
-Draft System consumes level-up opportunities. Battle HUD UI System consumes player state changes for presentation. Consumers cannot mutate Player state through those notifications.
+Draft System consumes level-up opportunities. Battle HUD UI System consumes player state changes for presentation. Battle result coordination consumes the terminal Defeat fact without taking ownership of Player state. Consumers cannot mutate Player state through those notifications.
 
 ---
 
@@ -126,6 +126,8 @@ Player configuration validation should report at minimum:
 
 # 7. Approved Scope And Deferred Topics
 
-Current scope includes battle-local level, one-point-per-resolution progress, health, one damage per Target arrival, level-up opportunities, defeat state, and stopping the current battle on defeat.
+Current scope includes battle-local level, one-point-per-resolution progress, health, one damage per Target arrival, level-up opportunities, defeat state, and the terminal Defeat fact consumed by battle result coordination.
 
-Deferred topics include player attributes, active skills, passive abilities, shields, damage resistance, talents, base meta-upgrades, persistent progression, defeat presentation, restart, and the broader Game Flow response to victory or defeat.
+Defeat presentation, retry, and return-to-main-menu behavior belong to Game Flow System rather than Player System.
+
+Deferred Player topics include player attributes, active skills, passive abilities, shields, damage resistance, talents, base meta-upgrades, and persistent progression.

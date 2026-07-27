@@ -21,37 +21,59 @@ The guiding design principle is:
 
 ---
 
-# 2. Core Gameplay Loop
+# 2. Core Game Loop
 
-The battle loop is:
+The Demo game loop is:
 
 ```text
-Select Stage
-    -> Compose Stage Content
-    -> Spawn Monster Waves
+Enter Main Menu
+    -> Start New Run At First Stage
+    -> Prepare Current Stage
+        -> Establish Fresh Player State At Current Stage Maximum Health
+        -> Establish Current Map, Wave, And Draft Content
+    -> Show Optional Stage Introduction
+    -> Begin Battle
+    -> Continue Until Victory Or Player Defeat
+    -> Victory
+        -> Prepare Next Stage
+        -> Final Stage Returns To Main Menu
+    -> Defeat
+        -> Retry Current Stage
+        -> Or Return To Main Menu
+```
+
+Within one active Stage, the battle loop is:
+
+```text
+Spawn Monster Waves
     -> Towers Resolve Combat
     -> Resolved Monsters Advance Player Progress
     -> Player Level-Up Opens Draft
     -> Select Tower Or Tower Upgrade
     -> Place Or Improve Tower
     -> Battlefield And Build Evolve
-    -> Continue Until Victory Or Player Defeat
+    -> Continue Until Battle Result
 ```
 
-Core battle rules:
+Core flow and battle rules:
 
+- A new run begins from the first Stage in the ordered Demo sequence.
 - One selected Stage composition is active during one battle.
+- Every initial Stage, next Stage, and retry prepares fresh Player state and resets current health to the selected Stage's positive maximum health.
+- Battle gameplay remains inactive during Stage preparation and optional Stage Introduction.
 - Monsters enter from the Map's Spawn node and attempt to reach its Target node.
 - A Monster that dies or reaches the Target is resolved exactly once.
-- Every Monster resolution advances player level progress by one.
+- Every accepted Monster resolution advances player level progress by one.
 - A Monster reaching the Target also reduces player health by one.
 - Player level progress and player health are independent state.
 - Player level-up opens a Draft choice.
 - Placed Towers occupy Grid Nodes and can change effective walkability.
 - A legal placement must not violate occupancy or approved route rules.
-- Player health reaching zero stops the current battle simulation.
+- Victory requires normal completion of all configured spawning, no alive unresolved Monsters, and a Player who is not defeated.
+- Player health reaching zero produces Defeat and takes precedence when the final Monster resolution could otherwise satisfy Victory.
+- One Battle produces at most one semantic result.
 
-Stage ordering, unlocking, victory transitions, defeat presentation, persistence, and Scene flow belong to a future Game Flow design.
+Unlocking, persistence, Stage Selection UI, branching progression, and Scene flow remain deferred.
 
 ---
 
@@ -75,11 +97,13 @@ Stage composition follows this relationship:
 
 ```text
 StageDefinition
+    + Player Maximum Health
     + Map Template
         + MapVisualTheme
     + MonsterWaveConfig
     + Tower Draft Pool
     + Tower Upgrade Draft Pool
+    + Optional Stage Introduction Content
 ```
 
 The demo is expected to contain at least five independently authored StageDefinitions. Each battle composes one selected StageDefinition.
@@ -105,79 +129,85 @@ Definitions store reusable authored truth. Per-instance runtime state, consumed 
 
 # 4. System Ownership
 
-## 4.1 Stage System
+## 4.1 Game Flow System
+
+Owns the ordered Demo Stage sequence, the current position in one game run, legal transitions among main menu, Stage preparation, optional introduction, battle, victory, and defeat, and the resulting next-Stage, retry, or return-to-main-menu decision.
+
+It selects the StageDefinition supplied to Stage System and consumes one authoritative Battle result. It does not compose Stage content, mutate Player state, execute Waves, resolve Monsters, generate Drafts, or own combat behavior.
+
+## 4.2 Stage System
 
 Owns composition of the StageDefinition selected for the current battle. It establishes the active Map and supplies the selected Wave and Draft content before battle runtime begins.
 
-It does not own Stage ordering, unlock rules, victory flow, Map behavior, Wave execution, or Draft generation.
+It establishes a prepared Stage with fresh Player state and waits for Game Flow start permission. It does not own Stage ordering, result transitions, Map behavior, Wave execution, or Draft generation.
 
-## 4.2 Player System
+## 4.3 Player System
 
 Owns battle-local player level, level progress, health, level-up notification, and defeat state.
 
 It does not own Draft generation, UI presentation, Monster lifecycle, or Stage flow.
 
-## 4.3 Battle HUD UI System
+## 4.4 Battle HUD UI System
 
 Owns presentation and interaction for battle information, Draft choices, held Draft items, drag feedback, and placement feedback.
 
-It observes or forwards domain intent but does not own player state, Draft rules, placement validation, or combat outcomes.
+It observes or forwards domain intent but does not own player state, Draft rules, placement validation, combat outcomes, or Game Flow presentation.
 
-## 4.4 Map System
+## 4.5 Map System
 
 Owns the authored grid battlefield, Grid Node state, effective walkability, spatial queries, Map presentation generation, runtime Tile topology refresh, and Map validation.
 
 It does not own Stage selection, pathfinding algorithms, Tower placement rules, Monster behavior, or battle flow.
 
-## 4.5 Monster System
+## 4.6 Monster System
 
-Owns Wave execution, Monster spawning, health, movement, pathfinding, runtime state, death, Target arrival, resolution reporting, and Monster-local presentation state.
+Owns Wave execution, Monster spawning, normal spawning-completion reporting, health, movement, pathfinding, runtime state, death, Target arrival, exactly-once resolution reporting, post-resolution alive-Monster state, and Monster-local presentation state.
 
-It consumes Map data and Stage-selected Wave configuration without owning them.
+It consumes Map data and Stage-selected Wave configuration without owning them. It supplies battle-completion facts without deciding Victory or Defeat.
 
-## 4.6 Draft System
+## 4.7 Draft System
 
 Owns Draft candidate gathering, eligibility-aware weighting, pending reservation, sampling, displayed-choice deduplication, and Draft result creation.
 
 It consumes the Stage-specific Tower and Tower Upgrade pools and forwards the selected result to the appropriate gameplay owner.
 
-## 4.7 Tower Placement System
+## 4.8 Tower Placement System
 
 Owns drag placement intent, Grid alignment, placement preview, placement validation, Tower target intent, occupancy commit, and the resulting Map topology update request.
 
 It does not own Tower combat, Tower Upgrade eligibility, Map data, or pathfinding execution.
 
-## 4.8 Tower Framework System
+## 4.9 Tower Framework System
 
 Owns shared Tower identity, authored base data, Tower level data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
 
 It defines what a Tower is, not how a placed Tower executes combat.
 
-## 4.9 Tower Runtime Combat System
+## 4.10 Tower Runtime Combat System
 
 Owns combat orchestration for placed Towers: target acquisition, attack timing, confirmation and release boundaries, Attack Entity release, active entity ownership, technical cleanup, and approved runtime refresh coordination.
 
 It decides when attacks are released. Released Attack Entities own their domain behavior.
 
-## 4.10 Projectile System
+## 4.11 Projectile System
 
 Owns projectile-style Attack Entities after release: movement, hit detection, lifetime, impact facts, projectile-specific results, presentation hooks, and completion.
 
 It does not own Tower targeting, Tower cooldowns, reusable Effect execution, Buff lifecycle, or Monster health state.
 
-## 4.11 Tower Upgrade System
+## 4.12 Tower Upgrade System
 
 Owns Tower growth and upgrade definitions, eligibility, layer capacity, duplicate rules, accepted state changes, and upgrade application.
 
 It records what a Tower has gained. Runtime owners execute the resulting combat or presentation behavior.
 
-## 4.12 Effect System
+## 4.13 Effect System
 
 Owns reusable one-shot gameplay resolution such as damage actions, target queries, Buff application requests, and the reviewed WindVortex entity.
 
 It does not own persistent Buff state, projectile flight, or source-system scheduling.
 
-## 4.13 Buff System
+## 4.14 Buff System
 
 Owns persistent Monster-attached state: duration, refresh, stacking, periodic timing, lifecycle bindings, Elemental overload, Protection, status presentation data, and persistent Buff presentation.
 
@@ -188,11 +218,24 @@ It may request one-shot Effects but does not duplicate Effect execution.
 # 5. Runtime Relationship
 
 ```text
-Selected StageDefinition
-    -> Stage Composition
-        -> Active Map
-        -> Monster Wave Configuration
-        -> Stage Draft Pools
+Game Flow
+    -> Select Current StageDefinition
+        -> Stage Composition
+            -> Fresh Player State
+            -> Active Map
+            -> Monster Wave Configuration
+            -> Stage Draft Pools
+            -> Prepared Stage
+        -> Optional Stage Introduction
+        -> Begin Battle
+
+Battle Completion Facts
+    -> Authoritative Victory Or Defeat
+        -> Stop Battle Runtime Output
+        -> Game Flow Transition
+            -> Next Stage
+            -> Retry Current Stage
+            -> Main Menu
 
 Monster Resolution
     -> Player Progress
@@ -243,16 +286,17 @@ Task Documents under `Doc/Task/` are implementation contracts for a bounded deve
 
 | Area | Source Of Truth |
 |---|---|
-| Stage composition and configuration distribution | `01_StageSystem.md` |
-| Player progression and survival | `02_PlayerSystem.md` |
-| Battle UI presentation and interaction | `03_BattleHUDUISystem.md` |
-| Grid, walkability, and Map presentation | `04_MapSystem.md` |
-| Monster waves, runtime, pathfinding, and resolution | `05_MonsterSystem.md` |
-| Draft generation and result ownership | `06_DraftSystem.md` |
-| Tower placement and runtime topology changes | `07_TowerPlacementSystem.md` |
-| Tower definitions, authoring, and shared structure | `08_TowerFrameworkSystem.md` |
-| Placed-Tower combat orchestration | `09_TowerRuntimeCombatSystem.md` |
-| Projectile lifecycle and impact behavior | `10_ProjectileSystem.md` |
-| Tower growth, upgrade eligibility, and application | `11_TowerUpgradeSystem.md` |
-| Reusable one-shot gameplay resolution | `12_EffectSystem.md` |
-| Persistent Buff and Elemental runtime state | `13_BuffSystem.md` |
+| Game flow, Stage sequencing, and result transitions | `01_GameFlowSystem.md` |
+| Stage composition and configuration distribution | `02_StageSystem.md` |
+| Player progression and survival | `03_PlayerSystem.md` |
+| Battle UI presentation and interaction | `04_BattleHUDUISystem.md` |
+| Grid, walkability, and Map presentation | `05_MapSystem.md` |
+| Monster waves, runtime, pathfinding, and resolution | `06_MonsterSystem.md` |
+| Draft generation and result ownership | `07_DraftSystem.md` |
+| Tower placement and runtime topology changes | `08_TowerPlacementSystem.md` |
+| Tower definitions, authoring, and shared structure | `09_TowerFrameworkSystem.md` |
+| Placed-Tower combat orchestration | `10_TowerRuntimeCombatSystem.md` |
+| Projectile lifecycle and impact behavior | `11_ProjectileSystem.md` |
+| Tower growth, upgrade eligibility, and application | `12_TowerUpgradeSystem.md` |
+| Reusable one-shot gameplay resolution | `13_EffectSystem.md` |
+| Persistent Buff and Elemental runtime state | `14_BuffSystem.md` |

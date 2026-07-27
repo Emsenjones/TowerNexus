@@ -8,6 +8,7 @@ Monster System owns the complete runtime lifecycle of battlefield Monsters:
 
 - Execution of the Stage-selected MonsterWaveConfig
 - Monster spawning
+- Normal completion reporting for all configured spawning
 - Health and damage reception
 - Movement and pathfinding
 - Dynamic path recalculation
@@ -19,7 +20,7 @@ Monster System owns the complete runtime lifecycle of battlefield Monsters:
 
 Stage System supplies the active Map and MonsterWaveConfig before Wave execution begins. Map System supplies spatial and walkability data. Player System owns progress, health, level-up, and defeat consequences reported by Monster System.
 
-Monster System does not select the Stage, modify Player state directly, decide Tower placement, execute reusable Effect rules, or own persistent Buff definitions.
+Monster System does not select the Stage, modify Player state directly, decide Tower placement, determine Victory or Defeat, execute reusable Effect rules, or own persistent Buff definitions.
 
 ---
 
@@ -64,6 +65,8 @@ Each Spawn Entry contains:
 The current Map contract provides one Spawn node and one Target node. Multiple Spawn Routes and route-specific Wave entries are deferred.
 
 Wave execution begins only after Stage composition has established the active Map and supplied a valid MonsterWaveConfig.
+
+Monster System reports normal spawning completion only after every configured Monster instance has been created through the complete ordered Wave sequence. Stopping, cancelling, disabling, or aborting invalid Wave execution does not report normal completion.
 
 ---
 
@@ -144,6 +147,19 @@ Player System owns:
 - Defeat state
 
 After the battle run has stopped, later Monster cleanup must not advance Player progress or reduce Player health.
+
+## 5.1 Battle Completion Facts
+
+Monster System exposes two semantic facts consumed by battle result coordination:
+
+- Whether all configured spawning completed normally
+- Whether any alive unresolved Monster remains after one Monster resolution finishes
+
+For one resolved Monster, removal from the alive set occurs before the Player resolution transaction. The post-resolution alive-Monster fact becomes eligible for battle-result evaluation only after Player System has completed progress, health, and Defeat resolution.
+
+This ordering prevents the final Target arrival from appearing victorious before its Player-health consequence is known. Monster System supplies completion facts but does not decide the final Battle result.
+
+Victory requires normal spawning completion and no alive unresolved Monsters, while Player System remains not defeated. Game Flow System owns the transition that follows the authoritative result.
 
 ---
 
@@ -278,6 +294,8 @@ Monster and Wave authoring validation should report at minimum:
 - Negative move speed, count, delay, or interval where invalid
 - Missing MonsterDefinition in a Spawn Entry
 - Empty or invalid Wave content
+- Normal spawning completion reported after cancellation, stop, or invalid Wave execution
+- Post-resolution alive-Monster state reported before Player resolution completes
 - Missing active Spawn or Target node
 - Missing initial Spawn-to-Target route
 - Presentation references that are configured but unusable
@@ -292,6 +310,7 @@ Current scope includes:
 
 - One Spawn and one Target
 - Stage-selected Wave execution
+- Normal spawning-completion and post-resolution alive-Monster facts
 - A* pathfinding and dynamic recalculation
 - Health, death, arrival, and exactly-once resolution
 - One-point Player progress and one-damage Target-arrival reporting
