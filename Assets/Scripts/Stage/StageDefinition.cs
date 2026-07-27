@@ -38,6 +38,11 @@ public class StageDefinition : ScriptableObject
     [SerializeField] private List<TowerDefinition> towerDraftPool = new List<TowerDefinition>();
     [SerializeField] private List<TowerUpgradeDefinition> towerUpgradeDraftPool =
         new List<TowerUpgradeDefinition>();
+    [SerializeField] private bool showStageIntroduction;
+    [SerializeField] private List<TowerDefinition> introducedTowers =
+        new List<TowerDefinition>();
+    [SerializeField] private List<TowerUpgradeDefinition> introducedTowerUpgrades =
+        new List<TowerUpgradeDefinition>();
 
     public string DisplayName => displayName;
     public int PlayerMaxHealth => playerMaxHealth;
@@ -45,6 +50,10 @@ public class StageDefinition : ScriptableObject
     public MonsterWaveConfig MonsterWaveConfig => monsterWaveConfig;
     public IReadOnlyList<TowerDefinition> TowerDraftPool => towerDraftPool;
     public IReadOnlyList<TowerUpgradeDefinition> TowerUpgradeDraftPool => towerUpgradeDraftPool;
+    public bool ShowStageIntroduction => showStageIntroduction;
+    public IReadOnlyList<TowerDefinition> IntroducedTowers => introducedTowers;
+    public IReadOnlyList<TowerUpgradeDefinition> IntroducedTowerUpgrades =>
+        introducedTowerUpgrades;
 
     public StageValidationResult ValidateStage()
     {
@@ -53,6 +62,7 @@ public class StageDefinition : ScriptableObject
         ValidateMapTemplate(result);
         ValidateMonsterWaveConfig(result);
         ValidateDraftPools(result);
+        ValidateIntroduction(result);
         return result;
     }
 
@@ -218,6 +228,127 @@ public class StageDefinition : ScriptableObject
                     $"TowerFamily '{upgradeDefinition.TowerFamily}', which is not represented " +
                     "by the Stage Tower Draft pool.");
             }
+        }
+    }
+
+    private void ValidateIntroduction(StageValidationResult result)
+    {
+        HashSet<TowerDefinition> configuredTowers = new HashSet<TowerDefinition>();
+
+        if (towerDraftPool != null)
+        {
+            for (int i = 0; i < towerDraftPool.Count; i++)
+            {
+                TowerDefinition towerDefinition = towerDraftPool[i];
+
+                if (towerDefinition != null)
+                {
+                    configuredTowers.Add(towerDefinition);
+                }
+            }
+        }
+
+        HashSet<TowerUpgradeDefinition> configuredUpgrades =
+            new HashSet<TowerUpgradeDefinition>();
+
+        if (towerUpgradeDraftPool != null)
+        {
+            for (int i = 0; i < towerUpgradeDraftPool.Count; i++)
+            {
+                TowerUpgradeDefinition upgradeDefinition =
+                    towerUpgradeDraftPool[i];
+
+                if (upgradeDefinition != null)
+                {
+                    configuredUpgrades.Add(upgradeDefinition);
+                }
+            }
+        }
+
+        bool hasPresentableContent = false;
+        HashSet<TowerDefinition> uniqueIntroducedTowers =
+            new HashSet<TowerDefinition>();
+
+        if (introducedTowers == null)
+        {
+            result.AddError("Introduced Towers list is null.");
+        }
+        else
+        {
+            for (int i = 0; i < introducedTowers.Count; i++)
+            {
+                TowerDefinition towerDefinition = introducedTowers[i];
+
+                if (towerDefinition == null)
+                {
+                    result.AddError($"Introduced Towers entry {i} is missing.");
+                    continue;
+                }
+
+                if (!uniqueIntroducedTowers.Add(towerDefinition))
+                {
+                    result.AddError(
+                        $"Introduced Towers contains duplicate definition " +
+                        $"'{towerDefinition.name}'.");
+                }
+
+                if (!configuredTowers.Contains(towerDefinition))
+                {
+                    result.AddError(
+                        $"Introduced Tower '{towerDefinition.name}' is not present " +
+                        "in the Stage Tower Draft pool.");
+                    continue;
+                }
+
+                hasPresentableContent = true;
+            }
+        }
+
+        HashSet<TowerUpgradeDefinition> uniqueIntroducedUpgrades =
+            new HashSet<TowerUpgradeDefinition>();
+
+        if (introducedTowerUpgrades == null)
+        {
+            result.AddError("Introduced Tower Upgrades list is null.");
+        }
+        else
+        {
+            for (int i = 0; i < introducedTowerUpgrades.Count; i++)
+            {
+                TowerUpgradeDefinition upgradeDefinition =
+                    introducedTowerUpgrades[i];
+
+                if (upgradeDefinition == null)
+                {
+                    result.AddError(
+                        $"Introduced Tower Upgrades entry {i} is missing.");
+                    continue;
+                }
+
+                if (!uniqueIntroducedUpgrades.Add(upgradeDefinition))
+                {
+                    result.AddError(
+                        $"Introduced Tower Upgrades contains duplicate definition " +
+                        $"'{upgradeDefinition.name}'.");
+                }
+
+                if (!configuredUpgrades.Contains(upgradeDefinition))
+                {
+                    result.AddError(
+                        $"Introduced Tower Upgrade '{upgradeDefinition.name}' is not " +
+                        "present in the Stage Tower Upgrade Draft pool.");
+                    continue;
+                }
+
+                hasPresentableContent = true;
+            }
+        }
+
+        if (showStageIntroduction && !hasPresentableContent)
+        {
+            result.AddWarning(
+                "Stage Introduction is enabled but contains no presentable Tower " +
+                "or Tower Upgrade content.");
         }
     }
 

@@ -15,6 +15,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private bool isBattlePrepared;
     private bool hasNormalSpawningCompleted;
     private bool hasEstablishedResult;
+    private int preparedPlayerMaxHealth;
+    private bool isLifecycleOperationInProgress;
+    private bool releaseRequested;
     public bool IsBattleActive { get; private set; }
     public bool IsBattlePrepared => isBattlePrepared;
 
@@ -71,6 +74,15 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         IReadOnlyList<TowerDefinition> towerPool,
         IReadOnlyList<TowerUpgradeDefinition> upgradePool)
     {
+        if (!TryValidatePreparationReferences(out string failureReason))
+        {
+            Debug.LogError(
+                $"Battle runtime coordinator cannot prepare Stage runtime: " +
+                failureReason,
+                this);
+            return false;
+        }
+
         if (IsBattleActive)
         {
             Debug.LogError(
@@ -79,31 +91,79 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        ReleasePreparedBattleRuntime();
-
-        if (!HasStableReferences(out string failureReason))
-        {
-            Debug.LogError(
-                $"Battle runtime coordinator cannot prepare Stage runtime: {failureReason}",
-                this);
-            return false;
-        }
-
         if (activeMap == null ||
             waveConfig == null ||
+            playerMaxHealth <= 0 ||
             towerPool == null ||
             upgradePool == null)
         {
             Debug.LogError(
-                "Battle runtime coordinator cannot prepare Stage runtime because one " +
-                "or more Stage dependency slices are missing.",
+                "Battle runtime coordinator cannot prepare Stage runtime because " +
+                "one or more Stage dependency slices are missing or invalid.",
                 this);
             return false;
         }
 
+        isLifecycleOperationInProgress = true;
+        bool preparationSucceeded = false;
+
+        try
+        {
+            preparationSucceeded = TryPrepareBattleRuntimeCore(
+                activeMap,
+                waveConfig,
+                playerMaxHealth,
+                towerPool,
+                upgradePool);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+        }
+        finally
+        {
+            preparationSucceeded = FinalizeLifecycleOperation(
+                preparationSucceeded);
+        }
+
+        return preparationSucceeded;
+    }
+
+    public bool TryValidatePreparationReferences(out string failureReason)
+    {
+        if (!isActiveAndEnabled)
+        {
+            failureReason = "Battle Runtime Coordinator is disabled.";
+            return false;
+        }
+
+        if (isLifecycleOperationInProgress)
+        {
+            failureReason =
+                "another Battle runtime lifecycle operation is already in progress.";
+            return false;
+        }
+
+        return HasStableReferences(out failureReason);
+    }
+
+    private bool TryPrepareBattleRuntimeCore(
+        MapGeneratorBehaviour activeMap,
+        MonsterWaveConfig waveConfig,
+        int playerMaxHealth,
+        IReadOnlyList<TowerDefinition> towerPool,
+        IReadOnlyList<TowerUpgradeDefinition> upgradePool)
+    {
+        ReleasePreparedBattleRuntimeCore();
+
         if (!pathfindingService.BindActiveMap(activeMap))
         {
             return FailPreparation("A* pathfinding binding failed.");
+        }
+
+        if (!CanContinueLifecycleOperation())
+        {
+            return FailPreparation("preparation was cancelled by a deferred release.");
         }
 
         if (!monsterSpawner.BindStage(activeMap, waveConfig))
@@ -111,9 +171,19 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return FailPreparation("Monster Spawner binding failed.");
         }
 
+        if (!CanContinueLifecycleOperation())
+        {
+            return FailPreparation("preparation was cancelled by a deferred release.");
+        }
+
         if (!towerPlacementController.BindActiveMap(activeMap))
         {
             return FailPreparation("Tower Placement binding failed.");
+        }
+
+        if (!CanContinueLifecycleOperation())
+        {
+            return FailPreparation("preparation was cancelled by a deferred release.");
         }
 
         if (!draftSystem.BindStagePools(towerPool, upgradePool))
@@ -121,14 +191,24 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return FailPreparation("Draft pool binding failed.");
         }
 
+        if (!CanContinueLifecycleOperation())
+        {
+            return FailPreparation("preparation was cancelled by a deferred release.");
+        }
+
         if (!InitializeFreshPlayerState(playerMaxHealth))
         {
             return FailPreparation("fresh Player state initialization failed.");
         }
 
+        if (!CanContinueLifecycleOperation())
+        {
+            return FailPreparation("preparation was cancelled by a deferred release.");
+        }
+
         isBattlePrepared = true;
 
-        if (!CanBeginPreparedBattle(out failureReason))
+        if (!CanBeginPreparedBattle(out string failureReason))
         {
             return FailPreparation(
                 $"prepared consumer validation failed: {failureReason}");
@@ -140,6 +220,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private bool InitializeFreshPlayerState(int playerMaxHealth)
     {
         hasFreshPlayerState = false;
+        preparedPlayerMaxHealth = 0;
 
         if (playerSystem == null)
         {
@@ -164,16 +245,21 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        hasFreshPlayerState =
-            !playerSystem.IsBattleActive &&
-            !playerSystem.IsDefeated &&
-            playerSystem.MaxHealth == playerMaxHealth &&
-            playerSystem.CurrentHealth == playerMaxHealth;
+        preparedPlayerMaxHealth = playerMaxHealth;
+        hasFreshPlayerState = HasValidFreshPlayerState();
         return hasFreshPlayerState;
     }
 
     public bool BeginPreparedBattle()
     {
+        if (isLifecycleOperationInProgress)
+        {
+            Debug.LogError(
+                "Battle runtime coordinator rejected a reentrant Battle begin request.",
+                this);
+            return false;
+        }
+
         if (IsBattleActive)
         {
             Debug.LogError(
@@ -183,12 +269,32 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
+        isLifecycleOperationInProgress = true;
+        bool beginSucceeded = false;
+
+        try
+        {
+            beginSucceeded = BeginPreparedBattleCore();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+        }
+        finally
+        {
+            beginSucceeded = FinalizeLifecycleOperation(beginSucceeded);
+        }
+
+        return beginSucceeded;
+    }
+
+    private bool BeginPreparedBattleCore()
+    {
         if (!CanBeginPreparedBattle(out string failureReason))
         {
             Debug.LogError(
                 $"Battle runtime coordinator cannot begin prepared battle: {failureReason}",
                 this);
-            CloseBattleAuthorityAndGates();
             return false;
         }
 
@@ -204,24 +310,38 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             Debug.LogError(
                 "Battle runtime coordinator failed to open every consumer battle gate.",
                 this);
-            StopBattle();
             return false;
         }
 
         bool spawningStarted = monsterSpawner.StartSpawning();
 
-        if (!spawningStarted ||
-            !IsBattleActive ||
-            !AreConsumerGatesOpen())
+        if (!spawningStarted)
         {
             Debug.LogError(
                 "Battle runtime coordinator failed to start the selected Monster Waves.",
                 this);
-            StopBattle();
+            return false;
+        }
+
+        if (hasEstablishedResult)
+        {
+            hasFreshPlayerState = false;
+            preparedPlayerMaxHealth = 0;
+            isBattlePrepared = false;
+            return true;
+        }
+
+        if (!IsBattleActive || !AreConsumerGatesOpen())
+        {
+            Debug.LogError(
+                "Battle runtime coordinator did not retain every Battle gate after " +
+                "Monster spawning started.",
+                this);
             return false;
         }
 
         hasFreshPlayerState = false;
+        preparedPlayerMaxHealth = 0;
         isBattlePrepared = false;
         return true;
     }
@@ -230,6 +350,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     {
         IsBattleActive = false;
         hasFreshPlayerState = false;
+        preparedPlayerMaxHealth = 0;
         isBattlePrepared = false;
         monsterSpawner?.StopBattle();
         playerSystem?.StopBattle();
@@ -246,6 +367,17 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     }
 
     public void ReleasePreparedBattleRuntime()
+    {
+        if (isLifecycleOperationInProgress)
+        {
+            releaseRequested = true;
+            return;
+        }
+
+        ReleasePreparedBattleRuntimeCore();
+    }
+
+    private void ReleasePreparedBattleRuntimeCore()
     {
         StopBattle();
         draftSystem?.ClearStageUi();
@@ -270,8 +402,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        if (!hasFreshPlayerState)
+        if (!hasFreshPlayerState || !HasValidFreshPlayerState())
         {
+            hasFreshPlayerState = false;
             failureReason = "fresh Player battle state has not been initialized.";
             return false;
         }
@@ -297,6 +430,13 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         if (!monsterSpawner.CanBeginBattle(out failureReason))
         {
             failureReason = $"Monster Spawner is not ready: {failureReason}";
+            return false;
+        }
+
+        if (!AreConsumerGatesClosed())
+        {
+            failureReason =
+                "one or more Battle consumer gates are open during preparation.";
             return false;
         }
 
@@ -351,8 +491,29 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         Debug.LogError(
             $"Battle runtime coordinator failed to prepare Stage runtime: {failureReason}",
             this);
-        ReleasePreparedBattleRuntime();
         return false;
+    }
+
+    private bool HasValidFreshPlayerState()
+    {
+        return playerSystem != null &&
+               !playerSystem.IsBattleActive &&
+               playerSystem.CurrentLevel == 1 &&
+               playerSystem.CurrentProgress == 0 &&
+               playerSystem.MaxHealth == preparedPlayerMaxHealth &&
+               playerSystem.CurrentHealth == preparedPlayerMaxHealth &&
+               !playerSystem.IsDefeated;
+    }
+
+    private bool AreConsumerGatesClosed()
+    {
+        return !IsBattleActive &&
+               !playerSystem.IsBattleActive &&
+               !monsterManager.IsBattleActive &&
+               !monsterSpawner.IsBattleActive &&
+               !monsterSpawner.IsSpawning &&
+               !draftSystem.IsBattleActive &&
+               !towerPlacementController.IsBattleActive;
     }
 
     private bool AreConsumerGatesOpen()
@@ -362,6 +523,26 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                towerPlacementController.IsBattleActive &&
                draftSystem.IsBattleActive &&
                monsterSpawner.IsBattleActive;
+    }
+
+    private bool CanContinueLifecycleOperation()
+    {
+        return !releaseRequested && isActiveAndEnabled;
+    }
+
+    private bool FinalizeLifecycleOperation(bool operationSucceeded)
+    {
+        isLifecycleOperationInProgress = false;
+
+        bool deferredReleaseRequested = releaseRequested;
+        releaseRequested = false;
+
+        if (!operationSucceeded || deferredReleaseRequested)
+        {
+            ReleasePreparedBattleRuntimeCore();
+        }
+
+        return operationSucceeded && !deferredReleaseRequested;
     }
 
     private void HandlePlayerDefeated()

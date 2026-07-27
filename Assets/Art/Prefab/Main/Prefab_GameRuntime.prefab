@@ -1646,10 +1646,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9b4df563724e44d9bbabfd917bee0236, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StageCompositionController
-  initialStageDefinition: {fileID: 11400000, guid: 3cbcb494b08af4efb85765bfa4fdfd7e, type: 2}
   stageRuntimeRoot: {fileID: 4599226690985017266}
   battleRuntimeCoordinator: {fileID: 1113759632605120418}
-  composeInitialStageOnStart: 1
 --- !u!1 &6159737766221864296
 GameObject:
   m_ObjectHideFlags: 0
@@ -2044,7 +2042,7 @@ Transform:
   m_GameObject: {fileID: 7229776445374390782}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.07913, y: 0, z: 0.37007}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2587,7 +2585,7 @@ GameObject:
   - component: {fileID: 3261855449354590494}
   - component: {fileID: 2046345648947699159}
   m_Layer: 0
-  m_Name: Prefab_GameManager
+  m_Name: Prefab_GameRuntime
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
