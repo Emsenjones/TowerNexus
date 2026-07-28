@@ -1,6 +1,6 @@
 # Task004 - Game Flow UI And Loop Integration
 
-Status: Not started
+Status: Runtime implementation complete; Unity Play Mode acceptance pending
 
 Depends on: Task001, Task002, Task003
 
@@ -35,7 +35,7 @@ UI must present Game Flow state and send semantic intent. It must not own Stage 
 - Task002 provides a prepared Stage and optional Introduction data.
 - Task003 provides the complete UI-independent Game Flow state machine and semantic intent API.
 - The existing Canvas contains Battle HUD, Monster status, and damage-number presentation.
-- There is no main menu, Stage Introduction window, Victory window, Defeat window, or Game Flow presentation root.
+- There is no main menu, Stage Introduction window, Stage Result window, or Game Flow presentation root.
 - Game Flow views are fixed Demo surfaces; only Introduction content items vary per Stage.
 
 ## 4. Ownership
@@ -46,14 +46,14 @@ UI must present Game Flow state and send semantic intent. It must not own Stage 
 | GameFlowUIRoot | Observe Game Flow state and make exactly the matching presentation interactive |
 | MainMenuView | Present start interaction and its local visual feedback |
 | StageIntroductionView | Present current Stage Introduction content and confirmation intent |
-| StageIntroductionUIItem | Present one referenced Tower or Tower Upgrade |
-| StageVictoryWindowView | Present Victory and continue intent |
-| StageDefeatWindowView | Present Defeat, retry intent, and return intent |
-| BattleUIRoot | Continue to group battle-local HUD, Monster status, and damage-number presentation |
+| TowerContentUIItem | Present one referenced Tower or Tower Upgrade in selectable Draft mode or read-only Introduction mode |
+| StageResultWindowView | Present Victory or Defeat copy and the actions valid for that result |
 
 No gameplay system receives a generic UI manager dependency.
 
 UI views never call StageCompositionController, BattleRuntimeCoordinator, PlayerSystem, MonsterManager, or MonsterSpawner directly.
+
+The existing authored Battle Layer continues to group battle-local HUD, Monster status, and damage-number presentation without becoming a runtime owner.
 
 ## 5. Authored UI Composition
 
@@ -68,8 +68,7 @@ Canvas
     -> Game Flow Layer
         -> Main Menu View
         -> Stage Introduction View
-        -> Stage Victory Window View
-        -> Stage Defeat Window View
+        -> Stage Result Window View
 ```
 
 The exact hierarchy and visual styling remain user-authored, but the composition contract is:
@@ -89,12 +88,17 @@ Create one `GameFlowUIRoot` with stable references to:
 - GameFlowController
 - MainMenuView
 - StageIntroductionView
-- StageVictoryWindowView
-- StageDefeatWindowView
+- StageResultWindowView
 
 GameFlowUIRoot remains active for the complete application lifecycle. A state
-with no fixed Game Flow presentation deactivates all four child views without
+with no fixed Game Flow presentation deactivates all three child views without
 deactivating the integration root or removing its state subscription.
+
+On `Awake`, GameFlowUIRoot hides and locks every referenced presentation
+regardless of its authored active state. Every later `OnEnable` repeats that
+safe reset before reference validation, subscription, and reconciliation.
+Prefab activation state is therefore not a presentation authority; current
+Game Flow state is the only runtime visibility authority.
 
 It observes Task003 state changes and applies one presentation state:
 
@@ -104,8 +108,8 @@ It observes Task003 state changes and applies one presentation state:
 | StagePreparing | None; interaction remains blocked until preparation resolves |
 | StageIntroduction | StageIntroductionView |
 | Battle | None |
-| StageVictory | StageVictoryWindowView |
-| StageDefeat | StageDefeatWindowView |
+| StageVictory | StageResultWindowView configured for Victory |
+| StageDefeat | StageResultWindowView configured for Defeat |
 
 Before activating a new view:
 
@@ -152,8 +156,7 @@ Use the project's existing tween dependency rather than implementing a new anima
 The Stage Introduction contains:
 
 - Authored static title presentation
-- Introduced Tower section and layout container
-- Introduced Tower Upgrade section and layout container
+- One unified introduced-item layout container
 - Confirm interaction
 
 On entry:
@@ -162,12 +165,15 @@ On entry:
 Receive Current StageDefinition
     -> Clear Prior Runtime Items
     -> Read Introduced Towers
-    -> Create One Item Per Presentable Tower
+    -> Create One Read-Only Item Per Presentable Tower
     -> Read Introduced Tower Upgrades
-    -> Create One Item Per Presentable Upgrade
-    -> Hide Empty Section Roots
+    -> Append One Read-Only Item Per Presentable Upgrade
     -> Enable Confirm Interaction
 ```
+
+Tower items are appended before Tower Upgrade items. The shared item's icon
+background treatment distinguishes their categories without separate section
+roots.
 
 The view must not compare the current Stage with the previous Stage.
 
@@ -175,32 +181,56 @@ The view must not read the full Draft pools as implied Introduction content.
 
 Confirm emits one semantic confirmation intent. It does not begin Stage composition directly.
 
-## 9. Stage Introduction UI Item
+The Confirm button keeps Unity Button as the sole click and interactable
+authority. A separate reusable `ButtonPressFeedback` component swaps its
+authored normal/pressed sprites and offsets only a child content root while a
+valid pointer press is held. The Button Transition is `None`, so built-in
+transition visuals do not compete with this feedback.
 
-Create one reusable `StageIntroductionUIItem` presentation component containing references for:
+## 9. Reusable Tower Content UI Item
+
+Use one reusable `TowerContentUIItem` presentation component containing references for:
 
 - Name text
 - Description text
 - Icon image
+- Icon background image and authored idle/pressed sprite pair for every category
+- One child content root for pressed-position feedback
 
-Use the same item type for introduced Towers and introduced Tower Upgrades because both provide the same presentation data.
+`TowerContentUIItem` is a pointer-driven presentation component, not a Button.
+The prefab does not add Button navigation, Transition, target-Graphic, or
+click-event configuration. Its icon background receives the item UI raycasts,
+and the component owns idle/pressed sprite changes, content-root offset, and
+selection publication directly.
 
-Initialization receives only resolved presentation values or one narrow presentation data value:
+Initialization assigns both the idle and pressed background sprites for Tower,
+Basic Upgrade, Behaviour Upgrade, or Elemental Upgrade content. Category
+presentation uses authored sprites rather than runtime color tinting.
 
-```text
-Display Name
-Description
-Icon
-```
+The same authored item prefab is shared by Draft selection and Stage
+Introduction. It has two explicit initialization modes:
 
-Display-name fallback follows the existing definition presentation convention: use the authored DisplayName when present, otherwise use the referenced definition's asset name.
+- Selectable mode retains exactly one Draft selection callback and accepts
+  pointer press and click handling.
+- Read-only mode removes any prior selection callback, ignores pointer
+  interaction, and restores idle press feedback.
+
+Both modes receive one valid Tower or Tower Upgrade content value and present
+the same display name, description, icon, and category background. Display-name
+fallback follows the existing definition presentation convention: use the
+authored DisplayName when present, otherwise use the referenced definition's
+asset name.
 
 The item:
 
-- Has no Button behavior.
-- Does not create DraftResult.
 - Does not own Tower or Upgrade eligibility.
-- Does not use TowerDraftUIItem or PendingDraftUIItem.
+- Does not infer whether it should be selectable from a nullable callback.
+- Does not retain a selection callback after disable or read-only
+  initialization.
+- Applies a small authored offset only to its pressed-content child root, never
+  to the layout-controlled item root.
+- Restores the content root to its captured idle position on release, pointer
+  exit, disable, and read-only initialization.
 - Does not write back to StageDefinition.
 
 ## 10. Introduction Item Cleanup
@@ -218,49 +248,63 @@ Cleanup must:
 
 - Destroy or release only tracked Introduction items.
 - Clear the tracking collection.
-- Reset section visibility.
 - Prevent stale Stage content from reappearing on next Stage or retry.
 
 Do not delete authored container children or unrelated UI objects.
 
-## 11. Stage Victory Window
+## 11. Stage Result Window
 
-Create a distinct `StageVictoryWindowView`.
-
-It contains:
-
-- Authored static Victory text
-- One Continue button
-- One Continue button label
-
-When another Stage exists:
-
-- Button label is `Next Stage`.
-- Clicking emits Continue After Victory.
-
-When the completed Stage is final:
-
-- Button label is `Back to Main Menu`.
-- Clicking still emits the same Continue After Victory intent.
-- Task003 decides that final Victory returns to MainMenu.
-
-The view may read the GameFlowController `HasNextStage` value for presentation. It must not increment the Stage index or select the next Stage itself.
-
-## 12. Stage Defeat Window
-
-Create a distinct `StageDefeatWindowView`.
+Create one `StageResultWindowView` shared by StageVictory and StageDefeat.
 
 It contains:
 
-- Authored static Defeat text
-- Retry button
-- Return-to-main-menu button
+- One presentation `Root Object`
+- One title text
+- One description text
+- One authored `Next Stage` button
+- One authored `Retry` button
+- One authored `Main Menu` button
+
+The view component remains active while `Root Object` is the visibility
+boundary for the complete result presentation. The title, description, and all
+three buttons must be under that root.
+
+The three buttons retain fixed semantic meanings. The view changes button
+visibility, never a button's label or click meaning.
+
+Before showing a result, the view disables interaction, hides every result
+button, assigns the result copy, activates only the valid buttons, and then
+enables interaction.
+
+## 12. Result Presentation Modes
+
+When another Stage exists, Victory presents:
+
+- Title: `VICTORY`
+- Description: `All enemy waves have been defeated.`
+- `Next Stage` button only
+- Clicking emits Continue After Victory
+
+When the completed Stage is final, Victory presents:
+
+- Title: `VICTORY`
+- Description: `All enemy waves have been defeated.`
+- `Main Menu` button only
+- Clicking emits Return To Main Menu
+
+Defeat presents:
+
+- Title: `DEFEAT`
+- Description: `The enemy broke through your defenses.`
+- `Retry` and `Main Menu` buttons
 
 Retry emits the Task003 Retry intent.
 
-Return emits the Task003 Return To Main Menu intent.
+Main Menu emits the Task003 Return To Main Menu intent.
 
-The view does not reset Player health or recompose the Stage directly.
+The view receives `HasNextStage` only to choose the valid Victory button set.
+It does not increment the Stage index, reset Player health, select the next
+Stage, or recompose a Stage directly.
 
 ## 13. Button And Subscription Lifecycle
 
@@ -269,9 +313,14 @@ The view does not reset Player health or recompose the Stage directly.
 - Do not add listeners every time a view is shown without removing the prior binding.
 - Disable relevant buttons immediately after forwarding an accepted intent.
 - Re-enable buttons only when the corresponding view is configured for a fresh valid state.
+- Keep click publication in Button listeners; `ButtonPressFeedback` never
+  invokes the Button or publishes a semantic intent.
+- Apply Confirm press feedback only while its Button is active and interactable.
+  Pointer release, pointer exit, and component disable restore the normal
+  sprite and the captured idle content position.
 - A hidden or inactive view cannot forward intent.
 - Re-enabling GameFlowUIRoot must reconcile to the current GameFlowState without duplicating listeners or transient items.
-- StagePreparing and Battle hide all four fixed child views while GameFlowUIRoot remains active and subscribed.
+- StagePreparing and Battle hide all three fixed child views while GameFlowUIRoot remains active and subscribed.
 
 ## 14. Battle UI Boundary
 
@@ -318,15 +367,18 @@ Report at minimum:
 
 - Missing GameFlowController reference
 - Missing required Game Flow view
-- Missing required Button, label, section, container, or item prefab reference
-- Introduction item prefab missing StageIntroductionUIItem
-- Introduction item presentation references missing
+- Missing required Button, label, unified container, or item prefab reference
+- Confirm Button missing valid `ButtonPressFeedback`, authored sprite pair, or
+  child pressed-content-root reference
+- Introduction item prefab missing TowerContentUIItem
+- Tower content item presentation, raycast target, category sprite, or
+  pressed-content-root references missing
 - Fixed Game Flow view configured for runtime dynamic loading
 - Multiple active modal Game Flow views
 - Active modal view not blocking Battle UI input
 - Duplicate Button subscriptions
 - Stale Introduction items after Stage change or retry
-- Victory label inconsistent with `HasNextStage`
+- Result copy or visible button set inconsistent with the current result and `HasNextStage`
 - Hidden view still accepting input
 
 Validation reports authoring problems without creating substitute UI, choosing a Stage, or starting Battle.
@@ -334,9 +386,10 @@ Validation reports authoring problems without creating substitute UI, choosing a
 Reference validation returns success or failure before Game Flow UI subscribes
 or reconciles. Missing core wiring leaves all available views hidden and locked,
 and GameFlowUIRoot creates no controller or view subscriptions. Introduction
-validation checks that its item prefab contains StageIntroductionUIItem and that
-the item has assigned name, description, and icon presentation references before
-any Stage content is populated.
+validation checks that its item prefab contains TowerContentUIItem and that the
+item has assigned name, description, icon, raycast-enabled icon background,
+idle/pressed category sprites, and pressed-content-root references before any
+Stage content is populated.
 
 ## 17. Out Of Scope
 
@@ -362,19 +415,31 @@ any Stage content is populated.
 - Main Menu tween stops and resets cleanly when hidden.
 - Start intent begins one run at Stage index zero.
 - A configured Stage Introduction displays the current Stage's explicit introduced Towers and Upgrades.
-- Empty Tower or Upgrade sections are hidden.
-- Introduction items show name, description, and icon.
+- Towers and Upgrades share one ordered Introduction container, with Towers presented first.
+- Introduction items show name, description, icon, and category background without accepting Draft selection.
+- Selectable Tower content uses pointer-driven pressed sprites and content-root
+  offset, publishes selection only from a valid pointer click, and always
+  restores both visuals to idle after the press ends.
+- Read-only Introduction content never enters pressed feedback.
+- An interactable Confirm button swaps to its pressed sprite and offsets only
+  its child content while pressed, then restores both on release or exit.
+- Confirm visual feedback never invokes Confirm independently of Button
+  `onClick`.
 - Confirm starts the already prepared Stage exactly once.
 - A Stage without presentable Introduction content begins without an empty window.
-- Victory displays only StageVictoryWindowView.
-- Non-final Victory label is `Next Stage`.
-- Final Victory label is `Back to Main Menu`.
-- Defeat displays only StageDefeatWindowView.
+- Victory and Defeat display only StageResultWindowView.
+- Victory displays `VICTORY` and `All enemy waves have been defeated.`
+- Non-final Victory displays only the `Next Stage` button.
+- Final Victory displays only the `Main Menu` button.
+- Defeat displays `DEFEAT` and `The enemy broke through your defenses.`
+- Defeat displays the `Retry` and `Main Menu` buttons.
 - Retry prepares the same Stage with fresh Player health.
 - Return releases current Stage runtime and shows MainMenuView.
 - Starting again from MainMenu begins at index zero.
 - Modal views block Battle UI interaction beneath them.
 - Fixed views are authored references; only Introduction items are dynamically instantiated.
+- Startup and re-enable normalize every fixed view to hidden and locked before
+  reconciling the current Game Flow state.
 - Rapid repeated clicks do not duplicate Stage preparation, begin, continue, retry, or return.
 - No prior Stage Introduction items or button listeners leak into another Stage or retry.
 
@@ -399,9 +464,14 @@ Static validation does not prove Canvas ordering, pointer blocking, serialized B
 User authoring:
 
 - Create MainMenuView prefab and full-screen Image interaction.
-- Create StageIntroductionView prefab with authored title, two sections, containers, and Confirm button.
-- Create StageIntroductionUIItem prefab with name, description, and icon presentation.
-- Create separate StageVictoryWindowView and StageDefeatWindowView prefabs.
+- Create StageIntroductionView prefab with authored title, one introduced-item container, and Confirm button.
+- Add `ButtonPressFeedback` beside the Confirm Button, set Button Transition to
+  `None`, and assign its Button, Image, normal/pressed sprites, child content
+  root, and pressed offset.
+- Reuse the TowerContentUIItem prefab for Introduction content and assign its unified container and prefab references.
+- Create one StageResultWindowView with an assigned presentation `Root Object`;
+  place its title, description, and authored `Next Stage`, `Retry`, and
+  `Main Menu` buttons under that root.
 - Place fixed Game Flow prefab instances under the Canvas Game Flow layer.
 - Assign GameFlowUIRoot references.
 - Configure Canvas ordering and modal raycast blocking.

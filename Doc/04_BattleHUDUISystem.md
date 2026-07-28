@@ -21,9 +21,9 @@ It observes gameplay state and forwards player intent. It does not own Player st
 
 # 2. Battle UI Composition
 
-One authored Battle UI Root may group the battle HUD, Monster status presentation, and damage-number presentation for composition and validation.
+One authored Battle UI layer may group the battle HUD, Monster status presentation, and damage-number presentation.
 
-The root is not a gameplay service locator and does not become the owner of child-domain state. Gameplay systems communicate only with the presentation capability they require.
+The layer is a composition boundary, not a runtime owner or gameplay service locator. Gameplay systems communicate only with the presentation capability they require.
 
 The Draft Window remains an authored part of the battle UI while closed. Opening a Draft creates transient choice items; closing it removes only those transient items and returns the window to its closed state.
 
@@ -142,7 +142,7 @@ Battle UI authoring validation should report at minimum:
 - Missing Draft Window or Draft choice container
 - Missing Draft Item Interaction Area
 - Missing interaction feedback references required by current content
-- Invalid presentation roots for Monster status or damage-number composition
+- Missing Monster status or damage-number presentation required by the authored composition
 
 Validation must not create gameplay state or silently replace authored UI.
 

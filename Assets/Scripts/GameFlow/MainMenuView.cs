@@ -1,12 +1,13 @@
 using System;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class MainMenuView : MonoBehaviour
 {
     [SerializeField] private Button startButton;
-    [SerializeField] private CanvasGroup startMessageCanvasGroup;
+    [SerializeField] private TMP_Text startMessageText;
     [Header("Start Message Pulse")]
     [Min(0.01f)]
     [SerializeField] private float pulseHalfDuration = 0.8f;
@@ -64,16 +65,16 @@ public class MainMenuView : MonoBehaviour
             return false;
         }
 
-        if (startMessageCanvasGroup == null)
+        if (startMessageText == null)
         {
-            failureReason = "Start Message Canvas Group is not assigned.";
+            failureReason = "Start Message Text is not assigned.";
             return false;
         }
 
-        if (startMessageCanvasGroup.blocksRaycasts)
+        if (startMessageText.raycastTarget)
         {
             failureReason =
-                "Start Message Canvas Group must not block pointer raycasts.";
+                "Start Message Text must not block pointer raycasts.";
             return false;
         }
 
@@ -135,12 +136,12 @@ public class MainMenuView : MonoBehaviour
     private void CaptureAuthoredMessageAlpha()
     {
         if (hasCapturedAuthoredAlpha ||
-            startMessageCanvasGroup == null)
+            startMessageText == null)
         {
             return;
         }
 
-        authoredMessageAlpha = startMessageCanvasGroup.alpha;
+        authoredMessageAlpha = startMessageText.color.a;
         hasCapturedAuthoredAlpha = true;
     }
 
@@ -148,7 +149,7 @@ public class MainMenuView : MonoBehaviour
     {
         StopPulseAndRestoreAlpha();
 
-        if (startMessageCanvasGroup == null)
+        if (startMessageText == null)
         {
             return;
         }
@@ -162,7 +163,7 @@ public class MainMenuView : MonoBehaviour
             return;
         }
 
-        pulseTween = startMessageCanvasGroup
+        pulseTween = startMessageText
             .DOFade(minimumAlpha, Mathf.Max(0.01f, pulseHalfDuration))
             .SetEase(pulseEaseType)
             .SetLoops(-1, LoopType.Yoyo);
@@ -176,10 +177,12 @@ public class MainMenuView : MonoBehaviour
             pulseTween = null;
         }
 
-        if (startMessageCanvasGroup != null &&
+        if (startMessageText != null &&
             hasCapturedAuthoredAlpha)
         {
-            startMessageCanvasGroup.alpha = authoredMessageAlpha;
+            Color color = startMessageText.color;
+            color.a = authoredMessageAlpha;
+            startMessageText.color = color;
         }
     }
 }

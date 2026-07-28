@@ -5,25 +5,29 @@ using UnityEngine.UI;
 
 public class StageIntroductionView : MonoBehaviour
 {
-    [SerializeField] private Graphic modalBlocker;
-    [SerializeField] private GameObject introducedTowerSectionRoot;
-    [SerializeField] private Transform introducedTowerContainer;
-    [SerializeField] private GameObject introducedUpgradeSectionRoot;
-    [SerializeField] private Transform introducedUpgradeContainer;
-    [SerializeField] private GameObject introductionItemPrefab;
+    [SerializeField] private GameObject rootObject;
+    [SerializeField] private Transform introducedItemContainer;
+    [SerializeField] private TowerContentUIItem introductionItemPrefab;
     [SerializeField] private Button confirmButton;
 
-    private readonly List<StageIntroductionUIItem> runtimeItems =
-        new List<StageIntroductionUIItem>();
+    private readonly List<TowerContentUIItem> runtimeItems =
+        new List<TowerContentUIItem>();
     private bool isInteractionEnabled;
 
     public event Action ConfirmRequested;
 
     public bool IsInteractionEnabled => isInteractionEnabled;
+    public bool IsVisible =>
+        rootObject != null && rootObject.activeInHierarchy;
 
     private void Awake()
     {
         SetInteractionEnabled(false);
+
+        if (rootObject != null)
+        {
+            rootObject.SetActive(false);
+        }
     }
 
     private void OnEnable()
@@ -45,69 +49,73 @@ public class StageIntroductionView : MonoBehaviour
 
     public bool TryValidateReferences(out string failureReason)
     {
-        if (modalBlocker == null || !modalBlocker.raycastTarget)
+        if (rootObject == null)
+        {
+            failureReason = "Root Object is not assigned.";
+            return false;
+        }
+
+        if (rootObject != gameObject &&
+            !rootObject.transform.IsChildOf(transform))
         {
             failureReason =
-                "Stage Introduction requires a raycast-enabled modal blocker Graphic.";
+                "Root Object must be the view object or one of its children.";
             return false;
         }
 
-        if (introducedTowerSectionRoot == null)
+        if (introducedItemContainer == null)
         {
-            failureReason = "Introduced Tower Section Root is not assigned.";
+            failureReason = "Introduced Item Container is not assigned.";
             return false;
         }
 
-        if (introducedTowerContainer == null)
+        if (!IsUnderRoot(introducedItemContainer))
         {
-            failureReason = "Introduced Tower Container is not assigned.";
-            return false;
-        }
-
-        if (introducedUpgradeSectionRoot == null)
-        {
-            failureReason = "Introduced Upgrade Section Root is not assigned.";
-            return false;
-        }
-
-        if (introducedUpgradeContainer == null)
-        {
-            failureReason = "Introduced Upgrade Container is not assigned.";
+            failureReason =
+                "Introduced Item Container must be under Root Object.";
             return false;
         }
 
         if (introductionItemPrefab == null)
         {
-            failureReason = "Stage Introduction Item Prefab is not assigned.";
+            failureReason = "Introduction Item Prefab is not assigned.";
             return false;
         }
 
-        if (!introductionItemPrefab.TryGetComponent(
-                out StageIntroductionUIItem item))
+        if (!introductionItemPrefab.TryValidateReferences(
+                out string itemFailureReason))
         {
             failureReason =
-                "Stage Introduction Item Prefab is missing StageIntroductionUIItem.";
-            return false;
-        }
-
-        if (!item.TryValidateReferences(out string itemFailureReason))
-        {
-            failureReason =
-                $"Stage Introduction Item Prefab is invalid: {itemFailureReason}";
-            return false;
-        }
-
-        if (introductionItemPrefab
-                .GetComponentInChildren<Button>(true) != null)
-        {
-            failureReason =
-                "Stage Introduction Item Prefab must not contain Button behavior.";
+                $"Introduction Item Prefab is invalid: {itemFailureReason}";
             return false;
         }
 
         if (confirmButton == null)
         {
             failureReason = "Confirm Button is not assigned.";
+            return false;
+        }
+
+        if (!IsUnderRoot(confirmButton.transform))
+        {
+            failureReason = "Confirm Button must be under Root Object.";
+            return false;
+        }
+
+        if (!confirmButton.TryGetComponent(
+                out ButtonPressFeedback pressFeedback))
+        {
+            failureReason =
+                "Confirm Button is missing ButtonPressFeedback.";
+            return false;
+        }
+
+        if (!pressFeedback.TryValidateReferences(
+                out string feedbackFailureReason))
+        {
+            failureReason =
+                $"Confirm Button press feedback is invalid: " +
+                feedbackFailureReason;
             return false;
         }
 
@@ -128,15 +136,11 @@ public class StageIntroductionView : MonoBehaviour
             return false;
         }
 
-        int towerItemCount = PopulateTowers(
-            stageDefinition.IntroducedTowers);
-        int upgradeItemCount = PopulateUpgrades(
-            stageDefinition.IntroducedTowerUpgrades);
+        int createdItemCount =
+            PopulateTowers(stageDefinition.IntroducedTowers) +
+            PopulateUpgrades(stageDefinition.IntroducedTowerUpgrades);
 
-        introducedTowerSectionRoot.SetActive(towerItemCount > 0);
-        introducedUpgradeSectionRoot.SetActive(upgradeItemCount > 0);
-
-        if (towerItemCount == 0 && upgradeItemCount == 0)
+        if (createdItemCount == 0)
         {
             Debug.LogError(
                 $"Stage Introduction for '{GetStageName(stageDefinition)}' " +
@@ -150,7 +154,7 @@ public class StageIntroductionView : MonoBehaviour
 
     public void Show()
     {
-        gameObject.SetActive(true);
+        rootObject.SetActive(true);
         SetInteractionEnabled(true);
     }
 
@@ -158,10 +162,9 @@ public class StageIntroductionView : MonoBehaviour
     {
         SetInteractionEnabled(false);
 
-        if (gameObject.activeSelf)
+        if (rootObject != null)
         {
-            gameObject.SetActive(false);
-            return;
+            rootObject.SetActive(false);
         }
 
         ClearRuntimeItems();
@@ -169,7 +172,10 @@ public class StageIntroductionView : MonoBehaviour
 
     public void SetInteractionEnabled(bool enabled)
     {
-        isInteractionEnabled = enabled && isActiveAndEnabled;
+        isInteractionEnabled =
+            enabled &&
+            isActiveAndEnabled &&
+            IsVisible;
 
         if (confirmButton != null)
         {
@@ -200,12 +206,7 @@ public class StageIntroductionView : MonoBehaviour
             }
 
             if (TryCreateItem(
-                    introducedTowerContainer,
-                    GetDisplayName(
-                        towerDefinition.DisplayName,
-                        towerDefinition.name),
-                    towerDefinition.Description,
-                    towerDefinition.Icon))
+                    DraftResult.CreateTowerDraft(towerDefinition)))
             {
                 createdItemCount++;
             }
@@ -238,12 +239,7 @@ public class StageIntroductionView : MonoBehaviour
             }
 
             if (TryCreateItem(
-                    introducedUpgradeContainer,
-                    GetDisplayName(
-                        upgradeDefinition.DisplayName,
-                        upgradeDefinition.name),
-                    upgradeDefinition.Description,
-                    upgradeDefinition.Icon))
+                    DraftResult.CreateTowerUpgradeDraft(upgradeDefinition)))
             {
                 createdItemCount++;
             }
@@ -252,37 +248,21 @@ public class StageIntroductionView : MonoBehaviour
         return createdItemCount;
     }
 
-    private bool TryCreateItem(
-        Transform container,
-        string displayName,
-        string description,
-        Sprite icon)
+    private bool TryCreateItem(DraftResult content)
     {
-        GameObject itemObject = Instantiate(
+        TowerContentUIItem item = Instantiate(
             introductionItemPrefab,
-            container,
+            introducedItemContainer,
             false);
 
-        if (!itemObject.TryGetComponent(
-                out StageIntroductionUIItem item))
+        if (!item.TryInitializeReadOnly(content))
         {
-            Debug.LogError(
-                "Created Stage Introduction item is missing " +
-                "StageIntroductionUIItem.",
-                itemObject);
-            itemObject.SetActive(false);
-            Destroy(itemObject);
+            item.gameObject.SetActive(false);
+            Destroy(item.gameObject);
             return false;
         }
 
-        if (!item.TryInitialize(displayName, description, icon))
-        {
-            itemObject.SetActive(false);
-            Destroy(itemObject);
-            return false;
-        }
-
-        itemObject.SetActive(true);
+        item.gameObject.SetActive(true);
         runtimeItems.Add(item);
         return true;
     }
@@ -291,7 +271,7 @@ public class StageIntroductionView : MonoBehaviour
     {
         for (int i = runtimeItems.Count - 1; i >= 0; i--)
         {
-            StageIntroductionUIItem item = runtimeItems[i];
+            TowerContentUIItem item = runtimeItems[i];
 
             if (item == null)
             {
@@ -303,13 +283,6 @@ public class StageIntroductionView : MonoBehaviour
         }
 
         runtimeItems.Clear();
-        ResetSectionVisibility();
-    }
-
-    private void ResetSectionVisibility()
-    {
-        introducedTowerSectionRoot?.SetActive(false);
-        introducedUpgradeSectionRoot?.SetActive(false);
     }
 
     private void BindButton()
@@ -341,20 +314,18 @@ public class StageIntroductionView : MonoBehaviour
         ConfirmRequested?.Invoke();
     }
 
-    private static string GetDisplayName(
-        string authoredDisplayName,
-        string assetName)
-    {
-        return string.IsNullOrEmpty(authoredDisplayName)
-            ? assetName
-            : authoredDisplayName;
-    }
-
     private static string GetStageName(
         StageDefinition stageDefinition)
     {
-        return GetDisplayName(
-            stageDefinition.DisplayName,
-            stageDefinition.name);
+        return string.IsNullOrEmpty(stageDefinition.DisplayName)
+            ? stageDefinition.name
+            : stageDefinition.DisplayName;
+    }
+
+    private bool IsUnderRoot(Transform candidate)
+    {
+        Transform rootTransform = rootObject.transform;
+        return candidate == rootTransform ||
+               candidate.IsChildOf(rootTransform);
     }
 }

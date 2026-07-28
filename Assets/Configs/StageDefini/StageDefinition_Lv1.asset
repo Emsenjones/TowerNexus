@@ -25,3 +25,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
   - {fileID: 11400000, guid: 81c23c8d23a140038f44a43dd92745e6, type: 2}
   - {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}
+  showStageIntroduction: 1
+  introducedTowers:
+  - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+  introducedTowerUpgrades:
+  - {fileID: 11400000, guid: fced72daa7b7c42419e4cb626f897805, type: 2}
+  - {fileID: 11400000, guid: 76b13c72bfb594d89beecab5f1ce3520, type: 2}
+  - {fileID: 11400000, guid: 83605bc8a0ade4983a10e00192c09e89, type: 2}
+  - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
+  - {fileID: 11400000, guid: 81c23c8d23a140038f44a43dd92745e6, type: 2}
+  - {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}

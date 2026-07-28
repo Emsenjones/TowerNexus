@@ -1,20 +1,23 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class GameFlowUIRoot : MonoBehaviour
 {
     [SerializeField] private GameFlowController gameFlowController;
     [SerializeField] private MainMenuView mainMenuView;
     [SerializeField] private StageIntroductionView stageIntroductionView;
-    [SerializeField] private StageVictoryWindowView stageVictoryWindowView;
-    [SerializeField] private StageDefeatWindowView stageDefeatWindowView;
+    [SerializeField] private StageResultWindowView stageResultWindowView;
 
     private bool isSubscribed;
 
+    private void Awake()
+    {
+        TryEnterSafePresentationState();
+    }
+
     private void OnEnable()
     {
-        ReportAuthoredActivationIssues();
-
         if (!TryEnterSafePresentationState() ||
             !TryValidateComposition())
         {
@@ -62,14 +65,8 @@ public class GameFlowUIRoot : MonoBehaviour
                 ? null
                 : failureReason);
         isValid &= TryValidateView(
-            stageVictoryWindowView,
-            "Stage Victory Window View",
-            view => view.TryValidateReferences(out string failureReason)
-                ? null
-                : failureReason);
-        isValid &= TryValidateView(
-            stageDefeatWindowView,
-            "Stage Defeat Window View",
+            stageResultWindowView,
+            "Stage Result Window View",
             view => view.TryValidateReferences(out string failureReason)
                 ? null
                 : failureReason);
@@ -77,7 +74,7 @@ public class GameFlowUIRoot : MonoBehaviour
         if (!AreViewObjectsDistinct())
         {
             Debug.LogError(
-                "Game Flow UI Root requires four distinct fixed view objects.",
+                "Game Flow UI Root requires three distinct fixed view objects.",
                 this);
             isValid = false;
         }
@@ -132,23 +129,18 @@ public class GameFlowUIRoot : MonoBehaviour
     {
         if (mainMenuView == null ||
             stageIntroductionView == null ||
-            stageVictoryWindowView == null ||
-            stageDefeatWindowView == null)
+            stageResultWindowView == null)
         {
             return false;
         }
 
         GameObject mainMenuObject = mainMenuView.gameObject;
         GameObject introductionObject = stageIntroductionView.gameObject;
-        GameObject victoryObject = stageVictoryWindowView.gameObject;
-        GameObject defeatObject = stageDefeatWindowView.gameObject;
+        GameObject resultObject = stageResultWindowView.gameObject;
 
         return mainMenuObject != introductionObject &&
-               mainMenuObject != victoryObject &&
-               mainMenuObject != defeatObject &&
-               introductionObject != victoryObject &&
-               introductionObject != defeatObject &&
-               victoryObject != defeatObject;
+               mainMenuObject != resultObject &&
+               introductionObject != resultObject;
     }
 
     private void Subscribe()
@@ -162,10 +154,10 @@ public class GameFlowUIRoot : MonoBehaviour
         mainMenuView.StartRequested += HandleStartRequested;
         stageIntroductionView.ConfirmRequested +=
             HandleIntroductionConfirmRequested;
-        stageVictoryWindowView.ContinueRequested +=
-            HandleContinueRequested;
-        stageDefeatWindowView.RetryRequested += HandleRetryRequested;
-        stageDefeatWindowView.ReturnToMainMenuRequested +=
+        stageResultWindowView.NextStageRequested +=
+            HandleNextStageRequested;
+        stageResultWindowView.RetryRequested += HandleRetryRequested;
+        stageResultWindowView.ReturnToMainMenuRequested +=
             HandleReturnToMainMenuRequested;
         isSubscribed = true;
     }
@@ -193,16 +185,12 @@ public class GameFlowUIRoot : MonoBehaviour
                 HandleIntroductionConfirmRequested;
         }
 
-        if (stageVictoryWindowView != null)
+        if (stageResultWindowView != null)
         {
-            stageVictoryWindowView.ContinueRequested -=
-                HandleContinueRequested;
-        }
-
-        if (stageDefeatWindowView != null)
-        {
-            stageDefeatWindowView.RetryRequested -= HandleRetryRequested;
-            stageDefeatWindowView.ReturnToMainMenuRequested -=
+            stageResultWindowView.NextStageRequested -=
+                HandleNextStageRequested;
+            stageResultWindowView.RetryRequested -= HandleRetryRequested;
+            stageResultWindowView.ReturnToMainMenuRequested -=
                 HandleReturnToMainMenuRequested;
         }
 
@@ -265,11 +253,11 @@ public class GameFlowUIRoot : MonoBehaviour
                 stageIntroductionView.Show();
                 break;
             case GameFlowState.StageVictory:
-                stageVictoryWindowView.Show(
+                stageResultWindowView.ShowVictory(
                     gameFlowController.HasNextStage);
                 break;
             case GameFlowState.StageDefeat:
-                stageDefeatWindowView.Show();
+                stageResultWindowView.ShowDefeat();
                 break;
             default:
                 Debug.LogError(
@@ -305,9 +293,8 @@ public class GameFlowUIRoot : MonoBehaviour
             (state != GameFlowState.StageIntroduction &&
              stageIntroductionView.IsInteractionEnabled) ||
             (state != GameFlowState.StageVictory &&
-             stageVictoryWindowView.IsInteractionEnabled) ||
-            (state != GameFlowState.StageDefeat &&
-             stageDefeatWindowView.IsInteractionEnabled))
+             state != GameFlowState.StageDefeat &&
+             stageResultWindowView.IsInteractionEnabled))
         {
             Debug.LogError(
                 $"Game Flow UI state {state} left a hidden view interactive.",
@@ -328,11 +315,8 @@ public class GameFlowUIRoot : MonoBehaviour
             () => stageIntroductionView?.HideAndClear(),
             "Stage Introduction View");
         succeeded &= TryHideView(
-            () => stageVictoryWindowView?.HideAndLock(),
-            "Stage Victory Window View");
-        succeeded &= TryHideView(
-            () => stageDefeatWindowView?.HideAndLock(),
-            "Stage Defeat Window View");
+            () => stageResultWindowView?.HideAndLock(),
+            "Stage Result Window View");
         return succeeded;
     }
 
@@ -353,27 +337,6 @@ public class GameFlowUIRoot : MonoBehaviour
         }
     }
 
-    private void ReportAuthoredActivationIssues()
-    {
-        int activeViewCount = CountActiveViews();
-
-        if (activeViewCount > 1)
-        {
-            Debug.LogError(
-                $"Game Flow UI Root found {activeViewCount} authored active " +
-                "fixed views. Fixed child views should be inactive by default.",
-                this);
-        }
-        else if (activeViewCount == 1)
-        {
-            Debug.LogWarning(
-                "Game Flow UI Root found an authored active fixed view. " +
-                "Fixed child views should be inactive by default so runtime " +
-                "state is the only visibility authority.",
-                this);
-        }
-    }
-
     private int CountActiveViews()
     {
         int activeViewCount = 0;
@@ -384,19 +347,13 @@ public class GameFlowUIRoot : MonoBehaviour
         }
 
         if (stageIntroductionView != null &&
-            stageIntroductionView.gameObject.activeSelf)
+            stageIntroductionView.IsVisible)
         {
             activeViewCount++;
         }
 
-        if (stageVictoryWindowView != null &&
-            stageVictoryWindowView.gameObject.activeSelf)
-        {
-            activeViewCount++;
-        }
-
-        if (stageDefeatWindowView != null &&
-            stageDefeatWindowView.gameObject.activeSelf)
+        if (stageResultWindowView != null &&
+            stageResultWindowView.IsVisible)
         {
             activeViewCount++;
         }
@@ -420,19 +377,19 @@ public class GameFlowUIRoot : MonoBehaviour
             "confirm the Stage Introduction");
     }
 
-    private void HandleContinueRequested()
+    private void HandleNextStageRequested()
     {
         ForwardIntent(
             gameFlowController.RequestContinueAfterVictory,
-            () => stageVictoryWindowView.SetInteractionEnabled(false),
-            "continue after Victory");
+            () => stageResultWindowView.SetInteractionEnabled(false),
+            "continue to the next Stage after Victory");
     }
 
     private void HandleRetryRequested()
     {
         ForwardIntent(
             gameFlowController.RequestRetryCurrentStage,
-            () => stageDefeatWindowView.SetInteractionEnabled(false),
+            () => stageResultWindowView.SetInteractionEnabled(false),
             "retry the current Stage");
     }
 
@@ -440,7 +397,7 @@ public class GameFlowUIRoot : MonoBehaviour
     {
         ForwardIntent(
             gameFlowController.RequestReturnToMainMenu,
-            () => stageDefeatWindowView.SetInteractionEnabled(false),
+            () => stageResultWindowView.SetInteractionEnabled(false),
             "return to Main Menu");
     }
 

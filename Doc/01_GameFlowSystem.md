@@ -128,7 +128,7 @@ StageDefinition may provide optional Stage Introduction content:
 
 Introduced Towers must belong to the same Stage's Tower Draft Pool. Introduced Tower Upgrades must belong to the same Stage's Tower Upgrade Draft Pool. The lists explicitly author the intended presentation; Game Flow does not calculate a difference against the preceding Stage.
 
-Each introduced item presents the referenced definition's player-facing name, description, and icon. A Tower or Upgrade section with no introduced items is omitted. If the Stage does not require an introduction, preparation proceeds directly to Battle.
+Each introduced item presents the referenced definition's player-facing name, description, icon, and category treatment. Tower and Tower Upgrade items share one ordered presentation collection while remaining visually distinguishable. If the Stage does not require an introduction, preparation proceeds directly to Battle.
 
 Introduction content is presentation metadata. It does not change Draft weighting, eligibility, availability, or the underlying Tower and Tower Upgrade definitions.
 
@@ -202,7 +202,11 @@ Game Flow presentation contains four distinct player-facing capabilities:
 | Stage Victory | Presents victory and requests next Stage or main menu according to sequence position |
 | Stage Defeat | Presents defeat and requests retry or main menu |
 
-Victory and Defeat are distinct presentation surfaces because their available actions differ. Their visual styling, animation, concrete hierarchy, and loading strategy are presentation implementation concerns.
+Victory and Defeat are distinct presentation modes because their available
+actions differ. They may share one result surface as long as its title,
+description, and available actions are configured from the current Game Flow
+state before interaction is enabled. Visual styling, animation, concrete
+hierarchy, and loading strategy are presentation implementation concerns.
 
 Only the presentation valid for the current Game Flow state accepts interaction. Modal Game Flow presentation prevents input from reaching inactive battle interaction surfaces beneath it.
 

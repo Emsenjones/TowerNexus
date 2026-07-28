@@ -89,10 +89,11 @@
 8. *Battle stage framework implementation;
 9. *Monster definition refactor;
 10. *Player Level up by resolving monsters;
-11. Game flow implementation;
-10. Level display window;
-11. Camera movement;
-13. Monster route display;
-14. Design a function which players can remove Tower pending items;
-15. Tap tower to pop up TowerInfoWindow;
-16. Develop Monster & Projectile object pool;
+11. *Game flow implementation;
+12. PlayerSystem refactoring;
+13. Camera movement;
+14. Level display window;
+15. Monster route display;
+16. players can remove Tower pending items;
+17. Tap tower to pop up TowerInfoWindow;
+18. Develop Monster & Projectile object pool;

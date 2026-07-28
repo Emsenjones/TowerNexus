@@ -26,6 +26,7 @@ public class BattleHUDUI : MonoBehaviour
     {
         SubscribeToPlayerSystem();
         InitializeFromPlayerSystem();
+        draftUI.CloseDraft();
     }
 
     private void OnDisable()
@@ -76,10 +77,6 @@ public class BattleHUDUI : MonoBehaviour
         hpText.text = currentHealth.ToString();
     }
 
-    public void AddPendingTower(TowerDefinition towerDefinition)
-    {
-        AddPendingDraft(DraftResult.CreateTowerDraft(towerDefinition));
-    }
 
     public void AddPendingDraft(DraftResult draftResult)
     {
@@ -120,10 +117,6 @@ public class BattleHUDUI : MonoBehaviour
         pendingDraftItems.Add(item);
     }
 
-    public void RemovePendingTower(PendingDraftUIItem item)
-    {
-        RemovePendingDraft(item);
-    }
 
     public void RemovePendingDraft(PendingDraftUIItem item)
     {

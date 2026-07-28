@@ -15,18 +15,15 @@ MonoBehaviour:
   towerFamily: 1
   displayName: Cannon Tower
   description: Explosive area damage
-  icon: {fileID: -5269700967859579669, guid: 10cbcc51943ea4b4aa154f8a8adf0bec, type: 3}
+  icon: {fileID: 21300000, guid: 63569a8c1e7b641ac9a77cfff8db3c94, type: 3}
   towerPrefab: {fileID: 1820178305229058407, guid: 4c7d64644d5084801a44646a80d14567, type: 3}
   towerLevelConfigs:
   - level: 1
     basicDamage: 5
     towerModelPrefab: {fileID: 7677242569431002602, guid: ef2f628bf4e7b464aabd9669d0954190, type: 3}
-    displayIcon: {fileID: 0}
   - level: 2
     basicDamage: 10
     towerModelPrefab: {fileID: 8029171840053306179, guid: 1591e7132c7cc4fbca77386bbf6c54c6, type: 3}
-    displayIcon: {fileID: 0}
   - level: 3
     basicDamage: 15
     towerModelPrefab: {fileID: 8007102300699716216, guid: 8d382cc663749481b854322fab758d13, type: 3}
-    displayIcon: {fileID: 0}
