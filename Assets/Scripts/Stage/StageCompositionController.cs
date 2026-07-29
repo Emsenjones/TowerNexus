@@ -5,17 +5,26 @@ public class StageCompositionController : MonoBehaviour
 {
     [SerializeField] private Transform stageRuntimeRoot;
     [SerializeField] private BattleRuntimeCoordinator battleRuntimeCoordinator;
+    [SerializeField] private CameraPanController cameraPanController;
 
     private GameObject activeMapObject;
+    private MapCameraBoundary activeCameraBoundary;
+    private Transform activeCameraDefaultPose;
     private StageDefinition candidateStage;
     private GameObject candidateMapObject;
     private MapGeneratorBehaviour candidateMap;
+    private MapCameraBoundary candidateCameraBoundary;
+    private Transform candidateCameraDefaultPose;
     private bool isLifecycleOperationInProgress;
     private bool isPreparationInProgress;
     private bool releaseRequested;
 
     public StageDefinition ActiveStage { get; private set; }
     public MapGeneratorBehaviour ActiveMap { get; private set; }
+    public MapCameraBoundary ActiveCameraBoundary =>
+        activeCameraBoundary;
+    public Transform ActiveCameraDefaultPose =>
+        activeCameraDefaultPose;
     public bool IsCompositionReady { get; private set; }
     public bool IsPreparationInProgress => isPreparationInProgress;
     public bool HasBattleBegun { get; private set; }
@@ -52,6 +61,7 @@ public class StageCompositionController : MonoBehaviour
 
                 if (CanContinueLifecycleOperation() &&
                     TryCreateCandidateMap(selectedStage) &&
+                    TryStageCandidateCameraBinding(selectedStage) &&
                     CanContinueLifecycleOperation())
                 {
                     if (!battleRuntimeCoordinator.TryPrepareBattleRuntime(
@@ -81,9 +91,29 @@ public class StageCompositionController : MonoBehaviour
                             "invalid prepared Battle coordinator state.",
                             this);
                     }
+                    else if (!cameraPanController.TryCommitStagedMapBinding(
+                                 candidateMap,
+                                 candidateCameraBoundary,
+                                 candidateCameraDefaultPose,
+                                 out string cameraCommitFailureReason))
+                    {
+                        Debug.LogError(
+                            $"Stage '{GetStageName(selectedStage)}' failed while " +
+                            $"committing Camera runtime: " +
+                            $"{cameraCommitFailureReason}",
+                            this);
+                    }
+                    else if (!CanContinueLifecycleOperation())
+                    {
+                        Debug.LogWarning(
+                            $"Stage '{GetStageName(selectedStage)}' preparation " +
+                            "was cancelled after Camera commit by a deferred release.",
+                            this);
+                    }
                     else
                     {
                         CommitCandidateStage();
+                        IsCompositionReady = true;
                         preparationSucceeded = true;
                     }
                 }
@@ -140,6 +170,35 @@ public class StageCompositionController : MonoBehaviour
             Debug.LogError(
                 $"Stage '{GetStageName(ActiveStage)}' cannot begin because its " +
                 "Battle runtime is not waiting in a valid prepared state.",
+                this);
+            ReleaseStageRuntimeCore();
+            return false;
+        }
+
+        string cameraFailureReason =
+            "Camera Pan Controller is not assigned.";
+        bool cameraReferencesAreValid =
+            cameraPanController != null &&
+            cameraPanController.TryValidateStableReferences(
+                out cameraFailureReason);
+        bool cameraBindingIsValid =
+            cameraReferencesAreValid &&
+            cameraPanController.IsCommittedMapBinding(
+                ActiveMap,
+                activeCameraBoundary,
+                activeCameraDefaultPose);
+
+        if (!cameraReferencesAreValid || !cameraBindingIsValid)
+        {
+            if (cameraReferencesAreValid)
+            {
+                cameraFailureReason =
+                    "the committed Camera binding does not match this Active Map.";
+            }
+
+            Debug.LogError(
+                $"Stage '{GetStageName(ActiveStage)}' cannot begin because its " +
+                $"Camera runtime is not ready: {cameraFailureReason}",
                 this);
             ReleaseStageRuntimeCore();
             return false;
@@ -228,6 +287,17 @@ public class StageCompositionController : MonoBehaviour
             return false;
         }
 
+        if (!cameraPanController.TryValidateStableReferences(
+                out string cameraFailureReason))
+        {
+            Debug.LogError(
+                $"Stage composition controller cannot prepare Stage " +
+                $"'{GetStageName(selectedStage)}': Camera runtime is not ready: " +
+                cameraFailureReason,
+                this);
+            return false;
+        }
+
         StageValidationResult validation = selectedStage.ValidateStage();
         LogStageValidation(selectedStage, validation);
         return validation.IsValid;
@@ -282,7 +352,28 @@ public class StageCompositionController : MonoBehaviour
         }
 
         candidateMap = rootMapOwners[0];
+        candidateCameraBoundary = candidateMap.CameraBoundary;
+        candidateCameraDefaultPose = candidateMap.CameraDefaultPose;
         return true;
+    }
+
+    private bool TryStageCandidateCameraBinding(
+        StageDefinition selectedStage)
+    {
+        if (cameraPanController.TryStageMapBinding(
+                candidateMap,
+                candidateCameraBoundary,
+                candidateCameraDefaultPose,
+                out string failureReason))
+        {
+            return true;
+        }
+
+        Debug.LogError(
+            $"Stage '{GetStageName(selectedStage)}' failed while staging " +
+            $"Camera runtime: {failureReason}",
+            this);
+        return false;
     }
 
     private void CommitCandidateStage()
@@ -290,13 +381,16 @@ public class StageCompositionController : MonoBehaviour
         ActiveStage = candidateStage;
         ActiveMap = candidateMap;
         activeMapObject = candidateMapObject;
+        activeCameraBoundary = candidateCameraBoundary;
+        activeCameraDefaultPose = candidateCameraDefaultPose;
 
         candidateStage = null;
         candidateMap = null;
         candidateMapObject = null;
+        candidateCameraBoundary = null;
+        candidateCameraDefaultPose = null;
 
         HasBattleBegun = false;
-        IsCompositionReady = true;
     }
 
     private bool CanContinueLifecycleOperation()
@@ -328,6 +422,15 @@ public class StageCompositionController : MonoBehaviour
         IsCompositionReady = false;
         HasBattleBegun = false;
 
+        cameraPanController?.ClearMapBinding(
+            candidateMap,
+            candidateCameraBoundary,
+            candidateCameraDefaultPose);
+        cameraPanController?.ClearMapBinding(
+            ActiveMap,
+            activeCameraBoundary,
+            activeCameraDefaultPose);
+
         battleRuntimeCoordinator?.ReleasePreparedBattleRuntime();
 
         GameObject committedMapObjectToDestroy = activeMapObject;
@@ -336,8 +439,12 @@ public class StageCompositionController : MonoBehaviour
         activeMapObject = null;
         candidateMapObject = null;
         candidateMap = null;
+        candidateCameraBoundary = null;
+        candidateCameraDefaultPose = null;
         candidateStage = null;
         ActiveMap = null;
+        activeCameraBoundary = null;
+        activeCameraDefaultPose = null;
         ActiveStage = null;
 
         DestroyOwnedMapObject(candidateMapObjectToDestroy);
@@ -370,6 +477,12 @@ public class StageCompositionController : MonoBehaviour
         if (battleRuntimeCoordinator == null)
         {
             failureReason = "Battle Runtime Coordinator is not assigned.";
+            return false;
+        }
+
+        if (cameraPanController == null)
+        {
+            failureReason = "Camera Pan Controller is not assigned.";
             return false;
         }
 

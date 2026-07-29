@@ -11,7 +11,7 @@ It owns:
 - Validation of the selected Stage composition
 - Creation of the selected Map instance
 - Establishment of the Active Map
-- Distribution of the selected Map's Camera movement boundary
+- Distribution of the selected Map's authored 3D Camera movement boundary
 - Distribution of the selected MonsterWaveConfig
 - Distribution of the selected Player maximum health
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
@@ -55,16 +55,20 @@ Introduction content explicitly authors presentation for this Stage. Introduced 
 
 ```text
 Receive Selected StageDefinition
-    -> Validate Composition
+    -> Validate Stable Runtime References And Composition
+    -> Withdraw Outgoing Camera Binding
+    -> Release Outgoing Battle Runtime And Map
     -> Create Selected Map
-    -> Validate And Supply Its Camera Movement Boundary
-    -> Establish Active Map
-    -> Reset Camera To Its Default Active-Map Framing
+    -> Resolve And Validate Its Authored Boundary And Default Pose
+    -> Stage Exact Map, Boundary, And Default-Pose Identity In Camera System
     -> Supply Map To Runtime Consumers
     -> Supply MonsterWaveConfig To Monster System
     -> Supply Player Max Health To Player System
     -> Supply Draft Pools To Draft System
     -> Initialize Fresh Player Battle-Local State At Full Health
+    -> Confirm No Deferred Release
+    -> Commit Exact Staged Camera Identity And Default Pose
+    -> Commit Candidate Stage
     -> Mark Stage Composition Ready
     -> Return Prepared Stage To Game Flow
     -> Game Flow Completes Optional Introduction
@@ -75,7 +79,9 @@ Monster Wave execution, Draft generation, Tower placement, and other battle runt
 
 Each receiving system gets only the configuration slice it owns. Stage System is not a general service locator.
 
-When replacing or ending a Stage composition, Stage System first withdraws the outgoing Active Map and its Camera movement boundary, then releases only the runtime objects and references created by that composition. A candidate Map and its boundary remain provisional until the complete Stage preparation transaction succeeds. Failure or cancellation discards both without leaving Camera System bound to candidate or outgoing content.
+Stage System obtains the boundary and default pose from the validated candidate Map and supplies that explicit Map-boundary-pose identity to Camera System. Camera System does not search for the Active Map or pull authoring state from Stage System.
+
+When replacing or ending a Stage composition, Stage System first withdraws the outgoing Camera binding, then releases Battle runtime, then disables or destroys the outgoing Map. Candidate and active Camera identities are tracked separately. Cleanup matches the exact Map, boundary, and default-pose identity, clears Camera state before Battle cleanup and Map destruction, and cannot clear a newer binding through a late or repeated call.
 
 Every successfully composed initial Stage, next Stage, and retry establishes fresh Camera framing. Camera System restores its authored default pose relative to the new Active Map and discards all pan displacement from the previous battle. Stage System requests this reset as part of composition but does not calculate or store the Camera pose.
 
@@ -96,7 +102,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 | Player System | Player Max Health and fresh Stage-battle initialization | Applied maximum health, current health, level progress, level-up, and defeat state |
 | Tower Upgrade System | No direct runtime mutation | Upgrade schema, eligibility, and application |
 | Tower Placement System | Active Map availability | Placement, occupancy commit, and topology requests |
-| Camera System | Active Map availability and its authored Camera movement boundary | Initial framing, pan input, and enforcement of Camera movement bounds |
+| Camera System | Exact Active Map, authored 3D boundary, and authored default pose | Initial framing, pan input, and enforcement of Camera movement bounds |
 
 ---
 
@@ -105,7 +111,8 @@ Player level progress, health, and defeat state are independent for each Stage b
 Stage validation should report at minimum:
 
 - Missing or invalid Map template
-- Missing, ambiguous, or invalid Camera movement boundary in the selected Map template
+- Missing, ambiguous, or invalid 3D Camera movement boundary in the selected Map template
+- Missing, ambiguous, invalid, or externally owned default Camera pose
 - Missing MonsterWaveConfig or invalid Wave content
 - Non-positive Player Max Health
 - Null or duplicate TowerDefinition references
@@ -131,7 +138,7 @@ Current scope includes:
 - Five or more authorable StageDefinitions
 - One selected Stage per battle runtime
 - One Map template and one MonsterWaveConfig per Stage
-- One valid authored Camera movement boundary per Map template
+- One valid authored 3D Camera movement boundary per Map template
 - One positive Player Max Health value per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
 - At least one valid TowerDefinition for the Initial Tower Draft

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class TowerPlacementController : MonoBehaviour
 {
-    private Camera placementCamera;
+    [SerializeField] private Camera placementCamera;
     [SerializeField] private Transform previewParent;
     [SerializeField] private TowerPlacementValidator placementValidator;
     [SerializeField] private TowerDeployController deployController;
@@ -47,12 +47,10 @@ public class TowerPlacementController : MonoBehaviour
     public bool IsDragging => isDragging;
     public bool IsBattleActive => isBattleActive;
     public MapGeneratorBehaviour ActiveMap => mapGenerator;
+    public Camera PlacementCamera => placementCamera;
 
     private void Awake()
     {
-        if (placementCamera == null)
-            placementCamera = Camera.main;
-
         EnsureStableRuntimeDependencies();
     }
 
@@ -266,6 +264,12 @@ public class TowerPlacementController : MonoBehaviour
     public bool CanBeginBattle(out string failureReason)
     {
         EnsureStableRuntimeDependencies();
+
+        if (placementCamera == null)
+        {
+            failureReason = "Placement Camera is not assigned.";
+            return false;
+        }
 
         if (mapGenerator == null)
         {

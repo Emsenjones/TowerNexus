@@ -18807,6 +18807,8 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3331492299143697098}
+  - {fileID: 5047744840231909562}
+  - {fileID: 690445308399896610}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &274921356860905782
@@ -18828,6 +18830,8 @@ MonoBehaviour:
   nodesRoot: {fileID: 3331492299143697098}
   mapVisualTheme: {fileID: 11400000, guid: 6437e0a3a6a3e49c389e414966159687, type: 2}
   mapVisualSeed: 0
+  cameraBoundary: {fileID: 8341031622885042811}
+  cameraDefaultPose: {fileID: 690445308399896610}
 --- !u!1 &3330093849957594514
 GameObject:
   m_ObjectHideFlags: 0
@@ -50342,6 +50346,73 @@ MonoBehaviour:
   visualRoot: {fileID: 2066902201333424997}
   tileVisualRoot: {fileID: 2560712752374684977}
   featureVisualRoot: {fileID: 4913845726550996115}
+--- !u!1 &7570578102926137966
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5047744840231909562}
+  - component: {fileID: 5758364171153076749}
+  - component: {fileID: 8341031622885042811}
+  m_Layer: 12
+  m_Name: MapCameraBoundary
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5047744840231909562
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7570578102926137966}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7152336949188375003}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &5758364171153076749
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7570578102926137966}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 6, y: 6, z: 6}
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &8341031622885042811
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7570578102926137966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 19c9c4dd526f4eb59d8b853c1c898506, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MapCameraBoundary
+  boundaryCollider: {fileID: 5758364171153076749}
 --- !u!1 &7594805174876814479
 GameObject:
   m_ObjectHideFlags: 0
@@ -52592,4 +52663,35 @@ Transform:
   - {fileID: 1303568527055592065}
   - {fileID: 1324361232402776103}
   m_Father: {fileID: 1937426586584312232}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &9203651702850097045
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 690445308399896610}
+  m_Layer: 0
+  m_Name: CameraDefaultPose
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &690445308399896610
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9203651702850097045}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.5, y: -0, z: -0, w: 0.8660254}
+  m_LocalPosition: {x: 0, y: 2, z: -2}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7152336949188375003}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

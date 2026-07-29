@@ -30,7 +30,7 @@ Enter Main Menu
     -> Start New Run At First Stage
     -> Prepare Current Stage
         -> Establish Fresh Player State At Current Stage Maximum Health
-        -> Establish Current Map, Camera Boundary, Wave, And Draft Content
+        -> Establish Current Map, 3D Camera Boundary, Wave, And Draft Content
         -> Reset Camera To Default Active-Map Framing
     -> Show Optional Stage Introduction
     -> Begin Battle
@@ -68,7 +68,7 @@ Core flow and battle rules:
 - A new run begins from the first Stage in the ordered Demo sequence.
 - One selected Stage composition is active during one battle.
 - Every initial Stage, next Stage, and retry prepares fresh Player state and resets current health to the selected Stage's positive maximum health.
-- Every initial Stage, next Stage, and retry binds the selected Map's authored Camera movement boundary and restores the authored default Camera framing without inheriting prior Pan displacement.
+- Every initial Stage, next Stage, and retry binds the selected Map's authored 3D Camera movement boundary and restores the authored default Camera framing without inheriting prior Pan displacement.
 - Battle gameplay remains inactive during Stage preparation and optional Stage Introduction.
 - Every fresh Stage battle grants exactly one Initial Tower Draft after Battle start permission and before Monster Wave execution begins.
 - The Initial Tower Draft creates one held Tower Draft item without changing Player level or progress.
@@ -114,7 +114,8 @@ StageDefinition
     + Player Maximum Health
     + Map Template
         + MapVisualTheme
-        + Authored Camera Movement Boundary
+        + Authored 3D Camera Movement Boundary
+        + Authored Default Camera Pose
     + MonsterWaveConfig
     + Tower Draft Pool
     + Tower Upgrade Draft Pool
@@ -167,7 +168,7 @@ It selects the StageDefinition supplied to Stage System and consumes one authori
 
 ## 4.2 Stage System
 
-Owns composition of the StageDefinition selected for the current battle. It establishes the active Map, supplies its Camera movement boundary, requests fresh default Camera framing, and supplies the selected Wave and Draft content before battle runtime begins.
+Owns composition of the StageDefinition selected for the current battle. It establishes the active Map, supplies its authored 3D Camera movement boundary, requests fresh default Camera framing, and supplies the selected Wave and Draft content before battle runtime begins.
 
 It establishes a prepared Stage with fresh Player and Camera framing state, then waits for Game Flow start permission. It does not own Stage ordering, result transitions, Camera movement, Map behavior, Wave execution, or Draft generation.
 
@@ -185,15 +186,15 @@ It observes or forwards domain intent but does not own player state, Draft rules
 
 ## 4.5 Map System
 
-Owns the authored grid battlefield, Grid Node state, effective walkability, spatial queries, Map presentation generation, one authored Camera movement boundary, runtime Tile topology refresh, and Map validation.
+Owns the authored grid battlefield, Grid Node state, effective walkability, spatial queries, Map presentation generation, one authored 3D Camera movement boundary, one authored default Camera pose, runtime Tile topology refresh, and Map validation.
 
 It does not own Stage selection, Camera movement, pathfinding algorithms, Tower placement rules, Monster behavior, or battle flow.
 
 ## 4.6 Camera System
 
-Owns battle-local framing of the Active Map, direct-manipulation pan input, enforcement of the Map-authored Camera movement boundary, and framing reset when the Active Map changes.
+Owns battle-local framing of the Active Map, direct-manipulation pan input, enforcement of the Map-authored 3D Camera movement boundary, and framing reset when the Active Map changes.
 
-It consumes Map framing data, one authored movement boundary, and battle-interaction availability without owning Map state, UI interaction, Tower placement, Monster behavior, or Game Flow transitions.
+It consumes Map framing data, one authored 3D movement boundary, and battle-interaction availability without owning Map state, UI interaction, Tower placement, Monster behavior, or Game Flow transitions.
 
 ## 4.7 Monster System
 
@@ -259,7 +260,7 @@ Game Flow
         -> Stage Composition
             -> Fresh Player State
             -> Active Map
-                -> Authored Camera Movement Boundary
+                -> Authored 3D Camera Movement Boundary
                 -> Default Camera Framing Reset
             -> Monster Wave Configuration
             -> Stage Draft Pools
@@ -293,7 +294,7 @@ Result-Neutral Battle Runtime Failure
         -> Release Current Stage
             -> Main Menu
 
-Active Map And Authored Camera Movement Boundary
+Active Map And Authored 3D Camera Movement Boundary
     -> Default Camera Framing
         -> Camera Framing And Bounds
             -> Eligible Battlefield Pan Gesture

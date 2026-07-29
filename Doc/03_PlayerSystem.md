@@ -56,9 +56,9 @@ Receive Monster Resolution
 
 Progress carries across multiple level thresholds. At maximum player level, additional resolution does not create further level-ups.
 
-## 3.1 Player Level Configuration
+## 3.1 Player Level Requirements
 
-Player level configuration stores the ordered resolved-progress requirement for each transition:
+Player System authors the ordered resolved-progress requirement for each transition:
 
 ```text
 Level 1 Requirement -> Level 2

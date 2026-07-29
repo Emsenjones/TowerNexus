@@ -48,6 +48,8 @@ public class MapGeneratorBehaviour : MonoBehaviour
     [SerializeField] private Transform nodesRoot;
     [SerializeField] private MapVisualTheme mapVisualTheme;
     [SerializeField] private int mapVisualSeed;
+    [SerializeField] private MapCameraBoundary cameraBoundary;
+    [SerializeField] private Transform cameraDefaultPose;
 
     private readonly Dictionary<Vector2Int, GridNodeBehaviour> nodeDictionary =
         new Dictionary<Vector2Int, GridNodeBehaviour>();
@@ -60,6 +62,8 @@ public class MapGeneratorBehaviour : MonoBehaviour
     public float NodeSize => nodeSize;
     public Transform NodesRoot => nodesRoot;
     public MapVisualTheme VisualTheme => mapVisualTheme;
+    public MapCameraBoundary CameraBoundary => cameraBoundary;
+    public Transform CameraDefaultPose => cameraDefaultPose;
 
     private void OnEnable()
     {
@@ -74,6 +78,11 @@ public class MapGeneratorBehaviour : MonoBehaviour
     [Button("Generate Map")]
     private void GenerateMapFromInspector()
     {
+        if (!TryEnsureCameraAuthoringFromInspector())
+        {
+            return;
+        }
+
         GenerateMap();
     }
 
@@ -293,6 +302,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
     {
         MapValidationResult result = new MapValidationResult();
         ValidateBasicConfiguration(result, true);
+        ValidateCameraAuthoring(result);
         ValidateTheme(result, true);
 
         if (nodesRoot == null)
@@ -417,6 +427,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
     {
         MapValidationResult result = new MapValidationResult();
         ValidateBasicConfiguration(result, true);
+        ValidateCameraAuthoring(result);
         ValidateTheme(result, true);
 
         if (nodePrefab != null)
@@ -438,6 +449,259 @@ public class MapGeneratorBehaviour : MonoBehaviour
         }
 
         return result;
+    }
+
+    private bool TryEnsureCameraAuthoringFromInspector()
+    {
+        MapCameraBoundary[] adapters =
+            GetComponentsInChildren<MapCameraBoundary>(true);
+        List<Transform> namedBoundaryObjects =
+            GetNamedDescendants(MapCameraBoundary.RequiredGameObjectName);
+
+        if (cameraBoundary == null)
+        {
+            if (adapters.Length == 0 && namedBoundaryObjects.Count == 0)
+            {
+                GameObject boundaryObject =
+                    new GameObject(MapCameraBoundary.RequiredGameObjectName);
+                boundaryObject.transform.SetParent(transform, false);
+
+                int boundaryLayer =
+                    LayerMask.NameToLayer(MapCameraBoundary.RequiredLayerName);
+
+                if (boundaryLayer >= 0)
+                {
+                    boundaryObject.layer = boundaryLayer;
+                }
+
+                cameraBoundary =
+                    boundaryObject.AddComponent<MapCameraBoundary>();
+                BoxCollider collider =
+                    boundaryObject.GetComponent<BoxCollider>();
+                collider.isTrigger = true;
+                collider.center = new Vector3(0f, 10f, -6f);
+                collider.size = Vector3.one;
+                cameraBoundary.InitializeAuthoring(collider);
+            }
+            else if (adapters.Length == 1 &&
+                     namedBoundaryObjects.Count == 1 &&
+                     adapters[0].transform == namedBoundaryObjects[0] &&
+                     adapters[0].transform.parent == transform)
+            {
+                cameraBoundary = adapters[0];
+            }
+            else
+            {
+                Debug.LogError(
+                    "Generate Map cannot create or adopt Camera authoring: " +
+                    "the Map contains an invalid or ambiguous MapCameraBoundary " +
+                    "candidate. Run Validate Map for details.",
+                    this);
+                return false;
+            }
+        }
+
+        if (!TryEnsureCameraDefaultPoseFromInspector())
+        {
+            return false;
+        }
+
+        MapValidationResult validation = new MapValidationResult();
+        ValidateCameraAuthoring(validation);
+
+        if (!validation.IsValid)
+        {
+            LogValidationResult(
+                "Generate Map Camera authoring preflight failed",
+                validation);
+            return false;
+        }
+
+        return true;
+    }
+
+    private bool TryEnsureCameraDefaultPoseFromInspector()
+    {
+        List<Transform> namedPoseObjects =
+            GetNamedDescendants("CameraDefaultPose");
+
+        if (cameraDefaultPose == null)
+        {
+            if (namedPoseObjects.Count == 0)
+            {
+                GameObject poseObject = new GameObject("CameraDefaultPose");
+                cameraDefaultPose = poseObject.transform;
+                cameraDefaultPose.SetParent(transform, false);
+                cameraDefaultPose.localPosition =
+                    new Vector3(0f, 10f, -6f);
+                cameraDefaultPose.localRotation =
+                    Quaternion.Euler(60f, 0f, 0f);
+            }
+            else if (namedPoseObjects.Count == 1 &&
+                     namedPoseObjects[0].parent == transform)
+            {
+                cameraDefaultPose = namedPoseObjects[0];
+            }
+            else
+            {
+                Debug.LogError(
+                    "Generate Map cannot create or adopt CameraDefaultPose: " +
+                    "the Map contains an invalid or ambiguous named candidate.",
+                    this);
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void ValidateCameraAuthoring(MapValidationResult result)
+    {
+        MapCameraBoundary[] adapters =
+            GetComponentsInChildren<MapCameraBoundary>(true);
+        List<Transform> namedBoundaryObjects =
+            GetNamedDescendants(MapCameraBoundary.RequiredGameObjectName);
+
+        if (adapters.Length != 1)
+        {
+            result.AddError(
+                $"Map must contain exactly one MapCameraBoundary adapter; " +
+                $"found {adapters.Length}.");
+        }
+
+        if (namedBoundaryObjects.Count != 1)
+        {
+            result.AddError(
+                $"Map must contain exactly one child named " +
+                $"'{MapCameraBoundary.RequiredGameObjectName}'; found " +
+                $"{namedBoundaryObjects.Count}.");
+        }
+
+        if (cameraBoundary == null)
+        {
+            result.AddError("MapCameraBoundary reference is not assigned.");
+        }
+        else
+        {
+            if (cameraBoundary.transform.parent != transform)
+            {
+                result.AddError(
+                    "Referenced MapCameraBoundary must be a direct child of the " +
+                    "Map root.");
+            }
+
+            if (cameraBoundary.gameObject.name !=
+                MapCameraBoundary.RequiredGameObjectName)
+            {
+                result.AddError(
+                    $"Referenced MapCameraBoundary GameObject must be named " +
+                    $"'{MapCameraBoundary.RequiredGameObjectName}'.");
+            }
+
+            if (adapters.Length == 1 && adapters[0] != cameraBoundary)
+            {
+                result.AddError(
+                    "MapCameraBoundary reference does not match the sole adapter " +
+                    "candidate.");
+            }
+
+            if (!HasActiveSelfPathToMapRoot(cameraBoundary.transform))
+            {
+                result.AddError(
+                    "MapCameraBoundary and its Map-owned ancestor path must be active.");
+            }
+
+            cameraBoundary.ValidateLocalStructure(result);
+        }
+
+        List<Transform> namedPoseObjects =
+            GetNamedDescendants("CameraDefaultPose");
+
+        if (namedPoseObjects.Count != 1)
+        {
+            result.AddError(
+                $"Map must contain exactly one child named 'CameraDefaultPose'; " +
+                $"found {namedPoseObjects.Count}.");
+        }
+
+        if (cameraDefaultPose == null)
+        {
+            result.AddError("CameraDefaultPose reference is not assigned.");
+        }
+        else
+        {
+            if (cameraDefaultPose.parent != transform)
+            {
+                result.AddError(
+                    "Referenced CameraDefaultPose must be a direct child of the " +
+                    "Map root.");
+            }
+
+            if (cameraDefaultPose.name != "CameraDefaultPose")
+            {
+                result.AddError(
+                    "Referenced CameraDefaultPose must be named " +
+                    "'CameraDefaultPose'.");
+            }
+
+            if (namedPoseObjects.Count == 1 &&
+                namedPoseObjects[0] != cameraDefaultPose)
+            {
+                result.AddError(
+                    "CameraDefaultPose reference does not match the sole named " +
+                    "candidate.");
+            }
+
+            if (!HasActiveSelfPathToMapRoot(cameraDefaultPose))
+            {
+                result.AddError(
+                    "CameraDefaultPose and its Map-owned ancestor path must be active.");
+            }
+
+            if (cameraBoundary != null &&
+                cameraBoundary.BoundaryCollider != null &&
+                !cameraBoundary.ContainsPoint(cameraDefaultPose.position))
+            {
+                result.AddError(
+                    "CameraDefaultPose position must lie inside the authored " +
+                    "MapCameraBoundary BoxCollider.");
+            }
+        }
+    }
+
+    private List<Transform> GetNamedDescendants(string requiredName)
+    {
+        Transform[] descendants = GetComponentsInChildren<Transform>(true);
+        List<Transform> matches = new List<Transform>();
+
+        for (int i = 0; i < descendants.Length; i++)
+        {
+            Transform candidate = descendants[i];
+
+            if (candidate != transform && candidate.name == requiredName)
+            {
+                matches.Add(candidate);
+            }
+        }
+
+        return matches;
+    }
+
+    private bool HasActiveSelfPathToMapRoot(Transform candidate)
+    {
+        Transform current = candidate;
+
+        while (current != null && current != transform)
+        {
+            if (!current.gameObject.activeSelf)
+            {
+                return false;
+            }
+
+            current = current.parent;
+        }
+
+        return current == transform && transform.gameObject.activeSelf;
     }
 
     private bool TryBuildVisualRefreshPlan(

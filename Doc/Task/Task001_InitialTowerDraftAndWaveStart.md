@@ -460,7 +460,7 @@ No technical-error window is added.
 - Starting Player progress above zero
 - Triggering a synthetic Player level-up
 - Requiring Tower deployment before the first Wave Delay
-- Changing PlayerLevelConfig
+- Changing Player progression requirements
 - Changing later level-up Draft weighting or eligibility
 - Draft reroll, skip, ban, or replacement rewards
 - Slow motion while dragging PendingDraftItem

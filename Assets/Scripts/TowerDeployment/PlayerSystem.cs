@@ -1,17 +1,16 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class PlayerSystem : MonoBehaviour
 {
-    [SerializeField] private PlayerLevelConfig levelConfig;
+    [Tooltip("Resolved progress required to level up from each current level to the next level.")]
+    [SerializeField] private List<int> progressRequiredPerLevel =
+        new List<int>();
     [SerializeField] private int currentLevel = 1;
-    [FormerlySerializedAs("currentExp")]
     [SerializeField] private int currentProgress;
     private int maxHealth = 1;
     [SerializeField] private int currentHealth = 10;
-    [FormerlySerializedAs("isDead")]
     [SerializeField] private bool isDefeated;
 
     private readonly List<int> resolvedLevelUps = new List<int>();
@@ -24,6 +23,8 @@ public class PlayerSystem : MonoBehaviour
     public int MaxHealth => maxHealth;
     public bool IsDefeated => isDefeated;
     public bool IsBattleActive => isBattleActive;
+    public IReadOnlyList<int> ProgressRequiredPerLevel =>
+        progressRequiredPerLevel;
 
     public event Action OnBattleStateInitialized;
     public event Action<int> OnLevelChanged;
@@ -177,13 +178,44 @@ public class PlayerSystem : MonoBehaviour
     {
         requiredProgress = 0;
 
-        if (levelConfig == null)
+        if (currentLevel < 1)
         {
-            Debug.LogWarning("Player system cannot level up because level config is not assigned.", this);
+            Debug.LogWarning(
+                $"Player system cannot resolve a progress requirement for " +
+                $"invalid level {currentLevel}.",
+                this);
             return false;
         }
 
-        return levelConfig.TryGetRequiredProgressForLevel(currentLevel, out requiredProgress);
+        if (progressRequiredPerLevel == null ||
+            progressRequiredPerLevel.Count == 0)
+        {
+            Debug.LogWarning(
+                "Player system has no progress requirements configured.",
+                this);
+            return false;
+        }
+
+        int requirementIndex = currentLevel - 1;
+
+        if (requirementIndex >= progressRequiredPerLevel.Count)
+        {
+            return false;
+        }
+
+        requiredProgress = progressRequiredPerLevel[requirementIndex];
+
+        if (requiredProgress <= 0)
+        {
+            Debug.LogWarning(
+                $"Invalid progress requirement for level {currentLevel}: " +
+                $"{requiredProgress}. Requirement must be greater than 0.",
+                this);
+            requiredProgress = 0;
+            return false;
+        }
+
+        return true;
     }
 
     private void EnsureValidConfigurationAndState()
