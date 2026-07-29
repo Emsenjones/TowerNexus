@@ -4,7 +4,7 @@
 
 # 1. Purpose And Ownership
 
-Draft System turns Player level-up opportunities into a set of runtime choices and one selected reward.
+Draft System turns an approved Draft opportunity into a set of runtime choices and one selected reward.
 
 It owns:
 
@@ -23,6 +23,7 @@ It does not own Player progression, Stage composition, UI layout, Tower placemen
 
 Inputs:
 
+- One Initial Tower Draft opportunity for each fresh Stage battle
 - Player level-up opportunity
 - Stage Tower Draft Pool
 - Stage Tower Upgrade Draft Pool
@@ -34,17 +35,18 @@ Outputs:
 
 - One displayed Draft choice set
 - One selected Tower Draft or Tower Upgrade Draft result
+- Accepted completion of the Initial Tower Draft after its held Tower Draft item exists
 
-The first version displays three distinct choices when at least three distinct eligible identities are available.
+The first version displays up to three distinct choices. It displays one or two choices when the active Stage contains fewer than three distinct eligible identities.
 
 ---
 
 # 3. Draft Workflow
 
 ```text
-Player Level-Up Opportunity
-    -> Build Tower Draft Candidates
-    -> Build Tower Upgrade Draft Candidates
+Approved Draft Opportunity
+    -> Resolve Initial Or Level-Up Source
+    -> Build Candidates Allowed For That Source
     -> Merge Candidate Entries
     -> Sample Distinct Display Choices
     -> Present Choices
@@ -53,6 +55,26 @@ Player Level-Up Opportunity
 ```
 
 Only one choice from the active set may become a result. Presentation closure, duplicate input, or stale selection must not create additional rewards.
+
+## 3.1 Initial Tower Draft
+
+Every fresh Stage battle, including a retry, grants exactly one Initial Tower Draft after Game Flow permits Battle entry and before Monster Wave execution begins.
+
+The Initial Tower Draft:
+
+- Builds candidates only from the active Stage Tower Draft Pool
+- Does not include Tower Upgrade Draft candidates
+- Does not change Player level or progress
+- Produces one held Tower Draft item after an accepted selection
+- Authorizes the first Monster Wave Delay only after that held item exists
+
+The selected Tower does not have to be deployed before Wave timing begins. Deployment follows the normal held-item interaction and Tower Placement rules during the first Wave Delay.
+
+A stopped, released, or failed Stage does not count as completing its Initial Tower Draft. A retry creates a fresh Initial Tower Draft opportunity with fresh Stage runtime state.
+
+## 3.2 Player Level-Up Draft
+
+Each accepted Player level-up opportunity uses the normal combined Tower and eligible Tower Upgrade candidate process. It remains independent of the one Initial Tower Draft granted for that Stage battle.
 
 ---
 
@@ -86,6 +108,8 @@ Every valid TowerDefinition in the active Stage Tower Draft Pool contributes one
 TowerDefinitions outside the current Stage pool do not participate. Pending held Tower Draft items do not reduce this pool.
 
 All first-version candidate entries have equal base weight unless an approved rule explicitly changes weighting.
+
+The Initial Tower Draft samples only these Tower Draft candidates. Later Player level-up Drafts may merge them with eligible Tower Upgrade candidates.
 
 ---
 
@@ -122,7 +146,7 @@ This produces Tower-instance-weighted discovery: content usable by more current 
 
 # 7. Combined Sampling And Display
 
-Tower Draft and Tower Upgrade candidate entries are merged before sampling.
+For a Player level-up Draft, Tower Draft and Tower Upgrade candidate entries are merged before sampling. The Initial Tower Draft samples only Tower Draft entries.
 
 Internal duplicate entries provide weight. Displayed choices remain unique by reward identity:
 
@@ -162,11 +186,14 @@ Cancelling or rejecting a drag preserves the held item and any reservation it re
 Draft validation should report at minimum:
 
 - Missing active Stage pools
+- No valid TowerDefinition available for the required Initial Tower Draft
 - Null or duplicate entries inside a Stage pool
 - Definitions that fail owner-system validation
 - Non-positive configured displayed choice count
 - Pending reservation that cannot identify its reward or exclusive capacity
 - A selected identity not present in the active displayed set
+- A duplicate Initial Tower Draft opportunity for one Stage battle
+- Initial Draft completion reported before its held Tower Draft item exists
 
 Validation does not silently add content to a Stage or alter Tower Upgrade rules.
 
@@ -177,6 +204,7 @@ Validation does not silently add content to a Stage or alter Tower Upgrade rules
 Current scope includes:
 
 - Stage-specific Tower and Tower Upgrade pools
+- One Initial Tower Draft for each fresh Stage battle
 - Player level-up Draft opportunities
 - Three-choice display when enough identities exist
 - Equal weight per internal candidate entry

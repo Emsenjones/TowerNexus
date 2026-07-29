@@ -11,6 +11,7 @@ It owns:
 - Validation of the selected Stage composition
 - Creation of the selected Map instance
 - Establishment of the Active Map
+- Distribution of the selected Map's Camera movement boundary
 - Distribution of the selected MonsterWaveConfig
 - Distribution of the selected Player maximum health
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
@@ -44,6 +45,8 @@ The asset or resource name is sufficient as authoring identity. A separate Stage
 
 StageDefinition references content owned by other systems. It does not duplicate their rules.
 
+Because every fresh Stage battle begins with one Initial Tower Draft, the Tower Draft Pool must contain at least one valid TowerDefinition. A Stage with no valid Initial Tower Draft candidate is not playable and cannot proceed to Monster Wave execution.
+
 Introduction content explicitly authors presentation for this Stage. Introduced Towers must be members of the same Stage's Tower Draft Pool, and introduced Tower Upgrades must be members of the same Stage's Tower Upgrade Draft Pool. Stage System does not calculate introduction content by comparing adjacent Stages.
 
 ---
@@ -54,7 +57,9 @@ Introduction content explicitly authors presentation for this Stage. Introduced 
 Receive Selected StageDefinition
     -> Validate Composition
     -> Create Selected Map
+    -> Validate And Supply Its Camera Movement Boundary
     -> Establish Active Map
+    -> Reset Camera To Its Default Active-Map Framing
     -> Supply Map To Runtime Consumers
     -> Supply MonsterWaveConfig To Monster System
     -> Supply Player Max Health To Player System
@@ -70,7 +75,11 @@ Monster Wave execution, Draft generation, Tower placement, and other battle runt
 
 Each receiving system gets only the configuration slice it owns. Stage System is not a general service locator.
 
-When replacing or ending a Stage composition, Stage System releases only the runtime objects and references created by that composition. Domain owners remain responsible for their own technical cleanup.
+When replacing or ending a Stage composition, Stage System first withdraws the outgoing Active Map and its Camera movement boundary, then releases only the runtime objects and references created by that composition. A candidate Map and its boundary remain provisional until the complete Stage preparation transaction succeeds. Failure or cancellation discards both without leaving Camera System bound to candidate or outgoing content.
+
+Every successfully composed initial Stage, next Stage, and retry establishes fresh Camera framing. Camera System restores its authored default pose relative to the new Active Map and discards all pan displacement from the previous battle. Stage System requests this reset as part of composition but does not calculate or store the Camera pose.
+
+Domain owners remain responsible for their own technical cleanup.
 
 Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next or into a retry. StageDefinition authors the positive maximum-health value for the selected Stage. Player System owns the applied runtime maximum, current health, and their rules; Stage composition only supplies the authored value and establishes a fresh full-health runtime before the prepared Stage may begin.
 
@@ -87,6 +96,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 | Player System | Player Max Health and fresh Stage-battle initialization | Applied maximum health, current health, level progress, level-up, and defeat state |
 | Tower Upgrade System | No direct runtime mutation | Upgrade schema, eligibility, and application |
 | Tower Placement System | Active Map availability | Placement, occupancy commit, and topology requests |
+| Camera System | Active Map availability and its authored Camera movement boundary | Initial framing, pan input, and enforcement of Camera movement bounds |
 
 ---
 
@@ -95,9 +105,11 @@ Player level progress, health, and defeat state are independent for each Stage b
 Stage validation should report at minimum:
 
 - Missing or invalid Map template
+- Missing, ambiguous, or invalid Camera movement boundary in the selected Map template
 - Missing MonsterWaveConfig or invalid Wave content
 - Non-positive Player Max Health
 - Null or duplicate TowerDefinition references
+- No valid TowerDefinition available for the required Initial Tower Draft
 - Null or duplicate TowerUpgradeDefinition references
 - Referenced definitions that fail owner-system validation
 - Tower Upgrade content whose TowerFamily cannot be represented by the Stage Tower pool when that relationship is required
@@ -119,12 +131,15 @@ Current scope includes:
 - Five or more authorable StageDefinitions
 - One selected Stage per battle runtime
 - One Map template and one MonsterWaveConfig per Stage
+- One valid authored Camera movement boundary per Map template
 - One positive Player Max Health value per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
+- At least one valid TowerDefinition for the Initial Tower Draft
 - Optional Stage Introduction content
 - Composition validation and pre-battle distribution
 - A prepared Stage boundary controlled by Game Flow
 - Fresh battle-local Player state for each composed Stage
+- Fresh default Camera framing for every initial Stage, next Stage, and retry
 
 Game Flow System owns the approved Demo Stage ordering, introduction, victory, defeat, next-Stage, retry, and return-to-main-menu rules.
 

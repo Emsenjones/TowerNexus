@@ -77,7 +77,9 @@ Each Spawn Entry contains:
 
 The current Map contract provides one Spawn node and one Target node. Multiple Spawn Routes and route-specific Wave entries are deferred.
 
-Wave execution begins only after Stage composition has established the active Map and supplied a valid MonsterWaveConfig.
+Wave execution begins only after Stage composition has established the active Map, supplied a valid MonsterWaveConfig, and the required Initial Tower Draft has produced one held Tower Draft item. Entering the Battle state or merely opening the Initial Draft Window does not begin Wave timing.
+
+The first Wave Delay starts when Monster System receives authorization after the Initial Draft selection is accepted. Tower deployment is not an additional prerequisite; the player may deploy the held Tower Draft item while the first Wave Delay advances.
 
 Monster System reports normal spawning completion only after every configured Monster instance has been created through the complete ordered Wave sequence. Stopping, cancelling, disabling, or aborting invalid Wave execution does not report normal completion.
 
@@ -312,6 +314,7 @@ Monster and Wave authoring validation should report at minimum:
 - Non-positive maximum health
 - Negative move speed, count, delay, or interval where invalid
 - Empty or invalid Wave content
+- Wave execution or the first Wave Delay beginning before the Initial Tower Draft is accepted
 - Normal spawning completion reported after cancellation, stop, or invalid Wave execution
 - Post-resolution alive-Monster state reported before Player resolution completes
 - Missing active Spawn or Target node
@@ -329,6 +332,7 @@ Current scope includes:
 - One Spawn and one Target
 - One directly referenced runtime template per unique demo Monster type
 - Stage-selected Wave execution
+- Initial-Draft-gated start of the first Wave Delay
 - Normal spawning-completion and post-resolution alive-Monster facts
 - A* pathfinding and dynamic recalculation
 - Health, death, arrival, and exactly-once resolution

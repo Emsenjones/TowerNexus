@@ -13,13 +13,14 @@ It owns:
 - Node and spatial queries
 - Spawn and Target node identity
 - MapVisualTheme-driven presentation
+- Authored Camera movement boundary
 - Authoring and runtime visual refresh
 - Reusable Map-template authoring
 - Map validation
 
-Stage System selects and creates the current Map. Tower Placement System requests runtime occupancy changes. Monster System consumes Map topology for pathfinding.
+Stage System selects and creates the current Map. Tower Placement System requests runtime occupancy changes. Monster System consumes Map topology for pathfinding. Camera System consumes the Map framing origin, plane, and authored Camera movement boundary for battle-local framing and movement bounds.
 
-Map System does not own Stage flow, Tower placement rules, pathfinding algorithms, Monster behavior, Draft generation, or combat.
+Map System does not own Stage flow, Tower placement rules, pathfinding algorithms, Monster behavior, Draft generation, Camera movement, or combat.
 
 ---
 
@@ -39,6 +40,8 @@ Node Local Position = (Grid X * Node Size, 0, Grid Y * Node Size)
 ```
 
 Map Root is the default framing origin for the complete grid. Generate Map translates NodesRoot so the midpoint between the first and last Grid Node centers coincides with Map Root, without changing any Grid Position or Grid Node local position.
+
+The complete gameplay footprint extends one half Node Size beyond the outermost Grid Node centers on each grid axis. Camera System may use this footprint for initial framing, but Camera movement limits come from the separately authored Camera movement boundary.
 
 World-position queries convert through NodesRoot local space before resolving the coordinate. Map Root or NodesRoot may be translated or rotated without changing grid identity or neighbor semantics.
 
@@ -76,14 +79,16 @@ Spawn and Target nodes must be Base Walkable. The current Map contract contains 
 
 ```text
 Map Root
-└── NodesRoot
-    └── GridNode
-        └── VisualRoot
-            ├── TileVisualRoot
-            │   └── TileVisualInstance
-            └── FeatureVisualRoot
-                ├── ObstacleVisualInstance
-                └── SpawnOrTargetVisualInstance
+├── NodesRoot
+│   └── GridNode
+│       └── VisualRoot
+│           ├── TileVisualRoot
+│           │   └── TileVisualInstance
+│           └── FeatureVisualRoot
+│               ├── ObstacleVisualInstance
+│               └── SpawnOrTargetVisualInstance
+└── CameraBoundaryRoot
+    └── CameraMovementBoundary
 ```
 
 Ownership rules:
@@ -93,6 +98,10 @@ Ownership rules:
 - `TileVisualRoot` owns topology-dependent Tile presentation.
 - `FeatureVisualRoot` owns authored static feature presentation.
 - Manually authored decorations that must survive refresh stay outside generated roots.
+- `CameraBoundaryRoot` owns exactly one supported Camera movement boundary for this Map.
+- The Camera movement boundary is presentation-only authoring. It does not participate in pathfinding, Tower placement, Monster collision, or runtime occupancy.
+- A Map may use either a supported planar boundary or a supported spatial volume, but not both simultaneously.
+- The boundary may extend beyond the gameplay footprint so the Camera viewport can intentionally reveal authored surrounding decoration.
 
 Before generated children may be removed, VisualRoot must belong to its Grid Node, TileVisualRoot and FeatureVisualRoot must be distinct descendants of VisualRoot, neither may contain the other, and no root may point into another Grid Node or outside NodesRoot.
 
@@ -211,8 +220,9 @@ The approved handcrafted workflow is:
 3. Generate the rectangular Grid Node scaffold.
 4. Edit each node's Base Walkable and Node Type.
 5. Refresh generated Map presentation.
-6. Validate the Map.
-7. Save the completed Map Root as a reusable Map template referenced by StageDefinition.
+6. Author one Camera movement boundary under CameraBoundaryRoot, including any intentional decorative margin outside the gameplay footprint.
+7. Validate the Map.
+8. Save the completed Map Root as a reusable Map template referenced by StageDefinition.
 
 The authoring surface contains:
 
@@ -252,10 +262,13 @@ The reusable Map template contains:
 - MapVisualTheme reference
 - Visual Seed
 - Generated Tile and Feature presentation
+- One Camera movement boundary
 
 StageDefinition references one Map template. Stage System creates it and establishes the Active Map before Monster, Draft, and Placement runtime begins.
 
 Map System does not choose the Stage, Wave content, Draft pools, or battle transition.
+
+Camera System may consume the Active Map's framing origin, plane, gameplay footprint, and authored Camera movement boundary. Map System does not decide when Camera input is available or how the view moves inside that boundary.
 
 ---
 
@@ -269,6 +282,9 @@ Map validation should report at minimum:
 
 - Non-positive Width, Height, or Node Size
 - Missing Grid Node template or NodesRoot
+- Missing CameraBoundaryRoot
+- No supported Camera movement boundary, more than one supported boundary, or simultaneous planar and spatial boundaries
+- A Camera movement boundary that is disabled, degenerate, outside its Map ownership hierarchy, or configured as gameplay collision
 - Missing MapVisualTheme
 - Missing, duplicate, extra, invalid-bit, or otherwise unsupported Tile masks
 - Null Tile prefabs; empty, null-containing, or duplicate Obstacle lists; missing Spawn or Target presentation references
@@ -285,6 +301,6 @@ Warnings identify the relevant Map or Grid Node and never silently rewrite autho
 
 # 12. Approved Scope And Deferred Topics
 
-Current scope includes rectangular handcrafted Maps, one Spawn, one Target, deterministic theme-based presentation, runtime Tower occupancy, Tile-only runtime refresh, and Map-template Stage composition.
+Current scope includes rectangular handcrafted Maps, one Spawn, one Target, deterministic theme-based presentation, runtime Tower occupancy, Tile-only runtime refresh, Map-template Stage composition, a complete rectangular gameplay footprint, and one Map-authored Camera movement boundary.
 
 Deferred topics include Multiple Spawn Routes, multiple Targets, special terrain, destructible terrain, runtime authored-feature replacement, multi-layer terrain, and procedural Map-data generation.

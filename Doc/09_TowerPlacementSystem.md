@@ -32,6 +32,8 @@ Only one drag operation and one active Tower placement preview may exist at a ti
 
 The held item is consumed only after the receiving gameplay system accepts the requested result. Rejection or cancellation preserves it.
 
+An accepted Draft-item drag owns its pointer gesture until release or cancellation. Camera System must not begin or continue a pan from that gesture, including after the pointer moves from the UI into the battlefield.
+
 ---
 
 # 3. Placement Structure Contract
@@ -236,6 +238,7 @@ Placement authoring and runtime validation should report or reject at minimum:
 - Candidate occupancy that blocks a required route
 - Stale or unavailable target Tower
 - A second drag or confirmation competing with the active operation
+- Camera pan competing for an active Draft-item drag gesture
 
 Validation must not silently alter Tower footprints, Map authored state, or Tower Upgrade eligibility.
 

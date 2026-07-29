@@ -102,13 +102,14 @@ Select Current StageDefinition
         -> Current Health = Maximum Health
         -> Reset Player Level And Progress
         -> Clear Player Defeat State
-    -> Establish Selected Map, Wave, And Draft Content
+    -> Establish Selected Map, Camera Boundary, Wave, And Draft Content
+    -> Restore Default Camera Framing Without Prior Pan Displacement
     -> Mark Stage Ready While Battle Remains Inactive
     -> Show Stage Introduction When Configured
     -> Otherwise Begin Battle
 ```
 
-Game Flow requests preparation of the selected Stage. Stage System distributes the selected configuration, and Player System owns the resulting runtime Player state. Game Flow does not write Player health, progress, level, or defeat state directly.
+Game Flow requests preparation of the selected Stage. Stage System distributes the selected configuration, Player System owns the resulting runtime Player state, and Camera System owns restoration of its authored default framing against the newly active Map. Game Flow does not write Player health, progress, level, defeat state, or Camera pose directly.
 
 Monster spawning, Draft generation, Tower placement, and combat remain inactive throughout Stage Preparing and Stage Introduction. Player confirmation of a configured introduction permits the already prepared Stage to enter Battle; it does not recompose the Stage.
 
@@ -185,7 +186,7 @@ Stage Defeat offers:
 - Retry the current Stage through the complete Stage Preparing flow.
 - Return to the main menu.
 
-Next-Stage and retry transitions both release the previous Stage runtime before preparing the selected Stage. They never reuse prior Player state, Map state, Monsters, Towers, pending Drafts, Wave execution state, or battle-active authority.
+Next-Stage and retry transitions both release the previous Stage runtime before preparing the selected Stage. They never reuse prior Player state, Map state, Camera boundary or Pan displacement, Monsters, Towers, pending Drafts, Wave execution state, or battle-active authority.
 
 The final-Stage check is derived from the current position in the configured sequence. It is not stored as a separate flag on StageDefinition.
 
@@ -218,7 +219,8 @@ Battle HUD UI remains a separate battle-local presentation system. Sharing one v
 
 | System | Supplies To Game Flow | Continues To Own |
 |---|---|---|
-| Stage System | Preparation success or failure and selected Stage readiness | Composition validation, Active Map, configuration distribution, and Stage release |
+| Stage System | Preparation success or failure and selected Stage readiness | Composition validation, Active Map and Camera-boundary handoff, configuration distribution, and Stage release |
+| Camera System | No Game Flow decision | Default Active-Map framing, Pan state, and movement-boundary enforcement |
 | Player System | Authoritative defeat state | Runtime level, progress, health, and defeat mutation |
 | Monster System | Normal spawning completion and post-resolution alive-Monster state | Wave execution, Monster lifecycle, and exactly-once resolution |
 | Battle runtime coordination | One authoritative Victory or Defeat result after gameplay authority closes | Battle gates and technical runtime cleanup |
@@ -237,6 +239,7 @@ Game Flow validation should report at minimum:
 - Current Stage position outside the configured sequence
 - Invalid Stage preparation entering Battle
 - Player state not reset to the selected Stage's positive maximum health
+- Camera boundary or Pan displacement retained by an initial Stage, next Stage, or retry
 - Introduction Tower content outside the selected Stage Tower Draft Pool
 - Introduction Upgrade content outside the selected Stage Tower Upgrade Draft Pool
 - Null or duplicate introduction content
@@ -258,7 +261,7 @@ Current scope includes:
 
 - One ordered Demo Stage sequence
 - New-run entry from a main menu
-- Stage preparation with fresh Player state
+- Stage preparation with fresh Player state and default Active-Map Camera framing
 - Optional Stage Introduction content
 - Battle start gating
 - Authoritative Victory and Defeat transitions

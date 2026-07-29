@@ -97,6 +97,8 @@ Stopping the current battle does not itself choose a presentation or Stage trans
 
 Each newly prepared Stage battle, including a retry, starts with fresh Player level progress, defeat state, and the positive maximum health authored by its StageDefinition. Current health starts equal to that maximum. Player state and maximum health from a previous Stage battle or failed attempt are not reused.
 
+The Initial Tower Draft granted at the beginning of a fresh Stage battle is not a Player level-up and does not add progress, consume a level requirement, or change the starting Player level. Player System remains at Level 1 with zero resolved progress until Monster resolution advances it.
+
 ---
 
 # 5. State-Change Outputs

@@ -30,9 +30,12 @@ Enter Main Menu
     -> Start New Run At First Stage
     -> Prepare Current Stage
         -> Establish Fresh Player State At Current Stage Maximum Health
-        -> Establish Current Map, Wave, And Draft Content
+        -> Establish Current Map, Camera Boundary, Wave, And Draft Content
+        -> Reset Camera To Default Active-Map Framing
     -> Show Optional Stage Introduction
     -> Begin Battle
+        -> Complete One Initial Tower Draft
+        -> Begin Monster Wave Execution
     -> Continue Until Victory Or Player Defeat
     -> Victory
         -> Prepare Next Stage
@@ -45,7 +48,10 @@ Enter Main Menu
 Within one active Stage, the battle loop is:
 
 ```text
-Spawn Monster Waves
+Complete Initial Tower Draft
+    -> Create One Held Tower Draft Item
+    -> Begin First Wave Delay
+    -> Spawn Monster Waves
     -> Towers Resolve Combat
     -> Resolved Monsters Advance Player Progress
     -> Player Level-Up Opens Draft
@@ -60,7 +66,11 @@ Core flow and battle rules:
 - A new run begins from the first Stage in the ordered Demo sequence.
 - One selected Stage composition is active during one battle.
 - Every initial Stage, next Stage, and retry prepares fresh Player state and resets current health to the selected Stage's positive maximum health.
+- Every initial Stage, next Stage, and retry binds the selected Map's authored Camera movement boundary and restores the authored default Camera framing without inheriting prior Pan displacement.
 - Battle gameplay remains inactive during Stage preparation and optional Stage Introduction.
+- Every fresh Stage battle grants exactly one Initial Tower Draft after Battle start permission and before Monster Wave execution begins.
+- The Initial Tower Draft creates one held Tower Draft item without changing Player level or progress.
+- The first Wave Delay begins only after the Initial Tower Draft selection is accepted; Tower deployment itself may occur during that delay.
 - Monsters enter from the Map's Spawn node and attempt to reach its Target node.
 - A Monster that dies or reaches the Target is resolved exactly once.
 - Every accepted Monster resolution advances player level progress by one.
@@ -99,6 +109,7 @@ StageDefinition
     + Player Maximum Health
     + Map Template
         + MapVisualTheme
+        + Authored Camera Movement Boundary
     + MonsterWaveConfig
     + Tower Draft Pool
     + Tower Upgrade Draft Pool
@@ -151,9 +162,9 @@ It selects the StageDefinition supplied to Stage System and consumes one authori
 
 ## 4.2 Stage System
 
-Owns composition of the StageDefinition selected for the current battle. It establishes the active Map and supplies the selected Wave and Draft content before battle runtime begins.
+Owns composition of the StageDefinition selected for the current battle. It establishes the active Map, supplies its Camera movement boundary, requests fresh default Camera framing, and supplies the selected Wave and Draft content before battle runtime begins.
 
-It establishes a prepared Stage with fresh Player state and waits for Game Flow start permission. It does not own Stage ordering, result transitions, Map behavior, Wave execution, or Draft generation.
+It establishes a prepared Stage with fresh Player and Camera framing state, then waits for Game Flow start permission. It does not own Stage ordering, result transitions, Camera movement, Map behavior, Wave execution, or Draft generation.
 
 ## 4.3 Player System
 
@@ -169,59 +180,65 @@ It observes or forwards domain intent but does not own player state, Draft rules
 
 ## 4.5 Map System
 
-Owns the authored grid battlefield, Grid Node state, effective walkability, spatial queries, Map presentation generation, runtime Tile topology refresh, and Map validation.
+Owns the authored grid battlefield, Grid Node state, effective walkability, spatial queries, Map presentation generation, one authored Camera movement boundary, runtime Tile topology refresh, and Map validation.
 
-It does not own Stage selection, pathfinding algorithms, Tower placement rules, Monster behavior, or battle flow.
+It does not own Stage selection, Camera movement, pathfinding algorithms, Tower placement rules, Monster behavior, or battle flow.
 
-## 4.6 Monster System
+## 4.6 Camera System
+
+Owns battle-local framing of the Active Map, direct-manipulation pan input, enforcement of the Map-authored Camera movement boundary, and framing reset when the Active Map changes.
+
+It consumes Map framing data, one authored movement boundary, and battle-interaction availability without owning Map state, UI interaction, Tower placement, Monster behavior, or Game Flow transitions.
+
+## 4.7 Monster System
 
 Owns Wave execution, Monster spawning, normal spawning-completion reporting, health, movement, pathfinding, runtime state, death, Target arrival, exactly-once resolution reporting, post-resolution alive-Monster state, and Monster-local presentation state.
 
 It consumes Map data and Stage-selected Wave configuration without owning them. It supplies battle-completion facts without deciding Victory or Defeat.
 
-## 4.7 Draft System
+## 4.8 Draft System
 
 Owns Draft candidate gathering, eligibility-aware weighting, pending reservation, sampling, displayed-choice deduplication, and Draft result creation.
 
 It consumes the Stage-specific Tower and Tower Upgrade pools and forwards the selected result to the appropriate gameplay owner.
 
-## 4.8 Tower Placement System
+## 4.9 Tower Placement System
 
 Owns drag placement intent, Grid alignment, placement preview, placement validation, Tower target intent, occupancy commit, and the resulting Map topology update request.
 
 It does not own Tower combat, Tower Upgrade eligibility, Map data, or pathfinding execution.
 
-## 4.9 Tower Framework System
+## 4.10 Tower Framework System
 
 Owns shared Tower identity, authored base data, Tower level data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
 
 It defines what a Tower is, not how a placed Tower executes combat.
 
-## 4.10 Tower Runtime Combat System
+## 4.11 Tower Runtime Combat System
 
 Owns combat orchestration for placed Towers: target acquisition, attack timing, confirmation and release boundaries, Attack Entity release, active entity ownership, technical cleanup, and approved runtime refresh coordination.
 
 It decides when attacks are released. Released Attack Entities own their domain behavior.
 
-## 4.11 Projectile System
+## 4.12 Projectile System
 
 Owns projectile-style Attack Entities after release: movement, hit detection, lifetime, impact facts, projectile-specific results, presentation hooks, and completion.
 
 It does not own Tower targeting, Tower cooldowns, reusable Effect execution, Buff lifecycle, or Monster health state.
 
-## 4.12 Tower Upgrade System
+## 4.13 Tower Upgrade System
 
 Owns Tower growth and upgrade definitions, eligibility, layer capacity, duplicate rules, accepted state changes, and upgrade application.
 
 It records what a Tower has gained. Runtime owners execute the resulting combat or presentation behavior.
 
-## 4.13 Effect System
+## 4.14 Effect System
 
 Owns reusable one-shot gameplay resolution such as damage actions, target queries, Buff application requests, and the reviewed WindVortex entity.
 
 It does not own persistent Buff state, projectile flight, or source-system scheduling.
 
-## 4.14 Buff System
+## 4.15 Buff System
 
 Owns persistent Monster-attached state: duration, refresh, stacking, periodic timing, lifecycle bindings, Elemental overload, Protection, status presentation data, and persistent Buff presentation.
 
@@ -237,11 +254,16 @@ Game Flow
         -> Stage Composition
             -> Fresh Player State
             -> Active Map
+                -> Authored Camera Movement Boundary
+                -> Default Camera Framing Reset
             -> Monster Wave Configuration
             -> Stage Draft Pools
             -> Prepared Stage
         -> Optional Stage Introduction
         -> Begin Battle
+            -> Initial Tower Draft
+                -> Held Tower Draft Item
+                    -> Authorize Monster Wave Execution
 
 Battle Completion Facts
     -> Authoritative Victory Or Defeat
@@ -253,9 +275,15 @@ Battle Completion Facts
 
 Monster Resolution
     -> Player Progress
-        -> Draft Request
+        -> Level-Up Draft Request
             -> Draft Choice
                 -> Placement Or Tower Upgrade Intent
+
+Active Map And Authored Camera Movement Boundary
+    -> Default Camera Framing
+        -> Camera Framing And Bounds
+            -> Eligible Battlefield Pan Gesture
+                -> Camera Translation
 
 Tower Placement
     -> Runtime Occupancy
@@ -305,12 +333,13 @@ Task Documents under `Doc/Task/` are implementation contracts for a bounded deve
 | Player progression and survival | `03_PlayerSystem.md` |
 | Battle UI presentation and interaction | `04_BattleHUDUISystem.md` |
 | Grid, walkability, and Map presentation | `05_MapSystem.md` |
-| Monster waves, runtime, pathfinding, and resolution | `06_MonsterSystem.md` |
-| Draft generation and result ownership | `07_DraftSystem.md` |
-| Tower placement and runtime topology changes | `08_TowerPlacementSystem.md` |
-| Tower definitions, authoring, and shared structure | `09_TowerFrameworkSystem.md` |
-| Placed-Tower combat orchestration | `10_TowerRuntimeCombatSystem.md` |
-| Projectile lifecycle and impact behavior | `11_ProjectileSystem.md` |
-| Tower growth, upgrade eligibility, and application | `12_TowerUpgradeSystem.md` |
-| Reusable one-shot gameplay resolution | `13_EffectSystem.md` |
-| Persistent Buff and Elemental runtime state | `14_BuffSystem.md` |
+| Active-Map framing and player-controlled Camera pan | `06_CameraSystem.md` |
+| Monster waves, runtime, pathfinding, and resolution | `07_MonsterSystem.md` |
+| Draft generation and result ownership | `08_DraftSystem.md` |
+| Tower placement and runtime topology changes | `09_TowerPlacementSystem.md` |
+| Tower definitions, authoring, and shared structure | `10_TowerFrameworkSystem.md` |
+| Placed-Tower combat orchestration | `11_TowerRuntimeCombatSystem.md` |
+| Projectile lifecycle and impact behavior | `12_ProjectileSystem.md` |
+| Tower growth, upgrade eligibility, and application | `13_TowerUpgradeSystem.md` |
+| Reusable one-shot gameplay resolution | `14_EffectSystem.md` |
+| Persistent Buff and Elemental runtime state | `15_BuffSystem.md` |

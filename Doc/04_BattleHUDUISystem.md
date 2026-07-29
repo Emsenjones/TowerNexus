@@ -62,6 +62,12 @@ Draft Choices Supplied
 
 The UI cannot create, replace, reroll, weight, or validate Draft candidates unless a future Draft rule explicitly grants that action.
 
+The same Draft Window presents both the required Initial Tower Draft and later Player level-up Drafts. When fewer distinct eligible choices exist than the configured display count, the window presents only the available choices; one-choice and two-choice Initial Drafts are valid authored outcomes and do not require placeholder entries.
+
+The Initial Draft is complete only after one valid selection has been returned and the held Tower Draft item has been created. Technical closure, Stage cleanup, or disabled presentation must not be treated as Initial Draft completion or authorize Monster Wave execution.
+
+While the Draft Window is open, it owns the active interaction surface. Pointer input must not pass through it to Camera pan, Tower placement, or other battlefield interaction.
+
 ---
 
 # 5. Draft Item Interaction Area
@@ -86,6 +92,8 @@ Releasing any currently dragged Draft item back inside the interaction area canc
 - Does not consume the item
 
 This rule applies to all present and future draggable Draft item types.
+
+An active held-item drag owns its pointer gesture until release or cancellation. Camera pan must not compete for that gesture even after the pointer leaves the Draft Item Interaction Area.
 
 ---
 
@@ -143,6 +151,8 @@ Battle UI authoring validation should report at minimum:
 - Missing Draft Item Interaction Area
 - Missing interaction feedback references required by current content
 - Missing Monster status or damage-number presentation required by the authored composition
+- Modal Draft input passing through to Camera or battlefield interaction
+- Camera pan competing with an active held-item drag
 
 Validation must not create gameplay state or silently replace authored UI.
 

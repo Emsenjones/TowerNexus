@@ -92,8 +92,11 @@
 11. *Game flow implementation;
 12. PlayerSystem refactoring;
 13. Camera movement;
-14. Level display window;
-15. Monster route display;
-16. players can remove Tower pending items;
-17. Tap tower to pop up TowerInfoWindow;
-18. Develop Monster & Projectile object pool;
+14. 5 Map generation;
+15. Tower state UI;
+16. Level display window;
+17. Monster route display;
+18. Modify time scale when the DraftWindow is popping up or the player is dragging DraftPendingItem;
+18. players can remove Tower pending items;
+19. Tap tower to pop up TowerInfoWindow;
+20. Develop Monster & Projectile object pool;
