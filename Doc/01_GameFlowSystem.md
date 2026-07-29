@@ -14,6 +14,7 @@ It owns:
 - Validation of legal flow transitions
 - Selection of the StageDefinition supplied to Stage System
 - Response to one authoritative battle result
+- Response to one result-neutral asynchronous Battle runtime failure
 - Next-Stage, retry-current-Stage, and return-to-main-menu decisions
 - Visibility and interaction intent for Game Flow presentation surfaces
 
@@ -55,6 +56,7 @@ Stage Introduction
 Battle
     -> Stage Victory
     -> Stage Defeat
+    -> Main Menu After Result-Neutral Runtime Failure
 
 Stage Victory
     -> Stage Preparing At Next Stage
@@ -139,7 +141,16 @@ Requesting an introduction while both introduced-content lists are empty produce
 
 # 6. Battle Result Contract
 
-One active Battle may produce exactly one semantic result.
+One active Battle owns one authoritative terminal claim:
+
+```text
+None
+    -> Victory
+    OR Defeat
+    OR Technical Failure
+```
+
+Victory and Defeat are semantic results. Technical Failure is terminal but result-neutral. Every terminal path must first claim this shared state; competing independent result and failure flags cannot authorize separate terminal transactions. Stop, Stage release, replacement, retry, and preparation rollback are lifecycle cancellation and do not claim a terminal state.
 
 ## 6.1 Victory
 
@@ -162,7 +173,7 @@ Monster removal and Player resolution form one ordered transaction. When the fin
 The battle-active authority closes before result presentation begins:
 
 ```text
-Establish One Battle Result
+Claim Victory Or Defeat From The Shared Terminal State
     -> Close Battle Gameplay Authority
     -> Stop New Runtime Output
     -> Perform Required Technical Cleanup
@@ -171,6 +182,28 @@ Establish One Battle Result
 ```
 
 A technical stop remains distinct from a semantic result. Releasing a Stage, returning to the main menu, disabling runtime owners, or rolling back failed preparation must not manufacture Victory or Defeat.
+
+## 6.4 Result-Neutral Runtime Failure
+
+A technical failure discovered before Battle start succeeds follows the existing failed-transition rollback and never enters Battle.
+
+A technical failure discovered after Battle start succeeds follows this contract:
+
+```text
+Claim Technical Failure From The Shared Terminal State
+    -> Close Battle Gameplay Authority
+    -> Stop New Runtime Output
+    -> Perform Required Technical Cleanup
+    -> Publish One Result-Neutral Failure
+    -> Game Flow Verifies The Current Battle Source
+    -> Release The Current Stage
+    -> Clear The Current Run
+    -> Enter Main Menu
+```
+
+The failure publication is the final operation performed by the Battle coordinator. A Game Flow subscriber may immediately release the Stage and invalidate its runtime objects; the coordinator must return without reading or mutating coordinator or Stage state after publication.
+
+The failure does not publish Victory or Defeat and does not enter a result presentation state. A synchronous and asynchronous report of the same underlying failure must converge on one cleanup transaction.
 
 ---
 
@@ -187,6 +220,8 @@ Stage Defeat offers:
 - Return to the main menu.
 
 Next-Stage and retry transitions both release the previous Stage runtime before preparing the selected Stage. They never reuse prior Player state, Map state, Camera boundary or Pan displacement, Monsters, Towers, pending Drafts, Wave execution state, or battle-active authority.
+
+A valid result-neutral runtime failure transitions directly from the active Battle to Main Menu after releasing the failed Stage. No retry, victory, defeat, or technical-error window is implied.
 
 The final-Stage check is derived from the current position in the configured sequence. It is not stored as a separate flag on StageDefinition.
 
@@ -223,7 +258,7 @@ Battle HUD UI remains a separate battle-local presentation system. Sharing one v
 | Camera System | No Game Flow decision | Default Active-Map framing, Pan state, and movement-boundary enforcement |
 | Player System | Authoritative defeat state | Runtime level, progress, health, and defeat mutation |
 | Monster System | Normal spawning completion and post-resolution alive-Monster state | Wave execution, Monster lifecycle, and exactly-once resolution |
-| Battle runtime coordination | One authoritative Victory or Defeat result after gameplay authority closes | Battle gates and technical runtime cleanup |
+| Battle runtime coordination | One claimed terminal fact: Victory, Defeat, or result-neutral Technical Failure, after gameplay authority closes | Shared terminal claim, Battle gates, and technical runtime cleanup |
 | Battle HUD UI System | No Game Flow decision | Battle-local information, Draft interaction, and placement feedback |
 
 Game Flow consumes semantic outcomes and readiness facts. It does not infer them from presentation state, object destruction timing, or visible UI contents.
@@ -247,7 +282,12 @@ Game Flow validation should report at minimum:
 - Battle gameplay active during Stage Introduction
 - Victory before normal spawning completion
 - Victory while an unresolved Monster remains
-- Victory and Defeat both produced for one Battle
+- More than one terminal state claimed for one Battle
+- Lifecycle cancellation incorrectly claiming a terminal state
+- A technical runtime failure publishing Victory or Defeat
+- Battle coordinator state accessed after publishing a result-neutral runtime failure
+- Duplicate cleanup or transition from synchronous and asynchronous reports of one technical failure
+- A result-neutral runtime failure retained in Battle or routed through a result window
 - Duplicate next, retry, confirmation, or return transitions
 - Previous Stage runtime state retained by next Stage or retry
 
@@ -265,6 +305,7 @@ Current scope includes:
 - Optional Stage Introduction content
 - Battle start gating
 - Authoritative Victory and Defeat transitions
+- Result-neutral asynchronous Battle failure return to Main Menu
 - Next Stage, retry, and return-to-main-menu flow
 - Distinct main-menu, introduction, victory, and defeat presentation capabilities
 

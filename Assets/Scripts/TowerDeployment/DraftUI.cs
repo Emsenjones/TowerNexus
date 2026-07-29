@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DraftUI : MonoBehaviour
 {
@@ -23,56 +24,110 @@ public class DraftUI : MonoBehaviour
         }
     }
 
-    public void OpenDraft(List<DraftResult> draftResults)
+    public bool TryValidateReferences(out string failureReason)
     {
-        OpenDraft(draftResults, null);
-    }
-
-    public void OpenDraft(List<DraftResult> draftResults, Action<DraftResult> onSelected)
-    {
-        if (!isBattleActive)
-        {
-            return;
-        }
-
-        ClearDraftItems();
-        onDraftSelected = onSelected;
-
         if (rootObject == null)
         {
-            Debug.LogWarning("Tower draft UI cannot open: root object is not assigned.", this);
-            return;
+            failureReason = "Root Object is not assigned.";
+            return false;
+        }
+
+        Graphic modalSurface = rootObject.GetComponent<Graphic>();
+
+        if (modalSurface == null || !modalSurface.raycastTarget)
+        {
+            failureReason =
+                "Root Object requires a raycast-enabled modal Graphic.";
+            return false;
         }
 
         if (draftItemContainer == null)
         {
-            Debug.LogWarning("Tower draft UI cannot open: draft item container is not assigned.", this);
-            return;
+            failureReason = "Draft Item Container is not assigned.";
+            return false;
         }
 
         if (towerDraftItemPrefab == null)
         {
-            Debug.LogWarning("Tower draft UI cannot open: tower draft item prefab is not assigned.", this);
-            return;
+            failureReason = "Tower Draft Item Prefab is not assigned.";
+            return false;
+        }
+
+        TowerContentUIItem[] rootItems =
+            towerDraftItemPrefab.GetComponents<TowerContentUIItem>();
+        TowerContentUIItem[] allItems =
+            towerDraftItemPrefab.GetComponentsInChildren<TowerContentUIItem>(
+                true);
+
+        if (rootItems.Length != 1 || allItems.Length != 1)
+        {
+            failureReason =
+                "Tower Draft Item Prefab requires exactly one " +
+                "TowerContentUIItem on its root.";
+            return false;
+        }
+
+        if (!rootItems[0].TryValidateReferences(
+                out string itemFailureReason))
+        {
+            failureReason =
+                $"Tower Draft Item Prefab is invalid: {itemFailureReason}";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public bool TryOpenDraft(
+        IReadOnlyList<DraftResult> draftResults,
+        Action<DraftResult> onSelected,
+        out string failureReason)
+    {
+        if (!isBattleActive)
+        {
+            failureReason = "the Draft UI battle gate is closed.";
+            return false;
+        }
+
+        ClearDraftItems();
+        onDraftSelected = null;
+
+        if (rootObject != null)
+        {
+            rootObject.SetActive(false);
+        }
+
+        if (!TryValidateReferences(out failureReason))
+        {
+            return false;
+        }
+
+        if (onSelected == null)
+        {
+            failureReason = "the selection callback is missing.";
+            return false;
         }
 
         if (draftResults == null || draftResults.Count == 0)
         {
-            Debug.LogWarning("Draft UI cannot open: draft result list is empty.", this);
             rootObject.SetActive(false);
-            return;
+            failureReason = "the Draft result list is empty.";
+            return false;
         }
 
+        onDraftSelected = onSelected;
         int createdItemCount = 0;
 
-        for (int i = 0; i < draftResults.Count && createdItemCount < 3; i++)
+        for (int i = 0; i < draftResults.Count; i++)
         {
             DraftResult draftResult = draftResults[i];
 
             if (draftResult == null || !draftResult.IsValid)
             {
-                Debug.LogWarning($"Draft UI skipped draft entry at index {i}: draft result is invalid.", this);
-                continue;
+                return FailOpen(
+                    $"Draft result at index {i} is invalid.",
+                    out failureReason);
             }
 
             if (draftResult.ResultType == DraftResultType.TowerDraft &&
@@ -82,43 +137,64 @@ public class DraftUI : MonoBehaviour
                 Debug.LogWarning($"Draft UI entry '{draftResult.DisplayName}' is missing a tower prefab reference.", draftResult.TowerDefinition);
             }
 
-            GameObject itemObject = Instantiate(towerDraftItemPrefab, draftItemContainer);
+            GameObject itemObject = null;
 
-            if (!itemObject.TryGetComponent(out TowerContentUIItem item))
+            try
             {
-                Debug.LogWarning(
-                    "Tower draft UI skipped draft item: tower draft item " +
-                    "prefab is missing TowerContentUIItem.",
-                    itemObject);
-                Destroy(itemObject);
-                continue;
-            }
+                itemObject = Instantiate(
+                    towerDraftItemPrefab,
+                    draftItemContainer);
 
-            if (!item.TryInitializeSelectable(
-                    draftResult,
-                    HandleDraftSelected))
+                if (!itemObject.TryGetComponent(
+                        out TowerContentUIItem item))
+                {
+                    Destroy(itemObject);
+                    return FailOpen(
+                        "Tower Draft Item Prefab is missing " +
+                        "TowerContentUIItem.",
+                        out failureReason);
+                }
+
+                if (!item.TryInitializeSelectable(
+                        draftResult,
+                        HandleDraftSelected))
+                {
+                    Destroy(itemObject);
+                    return FailOpen(
+                        $"Draft item {i} failed initialization.",
+                        out failureReason);
+                }
+
+                draftItems.Add(item);
+                createdItemCount++;
+            }
+            catch (Exception exception)
             {
-                Destroy(itemObject);
-                continue;
-            }
+                Debug.LogException(exception, this);
 
-            draftItems.Add(item);
-            createdItemCount++;
+                if (itemObject != null)
+                {
+                    itemObject.SetActive(false);
+                    Destroy(itemObject);
+                }
+
+                return FailOpen(
+                    $"Draft item {i} creation threw " +
+                    $"{exception.GetType().Name}.",
+                    out failureReason);
+            }
         }
 
         if (createdItemCount == 0)
         {
-            Debug.LogWarning("Tower draft UI cannot open: no valid draft items were generated.", this);
-            rootObject.SetActive(false);
-            return;
-        }
-
-        if (createdItemCount < 3)
-        {
-            Debug.LogWarning($"Tower draft UI opened with {createdItemCount} draft item(s). Expected 3.", this);
+            return FailOpen(
+                "no selectable Draft items were created.",
+                out failureReason);
         }
 
         rootObject.SetActive(true);
+        failureReason = string.Empty;
+        return true;
     }
 
     public void CloseDraft()
@@ -158,7 +234,15 @@ public class DraftUI : MonoBehaviour
         }
 
         onDraftSelected?.Invoke(draftResult);
+    }
+
+    private bool FailOpen(
+        string reason,
+        out string failureReason)
+    {
         CloseDraft();
+        failureReason = reason;
+        return false;
     }
 
     private void ClearDraftItems()

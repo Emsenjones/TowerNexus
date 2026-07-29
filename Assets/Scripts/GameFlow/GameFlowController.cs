@@ -429,6 +429,26 @@ public class GameFlowController : MonoBehaviour
         TryAcceptBattleResult(result);
     }
 
+    private void HandleBattleRuntimeFailed(string failureReason)
+    {
+        if (cleanupRequested)
+        {
+            return;
+        }
+
+        if (isTransitionInProgress)
+        {
+            Debug.LogError(
+                "Game Flow received an asynchronous Battle runtime failure " +
+                "during another transition and scheduled safe cleanup.",
+                this);
+            cleanupRequested = true;
+            return;
+        }
+
+        TryAcceptBattleRuntimeFailure(failureReason);
+    }
+
     private bool TryAcceptBattleResult(BattleResult result)
     {
         if (currentState != GameFlowState.Battle)
@@ -472,6 +492,59 @@ public class GameFlowController : MonoBehaviour
                     result == BattleResult.Victory
                         ? GameFlowState.StageVictory
                         : GameFlowState.StageDefeat);
+                return true;
+            });
+    }
+
+    private bool TryAcceptBattleRuntimeFailure(string failureReason)
+    {
+        if (currentState != GameFlowState.Battle)
+        {
+            Debug.LogWarning(
+                $"Game Flow ignored a Battle runtime failure while in " +
+                $"{currentState}.",
+                this);
+            return false;
+        }
+
+        if (lastBattleResult.HasValue)
+        {
+            Debug.LogWarning(
+                "Game Flow ignored a Battle runtime failure after a semantic " +
+                "Battle result was already accepted.",
+                this);
+            return false;
+        }
+
+        if (!IsCurrentBattleResultSourceValid())
+        {
+            Debug.LogWarning(
+                "Game Flow ignored a Battle runtime failure because it does " +
+                "not belong to the current composed Battle.",
+                this);
+            return false;
+        }
+
+        string concreteReason = string.IsNullOrWhiteSpace(failureReason)
+            ? "an unspecified Battle runtime failure occurred."
+            : failureReason;
+
+        return ExecuteGuardedTransition(
+            () =>
+            {
+                Debug.LogError(
+                    $"Game Flow returned to Main Menu after Battle runtime " +
+                    $"failure: {concreteReason}",
+                    this);
+                stageCompositionController.ReleaseStage();
+
+                if (!CanContinueTransition())
+                {
+                    return false;
+                }
+
+                ClearRunStateCore();
+                PublishState(GameFlowState.MainMenu);
                 return true;
             });
     }
@@ -735,6 +808,8 @@ public class GameFlowController : MonoBehaviour
 
         coordinator.OnBattleResultPublished +=
             HandleBattleResultPublished;
+        coordinator.OnBattleRuntimeFailed +=
+            HandleBattleRuntimeFailed;
         subscribedBattleRuntimeCoordinator = coordinator;
     }
 
@@ -747,6 +822,8 @@ public class GameFlowController : MonoBehaviour
 
         subscribedBattleRuntimeCoordinator.OnBattleResultPublished -=
             HandleBattleResultPublished;
+        subscribedBattleRuntimeCoordinator.OnBattleRuntimeFailed -=
+            HandleBattleRuntimeFailed;
         subscribedBattleRuntimeCoordinator = null;
     }
 

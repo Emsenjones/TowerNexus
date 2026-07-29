@@ -49,7 +49,9 @@ Within one active Stage, the battle loop is:
 
 ```text
 Complete Initial Tower Draft
+    -> Pause Battle Simulation While The Draft Window Is Open
     -> Create One Held Tower Draft Item
+    -> Resume Battle Simulation
     -> Begin First Wave Delay
     -> Spawn Monster Waves
     -> Towers Resolve Combat
@@ -71,6 +73,7 @@ Core flow and battle rules:
 - Every fresh Stage battle grants exactly one Initial Tower Draft after Battle start permission and before Monster Wave execution begins.
 - The Initial Tower Draft creates one held Tower Draft item without changing Player level or progress.
 - The first Wave Delay begins only after the Initial Tower Draft selection is accepted; Tower deployment itself may occur during that delay.
+- Every Initial or Player level-up Draft pauses battle simulation while its Draft Window is open. Draft presentation and selection remain interactive, and the prior simulation rate is restored before gameplay resumes.
 - Monsters enter from the Map's Spawn node and attempt to reach its Target node.
 - A Monster that dies or reaches the Target is resolved exactly once.
 - Every accepted Monster resolution advances player level progress by one.
@@ -81,7 +84,9 @@ Core flow and battle rules:
 - A legal placement must not violate occupancy or approved route rules.
 - Victory requires normal completion of all configured spawning, no alive unresolved Monsters, and a Player who is not defeated.
 - Player health reaching zero produces Defeat and takes precedence when the final Monster resolution could otherwise satisfy Victory.
-- One Battle produces at most one semantic result.
+- One Battle claims at most one terminal state: Victory, Defeat, or result-neutral Technical Failure.
+- Stop, release, replacement, retry, and preparation rollback are lifecycle cancellation rather than terminal Battle states.
+- A result-neutral Technical Failure after Battle start closes gameplay authority, releases the current Stage, and returns Game Flow directly to Main Menu without publishing Victory or Defeat.
 
 Unlocking, persistence, Stage Selection UI, branching progression, and Scene flow remain deferred.
 
@@ -176,7 +181,7 @@ It does not own Draft generation, UI presentation, Monster lifecycle, or Stage f
 
 Owns presentation and interaction for battle information, Draft choices, held Draft items, drag feedback, and placement feedback.
 
-It observes or forwards domain intent but does not own player state, Draft rules, placement validation, combat outcomes, or Game Flow presentation.
+It observes or forwards domain intent but does not own player state, Draft rules, Draft-driven simulation pause, placement validation, combat outcomes, or Game Flow presentation.
 
 ## 4.5 Map System
 
@@ -198,7 +203,7 @@ It consumes Map data and Stage-selected Wave configuration without owning them. 
 
 ## 4.8 Draft System
 
-Owns Draft candidate gathering, eligibility-aware weighting, pending reservation, sampling, displayed-choice deduplication, and Draft result creation.
+Owns Draft candidate gathering, eligibility-aware weighting, pending reservation, sampling, displayed-choice deduplication, explicit Draft workflow phase and session identity, Draft-driven battle-simulation pause, and Draft result creation.
 
 It consumes the Stage-specific Tower and Tower Upgrade pools and forwards the selected result to the appropriate gameplay owner.
 
@@ -262,8 +267,10 @@ Game Flow
         -> Optional Stage Introduction
         -> Begin Battle
             -> Initial Tower Draft
-                -> Held Tower Draft Item
-                    -> Authorize Monster Wave Execution
+                -> Pause Battle Simulation
+                    -> Held Tower Draft Item
+                        -> Resume Battle Simulation
+                            -> Authorize Monster Wave Execution
 
 Battle Completion Facts
     -> Authoritative Victory Or Defeat
@@ -276,8 +283,15 @@ Battle Completion Facts
 Monster Resolution
     -> Player Progress
         -> Level-Up Draft Request
-            -> Draft Choice
-                -> Placement Or Tower Upgrade Intent
+            -> Pause Battle Simulation
+                -> Draft Choice
+                    -> Resume Battle Simulation
+                        -> Placement Or Tower Upgrade Intent
+
+Result-Neutral Battle Runtime Failure
+    -> Close Battle Gameplay Authority
+        -> Release Current Stage
+            -> Main Menu
 
 Active Map And Authored Camera Movement Boundary
     -> Default Camera Framing

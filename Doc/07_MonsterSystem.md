@@ -81,6 +81,8 @@ Wave execution begins only after Stage composition has established the active Ma
 
 The first Wave Delay starts when Monster System receives authorization after the Initial Draft selection is accepted. Tower deployment is not an additional prerequisite; the player may deploy the held Tower Draft item while the first Wave Delay advances.
 
+Wave timing, spawning, Monster movement, and Monster-driven gameplay output do not advance while an Initial or Player level-up Draft Window holds the approved battle-simulation pause. Draft presentation remains interactive outside Monster System. The pause is released before Initial Draft completion authorizes the first Wave Delay.
+
 Monster System reports normal spawning completion only after every configured Monster instance has been created through the complete ordered Wave sequence. Stopping, cancelling, disabling, or aborting invalid Wave execution does not report normal completion.
 
 ---
@@ -315,6 +317,7 @@ Monster and Wave authoring validation should report at minimum:
 - Negative move speed, count, delay, or interval where invalid
 - Empty or invalid Wave content
 - Wave execution or the first Wave Delay beginning before the Initial Tower Draft is accepted
+- Wave timing, spawning, or Monster movement advancing while a Draft Window holds the battle-simulation pause
 - Normal spawning completion reported after cancellation, stop, or invalid Wave execution
 - Post-resolution alive-Monster state reported before Player resolution completes
 - Missing active Spawn or Target node

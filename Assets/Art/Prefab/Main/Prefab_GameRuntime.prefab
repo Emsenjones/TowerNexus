@@ -1298,7 +1298,7 @@ GameObject:
   - component: {fileID: 3233101487444575971}
   - component: {fileID: 6163001500443749745}
   m_Layer: 5
-  m_Name: HealthInfo
+  m_Name: RecTransform_HealthInfo
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1436,6 +1436,7 @@ RectTransform:
   - {fileID: 8819281262504372311}
   - {fileID: 4434340723118395232}
   - {fileID: 7818174435048902082}
+  - {fileID: 2917316673235505824}
   - {fileID: 2591946000137446198}
   m_Father: {fileID: 3177142286291502680}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1471,6 +1472,7 @@ MonoBehaviour:
   hpText: {fileID: 3532528489163198663}
   progressSlider: {fileID: 1510971882914088562}
   pendingDraftContainer: {fileID: 7818174435048902082}
+  pendingDraftDragVisualRoot: {fileID: 2917316673235505824}
   pendingDraftItemPrefab: {fileID: 1640803525699781486, guid: c429eebae545c4268a9748d3c3a58748, type: 3}
 --- !u!1 &3347167417675004667
 GameObject:
@@ -1824,7 +1826,7 @@ GameObject:
   - component: {fileID: 3377065681575065628}
   - component: {fileID: 95540712657133512}
   m_Layer: 5
-  m_Name: Cointainer_PendingDraftItems
+  m_Name: LayoutGroup_PendingDraftItems
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2237,6 +2239,41 @@ RectTransform:
   - {fileID: 4726569871959940930}
   - {fileID: 6003141381322467600}
   m_Father: {fileID: 8017504436740523961}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &4361792803868736713
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2917316673235505824}
+  m_Layer: 5
+  m_Name: RecTransform_PendingDraftDragItems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2917316673235505824
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4361792803868736713}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 6003141381322467600}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
@@ -2824,7 +2861,7 @@ GameObject:
   - component: {fileID: 8755431686370488558}
   - component: {fileID: 6668126777542329585}
   m_Layer: 5
-  m_Name: DraftUI
+  m_Name: Window_DraftUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3996,7 +4033,7 @@ GameObject:
   - component: {fileID: 463031437302853265}
   - component: {fileID: 4277088399553606389}
   m_Layer: 5
-  m_Name: Container_TowerContentItems
+  m_Name: LayoutGroup_TowerContentItems
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4630,8 +4667,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuView
   startButton: {fileID: 8872576939501718951}
   startMessageText: {fileID: 7207197616302304322}
-  pulseHalfDuration: 1.6
-  pulseMinimumAlpha: 0.35
+  pulseHalfDuration: 1
+  pulseMinimumAlpha: 0.2
   pulseEaseType: 13
 --- !u!222 &1343103296967959706
 CanvasRenderer:

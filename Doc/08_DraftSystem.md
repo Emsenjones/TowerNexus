@@ -14,6 +14,8 @@ It owns:
 - Candidate weighting and sampling
 - Same-round displayed-choice deduplication
 - Draft workflow state and result creation
+- Explicit Draft workflow phase, Draft-session identity, and stale-callback rejection
+- Battle-simulation pause while the Draft Window is open
 
 It does not own Player progression, Stage composition, UI layout, Tower placement, Tower Upgrade application, Map occupancy, or combat behavior.
 
@@ -36,6 +38,7 @@ Outputs:
 - One displayed Draft choice set
 - One selected Tower Draft or Tower Upgrade Draft result
 - Accepted completion of the Initial Tower Draft after its held Tower Draft item exists
+- One owned battle-simulation pause for the active Draft session
 
 The first version displays up to three distinct choices. It displays one or two choices when the active Stage contains fewer than three distinct eligible identities.
 
@@ -49,12 +52,38 @@ Approved Draft Opportunity
     -> Build Candidates Allowed For That Source
     -> Merge Candidate Entries
     -> Sample Distinct Display Choices
-    -> Present Choices
+    -> Establish Provisional Opening Session
+    -> Present Choices With Session Identity
+    -> Acquire Battle-Simulation Pause After Successful Opening
+    -> Await One Selection
+    -> Claim Selection Commit Before Held-Item Creation
     -> Accept One Selection
     -> Create Held Draft Item
+    -> Preserve Initial Completion Evidence When Applicable
+    -> Close Draft Presentation
+    -> Release Battle-Simulation Pause
+    -> Publish Accepted Completion When Required
 ```
 
 Only one choice from the active set may become a result. Presentation closure, duplicate input, or stale selection must not create additional rewards.
+
+Each Draft session belongs to one fresh Battle generation and one unique attempt within that Battle. Stop, release, retry, replacement, or disable invalidates the active session. Completion and technical-failure facts are accepted only from the exact current session; identity must not collide with an earlier Battle.
+
+Every session moves through one explicit workflow phase:
+
+```text
+None
+    -> Opening
+    -> Awaiting Selection
+    -> Committing Selection
+        -> Completed
+        -> Failed
+
+Opening / Awaiting Selection / Committing Selection
+    -> Cancelled By Lifecycle Cleanup
+```
+
+The attempt identity is provisional before it is exposed to presentation callbacks. A successful opening acquires the attempt-owned pause before entering Awaiting Selection. Opening failure rolls the provisional session back synchronously and publishes no asynchronous failure fact.
 
 ## 3.1 Initial Tower Draft
 
@@ -75,6 +104,30 @@ A stopped, released, or failed Stage does not count as completing its Initial To
 ## 3.2 Player Level-Up Draft
 
 Each accepted Player level-up opportunity uses the normal combined Tower and eligible Tower Upgrade candidate process. It remains independent of the one Initial Tower Draft granted for that Stage battle.
+
+Only the first level-up callback may establish a Draft session. While ordinary gameplay pause prevents later Monster resolution, one debug or future batch-progression transaction may still publish multiple callbacks synchronously. Later callbacks in that transaction are rejected as unsupported overlap: they cannot replace the active Draft, create a reward, close its presentation, or release its pause. Preserving one Draft reward for every callback in a multi-level batch requires a future Draft queue.
+
+## 3.3 Draft Simulation Pause
+
+Every successfully opened Initial or Player level-up Draft Window pauses battle simulation until that Draft session commits a held item or terminates through failure or lifecycle cancellation.
+
+Pause rules are:
+
+- Draft System owns acquisition and release for the exact active Draft session.
+- The simulation rate that existed before the Draft opened is restored rather than replaced with an assumed default.
+- While the Draft-owned pause is active, Draft System is the only permitted writer of the simulation rate; another pause or slow-motion owner must not change it before release.
+- Draft presentation and selection remain interactive while battle simulation is paused.
+- Successful selection first enters Committing Selection, then commits the held item, closes presentation, releases pause, and only then publishes completion.
+- Synchronous opening failure acquires no pause and returns failure directly.
+- Asynchronous technical failure releases pause before reporting failure.
+- Stop, release, replacement, retry, and disable cancel the session and release its pause without publishing completion or technical failure.
+- Nested or stale callbacks cannot release another session's pause.
+
+Pausing prevents ordinary later Monster resolution and Player progress while a Draft is open. Same-frame reentrant level-up or selection callbacks are still rejected by session identity and exactly-once guards.
+
+Slow motion while dragging a held Draft item is a separate future behavior. It does not share the Draft Window pause lifetime.
+
+The attempt identity prevents another Draft from releasing the active pause; it cannot arbitrate an unrelated simulation-rate writer. If another runtime time owner is introduced, direct Draft ownership must be replaced by a shared pause or time-control service.
 
 ---
 
@@ -179,6 +232,12 @@ Select Tower Upgrade Draft
 
 Cancelling or rejecting a drag preserves the held item and any reservation it represents. Successful consumption removes both.
 
+Held-item creation is atomic. A selected result is committed only after one complete held item has been created, validated, initialized, made interactive, and registered in the pending-item collection. Failure leaves no partial registration and does not publish accepted Draft completion.
+
+The active session must atomically move from Awaiting Selection to Committing Selection before held-item creation begins. Object construction, activation, initialization, or nested presentation callbacks therefore cannot enter a second held-item transaction. Failure establishes Failed.
+
+For an Initial Draft, successful held-item commit next preserves an attempt-scoped completed record containing the exact completed token and committed held item, then establishes Completed. Active selection authority may then be invalidated without erasing the evidence required by Battle coordination. Presentation closes, pause releases, and completion publishes only after the record exists. The completed Initial record survives completion publication and is cleared only by fresh Battle reset or Stage cleanup.
+
 ---
 
 # 9. Validation
@@ -192,8 +251,16 @@ Draft validation should report at minimum:
 - Non-positive configured displayed choice count
 - Pending reservation that cannot identify its reward or exclusive capacity
 - A selected identity not present in the active displayed set
+- A stale or mismatched Battle-generation or Draft-attempt identity
 - A duplicate Initial Tower Draft opportunity for one Stage battle
+- Held-item creation entered without first claiming the Committing Selection phase
 - Initial Draft completion reported before its held Tower Draft item exists
+- Active Draft invalidation erasing the completed Initial Draft record before Battle coordination validates it
+- Completed Initial Draft record retained across fresh Battle reset or Stage cleanup
+- More than one active Draft session or Draft-owned simulation pause
+- Another simulation-rate owner writing while the Draft-owned pause is active
+- Draft pause not released on selection, failure, stop, release, retry, replacement, or disable
+- Draft presentation unable to remain interactive while battle simulation is paused
 
 Validation does not silently add content to a Stage or alter Tower Upgrade rules.
 
@@ -212,5 +279,7 @@ Current scope includes:
 - Pending Upgrade reservation
 - Same-round displayed deduplication
 - Held Tower and Tower Upgrade results
+- Draft-owned battle-simulation pause while the Draft Window is open
+- Battle-generation and attempt identity guards
 
-Deferred topics include rarity, reroll, ban or pick, global rewards, curses, persistent progression rewards, multiplayer Drafts, and Stage-completion rewards.
+Deferred topics include Draft queueing for multi-level batch progression, slow motion while dragging a held Draft item, rarity, reroll, ban or pick, global rewards, curses, persistent progression rewards, multiplayer Drafts, and Stage-completion rewards.

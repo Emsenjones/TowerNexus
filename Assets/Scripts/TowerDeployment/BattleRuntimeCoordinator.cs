@@ -4,6 +4,14 @@ using UnityEngine;
 
 public class BattleRuntimeCoordinator : MonoBehaviour
 {
+    private enum BattleTerminalState
+    {
+        None = 0,
+        Victory = 1,
+        Defeat = 2,
+        TechnicalFailure = 3
+    }
+
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterSpawner monsterSpawner;
@@ -14,7 +22,11 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private bool hasFreshPlayerState;
     private bool isBattlePrepared;
     private bool hasNormalSpawningCompleted;
-    private bool hasEstablishedResult;
+    private BattleTerminalState battleTerminalState;
+    private DraftAttemptToken expectedInitialDraftToken;
+    private bool hasInitialDraftAuthorizedSpawning;
+    private bool isStartingSpawner;
+    private string pendingSynchronousSpawningFailureReason;
     private int preparedPlayerMaxHealth;
     private bool isLifecycleOperationInProgress;
     private bool releaseRequested;
@@ -22,6 +34,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     public bool IsBattlePrepared => isBattlePrepared;
 
     public event Action<BattleResult> OnBattleResultPublished;
+    public event Action<string> OnBattleRuntimeFailed;
 
     private void OnEnable()
     {
@@ -41,6 +54,14 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         {
             monsterManager.OnMonsterResolutionCompleted +=
                 HandleMonsterResolutionCompleted;
+        }
+
+        if (draftSystem != null)
+        {
+            draftSystem.OnInitialDraftCompleted +=
+                HandleInitialDraftCompleted;
+            draftSystem.OnInitialDraftFailed +=
+                HandleInitialDraftFailed;
         }
     }
 
@@ -62,6 +83,14 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         {
             monsterManager.OnMonsterResolutionCompleted -=
                 HandleMonsterResolutionCompleted;
+        }
+
+        if (draftSystem != null)
+        {
+            draftSystem.OnInitialDraftCompleted -=
+                HandleInitialDraftCompleted;
+            draftSystem.OnInitialDraftFailed -=
+                HandleInitialDraftFailed;
         }
 
         ReleasePreparedBattleRuntime();
@@ -313,29 +342,35 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        bool spawningStarted = monsterSpawner.StartSpawning();
-
-        if (!spawningStarted)
+        if (!draftSystem.TryOpenInitialTowerDraft(
+                out DraftAttemptToken initialDraftToken,
+                out string initialDraftFailureReason))
         {
             Debug.LogError(
-                "Battle runtime coordinator failed to start the selected Monster Waves.",
+                "Battle runtime coordinator failed to open the Initial Tower " +
+                $"Draft: {initialDraftFailureReason}",
                 this);
             return false;
         }
 
-        if (hasEstablishedResult)
+        expectedInitialDraftToken = initialDraftToken;
+
+        if (!CanContinueLifecycleOperation())
         {
-            hasFreshPlayerState = false;
-            preparedPlayerMaxHealth = 0;
-            isBattlePrepared = false;
-            return true;
+            Debug.LogWarning(
+                "Battle runtime coordinator cancelled Battle begin after a " +
+                "deferred release request.",
+                this);
+            return false;
         }
 
-        if (!IsBattleActive || !AreConsumerGatesOpen())
+        if (!IsBattleActive ||
+            !AreConsumerGatesOpen() ||
+            !draftSystem.IsAwaitingDraft(initialDraftToken))
         {
             Debug.LogError(
                 "Battle runtime coordinator did not retain every Battle gate after " +
-                "Monster spawning started.",
+                "opening the Initial Tower Draft.",
                 this);
             return false;
         }
@@ -552,7 +587,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void HandleAllSpawningCompleted()
     {
-        if (!IsBattleActive || hasEstablishedResult)
+        if (!IsBattleActive ||
+            battleTerminalState != BattleTerminalState.None)
         {
             return;
         }
@@ -568,22 +604,30 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void HandleSpawningFailed(string failureReason)
     {
-        if (!IsBattleActive || hasEstablishedResult)
+        if (!IsBattleActive ||
+            battleTerminalState != BattleTerminalState.None)
         {
             return;
         }
 
-        Debug.LogError(
-            $"Battle runtime coordinator stopped after Monster Spawner failure: " +
-            $"{failureReason}",
-            this);
-        StopBattle();
+        if (isStartingSpawner)
+        {
+            if (string.IsNullOrWhiteSpace(
+                    pendingSynchronousSpawningFailureReason))
+            {
+                pendingSynchronousSpawningFailureReason = failureReason;
+            }
+
+            return;
+        }
+
+        TryFailBattleRuntime(failureReason);
     }
 
     private void TryCompleteVictory()
     {
         if (!IsBattleActive ||
-            hasEstablishedResult ||
+            battleTerminalState != BattleTerminalState.None ||
             !hasNormalSpawningCompleted ||
             monsterManager == null ||
             monsterManager.AliveMonsterCount != 0 ||
@@ -598,12 +642,16 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void TryCompleteBattleResult(BattleResult result)
     {
-        if (!IsBattleActive || hasEstablishedResult)
+        BattleTerminalState requestedTerminalState =
+            result == BattleResult.Victory
+                ? BattleTerminalState.Victory
+                : BattleTerminalState.Defeat;
+
+        if (!TryClaimBattleTerminalState(requestedTerminalState))
         {
             return;
         }
 
-        hasEstablishedResult = true;
         StopBattle();
         OnBattleResultPublished?.Invoke(result);
     }
@@ -611,6 +659,129 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private void ResetResultTracking()
     {
         hasNormalSpawningCompleted = false;
-        hasEstablishedResult = false;
+        battleTerminalState = BattleTerminalState.None;
+        expectedInitialDraftToken = default;
+        hasInitialDraftAuthorizedSpawning = false;
+        isStartingSpawner = false;
+        pendingSynchronousSpawningFailureReason = null;
+    }
+
+    private void HandleInitialDraftCompleted(
+        DraftAttemptToken attemptToken)
+    {
+        if (!IsBattleActive ||
+            battleTerminalState != BattleTerminalState.None ||
+            hasInitialDraftAuthorizedSpawning ||
+            attemptToken != expectedInitialDraftToken)
+        {
+            return;
+        }
+
+        if (!draftSystem.TryConfirmCommittedInitialDraft(
+                attemptToken,
+                out PendingDraftUIItem committedItem) ||
+            committedItem == null ||
+            committedItem.DraftResult == null ||
+            !committedItem.DraftResult.IsValid ||
+            committedItem.TowerDefinition == null)
+        {
+            TryFailBattleRuntime(
+                "Initial Tower Draft completion could not confirm its exact " +
+                "committed held item.");
+            return;
+        }
+
+        hasInitialDraftAuthorizedSpawning = true;
+        bool spawningStarted = false;
+        string localFailureReason = null;
+        pendingSynchronousSpawningFailureReason = null;
+        isStartingSpawner = true;
+
+        try
+        {
+            spawningStarted = monsterSpawner.StartSpawning();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            localFailureReason =
+                $"Monster Spawner threw {exception.GetType().Name} while starting.";
+        }
+        finally
+        {
+            isStartingSpawner = false;
+        }
+
+        if (string.IsNullOrWhiteSpace(localFailureReason))
+        {
+            localFailureReason =
+                pendingSynchronousSpawningFailureReason;
+        }
+
+        pendingSynchronousSpawningFailureReason = null;
+
+        if (!spawningStarted ||
+            !string.IsNullOrWhiteSpace(localFailureReason))
+        {
+            TryFailBattleRuntime(
+                string.IsNullOrWhiteSpace(localFailureReason)
+                    ? "Monster Spawner rejected Initial Draft authorization."
+                    : localFailureReason);
+            return;
+        }
+    }
+
+    private void HandleInitialDraftFailed(
+        DraftAttemptToken attemptToken,
+        string failureReason)
+    {
+        if (!IsBattleActive ||
+            battleTerminalState != BattleTerminalState.None ||
+            attemptToken != expectedInitialDraftToken)
+        {
+            return;
+        }
+
+        TryFailBattleRuntime(
+            string.IsNullOrWhiteSpace(failureReason)
+                ? "Initial Tower Draft failed after Battle start."
+                : $"Initial Tower Draft failed: {failureReason}");
+    }
+
+    private bool TryClaimBattleTerminalState(
+        BattleTerminalState requestedState)
+    {
+        if (!IsBattleActive ||
+            requestedState == BattleTerminalState.None ||
+            battleTerminalState != BattleTerminalState.None)
+        {
+            return false;
+        }
+
+        battleTerminalState = requestedState;
+        return true;
+    }
+
+    private void TryFailBattleRuntime(string failureReason)
+    {
+        if (!TryClaimBattleTerminalState(
+                BattleTerminalState.TechnicalFailure))
+        {
+            return;
+        }
+
+        string concreteReason = string.IsNullOrWhiteSpace(failureReason)
+            ? "an unspecified Battle runtime failure occurred."
+            : failureReason;
+
+        Debug.LogError(
+            $"Battle runtime coordinator terminated the Battle: " +
+            $"{concreteReason}",
+            this);
+
+        CloseBattleAuthorityAndGates();
+        monsterManager?.ForceCleanupAllMonsters();
+        towerPlacementController?.StopTrackedTowerCombat();
+        OnBattleRuntimeFailed?.Invoke(concreteReason);
     }
 }

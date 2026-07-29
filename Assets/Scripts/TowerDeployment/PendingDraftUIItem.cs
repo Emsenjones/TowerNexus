@@ -17,8 +17,9 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private DraftResult draftResult;
     private TowerPlacementController placementController;
     private RectTransform rectTransform;
-    private Canvas rootCanvas;
-    private Transform originalParent;
+    private RectTransform pendingItemContainer;
+    private RectTransform dragVisualRoot;
+    private RectTransform originalParent;
     private int originalSiblingIndex;
     private Vector2 originalAnchoredPosition;
     private Vector3 originalLocalScale;
@@ -34,39 +35,115 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private void Awake()
     {
         rectTransform = transform as RectTransform;
-        Canvas canvas = GetComponentInParent<Canvas>();
-        rootCanvas = canvas != null ? canvas.rootCanvas : null;
     }
 
-    public void Initialize(TowerDefinition towerDefinition)
+    private void OnDisable()
     {
-        Initialize(DraftResult.CreateTowerDraft(towerDefinition), placementController);
+        isBattleActive = false;
+        RestorePendingPosition();
     }
 
-    public void Initialize(TowerDefinition towerDefinition, TowerPlacementController placementController)
+    public bool TryValidateReferences(out string failureReason)
     {
-        Initialize(DraftResult.CreateTowerDraft(towerDefinition), placementController);
-    }
-
-    public void Initialize(DraftResult draftResult, TowerPlacementController placementController)
-    {
-        this.draftResult = draftResult;
-        this.placementController = placementController;
-
-        if (draftResult == null || !draftResult.IsValid)
+        if (!(transform is RectTransform))
         {
-            Debug.LogWarning("Pending draft UI cannot initialize: draft result is invalid.", this);
-            return;
+            failureReason = "the item root must be a RectTransform.";
+            return false;
         }
 
+        if (iconImage == null)
+        {
+            failureReason = "Icon Image is not assigned.";
+            return false;
+        }
+
+        if (iconBackgroundImage == null)
+        {
+            failureReason = "Icon Background Image is not assigned.";
+            return false;
+        }
+
+        if (nameText == null)
+        {
+            failureReason = "Name Text is not assigned.";
+            return false;
+        }
+
+        if (towerDraftIconBackground == null ||
+            basicUpgradeIconBackground == null ||
+            behaviourUpgradeIconBackground == null ||
+            elementalUpgradeIconBackground == null)
+        {
+            failureReason =
+                "all Pending Draft category background sprites must be assigned.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public bool TryInitialize(
+        DraftResult selectedDraftResult,
+        TowerPlacementController selectedPlacementController,
+        RectTransform selectedPendingItemContainer,
+        RectTransform selectedDragVisualRoot,
+        out string failureReason)
+    {
+        draftResult = null;
+        placementController = null;
+        pendingItemContainer = null;
+        dragVisualRoot = null;
+
+        if (!TryValidateReferences(out failureReason))
+        {
+            return false;
+        }
+
+        if (selectedDraftResult == null || !selectedDraftResult.IsValid)
+        {
+            failureReason = "the Draft result is invalid.";
+            return false;
+        }
+
+        if (selectedPlacementController == null)
+        {
+            failureReason = "Tower Placement Controller is not assigned.";
+            return false;
+        }
+
+        if (selectedPendingItemContainer == null ||
+            selectedDragVisualRoot == null)
+        {
+            failureReason =
+                "the Pending Item Container or Drag Visual Root is missing.";
+            return false;
+        }
+
+        if (selectedPendingItemContainer == selectedDragVisualRoot)
+        {
+            failureReason =
+                "the Pending Item Container and Drag Visual Root must be distinct.";
+            return false;
+        }
+
+        if (transform.parent != selectedPendingItemContainer)
+        {
+            failureReason =
+                "the Pending Draft Item was not instantiated directly under " +
+                "the supplied Pending Item Container.";
+            return false;
+        }
+
+        draftResult = selectedDraftResult;
+        placementController = selectedPlacementController;
+        pendingItemContainer = selectedPendingItemContainer;
+        dragVisualRoot = selectedDragVisualRoot;
         UpdateIcon(draftResult.Icon);
         UpdateIconBackground(draftResult);
         UpdateName(draftResult);
-    }
-
-    public void SetPlacementController(TowerPlacementController placementController)
-    {
-        this.placementController = placementController;
+        failureReason = string.Empty;
+        return true;
     }
 
     public void BeginBattle()
@@ -82,12 +159,12 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (!isBattleActive)
+        if (!isBattleActive || eventData == null)
         {
             return;
         }
 
-        if (eventData != null && eventData.button != PointerEventData.InputButton.Left)
+        if (eventData.button != PointerEventData.InputButton.Left)
         {
             return;
         }
@@ -164,7 +241,9 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void RestorePendingPosition()
     {
-        if (!hasStoredPendingPosition || originalParent == null || rectTransform == null)
+        if (!hasStoredPendingPosition ||
+            originalParent == null ||
+            rectTransform == null)
         {
             isDragVisualActive = false;
             return;
@@ -180,10 +259,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
         rectTransform.localScale = originalLocalScale;
 
-        if (originalParent is RectTransform originalParentRect)
-        {
-            LayoutRebuilder.MarkLayoutForRebuild(originalParentRect);
-        }
+        LayoutRebuilder.MarkLayoutForRebuild(originalParent);
 
         hasStoredPendingPosition = false;
         isDragVisualActive = false;
@@ -290,56 +366,66 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
             return;
         }
 
-        if (rootCanvas == null)
-        {
-            Canvas canvas = GetComponentInParent<Canvas>();
-            rootCanvas = canvas != null ? canvas.rootCanvas : null;
-        }
-
         if (!hasStoredPendingPosition)
         {
-            originalParent = transform.parent;
+            originalParent = transform.parent as RectTransform;
+
+            if (originalParent == null ||
+                originalParent != pendingItemContainer ||
+                dragVisualRoot == null)
+            {
+                return;
+            }
+
             originalSiblingIndex = transform.GetSiblingIndex();
             originalAnchoredPosition = rectTransform.anchoredPosition;
             originalLocalScale = rectTransform.localScale;
-            originalParentUsesLayoutGroup = originalParent != null && originalParent.GetComponent<LayoutGroup>() != null;
+            originalParentUsesLayoutGroup =
+                originalParent.GetComponent<LayoutGroup>() != null;
             hasStoredPendingPosition = true;
         }
 
-        if (!isDragVisualActive && rootCanvas != null)
+        if (!isDragVisualActive)
         {
-            transform.SetParent(rootCanvas.transform, true);
+            transform.SetParent(dragVisualRoot, true);
             transform.SetAsLastSibling();
         }
 
         isDragVisualActive = true;
-        SetDragVisualScreenPosition(screenPosition, eventCamera);
+
+        if (!TrySetDragVisualScreenPosition(screenPosition, eventCamera))
+        {
+            RestorePendingPosition();
+        }
     }
 
     private void SetDragVisualScreenPosition(Vector2 screenPosition, Camera eventCamera)
     {
-        if (!isDragVisualActive || rectTransform == null)
+        TrySetDragVisualScreenPosition(screenPosition, eventCamera);
+    }
+
+    private bool TrySetDragVisualScreenPosition(
+        Vector2 screenPosition,
+        Camera eventCamera)
+    {
+        if (!isDragVisualActive ||
+            rectTransform == null ||
+            dragVisualRoot == null)
         {
-            return;
+            return false;
         }
 
-        RectTransform canvasRectTransform = rootCanvas != null ? rootCanvas.transform as RectTransform : null;
-        Camera dragCamera = rootCanvas != null && rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay
-            ? null
-            : eventCamera;
-
-        if (canvasRectTransform != null &&
-            RectTransformUtility.ScreenPointToWorldPointInRectangle(
-                canvasRectTransform,
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                dragVisualRoot,
                 screenPosition,
-                dragCamera,
+                eventCamera,
                 out Vector3 worldPoint))
         {
             rectTransform.position = worldPoint;
-            return;
+            return true;
         }
 
-        rectTransform.position = screenPosition;
+        return false;
     }
 
     private bool ShouldShowDragVisual()
