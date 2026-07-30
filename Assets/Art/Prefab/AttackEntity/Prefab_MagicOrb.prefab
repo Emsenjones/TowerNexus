@@ -9879,9 +9879,9 @@ MonoBehaviour:
   rotationSpeed: 180
   orbitRadius: 1
   contactDistance: 0.5
-  maxHitCount: 6
+  maxHitCount: 12
   sameTargetHitCooldown: 0.5
-  maxLifetime: 6
+  maxLifetime: 12
 --- !u!1 &7702116986669340077
 GameObject:
   m_ObjectHideFlags: 0

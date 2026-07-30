@@ -1,5 +1,7 @@
 # Tower Nexus - Game Flow System
 
+Document Set: System
+
 ---
 
 # 1. Purpose And Ownership
@@ -85,7 +87,7 @@ Sequence rules:
 - Starting again from the main menu creates a new run at index zero.
 - The number of configured Stages is authored data rather than a hard-coded runtime limit.
 
-The current Demo target is at least five independently authored StageDefinitions. A temporarily shorter sequence may support content production, but an empty sequence, null entry, duplicate entry, or invalid current index is not a playable configuration.
+The current Demo target is at least six independently authored StageDefinitions. A temporarily shorter sequence may support content production, but an empty sequence, null entry, duplicate entry, or invalid current index is not a playable configuration.
 
 Game Flow owns Stage ordering only. StageDefinition continues to own one Stage's reusable composition, and Stage System continues to own preparation and release of the selected Stage.
 

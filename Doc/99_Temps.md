@@ -33,7 +33,7 @@
    2. Activation：什么时候开始攻击？
       1. Enemy In Range
       2. Always active
-      3. ... 
+      3. ...
    3. Targeting：目标怎么选择？
       1. Nearest
       2. Highest HP
@@ -51,7 +51,7 @@
 3. Upgrade Rules
    1. When(Condition)：如何触发？
    2. Do(Action)：触发后做什么？
-   
+
    e.g.:
    1. OnHit - ContinueFlight
    2. OnSpawn - SpawnProjectile
@@ -90,10 +90,12 @@
 9. *Monster definition refactor;
 10. *Player Level up by resolving monsters;
 11. *Game flow implementation;
-12. Pop up initial DraftWindow on game start;
-13. Camera movement;
-14. Simplify monster wave config;
-15. 5 Map generation;
+12. *Pop up initial DraftWindow on game start;
+13. *Camera movement;
+14. *Simplify monster wave config;
+15. 6 Stage Map Prefabs;
+16. Value judgement;
+17. Draft Specific Tower on initial Draft window pop up;
 16. Tower state UI;
 17. Level display window;
 18. Monster route display;

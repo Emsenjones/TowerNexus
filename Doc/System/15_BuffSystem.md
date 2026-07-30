@@ -1,5 +1,7 @@
 # Buff System
 
+Document Set: System
+
 ## 1. System Overview
 
 The Buff System owns persistent gameplay state attached to monsters: duration, refresh, stack count, periodic timing, lifecycle events, Elemental overload and Protection, status UI, and persistent Buff VFX.

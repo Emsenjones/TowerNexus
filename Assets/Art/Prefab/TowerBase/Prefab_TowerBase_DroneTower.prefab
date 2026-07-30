@@ -655,7 +655,6 @@ MonoBehaviour:
   targetSelectionType: 3
   attackReleaseVfxPrefab: {fileID: 3966859551205364536, guid: 23dd5e31cc3eb4b9687e919a6e09114d, type: 3}
   dronePrefab: {fileID: 7978792076586334490, guid: 7b10ada619b6042278238b85e5e41ed9, type: 3}
-  defaultMaximumDroneCount: 1
 --- !u!114 &2757564218915723808
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -1,5 +1,7 @@
 # Tower Nexus - Project Overview
 
+Document Set: System
+
 ---
 
 # 1. Project Identity
@@ -137,7 +139,7 @@ The demo uses one directly referenced runtime template for each unique Monster
 type. Separate balance definitions or multiple stat variants sharing one visual
 Monster are deferred until the content model requires them.
 
-The demo is expected to contain at least five independently authored StageDefinitions. Each battle composes one selected StageDefinition.
+The demo is expected to contain at least six independently authored StageDefinitions. Each battle composes one selected StageDefinition.
 
 Combat configuration follows this relationship:
 
@@ -320,9 +322,9 @@ The arrows describe information or intent flow, not object ownership. Each recei
 
 # 6. Documentation Contract
 
-The complete `Doc/` folder is the long-term design source of truth. Another team should be able to reproduce approximately the same game and system behavior in a different programming language or game engine by following these documents.
+The complete `Doc/` folder is the long-term design source of truth. `Doc/README.md` defines the document sets and their authority. Another team should be able to reproduce approximately the same game and system behavior in a different programming language or game engine by following these documents.
 
-System Documents therefore describe:
+System Documents under `Doc/System/` describe:
 
 - Purpose and ownership
 - Stable data and authoring contracts
@@ -335,7 +337,9 @@ They do not store task status, concrete method names, engine lifecycle callbacks
 
 Engine-specific structures remain only when they are intentional content-authoring contracts. Stable formulas, hierarchy semantics, data schemas, and behavior flows are valid System Document content because they are required to reproduce the design.
 
-Task Documents under `Doc/Task/` are implementation contracts for a bounded development slice. They may contain code-level decisions and may be retired after their durable design outcomes are synchronized back into the owning System Documents.
+The current Balance source under `Doc/Balance/00_StageDesignBlueprint.md` describes the campaign learning arc, new content, Reference Builds, required capabilities, and expected Anti-patterns. Exact Map size, Draft budgets, placement pressure, progression, Draft pools, and Wave values are downstream implementation results derived by Task Documents and authored in their owning Unity assets. Additional balance documents are deferred until the tuning workflow and required durable content become clear.
+
+Task Documents under `Doc/Task/` are implementation contracts for a bounded development slice. They may contain code-level decisions and derived working values. They may be retired after durable intent or contract changes are synchronized into the owning Blueprint or System Document and accepted executable values are authored in their owning Unity assets.
 
 ---
 

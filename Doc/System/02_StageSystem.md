@@ -1,5 +1,7 @@
 # Tower Nexus - Stage System
 
+Document Set: System
+
 ---
 
 # 1. Purpose And Ownership
@@ -21,7 +23,7 @@ It owns:
 
 It coordinates domain owners without absorbing Map, Monster, Draft, Tower, or Game Flow rules.
 
-The demo is expected to contain at least five independently authored StageDefinitions. One selected StageDefinition is active in one battle runtime.
+The demo is expected to contain at least six independently authored StageDefinitions. One selected StageDefinition is active in one battle runtime.
 
 ---
 
@@ -135,7 +137,7 @@ An introduction requested with no presentable Tower or Upgrade content is a warn
 
 Current scope includes:
 
-- Five or more authorable StageDefinitions
+- Six or more authorable StageDefinitions
 - One selected Stage per battle runtime
 - One Map template and one MonsterWaveConfig per Stage
 - One valid authored 3D Camera movement boundary per Map template

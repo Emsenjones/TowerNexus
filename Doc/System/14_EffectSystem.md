@@ -1,5 +1,7 @@
 # Effect System
 
+Document Set: System
+
 ## 1. System Overview
 
 The Effect System executes reusable, one-shot gameplay rules. It consumes runtime trigger context, resolves targets, executes ordered actions, and owns the reviewed WindVortex gameplay entity.

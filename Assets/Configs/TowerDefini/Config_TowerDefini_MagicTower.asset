@@ -16,7 +16,7 @@ MonoBehaviour:
   displayName: Magic Tower
   description: Orbiting magic orb
   icon: {fileID: 21300000, guid: c2a778fc5841b4fd689931cc6e210472, type: 3}
-  towerPrefab: {fileID: 6027618472494872927, guid: 5b7ed8402f4fc4e9bbbfc43e6ae17d24, type: 3}
+  towerPrefab: {fileID: 8270491640636788401, guid: 7f40fd16bab2d4a20b51506d3cb37e8f, type: 3}
   towerLevelConfigs:
   - level: 1
     basicDamage: 2
