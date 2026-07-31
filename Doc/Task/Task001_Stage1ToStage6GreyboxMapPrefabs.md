@@ -1,6 +1,6 @@
 # Task001 - Stage1 To Stage6 Greybox Map Prefabs
 
-Status: Ready for v0.2 greybox authoring; six Map sizes and Reference Tower counts are provisionally selected as the next testable baseline
+Status: Completed; six Map Prefabs are accepted as the v0.2 greybox baseline after Unity Validate Map checks and static structure review
 
 Depends on: Existing Map, Stage, Tower Placement, Camera, Tower footprint, and Tower attack-range authoring contracts
 
@@ -41,8 +41,8 @@ Range and footprint values are implementation inputs, not final balance claims. 
 | Stage2 | 10x10 | 3 |
 | Stage3 | 12x12 | 4 |
 | Stage4 | 14x14 | 5 |
-| Stage5 | 16x16 | 5 |
-| Stage6 | 18x18 | 6 |
+| Stage5 | 14x14 | 5 |
+| Stage6 | 14x14 | 5 |
 
 These values are intentional first-pass estimates. They exist so the first six greyboxes can be authored and observed before further correction.
 
@@ -62,7 +62,7 @@ Map size alone does not determine useful coverage. Base Walkable topology and ro
 ## 6. In Scope
 
 - One Map Prefab for each Stage
-- v0.2 Grid sizes from 8x8 through 18x18
+- v0.2 Grid sizes from 8x8 through 14x14
 - Spawn Grid and Target Grid
 - Authored Base Walkable topology
 - One intended best Monster route
@@ -122,8 +122,8 @@ Map size alone does not determine useful coverage. Base Walkable topology and ro
 ## 11. Acceptance Criteria
 
 - Six Map Prefabs exist and validate.
-- Grid sizes are 8x8, 10x10, 12x12, 14x14, 16x16, and 18x18.
-- Reference Tower counts are 2, 3, 4, 5, 5, and 6.
+- Stage1-Stage6 Grid sizes are respectively 8x8, 10x10, 12x12, 14x14, 14x14, and 14x14.
+- Stage1-Stage6 Reference Tower counts are respectively 2, 3, 4, 5, 5, and 5.
 - Every Map has a valid Spawn-to-Target route.
 - Every v0.1 Reference Build has at least one legal, strategically useful layout.
 - At least one reasonable alternative arrangement is legal per Stage.
@@ -146,4 +146,4 @@ Map size alone does not determine useful coverage. Base Walkable topology and ro
 
 ## 13. Review Note
 
-Completion freezes the six Maps only as usable v0.2 greybox baselines. These values are not final balance claims. Task002 must return any accepted Attack Range change for Map coverage regression, and Task007-Task012 may later propose local route or placement refinements when Stage calibration reveals a specific spatial problem.
+Task001 completion freezes the six Maps only as usable v0.2 greybox baselines. The user ran Validate Map on every Stage1-Stage6 Prefab without errors; static review confirmed the planned dimensions, expected node counts, one Spawn, one Target, and one referenced MapCameraBoundary per Map. These values are not final balance claims. Task002 must return any accepted Attack Range change for Map coverage regression, and Task007-Task012 may later propose local route or placement refinements when Stage calibration reveals a specific spatial problem.

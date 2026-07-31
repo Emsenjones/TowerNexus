@@ -1,8 +1,8 @@
 # Task002 - Base Tower And Reference Monster Baseline
 
-Status: Planned
+Status: Ready for implementation; Task001 v0.2 greybox Maps are accepted and Stage1 can now be frozen as the fixed Reference test setup
 
-Depends on: Task001 Stage1 greybox Map
+Depends on: Completed Task001 Stage1 greybox Map
 
 ## 1. Goal
 

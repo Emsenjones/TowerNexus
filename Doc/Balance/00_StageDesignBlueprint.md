@@ -78,7 +78,7 @@ The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magi
 | Stage5 | Create the first Elemental core and understand Elemental application and stacking | Elemental Layer |
 | Stage6 | Coordinate two Towers with the same ElementType in one overlapping fire zone to trigger Overload | Elemental cooperation |
 
-Campaign spatial scale should generally increase from Stage1 through Stage6. Exact Grid sizes are Task001 implementation inputs and may be revised when Reference Build placement, attack-range separation, and route validation require it.
+Campaign spatial scale should generally increase from Stage1 through Stage4. Stage5 and Stage6 reuse the Stage4 spatial scale so their additional pressure comes from Elemental specialization and cooperation rather than from larger boards. Exact Grid sizes are Task001 implementation inputs and may be revised when Reference Build placement, attack-range separation, and route validation require it.
 
 ---
 
@@ -191,14 +191,14 @@ Status: Reference Build Baseline v0.1
 | New Content | Elemental cooperation |
 | Required Capability | Two Towers with the same ElementType and overlapping effective coverage |
 | Expected Anti-pattern | Use unmatched Elements or separate matching Towers so they do not share targets |
-| Notes | Six Towers use all four TowerFamilies; exact Core families, repeated families, and shared ElementType remain TBD |
+| Notes | Five Towers use all four TowerFamilies; exact Core families, repeated family, and shared ElementType remain TBD |
 
 Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
 | Matching Elemental Core | 2 | TBD; matching TowerFamily is not required | L3, one Basic, one Behaviour, one matching Elemental each |
-| Support | 4 | Complete the four-family Reference roster | L1, no Upgrades |
+| Support | 3 | Complete the four-family Reference roster together with the two Cores | L1, no Upgrades |
 
 Different TowerFamilies with the same ElementType may contribute to the same shared Elemental Buff on a Monster. Because Overload is required, the authored Draft structure must preserve at least one achievable matching-Element build path.
 

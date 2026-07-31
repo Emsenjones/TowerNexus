@@ -37,11 +37,11 @@ First-pass inputs:
 
 | Input | v0.1 Value |
 |---|---|
-| Map Size | 18x18 |
-| Reference Towers | 6 |
+| Map Size | 14x14 |
+| Reference Towers | 5 |
 | Core | Two L3 Towers, each with one Basic, one Behaviour, and one matching Elemental |
-| Support | Four L1 Towers with no Upgrades; all four TowerFamilies appear in the complete Reference roster |
-| Total Draft Opportunities | 16 |
+| Support | Three L1 Towers with no Upgrades; all four TowerFamilies appear in the complete five-Tower Reference roster |
+| Total Draft Opportunities | 15 |
 | Elemental Detail | The two Cores share one ElementType; exact Core families and ElementType are resolved by Task006 |
 
 ## 4. In Scope

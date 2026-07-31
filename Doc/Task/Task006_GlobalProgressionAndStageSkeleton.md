@@ -57,7 +57,11 @@ Current Blueprint-derived v0.1 inputs:
 | Stage3 | 4 | 1 | 8 | 8 | 7 | None |
 | Stage4 | 5 | 1 | 9 | 9 | 8 | None |
 | Stage5 | 5 | 1 | 10 | 10 | 9 | One Elemental Core |
-| Stage6 | 6 | 2 | 16 | 16 | 15 | Two overlapping Cores with the same ElementType |
+| Stage6 | 5 | 2 | 15 | 15 | 14 | Two overlapping Cores with the same ElementType |
+
+Stage6 costs 15 Drafts: five Tower deployments plus two Cores, each requiring two Level-ups, one Basic Upgrade, one Behaviour Upgrade, and one Elemental Upgrade.
+
+Stage4-Stage6 intentionally share five Reference Towers and the same proposed Map scale, but their Total Draft Opportunities remain 9, 10, and 15 because their Reference Builds require different vertical and Elemental investment.
 
 These values are the first trajectory estimate. Task006 does not treat the Progress sequence, Monster totals, Draft pools, or candidate availability as accepted until the derived table has been structurally tested.
 

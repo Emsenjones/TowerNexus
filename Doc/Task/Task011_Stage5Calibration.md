@@ -35,7 +35,7 @@ First-pass inputs:
 
 | Input | v0.1 Value |
 |---|---|
-| Map Size | 16x16 |
+| Map Size | 14x14 |
 | Reference Towers | 5 |
 | Core | One L3 Tower with one Basic, one Behaviour, and one Elemental |
 | Support | Four L1 Towers with no Upgrades; all four TowerFamilies appear in the Reference roster |
