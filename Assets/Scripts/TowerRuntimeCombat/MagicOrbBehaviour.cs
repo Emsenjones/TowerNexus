@@ -9,23 +9,19 @@ public readonly struct MagicOrbStatRefresh
         bool refreshDamage,
         int newDamage,
         bool refreshRotationSpeed,
-        float newRotationSpeed,
-        int remainingHitCountDelta)
+        float newRotationSpeed)
     {
         RefreshDamage = refreshDamage;
         NewDamage = newDamage;
         RefreshRotationSpeed = refreshRotationSpeed;
         NewRotationSpeed = newRotationSpeed;
-        RemainingHitCountDelta = remainingHitCountDelta;
     }
 
     public bool RefreshDamage { get; }
     public int NewDamage { get; }
     public bool RefreshRotationSpeed { get; }
     public float NewRotationSpeed { get; }
-    public int RemainingHitCountDelta { get; }
-    public bool HasAnyChange =>
-        RefreshDamage || RefreshRotationSpeed || RemainingHitCountDelta != 0;
+    public bool HasAnyChange => RefreshDamage || RefreshRotationSpeed;
 }
 
 public class MagicOrbBehaviour : MonoBehaviour
@@ -151,16 +147,6 @@ public class MagicOrbBehaviour : MonoBehaviour
         monsterHitCooldownEnds[monster] = cooldownEndTime;
     }
 
-    internal void ApplyRemainingHitCountDelta(int delta)
-    {
-        if (!isInitialized || hasEnded || delta == 0)
-        {
-            return;
-        }
-
-        remainingHitCount = Mathf.Max(0, remainingHitCount + delta);
-    }
-
     internal bool TryConsumeHit()
     {
         if (!isInitialized || hasEnded || remainingHitCount <= 0)
@@ -255,7 +241,7 @@ internal sealed class MagicOrbGroupRuntime
     private bool isActive;
     private bool hasEnded;
 
-    public event Action<MagicOrbGroupRuntime> OnEnded;
+    public event Action<MagicOrbGroupRuntime, bool> OnEnded;
 
     public MagicOrbGroupRuntime(
         long releaseGroupId,
@@ -388,33 +374,6 @@ internal sealed class MagicOrbGroupRuntime
         {
             rotationSpeed = Mathf.Max(0f, refresh.NewRotationSpeed);
         }
-
-        if (refresh.RemainingHitCountDelta != 0)
-        {
-            resolvedMaxHitCount = Mathf.Max(
-                1,
-                resolvedMaxHitCount + refresh.RemainingHitCountDelta);
-
-            bool shouldComplete = false;
-
-            for (int i = 0; i < members.Count; i++)
-            {
-                MagicOrbBehaviour member = members[i];
-
-                if (member == null)
-                {
-                    continue;
-                }
-
-                member.ApplyRemainingHitCountDelta(refresh.RemainingHitCountDelta);
-                shouldComplete |= member.RemainingHitCount <= 0;
-            }
-
-            if (shouldComplete)
-            {
-                CompleteNormally();
-            }
-        }
     }
 
     public void EnableArcaneDetonation(
@@ -486,7 +445,7 @@ internal sealed class MagicOrbGroupRuntime
         hasEnded = true;
         isActive = false;
         TeardownMembers(technicalCleanup: true);
-        OnEnded?.Invoke(this);
+        OnEnded?.Invoke(this, false);
     }
 
     public void HandleUnexpectedMemberInvalidation(MagicOrbBehaviour member)
@@ -592,7 +551,7 @@ internal sealed class MagicOrbGroupRuntime
         CaptureCompletionPositions();
         ExecuteArcaneDetonations();
         TeardownMembers(technicalCleanup: false);
-        OnEnded?.Invoke(this);
+        OnEnded?.Invoke(this, true);
     }
 
     private void CaptureCompletionPositions()

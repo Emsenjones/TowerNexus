@@ -26,7 +26,7 @@ The result must make the four attack strategies visibly different while keeping 
 - Attack Interval or release cadence
 - Projectile or Attack Entity speed and lifetime
 - Targeting behavior
-- Magic contact behavior
+- Magic contact behavior, active-group duration, and post-completion recovery cadence
 - Drone launch, battery, pursuit, and burst cadence
 - Reference Monster maximum health and movement speed
 - Base Tower damage and measured TTK
@@ -51,6 +51,13 @@ The result must make the four attack strategies visibly different while keeping 
 6. Run a normal-route comparison to include range, pursuit, contact, and downtime.
 7. Record accepted values and freeze the baseline.
 
+### Current Magic Calibration Checkpoint
+
+- The last Straight-route candidate is restored to Attack Interval `3s`, Orb Max Lifetime `17s`, and Orb Max Hit Count `15`.
+- A three-sided U-shaped route is treated as an intentional Magic-favored stress case, not as the neutral baseline.
+- An L-shaped route test remains pending before any decision to replace per-target contact cooldown with a shared Orb contact cadence.
+- No contact-cooldown mechanism change is accepted by this checkpoint.
+
 ## 6. Required Measurements
 
 - First attack or first-hit delay
@@ -58,6 +65,7 @@ The result must make the four attack strategies visibly different while keeping 
 - Number of releases, contacts, or bursts
 - Effective route coverage
 - Target-loss or entity-limit downtime
+- Magic active-group duration and post-completion recovery downtime
 - Whether any Tower dominates range, cadence, damage, and flexibility simultaneously
 - Short player-facing description of each Tower's strength and weakness
 

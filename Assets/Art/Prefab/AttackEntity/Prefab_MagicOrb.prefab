@@ -9878,10 +9878,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbBehaviour
   rotationSpeed: 180
   orbitRadius: 1
-  contactDistance: 0.5
-  maxHitCount: 12
+  contactDistance: 0.25
+  maxHitCount: 15
   sameTargetHitCooldown: 0.5
-  maxLifetime: 12
+  maxLifetime: 17
 --- !u!1 &7702116986669340077
 GameObject:
   m_ObjectHideFlags: 0

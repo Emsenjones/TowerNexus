@@ -651,8 +651,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DroneCombatBehaviour
   attackRange: 4
-  attackInterval: 6
-  targetSelectionType: 3
+  attackInterval: 10
+  targetSelectionType: 2
   attackReleaseVfxPrefab: {fileID: 3966859551205364536, guid: 23dd5e31cc3eb4b9687e919a6e09114d, type: 3}
   dronePrefab: {fileID: 7978792076586334490, guid: 7b10ada619b6042278238b85e5e41ed9, type: 3}
 --- !u!114 &2757564218915723808
@@ -674,7 +674,7 @@ MonoBehaviour:
   attackOriginFallback: {fileID: 6617525378691214913}
   towerSpawnRefreshVfxAnchor: {fileID: 8718468317004484059}
   towerUpgradeAppliedVfxAnchor: {fileID: 3977874666773507100}
-  towerSpawnRefreshVfxPrefab: {fileID: 2407319477381325343, guid: 1cc7165880e704e1ca3d20862578e2cb, type: 3}
+  towerSpawnRefreshVfxPrefab: {fileID: 2407319477381325343, guid: 600e0cc70d5be488ab16ad89dd070a8f, type: 3}
   towerUpgradeAppliedVfxPrefab: {fileID: 2549197258187512340, guid: d11c3d7cf18dc42848ffc47a089a7cb8, type: 3}
   validUpgradeTargetHighlightColor: {r: 1, g: 1, b: 1, a: 1}
   validUpgradeTargetHighlightIntensity: 1.5

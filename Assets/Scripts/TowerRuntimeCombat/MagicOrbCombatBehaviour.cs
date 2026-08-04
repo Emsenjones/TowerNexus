@@ -121,19 +121,12 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             UpgradeIncludesBasicStat(
                 sourceUpgrade,
                 TowerUpgradeBasicStatType.MagicOrbRotationSpeed);
-        bool refreshMaxHitCount = !isLevelChange &&
-            UpgradeIncludesBasicStat(
-                sourceUpgrade,
-                TowerUpgradeBasicStatType.MagicOrbMaxHitCount);
 
         group.ApplyStatRefresh(new MagicOrbStatRefresh(
             refreshDamage,
             currentStats.AttackDamage,
             refreshRotationSpeed,
-            currentStats.MagicOrbRotationSpeed,
-            refreshMaxHitCount
-                ? currentStats.MagicOrbMaxHitCount - previousStats.MagicOrbMaxHitCount
-                : 0));
+            currentStats.MagicOrbRotationSpeed));
     }
 
     protected override void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)
@@ -248,7 +241,6 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        StartAttackCooldown(resolvedStats.AttackInterval);
         PlayAttackReleaseVfx(Quaternion.identity);
         ResetPendingAttack();
     }
@@ -397,7 +389,9 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         return new MagicOrbRuntimeOptions(sourceUpgrade, detonationEffect);
     }
 
-    private void HandleMagicOrbGroupEnded(MagicOrbGroupRuntime group)
+    private void HandleMagicOrbGroupEnded(
+        MagicOrbGroupRuntime group,
+        bool completedNormally)
     {
         if (group == null)
         {
@@ -409,6 +403,11 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         if (activeMagicOrbGroup == group)
         {
             activeMagicOrbGroup = null;
+
+            if (completedNormally)
+            {
+                StartAttackCooldown(ResolveCombatStats().AttackInterval);
+            }
         }
     }
 

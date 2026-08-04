@@ -207,7 +207,7 @@ Camera:
   far clip plane: 100
   field of view: 60
   orthographic: 1
-  orthographic size: 4
+  orthographic size: 6
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -4761,7 +4761,7 @@ MonoBehaviour:
     CustomLookAtTarget: 0
   Lens:
     FieldOfView: 60
-    OrthographicSize: 4
+    OrthographicSize: 6
     NearClipPlane: 0.3
     FarClipPlane: 100
     Dutch: 0
@@ -5577,7 +5577,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameFlowController
   demoStages:
-  - {fileID: 11400000, guid: 3cbcb494b08af4efb85765bfa4fdfd7e, type: 2}
+  - {fileID: 11400000, guid: 9f2aaa0ae562f4d00aeba91658bf4009, type: 2}
   stageCompositionController: {fileID: 4707264216546559258}
 --- !u!1 &9015606273351229035
 GameObject:

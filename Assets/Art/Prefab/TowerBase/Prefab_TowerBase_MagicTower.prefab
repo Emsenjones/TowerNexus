@@ -606,7 +606,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbCombatBehaviour
   attackRange: 1.5
-  attackInterval: 8
+  attackInterval: 3
   targetSelectionType: 1
   attackReleaseVfxPrefab: {fileID: 0}
   magicOrbPrefab: {fileID: 5932105996875227893, guid: ddbc56afe56b5423287d527e7c7b5b88, type: 3}

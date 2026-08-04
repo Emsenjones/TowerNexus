@@ -125,21 +125,20 @@ Pending data is cleared only by cancellation, successful release, or technical c
 
 # 6. Cooldown Contract
 
-Cooldown begins only after successful Attack Entity release:
+Attack Interval recovery begins at the approved TowerFamily boundary:
 
-- Archer: Arrow group released
-- Cannon: Shell group released
-- Magic: Magic Orb group released
-- Drone: one Drone launched
+- Archer: after an Arrow group is successfully released
+- Cannon: after a Shell group is successfully released
+- Drone: after one Drone is successfully launched
+- Magic: after its active Magic Orb group completes normally
 
-Failed confirmation, missing required release data, or failed entity creation does not start cooldown.
+Failed confirmation, missing required release data, or failed entity creation does not start recovery. Releasing a Magic Orb group does not start recovery; its active lifetime and post-group recovery are sequential phases.
 
-Projectile completion does not delay Archer or Cannon readiness. Magic and Drone have additional gates:
+Projectile completion does not delay Archer or Cannon readiness. Drone additionally requires active Drone count below current capacity.
 
-- Magic requires cooldown readiness and completion of its one active Orb group.
-- Drone requires cooldown readiness and active Drone count below current capacity.
+Magic normal completion first finishes all synchronous contact, Arcane Detonation, and member-completion results. It then clears exact ownership and starts recovery from the latest resolved Attack Interval. Lifetime expiry and hit-count exhaustion are normal completion. Technical cleanup clears the group and scheduler state without starting recovery.
 
-When cooldown becomes ready while another gate remains blocked, it stays ready at zero. Clearing the gate allows the next normal detection and release pass; it does not create an immediate release inside a completion or upgrade notification.
+When recovery becomes ready while another gate remains blocked, it stays ready at zero. Clearing the gate allows the next normal detection and release pass; completion and upgrade notifications never create a new Attack Entity directly.
 
 ---
 
@@ -204,6 +203,8 @@ Non-Positive Old Interval       -> Remaining Becomes Ready
 
 The result is non-negative. Completing cooldown through refresh does not release an entity until the next normal scheduler pass.
 
+An active Magic Orb group has no running Tower recovery timer. An accepted Attack Interval change updates the resolved baseline, and normal group completion later starts recovery from that latest value. Once Magic is in post-group recovery, the same completion-ratio rule applies.
+
 ## 8.2 Entity Refresh
 
 - Unresolved damage may refresh for eligible active entities.
@@ -251,7 +252,7 @@ Successful release starts cooldown. Arc movement, Position Impact, direct arriva
 
 Magic Tower owns at most one active synchronized Orb group.
 
-Release requires cooldown readiness and no active group. The group captures one orbit center from the current Attack Origin.
+Release requires post-group recovery readiness and no active group. The group captures one orbit center from the current Attack Origin. Successful release begins the active-group phase without starting Tower recovery.
 
 Group contract:
 
@@ -261,7 +262,7 @@ Group contract:
 - Exhaustion of any member or shared lifetime completion ends the whole group
 - Group completion is idempotent
 
-Approved active-group refresh may update unresolved damage, orbit speed, remaining hit count by delta, and reviewed Behaviour packages.
+Approved active-group refresh may update unresolved damage, orbit speed, and reviewed Behaviour packages. Maximum hit count is captured from authored Attack Entity capacity when the group is created and does not refresh through Basic Upgrades.
 
 Multi Orbs reconciliation is atomic:
 
@@ -272,6 +273,8 @@ Multi Orbs reconciliation is atomic:
 - Existing members keep lifetime, history, and consumed hits.
 
 Arcane Detonation is eligible only on normal group completion and executes once at each active member's current position before the group disappears. Technical cleanup never triggers it.
+
+After all normal completion results finish, exact group ownership is cleared and post-group recovery begins from the latest resolved Attack Interval. The completion notification does not create the next group. Technical cleanup clears the group without starting recovery; a later valid combat-session recovery begins from ready scheduler state.
 
 ## 11.1 Arcane Field
 
@@ -355,6 +358,8 @@ It:
 - Detaches state-change observation
 
 Technical cleanup produces no gameplay completion results: no damage, Impact, Elemental attempt, Arcane Detonation, Final Dive, or ordinary completion Effect.
+
+Technical cleanup does not start post-completion cooldown or recovery. A later valid combat-session recovery establishes fresh scheduler state from the preserved placed-Tower identity and current resolved values.
 
 Cleanup and unregister operations are idempotent.
 

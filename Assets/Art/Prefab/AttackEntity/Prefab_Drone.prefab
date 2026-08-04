@@ -78,13 +78,13 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DroneBehaviour
   projectilePrefab: {fileID: 8114050377353550322, guid: 82dd8297aa6fd49a3a5da7bb548e6ef3, type: 3}
-  batteryDuration: 10
+  batteryDuration: 20
   orbitRadius: 1.5
   flightSpeed: 3
   flightHeight: 1
   burstCount: 4
-  burstInterval: 0.2
-  burstCooldown: 2
+  burstInterval: 0.4
+  burstCooldown: 1.9
   fireAnchor: {fileID: 2326441832793177826}
   propellerTransform: {fileID: 1827786373825279271}
   propellerSpinAxis: {x: 0, y: 0, z: 1}

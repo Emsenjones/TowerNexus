@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Golem
   moveSpeed: 0.25
-  maxHealth: 300
+  maxHealth: 5
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2
@@ -73,13 +73,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 6188540993782782868}
+  hitFlashRenderers:
+  - {fileID: 6188540993778509140}
   getHitTriggerName: GetHit
   enableHitFlash: 1
   hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
   hitFlashDuration: 0.08
-  animator: {fileID: 6188540993782782868}
-  hitFlashRenderers:
-  - {fileID: 6188540993778509140}
 --- !u!114 &4631483941930043226
 MonoBehaviour:
   m_ObjectHideFlags: 0

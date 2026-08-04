@@ -19,7 +19,6 @@ public class TowerUpgradeStatDelta
             case TowerUpgradeBasicStatType.DamageBonus:
                 return true;
             case TowerUpgradeBasicStatType.MagicOrbRotationSpeed:
-            case TowerUpgradeBasicStatType.MagicOrbMaxHitCount:
                 return towerFamily == TowerFamily.Magic;
             case TowerUpgradeBasicStatType.DroneBatteryDuration:
             case TowerUpgradeBasicStatType.DroneBurstCooldown:
@@ -31,8 +30,7 @@ public class TowerUpgradeStatDelta
 
     public bool RequiresWholeNumberAdditiveValue()
     {
-        return statType == TowerUpgradeBasicStatType.MagicOrbMaxHitCount ||
-               statType == TowerUpgradeBasicStatType.DamageBonus;
+        return statType == TowerUpgradeBasicStatType.DamageBonus;
     }
 
     public bool HasWholeNumberAdditiveValue()

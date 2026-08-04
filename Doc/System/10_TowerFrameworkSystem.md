@@ -198,7 +198,7 @@ Common authored data:
 | Data | Contract |
 |---|---|
 | Attack Range | Base acquisition and release range before level and Upgrade changes |
-| Attack Interval | Base time between successful releases before changes |
+| Attack Interval | Base recovery duration before the archetype may schedule its next attack; the approved start boundary is archetype-specific |
 | Target Selection | Selection category used by archetypes that select one Monster |
 | Release Presentation | Optional presentation played at the approved release boundary |
 
@@ -263,11 +263,14 @@ This section defines identity and gameplay direction. Runtime execution belongs 
 ## 10.3 Magic
 
 - Owns at most one active synchronized Magic Orb group
-- A new group requires cooldown readiness and completion of the previous group
+- Releasing a group does not start recovery while that group remains active
+- Normal group completion starts the post-group recovery interval
+- A new group requires recovery readiness and no active group
 - Members orbit one release-time center
 - Each member owns independent remaining hits and contact history
 - The group owns shared phase, lifetime, and completion
 - Exhaustion of any member or shared lifetime completes the whole group
+- Technical cleanup removes the group without starting post-group recovery
 
 ## 10.4 Drone
 

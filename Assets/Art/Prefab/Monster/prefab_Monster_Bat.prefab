@@ -81,7 +81,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Bat
   moveSpeed: 0.25
-  maxHealth: 300
+  maxHealth: 5
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2
@@ -104,13 +104,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  animator: {fileID: 7595351528232211962}
+  hitFlashRenderers:
+  - {fileID: 7595351528236493626}
   getHitTriggerName: GetHit
   enableHitFlash: 1
   hitFlashColor: {r: 1, g: 0, b: 0, a: 1}
   hitFlashDuration: 0.08
-  animator: {fileID: 7595351528232211962}
-  hitFlashRenderers:
-  - {fileID: 7595351528236493626}
 --- !u!114 &7790506509370628079
 MonoBehaviour:
   m_ObjectHideFlags: 0

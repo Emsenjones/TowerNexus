@@ -93,8 +93,8 @@
 12. *Pop up initial DraftWindow on game start;
 13. *Camera movement;
 14. *Simplify monster wave config;
-15. 6 Stage Map Prefabs;
-16. Value judgement;
+15. *6 Stage Map Prefabs;
+16. Value judgement + Replace LingerOribt;
 17. Draft Specific Tower on initial Draft window pop up;
 16. Tower state UI;
 17. Level display window;

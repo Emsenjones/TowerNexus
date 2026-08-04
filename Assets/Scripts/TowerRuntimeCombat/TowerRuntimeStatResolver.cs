@@ -15,7 +15,6 @@ public static class TowerRuntimeStatResolver
         float attackIntervalDelta = 0f;
         float damageBonus = 0f;
         float magicOrbRotationSpeedDelta = 0f;
-        float magicOrbMaxHitCountDelta = 0f;
         float droneBatteryDurationDelta = 0f;
         float droneBurstCooldownDelta = 0f;
 
@@ -33,7 +32,6 @@ public static class TowerRuntimeStatResolver
                     ref attackIntervalDelta,
                     ref damageBonus,
                     ref magicOrbRotationSpeedDelta,
-                    ref magicOrbMaxHitCountDelta,
                     ref droneBatteryDurationDelta,
                     ref droneBurstCooldownDelta
                 );
@@ -47,7 +45,7 @@ public static class TowerRuntimeStatResolver
             Mathf.Max(MinimumAttackInterval, baseStats.AttackInterval + attackIntervalDelta),
             Mathf.Max(0, basicDamage + Mathf.RoundToInt(damageBonus)),
             Mathf.Max(0f, baseStats.MagicOrbRotationSpeed + magicOrbRotationSpeedDelta),
-            Mathf.Max(1, baseStats.MagicOrbMaxHitCount + Mathf.RoundToInt(magicOrbMaxHitCountDelta)),
+            Mathf.Max(1, baseStats.MagicOrbMaxHitCount),
             Mathf.Max(MinimumDroneBatteryDuration, baseStats.DroneBatteryDuration + droneBatteryDurationDelta),
             Mathf.Max(MinimumDroneBurstCooldown, baseStats.DroneBurstCooldown + droneBurstCooldownDelta)
         );
@@ -59,7 +57,6 @@ public static class TowerRuntimeStatResolver
         ref float attackIntervalDelta,
         ref float damageBonus,
         ref float magicOrbRotationSpeedDelta,
-        ref float magicOrbMaxHitCountDelta,
         ref float droneBatteryDurationDelta,
         ref float droneBurstCooldownDelta)
     {
@@ -97,9 +94,6 @@ public static class TowerRuntimeStatResolver
                     break;
                 case TowerUpgradeBasicStatType.MagicOrbRotationSpeed:
                     magicOrbRotationSpeedDelta += statDelta.AdditiveValue;
-                    break;
-                case TowerUpgradeBasicStatType.MagicOrbMaxHitCount:
-                    magicOrbMaxHitCountDelta += statDelta.AdditiveValue;
                     break;
                 case TowerUpgradeBasicStatType.DroneBatteryDuration:
                     droneBatteryDurationDelta += statDelta.AdditiveValue;
