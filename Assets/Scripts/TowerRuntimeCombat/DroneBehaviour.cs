@@ -57,7 +57,7 @@ public class DroneBehaviour : MonoBehaviour
 {
     [TitleGroup("Projectile")]
     [Required]
-    [SerializeField] private ProjectileConfig projectileConfig;
+    [SerializeField] private ProjectileBehaviour projectilePrefab;
 
     [TitleGroup("Lifetime")]
     [MinValue(0.01f)]
@@ -140,8 +140,8 @@ public class DroneBehaviour : MonoBehaviour
 
     public bool IsAuthoredConfigurationValid()
     {
-        return projectileConfig != null &&
-               projectileConfig.IsValid() &&
+        return projectilePrefab != null &&
+               projectilePrefab.IsValid() &&
                batteryDuration > 0f &&
                orbitRadius > 0f &&
                flightSpeed > 0f &&
@@ -212,9 +212,9 @@ public class DroneBehaviour : MonoBehaviour
             return false;
         }
 
-        if (projectileConfig == null || projectileConfig.ProjectilePrefab == null)
+        if (projectilePrefab == null || !projectilePrefab.IsValid())
         {
-            Debug.LogWarning("Drone cannot initialize: drone projectile config or prefab is missing.", this);
+            Debug.LogWarning("Drone cannot initialize: projectile prefab or behaviour authoring is missing.", this);
             return false;
         }
 
@@ -679,17 +679,15 @@ public class DroneBehaviour : MonoBehaviour
 
         Transform spawnAnchor = GetFireAnchor();
         Vector3 targetPosition = GetMonsterHitPosition(target);
-        GameObject projectileObject = Instantiate(projectileConfig.ProjectilePrefab, spawnAnchor.position, Quaternion.identity);
-
-        if (!projectileObject.TryGetComponent(out ProjectileBehaviour projectileBehaviour))
-        {
-            projectileBehaviour = projectileObject.AddComponent<ProjectileBehaviour>();
-        }
+        ProjectileBehaviour projectileBehaviour = Instantiate(
+            projectilePrefab,
+            spawnAnchor.position,
+            Quaternion.identity);
 
         projectileBehaviour.Initialize(
             sourceTower,
             monsterManager,
-            projectileConfig,
+            projectilePrefab,
             target,
             targetPosition,
             attackDamage,

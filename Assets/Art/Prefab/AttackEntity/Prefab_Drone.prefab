@@ -77,7 +77,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 807812766b7c4465a1aa70908d8ef1a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DroneBehaviour
-  projectileConfig: {fileID: 11400000, guid: 6a58c9e1d15b348c2b43499f6a6e273b, type: 2}
+  projectilePrefab: {fileID: 8114050377353550322, guid: 82dd8297aa6fd49a3a5da7bb548e6ef3, type: 3}
   batteryDuration: 10
   orbitRadius: 1.5
   flightSpeed: 3

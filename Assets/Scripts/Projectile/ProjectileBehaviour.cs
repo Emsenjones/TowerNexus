@@ -1,12 +1,28 @@
 using System;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class ProjectileBehaviour : MonoBehaviour
 {
+    [TitleGroup("Movement")]
+    [MinValue(0f)]
+    [SerializeField] private float projectileSpeed = 1f;
+    [TitleGroup("Movement")]
+    [MinValue(0f)]
+    [SerializeField] private float hitDistanceThreshold = 0.1f;
+    [TitleGroup("Movement")]
+    [MinValue(0f)]
+    [SerializeField] private float maxLifetime = 10f;
+
+    [TitleGroup("Impact Gameplay")]
+    [SerializeField] private EffectDefinition impactEffectDefinition;
+    [TitleGroup("Impact VFX")]
+    [SerializeField] private GameObject impactVfxPrefab;
+
     private TowerInstance sourceTower;
     private MonsterManager monsterManager;
-    private ProjectileConfig projectileConfig;
+    private ProjectileBehaviour projectileTemplate;
     private ProjectileFlightType flightType;
     private MonsterBehaviour targetMonster;
     private Vector3 targetPosition;
@@ -46,7 +62,11 @@ public class ProjectileBehaviour : MonoBehaviour
     public event Action<ProjectileBehaviour> OnEnded;
 
     public TowerInstance SourceTower => sourceTower;
-    public ProjectileConfig ProjectileConfig => projectileConfig;
+    public float ProjectileSpeed => projectileSpeed;
+    public float HitDistanceThreshold => hitDistanceThreshold;
+    public float MaxLifetime => maxLifetime;
+    public EffectDefinition ImpactEffectDefinition => impactEffectDefinition;
+    public GameObject ImpactVfxPrefab => impactVfxPrefab;
     public ProjectileFlightType FlightType => flightType;
     public MonsterBehaviour TargetMonster => targetMonster;
     public Vector3 TargetPosition => targetPosition;
@@ -56,10 +76,33 @@ public class ProjectileBehaviour : MonoBehaviour
     public ArcherProjectileReleaseIdentity ArcherReleaseIdentity => archerReleaseIdentity;
     public Vector3 TrackingRangeOrigin => trackingRangeOrigin;
 
+    public bool IsValid()
+    {
+        if (projectileSpeed <= 0f)
+        {
+            Debug.LogWarning("Projectile behaviour is invalid: projectile speed must be greater than zero.", this);
+            return false;
+        }
+
+        if (hitDistanceThreshold <= 0f)
+        {
+            Debug.LogWarning("Projectile behaviour is invalid: hit distance threshold must be greater than zero.", this);
+            return false;
+        }
+
+        if (maxLifetime <= 0f)
+        {
+            Debug.LogWarning("Projectile behaviour is invalid: max lifetime must be greater than zero.", this);
+            return false;
+        }
+
+        return true;
+    }
+
     public void Initialize(
         TowerInstance sourceTower,
         MonsterManager monsterManager,
-        ProjectileConfig projectileConfig,
+        ProjectileBehaviour projectileTemplate,
         MonsterBehaviour targetMonster,
         Vector3 targetPosition,
         int attackDamage,
@@ -72,7 +115,7 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
-        this.projectileConfig = projectileConfig;
+        this.projectileTemplate = projectileTemplate;
         this.flightType = flightType;
         this.targetMonster = targetMonster;
         this.targetPosition = targetPosition;
@@ -122,15 +165,21 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool CanInitialize()
     {
-        if (projectileConfig == null)
+        if (projectileTemplate == null)
         {
-            Debug.LogWarning("Projectile behaviour cannot initialize: projectile config is null.", this);
+            Debug.LogWarning("Projectile behaviour cannot initialize: projectile template is null.", this);
             return false;
         }
 
-        if (projectileConfig.ProjectileSpeed <= 0f)
+        if (projectileSpeed <= 0f)
         {
-            Debug.LogWarning("Projectile behaviour cannot initialize: projectile speed must be greater than zero.", projectileConfig);
+            Debug.LogWarning("Projectile behaviour cannot initialize: projectile speed must be greater than zero.", this);
+            return false;
+        }
+
+        if (maxLifetime <= 0f)
+        {
+            Debug.LogWarning("Projectile behaviour cannot initialize: max lifetime must be greater than zero.", this);
             return false;
         }
 
@@ -173,9 +222,9 @@ public class ProjectileBehaviour : MonoBehaviour
             return false;
         }
 
-        if (projectileConfig.HitDistanceThreshold <= 0f)
+        if (hitDistanceThreshold <= 0f)
         {
-            Debug.LogWarning("Projectile behaviour cannot initialize Arc flight: hit distance threshold must be greater than zero.", projectileConfig);
+            Debug.LogWarning("Projectile behaviour cannot initialize Arc flight: hit distance threshold must be greater than zero.", this);
             return false;
         }
 
@@ -190,9 +239,9 @@ public class ProjectileBehaviour : MonoBehaviour
             return false;
         }
 
-        if (projectileConfig.HitDistanceThreshold <= 0f)
+        if (hitDistanceThreshold <= 0f)
         {
-            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: hit distance threshold must be greater than zero.", projectileConfig);
+            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: hit distance threshold must be greater than zero.", this);
             return false;
         }
 
@@ -253,7 +302,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
         elapsedLifetime += Time.deltaTime;
 
-        if (elapsedLifetime >= projectileConfig.MaxLifetime)
+        if (elapsedLifetime >= maxLifetime)
         {
             DestroyProjectile();
             return;
@@ -443,7 +492,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void UpdateDirectionFlight()
     {
-        transform.position += launchDirection * projectileConfig.ProjectileSpeed * Time.deltaTime;
+        transform.position += launchDirection * projectileSpeed * Time.deltaTime;
 
         FaceMoveDirection(launchDirection);
 
@@ -502,7 +551,7 @@ public class ProjectileBehaviour : MonoBehaviour
         Vector3 toTarget = lockedTargetPosition - transform.position;
         float distanceToTarget = toTarget.magnitude;
 
-        if (distanceToTarget <= projectileConfig.HitDistanceThreshold)
+        if (distanceToTarget <= hitDistanceThreshold)
         {
             ImpactTrackingTarget();
             return;
@@ -510,7 +559,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
         launchDirection = toTarget / distanceToTarget;
         float travelDistance = Mathf.Min(
-            projectileConfig.ProjectileSpeed * Time.deltaTime,
+            projectileSpeed * Time.deltaTime,
             distanceToTarget);
         transform.position += launchDirection * travelDistance;
         FaceMoveDirection(launchDirection);
@@ -524,7 +573,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private float CalculateArcTravelTime()
     {
         float distance = Vector3.Distance(startPosition, targetPosition);
-        return Mathf.Max(distance / projectileConfig.ProjectileSpeed, 0.01f);
+        return Mathf.Max(distance / projectileSpeed, 0.01f);
     }
 
     private void FaceMoveDirection(Vector3 moveDirection)
@@ -902,25 +951,20 @@ public class ProjectileBehaviour : MonoBehaviour
         Vector3 impactPosition,
         Vector3 bounceTargetPosition)
     {
-        if (projectileConfig == null || projectileConfig.ProjectilePrefab == null)
+        if (projectileTemplate == null)
         {
             return false;
         }
 
-        GameObject childObject = Instantiate(
-            projectileConfig.ProjectilePrefab,
+        ProjectileBehaviour childProjectile = Instantiate(
+            projectileTemplate,
             impactPosition,
             Quaternion.identity);
-
-        if (!childObject.TryGetComponent(out ProjectileBehaviour childProjectile))
-        {
-            childProjectile = childObject.AddComponent<ProjectileBehaviour>();
-        }
 
         childProjectile.Initialize(
             sourceTower,
             monsterManager,
-            projectileConfig,
+            projectileTemplate,
             targetMonster: null,
             targetPosition: bounceTargetPosition,
             attackDamage: attackDamage,
@@ -957,10 +1001,9 @@ public class ProjectileBehaviour : MonoBehaviour
         bool isArcPositionImpact = flightType == ProjectileFlightType.Arc;
         EffectDefinition impactEffectDefinition = isArcPositionImpact
             ? null
-            : projectileConfig.ImpactEffectDefinition;
+            : this.impactEffectDefinition;
         ProjectileImpactContext impactContext = new ProjectileImpactContext(
             sourceTower,
-            projectileConfig,
             hitMonster,
             impactPosition,
             attackDamage,
@@ -997,12 +1040,12 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void PlayImpactVfx(Vector3 impactPosition)
     {
-        if (projectileConfig == null || projectileConfig.ImpactVfxPrefab == null)
+        if (impactVfxPrefab == null)
         {
             return;
         }
 
-        Instantiate(projectileConfig.ImpactVfxPrefab, impactPosition, Quaternion.identity);
+        Instantiate(impactVfxPrefab, impactPosition, Quaternion.identity);
     }
 
     private Vector3 CalculateLaunchDirection(Vector3 targetPosition)
@@ -1023,13 +1066,13 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         hitMonster = null;
 
-        if (monsterManager == null || projectileConfig == null || projectileConfig.HitDistanceThreshold <= 0f)
+        if (monsterManager == null || hitDistanceThreshold <= 0f)
         {
             return false;
         }
 
         IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
-        float hitDistanceThresholdSqr = projectileConfig.HitDistanceThreshold * projectileConfig.HitDistanceThreshold;
+        float hitDistanceThresholdSqr = hitDistanceThreshold * hitDistanceThreshold;
         float nearestDistanceSqr = float.MaxValue;
 
         for (int i = 0; i < aliveMonsters.Count; i++)
@@ -1066,7 +1109,7 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
-        float hitDistanceThresholdSqr = projectileConfig.HitDistanceThreshold * projectileConfig.HitDistanceThreshold;
+        float hitDistanceThresholdSqr = hitDistanceThreshold * hitDistanceThreshold;
         float nearestDistanceSqr = float.MaxValue;
 
         for (int i = 0; i < aliveMonsters.Count; i++)
@@ -1100,13 +1143,13 @@ public class ProjectileBehaviour : MonoBehaviour
             return false;
         }
 
-        float hitDistanceThresholdSqr = projectileConfig.HitDistanceThreshold * projectileConfig.HitDistanceThreshold;
+        float hitDistanceThresholdSqr = hitDistanceThreshold * hitDistanceThreshold;
         return GetHitDistanceSqr(monster) <= hitDistanceThresholdSqr;
     }
 
     private bool IsDirectHitEnabled()
     {
-        return projectileConfig != null && projectileConfig.HitDistanceThreshold > 0f;
+        return hitDistanceThreshold > 0f;
     }
 
     private float GetHitDistanceSqr(MonsterBehaviour monster)

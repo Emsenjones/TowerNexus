@@ -99,6 +99,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6512539937036389786}
+  - component: {fileID: 8114050377353550322}
   m_Layer: 0
   m_Name: Prefab_Projectile_Drone
   m_TagString: Untagged
@@ -122,6 +123,23 @@ Transform:
   - {fileID: 112840119336956300}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8114050377353550322
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5338880432390099196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ea27477528f2d496abc117eb970cd55d, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ProjectileBehaviour
+  projectileSpeed: 6
+  hitDistanceThreshold: 0.2
+  maxLifetime: 4
+  impactEffectDefinition: {fileID: 0}
+  impactVfxPrefab: {fileID: 0}
 --- !u!1 &5403914352710231199
 GameObject:
   m_ObjectHideFlags: 0

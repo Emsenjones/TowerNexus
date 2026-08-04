@@ -77,6 +77,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea27477528f2d496abc117eb970cd55d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ProjectileBehaviour
+  projectileSpeed: 3
+  hitDistanceThreshold: 0.3
+  maxLifetime: 1
+  impactEffectDefinition: {fileID: 0}
+  impactVfxPrefab: {fileID: 0}
 --- !u!1001 &6434560179322706892
 PrefabInstance:
   m_ObjectHideFlags: 0

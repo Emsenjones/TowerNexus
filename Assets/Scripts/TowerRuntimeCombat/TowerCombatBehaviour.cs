@@ -335,7 +335,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     }
 
     protected bool TryReleaseProjectile(
-        ProjectileConfig projectileConfig,
+        ProjectileBehaviour projectilePrefab,
         Transform origin,
         Vector3 targetPosition,
         MonsterBehaviour target,
@@ -346,25 +346,20 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         ArcherProjectileReleaseIdentity archerReleaseIdentity = default,
         bool huntingOpportunityConsumed = false)
     {
-        if (projectileConfig == null || projectileConfig.ProjectilePrefab == null || origin == null)
+        if (projectilePrefab == null || origin == null)
         {
             return false;
         }
 
-        GameObject projectileObject = Instantiate(
-            projectileConfig.ProjectilePrefab,
+        ProjectileBehaviour projectileBehaviour = Instantiate(
+            projectilePrefab,
             origin.position,
             Quaternion.identity);
-
-        if (!projectileObject.TryGetComponent(out ProjectileBehaviour projectileBehaviour))
-        {
-            projectileBehaviour = projectileObject.AddComponent<ProjectileBehaviour>();
-        }
 
         projectileBehaviour.Initialize(
             towerInstance,
             monsterManager,
-            projectileConfig,
+            projectilePrefab,
             target,
             targetPosition,
             attackDamage,

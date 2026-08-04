@@ -206,14 +206,16 @@ Archetype-specific authored data:
 
 | Archetype | Additional Base Data |
 |---|---|
-| Direction Projectile | ProjectileConfig |
-| Arc Projectile | ProjectileConfig and initial arc height |
+| Direction Projectile | Projectile entity template |
+| Arc Projectile | Projectile entity template and initial arc height |
 | Magic Orb | Magic Orb entity template |
 | Drone | Drone entity template and base maximum active Drone count |
 
+Projectile entity authoring owns base movement speed, hit distance threshold, safety lifetime, optional impact Effect, optional impact presentation, and entity presentation.
+
 Magic Orb entity authoring owns base orbit, contact distance, per-member hit count, lifetime, same-target contact cooldown, and entity presentation.
 
-Drone entity authoring owns its projectile configuration, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
+Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
 
 At release, Tower Runtime Combat combines base authoring, Tower level data, and applied Tower Upgrade state into only the runtime data relevant to the released entity. Runtime history is never stored in authored data.
 

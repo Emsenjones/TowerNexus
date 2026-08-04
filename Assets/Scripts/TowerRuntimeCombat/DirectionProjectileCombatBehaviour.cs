@@ -31,7 +31,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
 
     [TitleGroup("Projectile")]
     [Required]
-    [SerializeField] private ProjectileConfig projectileConfig;
+    [SerializeField] private ProjectileBehaviour projectilePrefab;
 
     private readonly MonsterBehaviour[] pendingCandidateTargets =
         new MonsterBehaviour[ArcherSlotCount];
@@ -49,7 +49,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     private bool pendingIsScatter;
 
     public override TowerFamily SupportedTowerFamily => TowerFamily.Archer;
-    public ProjectileConfig ProjectileConfig => projectileConfig;
+    public ProjectileBehaviour ProjectilePrefab => projectilePrefab;
 
     protected override TowerCombatBaseStats CreateBaseStats()
     {
@@ -58,13 +58,13 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
 
     protected override bool IsSubtypeConfigurationValid()
     {
-        if (projectileConfig != null && projectileConfig.IsValid())
+        if (projectilePrefab != null && projectilePrefab.IsValid())
         {
             return true;
         }
 
         Debug.LogWarning(
-            "Direction projectile combat is invalid: projectile config or prefab data is missing.",
+            "Direction projectile combat is invalid: projectile prefab or behaviour authoring is missing.",
             this);
         return false;
     }
@@ -202,7 +202,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     private void ReleasePendingAttack()
     {
         if (!IsWaitingForAnimationRelease ||
-            projectileConfig == null ||
+            projectilePrefab == null ||
             pendingReleaseGroupId <= 0 ||
             pendingSlotCount <= 0)
         {
@@ -275,7 +275,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             IsCapturedCandidateValid(candidate, origin.position, resolvedStats.AttackRange))
         {
             return TryReleaseProjectile(
-                projectileConfig,
+                projectilePrefab,
                 origin,
                 GetMonsterHitPosition(candidate),
                 candidate,
@@ -295,7 +295,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         return TryReleaseProjectile(
-            projectileConfig,
+            projectilePrefab,
             origin,
             origin.position + fallbackDirection.normalized,
             pendingProjectileTarget,

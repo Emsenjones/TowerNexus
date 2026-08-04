@@ -105,7 +105,6 @@ Current domain definitions include:
 - MonsterWaveConfig
 - TowerDefinition and TowerLevelConfig
 - TowerUpgradeDefinition
-- ProjectileConfig
 - EffectDefinition
 - BuffDefinition
 

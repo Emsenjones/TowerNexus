@@ -6,7 +6,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 {
     [TitleGroup("Projectile")]
     [Required]
-    [SerializeField] private ProjectileConfig projectileConfig;
+    [SerializeField] private ProjectileBehaviour projectilePrefab;
     [TitleGroup("Projectile")]
     [MinValue(0f)]
     [SerializeField] private float arcHeight = 1f;
@@ -16,7 +16,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
     private bool hasLoggedInvalidExplosiveShellEffect;
 
     public override TowerFamily SupportedTowerFamily => TowerFamily.Cannon;
-    public ProjectileConfig ProjectileConfig => projectileConfig;
+    public ProjectileBehaviour ProjectilePrefab => projectilePrefab;
     public float ArcHeight => arcHeight;
 
     protected override TowerCombatBaseStats CreateBaseStats()
@@ -26,19 +26,19 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 
     protected override bool IsSubtypeConfigurationValid()
     {
-        if (projectileConfig == null || !projectileConfig.IsValid())
+        if (projectilePrefab == null || !projectilePrefab.IsValid())
         {
             Debug.LogWarning(
-                "Arc projectile combat is invalid: projectile config or prefab data is missing.",
+                "Arc projectile combat is invalid: projectile prefab or behaviour authoring is missing.",
                 this);
             return false;
         }
 
-        if (projectileConfig.HitDistanceThreshold <= 0f)
+        if (projectilePrefab.HitDistanceThreshold <= 0f)
         {
             Debug.LogWarning(
                 "Arc projectile combat is invalid: hit distance threshold must be greater than zero.",
-                projectileConfig);
+                projectilePrefab);
             return false;
         }
 
@@ -63,12 +63,12 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        if (!IsCooldownReady || projectileConfig == null)
+        if (!IsCooldownReady || projectilePrefab == null)
         {
             return;
         }
 
-        if (projectileConfig.HitDistanceThreshold <= 0f)
+        if (projectilePrefab.HitDistanceThreshold <= 0f)
         {
             return;
         }
@@ -146,7 +146,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
     private void ReleasePendingAttack()
     {
         if (!IsWaitingForAnimationRelease ||
-            projectileConfig == null ||
+            projectilePrefab == null ||
             pendingTargetPositions.Count == 0)
         {
             return;
@@ -154,7 +154,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 
         Transform origin = GetAttackOrigin();
 
-        if (origin == null || projectileConfig.HitDistanceThreshold <= 0f)
+        if (origin == null || projectilePrefab.HitDistanceThreshold <= 0f)
         {
             ResetPendingAttack();
             return;
@@ -167,7 +167,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         for (int i = 0; i < pendingTargetPositions.Count; i++)
         {
             if (TryReleaseProjectile(
-                    projectileConfig,
+                    projectilePrefab,
                     origin,
                     pendingTargetPositions[i],
                     target: null,

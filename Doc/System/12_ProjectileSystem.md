@@ -46,20 +46,21 @@ Completion is idempotent.
 
 ---
 
-# 3. ProjectileConfig
+# 3. Projectile Entity Authoring
 
-ProjectileConfig stores reusable projectile-specific authoring:
+Each Projectile entity template carries its reusable projectile-specific authoring on its Projectile Behaviour:
 
 | Data | Contract |
 |---|---|
-| Projectile Template | Reusable projectile object and presentation |
 | Movement Speed | Base movement rate |
 | Hit Distance Threshold | Monster-contact threshold or Arc-arrival query radius |
 | Maximum Lifetime | Safety lifetime |
 | Optional Impact Effect | Reusable one-shot gameplay Effect executed at the approved impact boundary |
 | Optional Impact Presentation | Presentation requested on impact |
 
-ProjectileConfig does not contain Tower damage, Attack Range, Attack Interval, Tower archetype, Tower Upgrade state, initial Arc height, or flight identity.
+Every released Projectile is created from a template that already contains a valid Projectile Behaviour and complete base authoring. Runtime code does not add a missing Projectile Behaviour or synthesize default authoring.
+
+Projectile entity authoring does not contain Tower damage, Attack Range, Attack Interval, Tower archetype, Tower Upgrade state, initial Arc height, or flight identity.
 
 Impact presentation and gameplay Effect references are independent. A projectile may present an impact without executing a gameplay Effect.
 
