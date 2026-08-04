@@ -407,7 +407,7 @@ public class DroneBehaviour : MonoBehaviour
             }
         }
 
-        BeginOrbitingTarget(currentTarget, true);
+        BeginOrbitingTarget(currentTarget);
     }
 
     private void UpdateOrbiting()
@@ -430,7 +430,7 @@ public class DroneBehaviour : MonoBehaviour
                 return;
             }
 
-            BeginOrbitingTarget(currentTarget, true);
+            BeginOrbitingTarget(currentTarget);
         }
 
         if (!hasReachedOrbitPath)
@@ -638,17 +638,16 @@ public class DroneBehaviour : MonoBehaviour
 
     private void StartBurst()
     {
-        burstShotsRemaining = Mathf.Max(1, burstCount);
-        FireNextBurstShot();
-    }
-
-    private void FireNextBurstShot()
-    {
         if (burstShotsRemaining <= 0)
         {
             burstShotsRemaining = Mathf.Max(1, burstCount);
         }
 
+        FireNextBurstShot();
+    }
+
+    private void FireNextBurstShot()
+    {
         FireProjectile(currentTarget);
         burstShotsRemaining--;
 
@@ -871,17 +870,12 @@ public class DroneBehaviour : MonoBehaviour
         return (GetMonsterHitPosition(monster) - releasePosition).sqrMagnitude <= attackRangeSqr;
     }
 
-    private void BeginOrbitingTarget(MonsterBehaviour target, bool resetBurstState)
+    private void BeginOrbitingTarget(MonsterBehaviour target)
     {
         currentTarget = target;
         hasReachedOrbitPath = false;
         InitializeOrbitAngle(target);
         orbitDirection = ChooseOrbitDirection();
-
-        if (resetBurstState)
-        {
-            ResetBurstState();
-        }
 
         SetState(DroneRuntimeState.Orbiting);
     }

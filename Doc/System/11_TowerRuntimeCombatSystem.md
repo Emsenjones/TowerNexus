@@ -305,6 +305,8 @@ Launching does not consume battery. Battery begins during active combat flight.
 
 If a normal Drone target becomes invalid, it may select another valid Monster inside the current refreshed range. If none exists, it ends through aerial despawn without ordinary impact gameplay.
 
+Normal retargeting preserves the current Burst phase, remaining shot count, and timer. It never reloads a Burst or bypasses Inter-Burst Cooldown.
+
 Burst cadence has three semantic phases:
 
 | Phase | Contract |
