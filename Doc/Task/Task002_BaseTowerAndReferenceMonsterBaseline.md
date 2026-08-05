@@ -1,14 +1,16 @@
 # Task002 - Base Tower And Reference Monster Baseline
 
-Status: In progress; Magic, Cannon, and Archer Level 1 candidates are frozen, while Drone calibration and the final cross-Tower stress pass remain pending
+Status: Completed; `Base Combat v0.1` frozen on 2026-08-06
 
 Depends on: Completed Task001 Stage1 greybox Map
 
 ## 1. Goal
 
-Establish `Base Combat v0.1` using four Level 1 Towers and one Reference Monster on a fixed Stage1 Map setup.
+Establish and preserve `Base Combat v0.1` for the four Level 1 Towers and one Reference Monster.
 
-The result must make the four attack strategies visibly different while keeping their same-cost combat value within one comparable baseline range.
+The frozen record provides a recovery point for later development: future Level, Upgrade, Stage, or runtime work can compare against the accepted Level 1 values instead of changing them unintentionally or losing the previous baseline.
+
+The four attack strategies must remain visibly different while their same-cost Straight-route combat value stays within one broad comparable range.
 
 ## 2. Source Documents
 
@@ -20,110 +22,148 @@ The result must make the four attack strategies visibly different while keeping 
 
 ## 3. In Scope
 
-- Fixed Stage1 test Map, route, Tower positions, and Monster setup
 - Archer, Cannon, Magic, and Drone Level 1 attack identity
-- Attack Range
-- Attack Cycle Duration or release cadence
-- Projectile or Attack Entity speed and lifetime
-- Targeting behavior
-- Magic contact behavior, active-group duration, and release-to-release Cycle cadence
-- Lingering Orbit maximum-hit capacity as the explicit Magic calibration exception
-- Drone launch, battery, pursuit, and burst cadence
+- Base damage, Attack Range, Attack Cycle Duration, and targeting behavior
+- Projectile or Attack Entity movement, lifetime, contact, and cadence values
 - Reference Monster maximum health and movement speed
-- Base Tower damage and measured TTK
-- A documented freeze point for `Base Combat v0.1`
+- Fixed-condition Straight-route comparison
+- L-shaped and selective U-shaped route-coverage observations
+- A durable freeze point for `Base Combat v0.1`
 
 ## 4. Out Of Scope
 
 - L2/L3 growth
-- Basic, Behaviour, or Elemental Upgrade balance beyond the explicit Lingering Orbit capacity restoration
+- Basic, Behaviour, or Elemental Upgrade balance
+- Exact first-hit delay or single-Monster TTK timing
+- Permanent recording of each test deployment Grid
 - Effect and Buff balance
 - Monster roster variants
 - Player Progress Requirements
 - Stage Wave tuning
 
-## 5. Calibration Sequence
+Lingering Orbit was restored during Task002 with its current `Magic Orb Max Hit Count +5` authoring value. Its final Upgrade balance belongs to Task003 with the other Basic and Behaviour Upgrades.
 
-1. Fix one Stage1 Map version and one legal test position per Tower.
-2. Fix one Reference Monster and one repeatable spawn path.
-3. Adjust how each Tower attacks before adjusting final damage.
-4. Use the same Reference Monster to compare first-hit delay and TTK.
-5. Adjust Tower damage and Reference Monster health together.
-6. Run a normal-route comparison to include range, pursuit, contact, and downtime.
-7. Record accepted values and freeze the baseline.
-
-### Fixed Reference Run
+## 5. Fixed Reference Run
 
 - One Wave with `40` Reference Monsters
 - Spawn Interval `2.5s`
-- Reference Monster Max Health `5` and Move Speed `0.25`
-- One Level 1 Tower with no Upgrades
-- Fixed Straight, L-shaped, and U-shaped test routes with one recorded legal placement per Tower
+- Reference Monster Max Health `5`
+- Reference Monster Move Speed `0.25`
+- Player Max Health `40`, allowing final health to report the number of kills directly
+- One Level 1 Tower at a time
+- No Upgrades
+- Straight route as the authoritative same-cost baseline
+- L-shaped route as the primary route-coverage comparison
+- U-shaped route only when the L-shaped result has not already reached the `40 / 40` measurement ceiling or when a family-specific mechanic still needs coverage
 
-Wave count, Monsters per Wave, Wave Delay, route shape, and placement are part of the test condition. Results from different Wave structures or placements are not interchangeable.
+The user held route and placement consistent within each comparison. Exact deployment Grid coordinates are intentionally not part of the permanent record. Results from materially different route shapes or placements remain separate observations rather than interchangeable samples.
 
-### Current Level 1 Calibration Checkpoint
+## 6. Frozen Base Combat v0.1
 
-- Magic uses Attack Cycle Duration `20s`, Orb Max Lifetime `18s`, and base Orb Max Hit Count `14`. Straight results were `30 / 33 / 32`, L-shaped result was `37`, and U-shaped result was `39` kills from 40.
-- The Attack Cycle begins only after a complete Orb group is successfully activated. It runs concurrently with the group, so early Max Hit Count exhaustion creates a longer inactive remainder without advancing the next release boundary.
-- Per-target contact cooldown remains unchanged. No shared or global contact cooldown and no route-shape detection enters this refactor.
-- Lingering Orbit is restored as a Basic maximum-hit capacity Upgrade. Its first Play Mode candidate is `+5`; the final delta remains subject to the fixed-condition Upgrade run.
-- Cannon uses Attack Cycle Duration `3.5s`, Damage `5`, and Highest Health targeting. Two Straight runs each released and hit `31` Shells for `31` kills. Two L-shaped runs each killed `29`; each gained additional release opportunities but missed six captured positions after Monsters moved away.
-- Archer uses Attack Cycle Duration `0.85s`, Damage `2`, and Lowest Health targeting. Straight results were `29 / 28`, and the L-shaped result was `36` kills from 40. Baseline Direction Projectiles had no observed misses in the recorded runs.
-- Drone remains under calibration. Its current diagnostic results are `17` Straight kills and `25` L-shaped kills; these values are not accepted as the frozen baseline.
+### 6.1 Shared Tower Values
 
-## 6. Required Measurements
+| Tower | Level 1 Damage | Attack Range | Attack Cycle Duration | Target Selection |
+|---|---:|---:|---:|---|
+| Archer | `2` | `2` | `0.85s` | Lowest Health |
+| Cannon | `5` | `3` | `3.5s` | Highest Health |
+| Magic | `3` | `1.5` | `20s` | Baseline contact behavior does not require a release target |
+| Drone | `1` | `4` | `10s` | Lowest Health |
 
-- First attack or first-hit delay
-- TTK against the Reference Monster
-- Number of releases, contacts, or bursts
-- Effective route coverage
-- Target-loss or entity-limit downtime
-- Magic active-group duration, completion cause, and release-to-release Cycle duration
-- Whether any Tower dominates range, cadence, damage, and flexibility simultaneously
-- Short player-facing description of each Tower's strength and weakness
+### 6.2 Archer Projectile
 
-## 7. Ownership
+| Parameter | Frozen Value |
+|---|---:|
+| Projectile Speed | `3` |
+| Hit Distance Threshold | `0.3` |
+| Max Lifetime | `1s` |
+
+### 6.3 Cannon Projectile
+
+| Parameter | Frozen Value |
+|---|---:|
+| Projectile Speed | `2` |
+| Hit Distance Threshold | `0.4` |
+| Max Lifetime | `10s` |
+| Arc Height | `1` |
+
+### 6.4 Magic Orb
+
+| Parameter | Frozen Value |
+|---|---:|
+| Rotation Speed | `180` |
+| Orbit Radius | `1` |
+| Contact Distance | `0.25` |
+| Same Target Hit Cooldown | `0.5s` |
+| Max Hit Count | `14` |
+| Max Lifetime | `18s` |
+
+The Magic Attack Cycle begins when a complete Orb group is successfully activated and runs concurrently with that group. Early Max Hit Count exhaustion therefore produces a longer inactive remainder before the next fixed release boundary. Per-target contact cooldown remains unchanged; no route-shape detection or shared Global Target Cooldown is used.
+
+### 6.5 Drone And Drone Projectile
+
+| Parameter | Frozen Value |
+|---|---:|
+| Maximum Active Drones | `1` |
+| Battery Duration | `20s` |
+| Orbit Radius | `1.5` |
+| Flight Speed | `3` |
+| Flight Height | `1` |
+| Burst Count | `4` |
+| Burst Interval | `0.4s` |
+| Burst Cooldown | `1.3s` |
+| Projectile Speed | `6` |
+| Projectile Hit Distance Threshold | `0.2` |
+| Projectile Max Lifetime | `4s` |
+
+Ordinary Drone retargeting preserves Burst phase, remaining shots, and timer. Retargeting does not reload a Burst or bypass Inter-Burst Cooldown.
+
+## 7. Accepted Play Mode Results
+
+| Tower | Straight Route | Straight Average | L-shaped Route | U-shaped Route |
+|---|---|---:|---|---|
+| Archer | `29 / 40`, `28 / 40` | `28.5` | `36 / 40` | Not required |
+| Cannon | `31 / 40`, `31 / 40` | `31` | `29 / 40`, `29 / 40` | Not required |
+| Magic | `30 / 40`, `33 / 40`, `32 / 40` | `31.7` | `37 / 40` | `39 / 40` |
+| Drone | `32 / 40`, `32 / 40` | `32` | `40 / 40` | Skipped because L-shaped already reached the measurement ceiling |
+
+The Straight-route averages occupy the accepted `28.5` to `32` range. Route results are identity observations rather than a requirement that every bend improve every Tower.
+
+- Archer fired fast Direction Projectiles with no observed baseline misses. Lowest Health targeting improved its ability to finish damaged Monsters, while short route exposure could still leave Monsters at `1` HP.
+- Cannon killed the Reference Monster in one successful hit. Its Position Snapshot Arc Projectile could miss at a bend after the captured position became stale; both accepted L-shaped runs recorded six misses.
+- Magic used evenly distributed Orb contact damage and gained strongly from corner coverage. Max Hit Count, Max Lifetime, and the fixed Attack Cycle bound its Level 1 output without route-shape-specific logic.
+- Drone used low-damage Burst fire and pursuit. Four baseline Burst shots did not kill the `5` HP Reference Monster; the next Burst completed the kill. Longer L-shaped coverage converted those follow-up opportunities into a `40 / 40` ceiling result.
+
+No Tower was accepted as universally superior. Cannon retained one-hit power and long range, Archer retained fast reliable finishing, Magic retained corner-focused contact coverage, and Drone retained mobile pursuit with Burst, battery, and active-entity limits.
+
+## 8. Ownership
 
 | Owner | Responsibility |
 |---|---|
 | Stage Design Blueprint | Campaign experience intent, not combat implementation |
-| Tower content | Base authoring and Level 1 identity |
-| Tower Runtime Combat | Attack execution and measured runtime behavior |
-| Monster content | Reference health, movement, and presentation |
-| Task002 | Fixed test, comparison, and accepted baseline record |
+| Tower content | Frozen Level 1 authoring and family identity |
+| Tower Runtime Combat | Attack execution and semantic timing contracts |
+| Monster content | Frozen Reference health, movement, and presentation |
+| Task002 | Accepted `Base Combat v0.1` parameter and result record |
+| Task003 | L2/L3 growth plus Basic and Behaviour Upgrade calibration on top of this baseline |
 
-## 8. Execution Collaboration
+## 9. Acceptance
 
-- The user owns the fixed Unity test setup, Tower and Monster asset authoring, repeated Play Mode runs, and the final subjective judgment that the four attack identities feel sufficiently distinct.
-- Codex prepares the comparison table, proposes first-pass parameter relationships, checks broad same-cost value, and identifies universal dominance or unclear identity from the user's observations.
-- The user may stop the identity pass when the differences are clearly readable. Accepted values then become `Base Combat v0.1` and remain fixed unless later evidence opens an explicit baseline revision.
+- The four Level 1 attack strategies are recognizable from their runtime behavior.
+- Same-cost Straight-route combat value falls within one broad comparable range.
+- No Tower is universally superior across damage pattern, cadence, route coverage, and flexibility.
+- Reference Monster health and movement produce a useful non-ceiling Straight test window.
+- All accepted Level 1 and Reference Monster values are recorded for later recovery and regression.
 
-## 9. Unity Authoring Checklist
+## 10. Validation Record
 
-- Disable all Tower Upgrades in the fixed test.
-- Use one Level 1 Tower at a time.
-- Use one fixed Reference Monster definition and route.
-- Record all authored values used by the run.
-- Repeat each comparison under the same simulation conditions.
-- Preserve the Stage1 Map version during the comparison.
+- Repeated fixed-condition Straight-route Play Mode runs for all four Towers
+- L-shaped route-coverage runs for all four Towers
+- Selective Magic U-shaped run before the U-shaped ceiling policy was adopted
+- Final Drone regression at Burst Cooldown `1.3s`: two Straight runs at `32 / 40` and one L-shaped run at `40 / 40`
+- Static project build and changed-file validation after the final document and asset update
 
-## 10. Acceptance Criteria
+## 11. Revision Policy
 
-- The four Tower attack strategies are recognizable without reading raw values.
-- Same-cost Level 1 combat value is in one broad comparable range.
-- No Tower is universally superior.
-- Reference Monster health and movement produce a useful test window.
-- The accepted baseline is recorded clearly enough to reproduce.
+Task003 and later Tasks must keep these Level 1 values fixed by default. L2/L3 data, Upgrade deltas, and Behaviour packages are the first calibration levers for later content; the Base Tower must not be changed merely to repair one Upgrade.
 
-## 11. Validation
-
-- Fixed-condition Play Mode runs
-- Repeat TTK observations
-- Route-coverage comparison
-- Static validation of changed assets
-- Regression run after the final accepted change
-
-## 12. Review Note
-
-Tower damage and Reference Monster health remain one coupled calibration problem. This Task must not approve either side in isolation.
+If later evidence proves that the Level 1 baseline itself is structurally invalid, the change must be named as a `Base Combat` revision. The revised Tower must rerun the Task002 Straight comparison, relevant route regression, and downstream Task003 checks before replacing `Base Combat v0.1`.

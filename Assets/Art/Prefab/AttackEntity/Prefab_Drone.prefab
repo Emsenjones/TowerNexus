@@ -84,7 +84,7 @@ MonoBehaviour:
   flightHeight: 1
   burstCount: 4
   burstInterval: 0.4
-  burstCooldown: 1.9
+  burstCooldown: 1.3
   fireAnchor: {fileID: 2326441832793177826}
   propellerTransform: {fileID: 1827786373825279271}
   propellerSpinAxis: {x: 0, y: 0, z: 1}
