@@ -169,12 +169,13 @@ Basic Layer contains numerical deltas and no trigger-driven gameplay Effects.
 Common deltas:
 
 - Attack Range
-- Attack Interval
+- Attack Cycle Duration
 - Damage Bonus
 
 TowerFamily-specific deltas may include:
 
 - Magic Orb rotation speed
+- Magic Orb maximum hit count
 - Drone battery duration
 - Drone burst cooldown
 
@@ -186,7 +187,7 @@ Resolved Value = Authored Base + Sum Of Applied Deltas
 
 Values are clamped to their valid gameplay ranges after composition.
 
-Magic Orb maximum hit count remains authored Attack Entity capacity and is not an Upgrade delta.
+Lingering Orbit grants a whole-number Magic Orb maximum-hit delta. The resolved value initializes future Orb members. When applied to an active synchronized group, the same delta is added once to every member's remaining capacity without resetting consumed hits or elapsed lifetime.
 
 Live propagation rules are owned by Tower Runtime Combat System. Basic Layer does not execute Effects or Buffs.
 

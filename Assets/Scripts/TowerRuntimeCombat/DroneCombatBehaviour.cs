@@ -32,7 +32,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
 
         return new TowerCombatBaseStats(
             BaseAttackRange,
-            BaseAttackInterval,
+            BaseAttackCycleDuration,
             droneBatteryDuration: batteryDuration,
             droneBurstCooldown: burstCooldown);
     }
@@ -190,7 +190,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        if (!IsCooldownReady || !HasOpenDroneCapacity())
+        if (!IsAttackCycleReady || !HasOpenDroneCapacity())
         {
             SetIdle();
             return;
@@ -277,7 +277,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        StartAttackCooldown(resolvedStats.AttackInterval);
+        StartAttackCycle(resolvedStats.AttackCycleDuration);
         ResetPendingAttack();
     }
 

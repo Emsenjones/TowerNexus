@@ -53,7 +53,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
 
     protected override TowerCombatBaseStats CreateBaseStats()
     {
-        return new TowerCombatBaseStats(BaseAttackRange, BaseAttackInterval);
+        return new TowerCombatBaseStats(BaseAttackRange, BaseAttackCycleDuration);
     }
 
     protected override bool IsSubtypeConfigurationValid()
@@ -93,7 +93,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        if (!IsCooldownReady)
+        if (!IsAttackCycleReady)
         {
             return;
         }
@@ -253,7 +253,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        StartAttackCooldown(resolvedStats.AttackInterval);
+        StartAttackCycle(resolvedStats.AttackCycleDuration);
         PlayAttackReleaseVfx(GetReleaseVfxRotation(origin));
         RaiseProjectileReleased(pendingProjectileTarget);
         ResetPendingAttack();

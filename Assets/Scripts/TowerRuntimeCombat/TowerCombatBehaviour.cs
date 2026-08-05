@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [DisallowMultipleComponent]
@@ -12,7 +13,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     [SerializeField] private float attackRange = 1f;
     [TitleGroup("Core")]
     [MinValue(0f)]
-    [SerializeField] private float attackInterval = 1f;
+    [FormerlySerializedAs("attackInterval")]
+    [SerializeField] private float attackCycleDuration = 1f;
     [TitleGroup("Core")]
     [SerializeField] private TargetSelectionType targetSelectionType;
     [TitleGroup("Attack VFX")]
@@ -31,7 +33,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     private TowerDefinition towerDefinition;
     private ResolvedTowerCombatStats cachedResolvedStats;
     private MonsterBehaviour currentTarget;
-    private float cooldownTimer;
+    private float attackCycleTimer;
     private TowerAttackState attackState = TowerAttackState.Idle;
     private bool hasExplicitInitialization;
     private bool hasCompletedSubtypeInitialization;
@@ -45,12 +47,12 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     public abstract TowerFamily SupportedTowerFamily { get; }
     public MonsterBehaviour CurrentTarget => currentTarget;
     public IReadOnlyList<MonsterBehaviour> DetectedEnemies => detectedEnemies;
-    public float CooldownTimer => cooldownTimer;
+    public float AttackCycleTimer => attackCycleTimer;
     public TowerAttackState AttackState => attackState;
     public bool IsAttacking => attackState != TowerAttackState.Idle;
     public bool IsBattleActive => isBattleActive;
     public float BaseAttackRange => attackRange;
-    public float BaseAttackInterval => attackInterval;
+    public float BaseAttackCycleDuration => attackCycleDuration;
     public float CurrentResolvedAttackRange => ResolveCombatStats().AttackRange;
 
     protected TowerInstance TowerInstance => towerInstance;
@@ -60,7 +62,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     protected GameObject AttackReleaseVfxPrefab => attackReleaseVfxPrefab;
     protected bool IsWaitingForAnimationRelease =>
         attackState == TowerAttackState.WaitingForAnimationRelease;
-    protected bool IsCooldownReady => cooldownTimer <= 0f;
+    protected bool IsAttackCycleReady => attackCycleTimer <= 0f;
 
     public void Initialize(TowerInstance initializedTowerInstance, MonsterManager initializedMonsterManager)
     {
@@ -73,7 +75,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         hasCompletedSubtypeInitialization = false;
         CacheOptionalReferences();
 
-        cooldownTimer = 0f;
+        attackCycleTimer = 0f;
         currentTarget = null;
         attackState = TowerAttackState.Idle;
         hasLoggedMissingAttackOrigin = false;
@@ -154,9 +156,11 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackInterval < 0f)
+        if (attackCycleDuration < 0f)
         {
-            Debug.LogWarning($"{GetType().Name} on '{name}' is invalid: attack interval cannot be negative.", this);
+            Debug.LogWarning(
+                $"{GetType().Name} on '{name}' is invalid: attack cycle duration cannot be negative.",
+                this);
             return false;
         }
 
@@ -193,7 +197,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        UpdateCooldown();
+        UpdateAttackCycle();
         OnOwnedRuntimeUpdate();
 
         if (!CanScheduleCombat())
@@ -257,14 +261,19 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         attackState = TowerAttackState.Idle;
     }
 
-    protected void StartAttackCooldown()
+    protected void StartAttackCycle()
     {
-        StartAttackCooldown(ResolveCombatStats().AttackInterval);
+        StartAttackCycle(ResolveCombatStats().AttackCycleDuration);
     }
 
-    protected void StartAttackCooldown(float resolvedAttackInterval)
+    protected void StartAttackCycle(float resolvedAttackCycleDuration)
     {
-        cooldownTimer = Mathf.Max(0f, resolvedAttackInterval);
+        attackCycleTimer = Mathf.Max(0f, resolvedAttackCycleDuration);
+    }
+
+    protected void ClearAttackCycle()
+    {
+        attackCycleTimer = 0f;
     }
 
     protected ResolvedTowerCombatStats ResolveCombatStats()
@@ -626,11 +635,11 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         }
     }
 
-    private void UpdateCooldown()
+    private void UpdateAttackCycle()
     {
-        if (cooldownTimer > 0f)
+        if (attackCycleTimer > 0f)
         {
-            cooldownTimer = Mathf.Max(0f, cooldownTimer - Time.deltaTime);
+            attackCycleTimer = Mathf.Max(0f, attackCycleTimer - Time.deltaTime);
         }
     }
 
@@ -851,7 +860,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             return false;
         }
 
-        cooldownTimer = 0f;
+        attackCycleTimer = 0f;
         currentTarget = null;
         attackState = TowerAttackState.Idle;
         hasLoggedMissingAttackOrigin = false;
@@ -968,16 +977,22 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         bool refreshAttackRange = isLevelChange
             ? !Mathf.Approximately(previousStats.AttackRange, currentStats.AttackRange)
             : UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.AttackRange);
-        bool refreshAttackInterval = isLevelChange
-            ? !Mathf.Approximately(previousStats.AttackInterval, currentStats.AttackInterval)
-            : UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.AttackInterval);
+        bool refreshAttackCycleDuration = isLevelChange
+            ? !Mathf.Approximately(
+                previousStats.AttackCycleDuration,
+                currentStats.AttackCycleDuration)
+            : UpgradeIncludesBasicStat(
+                sourceUpgrade,
+                TowerUpgradeBasicStatType.AttackCycleDuration);
         bool refreshDamage = isLevelChange
             ? previousStats.AttackDamage != currentStats.AttackDamage
             : UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.DamageBonus);
 
-        if (refreshAttackInterval)
+        if (refreshAttackCycleDuration)
         {
-            RefreshCooldownRatio(previousStats.AttackInterval, currentStats.AttackInterval);
+            RefreshAttackCycleRatio(
+                previousStats.AttackCycleDuration,
+                currentStats.AttackCycleDuration);
         }
 
         if (refreshAttackRange || refreshDamage)
@@ -1012,16 +1027,20 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             isLevelChange);
     }
 
-    private void RefreshCooldownRatio(float previousInterval, float currentInterval)
+    private void RefreshAttackCycleRatio(
+        float previousCycleDuration,
+        float currentCycleDuration)
     {
-        if (cooldownTimer <= 0f)
+        if (attackCycleTimer <= 0f)
         {
-            cooldownTimer = 0f;
+            attackCycleTimer = 0f;
             return;
         }
 
-        cooldownTimer = previousInterval > 0f
-            ? Mathf.Max(0f, cooldownTimer * currentInterval / previousInterval)
+        attackCycleTimer = previousCycleDuration > 0f
+            ? Mathf.Max(
+                0f,
+                attackCycleTimer * currentCycleDuration / previousCycleDuration)
             : 0f;
     }
 
@@ -1036,7 +1055,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
         isRuntimeSessionActive = false;
         hasResolvedStatsCache = false;
-        cooldownTimer = 0f;
+        attackCycleTimer = 0f;
         currentTarget = null;
         attackState = TowerAttackState.Idle;
 

@@ -2,7 +2,7 @@ public readonly struct ResolvedTowerCombatStats
 {
     public ResolvedTowerCombatStats(
         float attackRange,
-        float attackInterval,
+        float attackCycleDuration,
         int attackDamage,
         float magicOrbRotationSpeed,
         int magicOrbMaxHitCount,
@@ -10,7 +10,7 @@ public readonly struct ResolvedTowerCombatStats
         float droneBurstCooldown)
     {
         AttackRange = attackRange;
-        AttackInterval = attackInterval;
+        AttackCycleDuration = attackCycleDuration;
         AttackDamage = attackDamage;
         MagicOrbRotationSpeed = magicOrbRotationSpeed;
         MagicOrbMaxHitCount = magicOrbMaxHitCount;
@@ -19,7 +19,7 @@ public readonly struct ResolvedTowerCombatStats
     }
 
     public float AttackRange { get; }
-    public float AttackInterval { get; }
+    public float AttackCycleDuration { get; }
     public int AttackDamage { get; }
     public float MagicOrbRotationSpeed { get; }
     public int MagicOrbMaxHitCount { get; }

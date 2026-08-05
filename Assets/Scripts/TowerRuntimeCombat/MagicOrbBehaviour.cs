@@ -9,19 +9,23 @@ public readonly struct MagicOrbStatRefresh
         bool refreshDamage,
         int newDamage,
         bool refreshRotationSpeed,
-        float newRotationSpeed)
+        float newRotationSpeed,
+        int remainingHitCountDelta)
     {
         RefreshDamage = refreshDamage;
         NewDamage = newDamage;
         RefreshRotationSpeed = refreshRotationSpeed;
         NewRotationSpeed = newRotationSpeed;
+        RemainingHitCountDelta = remainingHitCountDelta;
     }
 
     public bool RefreshDamage { get; }
     public int NewDamage { get; }
     public bool RefreshRotationSpeed { get; }
     public float NewRotationSpeed { get; }
-    public bool HasAnyChange => RefreshDamage || RefreshRotationSpeed;
+    public int RemainingHitCountDelta { get; }
+    public bool HasAnyChange =>
+        RefreshDamage || RefreshRotationSpeed || RemainingHitCountDelta != 0;
 }
 
 public class MagicOrbBehaviour : MonoBehaviour
@@ -145,6 +149,16 @@ public class MagicOrbBehaviour : MonoBehaviour
     internal void RecordContact(MonsterBehaviour monster, float cooldownEndTime)
     {
         monsterHitCooldownEnds[monster] = cooldownEndTime;
+    }
+
+    internal void ApplyRemainingHitCountDelta(int delta)
+    {
+        if (!isInitialized || hasEnded || delta == 0)
+        {
+            return;
+        }
+
+        remainingHitCount = Mathf.Max(0, remainingHitCount + delta);
     }
 
     internal bool TryConsumeHit()
@@ -373,6 +387,33 @@ internal sealed class MagicOrbGroupRuntime
         if (refresh.RefreshRotationSpeed)
         {
             rotationSpeed = Mathf.Max(0f, refresh.NewRotationSpeed);
+        }
+
+        if (refresh.RemainingHitCountDelta != 0)
+        {
+            resolvedMaxHitCount = Mathf.Max(
+                1,
+                resolvedMaxHitCount + refresh.RemainingHitCountDelta);
+
+            bool shouldComplete = false;
+
+            for (int i = 0; i < members.Count; i++)
+            {
+                MagicOrbBehaviour member = members[i];
+
+                if (member == null)
+                {
+                    continue;
+                }
+
+                member.ApplyRemainingHitCountDelta(refresh.RemainingHitCountDelta);
+                shouldComplete |= member.RemainingHitCount <= 0;
+            }
+
+            if (shouldComplete)
+            {
+                CompleteNormally();
+            }
         }
     }
 

@@ -198,7 +198,7 @@ Common authored data:
 | Data | Contract |
 |---|---|
 | Attack Range | Base acquisition and release range before level and Upgrade changes |
-| Attack Interval | Base recovery duration before the archetype may schedule its next attack; the approved start boundary is archetype-specific |
+| Attack Cycle Duration | Minimum duration from one successful Attack Entity release until the archetype may release again |
 | Target Selection | Selection category used by archetypes that select one Monster |
 | Release Presentation | Optional presentation played at the approved release boundary |
 
@@ -248,7 +248,7 @@ This section defines identity and gameplay direction. Runtime execution belongs 
 - Selected Monster defines initial launch direction
 - Released Arrow travels independently
 - Direction flight may hit the nearest valid Monster within its hit threshold
-- Cooldown begins on successful Arrow release
+- Attack Cycle begins on successful Arrow release
 
 ## 10.2 Cannon
 
@@ -258,24 +258,24 @@ This section defines identity and gameplay direction. Runtime execution belongs 
 - Arrival always produces Position Impact
 - A local arrival query may additionally produce one Monster Hit and direct damage
 - Area explosion is Upgrade content, not baseline Cannon behavior
-- Cooldown begins on successful Shell release
+- Attack Cycle begins on successful Shell release
 
 ## 10.3 Magic
 
 - Owns at most one active synchronized Magic Orb group
-- Releasing a group does not start recovery while that group remains active
-- Normal group completion starts the post-group recovery interval
-- A new group requires recovery readiness and no active group
+- Successful group activation starts one Attack Cycle while the group remains active
+- Normal group completion clears exact ownership without restarting the Cycle
+- A new group requires Attack Cycle readiness and no active group
 - Members orbit one release-time center
 - Each member owns independent remaining hits and contact history
 - The group owns shared phase, lifetime, and completion
 - Exhaustion of any member or shared lifetime completes the whole group
-- Technical cleanup removes the group without starting post-group recovery
+- Technical cleanup removes the group and clears scheduler state
 
 ## 10.4 Drone
 
 - Releases autonomous Drones one at a time while below current capacity
-- A Drone launches only with cooldown readiness and a valid target
+- A Drone launches only with Attack Cycle readiness and a valid target
 - Each Drone owns movement, target, orbit, battery, projectile bursts, and completion
 - Loss of target attempts an in-range retarget; no replacement target ends ordinary Drone work
 - Drone may enter package-defined Final Dive behavior at battery end

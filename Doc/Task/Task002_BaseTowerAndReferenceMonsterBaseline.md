@@ -1,6 +1,6 @@
 # Task002 - Base Tower And Reference Monster Baseline
 
-Status: Ready for implementation; Task001 v0.2 greybox Maps are accepted and Stage1 can now be frozen as the fixed Reference test setup
+Status: In progress; Magic, Cannon, and Archer Level 1 candidates are frozen, while Drone calibration and the final cross-Tower stress pass remain pending
 
 Depends on: Completed Task001 Stage1 greybox Map
 
@@ -23,10 +23,11 @@ The result must make the four attack strategies visibly different while keeping 
 - Fixed Stage1 test Map, route, Tower positions, and Monster setup
 - Archer, Cannon, Magic, and Drone Level 1 attack identity
 - Attack Range
-- Attack Interval or release cadence
+- Attack Cycle Duration or release cadence
 - Projectile or Attack Entity speed and lifetime
 - Targeting behavior
-- Magic contact behavior, active-group duration, and post-completion recovery cadence
+- Magic contact behavior, active-group duration, and release-to-release Cycle cadence
+- Lingering Orbit maximum-hit capacity as the explicit Magic calibration exception
 - Drone launch, battery, pursuit, and burst cadence
 - Reference Monster maximum health and movement speed
 - Base Tower damage and measured TTK
@@ -35,7 +36,7 @@ The result must make the four attack strategies visibly different while keeping 
 ## 4. Out Of Scope
 
 - L2/L3 growth
-- Basic, Behaviour, or Elemental Upgrades
+- Basic, Behaviour, or Elemental Upgrade balance beyond the explicit Lingering Orbit capacity restoration
 - Effect and Buff balance
 - Monster roster variants
 - Player Progress Requirements
@@ -51,12 +52,25 @@ The result must make the four attack strategies visibly different while keeping 
 6. Run a normal-route comparison to include range, pursuit, contact, and downtime.
 7. Record accepted values and freeze the baseline.
 
-### Current Magic Calibration Checkpoint
+### Fixed Reference Run
 
-- The last Straight-route candidate is restored to Attack Interval `3s`, Orb Max Lifetime `17s`, and Orb Max Hit Count `15`.
-- A three-sided U-shaped route is treated as an intentional Magic-favored stress case, not as the neutral baseline.
-- An L-shaped route test remains pending before any decision to replace per-target contact cooldown with a shared Orb contact cadence.
-- No contact-cooldown mechanism change is accepted by this checkpoint.
+- One Wave with `40` Reference Monsters
+- Spawn Interval `2.5s`
+- Reference Monster Max Health `5` and Move Speed `0.25`
+- One Level 1 Tower with no Upgrades
+- Fixed Straight, L-shaped, and U-shaped test routes with one recorded legal placement per Tower
+
+Wave count, Monsters per Wave, Wave Delay, route shape, and placement are part of the test condition. Results from different Wave structures or placements are not interchangeable.
+
+### Current Level 1 Calibration Checkpoint
+
+- Magic uses Attack Cycle Duration `20s`, Orb Max Lifetime `18s`, and base Orb Max Hit Count `14`. Straight results were `30 / 33 / 32`, L-shaped result was `37`, and U-shaped result was `39` kills from 40.
+- The Attack Cycle begins only after a complete Orb group is successfully activated. It runs concurrently with the group, so early Max Hit Count exhaustion creates a longer inactive remainder without advancing the next release boundary.
+- Per-target contact cooldown remains unchanged. No shared or global contact cooldown and no route-shape detection enters this refactor.
+- Lingering Orbit is restored as a Basic maximum-hit capacity Upgrade. Its first Play Mode candidate is `+5`; the final delta remains subject to the fixed-condition Upgrade run.
+- Cannon uses Attack Cycle Duration `3.5s`, Damage `5`, and Highest Health targeting. Two Straight runs each released and hit `31` Shells for `31` kills. Two L-shaped runs each killed `29`; each gained additional release opportunities but missed six captured positions after Monsters moved away.
+- Archer uses Attack Cycle Duration `0.85s`, Damage `2`, and Lowest Health targeting. Straight results were `29 / 28`, and the L-shaped result was `36` kills from 40. Baseline Direction Projectiles had no observed misses in the recorded runs.
+- Drone remains under calibration. Its current diagnostic results are `17` Straight kills and `25` L-shaped kills; these values are not accepted as the frozen baseline.
 
 ## 6. Required Measurements
 
@@ -65,7 +79,7 @@ The result must make the four attack strategies visibly different while keeping 
 - Number of releases, contacts, or bursts
 - Effective route coverage
 - Target-loss or entity-limit downtime
-- Magic active-group duration and post-completion recovery downtime
+- Magic active-group duration, completion cause, and release-to-release Cycle duration
 - Whether any Tower dominates range, cadence, damage, and flexibility simultaneously
 - Short player-facing description of each Tower's strength and weakness
 

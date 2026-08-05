@@ -21,7 +21,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 
     protected override TowerCombatBaseStats CreateBaseStats()
     {
-        return new TowerCombatBaseStats(BaseAttackRange, BaseAttackInterval);
+        return new TowerCombatBaseStats(BaseAttackRange, BaseAttackCycleDuration);
     }
 
     protected override bool IsSubtypeConfigurationValid()
@@ -63,7 +63,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        if (!IsCooldownReady || projectilePrefab == null)
+        if (!IsAttackCycleReady || projectilePrefab == null)
         {
             return;
         }
@@ -186,7 +186,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        StartAttackCooldown(resolvedStats.AttackInterval);
+        StartAttackCycle(resolvedStats.AttackCycleDuration);
         PlayAttackReleaseVfx(Quaternion.identity);
         RaiseProjectileReleased(pendingPrimaryTarget);
         ResetPendingAttack();

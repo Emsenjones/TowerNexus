@@ -13,7 +13,7 @@ It owns:
 - Binding one combat session to one placed Tower instance
 - Resolving current Tower combat values
 - Monster detection and target selection
-- Attack readiness and cooldown timing
+- Attack readiness and Attack Cycle timing
 - Attack confirmation and presentation-gated release
 - Attack Entity release and ownership registration
 - Coordination of approved Live Refresh
@@ -50,7 +50,7 @@ Recovery may reacquire external services such as the Monster source, but it must
 Common per-Tower runtime state includes:
 
 - Current resolved combat values
-- Remaining cooldown
+- Remaining Attack Cycle time
 - Detected valid Monsters
 - Current selected target when required
 - Optional pending attack confirmation
@@ -123,22 +123,22 @@ Pending data is cleared only by cancellation, successful release, or technical c
 
 ---
 
-# 6. Cooldown Contract
+# 6. Attack Cycle Contract
 
-Attack Interval recovery begins at the approved TowerFamily boundary:
+Attack Cycle Duration begins when the approved Attack Entity is successfully released:
 
 - Archer: after an Arrow group is successfully released
 - Cannon: after a Shell group is successfully released
 - Drone: after one Drone is successfully launched
-- Magic: after its active Magic Orb group completes normally
+- Magic: after one complete Magic Orb group is successfully created and activated
 
-Failed confirmation, missing required release data, or failed entity creation does not start recovery. Releasing a Magic Orb group does not start recovery; its active lifetime and post-group recovery are sequential phases.
+Failed confirmation, missing required release data, or failed entity creation does not start an Attack Cycle.
 
 Projectile completion does not delay Archer or Cannon readiness. Drone additionally requires active Drone count below current capacity.
 
-Magic normal completion first finishes all synchronous contact, Arcane Detonation, and member-completion results. It then clears exact ownership and starts recovery from the latest resolved Attack Interval. Lifetime expiry and hit-count exhaustion are normal completion. Technical cleanup clears the group and scheduler state without starting recovery.
+Magic Attack Cycle time runs concurrently with its active Orb group. Lifetime expiry and hit-count exhaustion finish all synchronous contact, Arcane Detonation, and member-completion results before exact ownership is cleared. Completion does not restart or extend the running Cycle. Magic may release again only when the Cycle is ready and no active group remains.
 
-When recovery becomes ready while another gate remains blocked, it stays ready at zero. Clearing the gate allows the next normal detection and release pass; completion and upgrade notifications never create a new Attack Entity directly.
+When a Cycle becomes ready while another gate remains blocked, it stays ready at zero. Clearing the gate allows the next normal detection and release pass; completion and upgrade notifications never create a new Attack Entity directly.
 
 ---
 
@@ -193,17 +193,15 @@ Each released entity receives only relevant typed values or package commands, ne
 
 Attack Range becomes the current detection range and may refresh active entities whose future behavior explicitly depends on it. Captured target positions and release-time range origins remain immutable.
 
-Attack Interval preserves current cooldown completion ratio:
+Attack Cycle Duration preserves current Cycle completion ratio:
 
 ```text
-Ready Cooldown                  -> Remains Ready
-Positive Old Interval           -> Remaining *= New / Old
-Non-Positive Old Interval       -> Remaining Becomes Ready
+Ready Cycle                     -> Remains Ready
+Positive Old Duration           -> Remaining *= New / Old
+Non-Positive Old Duration       -> Remaining Becomes Ready
 ```
 
-The result is non-negative. Completing cooldown through refresh does not release an entity until the next normal scheduler pass.
-
-An active Magic Orb group has no running Tower recovery timer. An accepted Attack Interval change updates the resolved baseline, and normal group completion later starts recovery from that latest value. Once Magic is in post-group recovery, the same completion-ratio rule applies.
+The result is non-negative. Completing an Attack Cycle through refresh does not release an entity until the next normal scheduler pass. Magic applies the same ratio rule while its Orb group is active because the Cycle began at successful group release.
 
 ## 8.2 Entity Refresh
 
@@ -229,7 +227,7 @@ Archer confirmation creates one stable release group with Center and optional Le
 - If the Center release requirement is invalid, the group is cancelled.
 - An invalid secondary target uses its confirmation-time fallback direction rather than free retargeting.
 
-Successful release starts cooldown and transfers Arrow movement, hit, Piercing, Hunting, and completion behavior to Projectile System.
+Successful release starts one Attack Cycle and transfers Arrow movement, hit, Piercing, Hunting, and completion behavior to Projectile System.
 
 ---
 
@@ -239,12 +237,12 @@ Cannon confirmation captures one or more immutable target-position snapshots.
 
 - Baseline Cannon confirms one position.
 - Multi Shells may confirm multiple initial positions up to its authored maximum.
-- One attack uses one presentation sequence and one cooldown.
+- One attack uses one presentation sequence and one Attack Cycle.
 - Source Monster invalidation after confirmation does not cancel or redirect a captured position.
 - An Upgrade during the presentation wait does not add Shells or recapture positions.
 - Each successful initial Shell release receives current unresolved Damage, Explosive Shell, and eligible pre-impact Bouncing Shell data.
 
-Successful release starts cooldown. Arc movement, Position Impact, direct arrival query, bounce-chain behavior, and completion belong to Projectile System.
+Successful release starts one Attack Cycle. Arc movement, Position Impact, direct arrival query, bounce-chain behavior, and completion belong to Projectile System.
 
 ---
 
@@ -252,7 +250,7 @@ Successful release starts cooldown. Arc movement, Position Impact, direct arriva
 
 Magic Tower owns at most one active synchronized Orb group.
 
-Release requires post-group recovery readiness and no active group. The group captures one orbit center from the current Attack Origin. Successful release begins the active-group phase without starting Tower recovery.
+Release requires Attack Cycle readiness and no active group. The group captures one orbit center from the current Attack Origin. Successful group activation begins both the active-group phase and one Attack Cycle.
 
 Group contract:
 
@@ -262,7 +260,7 @@ Group contract:
 - Exhaustion of any member or shared lifetime completion ends the whole group
 - Group completion is idempotent
 
-Approved active-group refresh may update unresolved damage, orbit speed, and reviewed Behaviour packages. Maximum hit count is captured from authored Attack Entity capacity when the group is created and does not refresh through Basic Upgrades.
+Approved active-group refresh may update unresolved damage, orbit speed, maximum hit capacity, and reviewed Behaviour packages. A maximum-hit delta changes each active member's remaining capacity by the same delta without resetting consumed hits. The group's resolved maximum changes once, and later Multi Orbs members start from that current resolved maximum.
 
 Multi Orbs reconciliation is atomic:
 
@@ -274,7 +272,7 @@ Multi Orbs reconciliation is atomic:
 
 Arcane Detonation is eligible only on normal group completion and executes once at each active member's current position before the group disappears. Technical cleanup never triggers it.
 
-After all normal completion results finish, exact group ownership is cleared and post-group recovery begins from the latest resolved Attack Interval. The completion notification does not create the next group. Technical cleanup clears the group without starting recovery; a later valid combat-session recovery begins from ready scheduler state.
+After all normal completion results finish, exact group ownership is cleared without modifying the running Attack Cycle. The completion notification does not create the next group. Technical cleanup clears both the group and scheduler state; a later valid combat-session recovery begins from ready scheduler state.
 
 ## 11.1 Arcane Field
 
@@ -359,7 +357,7 @@ It:
 
 Technical cleanup produces no gameplay completion results: no damage, Impact, Elemental attempt, Arcane Detonation, Final Dive, or ordinary completion Effect.
 
-Technical cleanup does not start post-completion cooldown or recovery. A later valid combat-session recovery establishes fresh scheduler state from the preserved placed-Tower identity and current resolved values.
+Technical cleanup does not preserve or restart an Attack Cycle. A later valid combat-session recovery establishes fresh scheduler state from the preserved placed-Tower identity and current resolved values.
 
 Cleanup and unregister operations are idempotent.
 
@@ -373,7 +371,7 @@ Runtime validation should reject or report at minimum:
 - Missing Monster source
 - Missing required Attack Entity configuration
 - Missing active Attack Origin at release time
-- Invalid range, interval, capacity, or package values
+- Invalid range, Attack Cycle duration, capacity, or package values
 - Duplicate active group identity or invalid slot membership
 - Release data that cannot satisfy its archetype contract
 
@@ -383,6 +381,6 @@ Presentation-only failure uses approved fallback behavior and must not silently 
 
 # 16. Approved Scope And Deferred Topics
 
-Current scope includes Archer, Cannon, Magic, and Drone orchestration; presentation-gated release; cooldowns; target selection; active entity ownership; selective Live Refresh; Arcane Field; and technical cleanup.
+Current scope includes Archer, Cannon, Magic, and Drone orchestration; presentation-gated release; Attack Cycles; target selection; active entity ownership; selective Live Refresh; Arcane Field; and technical cleanup.
 
 Object pooling, Tower demolition, Monster-driven Tower destruction, new attack archetypes, and unreviewed package behavior are deferred.

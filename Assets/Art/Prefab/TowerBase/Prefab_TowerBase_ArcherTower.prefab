@@ -502,8 +502,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectionProjectileCombatBehaviour
   attackRange: 2
-  attackInterval: 0.95
-  targetSelectionType: 0
+  attackCycleDuration: 0.85
+  targetSelectionType: 2
   attackReleaseVfxPrefab: {fileID: 2526188762600594687, guid: e9e726441714d495680f004cfb654b82, type: 3}
   projectilePrefab: {fileID: 6201473830942121708, guid: 1835c2457c5234c6b8c588eb9ebeaa9c, type: 3}
 --- !u!1 &6128791231166235281

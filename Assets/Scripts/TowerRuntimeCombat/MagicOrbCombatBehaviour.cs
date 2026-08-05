@@ -34,7 +34,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
 
         return new TowerCombatBaseStats(
             BaseAttackRange,
-            BaseAttackInterval,
+            BaseAttackCycleDuration,
             rotationSpeed,
             maxHitCount);
     }
@@ -59,6 +59,14 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         {
             Debug.LogWarning(
                 "Magic Orb combat is invalid: prefab MagicOrbBehaviour has invalid authored data.",
+                this);
+            return false;
+        }
+
+        if (BaseAttackCycleDuration < orbBehaviour.BaseMaxLifetime)
+        {
+            Debug.LogWarning(
+                "Magic Orb combat is invalid: attack cycle duration cannot be shorter than the Orb max lifetime.",
                 this);
             return false;
         }
@@ -121,12 +129,19 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             UpgradeIncludesBasicStat(
                 sourceUpgrade,
                 TowerUpgradeBasicStatType.MagicOrbRotationSpeed);
+        bool refreshMaxHitCount = !isLevelChange &&
+            UpgradeIncludesBasicStat(
+                sourceUpgrade,
+                TowerUpgradeBasicStatType.MagicOrbMaxHitCount);
 
         group.ApplyStatRefresh(new MagicOrbStatRefresh(
             refreshDamage,
             currentStats.AttackDamage,
             refreshRotationSpeed,
-            currentStats.MagicOrbRotationSpeed));
+            currentStats.MagicOrbRotationSpeed,
+            refreshMaxHitCount
+                ? currentStats.MagicOrbMaxHitCount - previousStats.MagicOrbMaxHitCount
+                : 0));
     }
 
     protected override void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)
@@ -162,7 +177,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        if (hadGroupAtFrameStart || activeMagicOrbGroup != null || !IsCooldownReady)
+        if (hadGroupAtFrameStart || activeMagicOrbGroup != null || !IsAttackCycleReady)
         {
             SetIdle();
             return;
@@ -241,6 +256,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
+        StartAttackCycle(resolvedStats.AttackCycleDuration);
         PlayAttackReleaseVfx(Quaternion.identity);
         ResetPendingAttack();
     }
@@ -404,9 +420,9 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         {
             activeMagicOrbGroup = null;
 
-            if (completedNormally)
+            if (!completedNormally)
             {
-                StartAttackCooldown(ResolveCombatStats().AttackInterval);
+                ClearAttackCycle();
             }
         }
     }
