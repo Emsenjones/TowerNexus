@@ -47,6 +47,7 @@ Before Unity authoring, Codex prepares one reviewable row per Stage containing:
 | Rough Monster Resolutions | Solve against the shared Progress sequence |
 | Last-Draft Combat Reserve | Preserve enough combat for the final choice to affect the result |
 | Candidate Solvability Rule | Measure remaining opportunities and practical sampling access without guaranteeing the next offer |
+| Legal Calibration Builds | Confirm that the Reference, viable alternative, and planned Anti-pattern allocations can actually be formed from the authored pools and Draft budget |
 
 The table begins as a proposed numeric pass. It becomes accepted only after structural validation and user Play Mode evidence.
 
@@ -62,6 +63,8 @@ Current Blueprint-derived v0.1 inputs:
 | Stage6 | 5 | 2 | 15 | 15 | 14 | Two overlapping Cores with the same ElementType |
 
 Stage6 costs 15 Drafts: five Tower deployments plus two Cores, each requiring two Level-ups, one Basic Upgrade, one Behaviour Upgrade, and one Elemental Upgrade.
+
+The one-Basic and one-Behaviour Core is the Reference budget unit, not the maximum legal Upgrade stack. Exact pools must also expose whether a player can legally redirect multiple Upgrades into one Tower; later Stage Tasks use that legal concentrated build only when it tests a required coverage, complement, or cooperation gap.
 
 Stage4-Stage6 intentionally share five Reference Towers and the same proposed Map scale, but their Total Draft Opportunities remain 9, 10, and 15 because their Reference Builds require different vertical and Elemental investment.
 
@@ -82,6 +85,7 @@ These values are the first trajectory estimate. Task006 does not treat the Progr
 - Stage maximum-health authoring
 - Post-final-Draft validation segment targets
 - Candidate solvability where required by the Blueprint
+- Legal constructibility records for every planned Stage calibration and Anti-pattern build
 - Revalidation of Task001 Reference and reasonable alternative placements against exact Draft pools
 
 ## 6. Out Of Scope
@@ -111,14 +115,15 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 2. Propose exact Tower and Tower Upgrade Draft pools.
 3. Derive every represented TowerFamily's Stage cap and validate each intermediate unlock level.
 4. Check that every required Reference Build remains obtainable.
-5. Choose rough Monster-resolution totals.
-6. Solve one positive global Progress Requirement sequence.
-7. Verify cumulative Draft nodes against every Stage.
-8. Author six StageDefinitions and six MonsterWaveConfig skeletons.
-9. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
-10. Reserve combat after the last intended Draft.
-11. Revalidate Task001 Reference and reasonable alternative placements against the exact pools.
-12. Validate each Stage composition without final difficulty claims.
+5. Confirm that each planned viable alternative and Anti-pattern is legal under the same pools and opportunities; remove or revise an impossible test rather than manufacturing it.
+6. Choose rough Monster-resolution totals.
+7. Solve one positive global Progress Requirement sequence.
+8. Verify cumulative Draft nodes against every Stage.
+9. Author six StageDefinitions and six MonsterWaveConfig skeletons.
+10. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
+11. Reserve combat after the last intended Draft.
+12. Revalidate Task001 Reference and reasonable alternative placements against the exact pools.
+13. Validate each Stage composition without final difficulty claims.
 
 ## 9. Ownership
 
@@ -161,6 +166,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Every Stage skeleton reaches its derived Draft count in resolution-count space.
 - Six StageDefinitions reference the intended Maps, Waves, and Draft pools.
 - Every approved Reference Build is obtainable under its authored Draft structure.
+- Every planned calibration and Anti-pattern build is either legally constructible or explicitly replaced before Stage testing.
 - Every allowed Tower level transition unlocks at least one Upgrade at the reached Required Tower Level.
 - Newly eligible required content has a reviewed practical chance to appear within the remaining Draft opportunities without a guaranteed next offer.
 - Stage6 retains at least one achievable matching-Element build path if Overload is mandatory.
@@ -172,6 +178,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 
 - Reference Build cost review
 - Draft-pool and candidate-solvability review
+- Reference, alternative, and Anti-pattern legal-constructibility review
 - Per-Family Stage-cap and Required-Level continuity review
 - Cumulative Draft-node calculation review
 - Task001 Reference-placement and range/route regression

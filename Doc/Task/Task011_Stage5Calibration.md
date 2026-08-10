@@ -11,6 +11,7 @@ Calibrate Stage5 so the player can build a first Elemental core and understand E
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/03_PlayerSystem.md`
 - `Doc/System/05_MapSystem.md`
@@ -51,6 +52,7 @@ First-pass inputs:
 - Monster composition and timing
 - Local Stage5 Map refinement
 - Reference, alternative, and Anti-pattern runs
+- A secondary legal over-concentrated single-Tower coverage run when Task006 can construct it
 - Prior-Stage regression
 
 ## 5. Out Of Scope
@@ -67,8 +69,9 @@ First-pass inputs:
 3. Tune remaining Wave exposure after the Elemental core becomes active.
 4. Confirm application and stacking are readable.
 5. Test a Codex-proposed alternative Element or TowerFamily when allowed.
-6. Test the no-Elemental-core Anti-pattern.
-7. Regress earlier Stages after global revisions.
+6. Test the primary no-Elemental-core Anti-pattern.
+7. When legal, test one fully invested Elemental Tower without the Reference coverage/support structure as a secondary Anti-pattern.
+8. Regress earlier Stages after global revisions.
 
 ## 7. Required Measurements
 
@@ -77,7 +80,7 @@ First-pass inputs:
 - Buff expiry before maximum stacks
 - Wave timing and remaining combat after Elemental activation
 - Leaks and final Player Health
-- Reference, alternative, and Anti-pattern result
+- Reference, alternative, primary Anti-pattern, and secondary coverage result
 
 ## 8. Ownership
 
@@ -112,7 +115,7 @@ The proposal also records one coherent alternative Elemental Build and its expec
 - Confirm the Stage5 Blueprint contract and Task006-derived Elemental inputs.
 - Assign the approved Stage5 Map, Wave, and Draft pools.
 - Author the Stage5 MonsterWaveConfig.
-- Place the Reference, alternative, and Anti-pattern builds.
+- Place the Reference, alternative, no-Elemental-core, and legal single-Tower coverage builds.
 - Record Elemental activation Draft and remaining combat.
 - Record applications, stacks, leaks, health, and Stage duration.
 - Rerun Stage1-Stage4 after global changes.
@@ -124,11 +127,12 @@ The proposal also records one coherent alternative Elemental Build and its expec
 - Elemental application and stacking are understandable.
 - Stage5 does not require the dual-source Stage6 solution.
 - The Anti-pattern fails because it never reaches the required Elemental specialization.
+- Stage5 does not punish having only one Elemental source; a secondary single-Tower build may fail only because it abandons required route coverage or support value.
 - Stage1-Stage4 remain accepted.
 
 ## 13. Validation
 
-- Reference, alternative, and Anti-pattern Play Mode runs
+- Reference, alternative, no-Elemental-core, and optional single-Tower coverage Play Mode runs
 - Elemental state observation
 - Draft-pool and eligibility validation
 - Map exposure review

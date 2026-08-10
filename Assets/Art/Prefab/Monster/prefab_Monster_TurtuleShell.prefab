@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Turtule Shell
   moveSpeed: 0.25
-  maxHealth: 5
+  maxHealth: 12
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2

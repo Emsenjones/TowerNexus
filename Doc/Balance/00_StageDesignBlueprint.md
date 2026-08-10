@@ -2,7 +2,7 @@
 
 Document Set: Balance
 
-Status: Campaign learning arc and Stage1-Stage6 Reference Build v0.1 shapes approved; exact repeated support families, UpgradeDefinitions, and ElementTypes remain downstream decisions
+Status: Campaign learning arc and Stage1-Stage6 Reference Build v0.1 shapes approved; exact repeated support families, UpgradeDefinitions, ElementTypes, and Stage-local calibration values remain downstream decisions
 
 ---
 
@@ -55,6 +55,8 @@ The Reference Build is the stable standard solution used to derive implementatio
 
 The Expected Anti-pattern is a build that rejects the Stage lesson and should fail because it lacks the required capability. The game does not apply hidden penalties for deviating from the Reference Build.
 
+Concentrated investment is not intrinsically an Anti-pattern. A highly developed Core should fail only when the Stage also requires coverage, role complement, or a second matching Elemental source that the concentrated build does not provide. Conversely, horizontal expansion should fail only when it leaves the required Core capability undeveloped.
+
 New Content describes the first campaign introduction of a mechanic or TowerFamily. Previously introduced content remains generally available unless a Stage Note explicitly says otherwise. Exact Draft pool composition is authored later by Task006.
 
 Reference Build v0.1 uses these shared rules:
@@ -66,6 +68,8 @@ Reference Build v0.1 uses these shared rules:
 - Both Stage6 Core Towers are L3 with one Basic, one Behaviour, and one Elemental Upgrade.
 - The two Stage6 Core Towers use the same ElementType and must have overlapping effective coverage.
 - Exact Basic, Behaviour, and Elemental definitions are selected by downstream calibration.
+
+The listed one-Basic and one-Behaviour Core is the Reference Build used to derive Stage budgets. It is not the maximum legal Upgrade stack on one Tower. Cross-Stage realized-power targets and cumulative single-Tower guardrails belong to `01_TowerGrowthAndUpgradeIdentity.md`; exact Upgrade values and Stage pressure remain Task outputs.
 
 The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain Task006 design work.
 
@@ -97,7 +101,7 @@ Status: Reference Build Baseline v0.1
 | Primary Experience | Learn that concentrated growth is required; pure horizontal expansion is insufficient |
 | New Content | Archer |
 | Required Capability | One developed L3 Archer core plus a second coverage point |
-| Expected Anti-pattern | Over-expand with undeveloped L1 Archers instead of creating the required L3 core |
+| Expected Anti-pattern | Either over-expand with undeveloped L1 Archers, or concentrate every legal investment into one Archer while omitting the required second coverage point |
 | Notes | Exact Basic and Behaviour definitions remain downstream calibration choices |
 
 Reference Build:
@@ -116,7 +120,7 @@ Status: Reference Build Baseline v0.1
 | Primary Experience | Combine Archer and Cannon range and cadence roles |
 | New Content | Cannon |
 | Required Capability | At least one coherent Archer and Cannon role-complement relationship |
-| Expected Anti-pattern | Spread growth across undeveloped Towers with no role complement |
+| Expected Anti-pattern | Spread growth across undeveloped Towers, or over-concentrate into one Tower, without creating an Archer/Cannon role-complement relationship |
 | Notes | Three Towers use Archer and Cannon; exact repeated support family remains TBD |
 
 Reference Build:
@@ -194,7 +198,7 @@ Status: Reference Build Baseline v0.1
 | Primary Experience | Coordinate two matching Elemental Towers to trigger Overload |
 | New Content | Elemental cooperation |
 | Required Capability | Two Towers with the same ElementType and overlapping effective coverage |
-| Expected Anti-pattern | Use unmatched Elements or separate matching Towers so they do not share targets |
+| Expected Anti-pattern | Stop at one Elemental Core, use unmatched Elements, or separate matching Towers so they do not share targets |
 | Notes | Five Towers use all four TowerFamilies; exact Core families, repeated family, and shared ElementType remain TBD |
 
 Reference Build:
@@ -231,3 +235,5 @@ Task ownership:
 | Task007-Task012 | Stage-specific Wave tables, measurable Reference Runs, Anti-pattern checks, and accepted local calibration |
 
 Task calculations are reviewable implementation inputs, not new Stage intent. Accepted executable values live in their owning Unity assets. If a derived result cannot realize an approved Stage design, the Task proposes a Blueprint revision explicitly rather than silently changing the intended experience.
+
+Task006 must confirm that every planned Anti-pattern run is constructible under the authored pools and remaining Draft opportunities. Task007-Task012 test only legal builds; they must not manufacture an impossible build or add a hidden penalty in order to demonstrate the Stage lesson.

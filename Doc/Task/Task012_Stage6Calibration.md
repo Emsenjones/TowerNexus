@@ -13,6 +13,7 @@ TowerFamily may differ. Matching ElementType and shared-target opportunity are t
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/03_PlayerSystem.md`
 - `Doc/System/05_MapSystem.md`
@@ -71,7 +72,7 @@ First-pass inputs:
 4. Tune Map overlap and Wave exposure before changing global Buff values.
 5. Confirm at least one required Overload.
 6. Test a Codex-proposed different-TowerFamily matching pair when permitted.
-7. Test mismatched-Element and non-overlapping Anti-patterns.
+7. Test the one-Elemental-Core, mismatched-Element, and non-overlapping Anti-patterns.
 8. Regress all earlier Stages after any global revision.
 
 ## 7. Required Measurements
@@ -82,7 +83,7 @@ First-pass inputs:
 - Overloads per run
 - Remaining combat after pair completion
 - Leaks and final Player Health
-- Reference, alternative, and Anti-pattern result
+- Reference, alternative, one-Core, mismatched, and non-overlap results
 
 ## 8. Ownership
 
@@ -104,7 +105,7 @@ Codex prepares:
 |---|---|---:|---:|---:|---|---|---|
 | Proposed Wave | Proposed roster entry | First-pass count | First-pass timing | First-pass timing | Expected Draft index and time | Intended shared-stack and Overload opportunities | Filled after Play Mode |
 
-The proposal also records one alternative matching-Element pair, the candidate path that makes it obtainable, and the mismatched/non-overlap Anti-pattern expectations.
+The proposal also records one alternative matching-Element pair, the candidate path that makes it obtainable, and the one-Core, mismatched, and non-overlap Anti-pattern expectations.
 
 ## 10. Execution Collaboration
 
@@ -118,7 +119,7 @@ The proposal also records one alternative matching-Element pair, the candidate p
 - Assign the approved Stage6 Map, Wave, and Draft pools.
 - Author the Stage6 MonsterWaveConfig.
 - Place the matching-Element Reference and alternative builds.
-- Run mismatched-Element and non-overlap Anti-patterns.
+- Run one-Elemental-Core, mismatched-Element, and non-overlap Anti-patterns.
 - Record pair activation, stack timing, Overloads, leaks, health, and Stage duration.
 - Rerun Stage1-Stage5 after global changes.
 
@@ -128,6 +129,7 @@ The proposal also records one alternative matching-Element pair, the candidate p
 - The pair has meaningful overlapping coverage.
 - Overload is required and observable.
 - Different TowerFamilies may cooperate through the same ElementType.
+- One fully developed Elemental Core is insufficient because Stage6 requires a second matching source, not because the first Core receives a hidden penalty.
 - Mismatched Elements or separated matching Towers fail for the intended reason.
 - Candidate generation does not silently remove every valid solution path under the Task006 solvability rule.
 - Stage1-Stage5 remain accepted.
@@ -136,6 +138,7 @@ The proposal also records one alternative matching-Element pair, the candidate p
 
 - Matching-pair Reference Run
 - Different-family matching-pair run
+- One-Elemental-Core Anti-pattern run
 - Mismatched-Element Anti-pattern run
 - Non-overlap Anti-pattern run
 - Elemental lifecycle observation

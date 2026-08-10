@@ -13,6 +13,7 @@ Each Map must provide a valid Spawn-to-Target route, legal Reference Build place
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/05_MapSystem.md`
 - `Doc/System/06_CameraSystem.md`
@@ -47,6 +48,8 @@ Range and footprint values are implementation inputs, not final balance claims. 
 These values are intentional first-pass estimates. They exist so the first six greyboxes can be authored and observed before further correction.
 
 The v0.2 Map baseline does not require the Map to support a player spending every Draft on a new Tower. Map acceptance covers the Reference Build and reasonable alternative placements. The all-deployment edge case is excluded from initial Map sizing.
+
+The Blueprint Reference Core contains one Basic and one Behaviour Upgrade; it is not the maximum legal single-Tower Upgrade stack. Task007-Task012 may use a legal over-concentrated build to prove that missing coverage or cooperation matters, but that later balance run does not retroactively require Task001 to size the Map for every possible Draft allocation.
 
 ## 5. Attack-Range And Route Guardrails
 
@@ -146,4 +149,4 @@ Map size alone does not determine useful coverage. Base Walkable topology and ro
 
 ## 13. Review Note
 
-Task001 completion freezes the six Maps only as usable v0.2 greybox baselines. The user ran Validate Map on every Stage1-Stage6 Prefab without errors; static review confirmed the planned dimensions, expected node counts, one Spawn, one Target, and one referenced MapCameraBoundary per Map. These values are not final balance claims. Task002 must return any accepted Attack Range change for Map coverage regression, and Task007-Task012 may later propose local route or placement refinements when Stage calibration reveals a specific spatial problem.
+Task001 completion freezes the six Maps only as usable v0.2 greybox baselines. The user ran Validate Map on every Stage1-Stage6 Prefab without errors; static review confirmed the planned dimensions, expected node counts, one Spawn, one Target, and one referenced MapCameraBoundary per Map. These values are not final balance claims. Task002 must return any accepted Attack Range change for Map coverage regression, and Task007-Task012 may later propose local route or placement refinements when Stage calibration reveals a specific spatial problem. Task003's higher-health calibration fixture does not change Map acceptance because it changes measurement sensitivity rather than geometry.

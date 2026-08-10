@@ -2,7 +2,7 @@
 
 Document Set: Balance
 
-Status: Growth strategy and Tower Level v0.1 baseline approved; per-Tower Upgrade values remain Task003 calibration outputs
+Status: Growth strategy and Tower Level v0.1 baseline approved; accepted per-Upgrade parameters remain pending Task003 and Task004 Play Mode acceptance
 
 ---
 
@@ -17,9 +17,9 @@ It answers:
 - Why Tower Level is worth buying even without direct combat-stat growth
 - How Core and Support Towers divide limited Draft investment
 - How Basic, Behaviour, and Elemental value depends on battlefield conditions
-- Which growth Anti-patterns later Stage calibration should expose
+- Which concrete Upgrade values form the accepted v0.1 balance snapshot after calibration
 
-It does not own runtime eligibility, candidate sampling, exact Upgrade values, exact Stage pools, Player Progress Requirements, or Monster Wave values. Those rules and authored values belong to their owning System documents, Task contracts, and Unity assets.
+It does not own runtime eligibility, candidate sampling, candidate power targets, test fixtures, route matrices, exact Stage pools, Player Progress Requirements, Monster Wave values, or raw Play Mode evidence. Those rules and evidence belong to their owning System documents and Task contracts. After calibration, this document records only the accepted v0.1 Upgrade-parameter snapshot; Unity assets remain the executable authored values.
 
 ---
 
@@ -112,42 +112,14 @@ Required Tower Level and Upgrade Layer remain separate. A Basic or Behaviour Upg
 
 ---
 
-# 7. Elemental Learning Arc
+# 7. Accepted Upgrade Parameters v0.1
 
-Stage5 establishes one complete Elemental Core. Its normal Elemental Effect and stacking improve combat output without requiring Overload for the intended clear.
+Status: Pending Task003 and Task004 Play Mode acceptance
 
-Stage6 establishes cooperation between two Towers with the same ElementType and overlapping effective coverage. TowerFamily may differ. Their shared application opportunity should make Overload reliable enough to answer Stage6 pressure.
+This section records one row per UpgradeDefinition only after its owning Task accepts the final authored parameters. Candidate gain targets, fixtures, route results, and revision history remain in the Task documents.
 
-The second matching source extends a complete Elemental strategy; it does not repair an otherwise valueless first Elemental Upgrade.
+| TowerFamily | Upgrade | Layer | Required Level | Accepted Authoring Parameters | Accepted In | Status |
+|---|---|---|---:|---|---|---|
+| Pending | Pending | Basic, Behaviour, or Elemental | Pending | Pending | Task003 or Task004 | Pending |
 
----
-
-# 8. Expected Anti-patterns
-
-Later calibration should expose these strategically incoherent outcomes:
-
-- Expanding into many undeveloped Level 1 Towers when a Stage requires one mature Core
-- Spending a Level Up on a TowerFamily whose Stage pool cannot unlock new content
-- Distributing Upgrade investment across low-exposure Support positions while the intended Core remains undeveloped
-- Treating a higher Layer name as automatically stronger without reading position, route, Monster composition, or current pressure
-- Offering a theoretical build path whose remaining Draft opportunity and sampling probability make it practically unreachable
-
-The game applies no hidden punishment for these choices. They fail only when the resulting build lacks the capability required by the Stage.
-
----
-
-# 9. Calibration Evidence
-
-Task003 and later Stage calibration should compare:
-
-- Current pressure before the choice
-- Immediate pressure change after deployment or Upgrade application
-- The Tower level and Draft index at which new content becomes eligible
-- The Draft index at which each Core becomes operational
-- Remaining Draft opportunities after each Level investment
-- Probability and observed timing of seeing newly eligible content
-- Route-zone coverage and downstream Tower idle time
-- Monster backlog trend, leading-Monster Target distance, leaks, and remaining Player Health
-- Whether the owning TowerFamily identity remains readable
-
-The approved result comes from fixed-condition Play Mode evidence, not from nominal damage gain alone.
+This table becomes the durable v0.1 lookup after Task003 and Task004 accept the corresponding content.

@@ -1,18 +1,19 @@
 # Task007 - Stage1 Calibration
 
-Status: Planned
+Status: Planned; Stage1 Reference Build v0.1 and both capability Anti-patterns are defined, while execution waits for Task006 inputs
 
 Depends on: Task006 Global Progression And Stage Skeleton
 
 ## 1. Goal
 
-Calibrate Stage1 so its approved Reference Build clears reliably while a legal over-expansion of undeveloped Level 1 Archers fails for the intended reason.
+Calibrate Stage1 so its approved Reference Build clears reliably while both legal extremes fail for their intended reasons: over-expanding into undeveloped Level 1 Archers, and over-concentrating every available investment into one Archer while omitting the required second coverage point.
 
 Stage1 establishes the first complete Stage calibration method used by later Stage Tasks.
 
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/03_PlayerSystem.md`
 - `Doc/System/05_MapSystem.md`
@@ -28,7 +29,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 | Derived Total Draft | 6 | Reference Build cost, formalized by Task006 |
 | Reference Build | Two Archers; one L3 with one Basic and one Behaviour, one L1 | Stage Design Blueprint v0.1 |
 | Required Capability | Concentrated growth plus a second coverage point | Stage Design Blueprint |
-| Anti-pattern | Over-expand with undeveloped L1 Archers instead of creating the required L3 core | Stage Design Blueprint |
+| Anti-patterns | Over-expand with undeveloped L1 Archers; or fully concentrate into one Archer without the second coverage point | Stage Design Blueprint |
 
 ## 4. In Scope
 
@@ -37,7 +38,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 - First Wave delay, Wave delay, and Spawn Interval
 - Stage1 maximum health if required
 - Local Stage1 route or placement refinement
-- Reference Build and Anti-pattern runs
+- Reference Build and both legal Anti-pattern runs
 - Stage duration and Draft timing
 
 ## 5. Out Of Scope
@@ -55,8 +56,9 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 4. Preserve combat after the sixth Draft.
 5. Confirm the Reference Build clears with deliberate margin.
 6. Run the legal L1 Archer over-expansion Anti-pattern.
-7. Adjust Stage-local Wave or Map pressure one axis at a time.
-8. Record the accepted Stage1 baseline.
+7. Run the Task006-confirmed legal single-Archer concentration Anti-pattern using the same total Draft budget.
+8. Adjust Stage-local Wave or Map pressure one axis at a time.
+9. Record the accepted Stage1 baseline.
 
 ## 7. Required Measurements
 
@@ -67,7 +69,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 - Final Player Health
 - Last Draft to final resolution time
 - Reference Build result
-- Anti-pattern failure point and reason
+- Each Anti-pattern's failure point and capability gap
 
 ## 8. Ownership
 
@@ -99,7 +101,7 @@ Codex prepares the first Stage calibration table:
 - Author the Stage1 MonsterWaveConfig.
 - Place the fixed Reference Build.
 - Record every Draft opportunity and its timing.
-- Run the Reference Build and Anti-pattern.
+- Run the Reference Build and both legal Anti-patterns.
 - Record final health, leaks, Stage duration, and failure reason.
 - Revalidate the route after any Map change.
 
@@ -108,6 +110,7 @@ Codex prepares the first Stage calibration table:
 - Stage1 grants exactly six total Drafts.
 - The approved Reference Build clears consistently.
 - The legal L1 Archer over-expansion Anti-pattern fails because of insufficient developed output.
+- The legal single-Archer concentration Anti-pattern fails because it omits the required second coverage point, not because concentrated investment receives a hidden penalty.
 - Failure is not caused by an invalid route or missing placement.
 - The final Draft has enough remaining combat to matter.
 - No global baseline is changed solely to repair Stage1.
@@ -115,7 +118,7 @@ Codex prepares the first Stage calibration table:
 ## 13. Validation
 
 - Reference Build Play Mode runs
-- Anti-pattern Play Mode runs
+- Over-expansion and single-Archer concentration Play Mode runs
 - Draft-count and timing review
 - Map route validation
 - StageDefinition and MonsterWaveConfig validation

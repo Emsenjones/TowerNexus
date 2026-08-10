@@ -6,11 +6,12 @@ Depends on: Task009 Stage3 Calibration
 
 ## 1. Goal
 
-Calibrate Stage4 so Drone pursuit answers expanded route pressure and larger placement footprints without making fixed Towers irrelevant.
+Calibrate Stage4 so Drone pursuit answers expanded route pressure and larger placement footprints without making fixed Towers irrelevant. A legal single-Tower or local-cluster overinvestment must still expose its missing spatial coverage.
 
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/03_PlayerSystem.md`
 - `Doc/System/05_MapSystem.md`
@@ -63,7 +64,8 @@ First-pass inputs:
 4. Preserve useful roles for Archer, Cannon, and Magic.
 5. Test a Codex-proposed viable alternative.
 6. Test the local-only fixed-firepower Anti-pattern.
-7. Regress Stage1-Stage3 after any global revision.
+7. Test a Task006-confirmed legal single-Tower concentration against the expanded route.
+8. Regress Stage1-Stage3 after any global revision.
 
 ## 7. Required Measurements
 
@@ -72,7 +74,7 @@ First-pass inputs:
 - Draft and Wave timing
 - Peak Monsters, leaks, and final Player Health
 - Reference and alternative result
-- Anti-pattern failure reason
+- Each Anti-pattern's failure reason and uncovered route segment
 
 ## 8. Ownership
 
@@ -103,7 +105,7 @@ Codex prepares:
 - Confirm the Stage4 Blueprint contract and Task001/Task006-derived inputs.
 - Assign the approved Stage4 Map, Wave, and Draft pools.
 - Author the Stage4 MonsterWaveConfig.
-- Place the Reference, alternative, and Anti-pattern builds.
+- Place the Reference, alternative, local fixed-firepower, and single-Tower concentration builds.
 - Record Drone launch, pursuit, and active time.
 - Validate large-footprint placement and route preservation.
 - Rerun Stage1-Stage3 after global changes.
@@ -115,11 +117,12 @@ Codex prepares:
 - Fixed Towers retain meaningful value.
 - Large footprints remain legally deployable.
 - The Anti-pattern fails because of insufficient spatial coverage.
+- A fully invested single Tower does not clear solely through Upgrade magnitude when the expanded route requires additional coverage.
 - Stage1-Stage3 remain accepted.
 
 ## 13. Validation
 
-- Reference, alternative, and Anti-pattern Play Mode runs
+- Reference, alternative, local fixed-firepower, and single-Tower concentration Play Mode runs
 - Drone lifecycle observation
 - Large-footprint Reference and alternative placement validation
 - Draft-count review

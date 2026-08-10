@@ -6,13 +6,14 @@ Depends on: Task007 Stage1 Calibration
 
 ## 1. Goal
 
-Calibrate Stage2 so Archer and Cannon role complement produces the intended clear capability while unfocused horizontal growth fails.
+Calibrate Stage2 so Archer and Cannon role complement produces the intended clear capability while both unfocused horizontal growth and one-Tower over-concentration without role complement fail.
 
 Stage2 introduces a second TowerFamily without erasing the Stage1 lesson of concentrated investment.
 
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/03_PlayerSystem.md`
 - `Doc/System/05_MapSystem.md`
@@ -46,6 +47,7 @@ First-pass inputs:
 - Wave and Spawn timing
 - Local Stage2 Map refinement
 - Reference, proposed-alternative, and Anti-pattern runs
+- A Task006-confirmed legal one-Tower concentration run
 - Stage1 regression after any global revision
 
 ## 5. Out Of Scope
@@ -61,9 +63,10 @@ First-pass inputs:
 2. Confirm the Task006-derived Draft count.
 3. Tune Wave content to expose range and cadence complement.
 4. Let Codex propose and test at least one coherent alternative build.
-5. Test the approved Anti-pattern.
-6. Adjust one Stage-local pressure axis at a time.
-7. Rerun Stage1 if any global value changes.
+5. Test the approved undeveloped horizontal-growth Anti-pattern.
+6. Test a legal one-Tower concentration that omits the Archer/Cannon complement.
+7. Adjust one Stage-local pressure axis at a time.
+8. Rerun Stage1 if any global value changes.
 
 ## 7. Required Measurements
 
@@ -72,7 +75,7 @@ First-pass inputs:
 - Peak simultaneous Monsters
 - Leaks and final Player Health
 - Reference and alternative build result
-- Anti-pattern failure reason
+- Each Anti-pattern's failure reason and missing role
 - Last Draft to Stage end
 
 ## 8. Ownership
@@ -106,7 +109,7 @@ The same proposal records one coherent alternative Build and its expected margin
 - Confirm the Stage2 Blueprint contract and Task006-derived inputs.
 - Assign the approved Stage2 Map, Wave, and Draft pools.
 - Author the Stage2 MonsterWaveConfig.
-- Place the Reference, alternative, and Anti-pattern builds.
+- Place the Reference, alternative, horizontal-growth, and one-Tower concentration builds.
 - Record Draft timing, leaks, health, and Stage duration.
 - Revalidate route and placement after Map changes.
 - Rerun Stage1 after global changes.
@@ -118,11 +121,12 @@ The same proposal records one coherent alternative Build and its expected margin
 - Archer and Cannon have understandable complementary value.
 - At least one viable alternative exists.
 - The Anti-pattern fails for the intended capability gap.
+- Concentrated investment receives no hidden penalty; its test fails only when the missing TowerFamily role matters.
 - Stage1 remains accepted.
 
 ## 13. Validation
 
-- Reference, alternative, and Anti-pattern Play Mode runs
+- Reference, alternative, horizontal-growth, and one-Tower concentration Play Mode runs
 - Stage1 regression
 - Draft-count review
 - Map route validation

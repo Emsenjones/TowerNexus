@@ -1,6 +1,6 @@
 # Task005 - Monster Roster Baseline
 
-Status: Planned
+Status: Planned; the Task002 Reference Monster is frozen, while additional roster roles and Play Mode acceptance remain pending
 
 Depends on: Task002 Base Combat baseline; Task003 and Task004 for regression coverage
 
@@ -13,6 +13,7 @@ The first pass should use maximum health as the primary differentiation axis and
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/07_MonsterSystem.md`
 - `Doc/System/14_EffectSystem.md`
 - `Doc/System/15_BuffSystem.md`
@@ -44,6 +45,8 @@ The first pass should use maximum health as the primary differentiation axis and
 5. Keep movement speed common for the first pass.
 6. Introduce a speed variant only if one Stage target requires it.
 7. Regress Base, Behaviour, and Elemental interactions.
+
+The higher-health Monsters used to prevent measurement ceilings in Task003 or Task004 are calibration fixtures, not automatically accepted roster roles. A fixture becomes roster content only when this Task gives it a named tactical purpose and accepts it through the full role comparison.
 
 ## 6. Required Measurements
 
@@ -90,6 +93,7 @@ Codex prepares the first-pass Monster table from the accepted Reference Monster 
 ## 11. Acceptance Criteria
 
 - One stable Reference Monster remains available.
+- Task003 and Task004 calibration fixtures do not silently replace the Reference Monster or enter the Stage roster.
 - Every additional Monster role has a clear reason to exist.
 - Maximum health produces understandable survival tiers.
 - Movement-speed differences are deliberate rather than incidental.

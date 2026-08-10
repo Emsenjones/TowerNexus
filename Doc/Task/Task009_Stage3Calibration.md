@@ -6,11 +6,12 @@ Depends on: Task008 Stage2 Calibration
 
 ## 1. Goal
 
-Calibrate Stage3 so Magic's route-adjacent persistent contact and wider multi-zone coverage become necessary parts of a coherent build.
+Calibrate Stage3 so Magic's route-adjacent persistent contact and wider multi-zone coverage become necessary parts of a coherent build. Concentrating all available growth into one local Magic position must not replace the required wider coverage.
 
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/03_PlayerSystem.md`
 - `Doc/System/05_MapSystem.md`
@@ -61,7 +62,7 @@ First-pass inputs:
 3. Tune Monster movement and Wave timing through Magic's intended contact zone.
 4. Maintain meaningful pressure outside that local zone.
 5. Test a Codex-proposed viable alternative.
-6. Test the single-zone overconcentration Anti-pattern.
+6. Test the Task006-confirmed legal single-zone overconcentration Anti-pattern, including its one-Tower concentration form when the pool permits it.
 7. Regress earlier Stages after any global revision.
 
 ## 7. Required Measurements
@@ -71,7 +72,7 @@ First-pass inputs:
 - Peak Monsters and leaks
 - Coverage outside the primary Magic zone
 - Reference and alternative result
-- Anti-pattern failure reason
+- Anti-pattern failure reason and uncovered route zone
 - Final Player Health
 
 ## 8. Ownership
@@ -103,7 +104,7 @@ Codex prepares:
 - Confirm the Stage3 Blueprint contract and Task006-derived inputs.
 - Assign the approved Stage3 Map, Wave, and Draft pools.
 - Author the Stage3 MonsterWaveConfig.
-- Place the Reference, alternative, and Anti-pattern builds.
+- Place the Reference, alternative, and legal single-zone concentration builds.
 - Record Magic contact time and wider route coverage.
 - Record Draft timing, leaks, health, and Stage duration.
 - Rerun Stage1-Stage2 after global changes.
@@ -115,6 +116,7 @@ Codex prepares:
 - The Stage requires more than one useful coverage zone.
 - A coherent alternative remains viable.
 - The Anti-pattern fails because of under-coverage.
+- Additional Upgrade power in the local Magic zone does not receive a hidden penalty and cannot substitute for an uncovered route zone.
 - Stage1 and Stage2 remain accepted.
 
 ## 13. Validation
