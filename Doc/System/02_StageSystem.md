@@ -17,6 +17,7 @@ It owns:
 - Distribution of the selected MonsterWaveConfig
 - Distribution of the selected Player maximum health
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
+- Distribution of the Stage Upgrade pool as Tower level-eligibility authoring
 - Establishment of a fresh battle-local Player runtime for the selected Stage
 - Establishment of a prepared Stage boundary before battle gameplay begins
 - Completion and replacement of Stage-composed runtime content
@@ -49,6 +50,10 @@ StageDefinition references content owned by other systems. It does not duplicate
 
 Because every fresh Stage battle begins with one Initial Tower Draft, the Tower Draft Pool must contain at least one valid TowerDefinition. A Stage with no valid Initial Tower Draft candidate is not playable and cannot proceed to Monster Wave execution.
 
+The Tower Upgrade Draft Pool also authors each TowerFamily's maximum reachable level for this Stage. The maximum is the highest Required Tower Level among that family's Stage-allowed Upgrades, clamped by the supported and TowerDefinition-configured maximums. A family with no Stage-allowed Upgrade remains at Level 1.
+
+Every level from 2 through the Stage-authored maximum must make at least one Upgrade newly eligible at exactly that level. A gap is invalid composition because it would permit a Level Up with no newly accessible Stage content.
+
 Introduction content explicitly authors presentation for this Stage. Introduced Towers must be members of the same Stage's Tower Draft Pool, and introduced Tower Upgrades must be members of the same Stage's Tower Upgrade Draft Pool. Stage System does not calculate introduction content by comparing adjacent Stages.
 
 ---
@@ -67,6 +72,7 @@ Receive Selected StageDefinition
     -> Supply MonsterWaveConfig To Monster System
     -> Supply Player Max Health To Player System
     -> Supply Draft Pools To Draft System
+    -> Supply Stage Upgrade Pool To Tower Upgrade System
     -> Initialize Fresh Player Battle-Local State At Full Health
     -> Confirm No Deferred Release
     -> Commit Exact Staged Camera Identity And Default Pose
@@ -102,7 +108,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 | Monster System | Active Map and MonsterWaveConfig | Wave timing, spawning, pathfinding, movement, and resolution |
 | Draft System | Tower and Tower Upgrade pools | Candidate generation, reservation, sampling, and results |
 | Player System | Player Max Health and fresh Stage-battle initialization | Applied maximum health, current health, level progress, level-up, and defeat state |
-| Tower Upgrade System | No direct runtime mutation | Upgrade schema, eligibility, and application |
+| Tower Upgrade System | Stage Upgrade pool as level-eligibility authoring | Stage-bound level cap, Upgrade schema, eligibility, and application |
 | Tower Placement System | Active Map availability | Placement, occupancy commit, and topology requests |
 | Camera System | Exact Active Map, authored 3D boundary, and authored default pose | Initial framing, pan input, and enforcement of Camera movement bounds |
 
@@ -122,6 +128,8 @@ Stage validation should report at minimum:
 - Null or duplicate TowerUpgradeDefinition references
 - Referenced definitions that fail owner-system validation
 - Tower Upgrade content whose TowerFamily cannot be represented by the Stage Tower pool when that relationship is required
+- Required Tower Level outside the supported or represented TowerDefinition progression
+- Missing newly eligible Upgrade content at any level from Level 2 through a TowerFamily's Stage maximum
 - Introduction Tower content outside the Stage Tower Draft Pool
 - Introduction Upgrade content outside the Stage Tower Upgrade Draft Pool
 - Null or duplicate introduction content
@@ -143,6 +151,7 @@ Current scope includes:
 - One valid authored 3D Camera movement boundary per Map template
 - One positive Player Max Health value per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
+- Stage-derived per-TowerFamily level caps with continuous unlock paths
 - At least one valid TowerDefinition for the Initial Tower Draft
 - Optional Stage Introduction content
 - Composition validation and pre-battle distribution

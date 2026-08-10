@@ -40,14 +40,12 @@ public static class TowerRuntimeStatResolver
             }
         }
 
-        int basicDamage = towerInstance != null ? towerInstance.BasicDamage : 0;
-
         return new ResolvedTowerCombatStats(
             Mathf.Max(0f, baseStats.AttackRange + attackRangeDelta),
             Mathf.Max(
                 MinimumAttackCycleDuration,
                 baseStats.AttackCycleDuration + attackCycleDurationDelta),
-            Mathf.Max(0, basicDamage + Mathf.RoundToInt(damageBonus)),
+            Mathf.Max(0, baseStats.AttackDamage + Mathf.RoundToInt(damageBonus)),
             Mathf.Max(0f, baseStats.MagicOrbRotationSpeed + magicOrbRotationSpeedDelta),
             Mathf.Max(
                 1,

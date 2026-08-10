@@ -212,6 +212,8 @@ The same identity must not appear twice in one displayed Draft set. Removing a s
 
 If no Tower Upgrade candidates exist, available Tower Draft candidates may still form the displayed choices. If fewer distinct eligible identities exist than the configured choice count, the Draft shows only the available distinct identities rather than inventing invalid choices.
 
+Raising a Tower level may make additional Stage-allowed Upgrade identities eligible for later candidate generation. It does not guarantee that any newly eligible identity appears in the next or a later Draft. Sampling risk remains part of the battle, while Stage authoring and Tower Upgrade System prevent a level transition that unlocks no possible Stage content.
+
 ---
 
 # 8. Selection And Consumption Boundary
@@ -279,6 +281,7 @@ Current scope includes:
 - Equal weight per internal candidate entry
 - Tower-instance-weighted Upgrade candidates
 - Pending Upgrade reservation
+- Rogue-like sampling without guaranteed post-Level-Up offers
 - Same-round displayed deduplication
 - Held Tower and Tower Upgrade results
 - Draft-owned battle-simulation pause while the Draft Window is open

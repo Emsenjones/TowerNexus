@@ -384,6 +384,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a91d0412b85f4f04ba6dd9f2ff12e105, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ArcProjectileCombatBehaviour
+  baseAttackDamage: 5
   attackRange: 3
   attackCycleDuration: 3.5
   targetSelectionType: 1

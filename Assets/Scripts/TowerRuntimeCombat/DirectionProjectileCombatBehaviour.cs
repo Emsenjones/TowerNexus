@@ -53,7 +53,10 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
 
     protected override TowerCombatBaseStats CreateBaseStats()
     {
-        return new TowerCombatBaseStats(BaseAttackRange, BaseAttackCycleDuration);
+        return new TowerCombatBaseStats(
+            BaseAttackDamage,
+            BaseAttackRange,
+            BaseAttackCycleDuration);
     }
 
     protected override bool IsSubtypeConfigurationValid()

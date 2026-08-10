@@ -605,6 +605,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a91d0412b85f4f04ba6dd9f2ff12e106, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbCombatBehaviour
+  baseAttackDamage: 3
   attackRange: 1.5
   attackCycleDuration: 20
   targetSelectionType: 1

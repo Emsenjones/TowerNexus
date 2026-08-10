@@ -31,6 +31,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         }
 
         return new TowerCombatBaseStats(
+            BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration,
             droneBatteryDuration: batteryDuration,
@@ -89,22 +90,20 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
     protected override void OnResolvedStatsChanged(
         ResolvedTowerCombatStats previousStats,
         ResolvedTowerCombatStats currentStats,
-        TowerUpgradeDefinition sourceUpgrade,
-        bool isLevelChange)
+        TowerUpgradeDefinition sourceUpgrade)
     {
-        bool refreshDamage = isLevelChange
-            ? previousStats.AttackDamage != currentStats.AttackDamage
-            : UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.DamageBonus);
-        bool refreshAttackRange = !isLevelChange &&
-            UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.AttackRange);
-        bool refreshBattery = !isLevelChange &&
-            UpgradeIncludesBasicStat(
-                sourceUpgrade,
-                TowerUpgradeBasicStatType.DroneBatteryDuration);
-        bool refreshBurstCooldown = !isLevelChange &&
-            UpgradeIncludesBasicStat(
-                sourceUpgrade,
-                TowerUpgradeBasicStatType.DroneBurstCooldown);
+        bool refreshDamage = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.DamageBonus);
+        bool refreshAttackRange = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.AttackRange);
+        bool refreshBattery = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.DroneBatteryDuration);
+        bool refreshBurstCooldown = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.DroneBurstCooldown);
         DroneStatRefresh refresh = new DroneStatRefresh(
             refreshDamage,
             currentStats.AttackDamage,

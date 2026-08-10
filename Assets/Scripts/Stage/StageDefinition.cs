@@ -153,6 +153,8 @@ public class StageDefinition : ScriptableObject
     {
         HashSet<TowerDefinition> configuredTowers = new HashSet<TowerDefinition>();
         HashSet<TowerFamily> configuredTowerFamilies = new HashSet<TowerFamily>();
+        Dictionary<TowerFamily, List<TowerDefinition>> configuredTowersByFamily =
+            new Dictionary<TowerFamily, List<TowerDefinition>>();
 
         if (towerDraftPool == null)
         {
@@ -179,6 +181,18 @@ public class StageDefinition : ScriptableObject
                 }
 
                 configuredTowerFamilies.Add(towerDefinition.TowerFamily);
+
+                if (!configuredTowersByFamily.TryGetValue(
+                        towerDefinition.TowerFamily,
+                        out List<TowerDefinition> familyDefinitions))
+                {
+                    familyDefinitions = new List<TowerDefinition>();
+                    configuredTowersByFamily.Add(
+                        towerDefinition.TowerFamily,
+                        familyDefinitions);
+                }
+
+                familyDefinitions.Add(towerDefinition);
 
                 if (!towerDefinition.IsValid())
                 {
@@ -227,6 +241,46 @@ public class StageDefinition : ScriptableObject
                     $"Tower Upgrade definition '{upgradeDefinition.name}' targets " +
                     $"TowerFamily '{upgradeDefinition.TowerFamily}', which is not represented " +
                     "by the Stage Tower Draft pool.");
+            }
+        }
+
+        Dictionary<TowerFamily, int> stageMaximumTowerLevels =
+            new Dictionary<TowerFamily, int>();
+
+        if (!TowerUpgradeSystem.TryResolveStageMaximumTowerLevels(
+                towerUpgradeDraftPool,
+                stageMaximumTowerLevels,
+                out string levelRuleFailureReason))
+        {
+            result.AddError(
+                $"Tower Upgrade Draft pool cannot establish Stage Tower Level rules: " +
+                levelRuleFailureReason);
+            return;
+        }
+
+        foreach (KeyValuePair<TowerFamily, int> pair in stageMaximumTowerLevels)
+        {
+            if (!configuredTowersByFamily.TryGetValue(
+                    pair.Key,
+                    out List<TowerDefinition> familyDefinitions))
+            {
+                continue;
+            }
+
+            for (int i = 0; i < familyDefinitions.Count; i++)
+            {
+                TowerDefinition towerDefinition = familyDefinitions[i];
+                int maximumConfiguredLevel = towerDefinition.GetMaxConfiguredLevel();
+
+                if (maximumConfiguredLevel >= pair.Value)
+                {
+                    continue;
+                }
+
+                result.AddError(
+                    $"Tower definition '{towerDefinition.name}' only configures through " +
+                    $"Level {maximumConfiguredLevel}, but Stage Upgrade content for " +
+                    $"TowerFamily '{pair.Key}' requires Level {pair.Value}.");
             }
         }
     }

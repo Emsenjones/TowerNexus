@@ -62,12 +62,14 @@ The user held route and placement consistent within each comparison. Exact deplo
 
 ### 6.1 Shared Tower Values
 
-| Tower | Level 1 Damage | Attack Range | Attack Cycle Duration | Target Selection |
+| Tower | Base Attack Damage | Attack Range | Attack Cycle Duration | Target Selection |
 |---|---:|---:|---:|---|
 | Archer | `2` | `2` | `0.85s` | Lowest Health |
 | Cannon | `5` | `3` | `3.5s` | Highest Health |
 | Magic | `3` | `1.5` | `20s` | Baseline contact behavior does not require a release target |
 | Drone | `1` | `4` | `10s` | Lowest Health |
+
+These are the no-Upgrade values authored by each Tower runtime template. Base Attack Damage is one TowerFamily baseline shared by every Tower level; Tower Level changes model presentation and Upgrade eligibility without replacing this value.
 
 ### 6.2 Archer Projectile
 
@@ -144,7 +146,7 @@ No Tower was accepted as universally superior. Cannon retained one-hit power and
 | Tower Runtime Combat | Attack execution and semantic timing contracts |
 | Monster content | Frozen Reference health, movement, and presentation |
 | Task002 | Accepted `Base Combat v0.1` parameter and result record |
-| Task003 | L2/L3 growth plus Basic and Behaviour Upgrade calibration on top of this baseline |
+| Task003 | Required-Level plus Basic and Behaviour Upgrade calibration on top of this baseline |
 
 ## 9. Acceptance
 
@@ -164,6 +166,8 @@ No Tower was accepted as universally superior. Cannon retained one-hit power and
 
 ## 11. Revision Policy
 
-Task003 and later Tasks must keep these Level 1 values fixed by default. L2/L3 data, Upgrade deltas, and Behaviour packages are the first calibration levers for later content; the Base Tower must not be changed merely to repair one Upgrade.
+Task003 and later Tasks must keep this Level 1 test baseline fixed by default. Base Attack Damage is authored once by the Tower runtime template rather than repeated in TowerLevelConfig. Required-Level gates, Upgrade deltas, and Behaviour packages are the first calibration levers for later content; the Base Tower must not be changed merely to repair one Upgrade.
+
+This ownership migration is not a `Base Combat` value revision, but it must rerun the Task002 Base Combat regression because the resolved-damage path changes.
 
 If later evidence proves that the Level 1 baseline itself is structurally invalid, the change must be named as a `Base Combat` revision. The revised Tower must rerun the Task002 Straight comparison, relevant route regression, and downstream Task003 checks before replacing `Base Combat v0.1`.

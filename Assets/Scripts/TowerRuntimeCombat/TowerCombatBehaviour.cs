@@ -9,6 +9,9 @@ using Random = UnityEngine.Random;
 public abstract class TowerCombatBehaviour : MonoBehaviour
 {
     [TitleGroup("Core")]
+    [MinValue(0)]
+    [SerializeField] private int baseAttackDamage = 1;
+    [TitleGroup("Core")]
     [MinValue(0f)]
     [SerializeField] private float attackRange = 1f;
     [TitleGroup("Core")]
@@ -51,6 +54,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     public TowerAttackState AttackState => attackState;
     public bool IsAttacking => attackState != TowerAttackState.Idle;
     public bool IsBattleActive => isBattleActive;
+    public int BaseAttackDamage => baseAttackDamage;
     public float BaseAttackRange => attackRange;
     public float BaseAttackCycleDuration => attackCycleDuration;
     public float CurrentResolvedAttackRange => ResolveCombatStats().AttackRange;
@@ -150,6 +154,14 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     public bool IsAuthoredConfigurationValid()
     {
+        if (baseAttackDamage < 0)
+        {
+            Debug.LogWarning(
+                $"{GetType().Name} on '{name}' is invalid: base attack damage cannot be negative.",
+                this);
+            return false;
+        }
+
         if (attackRange < 0f)
         {
             Debug.LogWarning($"{GetType().Name} on '{name}' is invalid: attack range cannot be negative.", this);
@@ -237,8 +249,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     protected virtual void OnResolvedStatsChanged(
         ResolvedTowerCombatStats previousStats,
         ResolvedTowerCombatStats currentStats,
-        TowerUpgradeDefinition sourceUpgrade,
-        bool isLevelChange)
+        TowerUpgradeDefinition sourceUpgrade)
     {
     }
 
@@ -903,7 +914,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         UnsubscribeFromRuntimeNotifications();
         subscribedUpgradeTowerInstance = towerInstance;
         subscribedUpgradeTowerInstance.OnUpgradeRecorded += HandleUpgradeRecorded;
-        subscribedUpgradeTowerInstance.OnLevelChanged += HandleLevelChanged;
     }
 
     private void UnsubscribeFromRuntimeNotifications()
@@ -911,7 +921,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         if (subscribedUpgradeTowerInstance != null)
         {
             subscribedUpgradeTowerInstance.OnUpgradeRecorded -= HandleUpgradeRecorded;
-            subscribedUpgradeTowerInstance.OnLevelChanged -= HandleLevelChanged;
         }
 
         subscribedUpgradeTowerInstance = null;
@@ -930,19 +939,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
                TryValidateExplicitOwner();
     }
 
-    private void HandleLevelChanged(
-        TowerInstance sourceTower,
-        int previousLevel,
-        int currentLevel)
-    {
-        if (!CanHandleNotification(sourceTower) || previousLevel == currentLevel)
-        {
-            return;
-        }
-
-        RefreshResolvedStats(sourceUpgrade: null, isLevelChange: true);
-    }
-
     private void HandleUpgradeRecorded(
         TowerInstance sourceTower,
         TowerUpgradeDefinition upgradeDefinition)
@@ -955,7 +951,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         switch (upgradeDefinition.UpgradeLayer)
         {
             case TowerUpgradeLayer.Basic:
-                RefreshResolvedStats(upgradeDefinition, isLevelChange: false);
+                RefreshResolvedStats(upgradeDefinition);
                 break;
             case TowerUpgradeLayer.Behaviour:
                 OnBehaviourPackageRecorded(upgradeDefinition);
@@ -965,28 +961,22 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         }
     }
 
-    private void RefreshResolvedStats(
-        TowerUpgradeDefinition sourceUpgrade,
-        bool isLevelChange)
+    private void RefreshResolvedStats(TowerUpgradeDefinition sourceUpgrade)
     {
         ResolvedTowerCombatStats previousStats = cachedResolvedStats;
         ResolvedTowerCombatStats currentStats =
             TowerRuntimeStatResolver.Resolve(towerInstance, CreateBaseStats());
         cachedResolvedStats = currentStats;
 
-        bool refreshAttackRange = isLevelChange
-            ? !Mathf.Approximately(previousStats.AttackRange, currentStats.AttackRange)
-            : UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.AttackRange);
-        bool refreshAttackCycleDuration = isLevelChange
-            ? !Mathf.Approximately(
-                previousStats.AttackCycleDuration,
-                currentStats.AttackCycleDuration)
-            : UpgradeIncludesBasicStat(
-                sourceUpgrade,
-                TowerUpgradeBasicStatType.AttackCycleDuration);
-        bool refreshDamage = isLevelChange
-            ? previousStats.AttackDamage != currentStats.AttackDamage
-            : UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.DamageBonus);
+        bool refreshAttackRange = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.AttackRange);
+        bool refreshAttackCycleDuration = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.AttackCycleDuration);
+        bool refreshDamage = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.DamageBonus);
 
         if (refreshAttackCycleDuration)
         {
@@ -1023,8 +1013,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         OnResolvedStatsChanged(
             previousStats,
             currentStats,
-            sourceUpgrade,
-            isLevelChange);
+            sourceUpgrade);
     }
 
     private void RefreshAttackCycleRatio(

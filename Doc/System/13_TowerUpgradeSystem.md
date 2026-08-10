@@ -11,6 +11,7 @@ Tower Upgrade System owns battle-local growth of individual Tower instances.
 It owns:
 
 - Tower level-up eligibility and application
+- Stage-bound per-TowerFamily maximum level resolution
 - TowerUpgradeDefinition schema
 - Required Tower Level and Upgrade Layer rules
 - Per-Tower applied Upgrade state
@@ -29,18 +30,22 @@ It does not own Draft generation, placement intent detection, UI feedback, comba
 
 Tower growth has two separate surfaces:
 
-1. Tower Level: small base growth, level-model change, and content unlocks.
+1. Tower Level: level-model change and Stage-authorized content unlocks.
 2. Tower Upgrades: the main source of stat, Behaviour, and Elemental build identity.
 
 The intended progression is:
 
 ```text
-Base Stat Growth
+Stage-Authorized Tower Level
+    -> Newly Eligible Upgrade Content
+    -> Basic Stat Specialization
     -> Attack Behaviour Evolution
     -> Elemental Strategy
 ```
 
 The current maximum Tower level is three.
+
+Tower Level v0.1 does not directly change damage, Attack Range, Attack Cycle Duration, or another combat stat. Direct combat growth comes from applied Tower Upgrades.
 
 ---
 
@@ -51,18 +56,22 @@ TowerDefinition owns ordered TowerLevelConfig data. Tower Upgrade System owns ap
 A level-up request is valid only when:
 
 - The Tower Draft TowerFamily matches the target TowerFamily.
-- The target is below maximum level.
+- The target is below the active Stage maximum for that TowerFamily.
+- The target is below the supported and TowerDefinition-configured maximums.
 - The next TowerLevelConfig exists and is valid.
 - The battle still allows the held item to be consumed.
+
+The active Stage maximum for one TowerFamily is the highest Required Tower Level among that family's Stage Upgrade pool entries. A family with no Stage-allowed Upgrade remains at Level 1. Every level from 2 through that maximum must have at least one Stage-allowed Upgrade whose Required Tower Level equals the reached level.
+
+Stage composition supplies and validates this authoring. Tower Upgrade System binds the resulting Stage level rules and remains the authority queried by preview and final application.
 
 An accepted request:
 
 1. Advances the Tower by exactly one level.
-2. Changes level-derived base values.
+2. Makes the new level's Stage-allowed Upgrade content eligible.
 3. Publishes one accepted level-change result.
 4. Allows the Tower visual owner to replace the level model.
-5. Allows combat runtime to refresh approved live values.
-6. Consumes the Tower Draft item through the calling interaction flow.
+5. Consumes the Tower Draft item through the calling interaction flow.
 
 A rejected request changes nothing and does not consume the item.
 
@@ -70,11 +79,11 @@ Base damage resolves as:
 
 ```text
 Resolved Damage
-    = Current Tower Level Basic Damage
+    = Tower Runtime Template Base Attack Damage
     + Sum Of Applied Damage Bonus Deltas
 ```
 
-Model replacement, Attack Origin resolution, pending presentation handoff, and combat refresh belong to their owning systems.
+Model replacement, Attack Origin resolution, pending presentation handoff, and Upgrade-driven combat refresh belong to their owning systems.
 
 ---
 
@@ -306,6 +315,8 @@ Tower Upgrade validation should report or reject at minimum:
 
 - Missing or invalid TowerFamily
 - Required Tower Level outside supported progression
+- Stage level progression with no newly eligible Upgrade at an intermediate level
+- Level-up request without bound Stage level rules
 - Missing or incompatible layer data
 - Package identity incompatible with TowerFamily
 - Missing required package Effect or parameter
@@ -320,6 +331,6 @@ Invalid content is an authoring error. Runtime does not silently reinterpret it 
 
 # 13. Approved Scope And Deferred Topics
 
-Current scope includes three Tower levels, Basic/Behaviour/Elemental layers, the twelve reviewed Behaviour packages, one package of each type per Tower, one Elemental Layer per Tower, per-Tower duplicate rules, and Stage-specific Upgrade pool eligibility support.
+Current scope includes three Tower levels, Stage-derived per-TowerFamily level caps, Basic/Behaviour/Elemental layers, the twelve reviewed Behaviour packages, one package of each type per Tower, one Elemental Layer per Tower, per-Tower duplicate rules, and Stage-specific Upgrade pool eligibility support.
 
 Deferred topics include prerequisites, rarity, evolution chains, Upgrade replacement, multi-element Towers, global Upgrades, specialization paths, and persistent progression.

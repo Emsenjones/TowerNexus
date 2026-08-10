@@ -13,6 +13,7 @@ This Task derives Draft budgets, exact Draft pools, Progress requirements, and s
 ## 2. Source Documents
 
 - `Doc/Balance/00_StageDesignBlueprint.md`
+- `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
 - `Doc/System/02_StageSystem.md`
 - `Doc/System/03_PlayerSystem.md`
 - `Doc/System/07_MonsterSystem.md`
@@ -42,9 +43,10 @@ Before Unity authoring, Codex prepares one reviewable row per Stage containing:
 | Required Player Level-Ups | Total Draft Opportunities minus the Initial Draft |
 | Exact Tower Draft Pool | Derive from the campaign unlock line and intended Stage build space |
 | Exact Tower Upgrade Draft Pool | Derive from required build access and Stage lesson |
+| Per-Family Stage Level Cap | Highest Required Tower Level in that family's Stage Upgrade pool, with a continuous unlock path |
 | Rough Monster Resolutions | Solve against the shared Progress sequence |
 | Last-Draft Combat Reserve | Preserve enough combat for the final choice to affect the result |
-| Candidate Solvability Rule | Add only when a required build could otherwise become unavailable through candidate generation |
+| Candidate Solvability Rule | Measure remaining opportunities and practical sampling access without guaranteeing the next offer |
 
 The table begins as a proposed numeric pass. It becomes accepted only after structural validation and user Play Mode evidence.
 
@@ -69,6 +71,8 @@ These values are the first trajectory estimate. Task006 does not treat the Progr
 
 - Reference Build Draft-cost calculation
 - Exact Tower and Tower Upgrade Draft pools
+- Per-Stage, per-TowerFamily level caps
+- Continuous Required-Level unlock paths from Level 1 through each Stage cap
 - Rough total Monster-resolution budget per Stage
 - One global `progressRequiredPerLevel` sequence
 - Cumulative Draft nodes
@@ -105,15 +109,16 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 
 1. Reconfirm the v0.1 Draft cost for all six approved Reference Builds.
 2. Propose exact Tower and Tower Upgrade Draft pools.
-3. Check that every required Reference Build remains obtainable.
-4. Choose rough Monster-resolution totals.
-5. Solve one positive global Progress Requirement sequence.
-6. Verify cumulative Draft nodes against every Stage.
-7. Author six StageDefinitions and six MonsterWaveConfig skeletons.
-8. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
-9. Reserve combat after the last intended Draft.
-10. Revalidate Task001 Reference and reasonable alternative placements against the exact pools.
-11. Validate each Stage composition without final difficulty claims.
+3. Derive every represented TowerFamily's Stage cap and validate each intermediate unlock level.
+4. Check that every required Reference Build remains obtainable.
+5. Choose rough Monster-resolution totals.
+6. Solve one positive global Progress Requirement sequence.
+7. Verify cumulative Draft nodes against every Stage.
+8. Author six StageDefinitions and six MonsterWaveConfig skeletons.
+9. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
+10. Reserve combat after the last intended Draft.
+11. Revalidate Task001 Reference and reasonable alternative placements against the exact pools.
+12. Validate each Stage composition without final difficulty claims.
 
 ## 9. Ownership
 
@@ -125,6 +130,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 | StageDefinition | Map, Wave, Draft pools, and maximum health composition |
 | MonsterWaveConfig | Ordered Wave skeleton and rough Monster totals |
 | Draft System | Candidate generation according to the authored pools and approved solvability contract |
+| Tower Upgrade System | Stage-derived Tower level cap and final level-up eligibility |
 
 ## 10. Execution Collaboration
 
@@ -141,6 +147,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Create or update Stage1-Stage6 StageDefinitions.
 - Assign the intended Map and MonsterWaveConfig to each Stage.
 - Assign the reviewed Tower and Tower Upgrade pools.
+- Confirm every represented TowerFamily's derived Stage cap and continuous Required-Level ladder.
 - Author positive Stage maximum health.
 - Create structurally valid Wave content with the rough Monster totals.
 - Verify the Initial Draft and first-Wave gate.
@@ -154,6 +161,8 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Every Stage skeleton reaches its derived Draft count in resolution-count space.
 - Six StageDefinitions reference the intended Maps, Waves, and Draft pools.
 - Every approved Reference Build is obtainable under its authored Draft structure.
+- Every allowed Tower level transition unlocks at least one Upgrade at the reached Required Tower Level.
+- Newly eligible required content has a reviewed practical chance to appear within the remaining Draft opportunities without a guaranteed next offer.
 - Stage6 retains at least one achievable matching-Element build path if Overload is mandatory.
 - Every fresh Stage begins with one Initial Tower Draft.
 - Every Stage retains a post-final-Draft validation segment.
@@ -163,6 +172,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 
 - Reference Build cost review
 - Draft-pool and candidate-solvability review
+- Per-Family Stage-cap and Required-Level continuity review
 - Cumulative Draft-node calculation review
 - Task001 Reference-placement and range/route regression
 - StageDefinition validation

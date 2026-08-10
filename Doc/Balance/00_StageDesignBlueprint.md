@@ -10,6 +10,8 @@ Status: Campaign learning arc and Stage1-Stage6 Reference Build v0.1 shapes appr
 
 This document is the durable design blueprint for the Stage1-Stage6 campaign.
 
+`01_TowerGrowthAndUpgradeIdentity.md` owns the cross-Stage interpretation of Horizontal Expansion, Vertical Investment, Immediate Conversion, and Core-versus-Support growth. This Blueprint applies that shared growth experience to individual Stage lessons and Reference Builds.
+
 It answers:
 
 - What the player should experience in each Stage
@@ -46,6 +48,8 @@ Each Draft asks the player to allocate limited growth between:
 1. Horizontal expansion through additional Towers and coverage.
 2. Vertical growth through Tower levels.
 3. Specialization through Basic, Behaviour, and later Elemental Upgrades.
+
+Tower Level is a future-eligibility investment under the approved v0.1 growth baseline. It does not directly increase combat stats. A Stage may require a Core to reach a level only when its Tower Upgrade pool provides a continuous newly eligible Upgrade path through that level.
 
 The Reference Build is the stable standard solution used to derive implementation budgets and perform controlled Stage calibration. It is not intended to be the only legal solution.
 

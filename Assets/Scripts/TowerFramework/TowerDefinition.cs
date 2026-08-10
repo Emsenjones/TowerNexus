@@ -55,6 +55,28 @@ public class TowerDefinition : ScriptableObject
         return null;
     }
 
+    public int GetMaxConfiguredLevel()
+    {
+        if (towerLevelConfigs == null)
+        {
+            return 0;
+        }
+
+        int maxLevel = 0;
+
+        for (int i = 0; i < towerLevelConfigs.Count; i++)
+        {
+            TowerLevelConfig levelConfig = towerLevelConfigs[i];
+
+            if (levelConfig != null && levelConfig.Level > maxLevel)
+            {
+                maxLevel = levelConfig.Level;
+            }
+        }
+
+        return maxLevel;
+    }
+
     public bool IsValid()
     {
         if (towerPrefab == null)

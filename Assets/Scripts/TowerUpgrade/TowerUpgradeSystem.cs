@@ -1,8 +1,150 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class TowerUpgradeSystem : MonoBehaviour
 {
-    private const int CurrentMaxTowerLevel = 3;
+    public const int SupportedMaximumTowerLevel = 3;
+
+    private readonly Dictionary<TowerFamily, int> stageMaximumTowerLevels =
+        new Dictionary<TowerFamily, int>();
+
+    public bool HasStageLevelRules { get; private set; }
+
+    public bool TryBindStageLevelRules(
+        IReadOnlyList<TowerUpgradeDefinition> upgradeDefinitions,
+        out string failureReason)
+    {
+        ClearStageLevelRules();
+
+        if (!TryResolveStageMaximumTowerLevels(
+                upgradeDefinitions,
+                stageMaximumTowerLevels,
+                out failureReason))
+        {
+            return false;
+        }
+
+        HasStageLevelRules = true;
+        failureReason = string.Empty;
+        return true;
+    }
+
+    public void ClearStageLevelRules()
+    {
+        stageMaximumTowerLevels.Clear();
+        HasStageLevelRules = false;
+    }
+
+    public int GetStageMaximumTowerLevel(TowerFamily towerFamily)
+    {
+        if (!HasStageLevelRules)
+        {
+            return 0;
+        }
+
+        return stageMaximumTowerLevels.TryGetValue(
+            towerFamily,
+            out int maximumTowerLevel)
+            ? maximumTowerLevel
+            : 1;
+    }
+
+    public static bool TryResolveStageMaximumTowerLevels(
+        IReadOnlyList<TowerUpgradeDefinition> upgradeDefinitions,
+        Dictionary<TowerFamily, int> resolvedMaximumLevels,
+        out string failureReason)
+    {
+        if (resolvedMaximumLevels == null)
+        {
+            failureReason = "Resolved maximum-level output is missing.";
+            return false;
+        }
+
+        resolvedMaximumLevels.Clear();
+
+        if (upgradeDefinitions == null)
+        {
+            failureReason = "Tower Upgrade Draft pool is null.";
+            return false;
+        }
+
+        Dictionary<TowerFamily, HashSet<int>> requiredLevelsByFamily =
+            new Dictionary<TowerFamily, HashSet<int>>();
+
+        for (int i = 0; i < upgradeDefinitions.Count; i++)
+        {
+            TowerUpgradeDefinition upgradeDefinition = upgradeDefinitions[i];
+
+            if (upgradeDefinition == null)
+            {
+                failureReason = $"Tower Upgrade Draft pool entry {i} is missing.";
+                resolvedMaximumLevels.Clear();
+                return false;
+            }
+
+            if (!upgradeDefinition.IsValid())
+            {
+                failureReason =
+                    $"Tower Upgrade definition '{upgradeDefinition.name}' failed owner validation.";
+                resolvedMaximumLevels.Clear();
+                return false;
+            }
+
+            int requiredTowerLevel = upgradeDefinition.RequiredTowerLevel;
+
+            if (!IsSupportedRequiredTowerLevel(requiredTowerLevel))
+            {
+                failureReason =
+                    $"Tower Upgrade definition '{upgradeDefinition.name}' requires " +
+                    $"Tower Level {requiredTowerLevel}, outside the supported range " +
+                    $"1-{SupportedMaximumTowerLevel}.";
+                resolvedMaximumLevels.Clear();
+                return false;
+            }
+
+            TowerFamily towerFamily = upgradeDefinition.TowerFamily;
+
+            if (!requiredLevelsByFamily.TryGetValue(
+                    towerFamily,
+                    out HashSet<int> requiredLevels))
+            {
+                requiredLevels = new HashSet<int>();
+                requiredLevelsByFamily.Add(towerFamily, requiredLevels);
+            }
+
+            requiredLevels.Add(requiredTowerLevel);
+
+            if (!resolvedMaximumLevels.TryGetValue(
+                    towerFamily,
+                    out int currentMaximum) ||
+                requiredTowerLevel > currentMaximum)
+            {
+                resolvedMaximumLevels[towerFamily] = requiredTowerLevel;
+            }
+        }
+
+        foreach (KeyValuePair<TowerFamily, int> pair in resolvedMaximumLevels)
+        {
+            HashSet<int> requiredLevels = requiredLevelsByFamily[pair.Key];
+
+            for (int level = 2; level <= pair.Value; level++)
+            {
+                if (requiredLevels.Contains(level))
+                {
+                    continue;
+                }
+
+                failureReason =
+                    $"TowerFamily '{pair.Key}' reaches Stage Tower Level {pair.Value} " +
+                    $"but no Stage Upgrade first becomes eligible at Level {level}.";
+                resolvedMaximumLevels.Clear();
+                return false;
+            }
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
 
     public bool CanLevelUpTower(
         TowerInstance targetTower,
@@ -28,8 +170,16 @@ public class TowerUpgradeSystem : MonoBehaviour
             return false;
         }
 
+        if (!HasStageLevelRules)
+        {
+            return false;
+        }
+
         int candidateNextLevel = targetTower.CurrentLevel + 1;
-        int maxAllowedLevel = Mathf.Min(targetTower.GetMaxConfiguredLevel(), CurrentMaxTowerLevel);
+        int maxAllowedLevel = Mathf.Min(
+            targetTower.GetMaxConfiguredLevel(),
+            SupportedMaximumTowerLevel,
+            GetStageMaximumTowerLevel(targetDefinition.TowerFamily));
 
         if (maxAllowedLevel <= 0 ||
             candidateNextLevel > maxAllowedLevel ||
@@ -151,8 +301,9 @@ public class TowerUpgradeSystem : MonoBehaviour
         return true;
     }
 
-    private bool IsSupportedRequiredTowerLevel(int requiredTowerLevel)
+    public static bool IsSupportedRequiredTowerLevel(int requiredTowerLevel)
     {
-        return requiredTowerLevel >= 1 && requiredTowerLevel <= CurrentMaxTowerLevel;
+        return requiredTowerLevel >= 1 &&
+               requiredTowerLevel <= SupportedMaximumTowerLevel;
     }
 }

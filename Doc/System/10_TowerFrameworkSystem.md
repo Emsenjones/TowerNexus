@@ -35,7 +35,7 @@ TowerDefinition is the reusable identity referenced by Draft, Placement, Upgrade
 | Description | Player-facing summary |
 | Icon | Player-facing Draft and UI presentation |
 | Tower Runtime Template | Reusable Tower base object |
-| Tower Level Configurations | Ordered per-level base stat and model data |
+| Tower Level Configurations | Ordered per-level identity and model data |
 
 TowerDefinition does not contain per-instance state, current targets, cooldowns, applied upgrades, active Attack Entities, or placement occupancy.
 
@@ -46,11 +46,10 @@ Each supported Tower level provides:
 | Data | Contract |
 |---|---|
 | Level | Unique positive level represented by the entry |
-| Basic Damage | Base attack damage at that level |
 | Tower Level Model | Model/presentation template used at that level |
 | Display Icon | Optional level-specific presentation |
 
-Tower level data defines base growth. TowerUpgradeDefinition defines separately acquired stat, Behaviour, and Elemental content.
+Tower level data defines progression identity and model replacement. It does not contain combat stats. TowerUpgradeDefinition defines separately acquired stat, Behaviour, and Elemental content.
 
 ---
 
@@ -197,7 +196,8 @@ Common authored data:
 
 | Data | Contract |
 |---|---|
-| Attack Range | Base acquisition and release range before level and Upgrade changes |
+| Base Attack Damage | Base damage before applied Basic Damage Bonus deltas |
+| Attack Range | Base acquisition and release range before Upgrade changes |
 | Attack Cycle Duration | Minimum duration from one successful Attack Entity release until the archetype may release again |
 | Target Selection | Selection category used by archetypes that select one Monster |
 | Release Presentation | Optional presentation played at the approved release boundary |
@@ -217,7 +217,7 @@ Magic Orb entity authoring owns base orbit, contact distance, per-member hit cou
 
 Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
 
-At release, Tower Runtime Combat combines base authoring, Tower level data, and applied Tower Upgrade state into only the runtime data relevant to the released entity. Runtime history is never stored in authored data.
+At release, Tower Runtime Combat combines base combat authoring and applied Tower Upgrade state into only the runtime data relevant to the released entity. Tower level selects presentation and Upgrade eligibility but does not alter combat values in the v0.1 growth model. Runtime history is never stored in authored data.
 
 ---
 
@@ -315,7 +315,8 @@ Tower authoring validation should report at minimum:
 - Missing Tower runtime template
 - Missing or mismatched TowerFamily archetype identity
 - Missing or duplicate Tower levels
-- Missing required level model or base damage data
+- Missing required level model
+- Invalid base combat damage
 - Missing Center Anchor or invalid Occupied Anchors
 - Missing required Attack Entity configuration
 - Non-positive or invalid base timing, range, lifetime, or capacity values
@@ -328,6 +329,6 @@ Validation reports the source content and does not silently replace the authored
 
 # 14. Approved Scope And Deferred Topics
 
-Current scope includes four TowerFamilies, four base archetypes, three projectile flight identities, level-based base data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
+Current scope includes four TowerFamilies, four base archetypes, three projectile flight identities, runtime-template base combat data, level-model data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
 
 Deferred Tower identities include support, trap, summon, resource, laser, boomerang, missile, and other archetypes that require reviewed behavior rather than expansion of one generic Tower type.

@@ -18,6 +18,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private DraftSystem draftSystem;
     [SerializeField] private TowerPlacementController towerPlacementController;
+    [SerializeField] private TowerUpgradeSystem towerUpgradeSystem;
 
     private bool hasFreshPlayerState;
     private bool isBattlePrepared;
@@ -208,6 +209,19 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         if (!towerPlacementController.BindActiveMap(activeMap))
         {
             return FailPreparation("Tower Placement binding failed.");
+        }
+
+        if (!CanContinueLifecycleOperation())
+        {
+            return FailPreparation("preparation was cancelled by a deferred release.");
+        }
+
+        if (!towerUpgradeSystem.TryBindStageLevelRules(
+                upgradePool,
+                out string levelRuleFailureReason))
+        {
+            return FailPreparation(
+                $"Tower Upgrade Stage rule binding failed: {levelRuleFailureReason}");
         }
 
         if (!CanContinueLifecycleOperation())
@@ -419,6 +433,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         towerPlacementController?.DestroyTrackedTowers();
         monsterSpawner?.ClearStageBinding();
         draftSystem?.ClearStagePools();
+        towerUpgradeSystem?.ClearStageLevelRules();
         towerPlacementController?.ClearActiveMap();
         pathfindingService?.ClearActiveMap();
         ResetResultTracking();
@@ -459,6 +474,12 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         if (!draftSystem.CanBeginBattle(out failureReason))
         {
             failureReason = $"Draft System is not ready: {failureReason}";
+            return false;
+        }
+
+        if (!towerUpgradeSystem.HasStageLevelRules)
+        {
+            failureReason = "Tower Upgrade System has no bound Stage level rules.";
             return false;
         }
 
@@ -514,6 +535,12 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         if (towerPlacementController == null)
         {
             failureReason = "Tower Placement Controller is not assigned.";
+            return false;
+        }
+
+        if (towerUpgradeSystem == null)
+        {
+            failureReason = "Tower Upgrade System is not assigned.";
             return false;
         }
 

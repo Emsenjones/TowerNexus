@@ -168,9 +168,9 @@ Elemental identity remains a live lookup at each explicitly eligible attack boun
 
 ---
 
-# 8. Accepted Tower-State Change Transaction
+# 8. Accepted Combat-Value Change Transaction
 
-After an accepted level or Tower Upgrade change, the bound runtime performs one ordered semantic transaction:
+After an accepted Basic Upgrade changes resolved combat values, the bound runtime performs one ordered semantic transaction:
 
 ```text
 Read Previous Resolved Baseline
@@ -183,7 +183,7 @@ Read Previous Resolved Baseline
 
 Committing the new baseline before entity dispatch ensures multiple accepted changes in the same frame compose from the immediately preceding state.
 
-Rejected changes and same-level no-ops create no refresh transaction.
+Rejected changes create no refresh transaction. Tower Level changes replace level presentation and eligibility state without creating a combat-value refresh transaction in the v0.1 growth model.
 
 Before dispatch, active registries are treated as stable snapshots so entity completion during refresh cannot skip another entity or mutate the iteration source.
 
@@ -371,7 +371,7 @@ Runtime validation should reject or report at minimum:
 - Missing Monster source
 - Missing required Attack Entity configuration
 - Missing active Attack Origin at release time
-- Invalid range, Attack Cycle duration, capacity, or package values
+- Invalid base damage, range, Attack Cycle duration, capacity, or package values
 - Duplicate active group identity or invalid slot membership
 - Release data that cannot satisfy its archetype contract
 

@@ -2757,7 +2757,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2576880cd6cf4c1aacbfdf6d153b0fa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLevelSystem
-  progressRequiredPerLevel: 0300000005000000070000000a0000000a0000000a0000000a0000000a0000000a0000000a000000
+  progressRequiredPerLevel: 0500000005000000070000000a0000000a0000000a0000000a0000000a0000000a0000000a000000
   currentLevel: 1
   currentProgress: 0
   currentHealth: 100
@@ -3256,6 +3256,7 @@ MonoBehaviour:
   monsterManager: {fileID: 8246104796970957583}
   draftSystem: {fileID: 2016482243056697407}
   towerPlacementController: {fileID: 5527772070008687998}
+  towerUpgradeSystem: {fileID: 3446166332166411794}
 --- !u!1 &5512136943329672488
 GameObject:
   m_ObjectHideFlags: 0
@@ -5563,7 +5564,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ExpAddController
   playerSystem: {fileID: 8439368486033747447}
-  addedProgress: 1
+  addedProgress: 2
 --- !u!114 &4303056428248239281
 MonoBehaviour:
   m_ObjectHideFlags: 0

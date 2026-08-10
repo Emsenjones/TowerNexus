@@ -33,6 +33,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         }
 
         return new TowerCombatBaseStats(
+            BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration,
             rotationSpeed,
@@ -112,8 +113,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
     protected override void OnResolvedStatsChanged(
         ResolvedTowerCombatStats previousStats,
         ResolvedTowerCombatStats currentStats,
-        TowerUpgradeDefinition sourceUpgrade,
-        bool isLevelChange)
+        TowerUpgradeDefinition sourceUpgrade)
     {
         MagicOrbGroupRuntime group = activeMagicOrbGroup;
 
@@ -122,17 +122,15 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        bool refreshDamage = isLevelChange
-            ? previousStats.AttackDamage != currentStats.AttackDamage
-            : UpgradeIncludesBasicStat(sourceUpgrade, TowerUpgradeBasicStatType.DamageBonus);
-        bool refreshRotationSpeed = !isLevelChange &&
-            UpgradeIncludesBasicStat(
-                sourceUpgrade,
-                TowerUpgradeBasicStatType.MagicOrbRotationSpeed);
-        bool refreshMaxHitCount = !isLevelChange &&
-            UpgradeIncludesBasicStat(
-                sourceUpgrade,
-                TowerUpgradeBasicStatType.MagicOrbMaxHitCount);
+        bool refreshDamage = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.DamageBonus);
+        bool refreshRotationSpeed = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.MagicOrbRotationSpeed);
+        bool refreshMaxHitCount = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.MagicOrbMaxHitCount);
 
         group.ApplyStatRefresh(new MagicOrbStatRefresh(
             refreshDamage,

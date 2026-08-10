@@ -144,9 +144,9 @@ Combat configuration follows this relationship:
 
 ```text
 TowerDefinition
-    + Per-Level Base Data
+    + Per-Level Model Data
     + Tower Runtime Template
-        + Base Combat Authoring
+        + Base Damage, Range, Cycle, And Targeting Authoring
         + Attack Entity References
 
 TowerUpgradeDefinition
@@ -217,7 +217,7 @@ It does not own Tower combat, Tower Upgrade eligibility, Map data, or pathfindin
 
 ## 4.10 Tower Framework System
 
-Owns shared Tower identity, authored base data, Tower level data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
+Owns shared Tower identity, authored base combat data, Tower level-model data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
 
 It defines what a Tower is, not how a placed Tower executes combat.
 
@@ -235,7 +235,7 @@ It does not own Tower targeting, Tower cooldowns, reusable Effect execution, Buf
 
 ## 4.13 Tower Upgrade System
 
-Owns Tower growth and upgrade definitions, eligibility, layer capacity, duplicate rules, accepted state changes, and upgrade application.
+Owns Stage-bound Tower level eligibility, Tower growth and upgrade definitions, layer capacity, duplicate rules, accepted state changes, and upgrade application.
 
 It records what a Tower has gained. Runtime owners execute the resulting combat or presentation behavior.
 
@@ -336,7 +336,7 @@ They do not store task status, concrete method names, engine lifecycle callbacks
 
 Engine-specific structures remain only when they are intentional content-authoring contracts. Stable formulas, hierarchy semantics, data schemas, and behavior flows are valid System Document content because they are required to reproduce the design.
 
-The current Balance source under `Doc/Balance/00_StageDesignBlueprint.md` describes the campaign learning arc, new content, Reference Builds, required capabilities, and expected Anti-patterns. Exact Map size, Draft budgets, placement pressure, progression, Draft pools, and Wave values are downstream implementation results derived by Task Documents and authored in their owning Unity assets. Additional balance documents are deferred until the tuning workflow and required durable content become clear.
+Balance sources under `Doc/Balance/` describe cross-Stage growth intent plus the campaign learning arc, new content, Reference Builds, required capabilities, and expected Anti-patterns. Exact Map size, Draft budgets, placement pressure, progression, Draft pools, Upgrade values, and Wave values are downstream implementation results derived by Task Documents and authored in their owning Unity assets.
 
 Task Documents under `Doc/Task/` are implementation contracts for a bounded development slice. They may contain code-level decisions and derived working values. They may be retired after durable intent or contract changes are synchronized into the owning Blueprint or System Document and accepted executable values are authored in their owning Unity assets.
 

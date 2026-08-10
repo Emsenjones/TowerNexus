@@ -15,7 +15,6 @@ public class TowerInstance : MonoBehaviour
     public TowerDefinition TowerDefinition => towerDefinition;
     public int CurrentLevel => currentLevel;
     public TowerLevelConfig CurrentLevelConfig => towerDefinition != null ? towerDefinition.GetLevelConfig(currentLevel) : null;
-    public int BasicDamage => CurrentLevelConfig != null ? CurrentLevelConfig.BasicDamage : 0;
     public IReadOnlyList<GridNodeBehaviour> OccupiedNodes => occupiedNodes;
     public IReadOnlyList<TowerUpgradeDefinition> AppliedUpgrades => upgradeState.AppliedUpgrades;
 
@@ -49,25 +48,9 @@ public class TowerInstance : MonoBehaviour
 
     public int GetMaxConfiguredLevel()
     {
-        if (towerDefinition == null || towerDefinition.TowerLevelConfigs == null)
-        {
-            return 0;
-        }
-
-        int maxLevel = 0;
-        IReadOnlyList<TowerLevelConfig> levelConfigs = towerDefinition.TowerLevelConfigs;
-
-        for (int i = 0; i < levelConfigs.Count; i++)
-        {
-            TowerLevelConfig levelConfig = levelConfigs[i];
-
-            if (levelConfig != null && levelConfig.Level > maxLevel)
-            {
-                maxLevel = levelConfig.Level;
-            }
-        }
-
-        return maxLevel;
+        return towerDefinition != null
+            ? towerDefinition.GetMaxConfiguredLevel()
+            : 0;
     }
 
     public bool CanSetLevel(int level)
