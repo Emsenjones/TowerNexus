@@ -1,12 +1,12 @@
 # Task002 - Base Tower And Reference Monster Baseline
 
-Status: Completed; `Base Combat v0.2` frozen on 2026-08-11
+Status: Completed; `Base Combat v0.3` frozen on 2026-08-12 after the Task003A structural regression
 
 Depends on: Completed Task001 Stage1 greybox Map
 
 ## 1. Goal
 
-Establish and preserve `Base Combat v0.2` for the four Level 1 Towers and one Reference Monster.
+Establish and preserve the current `Base Combat v0.3` baseline for the four Level 1 Towers and one Reference Monster while retaining prior accepted versions as historical recovery points.
 
 The frozen record provides a recovery point for later development: future Level, Upgrade, Stage, or runtime work can compare against the accepted Level 1 values instead of changing them unintentionally or losing the previous baseline.
 
@@ -30,7 +30,7 @@ The four attack strategies must remain visibly different while their same-cost c
 - L-shaped primary acceptance comparison
 - Straight low-exposure diagnostic comparison
 - U-shaped premium-position stress comparison
-- A durable freeze point for `Base Combat v0.2`
+- A durable freeze point for `Base Combat v0.3`
 
 ## 4. Out Of Scope
 
@@ -43,7 +43,7 @@ The four attack strategies must remain visibly different while their same-cost c
 - Player Progress Requirements
 - Stage Wave tuning
 
-Task003A later approved removal of gameplay Magic Orb Maximum Hit Count and replacement of Lingering Orbit. Those changes are not retroactively written into this frozen v0.2 record. After Task003A implementation, Task002 must establish `Base Combat v0.3` before Task003 Upgrade calibration begins.
+Task003A removed gameplay Magic Orb Maximum Hit Count and replaced Lingering Orbit. This Task therefore completed a named `Base Combat v0.3` revision before Task003 Upgrade calibration. The superseded v0.2 record remains in Section 11 rather than being retroactively rewritten.
 
 ## 5. Fixed Reference Run
 
@@ -64,7 +64,7 @@ Player Final Health equals the number of Monsters killed because every leak remo
 
 | Route | Test Role | Interpretation |
 |---|---|---|
-| L-shaped | Primary acceptance route | Represents the likely core-Tower placement around a strong corner and is the authoritative `Base Combat v0.2` comparison. |
+| L-shaped | Primary acceptance route | Represents the likely core-Tower placement around a strong corner and is the authoritative `Base Combat v0.3` comparison. |
 | Straight | Low-exposure diagnostic | Shows how each family performs with limited route coverage and exposes reliance on corner geometry. It is not tuned to match the L-shaped result. |
 | U-shaped | Premium-position stress | Measures the additional exposure available at a deliberately strong deployment position and reveals route-overload behavior. It is not required to produce the most kills for every family. |
 
@@ -80,7 +80,7 @@ If a U-shaped result is unusually strong, first treat it as placement identity e
 
 Kill counts are intentionally not equalized. A Tower that concentrates damage and a Tower that spreads damage may deliver comparable total value while producing different kill counts against the same fixture.
 
-## 6. Frozen Base Combat v0.2
+## 6. Frozen Base Combat v0.3
 
 ### 6.1 Shared Tower Values
 
@@ -114,14 +114,13 @@ These are the no-Upgrade values authored by each Tower runtime template. Base At
 
 | Parameter | Frozen Value |
 |---|---:|
-| Rotation Speed | `180` |
+| Rotation Speed | `90` |
 | Orbit Radius | `1` |
 | Contact Distance | `0.25` |
 | Same Target Hit Cooldown | `0.5s` |
-| Max Hit Count | `14` |
 | Max Lifetime | `18s` |
 
-The Magic Attack Cycle begins when a complete Orb group is successfully activated and runs concurrently with that group. Early Max Hit Count exhaustion therefore produces a longer inactive remainder before the next fixed release boundary. Per-target contact cooldown remains unchanged; no route-shape detection or shared Global Target Cooldown is used.
+The Magic Attack Cycle begins when a complete Orb group is successfully activated and runs concurrently with that group. Normal Orb completion is governed by the shared maximum lifetime; gameplay hit-count exhaustion no longer exists. Per-target contact cooldown remains unchanged; no route-shape detection or shared Global Target Cooldown is used.
 
 ### 6.5 Drone And Drone Projectile
 
@@ -147,44 +146,44 @@ Every accepted run used the fixture in Section 5. Integrity checks confirmed tha
 
 ### 7.1 L-shaped Primary Acceptance
 
-| Tower | Accepted Runs | Killed | Average Effective Damage | Average Damage Coverage | Average Leaked Remaining HP |
-|---|---:|---:|---:|---:|---:|
-| Archer | `1` | `5 / 40` | `232` | `48.33%` | `7.086` |
-| Cannon | `2` | `10 / 40` | `204` | `42.50%` | `9.200` |
-| Magic | `2` | `2 / 40` | `238.5` | `49.69%` | `6.356` |
-| Drone | `2` | `7 / 40` | `203.5` | `42.40%` | `8.379` |
+| Tower | Accepted Runs | Killed | Average Effective Damage | Average Damage Coverage | Average Leaked Remaining HP | Terminal State |
+|---|---:|---:|---:|---:|---:|---|
+| Archer | `1` | `5 / 40` | `228` | `47.50%` | `7.200` | Victory |
+| Cannon | `1` | `10 / 40` | `204` | `42.50%` | `9.200` | Victory |
+| Magic | `2` | `0 / 40` | `216` | `45.00%` | `6.600` | Defeat |
+| Drone | `1` | `7 / 40` | `205` | `42.71%` | `8.333` | Victory |
 
-The L-shaped effective-damage range is `203.5` to `238.5`. Cannon's Base Attack Damage revision from `5` to `6` moved it from the superseded `161` damage diagnostic to an accepted repeatable `204` damage result without changing its Range or Attack Cycle Duration.
+The L-shaped effective-damage range is `204` to `228`, so the four naked Towers remain in one broad primary-acceptance band. The first post-Task003A Magic diagnostic retained Rotation Speed `180` and produced `444` Effective Damage. That structural outlier led to the isolated `180 -> 90` revision; two subsequent L-shaped runs both produced `216` Effective Damage and established the accepted Magic baseline.
 
 ### 7.2 Straight Low-exposure Diagnostic
 
 | Tower | Killed | Effective Damage | Damage Coverage | Average Leaked Remaining HP | Terminal State |
 |---|---:|---:|---:|---:|---|
-| Archer | `2 / 40` | `216` | `45.00%` | `6.947` | Victory |
+| Archer | `2 / 40` | `212` | `44.17%` | `7.053` | Victory |
 | Cannon | `8 / 40` | `180` | `37.50%` | `9.375` | Victory |
-| Magic | `0 / 40` | `216` | `45.00%` | `6.600` | Defeat |
+| Magic | `0 / 40` | `111` | `23.13%` | `9.225` | Defeat |
 | Drone | `4 / 40` | `186` | `38.75%` | `8.167` | Victory |
 
-Magic's zero-kill Straight result is accepted identity evidence rather than zero output: it delivered `216` Effective Damage, equal to Archer, but distributed that damage without completing a kill. This is why Effective Damage remains the primary comparison measure.
+Magic's zero-kill Straight result is accepted identity evidence rather than zero output: it delivered `111` Effective Damage but distributed that damage without completing a kill. Together with its L and U results, this identifies Magic as highly dependent on sustained corner coverage rather than universally strong.
 
 ### 7.3 U-shaped Premium-position Stress
 
-| Tower | Killed | Effective Damage | Damage Coverage | Average Leaked Remaining HP | Effective Damage vs L |
-|---|---:|---:|---:|---:|---:|
-| Archer | `7 / 40` | `254` | `52.92%` | `6.848` | `+9.5%` |
-| Cannon | `4 / 40` | `228` | `47.50%` | `7.000` | `+11.8%` |
-| Magic | `4 / 40` | `252` | `52.50%` | `6.333` | `+5.7%` |
-| Drone | `9 / 40` | `222` | `46.25%` | `8.323` | `+9.1%` |
+| Tower | Accepted Runs | Killed | Average Effective Damage | Average Damage Coverage | Average Leaked Remaining HP | Effective Damage vs L |
+|---|---:|---:|---:|---:|---:|---:|
+| Archer | `1` | `7 / 40` | `250` | `52.08%` | `6.970` | `+9.6%` |
+| Cannon | `1` | `6 / 40` | `228` | `47.50%` | `7.412` | `+11.8%` |
+| Magic | `2` | `1 / 40`, `2 / 40` | `327` | `68.13%` | `3.973` | `+51.4%` |
+| Drone | `1` | `9 / 40` | `221` | `46.04%` | `8.355` | `+7.8%` |
 
-Every family produced more Effective Damage as route exposure increased from Straight to L-shaped to U-shaped. No U-shaped result reached the `40 / 40` kill ceiling or exceeded `52.92%` Damage Coverage.
+Every family produced more Effective Damage as route exposure increased from Straight to L-shaped to U-shaped. Magic's two accepted U-shaped runs produced `321` and `333` Effective Damage, confirming a repeatable premium-position range rather than a one-run spike.
 
-Cannon nevertheless converted fewer kills on U-shaped than on L-shaped despite dealing more total damage. This confirms that U-shaped placement is a stress condition rather than a universal best-result requirement, and that kill conversion remains family- and geometry-dependent.
+Magic's `111 -> 216 -> 327` route profile is an intentionally strong geometry response: weak on Straight, comparable on the authoritative L-shaped route, and exceptional at the U-shaped premium position. Its U-shaped damage still converted only one or two kills because contact damage was distributed across the wave. This is accepted specialization evidence, not a reason to equalize kill count or reduce a Base Tower value that remains comparable on L.
 
 ### 7.4 Accepted Identity Reading
 
 - Archer retains fast, reliable finishing and scales moderately with added route exposure.
 - Cannon retains heavy-hit concentration and long range; its kill conversion changes strongly with when and where captured targets are hit.
-- Magic retains broad contact damage and corner-focused coverage; total damage can be competitive even when kills are low.
+- Magic retains broad distributed contact damage and the strongest dependence on sustained corner coverage; it is weak on Straight, comparable on L, and exceptional at the U premium position even when kills remain low.
 - Drone retains mobile pursuit, Burst cadence, battery duration, and active-entity limits, with stronger conversion when route exposure creates follow-up opportunities.
 
 No Tower is accepted as universally superior. The route suite establishes comparable delivered damage while preserving different cadence, concentration, coverage, and conversion identities.
@@ -197,7 +196,7 @@ No Tower is accepted as universally superior. The route suite establishes compar
 | Tower content | Frozen Level 1 authoring and family identity |
 | Tower Runtime Combat | Attack execution and semantic timing contracts |
 | Monster content | Frozen Reference health, movement, and presentation |
-| Task002 | Accepted `Base Combat v0.2` fixture, route structure, parameters, and result record |
+| Task002 | Accepted `Base Combat v0.3` fixture, route structure, parameters, and result record |
 | Task003 | Required-Level plus Basic and Behaviour Upgrade calibration on top of this baseline |
 
 ## 9. Acceptance
@@ -210,13 +209,29 @@ No Tower is accepted as universally superior. The route suite establishes compar
 
 ## 10. Validation Record
 
-- Fixed-condition L-shaped Play Mode runs for all four Towers, including repeated Cannon, Magic, and Drone runs
+- Fixed-condition L-shaped Play Mode runs for all four Towers, including two identical accepted Magic runs after its isolated Rotation Speed revision
 - Fixed-condition Straight low-exposure Play Mode run for all four Towers
-- Fixed-condition U-shaped premium-position Play Mode run for all four Towers
+- Fixed-condition U-shaped premium-position Play Mode runs for all four Towers, including two Magic runs within the accepted `321-333` Effective Damage range
 - `CombatBalanceRunRecorder` output for fixture, damage, pressure, timing, integrity, Tower family, Tower level, resolved stats, and Upgrade layers
-- Live prefab verification of Reference Monster Health and all four Tower shared values
+- Every accepted run reported `ResolutionCountsMatch=True` and `LeakCountMatchesPlayerHealthLoss=True`
+- Live prefab verification of Reference Monster Health, all four Tower shared values, and Magic Orb Rotation Speed `90`
 
-## 11. Superseded Base Combat v0.1 Record
+## 11. Superseded Base Combat Records
+
+### 11.1 Base Combat v0.2
+
+`Base Combat v0.2` was frozen on 2026-08-11 with the same `40 / HP 12 / Speed 0.25 / Spawn 2.5s` fixture and the same shared Tower stats now used by v0.3. Its Magic Orb used Rotation Speed `180`, Max Hit Count `14`, and Max Lifetime `18s`. Task003A's removal of gameplay hit-count exhaustion made that Magic baseline structurally obsolete and required v0.3.
+
+| Tower | L-shaped | Straight | U-shaped |
+|---|---:|---:|---:|
+| Archer | `232` | `216` | `254` |
+| Cannon | `204` | `180` | `228` |
+| Magic | `238.5` | `216` | `252` |
+| Drone | `203.5` | `186` | `222` |
+
+Values are accepted Effective Damage. The full v0.2 evidence remains recoverable from repository history at the v0.2 freeze commit.
+
+### 11.2 Base Combat v0.1
 
 `Base Combat v0.1` was frozen on 2026-08-06 with `40` Monsters, Health `5`, Move Speed `0.25`, Spawn Interval `2.5s`, and Straight as the authoritative comparison. It is retained as historical evidence but no longer defines the current regression fixture.
 
@@ -231,19 +246,10 @@ The v0.1 shared Tower values matched v0.2 except that Cannon Base Attack Damage 
 
 ## 12. Revision Policy
 
-Task003 and later Tasks must keep the `Base Combat v0.2` Level 1 baseline fixed by default. Base Attack Damage is authored once by the Tower runtime template rather than repeated in TowerLevelConfig. Required-Level gates, Upgrade deltas, and Behaviour packages are the first calibration levers for later content; the Base Tower must not be changed merely to repair one Upgrade.
+Task003 and later Tasks must keep the `Base Combat v0.3` Level 1 baseline fixed by default. Base Attack Damage is authored once by the Tower runtime template rather than repeated in TowerLevelConfig. Required-Level gates, Upgrade deltas, and Behaviour packages are the first calibration levers for later content; the Base Tower must not be changed merely to repair one Upgrade.
 
 A Level Up whose contract and data remain model-and-eligibility-only does not require a repeated combat-output run; static schema and asset validation are sufficient unless runtime combat resolution code changes.
 
 An ownership migration is not a `Base Combat` value revision, but it must rerun the Task002 route suite when the resolved-damage path changes.
 
-If later evidence proves that the Level 1 baseline itself is structurally invalid, the change must be named as a `Base Combat` revision. The revised Tower must rerun L-shaped primary acceptance plus Straight and U-shaped diagnostics, then rerun downstream Upgrade checks before replacing `Base Combat v0.2`.
-
-Task003A is one such named structural revision because normal Magic Orb completion changes from hit-count exhaustion or lifetime expiry to lifetime expiry only. After Task003A implementation:
-
-1. Keep the `40 / HP 12 / Speed 0.25 / Spawn 2.5s` fixture and the existing L, Straight, and U route roles.
-2. Run every naked Level 1 Tower on every route, not Magic alone, so the common baseline remains comparable after shared runtime changes.
-3. Use Effective Damage and Damage Coverage as the primary comparison; do not force equal kill counts.
-4. Adjust a naked-Tower base value only when the revised route suite shows a structural outlier. Upgrade values are not used to repair the baseline.
-5. Record and freeze the accepted results as `Base Combat v0.3`, retaining v0.2 as historical evidence.
-6. Begin Task003 final Upgrade calibration only after v0.3 is accepted.
+If later evidence proves that the Level 1 baseline itself is structurally invalid, the change must be named as a new `Base Combat` revision. Keep the fixed fixture and route roles, rerun every naked Level 1 Tower on L-shaped primary acceptance plus Straight and U-shaped diagnostics, use Effective Damage and Damage Coverage as the primary measures, and retain v0.3 as historical evidence before replacing it. Downstream Upgrade checks must then be rerun from the new accepted controls.

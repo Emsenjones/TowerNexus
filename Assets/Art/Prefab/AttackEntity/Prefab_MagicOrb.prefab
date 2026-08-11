@@ -9874,7 +9874,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 003ad1ec08671497fb7cbd9bcaddf100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbBehaviour
-  rotationSpeed: 180
+  rotationSpeed: 90
   orbitRadius: 1
   contactDistance: 0.25
   sameTargetHitCooldown: 0.5

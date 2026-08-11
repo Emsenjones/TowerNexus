@@ -1,6 +1,6 @@
 # Task003 - Tower Growth And Non-Elemental Upgrades
 
-Status: Planned and blocked by Task003A plus Task002 `Base Combat v0.3`; Power Budget targets, revised Upgrade values, and final Play Mode acceptance remain pending
+Status: Ready for calibration; Task003A and Task002 `Base Combat v0.3` are accepted, while Power Budget targets, revised Upgrade values, and final Play Mode acceptance remain pending
 
 Depends on: Completed Task003A implementation; accepted Task002 `Base Combat v0.3`; approved Tower Growth And Upgrade Identity balance contract
 
@@ -64,8 +64,8 @@ Every Basic and Behaviour Upgrade is measured on fixed Straight, L, and U routes
 
 1. Preserve the Task002 Map plus all frozen `Base Combat v0.3` Tower and Reference Monster asset values.
 2. Reuse the Task002 Straight, L, and U route suite with `40` Monsters, fixed `12` Max Health, `0.25` Move Speed, and `2.5s` Spawn Interval.
-3. Run Archer, Cannon, Magic, and Drone at Level 1 with no Upgrades on L first. Record every fixed-fixture result, including zero or `40 / 40`, before deciding whether the fixture can distinguish Upgrade value.
-4. Record reusable naked L, Straight, and U controls for the selected TowerFamily while route, placement, Monster, health, count, and timing remain fixed.
+3. Reuse the accepted naked L, Straight, and U controls in Section 6.2, including Magic's zero-kill observations, without redefining the fixture for Upgrade calibration.
+4. Before each TowerFamily matrix, confirm route, placement, Monster, health, count, and timing still match the accepted controls. Rerun a naked control only when the setup changes or runtime drift is suspected.
 5. Select one Basic or Behaviour Upgrade. Its Primary Acceptance Route is L without a per-Upgrade route-selection step.
 6. Assign Required Tower Level gates so each reached level unlocks real content; validate TowerLevelConfig and resolved data remain combat-stat-free rather than repeating an expected no-output-change Play Mode run.
 7. Force-apply the selected Upgrade alone and run its complete Straight, L, and U matrix.
@@ -85,7 +85,20 @@ Every Basic and Behaviour Upgrade is measured on fixed Straight, L, and U routes
 - A differently named Health-sensitivity run may be added when an exact ceiling magnitude or measurable control is required. It is supplemental diagnostic evidence and cannot replace the fixed v0.1 comparison.
 - If `HP 12` proves fundamentally unable to support acceptance, propose an explicit Task003 fixture revision. After approval, assign a new fixture version and rerun every affected naked control and upgraded build under the new fixed conditions.
 
-### 6.2 Route Matrix And Decision Authority
+### 6.2 Accepted Naked Controls
+
+Task003 starts from the following accepted `Base Combat v0.3` Effective Damage controls. Each Upgrade result is compared only with the same TowerFamily and route control; route results are not interchangeable samples.
+
+| Tower | Straight | L-shaped Primary | U-shaped Premium |
+|---|---:|---:|---:|
+| Archer | `212` | `228` | `250` |
+| Cannon | `180` | `204` | `228` |
+| Magic | `111` | `216` | `327` average (`321-333`) |
+| Drone | `186` | `205` | `221` |
+
+Magic Orb Rotation Speed `90` is part of the frozen v0.3 content. Magic's large Straight-to-U spread is accepted positional identity: L remains the shared Upgrade acceptance route, while U records exceptional geometry strength without becoming the universal tuning target.
+
+### 6.3 Route Matrix And Decision Authority
 
 For each named Upgrade or required combination:
 
@@ -200,7 +213,7 @@ Each proposal then receives a route-result matrix:
 ## 14. Validation
 
 - Fixed-condition A/B Play Mode runs
-- Four-family naked Task003 screening run
+- Accepted four-family naked `Base Combat v0.3` control suite recorded in Section 6.2
 - Straight/L/U matrices for every single Upgrade and required combination
 - Required-Level, eligibility, and application validation
 - Combination regression

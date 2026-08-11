@@ -1,16 +1,16 @@
 # Task003A - Non-Elemental Upgrade Definition Revision
 
-Status: Implementation complete in source and serialized authoring; static validation passed, while Unity import/reserialization and Play Mode acceptance remain pending
+Status: Completed and accepted; source, serialized authoring, static validation, Unity Play Mode inspection, and the post-change Task002 `Base Combat v0.3` regression are complete
 
 Depends on: Completed Task002 `Base Combat v0.2`; approved Task003 Upgrade review
 
-Blocks: Task002 `Base Combat v0.3` revision; Task003 Upgrade calibration
+Unblocks: Task003 Upgrade calibration
 
 ## 1. Goal
 
 Revise the current Basic and Behaviour Upgrade set before numerical calibration so every retained Upgrade has independent gameplay value, coherent combination behavior, and a parameter surface that can be tuned without changing unrelated base-Tower values.
 
-Task003A is a definition, schema, runtime, and asset-migration slice. It does not choose final balance values. After implementation, Task002 must establish a new naked-Tower `Base Combat v0.3` baseline because removing Magic Orb maximum-hit exhaustion changes Level 1 Magic behavior. Task003 calibration begins only after that baseline is accepted.
+Task003A is a definition, schema, runtime, and asset-migration slice. It does not choose final Upgrade balance values. Its structural implementation is accepted, and Task002 has established the required naked-Tower `Base Combat v0.3` baseline after removal of Magic Orb maximum-hit exhaustion. Task003 calibration may now proceed from that baseline.
 
 ## 2. Source Documents
 
@@ -143,7 +143,7 @@ The High-Caliber chance is finite and authored in the inclusive range `[0, 1]`. 
 7. Migrate the affected Upgrade assets and preserve serialized references where a rename represents the same Draft slot.
 8. Run static validation and focused package-combination smoke checks.
 9. Hand off Unity import, serialized asset inspection, and Play Mode acceptance.
-10. Return to Task002 and run the complete `Base Combat v0.3` route suite before Task003 tuning.
+10. Return to Task002 and run the complete `Base Combat v0.3` route suite before Task003 tuning. Completed on 2026-08-12.
 
 ## 8. Asset Migration Contract
 
@@ -194,10 +194,12 @@ The High-Caliber chance is finite and authored in the inclusive range `[0, 1]`. 
 - Unity import and missing-reference inspection
 - Task002 `Base Combat v0.3` L, Straight, and U runs for all four naked Towers after implementation
 
+The post-change Task002 regression is accepted. The unchanged Archer, Cannon, and Drone controls remained close to v0.2. Removing Magic hit exhaustion made Rotation Speed `180` structurally dominant on L, so Task002 isolated Rotation Speed `90`, repeated the accepted Magic L and U observations, and froze the full v0.3 suite before returning calibration authority to Task003.
+
 The clean-break scan must return no active code or serialized authoring matches for `TryConvertToTracking`, `TrackingRange`, `huntingOpportunityConsumed`, `maxHitCount`, `BaseMaxHitCount`, `resolvedMaxHitCount`, `RemainingHitCountDelta`, `TryConsumeHit`, `BatteryDurationDelta`, `statType: 101`, `statType: 200`, or `behaviourPackageType: 102`. Unity import alone is insufficient; the affected assets and Magic Orb prefab must be explicitly saved or force-reserialized before this gate.
 
 ## 12. Review Note
 
 The first L-route pass across the current twenty-four Basic and Behaviour Upgrades is exploratory design evidence. It successfully revealed definition and composition problems, but it is not final Task003 balance acceptance because Task003A intentionally changes several tested definitions and the naked Magic baseline.
 
-Task003A is complete only when the revised runtime and authored content are accepted. Static validation alone does not authorize Task003 numerical tuning. After completion, Task002 owns the new naked-Tower baseline, and Task003 owns all final Upgrade-value decisions.
+The revised runtime and authored content are accepted, and Task002 now owns the frozen v0.3 naked-Tower baseline. Task003 owns all final Upgrade-value decisions and must retest revised definitions from those controls; the pre-Task003A Upgrade results remain exploratory evidence only.

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_DroneTower_Basic_High-CaliberRounds
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: High-Caliber Rounds
-  description: Each Drone projectile has a 25% chance to deal +1 direct damage
+  description: projectile has a 25% chance to deal extra damage
   icon: {fileID: 21300000, guid: b99d2b674a637441f907e69e0bf0f4cf, type: 3}
   towerFamily: 3
   requiredTowerLevel: 1
@@ -24,9 +24,21 @@ MonoBehaviour:
   behaviourPackageType: 0
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
-  twinOrbsCount: 2
-  twinOrbsStartingAngleOffset: 180
+  explosiveArrowEffect: {fileID: 0}
+  multiOrbsCount: 2
   overrideMaximumDroneCount: 2
+  explosiveShellEffect: {fileID: 0}
+  multiShellsMaxInitialShellCount: 2
+  multiShellsAdditionalDamage: 3
+  bounceSearchRadius: 1
+  maxBounceCount: 1
+  bounceArcHeight: 1
+  bounceTargetSelectionType: 0
+  bounceDamage: 3
+  arcaneDetonationEffect: {fileID: 0}
+  magicArcaneFieldPrefab: {fileID: 0}
+  blastRoundsEffect: {fileID: 0}
+  finalDiveHitThreshold: 1
+  finalDiveExplosionEffect: {fileID: 0}
   elementType: 0
   elementalApplyEffect: {fileID: 0}
-  effectBindings: []
