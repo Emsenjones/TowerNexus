@@ -136,7 +136,7 @@ Failed confirmation, missing required release data, or failed entity creation do
 
 Projectile completion does not delay Archer or Cannon readiness. Drone additionally requires active Drone count below current capacity.
 
-Magic Attack Cycle time runs concurrently with its active Orb group. Lifetime expiry and hit-count exhaustion finish all synchronous contact, Arcane Detonation, and member-completion results before exact ownership is cleared. Completion does not restart or extend the running Cycle. Magic may release again only when the Cycle is ready and no active group remains.
+Magic Attack Cycle time runs concurrently with its active Orb group. Shared lifetime expiry finishes all synchronous contact, Arcane Detonation, and member-completion results before exact ownership is cleared. Completion does not restart or extend the running Cycle. Magic may release again only when the Cycle is ready and no active group remains.
 
 When a Cycle becomes ready while another gate remains blocked, it stays ready at zero. Clearing the gate allows the next normal detection and release pass; completion and upgrade notifications never create a new Attack Entity directly.
 
@@ -206,7 +206,7 @@ The result is non-negative. Completing an Attack Cycle through refresh does not 
 ## 8.2 Entity Refresh
 
 - Unresolved damage may refresh for eligible active entities.
-- Additive capacities change remaining state by the resolved delta rather than resetting from a new maximum.
+- Additive capacities such as Piercing change remaining state by the resolved delta rather than resetting from a new maximum.
 - Atomic multi-field changes are applied together before completion is evaluated.
 - Ended, disabled, impacted, or otherwise terminal entities reject refresh.
 - Package-specific immutable boundaries override generic refresh eligibility.
@@ -223,11 +223,11 @@ Archer confirmation creates one stable release group with Center and optional Le
 - Each confirmed slot captures a distinct target candidate when available and a fallback direction.
 - Scatter Arrow fixes the slot topology at confirmation.
 - An Upgrade during the presentation wait does not add slots.
-- At release, current Damage, Piercing, and Hunting values are resolved while confirmed topology remains unchanged.
+- At release, current Damage, Piercing, and Explosive Arrow values are resolved while confirmed topology remains unchanged.
 - If the Center release requirement is invalid, the group is cancelled.
 - An invalid secondary target uses its confirmation-time fallback direction rather than free retargeting.
 
-Successful release starts one Attack Cycle and transfers Arrow movement, hit, Piercing, Hunting, and completion behavior to Projectile System.
+Successful release starts one Attack Cycle and transfers Arrow movement, hit, Piercing, Explosive Arrow, and completion behavior to Projectile System.
 
 ---
 
@@ -240,7 +240,8 @@ Cannon confirmation captures one or more immutable target-position snapshots.
 - One attack uses one presentation sequence and one Attack Cycle.
 - Source Monster invalidation after confirmation does not cancel or redirect a captured position.
 - An Upgrade during the presentation wait does not add Shells or recapture positions.
-- Each successful initial Shell release receives current unresolved Damage, Explosive Shell, and eligible pre-impact Bouncing Shell data.
+- Each successful initial Shell release receives one immutable integer direct-damage value plus Explosive Shell and eligible pre-impact Bouncing Shell data. The primary Shell uses current resolved Cannon Attack Damage; additional Shells use the active Multi Shells package's authored Additional Shell Damage.
+- Damage Bonus live refresh may update an unresolved primary initial Shell, but it cannot overwrite an additional initial Shell's fixed authored direct damage or any bounce child's fixed Bounce Damage.
 
 Successful release starts one Attack Cycle. Arc movement, Position Impact, direct arrival query, bounce-chain behavior, and completion belong to Projectile System.
 
@@ -256,11 +257,11 @@ Group contract:
 
 - One shared orbit phase, lifetime, and completion reason
 - Evenly distributed member angles
-- Independent remaining hit count and contact history per member
-- Exhaustion of any member or shared lifetime completion ends the whole group
+- Independent contact history per member
+- Shared lifetime completion ends the whole group
 - Group completion is idempotent
 
-Approved active-group refresh may update unresolved damage, orbit speed, maximum hit capacity, and reviewed Behaviour packages. A maximum-hit delta changes each active member's remaining capacity by the same delta without resetting consumed hits. The group's resolved maximum changes once, and later Multi Orbs members start from that current resolved maximum.
+Approved active-group refresh may update unresolved damage, orbit speed, and reviewed Behaviour packages. No gameplay hit capacity, hit-exhaustion completion branch, or maximum-hit refresh exists.
 
 Multi Orbs reconciliation is atomic:
 
@@ -268,7 +269,7 @@ Multi Orbs reconciliation is atomic:
 - Prepare every missing member without making it active.
 - If any candidate fails, discard only candidates and preserve the original group.
 - Revalidate the group and commit all missing members together.
-- Existing members keep lifetime, history, and consumed hits.
+- Existing members keep lifetime and contact history.
 
 Arcane Detonation is eligible only on normal group completion and executes once at each active member's current position before the group disappears. Technical cleanup never triggers it.
 
@@ -316,7 +317,9 @@ Burst cadence has three semantic phases:
 | Between Shots | Remaining shots use the current burst's authored spacing |
 | Inter-Burst Cooldown | Timer before a future burst; approved cooldown refresh preserves its ratio |
 
-Battery-duration refresh changes remaining battery by delta only before battery-end resolution. It never restores full battery or rewrites a completed battery-end branch.
+Battery Duration is static Drone entity authoring for the battle. Applying a Tower Upgrade does not refresh remaining battery or rewrite the battery-end boundary.
+
+Each Drone projectile resolves High-Caliber Rounds at release. When active, one authored chance is rolled exactly once and the immutable result determines whether that projectile carries one fixed bonus direct-damage result. Retargeting, projectile refresh, Blast Rounds, and later Upgrade changes do not reroll or copy that result into area damage.
 
 Final Dive, when active at battery end, locks one target and becomes one-way:
 

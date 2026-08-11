@@ -24,20 +24,17 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
     protected override TowerCombatBaseStats CreateBaseStats()
     {
         float rotationSpeed = 0f;
-        int maxHitCount = 1;
 
         if (TryGetMagicOrbPrefabBehaviour(out MagicOrbBehaviour orbBehaviour))
         {
             rotationSpeed = orbBehaviour.BaseRotationSpeed;
-            maxHitCount = orbBehaviour.BaseMaxHitCount;
         }
 
         return new TowerCombatBaseStats(
             BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration,
-            rotationSpeed,
-            maxHitCount);
+            rotationSpeed);
     }
 
     protected override bool IsSubtypeConfigurationValid()
@@ -128,18 +125,11 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         bool refreshRotationSpeed = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.MagicOrbRotationSpeed);
-        bool refreshMaxHitCount = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.MagicOrbMaxHitCount);
-
         group.ApplyStatRefresh(new MagicOrbStatRefresh(
             refreshDamage,
             currentStats.AttackDamage,
             refreshRotationSpeed,
-            currentStats.MagicOrbRotationSpeed,
-            refreshMaxHitCount
-                ? currentStats.MagicOrbMaxHitCount - previousStats.MagicOrbMaxHitCount
-                : 0));
+            currentStats.MagicOrbRotationSpeed));
     }
 
     protected override void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)

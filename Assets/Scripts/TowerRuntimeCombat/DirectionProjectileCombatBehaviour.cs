@@ -37,9 +37,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         new MonsterBehaviour[ArcherSlotCount];
     private readonly Vector3[] pendingFallbackDirections =
         new Vector3[ArcherSlotCount];
-    private readonly List<MonsterBehaviour> huntingCandidates =
-        new List<MonsterBehaviour>();
-
     private MonsterBehaviour pendingProjectileTarget;
     private Vector3 pendingProjectileTargetPosition;
     private long nextReleaseGroupId = 1;
@@ -147,9 +144,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             case TowerBehaviourPackageType.ArcherPiercingArrow:
                 RefreshActivePiercing(upgradeDefinition.PiercingMaxHitCount);
                 break;
-            case TowerBehaviourPackageType.ArcherHuntingArrow:
-                ReconcileActiveHuntingGroups();
-                break;
         }
     }
 
@@ -183,23 +177,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        HashSet<MonsterBehaviour> selectedTargets = new HashSet<MonsterBehaviour>
-        {
-            firstTarget
-        };
-
-        for (int slotIndex = 1; slotIndex < pendingSlotCount; slotIndex++)
-        {
-            MonsterBehaviour candidate = SelectTarget(selectedTargets);
-
-            if (!IsValidTarget(candidate))
-            {
-                break;
-            }
-
-            pendingCandidateTargets[slotIndex] = candidate;
-            selectedTargets.Add(candidate);
-        }
     }
 
     private void ReleasePendingAttack()
@@ -231,10 +208,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        bool isHunting = IsHuntingArrowActive();
-        ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions(
-            origin.position,
-            resolvedStats.AttackRange);
+        ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions();
         int releasedCount = 0;
 
         for (int slotIndex = 0; slotIndex < pendingSlotCount; slotIndex++)
@@ -243,8 +217,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
                     slotIndex,
                     origin,
                     resolvedStats,
-                    runtimeOptions,
-                    isHunting))
+                    runtimeOptions))
             {
                 releasedCount++;
             }
@@ -266,30 +239,11 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         int slotIndex,
         Transform origin,
         ResolvedTowerCombatStats resolvedStats,
-        ProjectileRuntimeOptions runtimeOptions,
-        bool isHunting)
+        ProjectileRuntimeOptions runtimeOptions)
     {
         ArcherProjectileSlot slot = (ArcherProjectileSlot)slotIndex;
         ArcherProjectileReleaseIdentity releaseIdentity =
             new ArcherProjectileReleaseIdentity(pendingReleaseGroupId, slot);
-        MonsterBehaviour candidate = pendingCandidateTargets[slotIndex];
-
-        if (isHunting &&
-            IsCapturedCandidateValid(candidate, origin.position, resolvedStats.AttackRange))
-        {
-            return TryReleaseProjectile(
-                projectilePrefab,
-                origin,
-                GetMonsterHitPosition(candidate),
-                candidate,
-                resolvedStats.AttackDamage,
-                ProjectileFlightType.Tracking,
-                initialArcHeight: 0f,
-                runtimeOptions: runtimeOptions,
-                archerReleaseIdentity: releaseIdentity,
-                huntingOpportunityConsumed: true);
-        }
-
         Vector3 fallbackDirection = pendingFallbackDirections[slotIndex];
 
         if (fallbackDirection.sqrMagnitude <= 0.0001f)
@@ -306,8 +260,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             ProjectileFlightType.Direction,
             initialArcHeight: 0f,
             runtimeOptions: runtimeOptions,
-            archerReleaseIdentity: releaseIdentity,
-            huntingOpportunityConsumed: isHunting);
+            archerReleaseIdentity: releaseIdentity);
     }
 
     private bool IsCapturedCandidateValid(
@@ -344,83 +297,26 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private void ReconcileActiveHuntingGroups()
-    {
-        List<ProjectileBehaviour> projectileSnapshot = GetOwnedProjectileSnapshot();
-        SortedDictionary<long, List<ProjectileBehaviour>> groups =
-            new SortedDictionary<long, List<ProjectileBehaviour>>();
-
-        for (int i = 0; i < projectileSnapshot.Count; i++)
-        {
-            ProjectileBehaviour projectile = projectileSnapshot[i];
-
-            if (projectile == null ||
-                !projectile.IsActiveForRefresh ||
-                !projectile.ArcherReleaseIdentity.IsValid)
-            {
-                continue;
-            }
-
-            long releaseGroupId = projectile.ArcherReleaseIdentity.ReleaseGroupId;
-
-            if (!groups.TryGetValue(releaseGroupId, out List<ProjectileBehaviour> members))
-            {
-                members = new List<ProjectileBehaviour>();
-                groups.Add(releaseGroupId, members);
-            }
-
-            members.Add(projectile);
-        }
-
-        float trackingRange = ResolveCombatStats().AttackRange;
-
-        foreach (KeyValuePair<long, List<ProjectileBehaviour>> pair in groups)
-        {
-            List<ProjectileBehaviour> members = pair.Value;
-            members.Sort((left, right) =>
-                left.ArcherReleaseIdentity.Slot.CompareTo(right.ArcherReleaseIdentity.Slot));
-
-            Vector3 trackingOrigin = members[0].TrackingRangeOrigin;
-            CollectTargetCandidates(huntingCandidates, trackingOrigin, trackingRange);
-            HashSet<MonsterBehaviour> assignedTargets = new HashSet<MonsterBehaviour>();
-
-            for (int memberIndex = 0; memberIndex < members.Count; memberIndex++)
-            {
-                ProjectileBehaviour member = members[memberIndex];
-
-                if (!member.TryConsumeHuntingOpportunity())
-                {
-                    continue;
-                }
-
-                MonsterBehaviour target = SelectTargetFromCandidates(
-                    huntingCandidates,
-                    trackingOrigin,
-                    assignedTargets);
-
-                if (target == null)
-                {
-                    continue;
-                }
-
-                if (member.TryConvertToTracking(target, trackingOrigin, trackingRange))
-                {
-                    assignedTargets.Add(target);
-                }
-            }
-        }
-    }
-
-    private ProjectileRuntimeOptions CreateRuntimeOptions(
-        Vector3 trackingRangeOrigin,
-        float trackingRange)
+    private ProjectileRuntimeOptions CreateRuntimeOptions()
     {
         bool canPierce = IsPiercingArrowActive();
+        TowerUpgradeDefinition explosiveArrowSourceUpgrade = null;
+        EffectDefinition explosiveArrowEffect = null;
+
+        if (HasBehaviourPackage(TowerBehaviourPackageType.ArcherExplosiveArrow) &&
+            TryGetBehaviourPackageUpgrade(
+                TowerBehaviourPackageType.ArcherExplosiveArrow,
+                out TowerUpgradeDefinition resolvedExplosiveArrowUpgrade))
+        {
+            explosiveArrowSourceUpgrade = resolvedExplosiveArrowUpgrade;
+            explosiveArrowEffect = resolvedExplosiveArrowUpgrade.ExplosiveArrowEffect;
+        }
+
         return new ProjectileRuntimeOptions(
             canPierce,
             canPierce ? cachedPiercingMaximum : 1,
-            trackingRangeOrigin: trackingRangeOrigin,
-            trackingRange: trackingRange);
+            explosiveArrowSourceUpgrade: explosiveArrowSourceUpgrade,
+            explosiveArrowEffect: explosiveArrowEffect);
     }
 
     private bool IsPiercingArrowActive()
@@ -431,11 +327,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     private bool IsScatterArrowActive()
     {
         return HasBehaviourPackage(TowerBehaviourPackageType.ArcherScatterArrow);
-    }
-
-    private bool IsHuntingArrowActive()
-    {
-        return HasBehaviourPackage(TowerBehaviourPackageType.ArcherHuntingArrow);
     }
 
     private int ResolvePiercingMaximum()

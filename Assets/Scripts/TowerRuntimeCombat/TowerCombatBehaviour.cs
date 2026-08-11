@@ -363,8 +363,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         ProjectileFlightType flightType,
         float initialArcHeight,
         ProjectileRuntimeOptions runtimeOptions,
-        ArcherProjectileReleaseIdentity archerReleaseIdentity = default,
-        bool huntingOpportunityConsumed = false)
+        ArcherProjectileReleaseIdentity archerReleaseIdentity = default)
     {
         if (projectilePrefab == null || origin == null)
         {
@@ -387,8 +386,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             initialArcHeight,
             runtimeOptions,
             inheritedBounceHitHistory: null,
-            archerReleaseIdentity: archerReleaseIdentity,
-            huntingOpportunityConsumed: huntingOpportunityConsumed);
+            archerReleaseIdentity: archerReleaseIdentity);
 
         if (!projectileBehaviour.IsInitialized)
         {
@@ -968,9 +966,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             TowerRuntimeStatResolver.Resolve(towerInstance, CreateBaseStats());
         cachedResolvedStats = currentStats;
 
-        bool refreshAttackRange = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.AttackRange);
         bool refreshAttackCycleDuration = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.AttackCycleDuration);
@@ -985,7 +980,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
                 currentStats.AttackCycleDuration);
         }
 
-        if (refreshAttackRange || refreshDamage)
+        if (refreshDamage)
         {
             List<ProjectileBehaviour> projectileSnapshot = GetOwnedProjectileSnapshot();
 
@@ -1003,10 +998,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
                     projectile.TryRefreshDamage(currentStats.AttackDamage);
                 }
 
-                if (refreshAttackRange)
-                {
-                    projectile.TryRefreshTrackingRange(currentStats.AttackRange);
-                }
             }
         }
 

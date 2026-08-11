@@ -151,4 +151,4 @@ Codex prepares the first-pass table from accepted Tower and Upgrade baselines:
 
 ## 14. Review Note
 
-Task004 owns matching-source and Overload calibration. After acceptance, only each Elemental Upgrade's final Required Level and authored parameters are copied into `01_TowerGrowthAndUpgradeIdentity.md`; candidate targets and test evidence remain here. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task006 from the Blueprint's required capabilities.
+Task004 owns matching-source and Overload calibration, including accepted Required Levels, authored parameters, candidate targets, and test evidence. `01_TowerGrowthAndUpgradeIdentity.md` remains the qualitative growth contract. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task006 from the Blueprint's required capabilities.

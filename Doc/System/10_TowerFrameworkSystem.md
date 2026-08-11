@@ -184,7 +184,7 @@ The first version contains four TowerFamilies and base archetypes:
 
 Each Tower runtime template authors exactly one compatible base archetype identity. A second selector that can disagree with that identity is invalid authoring.
 
-Projectile movement identity is separate from Tower attack archetype: Direction, Arc, and Tracking describe projectile flight only.
+Projectile movement identity is separate from Tower attack archetype: Direction and Arc describe the current projectile flight contracts.
 
 ---
 
@@ -213,7 +213,7 @@ Archetype-specific authored data:
 
 Projectile entity authoring owns base movement speed, hit distance threshold, safety lifetime, optional impact Effect, optional impact presentation, and entity presentation.
 
-Magic Orb entity authoring owns base orbit, contact distance, per-member hit count, lifetime, same-target contact cooldown, and entity presentation.
+Magic Orb entity authoring owns base orbit, contact distance, lifetime, same-target contact cooldown, and entity presentation. Normal gameplay authoring contains no maximum-hit capacity; Orb-group lifetime is the normal completion boundary.
 
 Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
 
@@ -329,6 +329,6 @@ Validation reports the source content and does not silently replace the authored
 
 # 14. Approved Scope And Deferred Topics
 
-Current scope includes four TowerFamilies, four base archetypes, three projectile flight identities, runtime-template base combat data, level-model data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
+Current scope includes four TowerFamilies, four base archetypes, two projectile flight identities, runtime-template base combat data, level-model data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
 
 Deferred Tower identities include support, trap, summon, resource, laser, boomerang, missile, and other archetypes that require reviewed behavior rather than expansion of one generic Tower type.

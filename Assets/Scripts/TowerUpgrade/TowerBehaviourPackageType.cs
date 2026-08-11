@@ -4,7 +4,7 @@ public enum TowerBehaviourPackageType
 
     ArcherPiercingArrow = 100,
     ArcherScatterArrow = 101,
-    ArcherHuntingArrow = 102,
+    ArcherExplosiveArrow = 103,
 
     MagicMultiOrbs = 200,
     MagicArcaneDetonation = 201,

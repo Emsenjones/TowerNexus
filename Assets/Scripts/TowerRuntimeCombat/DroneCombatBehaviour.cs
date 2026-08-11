@@ -21,12 +21,10 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
 
     protected override TowerCombatBaseStats CreateBaseStats()
     {
-        float batteryDuration = TowerRuntimeStatResolver.MinimumDroneBatteryDuration;
         float burstCooldown = TowerRuntimeStatResolver.MinimumDroneBurstCooldown;
 
         if (TryGetDronePrefabBehaviour(out DroneBehaviour droneBehaviour))
         {
-            batteryDuration = droneBehaviour.BaseBatteryDuration;
             burstCooldown = droneBehaviour.BaseBurstCooldown;
         }
 
@@ -34,7 +32,6 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration,
-            droneBatteryDuration: batteryDuration,
             droneBurstCooldown: burstCooldown);
     }
 
@@ -98,22 +95,21 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         bool refreshAttackRange = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.AttackRange);
-        bool refreshBattery = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.DroneBatteryDuration);
         bool refreshBurstCooldown = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.DroneBurstCooldown);
+        bool refreshProjectileBonusDamageChance = UpgradeIncludesBasicStat(
+            sourceUpgrade,
+            TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance);
         DroneStatRefresh refresh = new DroneStatRefresh(
             refreshDamage,
             currentStats.AttackDamage,
             refreshAttackRange,
             currentStats.AttackRange,
-            refreshBattery
-                ? currentStats.DroneBatteryDuration - previousStats.DroneBatteryDuration
-                : 0f,
             refreshBurstCooldown,
-            currentStats.DroneBurstCooldown);
+            currentStats.DroneBurstCooldown,
+            refreshProjectileBonusDamageChance,
+            currentStats.DroneProjectileBonusDamageChance);
         List<DroneBehaviour> droneSnapshot = GetActiveDroneSnapshot();
 
         for (int i = 0; i < droneSnapshot.Count; i++)

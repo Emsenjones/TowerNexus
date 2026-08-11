@@ -4,7 +4,6 @@ using UnityEngine;
 public static class TowerRuntimeStatResolver
 {
     public const float MinimumAttackCycleDuration = 0f;
-    public const float MinimumDroneBatteryDuration = 0.01f;
     public const float MinimumDroneBurstCooldown = 0f;
 
     public static ResolvedTowerCombatStats Resolve(
@@ -15,9 +14,8 @@ public static class TowerRuntimeStatResolver
         float attackCycleDurationDelta = 0f;
         float damageBonus = 0f;
         float magicOrbRotationSpeedDelta = 0f;
-        float magicOrbMaxHitCountDelta = 0f;
-        float droneBatteryDurationDelta = 0f;
         float droneBurstCooldownDelta = 0f;
+        float droneProjectileBonusDamageChanceDelta = 0f;
 
         IReadOnlyList<TowerUpgradeDefinition> appliedUpgrades = towerInstance != null
             ? towerInstance.AppliedUpgrades
@@ -33,9 +31,8 @@ public static class TowerRuntimeStatResolver
                     ref attackCycleDurationDelta,
                     ref damageBonus,
                     ref magicOrbRotationSpeedDelta,
-                    ref magicOrbMaxHitCountDelta,
-                    ref droneBatteryDurationDelta,
-                    ref droneBurstCooldownDelta
+                    ref droneBurstCooldownDelta,
+                    ref droneProjectileBonusDamageChanceDelta
                 );
             }
         }
@@ -47,11 +44,10 @@ public static class TowerRuntimeStatResolver
                 baseStats.AttackCycleDuration + attackCycleDurationDelta),
             Mathf.Max(0, baseStats.AttackDamage + Mathf.RoundToInt(damageBonus)),
             Mathf.Max(0f, baseStats.MagicOrbRotationSpeed + magicOrbRotationSpeedDelta),
-            Mathf.Max(
-                1,
-                baseStats.MagicOrbMaxHitCount + Mathf.RoundToInt(magicOrbMaxHitCountDelta)),
-            Mathf.Max(MinimumDroneBatteryDuration, baseStats.DroneBatteryDuration + droneBatteryDurationDelta),
-            Mathf.Max(MinimumDroneBurstCooldown, baseStats.DroneBurstCooldown + droneBurstCooldownDelta)
+            Mathf.Max(MinimumDroneBurstCooldown, baseStats.DroneBurstCooldown + droneBurstCooldownDelta),
+            Mathf.Clamp01(
+                baseStats.DroneProjectileBonusDamageChance +
+                droneProjectileBonusDamageChanceDelta)
         );
     }
 
@@ -61,9 +57,8 @@ public static class TowerRuntimeStatResolver
         ref float attackCycleDurationDelta,
         ref float damageBonus,
         ref float magicOrbRotationSpeedDelta,
-        ref float magicOrbMaxHitCountDelta,
-        ref float droneBatteryDurationDelta,
-        ref float droneBurstCooldownDelta)
+        ref float droneBurstCooldownDelta,
+        ref float droneProjectileBonusDamageChanceDelta)
     {
         if (upgradeDefinition == null || upgradeDefinition.UpgradeLayer != TowerUpgradeLayer.Basic)
         {
@@ -100,14 +95,11 @@ public static class TowerRuntimeStatResolver
                 case TowerUpgradeBasicStatType.MagicOrbRotationSpeed:
                     magicOrbRotationSpeedDelta += statDelta.AdditiveValue;
                     break;
-                case TowerUpgradeBasicStatType.MagicOrbMaxHitCount:
-                    magicOrbMaxHitCountDelta += statDelta.AdditiveValue;
-                    break;
-                case TowerUpgradeBasicStatType.DroneBatteryDuration:
-                    droneBatteryDurationDelta += statDelta.AdditiveValue;
-                    break;
                 case TowerUpgradeBasicStatType.DroneBurstCooldown:
                     droneBurstCooldownDelta += statDelta.AdditiveValue;
+                    break;
+                case TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance:
+                    droneProjectileBonusDamageChanceDelta += statDelta.AdditiveValue;
                     break;
             }
         }

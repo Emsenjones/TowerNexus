@@ -40,6 +40,9 @@ public class TowerUpgradeDefinition : ScriptableObject
     [ShowIf(nameof(IsArcherScatterArrow))]
     [MinValue(0f)]
     [SerializeField] private float scatterAngleOffset = 15f;
+    [TitleGroup("Behaviour Layer/Archer Explosive Arrow")]
+    [ShowIf(nameof(IsArcherExplosiveArrow))]
+    [SerializeField] private EffectDefinition explosiveArrowEffect;
     [FormerlySerializedAs("twinOrbsCount")]
     [TitleGroup("Behaviour Layer/Magic Multi Orbs")]
     [ShowIf(nameof(IsMagicMultiOrbs))]
@@ -58,6 +61,11 @@ public class TowerUpgradeDefinition : ScriptableObject
     [ShowIf(nameof(IsCannonMultiShells))]
     [MinValue(2)]
     [SerializeField] private int multiShellsMaxInitialShellCount = 2;
+    [TitleGroup("Behaviour Layer/Cannon Multi Shells")]
+    [ShowIf(nameof(IsCannonMultiShells))]
+    [LabelText("Additional Shell Damage")]
+    [MinValue(1)]
+    [SerializeField] private int multiShellsAdditionalDamage = 3;
     [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
     [ShowIf(nameof(IsCannonBouncingShell))]
     [MinValue(0.01f)]
@@ -73,6 +81,11 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
     [ShowIf(nameof(IsCannonBouncingShell))]
     [SerializeField] private TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest;
+    [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
+    [ShowIf(nameof(IsCannonBouncingShell))]
+    [LabelText("Bounce Damage")]
+    [MinValue(1)]
+    [SerializeField] private int bounceDamage = 3;
     [TitleGroup("Behaviour Layer/Magic Arcane Detonation")]
     [ShowIf(nameof(IsMagicArcaneDetonation))]
     [SerializeField] private EffectDefinition arcaneDetonationEffect;
@@ -109,14 +122,17 @@ public class TowerUpgradeDefinition : ScriptableObject
     public TowerBehaviourPackageType BehaviourPackageType => behaviourPackageType;
     public int PiercingMaxHitCount => Mathf.Max(1, piercingMaxHitCount);
     public float ScatterAngleOffset => Mathf.Max(0f, scatterAngleOffset);
+    public EffectDefinition ExplosiveArrowEffect => explosiveArrowEffect;
     public int MultiOrbsCount => Mathf.Max(2, multiOrbsCount);
     public int OverrideMaximumDroneCount => Mathf.Max(2, overrideMaximumDroneCount);
     public EffectDefinition ExplosiveShellEffect => explosiveShellEffect;
     public int MultiShellsMaxInitialShellCount => Mathf.Max(2, multiShellsMaxInitialShellCount);
+    public int MultiShellsAdditionalDamage => Mathf.Max(1, multiShellsAdditionalDamage);
     public float BounceSearchRadius => Mathf.Max(0.01f, bounceSearchRadius);
     public int MaxBounceCount => Mathf.Max(1, maxBounceCount);
     public float BounceArcHeight => Mathf.Max(0f, bounceArcHeight);
     public TargetSelectionType BounceTargetSelectionType => bounceTargetSelectionType;
+    public int BounceDamage => Mathf.Max(1, bounceDamage);
     public EffectDefinition ArcaneDetonationEffect => arcaneDetonationEffect;
     public GameObject MagicArcaneFieldPrefab => magicArcaneFieldPrefab;
     public EffectDefinition BlastRoundsEffect => blastRoundsEffect;
@@ -233,7 +249,7 @@ public class TowerUpgradeDefinition : ScriptableObject
         {
             case TowerBehaviourPackageType.ArcherPiercingArrow:
             case TowerBehaviourPackageType.ArcherScatterArrow:
-            case TowerBehaviourPackageType.ArcherHuntingArrow:
+            case TowerBehaviourPackageType.ArcherExplosiveArrow:
                 return WarnIfBehaviourPackageTowerFamilyMismatch(logWarnings, TowerFamily.Archer);
             case TowerBehaviourPackageType.MagicMultiOrbs:
             case TowerBehaviourPackageType.MagicArcaneDetonation:
@@ -282,6 +298,12 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
+        if (IsArcherExplosiveArrow() &&
+            !ValidateRequiredAreaEffect(explosiveArrowEffect, "Explosive Arrow", logWarnings))
+        {
+            isValid = false;
+        }
+
         if (IsMagicMultiOrbs() && multiOrbsCount < 2)
         {
             Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Orbs count must be at least 2.");
@@ -306,6 +328,12 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
+        if (IsCannonMultiShells() && multiShellsAdditionalDamage <= 0)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Shells additional damage must be greater than zero.");
+            isValid = false;
+        }
+
         if (IsCannonBouncingShell() && bounceSearchRadius <= 0f)
         {
             Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell search radius must be greater than zero.");
@@ -321,6 +349,12 @@ public class TowerUpgradeDefinition : ScriptableObject
         if (IsCannonBouncingShell() && bounceArcHeight < 0f)
         {
             Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell arc height cannot be negative.");
+            isValid = false;
+        }
+
+        if (IsCannonBouncingShell() && bounceDamage <= 0)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell damage must be greater than zero.");
             isValid = false;
         }
 
@@ -433,6 +467,19 @@ public class TowerUpgradeDefinition : ScriptableObject
                 isValid = false;
             }
 
+            if (!statDelta.HasFiniteAdditiveValue())
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {statDelta.StatType} additive value must be finite.");
+                isValid = false;
+            }
+
+            if (statDelta.RequiresUnitIntervalAdditiveValue() &&
+                !statDelta.HasUnitIntervalAdditiveValue())
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {statDelta.StatType} additive value must be finite and between zero and one inclusive.");
+                isValid = false;
+            }
+
             if (statDelta.RequiresWholeNumberAdditiveValue() && !statDelta.HasWholeNumberAdditiveValue())
             {
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {statDelta.StatType} additive value should be a whole number.");
@@ -474,6 +521,12 @@ public class TowerUpgradeDefinition : ScriptableObject
     {
         return IsBehaviourLayerUpgrade() &&
                behaviourPackageType == TowerBehaviourPackageType.ArcherScatterArrow;
+    }
+
+    private bool IsArcherExplosiveArrow()
+    {
+        return IsBehaviourLayerUpgrade() &&
+               behaviourPackageType == TowerBehaviourPackageType.ArcherExplosiveArrow;
     }
 
     private bool IsMagicMultiOrbs()

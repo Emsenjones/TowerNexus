@@ -11,7 +11,7 @@ Projectile System owns projectile-style Attack Entities after they are successfu
 It owns:
 
 - Projectile runtime state
-- Direction, Arc, and Tracking flight
+- Direction and Arc flight
 - Hit and arrival detection
 - Lifetime and hit history
 - Position Impact and Monster Hit fact generation
@@ -83,7 +83,6 @@ Immutable Entity State includes:
 
 - Captured landing position
 - Launch direction
-- Tracking range origin
 - Flight progress
 - Elapsed lifetime
 - Monster hit history
@@ -91,7 +90,7 @@ Immutable Entity State includes:
 - Started bounce-chain contract
 - Completed results
 
-Approved Live Refresh may replace future unresolved values such as damage, remaining Piercing capacity by delta, Hunting conversion, pre-impact Explosive or Bouncing capability, Blast Rounds, and current Tracking Range.
+Approved Live Refresh may replace future unresolved values such as damage, remaining Piercing capacity by delta, pre-impact Explosive or Bouncing capability, and Blast Rounds.
 
 Live Refresh never resets immutable Entity State or replays completed results.
 
@@ -102,7 +101,7 @@ Live Refresh never resets immutable Entity State or replays completed results.
 Direction flight moves along one launch direction and may resolve Monsters encountered within its hit threshold.
 
 - The selected target may define the initial direction.
-- The projectile is not locked to that target unless Tracking is explicitly active.
+- The projectile is not locked to that target after release.
 - If multiple valid Monsters are simultaneously in threshold, the nearest valid Monster is resolved first using stable source order for ties.
 - A Monster already recorded by the same projectile cannot be hit again when the active behavior requires unique-hit history.
 - The projectile completes when its hit capacity is exhausted or lifetime ends.
@@ -129,36 +128,20 @@ Scatter topology is fixed at attack confirmation and never adds projectiles to a
 
 ---
 
-# 6. Tracking Flight And Hunting Arrow
+# 6. Explosive Arrow
 
-Tracking flight follows one locked Monster reference while the behavior remains valid.
+Explosive Arrow is a direct-hit Archer Behaviour package, not a flight identity.
 
-Hunting Arrow rules:
+- Arrow flight remains Direction flight.
+- Each new Arrow Monster Hit first resolves its baseline direct damage and reviewed direct Elemental opportunity.
+- When Explosive Arrow is active for that released Arrow, the same hit then executes one package-authored area Effect centered on the hit Monster's current Hit Reference.
+- The directly hit Monster remains eligible for the area target set when it is still gameplay-targetable after baseline direct damage.
+- A miss, lifetime expiry, or technical cleanup produces no Explosive Arrow Effect.
+- Piercing may produce one Explosive Arrow Effect for each new unique Monster Hit.
+- Scatter members resolve their own hits and explosions independently.
+- Applying Explosive Arrow affects future Arrow releases only and never retrofits an active Arrow.
 
-- Each Arrow has at most one locked target.
-- Tracking Range Origin is captured at release and never moves.
-- Current Tracking Range may receive approved refresh.
-- Both the Arrow and locked Monster must remain inside that range.
-- The target must remain alive, gameplay-targetable, and registered with Monster System.
-- Tracking follows the target's current Hit Reference and safely handles movement overshoot.
-- Hitting the locked target, target invalidation, registration loss, or either range failure permanently changes the Arrow to Direction flight.
-- Tracking never reacquires and never becomes active again on that Arrow.
-- Surviving Piercing behavior continues after fallback.
-
-Tracking motion itself does not apply Elemental state. Actual Monster Hits use the Arrow attack boundary.
-
-## 6.1 Hunting Applied To Active Arrows
-
-Applying Hunting while eligible Archer Arrows are active performs one virtual confirmation per release group:
-
-1. Snapshot surviving eligible groups.
-2. Preserve stable Center, Left, and Right slot order.
-3. Gather current valid targets using Tower target-selection rules.
-4. Assign distinct targets without reuse inside the group.
-5. Convert only successfully assigned Arrows from their current position.
-6. Permanently mark the group reconciliation as consumed.
-
-Unassigned slots remain Direction flight. A partially surviving group reconciles only its current projectiles. The retrofit does not reset lifetime, direction history, Piercing capacity, Monster hit history, or completed hits.
+Explosive Arrow is intentionally a small, frequent direct-hit splash. Cannon Explosive Shell remains a Position Impact Effect and may execute even when no direct Monster Hit exists.
 
 ---
 
@@ -189,7 +172,7 @@ Position Impact Effects remain centered on the actual landing position even when
 
 Position Impact and Monster Hit are independent semantic facts:
 
-- Direction or Tracking contact normally produces Monster Hit.
+- Direction contact normally produces Monster Hit.
 - Arc arrival always produces Position Impact and may also produce Monster Hit.
 
 For a projectile that has both direct and additional package results, ordering is:
@@ -206,7 +189,7 @@ Resolve Optional Direct Monster Hit
 
 Impact presentation is requested in the same impact-resolution step. Its ordering relative to synchronous gameplay results within that frame is not a gameplay contract. Presentation cannot change result ordering, target eligibility, or completion.
 
-Explosive Shell and Blast Rounds are additive to their baseline direct result. The direct target may also be included in the area Effect and may therefore receive two independent damage results and two explicitly authorized Elemental opportunities.
+Explosive Arrow, Explosive Shell, and Blast Rounds are additive to their baseline direct result. Their surviving direct target may also be included in the area Effect and may therefore receive two independent damage results and two explicitly authorized Elemental opportunities.
 
 Positive damage or successful damage application is not a universal gate for Elemental opportunity. However, a Monster removed by the preceding damage is no longer a valid target at the following boundary.
 
@@ -233,15 +216,18 @@ Direct Monster Hit and positive direct damage are not required to continue the c
 
 The local selector does not use the source Tower's full Attack Range or normal target-selection value. It operates only after radius and chain-history filtering.
 
-Before an initial Shell's first Position Impact, approved refresh may change unresolved damage, Explosive Shell, or whether Bouncing Shell is available. The first Position Impact fixes the chain's remaining count, resolved-target history, bounce Arc height, search radius, and local selector. Later refresh cannot extend or rewrite that active chain.
+Before an initial Shell's first Position Impact, approved refresh may change unresolved primary damage, Explosive Shell, or whether Bouncing Shell is available. The first Position Impact fixes the chain's remaining count, resolved-target history, fixed Bounce Damage, bounce Arc height, search radius, and local selector. Later refresh cannot extend or rewrite that active chain.
 
 Bounce children:
 
 - Inherit only relevant typed source and package data.
+- Use the package-authored positive integer Bounce Damage rather than inheriting parent direct damage.
 - Use package-authored bounce Arc height.
 - Do not consume Multi Shells again.
 - Do not inspect the source Tower's complete Upgrade state.
 - Retain live Elemental lookup at each eligible result boundary.
+
+Primary initial Shells use current resolved Cannon Attack Damage. Additional initial Shells use the Multi Shells package's positive integer Additional Shell Damage. Bounce children always use the Bouncing Shell package's positive integer Bounce Damage, including when the parent was an additional Shell or another bounce child. Fixed additional and bounce direct damage is immutable against later Damage Bonus refresh, while an unresolved primary initial Shell remains eligible for its reviewed live Damage refresh. Explosive Shell remains an independently authored Effect and uses the same authored Effect damage at every eligible impact. No Cannon Behaviour composes a general damage multiplier.
 
 ---
 
@@ -279,7 +265,6 @@ Projectile authoring and release validation should report or reject at minimum:
 - Missing required launch direction, target, or target-position presence
 - Incompatible flight identity and release data
 - Invalid Piercing capacity
-- Invalid Tracking range or target identity
 - Invalid bounce count, radius, Arc height, or selector
 - Missing source context required by an authorized Elemental or package result
 
@@ -289,6 +274,6 @@ Invalid data must not be repaired by changing flight identity or inventing a tar
 
 # 13. Approved Scope And Deferred Topics
 
-Current scope includes Direction, Arc, and Tracking flight; direct Monster Hits; Position Impact; finite Piercing; Scatter independence; Hunting tracking and retrofit; Bouncing Shell; Drone-fired projectiles; and optional impact presentation.
+Current scope includes Direction and Arc flight; direct Monster Hits; Position Impact; finite Piercing; Scatter independence; Explosive Arrow; Bouncing Shell; Drone-fired projectiles; and optional impact presentation. Tracking flight is not part of the current projectile schema or runtime contract.
 
 Deferred topics include generic chain, split, boomerang, ricochet, and missile frameworks. New behaviors require explicit contracts rather than Tower-specific branching inside the shared projectile lifecycle.

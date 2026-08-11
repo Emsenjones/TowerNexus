@@ -19,10 +19,9 @@ public class TowerUpgradeStatDelta
             case TowerUpgradeBasicStatType.DamageBonus:
                 return true;
             case TowerUpgradeBasicStatType.MagicOrbRotationSpeed:
-            case TowerUpgradeBasicStatType.MagicOrbMaxHitCount:
                 return towerFamily == TowerFamily.Magic;
-            case TowerUpgradeBasicStatType.DroneBatteryDuration:
             case TowerUpgradeBasicStatType.DroneBurstCooldown:
+            case TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance:
                 return towerFamily == TowerFamily.Drone;
             default:
                 return false;
@@ -31,12 +30,26 @@ public class TowerUpgradeStatDelta
 
     public bool RequiresWholeNumberAdditiveValue()
     {
-        return statType == TowerUpgradeBasicStatType.MagicOrbMaxHitCount ||
-               statType == TowerUpgradeBasicStatType.DamageBonus;
+        return statType == TowerUpgradeBasicStatType.DamageBonus;
     }
 
     public bool HasWholeNumberAdditiveValue()
     {
         return Mathf.Approximately(additiveValue, Mathf.Round(additiveValue));
+    }
+
+    public bool HasFiniteAdditiveValue()
+    {
+        return !float.IsNaN(additiveValue) && !float.IsInfinity(additiveValue);
+    }
+
+    public bool RequiresUnitIntervalAdditiveValue()
+    {
+        return statType == TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance;
+    }
+
+    public bool HasUnitIntervalAdditiveValue()
+    {
+        return additiveValue >= 0f && additiveValue <= 1f;
     }
 }

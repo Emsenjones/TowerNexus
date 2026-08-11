@@ -4850,7 +4850,6 @@ MonoBehaviour:
   rotationSpeed: 180
   orbitRadius: 0.75
   contactDistance: 0.25
-  maxHitCount: 3
   sameTargetHitCooldown: 0.5
   maxLifetime: 5
 --- !u!1 &3170343543818680394
@@ -9828,7 +9827,6 @@ MonoBehaviour:
   rotationSpeed: 180
   orbitRadius: 0.75
   contactDistance: 0.25
-  maxHitCount: 3
   sameTargetHitCooldown: 0.5
   maxLifetime: 5
 --- !u!1 &5932105996875227893
@@ -9879,7 +9877,6 @@ MonoBehaviour:
   rotationSpeed: 180
   orbitRadius: 1
   contactDistance: 0.25
-  maxHitCount: 14
   sameTargetHitCooldown: 0.5
   maxLifetime: 18
 --- !u!1 &7702116986669340077
@@ -14732,6 +14729,5 @@ MonoBehaviour:
   rotationSpeed: 180
   orbitRadius: 0.75
   contactDistance: 0.25
-  maxHitCount: 3
   sameTargetHitCooldown: 0.5
   maxLifetime: 5

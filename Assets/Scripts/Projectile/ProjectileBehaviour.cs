@@ -29,16 +29,20 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 launchDirection;
     private Vector3 startPosition;
     private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
+    private readonly List<MonsterBehaviour> resolvedExplosiveArrowTargets = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> resolvedExplosiveShellTargets = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> resolvedBlastRoundsTargets = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> bounceCandidates = new List<MonsterBehaviour>();
     private readonly HashSet<MonsterBehaviour> bounceHitHistory = new HashSet<MonsterBehaviour>();
     private ArcherProjectileReleaseIdentity archerReleaseIdentity;
+    private TowerUpgradeDefinition explosiveArrowSourceUpgrade;
     private TowerUpgradeDefinition explosiveShellSourceUpgrade;
     private TowerUpgradeDefinition blastRoundsSourceUpgrade;
+    private EffectDefinition explosiveArrowEffect;
     private EffectDefinition explosiveShellEffect;
     private EffectDefinition blastRoundsEffect;
     private int attackDamage;
+    private int directDamageBonus;
     private int remainingPiercingHitCount;
     private int remainingBounceCount;
     private float elapsedLifetime;
@@ -46,12 +50,11 @@ public class ProjectileBehaviour : MonoBehaviour
     private float initialArcHeight;
     private float bounceSearchRadius;
     private float bounceArcHeight;
-    private float trackingRange;
-    private Vector3 trackingRangeOrigin;
+    private int bounceDamage;
     private TargetSelectionType bounceTargetSelectionType;
     private bool canPierce;
     private bool isBounceChild;
-    private bool hasConsumedHuntingOpportunity;
+    private bool locksDirectDamage;
     private bool isInitialized;
     private bool hasImpacted;
     private bool hasEnded;
@@ -74,7 +77,6 @@ public class ProjectileBehaviour : MonoBehaviour
     public bool IsActiveForRefresh =>
         isInitialized && !hasImpacted && !hasEnded && gameObject.activeInHierarchy;
     public ArcherProjectileReleaseIdentity ArcherReleaseIdentity => archerReleaseIdentity;
-    public Vector3 TrackingRangeOrigin => trackingRangeOrigin;
 
     public bool IsValid()
     {
@@ -110,8 +112,7 @@ public class ProjectileBehaviour : MonoBehaviour
         float initialArcHeight = 0f,
         ProjectileRuntimeOptions runtimeOptions = default,
         IReadOnlyCollection<MonsterBehaviour> inheritedBounceHitHistory = null,
-        ArcherProjectileReleaseIdentity archerReleaseIdentity = default,
-        bool huntingOpportunityConsumed = false)
+        ArcherProjectileReleaseIdentity archerReleaseIdentity = default)
     {
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
@@ -121,26 +122,29 @@ public class ProjectileBehaviour : MonoBehaviour
         this.targetPosition = targetPosition;
         this.archerReleaseIdentity = archerReleaseIdentity;
         this.attackDamage = Mathf.Max(0, attackDamage);
+        directDamageBonus = Mathf.Max(0, runtimeOptions.DirectDamageBonus);
         this.initialArcHeight = Mathf.Max(0f, initialArcHeight);
         canPierce = runtimeOptions.CanPierce;
         remainingPiercingHitCount = canPierce
             ? Mathf.Max(1, runtimeOptions.MaxPierceHitCount)
             : 1;
         isBounceChild = runtimeOptions.IsBounceChild;
+        locksDirectDamage = runtimeOptions.LocksDirectDamage;
+        explosiveArrowSourceUpgrade = runtimeOptions.ExplosiveArrowSourceUpgrade;
+        explosiveArrowEffect = runtimeOptions.ExplosiveArrowEffect;
         explosiveShellSourceUpgrade = runtimeOptions.ExplosiveShellSourceUpgrade;
         explosiveShellEffect = runtimeOptions.ExplosiveShellEffect;
         bounceSearchRadius = runtimeOptions.BounceSearchRadius;
         remainingBounceCount = runtimeOptions.RemainingBounceCount;
         bounceArcHeight = runtimeOptions.BounceArcHeight;
         bounceTargetSelectionType = runtimeOptions.BounceTargetSelectionType;
-        trackingRangeOrigin = runtimeOptions.TrackingRangeOrigin;
-        trackingRange = runtimeOptions.TrackingRange;
+        bounceDamage = runtimeOptions.BounceDamage;
         blastRoundsSourceUpgrade = runtimeOptions.BlastRoundsSourceUpgrade;
         blastRoundsEffect = runtimeOptions.BlastRoundsEffect;
-        hasConsumedHuntingOpportunity = huntingOpportunityConsumed;
 
         startPosition = transform.position;
         piercedMonsters.Clear();
+        resolvedExplosiveArrowTargets.Clear();
         resolvedExplosiveShellTargets.Clear();
         resolvedBlastRoundsTargets.Clear();
         bounceCandidates.Clear();
@@ -189,8 +193,6 @@ public class ProjectileBehaviour : MonoBehaviour
                 return CanInitializeDirectionFlight();
             case ProjectileFlightType.Arc:
                 return CanInitializeArcFlight();
-            case ProjectileFlightType.Tracking:
-                return CanInitializeTrackingFlight();
             default:
                 Debug.LogWarning($"Projectile behaviour cannot initialize: unsupported flight type '{flightType}'.", this);
                 return false;
@@ -231,35 +233,6 @@ public class ProjectileBehaviour : MonoBehaviour
         return true;
     }
 
-    private bool CanInitializeTrackingFlight()
-    {
-        if (monsterManager == null)
-        {
-            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: monster manager is null.", this);
-            return false;
-        }
-
-        if (hitDistanceThreshold <= 0f)
-        {
-            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: hit distance threshold must be greater than zero.", this);
-            return false;
-        }
-
-        if (trackingRange <= 0f)
-        {
-            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: tracking range must be greater than zero.", this);
-            return false;
-        }
-
-        if (!IsValidTrackingTarget(targetMonster) || !IsInsideTrackingRange(GetMonsterHitPosition(targetMonster)))
-        {
-            Debug.LogWarning("Projectile behaviour cannot initialize Tracking flight: locked target is invalid or outside tracking range.", this);
-            return false;
-        }
-
-        return true;
-    }
-
     private bool InitializeFlight()
     {
         switch (flightType)
@@ -268,8 +241,6 @@ public class ProjectileBehaviour : MonoBehaviour
                 return InitializeDirectionFlight();
             case ProjectileFlightType.Arc:
                 return InitializeArcFlight();
-            case ProjectileFlightType.Tracking:
-                return InitializeTrackingFlight();
             default:
                 return false;
         }
@@ -284,12 +255,6 @@ public class ProjectileBehaviour : MonoBehaviour
     private bool InitializeArcFlight()
     {
         arcTravelTime = CalculateArcTravelTime();
-        return true;
-    }
-
-    private bool InitializeTrackingFlight()
-    {
-        launchDirection = CalculateLaunchDirection(GetMonsterHitPosition(targetMonster));
         return true;
     }
 
@@ -315,9 +280,6 @@ public class ProjectileBehaviour : MonoBehaviour
                 break;
             case ProjectileFlightType.Arc:
                 UpdateArcFlight();
-                break;
-            case ProjectileFlightType.Tracking:
-                UpdateTrackingFlight();
                 break;
             default:
                 DestroyProjectile();
@@ -354,23 +316,12 @@ public class ProjectileBehaviour : MonoBehaviour
 
     public bool TryRefreshDamage(int resolvedDamage)
     {
-        if (!IsActiveForRefresh)
+        if (!IsActiveForRefresh || locksDirectDamage)
         {
             return false;
         }
 
         attackDamage = Mathf.Max(0, resolvedDamage);
-        return true;
-    }
-
-    public bool TryRefreshTrackingRange(float resolvedTrackingRange)
-    {
-        if (!IsActiveForRefresh || flightType != ProjectileFlightType.Tracking)
-        {
-            return false;
-        }
-
-        trackingRange = Mathf.Max(0f, resolvedTrackingRange);
         return true;
     }
 
@@ -396,52 +347,6 @@ public class ProjectileBehaviour : MonoBehaviour
         return true;
     }
 
-    public bool TryConsumeHuntingOpportunity()
-    {
-        if (!IsActiveForRefresh ||
-            !archerReleaseIdentity.IsValid ||
-            hasConsumedHuntingOpportunity)
-        {
-            return false;
-        }
-
-        hasConsumedHuntingOpportunity = true;
-        return true;
-    }
-
-    public bool TryConvertToTracking(
-        MonsterBehaviour lockedTarget,
-        Vector3 rangeOrigin,
-        float resolvedTrackingRange)
-    {
-        if (!IsActiveForRefresh ||
-            !archerReleaseIdentity.IsValid ||
-            !hasConsumedHuntingOpportunity ||
-            flightType != ProjectileFlightType.Direction ||
-            resolvedTrackingRange <= 0f ||
-            !IsValidTrackingTarget(lockedTarget))
-        {
-            return false;
-        }
-
-        Vector3 lockedPosition = GetMonsterHitPosition(lockedTarget);
-        float rangeSqr = resolvedTrackingRange * resolvedTrackingRange;
-
-        if ((lockedPosition - rangeOrigin).sqrMagnitude > rangeSqr ||
-            (transform.position - rangeOrigin).sqrMagnitude > rangeSqr)
-        {
-            return false;
-        }
-
-        targetMonster = lockedTarget;
-        targetPosition = lockedPosition;
-        trackingRangeOrigin = rangeOrigin;
-        trackingRange = resolvedTrackingRange;
-        flightType = ProjectileFlightType.Tracking;
-        launchDirection = CalculateLaunchDirection(lockedPosition);
-        return true;
-    }
-
     public bool TryRefreshExplosiveShell(
         TowerUpgradeDefinition sourceUpgrade,
         EffectDefinition effectDefinition)
@@ -460,11 +365,13 @@ public class ProjectileBehaviour : MonoBehaviour
         float searchRadius,
         int maxBounceCount,
         float arcHeight,
-        TargetSelectionType selectionType)
+        TargetSelectionType selectionType,
+        int resolvedBounceDamage)
     {
         if (!IsActiveForRefresh ||
             flightType != ProjectileFlightType.Arc ||
-            isBounceChild)
+            isBounceChild ||
+            resolvedBounceDamage <= 0)
         {
             return false;
         }
@@ -473,6 +380,7 @@ public class ProjectileBehaviour : MonoBehaviour
         remainingBounceCount = Mathf.Max(0, maxBounceCount);
         bounceArcHeight = Mathf.Max(0f, arcHeight);
         bounceTargetSelectionType = selectionType;
+        bounceDamage = resolvedBounceDamage;
         return true;
     }
 
@@ -531,45 +439,6 @@ public class ProjectileBehaviour : MonoBehaviour
         ImpactArcProjectile();
     }
 
-    private void UpdateTrackingFlight()
-    {
-        if (!IsInsideTrackingRange(transform.position) ||
-            !IsValidTrackingTarget(targetMonster))
-        {
-            TransitionTrackingToDirection();
-            return;
-        }
-
-        Vector3 lockedTargetPosition = GetMonsterHitPosition(targetMonster);
-
-        if (!IsInsideTrackingRange(lockedTargetPosition))
-        {
-            TransitionTrackingToDirection();
-            return;
-        }
-
-        Vector3 toTarget = lockedTargetPosition - transform.position;
-        float distanceToTarget = toTarget.magnitude;
-
-        if (distanceToTarget <= hitDistanceThreshold)
-        {
-            ImpactTrackingTarget();
-            return;
-        }
-
-        launchDirection = toTarget / distanceToTarget;
-        float travelDistance = Mathf.Min(
-            projectileSpeed * Time.deltaTime,
-            distanceToTarget);
-        transform.position += launchDirection * travelDistance;
-        FaceMoveDirection(launchDirection);
-
-        if (IsWithinHitDistance(targetMonster))
-        {
-            ImpactTrackingTarget();
-        }
-    }
-
     private float CalculateArcTravelTime()
     {
         float distance = Vector3.Distance(startPosition, targetPosition);
@@ -612,21 +481,6 @@ public class ProjectileBehaviour : MonoBehaviour
 
         MonsterBehaviour hitMonster = hitCollider.GetComponentInParent<MonsterBehaviour>();
 
-        if (flightType == ProjectileFlightType.Tracking)
-        {
-            if (hitMonster != targetMonster ||
-                !IsInsideTrackingRange(transform.position) ||
-                !IsValidTrackingTarget(targetMonster) ||
-                !IsInsideTrackingRange(GetMonsterHitPosition(targetMonster)) ||
-                !IsWithinHitDistance(targetMonster))
-            {
-                return;
-            }
-
-            ImpactTrackingTarget();
-            return;
-        }
-
         if (flightType != ProjectileFlightType.Direction)
         {
             return;
@@ -648,34 +502,6 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         ImpactDirectionProjectile(hitMonster);
-    }
-
-    private void ImpactTrackingTarget()
-    {
-        MonsterBehaviour lockedTarget = targetMonster;
-        ImpactDirectionProjectile(lockedTarget);
-
-        if (!hasImpacted && flightType == ProjectileFlightType.Tracking)
-        {
-            TransitionTrackingToDirection();
-        }
-    }
-
-    private void TransitionTrackingToDirection()
-    {
-        if (flightType != ProjectileFlightType.Tracking)
-        {
-            return;
-        }
-
-        if (launchDirection.sqrMagnitude <= 0.0001f)
-        {
-            launchDirection = transform.forward;
-        }
-
-        launchDirection.Normalize();
-        targetMonster = null;
-        flightType = ProjectileFlightType.Direction;
     }
 
     private void ImpactDirectionProjectile(MonsterBehaviour hitMonster)
@@ -711,13 +537,44 @@ public class ProjectileBehaviour : MonoBehaviour
     private void ApplyDirectionProjectileImpact(MonsterBehaviour hitMonster)
     {
         Vector3 impactPosition = transform.position;
-        hitMonster.TakeDamage(attackDamage);
+        hitMonster.TakeDamage(ResolveDirectDamage());
         ElementalApplication.TryApplyFromTowerAttack(
             sourceTower,
             hitMonster,
             impactPosition);
         RaiseImpact(hitMonster, impactPosition);
+        ExecuteExplosiveArrowImpact(hitMonster, impactPosition);
         ExecuteBlastRoundsImpact(impactPosition);
+    }
+
+    private void ExecuteExplosiveArrowImpact(
+        MonsterBehaviour directTarget,
+        Vector3 impactPosition)
+    {
+        if (explosiveArrowEffect == null)
+        {
+            return;
+        }
+
+        EffectExecutor.ExecuteWithResolvedTargets(
+            explosiveArrowEffect,
+            new EffectTriggerContext(
+                sourceTower: sourceTower,
+                sourceUpgrade: explosiveArrowSourceUpgrade,
+                targetMonster: directTarget,
+                hasTriggerPosition: true,
+                triggerPosition: impactPosition,
+                resolvedDamage: 0,
+                allowsElementalApplication: false),
+            resolvedExplosiveArrowTargets);
+
+        for (int i = 0; i < resolvedExplosiveArrowTargets.Count; i++)
+        {
+            ElementalApplication.TryApplyFromTowerAttack(
+                sourceTower,
+                resolvedExplosiveArrowTargets[i],
+                impactPosition);
+        }
     }
 
     private void ExecuteBlastRoundsImpact(Vector3 impactPosition)
@@ -770,7 +627,7 @@ public class ProjectileBehaviour : MonoBehaviour
         {
             hitMonster = resolvedMonster;
             bounceHitHistory.Add(hitMonster);
-            hitMonster.TakeDamage(attackDamage);
+            hitMonster.TakeDamage(ResolveDirectDamage());
             ElementalApplication.TryApplyFromTowerAttack(
                 sourceTower,
                 hitMonster,
@@ -816,7 +673,7 @@ public class ProjectileBehaviour : MonoBehaviour
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                resolvedDamage: attackDamage,
+                resolvedDamage: 0,
                 // Elemental Buff actions stay gated here; non-elemental authored Buff actions may still execute.
                 allowsElementalApplication: false),
             resolvedExplosiveShellTargets);
@@ -967,7 +824,7 @@ public class ProjectileBehaviour : MonoBehaviour
             projectileTemplate,
             targetMonster: null,
             targetPosition: bounceTargetPosition,
-            attackDamage: attackDamage,
+            attackDamage: bounceDamage,
             flightType: ProjectileFlightType.Arc,
             initialArcHeight: bounceArcHeight,
             runtimeOptions: CreateBounceChildRuntimeOptions(),
@@ -988,12 +845,14 @@ public class ProjectileBehaviour : MonoBehaviour
             canPierce: false,
             maxPierceHitCount: 1,
             isBounceChild: true,
+            locksDirectDamage: true,
             explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,
             explosiveShellEffect: explosiveShellEffect,
             bounceSearchRadius: bounceSearchRadius,
             remainingBounceCount: remainingBounceCount - 1,
             bounceArcHeight: bounceArcHeight,
-            bounceTargetSelectionType: bounceTargetSelectionType);
+            bounceTargetSelectionType: bounceTargetSelectionType,
+            bounceDamage: bounceDamage);
     }
 
     private void RaiseImpact(MonsterBehaviour hitMonster, Vector3 impactPosition)
@@ -1006,7 +865,7 @@ public class ProjectileBehaviour : MonoBehaviour
             sourceTower,
             hitMonster,
             impactPosition,
-            attackDamage,
+            ResolveDirectDamage(),
             impactEffectDefinition
         );
 
@@ -1183,35 +1042,9 @@ public class ProjectileBehaviour : MonoBehaviour
         return false;
     }
 
-    private bool IsValidTrackingTarget(MonsterBehaviour monster)
+    private int ResolveDirectDamage()
     {
-        if (monster == null || !monster.IsGameplayTargetable || monsterManager == null)
-        {
-            return false;
-        }
-
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
-
-        for (int i = 0; i < aliveMonsters.Count; i++)
-        {
-            if (aliveMonsters[i] == monster)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private bool IsInsideTrackingRange(Vector3 position)
-    {
-        if (trackingRange <= 0f)
-        {
-            return false;
-        }
-
-        float trackingRangeSqr = trackingRange * trackingRange;
-        return (position - trackingRangeOrigin).sqrMagnitude <= trackingRangeSqr;
+        return attackDamage + directDamageBonus;
     }
 
     private static bool IsValidTarget(MonsterBehaviour monster)

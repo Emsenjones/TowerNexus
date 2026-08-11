@@ -26,6 +26,7 @@ MonoBehaviour:
   overrideMaximumDroneCount: 2
   explosiveShellEffect: {fileID: 0}
   multiShellsMaxInitialShellCount: 2
+  multiShellsAdditionalDamage: 3
   bounceSearchRadius: 1
   maxBounceCount: 1
   arcaneDetonationEffect: {fileID: 0}

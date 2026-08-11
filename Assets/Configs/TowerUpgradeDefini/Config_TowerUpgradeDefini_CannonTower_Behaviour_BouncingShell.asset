@@ -30,6 +30,7 @@ MonoBehaviour:
   maxBounceCount: 1
   bounceArcHeight: 1
   bounceTargetSelectionType: 1
+  bounceDamage: 3
   arcaneDetonationEffect: {fileID: 0}
   magicArcaneFieldPrefab: {fileID: 0}
   blastRoundsEffect: {fileID: 0}

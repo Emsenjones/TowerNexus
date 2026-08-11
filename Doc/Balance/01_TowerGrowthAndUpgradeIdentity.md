@@ -2,7 +2,7 @@
 
 Document Set: Balance
 
-Status: Growth strategy and Tower Level v0.1 baseline approved; accepted per-Upgrade parameters remain pending Task003 and Task004 Play Mode acceptance
+Status: Growth strategy and Tower Level v0.1 baseline approved; detailed Upgrade calibration remains Task-owned
 
 ---
 
@@ -17,9 +17,9 @@ It answers:
 - Why Tower Level is worth buying even without direct combat-stat growth
 - How Core and Support Towers divide limited Draft investment
 - How Basic, Behaviour, and Elemental value depends on battlefield conditions
-- Which concrete Upgrade values form the accepted v0.1 balance snapshot after calibration
+- How immediate and delayed growth paths remain competitive without becoming universally optimal
 
-It does not own runtime eligibility, candidate sampling, candidate power targets, test fixtures, route matrices, exact Stage pools, Player Progress Requirements, Monster Wave values, or raw Play Mode evidence. Those rules and evidence belong to their owning System documents and Task contracts. After calibration, this document records only the accepted v0.1 Upgrade-parameter snapshot; Unity assets remain the executable authored values.
+It does not own runtime eligibility, candidate sampling, numerical power targets, accepted Upgrade values, test fixtures, route matrices, exact Stage pools, Player Progress Requirements, Monster Wave values, or raw Play Mode evidence. Those rules, values, and evidence belong to their owning System documents, Task contracts, and authored game content. This document remains the qualitative cross-Stage growth contract.
 
 ---
 
@@ -58,6 +58,8 @@ Pressure is interpreted from the complete battle state, including:
 Kill rate compared with spawn rate is useful evidence, but it is not the complete pressure model because route length and remaining exposure provide spatial buffer.
 
 The intended strategy is contextual. Low pressure should often favor Level investment, not make it automatically optimal.
+
+At equal Draft investment, higher-level progression should provide scenarios where its delayed investment is competitively rewarded. It does not need to outperform lower-level Upgrades universally, but it should not be strictly dominated by repeatedly taking immediately available lower-level Upgrades.
 
 ---
 
@@ -112,14 +114,14 @@ Required Tower Level and Upgrade Layer remain separate. A Basic or Behaviour Upg
 
 ---
 
-# 7. Accepted Upgrade Parameters v0.1
+# 7. Growth Curve Principles
 
-Status: Pending Task003 and Task004 Play Mode acceptance
+Growth should remain readable and reasonably smooth across the limited Draft investments available during one battle.
 
-This section records one row per UpgradeDefinition only after its owning Task accepts the final authored parameters. Candidate gain targets, fixtures, route results, and revision history remain in the Task documents.
+- Every accepted Upgrade should create meaningful value without being required to repair an unusable Base Tower.
+- Immediate lower-level Upgrades should offer dependable current power, while Level investment exchanges current power for access to future specialization and a higher conditional ceiling.
+- Higher Required Tower Level content should create new strategic capability, synergy, or scenario strength rather than acting as an unconditional numerical tier above lower-level content.
+- No immediate or delayed investment path should become the universally correct choice across pressure states, Tower positions, and intended build roles.
+- Large power discontinuities should come from readable build completion or cooperation, not from an isolated unexplained parameter spike.
 
-| TowerFamily | Upgrade | Layer | Required Level | Accepted Authoring Parameters | Accepted In | Status |
-|---|---|---|---:|---|---|---|
-| Pending | Pending | Basic, Behaviour, or Elemental | Pending | Pending | Task003 or Task004 | Pending |
-
-This table becomes the durable v0.1 lookup after Task003 and Task004 accept the corresponding content.
+Task003 and Task004 own candidate targets, fixed-condition evidence, accepted Upgrade values, and revision decisions. Unity assets remain the executable source for authored parameters. This document retains only the design intent used to judge those outputs.

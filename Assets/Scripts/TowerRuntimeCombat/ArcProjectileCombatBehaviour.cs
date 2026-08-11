@@ -139,7 +139,8 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
                             upgradeDefinition.BounceSearchRadius,
                             upgradeDefinition.MaxBounceCount,
                             upgradeDefinition.BounceArcHeight,
-                            upgradeDefinition.BounceTargetSelectionType);
+                            upgradeDefinition.BounceTargetSelectionType,
+                            upgradeDefinition.BounceDamage);
                     }
                 }
                 break;
@@ -164,17 +165,20 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
-        ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions();
         int releasedCount = 0;
 
         for (int i = 0; i < pendingTargetPositions.Count; i++)
         {
+            int shellDamage = ResolveInitialShellDamage(i, resolvedStats.AttackDamage);
+            ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions(
+                locksDirectDamage: i > 0);
+
             if (TryReleaseProjectile(
                     projectilePrefab,
                     origin,
                     pendingTargetPositions[i],
                     target: null,
-                    resolvedStats.AttackDamage,
+                    shellDamage,
                     ProjectileFlightType.Arc,
                     arcHeight,
                     runtimeOptions))
@@ -220,13 +224,14 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private ProjectileRuntimeOptions CreateRuntimeOptions()
+    private ProjectileRuntimeOptions CreateRuntimeOptions(bool locksDirectDamage)
     {
         TowerUpgradeDefinition explosiveShellSourceUpgrade = null;
         EffectDefinition explosiveShellEffect = null;
         float bounceSearchRadius = 0f;
         int remainingBounceCount = 0;
         float bounceArcHeight = 0f;
+        int bounceDamage = 0;
         TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest;
 
         if (HasBehaviourPackage(TowerBehaviourPackageType.CannonExplosiveShell) &&
@@ -255,17 +260,35 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             remainingBounceCount = resolvedBouncingShellUpgrade.MaxBounceCount;
             bounceArcHeight = resolvedBouncingShellUpgrade.BounceArcHeight;
             bounceTargetSelectionType = resolvedBouncingShellUpgrade.BounceTargetSelectionType;
+            bounceDamage = resolvedBouncingShellUpgrade.BounceDamage;
         }
 
         return new ProjectileRuntimeOptions(
             canPierce: false,
             maxPierceHitCount: 1,
+            locksDirectDamage: locksDirectDamage,
             explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,
             explosiveShellEffect: explosiveShellEffect,
             bounceSearchRadius: bounceSearchRadius,
             remainingBounceCount: remainingBounceCount,
             bounceArcHeight: bounceArcHeight,
-            bounceTargetSelectionType: bounceTargetSelectionType);
+            bounceTargetSelectionType: bounceTargetSelectionType,
+            bounceDamage: bounceDamage);
+    }
+
+    private int ResolveInitialShellDamage(int slotIndex, int resolvedPrimaryDamage)
+    {
+        if (slotIndex <= 0 ||
+            !HasBehaviourPackage(TowerBehaviourPackageType.CannonMultiShells))
+        {
+            return resolvedPrimaryDamage;
+        }
+
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.CannonMultiShells,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.MultiShellsAdditionalDamage
+            : resolvedPrimaryDamage;
     }
 
     private int ResolveMaximumInitialShellCount()

@@ -69,7 +69,7 @@ Reference Build v0.1 uses these shared rules:
 - The two Stage6 Core Towers use the same ElementType and must have overlapping effective coverage.
 - Exact Basic, Behaviour, and Elemental definitions are selected by downstream calibration.
 
-The listed one-Basic and one-Behaviour Core is the Reference Build used to derive Stage budgets. It is not the maximum legal Upgrade stack on one Tower. Cross-Stage realized-power targets and cumulative single-Tower guardrails belong to `01_TowerGrowthAndUpgradeIdentity.md`; exact Upgrade values and Stage pressure remain Task outputs.
+The listed one-Basic and one-Behaviour Core is the Reference Build used to derive Stage budgets. It is not the maximum legal Upgrade stack on one Tower. Cross-Stage qualitative growth principles belong to `01_TowerGrowthAndUpgradeIdentity.md`; realized-power targets, cumulative single-Tower guardrails, exact Upgrade values, and Stage pressure remain Task outputs.
 
 The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain Task006 design work.
 

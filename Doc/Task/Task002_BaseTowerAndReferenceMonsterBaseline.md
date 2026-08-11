@@ -43,7 +43,7 @@ The four attack strategies must remain visibly different while their same-cost c
 - Player Progress Requirements
 - Stage Wave tuning
 
-Lingering Orbit was restored during Task002 with its current `Magic Orb Max Hit Count +5` authoring value. Its final Upgrade balance belongs to Task003 with the other Basic and Behaviour Upgrades.
+Task003A later approved removal of gameplay Magic Orb Maximum Hit Count and replacement of Lingering Orbit. Those changes are not retroactively written into this frozen v0.2 record. After Task003A implementation, Task002 must establish `Base Combat v0.3` before Task003 Upgrade calibration begins.
 
 ## 5. Fixed Reference Run
 
@@ -238,3 +238,12 @@ A Level Up whose contract and data remain model-and-eligibility-only does not re
 An ownership migration is not a `Base Combat` value revision, but it must rerun the Task002 route suite when the resolved-damage path changes.
 
 If later evidence proves that the Level 1 baseline itself is structurally invalid, the change must be named as a `Base Combat` revision. The revised Tower must rerun L-shaped primary acceptance plus Straight and U-shaped diagnostics, then rerun downstream Upgrade checks before replacing `Base Combat v0.2`.
+
+Task003A is one such named structural revision because normal Magic Orb completion changes from hit-count exhaustion or lifetime expiry to lifetime expiry only. After Task003A implementation:
+
+1. Keep the `40 / HP 12 / Speed 0.25 / Spawn 2.5s` fixture and the existing L, Straight, and U route roles.
+2. Run every naked Level 1 Tower on every route, not Magic alone, so the common baseline remains comparable after shared runtime changes.
+3. Use Effective Damage and Damage Coverage as the primary comparison; do not force equal kill counts.
+4. Adjust a naked-Tower base value only when the revised route suite shows a structural outlier. Upgrade values are not used to repair the baseline.
+5. Record and freeze the accepted results as `Base Combat v0.3`, retaining v0.2 as historical evidence.
+6. Begin Task003 final Upgrade calibration only after v0.3 is accepted.

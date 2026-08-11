@@ -5,24 +5,21 @@ public readonly struct ResolvedTowerCombatStats
         float attackCycleDuration,
         int attackDamage,
         float magicOrbRotationSpeed,
-        int magicOrbMaxHitCount,
-        float droneBatteryDuration,
-        float droneBurstCooldown)
+        float droneBurstCooldown,
+        float droneProjectileBonusDamageChance)
     {
         AttackRange = attackRange;
         AttackCycleDuration = attackCycleDuration;
         AttackDamage = attackDamage;
         MagicOrbRotationSpeed = magicOrbRotationSpeed;
-        MagicOrbMaxHitCount = magicOrbMaxHitCount;
-        DroneBatteryDuration = droneBatteryDuration;
         DroneBurstCooldown = droneBurstCooldown;
+        DroneProjectileBonusDamageChance = droneProjectileBonusDamageChance;
     }
 
     public float AttackRange { get; }
     public float AttackCycleDuration { get; }
     public int AttackDamage { get; }
     public float MagicOrbRotationSpeed { get; }
-    public int MagicOrbMaxHitCount { get; }
-    public float DroneBatteryDuration { get; }
     public float DroneBurstCooldown { get; }
+    public float DroneProjectileBonusDamageChance { get; }
 }

@@ -9,23 +9,19 @@ public readonly struct MagicOrbStatRefresh
         bool refreshDamage,
         int newDamage,
         bool refreshRotationSpeed,
-        float newRotationSpeed,
-        int remainingHitCountDelta)
+        float newRotationSpeed)
     {
         RefreshDamage = refreshDamage;
         NewDamage = newDamage;
         RefreshRotationSpeed = refreshRotationSpeed;
         NewRotationSpeed = newRotationSpeed;
-        RemainingHitCountDelta = remainingHitCountDelta;
     }
 
     public bool RefreshDamage { get; }
     public int NewDamage { get; }
     public bool RefreshRotationSpeed { get; }
     public float NewRotationSpeed { get; }
-    public int RemainingHitCountDelta { get; }
-    public bool HasAnyChange =>
-        RefreshDamage || RefreshRotationSpeed || RemainingHitCountDelta != 0;
+    public bool HasAnyChange => RefreshDamage || RefreshRotationSpeed;
 }
 
 public class MagicOrbBehaviour : MonoBehaviour
@@ -41,9 +37,6 @@ public class MagicOrbBehaviour : MonoBehaviour
     [MinValue(0f)]
     [SerializeField] private float contactDistance = 0.25f;
     [TitleGroup("Hits")]
-    [MinValue(1)]
-    [SerializeField] private int maxHitCount = 3;
-    [TitleGroup("Hits")]
     [MinValue(0f)]
     [SerializeField] private float sameTargetHitCooldown = 0.5f;
 
@@ -56,7 +49,6 @@ public class MagicOrbBehaviour : MonoBehaviour
 
     private MagicOrbGroupRuntime ownerGroup;
     private int memberSlot;
-    private int remainingHitCount;
     private float angleOffset;
     private bool isInitialized;
     private bool hasEnded;
@@ -65,14 +57,12 @@ public class MagicOrbBehaviour : MonoBehaviour
     public Vector3 OrbitCenterPosition => ownerGroup != null
         ? ownerGroup.OrbitCenterPosition
         : transform.position;
-    public int RemainingHitCount => remainingHitCount;
     public bool IsInitialized => isInitialized;
     public int MemberSlot => memberSlot;
     public float AngleOffset => angleOffset;
     public float BaseRotationSpeed => rotationSpeed;
     public float BaseOrbitRadius => orbitRadius;
     public float BaseContactDistance => contactDistance;
-    public int BaseMaxHitCount => maxHitCount;
     public float BaseMaxLifetime => maxLifetime;
     public float BaseSameTargetHitCooldown => sameTargetHitCooldown;
 
@@ -81,7 +71,6 @@ public class MagicOrbBehaviour : MonoBehaviour
         return rotationSpeed >= 0f &&
                orbitRadius >= 0f &&
                contactDistance >= 0f &&
-               maxHitCount > 0 &&
                maxLifetime > 0f &&
                sameTargetHitCooldown >= 0f;
     }
@@ -89,16 +78,14 @@ public class MagicOrbBehaviour : MonoBehaviour
     internal bool Initialize(
         MagicOrbGroupRuntime initializedOwnerGroup,
         int initializedMemberSlot,
-        float initializedAngleOffset,
-        int initializedRemainingHitCount)
+        float initializedAngleOffset)
     {
         ownerGroup = initializedOwnerGroup;
         memberSlot = initializedMemberSlot;
         angleOffset = initializedAngleOffset;
-        remainingHitCount = Mathf.Max(0, initializedRemainingHitCount);
         monsterHitCooldownEnds.Clear();
         hasEnded = false;
-        isInitialized = ownerGroup != null && memberSlot >= 0 && remainingHitCount > 0;
+        isInitialized = ownerGroup != null && memberSlot >= 0;
 
         if (isInitialized)
         {
@@ -120,16 +107,14 @@ public class MagicOrbBehaviour : MonoBehaviour
     internal void AttachCommittedMember(
         MagicOrbGroupRuntime initializedOwnerGroup,
         int initializedMemberSlot,
-        float initializedAngleOffset,
-        int initializedRemainingHitCount)
+        float initializedAngleOffset)
     {
         ownerGroup = initializedOwnerGroup;
         memberSlot = initializedMemberSlot;
         angleOffset = initializedAngleOffset;
-        remainingHitCount = Mathf.Max(0, initializedRemainingHitCount);
         monsterHitCooldownEnds.Clear();
         hasEnded = false;
-        isInitialized = ownerGroup != null && memberSlot >= 0 && remainingHitCount > 0;
+        isInitialized = ownerGroup != null && memberSlot >= 0;
     }
 
     internal void ActivateCommittedMember()
@@ -149,27 +134,6 @@ public class MagicOrbBehaviour : MonoBehaviour
     internal void RecordContact(MonsterBehaviour monster, float cooldownEndTime)
     {
         monsterHitCooldownEnds[monster] = cooldownEndTime;
-    }
-
-    internal void ApplyRemainingHitCountDelta(int delta)
-    {
-        if (!isInitialized || hasEnded || delta == 0)
-        {
-            return;
-        }
-
-        remainingHitCount = Mathf.Max(0, remainingHitCount + delta);
-    }
-
-    internal bool TryConsumeHit()
-    {
-        if (!isInitialized || hasEnded || remainingHitCount <= 0)
-        {
-            return false;
-        }
-
-        remainingHitCount--;
-        return true;
     }
 
     internal void SetGroupPosition(Vector3 worldPosition)
@@ -248,7 +212,6 @@ internal sealed class MagicOrbGroupRuntime
     private TowerUpgradeDefinition arcaneDetonationSourceUpgrade;
     private EffectDefinition arcaneDetonationEffect;
     private int attackDamage;
-    private int resolvedMaxHitCount;
     private float rotationSpeed;
     private float orbitPhase;
     private float elapsedLifetime;
@@ -273,7 +236,6 @@ internal sealed class MagicOrbGroupRuntime
         this.orbitCenterPosition = orbitCenterPosition;
         attackDamage = resolvedStats.AttackDamage;
         rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
-        resolvedMaxHitCount = resolvedStats.MagicOrbMaxHitCount;
         arcaneDetonationSourceUpgrade = runtimeOptions.ArcaneDetonationSourceUpgrade;
         arcaneDetonationEffect = runtimeOptions.ArcaneDetonationEffect;
         orbitRadius = authoredOrb != null ? authoredOrb.BaseOrbitRadius : -1f;
@@ -295,7 +257,6 @@ internal sealed class MagicOrbGroupRuntime
     {
         return sourceTower != null &&
                monsterManager != null &&
-               resolvedMaxHitCount > 0 &&
                rotationSpeed >= 0f &&
                orbitRadius >= 0f &&
                contactDistance >= 0f &&
@@ -319,8 +280,7 @@ internal sealed class MagicOrbGroupRuntime
         if (!member.Initialize(
                 this,
                 memberSlot,
-                angleOffset,
-                resolvedMaxHitCount))
+                angleOffset))
         {
             return false;
         }
@@ -389,32 +349,6 @@ internal sealed class MagicOrbGroupRuntime
             rotationSpeed = Mathf.Max(0f, refresh.NewRotationSpeed);
         }
 
-        if (refresh.RemainingHitCountDelta != 0)
-        {
-            resolvedMaxHitCount = Mathf.Max(
-                1,
-                resolvedMaxHitCount + refresh.RemainingHitCountDelta);
-
-            bool shouldComplete = false;
-
-            for (int i = 0; i < members.Count; i++)
-            {
-                MagicOrbBehaviour member = members[i];
-
-                if (member == null)
-                {
-                    continue;
-                }
-
-                member.ApplyRemainingHitCountDelta(refresh.RemainingHitCountDelta);
-                shouldComplete |= member.RemainingHitCount <= 0;
-            }
-
-            if (shouldComplete)
-            {
-                CompleteNormally();
-            }
-        }
     }
 
     public void EnableArcaneDetonation(
@@ -462,8 +396,7 @@ internal sealed class MagicOrbGroupRuntime
             candidate.AttachCommittedMember(
                 this,
                 slot,
-                angleOffset,
-                resolvedMaxHitCount);
+                angleOffset);
             members.Add(candidate);
             SetMemberPosition(candidate);
         }
@@ -548,7 +481,6 @@ internal sealed class MagicOrbGroupRuntime
         if (!IsActive ||
             member == null ||
             !member.IsInitialized ||
-            member.RemainingHitCount <= 0 ||
             !EffectTargetResolver.IsValidMonsterTarget(monster) ||
             member.IsTargetOnCooldown(monster, Time.time))
         {
@@ -566,16 +498,6 @@ internal sealed class MagicOrbGroupRuntime
         monster.TakeDamage(attackDamage);
         ElementalApplication.TryApplyFromTowerAttack(sourceTower, monster, hitPosition);
         member.RecordContact(monster, Time.time + sameTargetHitCooldown);
-
-        if (!member.TryConsumeHit())
-        {
-            return false;
-        }
-
-        if (member.RemainingHitCount <= 0)
-        {
-            CompleteNormally();
-        }
 
         return true;
     }

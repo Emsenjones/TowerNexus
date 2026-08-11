@@ -1,8 +1,8 @@
 # Task003 - Tower Growth And Non-Elemental Upgrades
 
-Status: Planned; the Task003 v0.1 test fixture is fixed, while Power Budget targets, Upgrade values, and Play Mode acceptance remain pending
+Status: Planned and blocked by Task003A plus Task002 `Base Combat v0.3`; Power Budget targets, revised Upgrade values, and final Play Mode acceptance remain pending
 
-Depends on: Task002 `Base Combat v0.2`; approved Tower Growth And Upgrade Identity balance contract
+Depends on: Completed Task003A implementation; accepted Task002 `Base Combat v0.3`; approved Tower Growth And Upgrade Identity balance contract
 
 ## 1. Goal
 
@@ -20,12 +20,15 @@ Every Basic and Behaviour Upgrade is measured on fixed Straight, L, and U routes
 - `Doc/System/08_DraftSystem.md`
 - `Doc/System/10_TowerFrameworkSystem.md`
 - `Doc/System/11_TowerRuntimeCombatSystem.md`
+- `Doc/System/12_ProjectileSystem.md`
 - `Doc/System/13_TowerUpgradeSystem.md`
 - `Doc/System/14_EffectSystem.md`
+- `Doc/Task/Task003A_NonElementalUpgradeDefinitionRevision.md`
 
 ## 3. Preconditions
 
-- Task002 `Base Combat v0.2` Level 1 values remain frozen.
+- Task003A revised Upgrade definitions and runtime contracts are implemented and accepted.
+- Task002 `Base Combat v0.3` Level 1 values are frozen after the complete naked-Tower route regression.
 - Tower runtime templates own Base Attack Damage, Range, Cycle, and targeting authoring.
 - TowerLevelConfig owns level identity and model data without combat stats.
 - Tower Upgrade System binds the active Stage Upgrade pool and enforces the derived per-TowerFamily level cap.
@@ -59,7 +62,7 @@ Every Basic and Behaviour Upgrade is measured on fixed Straight, L, and U routes
 
 ## 6. Calibration Sequence
 
-1. Preserve the Task002 Map plus all frozen `Base Combat v0.2` Tower and Reference Monster asset values.
+1. Preserve the Task002 Map plus all frozen `Base Combat v0.3` Tower and Reference Monster asset values.
 2. Reuse the Task002 Straight, L, and U route suite with `40` Monsters, fixed `12` Max Health, `0.25` Move Speed, and `2.5s` Spawn Interval.
 3. Run Archer, Cannon, Magic, and Drone at Level 1 with no Upgrades on L first. Record every fixed-fixture result, including zero or `40 / 40`, before deciding whether the fixture can distinguish Upgrade value.
 4. Record reusable naked L, Straight, and U controls for the selected TowerFamily while route, placement, Monster, health, count, and timing remain fixed.
@@ -73,8 +76,8 @@ Every Basic and Behaviour Upgrade is measured on fixed Straight, L, and U routes
 
 ### 6.1 Fixed Fixture And Reuse
 
-- Task003 v0.1 reuses the Task002 `Base Combat v0.2` fixture: `40` Monsters, `12` Max Health, `0.25` Move Speed, and `2.5s` Spawn Interval. The interval is not shortened because denser presentation is visually undesirable.
-- Reusing the same naked controls and route roles gives every Upgrade comparison the accepted Task002 starting line; Task003 measures the upgraded state rather than redefining the Base Tower fixture.
+- Task003 v0.1 reuses the Task002 `Base Combat v0.3` fixture: `40` Monsters, `12` Max Health, `0.25` Move Speed, and `2.5s` Spawn Interval. The interval is not shortened because denser presentation is visually undesirable.
+- Reusing the same naked controls and route roles gives every Upgrade comparison the accepted post-Task003A starting line; Task003 measures the upgraded state rather than redefining the Base Tower fixture.
 - The canonical L fixture contains one ordinary 90-degree bend and one strong Core placement. It must not behave like a U fixture by covering multiple separated route segments, or both the entrance and Target zones, from the same Tower position.
 - `Naked control` means the same TowerFamily at the same Required Tower Level as the tested build with no applied Upgrades. Using that control isolates Upgrade value and is not a separate claim that Level Up grants combat stats.
 - A naked control may be reused by every Upgrade on the same TowerFamily only while route, placement, fixture health, Monster, count, timing, and observation method remain unchanged.
@@ -101,7 +104,9 @@ U Gain        = Upgraded U Result / Naked U Result
 
 ## 7. Proposed Power Targets
 
-These are Task003-local calibration hypotheses. They remain proposed until Play Mode acceptance and do not become part of `01_TowerGrowthAndUpgradeIdentity.md`; only the final accepted parameters are copied there.
+These are Task003-local calibration hypotheses. They remain proposed until Play Mode acceptance and do not become part of `01_TowerGrowthAndUpgradeIdentity.md`; accepted parameters remain in their owning Task record and Unity assets.
+
+The twenty-four single-Upgrade L-route results collected before Task003A are exploratory definition-review evidence only. They remain useful for identifying weak, dominant, or position-sensitive concepts, but results for replaced definitions and the pre-revision naked Magic runtime cannot satisfy final acceptance. Every revised definition must be retested from the accepted v0.3 naked control.
 
 | Test Build | Exact Construction | Proposed L-Route Target |
 |---|---|---:|
@@ -134,7 +139,7 @@ These are empirical acceptance bands rather than direct stat-multiplier formulas
 
 | Owner | Responsibility |
 |---|---|
-| Tower Growth And Upgrade Identity | Cross-Stage player experience, investment interpretation, Core/Support intent, and accepted per-Upgrade parameter snapshot |
+| Tower Growth And Upgrade Identity | Qualitative cross-Stage growth experience, investment interpretation, Core/Support intent, and growth-curve principles |
 | TowerDefinition | Ordered level identity and model data |
 | Tower Upgrade System | Stage-bound level eligibility, application, and accepted Upgrade state |
 | Tower Runtime Combat | Base combat authoring and runtime interpretation of accepted Upgrades |
@@ -164,7 +169,7 @@ Each proposal then receives a route-result matrix:
 ## 12. Unity Authoring Checklist
 
 - Force one known Upgrade at a time for controlled comparison.
-- Confirm the fixed Task003 v0.1 fixture is `40 / HP 12 / Speed 0.25 / Spawn 2.5s` before recording results.
+- Confirm the accepted Task002 `Base Combat v0.3` fixture is `40 / HP 12 / Speed 0.25 / Spawn 2.5s` before recording results.
 - Run the four naked Towers under the fixed L fixture before Upgrade tuning.
 - Record fixed L, Straight, and U controls for each TowerFamily before its Upgrade matrices.
 - Keep Map, Monster, placement, and simulation conditions fixed.
@@ -204,4 +209,4 @@ Each proposal then receives a route-result matrix:
 
 ## 15. Review Note
 
-Task003 v0.1 reuses the frozen Task002 `Base Combat v0.2` fixture and route roles. After testing, only each Upgrade's accepted Required Level and authored parameters are copied into `01_TowerGrowthAndUpgradeIdentity.md`; this Task retains the candidate targets, detailed Upgrade route matrices, and decisions. Any proposed change to the Task002 Tower or Reference Monster assets must be treated as a Base Combat revision and must rerun the complete Task002 route suite. U-route strength alone does not authorize a frozen Base Tower change. Exact Stage pools, concentrated-build legality, and actual sampling solvability remain Task006 outputs.
+Task003 v0.1 reuses the frozen Task002 `Base Combat v0.3` fixture and route roles after Task003A. This Task retains candidate targets, accepted Required Levels and authored parameters, detailed Upgrade route matrices, and decisions; `01_TowerGrowthAndUpgradeIdentity.md` remains qualitative. Any later proposed change to the Task002 Tower or Reference Monster assets must be treated as another Base Combat revision and must rerun the complete Task002 route suite. U-route strength alone does not authorize a frozen Base Tower change. Exact Stage pools, concentrated-build legality, and actual sampling solvability remain Task006 outputs.

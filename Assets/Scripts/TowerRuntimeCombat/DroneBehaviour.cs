@@ -26,31 +26,34 @@ public readonly struct DroneStatRefresh
         int newDamage,
         bool refreshAttackRange,
         float newAttackRange,
-        float batteryDurationDelta,
         bool refreshBurstCooldown,
-        float newBurstCooldown)
+        float newBurstCooldown,
+        bool refreshProjectileBonusDamageChance,
+        float newProjectileBonusDamageChance)
     {
         RefreshDamage = refreshDamage;
         NewDamage = newDamage;
         RefreshAttackRange = refreshAttackRange;
         NewAttackRange = newAttackRange;
-        BatteryDurationDelta = batteryDurationDelta;
         RefreshBurstCooldown = refreshBurstCooldown;
         NewBurstCooldown = newBurstCooldown;
+        RefreshProjectileBonusDamageChance = refreshProjectileBonusDamageChance;
+        NewProjectileBonusDamageChance = newProjectileBonusDamageChance;
     }
 
     public bool RefreshDamage { get; }
     public int NewDamage { get; }
     public bool RefreshAttackRange { get; }
     public float NewAttackRange { get; }
-    public float BatteryDurationDelta { get; }
     public bool RefreshBurstCooldown { get; }
     public float NewBurstCooldown { get; }
+    public bool RefreshProjectileBonusDamageChance { get; }
+    public float NewProjectileBonusDamageChance { get; }
     public bool HasAnyChange =>
         RefreshDamage ||
         RefreshAttackRange ||
-        !Mathf.Approximately(BatteryDurationDelta, 0f) ||
-        RefreshBurstCooldown;
+        RefreshBurstCooldown ||
+        RefreshProjectileBonusDamageChance;
 }
 
 public class DroneBehaviour : MonoBehaviour
@@ -109,6 +112,7 @@ public class DroneBehaviour : MonoBehaviour
     private int attackDamage;
     private float attackRange;
     private float currentBurstCooldown;
+    private float projectileBonusDamageChance;
     private float finalDiveHitThreshold;
     private float orbitAngleRadians;
     private int orbitDirection = 1;
@@ -175,9 +179,10 @@ public class DroneBehaviour : MonoBehaviour
         attackDamage = resolvedStats.AttackDamage;
         attackRange = resolvedStats.AttackRange;
         currentBurstCooldown = resolvedStats.DroneBurstCooldown;
+        projectileBonusDamageChance = resolvedStats.DroneProjectileBonusDamageChance;
         orbitAngleRadians = 0f;
         orbitDirection = 1;
-        batteryTimer = resolvedStats.DroneBatteryDuration;
+        batteryTimer = batteryDuration;
         ResetBurstState();
         hasReachedOrbitPath = false;
         hasResolvedFinalDiveImpact = false;
@@ -318,16 +323,15 @@ public class DroneBehaviour : MonoBehaviour
             attackRange = Mathf.Max(0f, refresh.NewAttackRange);
         }
 
-        if (!hasResolvedBatteryEnd &&
-            (State == DroneRuntimeState.Launching || State == DroneRuntimeState.Orbiting) &&
-            !Mathf.Approximately(refresh.BatteryDurationDelta, 0f))
-        {
-            batteryTimer = Mathf.Max(0f, batteryTimer + refresh.BatteryDurationDelta);
-        }
-
         if (refresh.RefreshBurstCooldown)
         {
             RefreshBurstCooldown(refresh.NewBurstCooldown);
+        }
+
+        if (refresh.RefreshProjectileBonusDamageChance)
+        {
+            projectileBonusDamageChance = Mathf.Clamp01(
+                refresh.NewProjectileBonusDamageChance);
         }
     }
 
@@ -682,6 +686,7 @@ public class DroneBehaviour : MonoBehaviour
             projectilePrefab,
             spawnAnchor.position,
             Quaternion.identity);
+        int directDamageBonus = RollProjectileDirectDamageBonus();
 
         projectileBehaviour.Initialize(
             sourceTower,
@@ -694,6 +699,7 @@ public class DroneBehaviour : MonoBehaviour
             runtimeOptions: new ProjectileRuntimeOptions(
                 canPierce: false,
                 maxPierceHitCount: 1,
+                directDamageBonus: directDamageBonus,
                 blastRoundsSourceUpgrade: blastRoundsSourceUpgrade,
                 blastRoundsEffect: blastRoundsEffect)
         );
@@ -705,6 +711,21 @@ public class DroneBehaviour : MonoBehaviour
 
         OnProjectileReleased?.Invoke(projectileBehaviour);
         PlayAttackReleaseVfx(spawnAnchor, targetPosition);
+    }
+
+    private int RollProjectileDirectDamageBonus()
+    {
+        if (projectileBonusDamageChance <= 0f)
+        {
+            return 0;
+        }
+
+        if (projectileBonusDamageChance >= 1f)
+        {
+            return 1;
+        }
+
+        return Random.value < projectileBonusDamageChance ? 1 : 0;
     }
 
     private void EndDrone()

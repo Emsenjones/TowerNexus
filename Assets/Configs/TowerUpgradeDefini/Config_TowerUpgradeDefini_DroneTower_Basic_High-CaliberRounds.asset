@@ -13,14 +13,14 @@ MonoBehaviour:
   m_Name: Config_TowerUpgradeDefini_DroneTower_Basic_High-CaliberRounds
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
   displayName: High-Caliber Rounds
-  description: Damage +1
+  description: Each Drone projectile has a 25% chance to deal +1 direct damage
   icon: {fileID: 21300000, guid: b99d2b674a637441f907e69e0bf0f4cf, type: 3}
   towerFamily: 3
   requiredTowerLevel: 1
   upgradeLayer: 0
   basicStatDeltas:
-  - statType: 2
-    additiveValue: 1
+  - statType: 202
+    additiveValue: 0.25
   behaviourPackageType: 0
   piercingMaxHitCount: 3
   scatterAngleOffset: 15

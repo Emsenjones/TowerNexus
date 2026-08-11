@@ -10,17 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
-  m_Name: Config_TowerUpgradeDefini_MagicTower_Basic_LingeringOrbit
+  m_Name: Config_TowerUpgradeDefini_DroneTower_Basic_ExpandedPatrolRadius
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
-  displayName: Lingering Orbit
-  description: Magic Orb Max Hit Count +5
-  icon: {fileID: 21300000, guid: c96d3cb9b5f064eb3b4c9bb606258cc7, type: 3}
-  towerFamily: 2
+  displayName: Expanded Patrol Radius
+  description: Attack Range +1
+  icon: {fileID: 21300000, guid: 40ccba95629984679840638bc0d04160, type: 3}
+  towerFamily: 3
   requiredTowerLevel: 1
   upgradeLayer: 0
   basicStatDeltas:
-  - statType: 101
-    additiveValue: 5
+  - statType: 0
+    additiveValue: 1
   behaviourPackageType: 0
   piercingMaxHitCount: 3
   scatterAngleOffset: 15

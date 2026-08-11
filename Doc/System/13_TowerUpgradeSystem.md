@@ -173,7 +173,7 @@ Multiple accepted changes in one gameplay step must be observable in accepted or
 
 # 8. Basic Layer
 
-Basic Layer contains numerical deltas and no trigger-driven gameplay Effects.
+Basic Layer contains numerical combat modifiers and no reusable gameplay Effects. Most modifiers are additive deltas; a family-specific modifier may instead define a reviewed release-time probability whose result is executed by the owning runtime.
 
 Common deltas:
 
@@ -184,9 +184,8 @@ Common deltas:
 TowerFamily-specific deltas may include:
 
 - Magic Orb rotation speed
-- Magic Orb maximum hit count
-- Drone battery duration
 - Drone burst cooldown
+- Drone projectile bonus-damage chance
 
 Same-type deltas add together:
 
@@ -196,7 +195,11 @@ Resolved Value = Authored Base + Sum Of Applied Deltas
 
 Values are clamped to their valid gameplay ranges after composition.
 
-Lingering Orbit grants a whole-number Magic Orb maximum-hit delta. The resolved value initializes future Orb members. When applied to an active synchronized group, the same delta is added once to every member's remaining capacity without resetting consumed hits or elapsed lifetime.
+Arcane Recovery is the Magic Attack Cycle Duration Basic Upgrade. Magic Orb Maximum Hit Count is not a gameplay stat or Upgrade surface.
+
+Expanded Patrol Radius is the Drone Attack Range Basic Upgrade. Drone Battery Duration remains static entity authoring and is not resolved from Tower Upgrade state.
+
+High-Caliber Rounds grants a finite authored chance in `[0, 1]` for each released Drone projectile to carry one fixed bonus direct-damage result. The chance is the Upgrade's authored tuning parameter; the fixed bonus is one. The release result is immutable for that projectile and does not increase package area damage.
 
 Live propagation rules are owned by Tower Runtime Combat System. Basic Layer does not execute Effects or Buffs.
 
@@ -212,10 +215,10 @@ The first-version package set is:
 |---|---|---|
 | Archer | Piercing Arrow | Finite hit capacity |
 | Archer | Scatter Arrow | Side-Arrow topology and angle |
-| Archer | Hunting Arrow | Locked-target tracking capability |
+| Archer | Explosive Arrow | Direct-hit area Effect that includes every surviving valid target in range |
 | Cannon | Explosive Shell | Position Impact area Effect |
-| Cannon | Multi Shells | Maximum initial Shell count |
-| Cannon | Bouncing Shell | Bounce count, local radius, bounce Arc height, and local selector |
+| Cannon | Multi Shells | Maximum initial Shell count and positive integer Additional Shell Damage |
+| Cannon | Bouncing Shell | Bounce count, local radius, bounce Arc height, local selector, and positive integer Bounce Damage |
 | Magic | Multi Orbs | Desired synchronized member count |
 | Magic | Arcane Detonation | Normal-completion area Effect |
 | Magic | Arcane Field | Complete field runtime prefab and presentation; its root Behaviour owns radius, tick interval, and tick Effect |
@@ -231,7 +234,7 @@ Package definitions own upgrade-level authoring values and complete runtime-pref
 |---|---|
 | Piercing Arrow | Add capacity delta to eligible active Arrows without clearing history |
 | Scatter Arrow | Future release only; never add side Arrows to a pending or released group |
-| Hunting Arrow | One live retrofit attempt for eligible active Arrow groups |
+| Explosive Arrow | Future release only; never add an explosion result to an active Arrow |
 | Explosive Shell | May affect unresolved airborne Shell impacts |
 | Multi Shells | Future confirmation only; never add Shells to a pending or released group |
 | Bouncing Shell | May affect an initial Shell only before its first Position Impact; never rewrite an active chain |
@@ -251,10 +254,10 @@ These timing identities are part of the Upgrade contract. Detailed algorithms re
 Different package types compose by default. The current reviewed combinations include:
 
 - Piercing + Scatter: every Arrow owns independent Piercing state.
-- Piercing + Hunting: surviving Piercing continues Direction hits after tracking ends.
-- Scatter + Hunting: stable Center/Left/Right slots receive distinct locked targets when available; unassigned slots keep their Scatter directions.
+- Piercing + Explosive: every new unique Monster Hit may produce one explosion.
+- Scatter + Explosive: every independently hitting Arrow may produce one explosion.
 - Multi Shells + Explosive: every initial Shell may explode.
-- Multi Shells + Bouncing: every initial Shell owns an independent chain; bounce children do not multiply again.
+- Multi Shells + Bouncing: every initial Shell owns an independent chain; every bounce child uses the Bouncing Shell package's fixed Bounce Damage.
 - Explosive + Bouncing: every landing completes explosion results before selecting the next bounce target.
 - Multi Orbs + Arcane Detonation: every active synchronized member detonates at normal group completion.
 - Multi Drones + Blast Rounds: every active Drone may fire Blast Rounds.
@@ -294,7 +297,7 @@ The first complete content pass contains four Elemental types for each of four T
 |---|---|
 | Piercing Arrow | Each new Arrow Monster Hit |
 | Scatter Arrow | Each independent Arrow Monster Hit |
-| Hunting Arrow | Actual Monster Hits only; tracking motion grants none |
+| Explosive Arrow | Direct result and every separately resolved explosion target independently; a surviving direct target may receive both |
 | Explosive Shell | Direct target and every explosion target independently |
 | Multi Shells | Each initial Shell independently |
 | Bouncing Shell | Each bounce child's direct and inherited explosion results |
@@ -321,6 +324,7 @@ Tower Upgrade validation should report or reject at minimum:
 - Package identity incompatible with TowerFamily
 - Missing required package Effect or parameter
 - Non-positive count, radius, interval, threshold, or capacity where invalid
+- Probability outside its valid range or non-positive Cannon Additional Shell Damage or Bounce Damage
 - Duplicate package identity on one Tower
 - Second Elemental Layer on one Tower
 - Elemental definition without a valid Elemental apply Effect
@@ -331,6 +335,6 @@ Invalid content is an authoring error. Runtime does not silently reinterpret it 
 
 # 13. Approved Scope And Deferred Topics
 
-Current scope includes three Tower levels, Stage-derived per-TowerFamily level caps, Basic/Behaviour/Elemental layers, the twelve reviewed Behaviour packages, one package of each type per Tower, one Elemental Layer per Tower, per-Tower duplicate rules, and Stage-specific Upgrade pool eligibility support.
+Current scope includes three Tower levels, Stage-derived per-TowerFamily level caps, Basic/Behaviour/Elemental layers, the twelve reviewed Behaviour packages, one package of each type per Tower, one Elemental Layer per Tower, per-Tower duplicate rules, and Stage-specific Upgrade pool eligibility support. Removed Hunting Arrow, Magic Orb Maximum Hit Count, and Drone Battery Duration Upgrade identities have no compatibility aliases or fallback interpretation.
 
 Deferred topics include prerequisites, rarity, evolution chains, Upgrade replacement, multi-element Towers, global Upgrades, specialization paths, and persistent progression.
