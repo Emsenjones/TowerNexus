@@ -223,7 +223,7 @@ Archer confirmation creates one stable release group with Center and optional Le
 - Each confirmed slot captures a distinct target candidate when available and a fallback direction.
 - Scatter Arrow fixes the slot topology at confirmation.
 - An Upgrade during the presentation wait does not add slots.
-- At release, current Damage, Piercing, and Explosive Arrow values are resolved while confirmed topology remains unchanged.
+- At release, current Damage, Piercing, and Explosive Arrow values are resolved while confirmed topology remains unchanged. The Center uses the Tower's Arrow template and resolved Attack Damage; side members use Scatter Arrow's additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
 - If the Center release requirement is invalid, the group is cancelled.
 - An invalid secondary target uses its confirmation-time fallback direction rather than free retargeting.
 
@@ -236,12 +236,12 @@ Successful release starts one Attack Cycle and transfers Arrow movement, hit, Pi
 Cannon confirmation captures one or more immutable target-position snapshots.
 
 - Baseline Cannon confirms one position.
-- Multi Shells may confirm multiple initial positions up to its authored maximum.
+- Multi Shells may confirm one primary position plus its authored positive additional-member count.
 - One attack uses one presentation sequence and one Attack Cycle.
 - Source Monster invalidation after confirmation does not cancel or redirect a captured position.
 - An Upgrade during the presentation wait does not add Shells or recapture positions.
-- Each successful initial Shell release receives one immutable integer direct-damage value plus Explosive Shell and eligible pre-impact Bouncing Shell data. The primary Shell uses current resolved Cannon Attack Damage; additional Shells use the active Multi Shells package's authored Additional Shell Damage.
-- Damage Bonus live refresh may update an unresolved primary initial Shell, but it cannot overwrite an additional initial Shell's fixed authored direct damage or any bounce child's fixed Bounce Damage.
+- Each successful initial Shell release receives one immutable integer direct-damage value plus Explosive Shell and eligible pre-impact Bouncing Shell data. The primary Shell uses the Tower's Shell template and current resolved Cannon Attack Damage; additional Shells use Multi Shells' additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
+- Damage Bonus live refresh may update an unresolved primary initial Shell, but it cannot overwrite an additional initial Shell's composed release-time direct damage or any bounce child's fixed Bounce Damage.
 
 Successful release starts one Attack Cycle. Arc movement, Position Impact, direct arrival query, bounce-chain behavior, and completion belong to Projectile System.
 
@@ -260,6 +260,8 @@ Group contract:
 - Independent contact history per member
 - Shared lifetime completion ends the whole group
 - Group completion is idempotent
+- The primary member uses the Tower's Orb template and base damage; additional members use Multi Orbs' additional-entity template and authored Basic Damage.
+- Every member composes its own Basic Damage with the current shared resolved Damage Bonus.
 
 Approved active-group refresh may update unresolved damage, orbit speed, and reviewed Behaviour packages. No gameplay hit capacity, hit-exhaustion completion branch, or maximum-hit refresh exists.
 
@@ -270,6 +272,7 @@ Multi Orbs reconciliation is atomic:
 - If any candidate fails, discard only candidates and preserve the original group.
 - Revalidate the group and commit all missing members together.
 - Existing members keep lifetime and contact history.
+- Newly committed members use the active package's configured template and Basic Damage.
 
 Arcane Detonation is eligible only on normal group completion and executes once at each active member's current position before the group disappears. Technical cleanup never triggers it.
 
@@ -292,6 +295,8 @@ It is not an Attack Entity released by the ordinary Magic scheduler.
 # 12. Drone Runtime
 
 Drone Tower launches one Drone per successful scheduler pass while active count is below current capacity.
+
+The primary active slot uses the Tower's Drone template and base damage. Multi Drones adds the package-authored number of secondary slots; each secondary slot uses its configured additional-entity template and `Additional Basic Damage + resolved Damage Bonus`. Capacity changes do not batch-fill slots. If the primary slot becomes vacant while secondary Drones remain active, the next eligible scheduler pass restores the primary slot.
 
 Each Drone owns:
 
@@ -319,7 +324,7 @@ Burst cadence has three semantic phases:
 
 Battery Duration is static Drone entity authoring for the battle. Applying a Tower Upgrade does not refresh remaining battery or rewrite the battery-end boundary.
 
-Each Drone projectile resolves High-Caliber Rounds at release. When active, one authored chance is rolled exactly once and the immutable result determines whether that projectile carries one fixed bonus direct-damage result. Retargeting, projectile refresh, Blast Rounds, and later Upgrade changes do not reroll or copy that result into area damage.
+High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates eligible active Drones through the same Damage Bonus refresh path and affects future Drone projectile direct damage. It does not alter Blast Rounds or other independently authored Effect damage.
 
 Final Dive, when active at battery end, locks one target and becomes one-way:
 

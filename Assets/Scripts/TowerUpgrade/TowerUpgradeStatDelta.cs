@@ -21,7 +21,6 @@ public class TowerUpgradeStatDelta
             case TowerUpgradeBasicStatType.MagicOrbRotationSpeed:
                 return towerFamily == TowerFamily.Magic;
             case TowerUpgradeBasicStatType.DroneBurstCooldown:
-            case TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance:
                 return towerFamily == TowerFamily.Drone;
             default:
                 return false;
@@ -43,13 +42,4 @@ public class TowerUpgradeStatDelta
         return !float.IsNaN(additiveValue) && !float.IsInfinity(additiveValue);
     }
 
-    public bool RequiresUnitIntervalAdditiveValue()
-    {
-        return statType == TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance;
-    }
-
-    public bool HasUnitIntervalAdditiveValue()
-    {
-        return additiveValue >= 0f && additiveValue <= 1f;
-    }
 }

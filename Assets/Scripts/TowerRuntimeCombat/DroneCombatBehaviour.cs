@@ -98,18 +98,13 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         bool refreshBurstCooldown = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.DroneBurstCooldown);
-        bool refreshProjectileBonusDamageChance = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance);
         DroneStatRefresh refresh = new DroneStatRefresh(
             refreshDamage,
-            currentStats.AttackDamage,
+            currentStats.DamageBonus,
             refreshAttackRange,
             currentStats.AttackRange,
             refreshBurstCooldown,
-            currentStats.DroneBurstCooldown,
-            refreshProjectileBonusDamageChance,
-            currentStats.DroneProjectileBonusDamageChance);
+            currentStats.DroneBurstCooldown);
         List<DroneBehaviour> droneSnapshot = GetActiveDroneSnapshot();
 
         for (int i = 0; i < droneSnapshot.Count; i++)
@@ -233,7 +228,14 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        if (dronePrefab == null)
+        bool releasesAdditionalEntity = HasActivePrimaryDrone();
+        AdditionalAttackEntityAuthoring additionalAttackEntities =
+            GetMultiDronesAdditionalAttackEntities();
+        GameObject releasePrefab = releasesAdditionalEntity
+            ? additionalAttackEntities?.Prefab
+            : dronePrefab;
+
+        if (releasePrefab == null)
         {
             if (!hasLoggedMissingDronePrefab)
             {
@@ -260,11 +262,18 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         DroneRuntimeOptions runtimeOptions = CreateRuntimeOptions();
         DroneReleaseData releaseData = CreateReleaseData();
 
+        int releaseBasicDamage = releasesAdditionalEntity
+            ? additionalAttackEntities.BasicDamage
+            : BaseAttackDamage;
+
         if (!TryReleaseDrone(
+                releasePrefab,
                 releasePosition,
                 releaseRotation,
                 initialTarget,
                 resolvedStats,
+                releaseBasicDamage,
+                releasesAdditionalEntity,
                 releaseData,
                 runtimeOptions))
         {
@@ -277,14 +286,17 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
     }
 
     private bool TryReleaseDrone(
+        GameObject releasePrefab,
         Vector3 releasePosition,
         Quaternion releaseRotation,
         MonsterBehaviour initialTarget,
         ResolvedTowerCombatStats resolvedStats,
+        int releaseBasicDamage,
+        bool isAdditionalAttackEntity,
         DroneReleaseData releaseData,
         DroneRuntimeOptions runtimeOptions)
     {
-        GameObject droneObject = Instantiate(dronePrefab, releasePosition, releaseRotation);
+        GameObject droneObject = Instantiate(releasePrefab, releasePosition, releaseRotation);
 
         if (!droneObject.TryGetComponent(out DroneBehaviour droneBehaviour))
         {
@@ -301,6 +313,8 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             releaseData,
             runtimeOptions,
             resolvedStats,
+            releaseBasicDamage,
+            isAdditionalAttackEntity,
             releasePosition,
             releaseRotation,
             initialTarget);
@@ -391,11 +405,38 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             return Mathf.Max(1, defaultMaximumDroneCount);
         }
 
+        AdditionalAttackEntityAuthoring additionalAttackEntities =
+            GetMultiDronesAdditionalAttackEntities();
+        return additionalAttackEntities != null
+            ? defaultMaximumDroneCount + additionalAttackEntities.Count
+            : Mathf.Max(1, defaultMaximumDroneCount);
+    }
+
+    private AdditionalAttackEntityAuthoring GetMultiDronesAdditionalAttackEntities()
+    {
+        if (!HasBehaviourPackage(TowerBehaviourPackageType.DroneMultiDrones))
+        {
+            return null;
+        }
+
         return TryGetBehaviourPackageUpgrade(
             TowerBehaviourPackageType.DroneMultiDrones,
             out TowerUpgradeDefinition upgradeDefinition)
-            ? upgradeDefinition.OverrideMaximumDroneCount
-            : Mathf.Max(1, defaultMaximumDroneCount);
+            ? upgradeDefinition.AdditionalAttackEntities
+            : null;
+    }
+
+    private bool HasActivePrimaryDrone()
+    {
+        foreach (DroneBehaviour drone in activeDrones)
+        {
+            if (drone != null && drone.IsInitialized && !drone.IsAdditionalAttackEntity)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private bool HasOpenDroneCapacity()

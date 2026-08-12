@@ -44,6 +44,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     private int pendingSlotCount;
     private int cachedPiercingMaximum = 1;
     private bool pendingIsScatter;
+    private AdditionalAttackEntityAuthoring pendingAdditionalAttackEntities;
 
     public override TowerFamily SupportedTowerFamily => TowerFamily.Archer;
     public ProjectileBehaviour ProjectilePrefab => projectilePrefab;
@@ -154,7 +155,12 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         pendingProjectileTargetPosition = GetMonsterHitPosition(firstTarget);
         pendingReleaseGroupId = nextReleaseGroupId++;
         pendingIsScatter = IsScatterArrowActive();
-        pendingSlotCount = pendingIsScatter ? ArcherSlotCount : 1;
+        pendingAdditionalAttackEntities = pendingIsScatter
+            ? GetScatterAdditionalAttackEntities()
+            : null;
+        pendingSlotCount = pendingAdditionalAttackEntities != null
+            ? Mathf.Min(ArcherSlotCount, 1 + pendingAdditionalAttackEntities.Count)
+            : 1;
 
         Vector3 centerDirection = pendingProjectileTargetPosition - origin.position;
 
@@ -208,7 +214,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions();
         int releasedCount = 0;
 
         for (int slotIndex = 0; slotIndex < pendingSlotCount; slotIndex++)
@@ -216,8 +221,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             if (TryReleasePendingSlot(
                     slotIndex,
                     origin,
-                    resolvedStats,
-                    runtimeOptions))
+                    resolvedStats))
             {
                 releasedCount++;
             }
@@ -238,8 +242,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     private bool TryReleasePendingSlot(
         int slotIndex,
         Transform origin,
-        ResolvedTowerCombatStats resolvedStats,
-        ProjectileRuntimeOptions runtimeOptions)
+        ResolvedTowerCombatStats resolvedStats)
     {
         ArcherProjectileSlot slot = (ArcherProjectileSlot)slotIndex;
         ArcherProjectileReleaseIdentity releaseIdentity =
@@ -251,15 +254,30 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return false;
         }
 
+        bool isAdditional = slot != ArcherProjectileSlot.Center;
+        ProjectileBehaviour releasePrefab = projectilePrefab;
+
+        if (isAdditional &&
+            (pendingAdditionalAttackEntities == null ||
+             pendingAdditionalAttackEntities.Prefab == null ||
+             !pendingAdditionalAttackEntities.Prefab.TryGetComponent(out releasePrefab)))
+        {
+            return false;
+        }
+
+        int releaseDamage = isAdditional
+            ? Mathf.Max(0, pendingAdditionalAttackEntities.BasicDamage + resolvedStats.DamageBonus)
+            : resolvedStats.AttackDamage;
+
         return TryReleaseProjectile(
-            projectilePrefab,
+            releasePrefab,
             origin,
             origin.position + fallbackDirection.normalized,
             pendingProjectileTarget,
-            resolvedStats.AttackDamage,
+            releaseDamage,
             ProjectileFlightType.Direction,
             initialArcHeight: 0f,
-            runtimeOptions: runtimeOptions,
+            runtimeOptions: CreateRuntimeOptions(isAdditional),
             archerReleaseIdentity: releaseIdentity);
     }
 
@@ -297,7 +315,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private ProjectileRuntimeOptions CreateRuntimeOptions()
+    private ProjectileRuntimeOptions CreateRuntimeOptions(bool locksDirectDamage)
     {
         bool canPierce = IsPiercingArrowActive();
         TowerUpgradeDefinition explosiveArrowSourceUpgrade = null;
@@ -315,6 +333,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         return new ProjectileRuntimeOptions(
             canPierce,
             canPierce ? cachedPiercingMaximum : 1,
+            locksDirectDamage: locksDirectDamage,
             explosiveArrowSourceUpgrade: explosiveArrowSourceUpgrade,
             explosiveArrowEffect: explosiveArrowEffect);
     }
@@ -352,6 +371,15 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             : DefaultScatterArrowAngleOffset;
     }
 
+    private AdditionalAttackEntityAuthoring GetScatterAdditionalAttackEntities()
+    {
+        return TryGetBehaviourPackageUpgrade(
+            TowerBehaviourPackageType.ArcherScatterArrow,
+            out TowerUpgradeDefinition upgradeDefinition)
+            ? upgradeDefinition.AdditionalAttackEntities
+            : null;
+    }
+
     private Quaternion GetReleaseVfxRotation(Transform origin)
     {
         Vector3 direction = pendingProjectileTargetPosition - origin.position;
@@ -367,6 +395,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         pendingReleaseGroupId = 0;
         pendingSlotCount = 0;
         pendingIsScatter = false;
+        pendingAdditionalAttackEntities = null;
         Array.Clear(pendingCandidateTargets, 0, pendingCandidateTargets.Length);
         Array.Clear(pendingFallbackDirections, 0, pendingFallbackDirections.Length);
         SetIdle();

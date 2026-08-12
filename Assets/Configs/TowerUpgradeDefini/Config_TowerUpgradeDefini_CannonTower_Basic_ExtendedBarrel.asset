@@ -24,9 +24,6 @@ MonoBehaviour:
   behaviourPackageType: 0
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
-  twinOrbsCount: 2
-  twinOrbsStartingAngleOffset: 180
-  overrideMaximumDroneCount: 2
   elementType: 0
   elementalApplyEffect: {fileID: 0}
   effectBindings: []

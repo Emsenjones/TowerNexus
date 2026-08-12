@@ -9,7 +9,7 @@ using UnityEngine;
 public sealed class CombatBalanceRunRecorder : MonoBehaviour
 {
     [Header("Run Identity")]
-    [SerializeField] private string runLabel = "Task002 / L / HP12";
+    [SerializeField] private string runLabel = "Task002 / L / HP120";
     [Min(0)]
     [SerializeField] private int expectedMonsterCount = 40;
 

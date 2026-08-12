@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: Config_EffectDefini_DealDamage_MagicTowerArcaneDetonation
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
   displayName: Magic Orb detonates in an arcane blast upon expiring
-  radius: 0.5
+  radius: 1
   executionVfxPrefab: {fileID: 5537275441999820816, guid: 56b52938655cb4e2baefcdea891ec239, type: 3}
   actions:
   - actionType: 0
-    damageAmount: 10
+    damageAmount: 200
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0

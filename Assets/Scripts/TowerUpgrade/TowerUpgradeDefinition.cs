@@ -1,7 +1,31 @@
+using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.Serialization;
+
+[Serializable]
+public sealed class AdditionalAttackEntityAuthoring
+{
+    [SerializeField] private GameObject prefab;
+    [Min(1)]
+    [SerializeField] private int count = 1;
+    [Min(1)]
+    [SerializeField] private int basicDamage = 1;
+
+    public GameObject Prefab => prefab;
+    public int Count => Mathf.Max(1, count);
+    public int BasicDamage => Mathf.Max(1, basicDamage);
+
+    public bool HasValidValues()
+    {
+        return prefab != null && count > 0 && basicDamage > 0;
+    }
+
+    public bool HasRootComponent<T>() where T : Component
+    {
+        return prefab != null && prefab.TryGetComponent(out T _);
+    }
+}
 
 [CreateAssetMenu(
     fileName = "TowerUpgradeDefinition",
@@ -40,32 +64,15 @@ public class TowerUpgradeDefinition : ScriptableObject
     [ShowIf(nameof(IsArcherScatterArrow))]
     [MinValue(0f)]
     [SerializeField] private float scatterAngleOffset = 15f;
+    [TitleGroup("Behaviour Layer/Additional Attack Entities")]
+    [ShowIf(nameof(UsesAdditionalAttackEntityAuthoring))]
+    [SerializeField] private AdditionalAttackEntityAuthoring additionalAttackEntities;
     [TitleGroup("Behaviour Layer/Archer Explosive Arrow")]
     [ShowIf(nameof(IsArcherExplosiveArrow))]
     [SerializeField] private EffectDefinition explosiveArrowEffect;
-    [FormerlySerializedAs("twinOrbsCount")]
-    [TitleGroup("Behaviour Layer/Magic Multi Orbs")]
-    [ShowIf(nameof(IsMagicMultiOrbs))]
-    [MinValue(2)]
-    [SerializeField] private int multiOrbsCount = 2;
-    [FormerlySerializedAs("twinDronesCount")]
-    [TitleGroup("Behaviour Layer/Drone Multi Drones")]
-    [ShowIf(nameof(IsDroneMultiDrones))]
-    [MinValue(2)]
-    [SerializeField] private int overrideMaximumDroneCount = 2;
     [TitleGroup("Behaviour Layer/Cannon Explosive Shell")]
     [ShowIf(nameof(IsCannonExplosiveShell))]
     [SerializeField] private EffectDefinition explosiveShellEffect;
-    [FormerlySerializedAs("twinShellsMaxInitialShellCount")]
-    [TitleGroup("Behaviour Layer/Cannon Multi Shells")]
-    [ShowIf(nameof(IsCannonMultiShells))]
-    [MinValue(2)]
-    [SerializeField] private int multiShellsMaxInitialShellCount = 2;
-    [TitleGroup("Behaviour Layer/Cannon Multi Shells")]
-    [ShowIf(nameof(IsCannonMultiShells))]
-    [LabelText("Additional Shell Damage")]
-    [MinValue(1)]
-    [SerializeField] private int multiShellsAdditionalDamage = 3;
     [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
     [ShowIf(nameof(IsCannonBouncingShell))]
     [MinValue(0.01f)]
@@ -89,7 +96,6 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Behaviour Layer/Magic Arcane Detonation")]
     [ShowIf(nameof(IsMagicArcaneDetonation))]
     [SerializeField] private EffectDefinition arcaneDetonationEffect;
-    [FormerlySerializedAs("magicArcaneFieldVfxPrefab")]
     [TitleGroup("Behaviour Layer/Magic Arcane Field")]
     [ShowIf(nameof(IsMagicArcaneField))]
     [Required]
@@ -122,12 +128,9 @@ public class TowerUpgradeDefinition : ScriptableObject
     public TowerBehaviourPackageType BehaviourPackageType => behaviourPackageType;
     public int PiercingMaxHitCount => Mathf.Max(1, piercingMaxHitCount);
     public float ScatterAngleOffset => Mathf.Max(0f, scatterAngleOffset);
+    public AdditionalAttackEntityAuthoring AdditionalAttackEntities => additionalAttackEntities;
     public EffectDefinition ExplosiveArrowEffect => explosiveArrowEffect;
-    public int MultiOrbsCount => Mathf.Max(2, multiOrbsCount);
-    public int OverrideMaximumDroneCount => Mathf.Max(2, overrideMaximumDroneCount);
     public EffectDefinition ExplosiveShellEffect => explosiveShellEffect;
-    public int MultiShellsMaxInitialShellCount => Mathf.Max(2, multiShellsMaxInitialShellCount);
-    public int MultiShellsAdditionalDamage => Mathf.Max(1, multiShellsAdditionalDamage);
     public float BounceSearchRadius => Mathf.Max(0.01f, bounceSearchRadius);
     public int MaxBounceCount => Mathf.Max(1, maxBounceCount);
     public float BounceArcHeight => Mathf.Max(0f, bounceArcHeight);
@@ -298,39 +301,21 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
+        if (UsesAdditionalAttackEntityAuthoring() &&
+            !ValidateAdditionalAttackEntityAuthoring(logWarnings))
+        {
+            isValid = false;
+        }
+
         if (IsArcherExplosiveArrow() &&
             !ValidateRequiredAreaEffect(explosiveArrowEffect, "Explosive Arrow", logWarnings))
         {
             isValid = false;
         }
 
-        if (IsMagicMultiOrbs() && multiOrbsCount < 2)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Orbs count must be at least 2.");
-            isValid = false;
-        }
-
-        if (IsDroneMultiDrones() && overrideMaximumDroneCount < 2)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Drones override maximum count must be at least 2.");
-            isValid = false;
-        }
-
         if (IsCannonExplosiveShell() &&
             !ValidateRequiredAreaEffect(explosiveShellEffect, "Explosive Shell", logWarnings))
         {
-            isValid = false;
-        }
-
-        if (IsCannonMultiShells() && multiShellsMaxInitialShellCount < 2)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Shells maximum initial Shell count must be at least 2.");
-            isValid = false;
-        }
-
-        if (IsCannonMultiShells() && multiShellsAdditionalDamage <= 0)
-        {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Multi Shells additional damage must be greater than zero.");
             isValid = false;
         }
 
@@ -388,6 +373,34 @@ public class TowerUpgradeDefinition : ScriptableObject
         }
 
         return isValid;
+    }
+
+    private bool ValidateAdditionalAttackEntityAuthoring(bool logWarnings)
+    {
+        if (additionalAttackEntities == null || !additionalAttackEntities.HasValidValues())
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {behaviourPackageType} requires an additional Attack Entity prefab, positive count, and positive Basic Damage.");
+            return false;
+        }
+
+        if (IsArcherScatterArrow() && additionalAttackEntities.Count != 2)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Scatter Arrow requires exactly two additional side Arrows.");
+            return false;
+        }
+
+        bool hasExpectedRoot = IsArcherScatterArrow() || IsCannonMultiShells()
+            ? additionalAttackEntities.HasRootComponent<ProjectileBehaviour>()
+            : IsMagicMultiOrbs()
+                ? additionalAttackEntities.HasRootComponent<MagicOrbBehaviour>()
+                : additionalAttackEntities.HasRootComponent<DroneBehaviour>();
+
+        if (!hasExpectedRoot)
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: additional Attack Entity prefab root is incompatible with {behaviourPackageType}.");
+        }
+
+        return hasExpectedRoot;
     }
 
     private bool ValidateRequiredAreaEffect(
@@ -473,13 +486,6 @@ public class TowerUpgradeDefinition : ScriptableObject
                 isValid = false;
             }
 
-            if (statDelta.RequiresUnitIntervalAdditiveValue() &&
-                !statDelta.HasUnitIntervalAdditiveValue())
-            {
-                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {statDelta.StatType} additive value must be finite and between zero and one inclusive.");
-                isValid = false;
-            }
-
             if (statDelta.RequiresWholeNumberAdditiveValue() && !statDelta.HasWholeNumberAdditiveValue())
             {
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {statDelta.StatType} additive value should be a whole number.");
@@ -521,6 +527,14 @@ public class TowerUpgradeDefinition : ScriptableObject
     {
         return IsBehaviourLayerUpgrade() &&
                behaviourPackageType == TowerBehaviourPackageType.ArcherScatterArrow;
+    }
+
+    private bool UsesAdditionalAttackEntityAuthoring()
+    {
+        return IsArcherScatterArrow() ||
+               IsCannonMultiShells() ||
+               IsMagicMultiOrbs() ||
+               IsDroneMultiDrones();
     }
 
     private bool IsArcherExplosiveArrow()

@@ -1,8 +1,8 @@
 # Task003 - Tower Growth And Non-Elemental Upgrades
 
-Status: Ready for calibration; Task003A and Task002 `Base Combat v0.3` are accepted, while Power Budget targets, revised Upgrade values, and final Play Mode acceptance remain pending
+Status: Completed on the accepted Task002 `Base Combat v0.4` fixture; all non-Elemental single-Upgrade L-route screens, targeted route diagnostics, and reviewed combination stress builds are accepted
 
-Depends on: Completed Task003A implementation; accepted Task002 `Base Combat v0.3`; approved Tower Growth And Upgrade Identity balance contract
+Depends on: Completed Task003A implementation; completed Task003B combat-scale and additional-entity revision; accepted Task002 `Base Combat v0.4`; approved Tower Growth And Upgrade Identity balance contract
 
 ## 1. Goal
 
@@ -10,216 +10,246 @@ Calibrate Required Tower Level gates plus Basic and Behaviour Upgrades on top of
 
 Each growth choice should create visible value without erasing the owning TowerFamily's base identity. Level Up buys future eligibility and model progression; applied Upgrades create combat-stat or attack-strategy growth.
 
-Every Basic and Behaviour Upgrade is measured on fixed Straight, L, and U routes. L is the shared Primary Acceptance Route because a strategic player is expected to reserve a strong ordinary bend position for the Core Tower. Straight is a low-exposure diagnostic and U is an extreme-exposure observation; neither is an automatic Task003 acceptance target.
+Every Basic and Behaviour Upgrade uses the fixed L route as its shared Primary Acceptance Route. Straight and U are targeted diagnostics for Upgrades whose value is materially shaped by range, projectile direction, route exposure, completion position, or local Monster density. They are not repeated for every ordinary numerical Upgrade.
 
 ## 2. Source Documents
 
-- `Doc/Balance/00_StageDesignBlueprint.md`
 - `Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md`
-- `Doc/System/02_StageSystem.md`
 - `Doc/System/08_DraftSystem.md`
 - `Doc/System/10_TowerFrameworkSystem.md`
 - `Doc/System/11_TowerRuntimeCombatSystem.md`
 - `Doc/System/12_ProjectileSystem.md`
 - `Doc/System/13_TowerUpgradeSystem.md`
 - `Doc/System/14_EffectSystem.md`
+- `Doc/Task/Task002_BaseTowerAndReferenceMonsterBaseline.md`
 - `Doc/Task/Task003A_NonElementalUpgradeDefinitionRevision.md`
+- `Doc/Task/Task003B_CombatValueScaleAndSecondaryAttackMemberDamageRevision.md`
 
-## 3. Preconditions
+## 3. Authority Boundary
 
-- Task003A revised Upgrade definitions and runtime contracts are implemented and accepted.
-- Task002 `Base Combat v0.3` Level 1 values are frozen after the complete naked-Tower route regression.
-- Tower runtime templates own Base Attack Damage, Range, Cycle, and targeting authoring.
-- TowerLevelConfig owns level identity and model data without combat stats.
-- Tower Upgrade System binds the active Stage Upgrade pool and enforces the derived per-TowerFamily level cap.
-- Stage validation rejects a level path that does not unlock at least one Upgrade at every reached level.
-- Rogue-like sampling does not guarantee that newly eligible content appears in a later Draft.
+`Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md` is the qualitative source of truth for growth philosophy, investment horizon, Core/Support intent, and the meaning of Basic, Behaviour, and Elemental growth.
 
-## 4. In Scope
+System documents own stable runtime, authoring, eligibility, application, and lifecycle contracts. They do not own Task003 candidate values or Play Mode evidence.
 
-- Required Tower Level gates for non-Elemental content
-- At least one valid newly eligible content path through every calibrated L2/L3 Core progression
-- A shared four-Tower naked screening run under Task003 calibration pressure
-- Straight, L, and U route matrices for every Basic and Behaviour Upgrade
-- Basic Upgrade additive deltas
-- Behaviour Upgrade packages
-- Single-Upgrade, Reference Core, same-Layer combination, and maximum non-Elemental stress builds
-- Per-Tower Upgrade capacity and duplicate rules
-- Upgrade-before and Upgrade-after combat comparisons
-- Reference Build cost accounting for non-Elemental Stages
-- Regression against the four Base Tower identities
+This Task owns the fixed fixture, proposed and accepted numerical values, route results, combination evidence, reviewed exceptions, and Keep/Revise decisions. Unity assets remain the executable source for the accepted authored parameters.
 
-## 5. Out Of Scope
+Exact Stage pools, Draft budgets, concentrated-build availability, and Stage sampling feasibility remain Task006 responsibilities.
+
+## 4. Scope
+
+### In Scope
+
+- Required Tower Level gates for current non-Elemental content
+- Basic additive stat deltas
+- Behaviour package parameters and visible attack-strategy changes
+- One fixed L-route single-Upgrade test for every current Basic and Behaviour Upgrade
+- Targeted Straight/U diagnostics for position- and route-sensitive Upgrades
+- Selected Basic/Behaviour, Behaviour/Behaviour, and three-Upgrade stress builds
+- Package composition, additional Attack Entity damage ownership, and ceiling review
+- Regression against the accepted four Base Tower identities
+
+### Out Of Scope
 
 - Direct combat-stat growth from Tower Level
-- Elemental Layer
+- Elemental Layer calibration
 - Elemental Buff stacking, Overload, and Protection
-- Final Monster roster
+- Final Monster roster and Stage MonsterWaveConfig tuning
 - Player Progress Requirements
-- Exact Stage Tower or Tower Upgrade pools
-- Stage MonsterWaveConfig tuning
+- Exact Stage Tower or Upgrade pools
 - Guaranteed post-Level-Up Draft offers
+- Exact uncapped magnitude after the fixed HP120 fixture reaches its `4800` total-damage ceiling
 
-## 6. Calibration Sequence
+## 5. Calibration Sequence
 
-1. Preserve the Task002 Map plus all frozen `Base Combat v0.3` Tower and Reference Monster asset values.
-2. Reuse the Task002 Straight, L, and U route suite with `40` Monsters, fixed `12` Max Health, `0.25` Move Speed, and `2.5s` Spawn Interval.
-3. Reuse the accepted naked L, Straight, and U controls in Section 6.2, including Magic's zero-kill observations, without redefining the fixture for Upgrade calibration.
-4. Before each TowerFamily matrix, confirm route, placement, Monster, health, count, and timing still match the accepted controls. Rerun a naked control only when the setup changes or runtime drift is suspected.
-5. Select one Basic or Behaviour Upgrade. Its Primary Acceptance Route is L without a per-Upgrade route-selection step.
-6. Assign Required Tower Level gates so each reached level unlocks real content; validate TowerLevelConfig and resolved data remain combat-stat-free rather than repeating an expected no-output-change Play Mode run.
-7. Force-apply the selected Upgrade alone and run its complete Straight, L, and U matrix.
-8. Repeat the single-Upgrade matrix for every Basic and Behaviour UpgradeDefinition.
-9. Run the required cumulative builds: combined Basic, combined Behaviour, Reference non-Elemental Core, and maximum non-Elemental stress build.
-10. Record expected gain, all route results, realized-gain ratios, ceiling state, and Keep/Revise decision.
-11. Recheck the Stage1 Reference Build cost and non-Elemental Core feasibility without finalizing its Task006 pool.
+1. Reuse the accepted Task002 `Base Combat v0.4` naked controls.
+2. Keep route, placement, Monster, health, count, speed, and Spawn Interval fixed within each comparison.
+3. Force exactly one Basic or Behaviour Upgrade and screen all `24` definitions on L.
+4. Tune one coherent Upgrade-owned value group at a time and rerun only the changed candidate.
+5. Run Straight/U only for selected range, direction, completion-position, or density-sensitive Upgrades.
+6. Run selected L-route combinations that can multiply cadence, area effects, additional Attack Entities, completion effects, or chained projectiles.
+7. Reuse the already accepted duplicate rejection, Required Tower Level eligibility, and package-capacity checks unless runtime eligibility code changes.
+8. Record Effective Damage, realized gain, ceiling state, mechanism observation, and Keep/Revise decision.
 
-### 6.1 Fixed Fixture And Reuse
+One valid fixed-condition run is sufficient when integrity checks pass and the result produces a clear practical decision. Repeat a run when variance, a mislabeled route, a changed candidate, or a near-threshold mechanism requires confirmation. A supplemental higher-Health diagnostic may expose an uncapped stress-build magnitude, but it never replaces the fixed fixture.
 
-- Task003 v0.1 reuses the Task002 `Base Combat v0.3` fixture: `40` Monsters, `12` Max Health, `0.25` Move Speed, and `2.5s` Spawn Interval. The interval is not shortened because denser presentation is visually undesirable.
-- Reusing the same naked controls and route roles gives every Upgrade comparison the accepted post-Task003A starting line; Task003 measures the upgraded state rather than redefining the Base Tower fixture.
-- The canonical L fixture contains one ordinary 90-degree bend and one strong Core placement. It must not behave like a U fixture by covering multiple separated route segments, or both the entrance and Target zones, from the same Tower position.
-- `Naked control` means the same TowerFamily at the same Required Tower Level as the tested build with no applied Upgrades. Using that control isolates Upgrade value and is not a separate claim that Level Up grants combat stats.
-- A naked control may be reused by every Upgrade on the same TowerFamily only while route, placement, fixture health, Monster, count, timing, and observation method remain unchanged.
-- If a naked result is zero or an upgraded result reaches `40 / 40`, retain that outcome in the Task003 v0.1 record rather than silently changing Health.
-- A differently named Health-sensitivity run may be added when an exact ceiling magnitude or measurable control is required. It is supplemental diagnostic evidence and cannot replace the fixed v0.1 comparison.
-- If `HP 12` proves fundamentally unable to support acceptance, propose an explicit Task003 fixture revision. After approval, assign a new fixture version and rerun every affected naked control and upgraded build under the new fixed conditions.
+## 6. Fixed Fixture And Controls
 
-### 6.2 Accepted Naked Controls
+Task003 v0.2 uses `40` Monsters, `120` Max Health, `0.25` Move Speed, and `2.5s` Spawn Interval. Total Observed HP is `4800`.
 
-Task003 starts from the following accepted `Base Combat v0.3` Effective Damage controls. Each Upgrade result is compared only with the same TowerFamily and route control; route results are not interchangeable samples.
+All accepted recorder results satisfy:
 
-| Tower | Straight | L-shaped Primary | U-shaped Premium |
+- `ResolutionCountsMatch=True`
+- `LeakCountMatchesPlayerHealthLoss=True`
+
+The accepted Task002 v0.4 Effective Damage denominators are:
+
+| Tower | Straight | L Primary | U Premium |
 |---|---:|---:|---:|
-| Archer | `212` | `228` | `250` |
-| Cannon | `180` | `204` | `228` |
-| Magic | `111` | `216` | `327` average (`321-333`) |
-| Drone | `186` | `205` | `221` |
+| Archer | `2140` | `2280` | `2500` |
+| Cannon | `1800` | `2040` | `2280` |
+| Magic | `1170` | `2160` | `3240` |
+| Drone | `1860` | `2025` average (`2020-2030`) | `2200` |
 
-Magic Orb Rotation Speed `90` is part of the frozen v0.3 content. Magic's large Straight-to-U spread is accepted positional identity: L remains the shared Upgrade acceptance route, while U records exceptional geometry strength without becoming the universal tuning target.
+Realized Gain is `Upgraded Effective Damage / same-family same-route naked Effective Damage`.
 
-### 6.3 Route Matrix And Decision Authority
+L owns the candidate decision. Straight records low-exposure or alignment behavior. U records extreme route exposure. A high or low non-L result causes revision only when it exposes an unbounded mechanic, broken ownership, or realistic Stage risk.
 
-For each named Upgrade or required combination:
+## 7. Calibration Targets
 
-```text
-Straight Gain = Upgraded Straight Result / Naked Straight Result
-L Gain        = Upgraded L Result / Naked L Result
-U Gain        = Upgraded U Result / Naked U Result
-```
-
-- L is the shared Primary Acceptance Route and owns the Task003 candidate-target decision.
-- Straight is the mandatory low-exposure diagnostic and Task002 identity regression.
-- U is a mandatory extreme-exposure observation, but a high U result does not automatically fail the Upgrade.
-- Straight, L, and U absolute results are not flattened across TowerFamilies.
-- A U result triggers revision only when it reveals an unbounded mechanic, breaks the cumulative single-Tower budget, or represents a realistic Stage risk. Otherwise it is recorded as exceptional route strength.
-- Any revision first changes the tested UpgradeDefinition's own coherent parameter or redesigns that Upgrade. Task002 Base Damage, Base Range, Base Attack Cycle Duration, and other frozen naked-Tower values remain unchanged.
-
-## 7. Proposed Power Targets
-
-These are Task003-local calibration hypotheses. They remain proposed until Play Mode acceptance and do not become part of `01_TowerGrowthAndUpgradeIdentity.md`; accepted parameters remain in their owning Task record and Unity assets.
-
-The twenty-four single-Upgrade L-route results collected before Task003A are exploratory definition-review evidence only. They remain useful for identifying weak, dominant, or position-sensitive concepts, but results for replaced definitions and the pre-revision naked Magic runtime cannot satisfy final acceptance. Every revised definition must be retested from the accepted v0.3 naked control.
-
-| Test Build | Exact Construction | Proposed L-Route Target |
-|---|---|---:|
-| Single Basic | Naked Tower plus exactly one named Basic UpgradeDefinition | `1.15x-1.30x` |
-| Combined Basic stress build | Apply every current Basic UpgradeDefinition for that TowerFamily once to the same Tower | Approximately `1.50x-1.65x` maximum |
-| Single Behaviour | Naked Tower plus exactly one named Behaviour UpgradeDefinition | `1.35x-1.65x` |
-| Combined Behaviour stress build | Apply every current Behaviour UpgradeDefinition for that TowerFamily once to the same Tower, subject to the existing package-type capacity rules | Approximately `2.0x-2.3x` maximum |
-| Reference non-Elemental Core | One Tower with exactly one named Basic plus one named Behaviour Upgrade | Approximately `1.8x` first-pass center |
-| Maximum non-Elemental stress build | One Tower with the combined Basic and combined Behaviour stress sets | Approximately `3.0x` maximum |
-
-`Single` rows measure one UpgradeDefinition without another Upgrade. `Combined` rows measure cumulative behavior that single-Upgrade tests cannot expose. They are mechanical stress builds; Task006 later decides whether one Stage pool actually offers every included definition together.
-
-These are empirical acceptance bands rather than direct stat-multiplier formulas. One run per naked Tower is sufficient for the initial Straight fixture screen. For each TowerFamily, record at least two fixed-condition naked runs per route at the final fixture health; those controls may be reused. Each final Upgrade value requires two matching upgraded runs per route that support the same practical conclusion. Exploratory values may use one complete Straight/L/U matrix before confirmation.
-
-## 8. Required Measurements
-
-- Pre-upgrade and post-upgrade TTK or resolved-Monster result
-- Change in range, cadence, uptime, or coverage
-- Multi-target or persistent-entity gain where relevant
-- Required Tower Level and Draft cost
-- Level at which the Upgrade first becomes eligible
-- Whether the Upgrade creates a meaningful current-versus-future choice
-- Whether the TowerFamily identity remains visible
-- Naked control result and upgraded result under the same fixture
-- Straight, L, and U realized-gain calculations using the same named measurement
-- Whether either state reaches the `40 / 40` ceiling on each route
-- Whether a high U result is accepted as exceptional route strength or escalated for revision
-
-## 9. Ownership
-
-| Owner | Responsibility |
+| Test Build | Primary L-Route Interpretation |
 |---|---|
-| Tower Growth And Upgrade Identity | Qualitative cross-Stage growth experience, investment interpretation, Core/Support intent, and growth-curve principles |
-| TowerDefinition | Ordered level identity and model data |
-| Tower Upgrade System | Stage-bound level eligibility, application, and accepted Upgrade state |
-| Tower Runtime Combat | Base combat authoring and runtime interpretation of accepted Upgrades |
-| Task003 | Required-Level proposals, comparative calibration, and regression evidence |
-| Task006 | Exact Stage pools, Draft budgets, and candidate solvability |
+| Single Basic | Prefer approximately `1.15x-1.30x`; reviewed range/placement and discrete-value exceptions are allowed |
+| Single Behaviour | Prefer approximately `1.35x-1.65x`; reviewed route/direction exceptions are allowed |
+| Selected Basic + Behaviour | Compare with the two accepted single gains and inspect ownership or repeated-trigger errors |
+| Selected Behaviour + Behaviour | Confirm bounded composition and the intended trigger count; approximately `2.0x-2.3x` is a review guide rather than a universal band |
+| Representative three-Upgrade stress build | Confirm the combined mechanism remains coherent; a `4800` result is recorded as a lower-bound Gain rather than an exact multiplier |
 
-## 10. Required Proposal Tables
+These empirical bands are decision aids, not direct stat-multiplier formulas. Range and path-shape Upgrades are allowed to trade fixed-point damage for deployment flexibility or exceptional geometry strength.
 
-Codex prepares the Upgrade proposal before Play Mode:
+## 8. Accepted Authoring Values
 
-| Upgrade Or Combination | Current Value | Proposed Value | Required Level | Intended Experience | L-Route Target | Decision |
-|---|---:|---:|---:|---|---|---|
-| Named Basic, Behaviour, or required combination | Record from asset | First-pass estimate | First eligible Tower level | Expected visible gain or specialization | Applicable Task003 target row | Keep or revise |
+| Tower | Upgrade | Required Level | Accepted Value |
+|---|---|---:|---|
+| Archer | Eagle Sight | `1` | Attack Range `+1` |
+| Archer | Quick Draw | `1` | Attack Cycle `-0.15s` (`0.85s -> 0.70s`) |
+| Archer | Sharpened Arrows | `1` | Damage Bonus `+5` |
+| Archer | Explosive Arrow | `2` | Effect Damage `5`, Radius `0.75` |
+| Archer | Piercing Arrow | `2` | Maximum Hit Count `3` |
+| Archer | Scatter Arrow | `2` | `2` additional Arrows, Basic Damage `5`, angle offset `16` |
+| Cannon | Extended Barrel | `1` | Attack Range `+1` |
+| Cannon | Faster Reload | `1` | Attack Cycle `-1s` (`3.5s -> 2.5s`) |
+| Cannon | Reinforced Shells | `1` | Damage Bonus `+20` |
+| Cannon | Bouncing Shell | `2` | `1` bounce, Search Radius `2`, Bounce Damage `30` |
+| Cannon | Explosive Shell | `2` | Effect Damage `25`, Radius `1` |
+| Cannon | Twin Shells | `2` | `1` additional Shell, Basic Damage `30` |
+| Magic | Arcane Charge | `1` | Damage Bonus `+6` |
+| Magic | Arcane Recovery | `1` | Attack Cycle `-3s` (`20s -> 17s`) |
+| Magic | Faster Orbit | `1` | Rotation Speed `+20` |
+| Magic | Arcane Detonation | `2` | Effect Damage `200`, Radius `1` |
+| Magic | Arcane Field | `2` | Tick Damage `1`, Interval `0.5s`, Radius `1.5` |
+| Magic | Twin Orbs | `2` | `1` additional Orb, Basic Damage `12` |
+| Drone | Expanded Patrol | `1` | Attack Range `+1` |
+| Drone | High-Caliber Rounds | `1` | deterministic Damage Bonus `+2` |
+| Drone | Optimized Burst Module | `1` | Burst Cooldown `-0.5s` |
+| Drone | Blast Rounds | `2` | Effect Damage `4`, Radius `0.75` |
+| Drone | Double Drones | `2` | `1` additional Drone, Basic Damage `6` |
+| Drone | Final Dive | `2` | Effect Damage `120`, Radius `1`, Hit Threshold `1` |
 
-Each proposal then receives a route-result matrix:
+## 9. Accepted Play Mode Evidence
 
-| Upgrade Or Combination | Fixture | Route | Naked Result | Upgraded Result | Realized Gain | Ceiling | Observation / Decision |
-|---|---|---|---:|---:|---:|---|---|
-| Named test build | Task003 v0.1 or named supplemental diagnostic | Straight, L, or U | Reusable same-family control | Filled after Play Mode | Calculated from the named measurement | Yes or no | Accepted, revise, or exceptional U strength |
+### 9.1 Single-Upgrade L Screen
 
-## 11. Execution Collaboration
+| Tower | Upgrade | Effective Damage | Gain | Decision |
+|---|---|---:|---:|---|
+| Archer | Eagle Sight | `2480` | `1.088x` | Keep as deployment/range exception |
+| Archer | Quick Draw | `2580` | `1.132x` | Keep; readable cadence gain |
+| Archer | Sharpened Arrows | `2840` | `1.246x` | Accepted |
+| Archer | Explosive Arrow | `3735` | `1.638x` | Accepted at upper Behaviour edge |
+| Archer | Piercing Arrow | `2320` | `1.018x` | Keep as direction-sensitive Behaviour |
+| Archer | Scatter Arrow | `3300` | `1.447x` | Accepted |
+| Cannon | Extended Barrel | `2100` | `1.029x` | Keep as deployment/range exception |
+| Cannon | Faster Reload | `2700` | `1.324x` | Accepted as high-value Basic |
+| Cannon | Reinforced Shells | `2320` | `1.137x` | Keep as discrete-damage exception |
+| Cannon | Bouncing Shell | `2970` | `1.456x` | Accepted |
+| Cannon | Explosive Shell | `3290` | `1.613x` | Accepted |
+| Cannon | Twin Shells | `2790` | `1.368x` | Accepted |
+| Magic | Arcane Charge | `2628` | `1.217x` | Accepted |
+| Magic | Arcane Recovery | `2490` | `1.153x` | Accepted |
+| Magic | Faster Orbit | `2730` | `1.264x` | Accepted |
+| Magic | Arcane Detonation | `2820` | `1.306x` | Keep as route/completion-position exception |
+| Magic | Arcane Field | `3511` | `1.625x` | Accepted at upper Behaviour edge |
+| Magic | Twin Orbs | `3318` | `1.536x` | Accepted |
+| Drone | Expanded Patrol | `2100` | `1.037x` | Keep as deployment/range exception |
+| Drone | High-Caliber Rounds | `2436` | `1.203x` | Accepted; deterministic damage confirmed |
+| Drone | Optimized Burst Module | `2480` | `1.225x` | Accepted |
+| Drone | Blast Rounds | `3276` | `1.618x` | Accepted after Radius revision |
+| Drone | Double Drones | `3026` | `1.494x` | Accepted; additional Drone identity confirmed |
+| Drone | Final Dive | `3120` | `1.541x` | Accepted as concentrated finisher |
 
-- The user describes the intended growth or Upgrade feeling and owns Unity asset authoring plus Play Mode observation.
-- Codex fills the first-pass Required-Level, Basic, and Behaviour proposal table, predicts the expected change, and revises one value group at a time from the returned measurements.
-- The user's Play Mode result, not the initial calculation alone, determines acceptance.
+Magic's zero-kill or Defeat outcomes in some single tests do not invalidate the Effective Damage comparison. Magic intentionally distributes contact damage across many Monsters; the recorder integrity checks remained valid.
 
-## 12. Unity Authoring Checklist
+### 9.2 Targeted Route Diagnostics
 
-- Force one known Upgrade at a time for controlled comparison.
-- Confirm the accepted Task002 `Base Combat v0.3` fixture is `40 / HP 12 / Speed 0.25 / Spawn 2.5s` before recording results.
-- Run the four naked Towers under the fixed L fixture before Upgrade tuning.
-- Record fixed L, Straight, and U controls for each TowerFamily before its Upgrade matrices.
-- Keep Map, Monster, placement, and simulation conditions fixed.
-- Validate each Stage-authorized level transition through schema, resolved-state, and eligibility inspection; add a Play Mode output regression only if combat-resolution code changes.
-- Validate every Basic and Behaviour definition selected for the pass.
-- Validate package-capacity and duplicate rejection.
-- Run every single-Upgrade and required combination test on Straight, L, and U.
-- Keep supplemental Health-sensitivity results separately named; do not overwrite the fixed v0.1 route matrix.
-- After an explicitly approved fixture-version revision, rerun affected controls and upgraded states together.
-- Record every accepted authoring change.
+| Upgrade | Straight Result / Gain | L Result / Gain | U Result / Gain | Decision |
+|---|---|---|---|---|
+| Archer Eagle Sight | `2300 / 1.075x` | `2480 / 1.088x` | `2680 / 1.072x` | Stable deployment-flexibility Basic; keep `+1` Range |
+| Archer Piercing Arrow | `3140 / 1.467x` | `2320 / 1.018x` | `4000-4060 / 1.600x-1.624x` | Intended alignment-sensitive Behaviour confirmed |
+| Cannon Extended Barrel | `1860 / 1.033x` | `2100 / 1.029x` | `2340 / 1.026x` | Stable deployment-flexibility Basic; keep `+1` Range |
+| Magic Arcane Detonation | `1680 / 1.436x` | `2820 / 1.306x` | `3960 / 1.222x` | Absolute contribution grows with exposure while relative gain follows Magic's route identity |
+| Drone Expanded Patrol | `1890 / 1.016x` | `2100 / 1.037x` | `2170 / 0.986x` | Fixed-point damage is neutral; keep as patrol/deployment flexibility |
 
-## 13. Acceptance Criteria
+The second U Piercing run (`4060`) confirms that its high aligned-route value was not a one-run anomaly. No range Upgrade is increased merely to force fixed-position DPS into the ordinary Basic band.
 
-- Every calibrated level transition unlocks at least one real Stage-allowed Upgrade.
-- TowerLevelConfig and resolved Level state contain no direct combat-stat growth.
-- Basic Upgrades produce coherent numerical specialization.
-- Behaviour Upgrades change attack strategy visibly.
-- Every Task003 v0.1 acceptance result uses the fixed `40 / HP 12 / Speed 0.25 / Spawn 2.5s` fixture; supplemental diagnostics do not replace it.
-- Fixed comparisons retain measurable headroom; no accepted gain is inferred from two `40 / 40` results.
-- Every Basic, Behaviour, and required combination has a complete Straight/L/U result matrix.
-- Individual and cumulative L-route realized gains satisfy the accepted Task003 target or record an explicit reviewed exception.
-- U-route observations are reviewed without forcing TowerFamilies or route shapes into equal absolute output.
+### 9.3 Combination Regression
+
+| Tower | Build | Effective Damage | Gain | Ceiling | Decision |
+|---|---|---:|---:|---|---|
+| Archer | Quick Draw + Explosive Arrow | `4270` | `1.873x` | No | Expected cadence/AoE composition |
+| Archer | Quick Draw + Scatter Arrow | `3830` | `1.680x` | No | Expected cadence/additional-member composition |
+| Archer | Sharpened Arrows + Scatter Arrow | `4590` | `2.013x` | No | Side members retain Basic Damage and add shared Damage Bonus |
+| Archer | Piercing Arrow + Explosive Arrow | `3910` | `1.715x` | No | Each new unique pierced hit is eligible for its explosion |
+| Cannon | Faster Reload + Explosive Shell | `4360` | `2.137x` | No | Expected cadence/AoE composition |
+| Cannon | Faster Reload + Twin Shells | `3570` | `1.750x` | No | Expected cadence/additional-member composition |
+| Cannon | Bouncing Shell + Explosive Shell | `4725` | `2.316x` | No | Bounded high-value pair; each eligible Position Impact explodes |
+| Magic | Faster Orbit + Arcane Field | `4140` | `1.917x` | No | Expected contact/field composition |
+| Magic | Arcane Recovery + Twin Orbs | `3816` | `1.767x` | No | Expected cadence/member composition |
+| Magic | Arcane Charge + Twin Orbs | `4044` | `1.872x` | No | Additional Orb keeps Basic Damage and receives shared Damage Bonus |
+| Magic | Twin Orbs + Arcane Detonation | `4158` | `1.925x` | No | Each active Orb owns its reviewed completion result |
+| Drone | Optimized Burst Module + Blast Rounds | `3704` | `1.829x` | No | Final Radius `0.75`; no repeated-trigger anomaly |
+| Drone | Double Drones + Final Dive | `4464` | `2.204x` | No | Each Drone owns one bounded battery-end sequence |
+| Archer | Quick Draw + Explosive Arrow + Scatter Arrow | `4800` | `>=2.105x` | Yes | Accepted representative upper stress build |
+| Cannon | Faster Reload + Explosive Shell + Twin Shells | `4800` | `>=2.353x` | Yes | Accepted representative upper stress build |
+| Magic | Faster Orbit + Arcane Field + Twin Orbs | `4612` | `2.135x` | No | Accepted upper stress build with measurable headroom |
+| Drone | Optimized Burst Module + Blast Rounds + Double Drones | `4800` | `>=2.370x` | Yes | Accepted representative upper stress build |
+
+The three `4800` results prove fixture saturation, not an exact final multiplier. Their fast clear, low Peak Alive, and shortened battle duration are expected from a selected Core build containing cadence plus multiple Behaviour investments. Single and pair tests retain enough headroom to validate the owning parameters. Exact Stage availability and acquisition pace remain Stage/Draft balance responsibilities.
+
+### 9.4 Final Candidate Revisions
+
+| Upgrade | First Task003B Candidate | Accepted Revision | Reason |
+|---|---|---|---|
+| Archer Explosive Arrow | Damage `10`, Radius `0.5` | Damage `5`, Radius `0.75` | Make nearby splash visible without preserving excessive per-target payload |
+| Archer Scatter Arrow | Side Basic Damage `10`, angle `15` | Side Basic Damage `5`, angle `16` | Record the final tested spread while removing the original ceiling result |
+| Cannon Explosive Shell | Damage `30`, Radius `1` | Damage `25`, Radius `1` | Bring the L gain inside the Behaviour band |
+| Magic Arcane Recovery | Cycle `-2s` | Cycle `-3s` | Reach the Basic lower band |
+| Magic Arcane Detonation | Damage `100`, Radius `0.75` | Damage `200`, Radius `1` | Improve completion-position hit opportunity; retain route-sensitive identity |
+| Magic Arcane Field | Tick Damage `4` | Tick Damage `1` | Restore measurable headroom below the fixture ceiling |
+| Drone Blast Rounds | Damage `4`, Radius `0.5` | Damage `4`, Radius `0.75` | Make area coverage reliable while remaining within the Behaviour band |
+
+## 10. Functional Acceptance
+
+- Scatter Arrow side damage, Twin Shell additional damage, Twin Orbs additional damage, and Double Drones additional damage use their package-authored Basic Damage rather than copying primary Attack Damage.
+- Shared Damage Bonus composes with eligible primary and additional members according to the System contracts.
+- High-Caliber Rounds is deterministic.
+- Piercing plus Explosive Arrow, Bouncing plus Explosive Shell, Twin Orbs plus Arcane Detonation, Blast Rounds cadence, and Final Dive multi-Drone interactions remain bounded and preserve their reviewed trigger ownership.
+- Duplicate application rejection, Level 1 Basic eligibility, Level 2 Behaviour eligibility, package capacity, and incompatible-combination rejection were previously exercised without error and remained reusable because eligibility code did not change during final value tuning.
+- Task002 v0.4 naked Tower identities remain the accepted regression controls; no final Upgrade-only parameter revision changes naked Tower or Monster values.
+
+## 11. Acceptance Criteria
+
+- All `24` current Basic and Behaviour definitions have an accepted fixed L result.
+- Every final authored value uses the fixed `40 / HP120 / Speed0.25 / Spawn2.5s` fixture.
+- Targeted route-sensitive Upgrades have reviewed Straight/U evidence.
+- Selected high-risk combinations confirm additional-member ownership, trigger count, and bounded completion behavior.
+- Ceiling results are recorded as Gain lower bounds and are not used to claim an exact multiplier.
+- Basic Upgrades create coherent numerical or deployment specialization.
+- Behaviour Upgrades visibly change attack strategy.
 - No Upgrade is required merely to repair an unusable Base Tower.
-- At least one non-Elemental L3 Core path is feasible for Task006 pool construction.
-- Stage1 approved Reference Build cost remains feasible.
-- Task002 Base Tower identities survive the full regression.
+- Task002 Base Tower identities survive the complete post-scale regression.
+- Elemental content and exact Stage/Draft feasibility remain explicitly deferred to their owning tasks.
 
-## 14. Validation
+## 12. Validation
 
-- Fixed-condition A/B Play Mode runs
-- Accepted four-family naked `Base Combat v0.3` control suite recorded in Section 6.2
-- Straight/L/U matrices for every single Upgrade and required combination
-- Required-Level, eligibility, and application validation
-- Combination regression
-- Static asset validation
-- Stage1 Reference Build cost regression
+- Task002 v0.4 Straight/L/U naked control suite
+- Task003 L-route single-Upgrade screen for all four TowerFamilies
+- Targeted Straight/U route diagnostics
+- L-route pair and representative upper-stress combination regression
+- Recorder integrity checks on every accepted run
+- Required-Level, eligibility, duplicate, and package-capacity smoke tests
+- Static source, asset, stale-schema, and diff validation from Task003B
 
-## 15. Review Note
+## 13. Review Note
 
-Task003 v0.1 reuses the frozen Task002 `Base Combat v0.3` fixture and route roles after Task003A. This Task retains candidate targets, accepted Required Levels and authored parameters, detailed Upgrade route matrices, and decisions; `01_TowerGrowthAndUpgradeIdentity.md` remains qualitative. Any later proposed change to the Task002 Tower or Reference Monster assets must be treated as another Base Combat revision and must rerun the complete Task002 route suite. U-route strength alone does not authorize a frozen Base Tower change. Exact Stage pools, concentrated-build legality, and actual sampling solvability remain Task006 outputs.
+Task003 v0.2 accepts the post-Task003B non-Elemental calibration without changing the frozen Task002 v0.4 Base Towers or reference Monster. `01_TowerGrowthAndUpgradeIdentity.md` remains qualitative; this Task retains concrete parameters, fixtures, measurements, and decisions. System documents retain only stable cross-engine behavior and ownership contracts.
+
+Future Stage tuning must not reinterpret a route-sensitive exception as a universal numerical weakness. Any later change to Base Tower or reference Monster values requires a named Base Combat revision and a complete affected Task002 regression. Any later change to an accepted Upgrade parameter requires an affected Task003 single run plus the smallest relevant route or combination regression.

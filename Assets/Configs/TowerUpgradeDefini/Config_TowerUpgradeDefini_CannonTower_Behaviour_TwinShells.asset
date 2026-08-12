@@ -22,11 +22,11 @@ MonoBehaviour:
   behaviourPackageType: 401
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
-  multiOrbsCount: 2
-  overrideMaximumDroneCount: 2
+  additionalAttackEntities:
+    prefab: {fileID: 389160941822607755, guid: 97060cd06ba0c4272b519291bdddd705, type: 3}
+    count: 1
+    basicDamage: 30
   explosiveShellEffect: {fileID: 0}
-  multiShellsMaxInitialShellCount: 2
-  multiShellsAdditionalDamage: 3
   bounceSearchRadius: 1
   maxBounceCount: 1
   arcaneDetonationEffect: {fileID: 0}

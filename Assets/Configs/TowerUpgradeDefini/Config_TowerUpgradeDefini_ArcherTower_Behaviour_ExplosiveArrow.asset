@@ -23,11 +23,7 @@ MonoBehaviour:
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
   explosiveArrowEffect: {fileID: 11400000, guid: d4e6a901b2c34f56a7890bcdef123456, type: 2}
-  multiOrbsCount: 2
-  overrideMaximumDroneCount: 2
   explosiveShellEffect: {fileID: 0}
-  multiShellsMaxInitialShellCount: 2
-  multiShellsAdditionalDamage: 3
   bounceSearchRadius: 1
   maxBounceCount: 1
   bounceArcHeight: 1

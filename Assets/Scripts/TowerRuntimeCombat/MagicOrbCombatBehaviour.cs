@@ -3,8 +3,6 @@ using UnityEngine;
 
 public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
 {
-    private const int DefaultMultiOrbsCount = 2;
-
     [TitleGroup("Magic Orb")]
     [Required]
     [SerializeField] private GameObject magicOrbPrefab;
@@ -127,7 +125,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             TowerUpgradeBasicStatType.MagicOrbRotationSpeed);
         group.ApplyStatRefresh(new MagicOrbStatRefresh(
             refreshDamage,
-            currentStats.AttackDamage,
+            currentStats.DamageBonus,
             refreshRotationSpeed,
             currentStats.MagicOrbRotationSpeed));
     }
@@ -142,7 +140,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         switch (upgradeDefinition.BehaviourPackageType)
         {
             case TowerBehaviourPackageType.MagicMultiOrbs:
-                ReconcileActiveMultiOrbs(upgradeDefinition.MultiOrbsCount);
+                ReconcileActiveMultiOrbs(upgradeDefinition.AdditionalAttackEntities);
                 break;
             case TowerBehaviourPackageType.MagicArcaneDetonation:
                 if (activeMagicOrbGroup != null)
@@ -231,14 +229,19 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
 
         ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
         MagicOrbRuntimeOptions runtimeOptions = CreateRuntimeOptions();
-        int memberCount = IsMultiOrbsActive() ? GetMultiOrbsCount() : 1;
+        AdditionalAttackEntityAuthoring additionalAttackEntities =
+            GetMultiOrbsAdditionalAttackEntities();
+        int memberCount = 1 + (additionalAttackEntities != null
+            ? additionalAttackEntities.Count
+            : 0);
 
         if (!TryCreateMagicOrbGroup(
                 origin.position,
                 authoredOrb,
                 memberCount,
                 resolvedStats,
-                runtimeOptions))
+                runtimeOptions,
+                additionalAttackEntities))
         {
             ResetPendingAttack();
             return;
@@ -254,7 +257,8 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         MagicOrbBehaviour authoredOrb,
         int memberCount,
         ResolvedTowerCombatStats resolvedStats,
-        MagicOrbRuntimeOptions runtimeOptions)
+        MagicOrbRuntimeOptions runtimeOptions,
+        AdditionalAttackEntityAuthoring additionalAttackEntities)
     {
         if (memberCount <= 0 || activeMagicOrbGroup != null)
         {
@@ -279,13 +283,27 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
 
         for (int i = 0; i < memberCount; i++)
         {
+            bool isAdditional = i > 0;
+            GameObject memberPrefab = isAdditional
+                ? additionalAttackEntities?.Prefab
+                : magicOrbPrefab;
+
+            if (memberPrefab == null)
+            {
+                group.ForceCleanup();
+                return false;
+            }
+
             GameObject orbObject = Instantiate(
-                magicOrbPrefab,
+                memberPrefab,
                 orbitCenterPosition,
                 Quaternion.identity);
+            int memberBasicDamage = isAdditional
+                ? additionalAttackEntities.BasicDamage
+                : BaseAttackDamage;
 
             if (!orbObject.TryGetComponent(out MagicOrbBehaviour member) ||
-                !group.TryAddMember(member, i, memberCount))
+                !group.TryAddMember(member, i, memberCount, memberBasicDamage))
             {
                 Debug.LogWarning(
                     "Magic Orb group release failed: every instance root requires a valid MagicOrbBehaviour.",
@@ -306,27 +324,30 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         return true;
     }
 
-    private void ReconcileActiveMultiOrbs(int desiredMemberCount)
+    private void ReconcileActiveMultiOrbs(
+        AdditionalAttackEntityAuthoring additionalAttackEntities)
     {
         MagicOrbGroupRuntime group = activeMagicOrbGroup;
-        int clampedDesiredCount = Mathf.Max(2, desiredMemberCount);
+        int desiredMemberCount = 1 + (additionalAttackEntities != null
+            ? additionalAttackEntities.Count
+            : 0);
 
         if (group == null ||
             !group.IsActive ||
-            group.MemberCount >= clampedDesiredCount ||
-            magicOrbPrefab == null)
+            group.MemberCount >= desiredMemberCount ||
+            additionalAttackEntities?.Prefab == null)
         {
             return;
         }
 
-        int missingMemberCount = clampedDesiredCount - group.MemberCount;
+        int missingMemberCount = desiredMemberCount - group.MemberCount;
         System.Collections.Generic.List<MagicOrbBehaviour> stagedMembers =
             new System.Collections.Generic.List<MagicOrbBehaviour>(missingMemberCount);
 
         for (int i = 0; i < missingMemberCount; i++)
         {
             GameObject candidateObject = Instantiate(
-                magicOrbPrefab,
+                additionalAttackEntities.Prefab,
                 group.OrbitCenterPosition,
                 Quaternion.identity);
             candidateObject.SetActive(false);
@@ -342,7 +363,10 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             stagedMembers.Add(candidate);
         }
 
-        if (!group.TryCommitStagedMembers(stagedMembers, clampedDesiredCount))
+        if (!group.TryCommitStagedMembers(
+                stagedMembers,
+                desiredMemberCount,
+                additionalAttackEntities.BasicDamage))
         {
             CleanupStagedMembers(stagedMembers);
         }
@@ -429,18 +453,18 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         group.ForceCleanup();
     }
 
-    private bool IsMultiOrbsActive()
+    private AdditionalAttackEntityAuthoring GetMultiOrbsAdditionalAttackEntities()
     {
-        return HasBehaviourPackage(TowerBehaviourPackageType.MagicMultiOrbs);
-    }
+        if (!HasBehaviourPackage(TowerBehaviourPackageType.MagicMultiOrbs))
+        {
+            return null;
+        }
 
-    private int GetMultiOrbsCount()
-    {
         return TryGetBehaviourPackageUpgrade(
             TowerBehaviourPackageType.MagicMultiOrbs,
             out TowerUpgradeDefinition upgradeDefinition)
-            ? upgradeDefinition.MultiOrbsCount
-            : DefaultMultiOrbsCount;
+            ? upgradeDefinition.AdditionalAttackEntities
+            : null;
     }
 
     private void ResetPendingAttack()

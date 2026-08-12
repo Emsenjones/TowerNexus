@@ -5,7 +5,6 @@ public readonly struct ProjectileRuntimeOptions
     public bool IsBounceChild { get; }
     public bool IsInitialRelease => !IsBounceChild;
     public bool LocksDirectDamage { get; }
-    public int DirectDamageBonus { get; }
     public TowerUpgradeDefinition ExplosiveArrowSourceUpgrade { get; }
     public EffectDefinition ExplosiveArrowEffect { get; }
     public TowerUpgradeDefinition ExplosiveShellSourceUpgrade { get; }
@@ -23,7 +22,6 @@ public readonly struct ProjectileRuntimeOptions
         int maxPierceHitCount,
         bool isBounceChild = false,
         bool locksDirectDamage = false,
-        int directDamageBonus = 0,
         TowerUpgradeDefinition explosiveArrowSourceUpgrade = null,
         EffectDefinition explosiveArrowEffect = null,
         TowerUpgradeDefinition explosiveShellSourceUpgrade = null,
@@ -40,7 +38,6 @@ public readonly struct ProjectileRuntimeOptions
         MaxPierceHitCount = maxPierceHitCount;
         IsBounceChild = isBounceChild;
         LocksDirectDamage = locksDirectDamage;
-        DirectDamageBonus = directDamageBonus;
         ExplosiveArrowSourceUpgrade = explosiveArrowSourceUpgrade;
         ExplosiveArrowEffect = explosiveArrowEffect;
         ExplosiveShellSourceUpgrade = explosiveShellSourceUpgrade;

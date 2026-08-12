@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Monster Plant
   moveSpeed: 0.25
-  maxHealth: 12
+  maxHealth: 120
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2

@@ -15,7 +15,6 @@ public static class TowerRuntimeStatResolver
         float damageBonus = 0f;
         float magicOrbRotationSpeedDelta = 0f;
         float droneBurstCooldownDelta = 0f;
-        float droneProjectileBonusDamageChanceDelta = 0f;
 
         IReadOnlyList<TowerUpgradeDefinition> appliedUpgrades = towerInstance != null
             ? towerInstance.AppliedUpgrades
@@ -31,23 +30,22 @@ public static class TowerRuntimeStatResolver
                     ref attackCycleDurationDelta,
                     ref damageBonus,
                     ref magicOrbRotationSpeedDelta,
-                    ref droneBurstCooldownDelta,
-                    ref droneProjectileBonusDamageChanceDelta
+                    ref droneBurstCooldownDelta
                 );
             }
         }
+
+        int resolvedDamageBonus = Mathf.RoundToInt(damageBonus);
 
         return new ResolvedTowerCombatStats(
             Mathf.Max(0f, baseStats.AttackRange + attackRangeDelta),
             Mathf.Max(
                 MinimumAttackCycleDuration,
                 baseStats.AttackCycleDuration + attackCycleDurationDelta),
-            Mathf.Max(0, baseStats.AttackDamage + Mathf.RoundToInt(damageBonus)),
+            Mathf.Max(0, baseStats.AttackDamage + resolvedDamageBonus),
+            resolvedDamageBonus,
             Mathf.Max(0f, baseStats.MagicOrbRotationSpeed + magicOrbRotationSpeedDelta),
-            Mathf.Max(MinimumDroneBurstCooldown, baseStats.DroneBurstCooldown + droneBurstCooldownDelta),
-            Mathf.Clamp01(
-                baseStats.DroneProjectileBonusDamageChance +
-                droneProjectileBonusDamageChanceDelta)
+            Mathf.Max(MinimumDroneBurstCooldown, baseStats.DroneBurstCooldown + droneBurstCooldownDelta)
         );
     }
 
@@ -57,8 +55,7 @@ public static class TowerRuntimeStatResolver
         ref float attackCycleDurationDelta,
         ref float damageBonus,
         ref float magicOrbRotationSpeedDelta,
-        ref float droneBurstCooldownDelta,
-        ref float droneProjectileBonusDamageChanceDelta)
+        ref float droneBurstCooldownDelta)
     {
         if (upgradeDefinition == null || upgradeDefinition.UpgradeLayer != TowerUpgradeLayer.Basic)
         {
@@ -97,9 +94,6 @@ public static class TowerRuntimeStatResolver
                     break;
                 case TowerUpgradeBasicStatType.DroneBurstCooldown:
                     droneBurstCooldownDelta += statDelta.AdditiveValue;
-                    break;
-                case TowerUpgradeBasicStatType.DroneProjectileBonusDamageChance:
-                    droneProjectileBonusDamageChanceDelta += statDelta.AdditiveValue;
                     break;
             }
         }

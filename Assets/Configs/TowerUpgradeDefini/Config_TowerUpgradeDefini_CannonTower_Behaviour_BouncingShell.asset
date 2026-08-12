@@ -22,15 +22,12 @@ MonoBehaviour:
   behaviourPackageType: 402
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
-  multiOrbsCount: 2
-  overrideMaximumDroneCount: 2
   explosiveShellEffect: {fileID: 0}
-  multiShellsMaxInitialShellCount: 2
   bounceSearchRadius: 2
   maxBounceCount: 1
   bounceArcHeight: 1
   bounceTargetSelectionType: 1
-  bounceDamage: 3
+  bounceDamage: 30
   arcaneDetonationEffect: {fileID: 0}
   magicArcaneFieldPrefab: {fileID: 0}
   blastRoundsEffect: {fileID: 0}

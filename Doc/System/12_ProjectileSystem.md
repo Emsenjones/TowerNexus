@@ -124,6 +124,8 @@ Applying or increasing Piercing on an active eligible Arrow changes remaining ca
 
 Scatter members are independent projectiles inside one stable release group. Each owns its own movement, hit history, remaining Piercing capacity, lifetime, damage, and Elemental results.
 
+The Center member uses the Tower-authored Arrow template and resolved Attack Damage. Side members use Scatter Arrow's additional-entity template and immutable release damage equal to its authored Basic Damage plus the release-time resolved Damage Bonus.
+
 Scatter topology is fixed at attack confirmation and never adds projectiles to an already released group.
 
 ---
@@ -227,7 +229,7 @@ Bounce children:
 - Do not inspect the source Tower's complete Upgrade state.
 - Retain live Elemental lookup at each eligible result boundary.
 
-Primary initial Shells use current resolved Cannon Attack Damage. Additional initial Shells use the Multi Shells package's positive integer Additional Shell Damage. Bounce children always use the Bouncing Shell package's positive integer Bounce Damage, including when the parent was an additional Shell or another bounce child. Fixed additional and bounce direct damage is immutable against later Damage Bonus refresh, while an unresolved primary initial Shell remains eligible for its reviewed live Damage refresh. Explosive Shell remains an independently authored Effect and uses the same authored Effect damage at every eligible impact. No Cannon Behaviour composes a general damage multiplier.
+Primary initial Shells use the Tower-authored Shell template and current resolved Cannon Attack Damage. Additional initial Shells use the Multi Shells package's additional-entity template and immutable release damage equal to its positive integer Basic Damage plus the release-time resolved Damage Bonus. Bounce children always use the Bouncing Shell package's positive integer Bounce Damage, including when the parent was an additional Shell or another bounce child. Additional and bounce direct damage is immutable against later refresh, while an unresolved primary initial Shell remains eligible for its reviewed live Damage refresh. Explosive Shell remains an independently authored Effect and uses the same authored Effect damage at every eligible impact. No Cannon Behaviour composes a general damage multiplier.
 
 ---
 

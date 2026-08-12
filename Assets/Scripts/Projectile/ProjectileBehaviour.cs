@@ -42,7 +42,6 @@ public class ProjectileBehaviour : MonoBehaviour
     private EffectDefinition explosiveShellEffect;
     private EffectDefinition blastRoundsEffect;
     private int attackDamage;
-    private int directDamageBonus;
     private int remainingPiercingHitCount;
     private int remainingBounceCount;
     private float elapsedLifetime;
@@ -122,7 +121,6 @@ public class ProjectileBehaviour : MonoBehaviour
         this.targetPosition = targetPosition;
         this.archerReleaseIdentity = archerReleaseIdentity;
         this.attackDamage = Mathf.Max(0, attackDamage);
-        directDamageBonus = Mathf.Max(0, runtimeOptions.DirectDamageBonus);
         this.initialArcHeight = Mathf.Max(0f, initialArcHeight);
         canPierce = runtimeOptions.CanPierce;
         remainingPiercingHitCount = canPierce
@@ -1044,7 +1042,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private int ResolveDirectDamage()
     {
-        return attackDamage + directDamageBonus;
+        return attackDamage;
     }
 
     private static bool IsValidTarget(MonsterBehaviour monster)

@@ -217,6 +217,8 @@ Magic Orb entity authoring owns base orbit, contact distance, lifetime, same-tar
 
 Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
 
+Behaviour packages that add Attack Entities author one shared data shape: the additional entity template, positive additional-member count, and positive integer Basic Damage. Scatter Arrow, Multi Shells, Multi Orbs, and Multi Drones consume that shape through their own runtime contracts; the shared authoring shape does not create a generic release runtime. The primary entity continues to use the Tower template and resolved Attack Damage. An additional entity uses its package-authored Basic Damage plus the same resolved Basic Damage Bonus.
+
 At release, Tower Runtime Combat combines base combat authoring and applied Tower Upgrade state into only the runtime data relevant to the released entity. Tower level selects presentation and Upgrade eligibility but does not alter combat values in the v0.1 growth model. Runtime history is never stored in authored data.
 
 ---

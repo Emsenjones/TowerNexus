@@ -501,7 +501,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a91d0412b85f4f04ba6dd9f2ff12e104, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DirectionProjectileCombatBehaviour
-  baseAttackDamage: 2
+  baseAttackDamage: 20
   attackRange: 2
   attackCycleDuration: 0.85
   targetSelectionType: 2

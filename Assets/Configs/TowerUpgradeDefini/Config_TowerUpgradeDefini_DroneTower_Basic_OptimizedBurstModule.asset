@@ -24,10 +24,7 @@ MonoBehaviour:
   behaviourPackageType: 0
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
-  multiOrbsCount: 2
-  overrideMaximumDroneCount: 2
   explosiveShellEffect: {fileID: 0}
-  multiShellsMaxInitialShellCount: 2
   bounceSearchRadius: 1
   maxBounceCount: 1
   bounceArcHeight: 1

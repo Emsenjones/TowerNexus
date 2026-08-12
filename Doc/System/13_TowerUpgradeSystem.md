@@ -173,7 +173,7 @@ Multiple accepted changes in one gameplay step must be observable in accepted or
 
 # 8. Basic Layer
 
-Basic Layer contains numerical combat modifiers and no reusable gameplay Effects. Most modifiers are additive deltas; a family-specific modifier may instead define a reviewed release-time probability whose result is executed by the owning runtime.
+Basic Layer contains deterministic numerical combat modifiers and no reusable gameplay Effects. Modifiers are additive deltas.
 
 Common deltas:
 
@@ -185,7 +185,6 @@ TowerFamily-specific deltas may include:
 
 - Magic Orb rotation speed
 - Drone burst cooldown
-- Drone projectile bonus-damage chance
 
 Same-type deltas add together:
 
@@ -197,9 +196,9 @@ Values are clamped to their valid gameplay ranges after composition.
 
 Arcane Recovery is the Magic Attack Cycle Duration Basic Upgrade. Magic Orb Maximum Hit Count is not a gameplay stat or Upgrade surface.
 
-Expanded Patrol Radius is the Drone Attack Range Basic Upgrade. Drone Battery Duration remains static entity authoring and is not resolved from Tower Upgrade state.
+Expanded Patrol is the Drone Attack Range Basic Upgrade. Drone Battery Duration remains static entity authoring and is not resolved from Tower Upgrade state.
 
-High-Caliber Rounds grants a finite authored chance in `[0, 1]` for each released Drone projectile to carry one fixed bonus direct-damage result. The chance is the Upgrade's authored tuning parameter; the fixed bonus is one. The release result is immutable for that projectile and does not increase package area damage.
+High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. It increases Drone direct damage and does not increase independently authored package Effect damage.
 
 Live propagation rules are owned by Tower Runtime Combat System. Basic Layer does not execute Effects or Buffs.
 
@@ -214,19 +213,19 @@ The first-version package set is:
 | TowerFamily | Package | Authored Contract |
 |---|---|---|
 | Archer | Piercing Arrow | Finite hit capacity |
-| Archer | Scatter Arrow | Side-Arrow topology and angle |
+| Archer | Scatter Arrow | Side-Arrow angle plus additional entity template, count, and Basic Damage |
 | Archer | Explosive Arrow | Direct-hit area Effect that includes every surviving valid target in range |
 | Cannon | Explosive Shell | Position Impact area Effect |
-| Cannon | Multi Shells | Maximum initial Shell count and positive integer Additional Shell Damage |
+| Cannon | Multi Shells | Additional entity template, count, and Basic Damage |
 | Cannon | Bouncing Shell | Bounce count, local radius, bounce Arc height, local selector, and positive integer Bounce Damage |
-| Magic | Multi Orbs | Desired synchronized member count |
+| Magic | Multi Orbs | Additional entity template, count, and Basic Damage |
 | Magic | Arcane Detonation | Normal-completion area Effect |
 | Magic | Arcane Field | Complete field runtime prefab and presentation; its root Behaviour owns radius, tick interval, and tick Effect |
-| Drone | Multi Drones | Absolute maximum active Drone count |
+| Drone | Multi Drones | Additional entity template, count, and Basic Damage |
 | Drone | Blast Rounds | Projectile-hit area Effect |
 | Drone | Final Dive | Positive arrival threshold and impact Effect |
 
-Package definitions own upgrade-level authoring values and complete runtime-prefab references. A referenced runtime prefab may own its entity-local authoring values through its root Behaviour. Runtime owner documents define trigger timing, target resolution, state transitions, and result order.
+Package definitions own upgrade-level authoring values and complete runtime-prefab references. Scatter Arrow, Multi Shells, Multi Orbs, and Multi Drones reuse one additional Attack Entity authoring shape, but each owning Tower runtime remains responsible for release topology and lifecycle. A referenced runtime prefab may own its entity-local authoring values through its root Behaviour. Runtime owner documents define trigger timing, target resolution, state transitions, and result order.
 
 ## 9.1 Timing When Applied
 
@@ -324,7 +323,7 @@ Tower Upgrade validation should report or reject at minimum:
 - Package identity incompatible with TowerFamily
 - Missing required package Effect or parameter
 - Non-positive count, radius, interval, threshold, or capacity where invalid
-- Probability outside its valid range or non-positive Cannon Additional Shell Damage or Bounce Damage
+- Missing or incompatible additional Attack Entity root component, or non-positive additional count, Basic Damage, or Bounce Damage
 - Duplicate package identity on one Tower
 - Second Elemental Layer on one Tower
 - Elemental definition without a valid Elemental apply Effect

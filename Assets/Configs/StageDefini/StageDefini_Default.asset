@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4f1fd7e4d8684ac4870eaec94bee5846, type: 3}
   m_Name: StageDefini_Default
   m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
-  displayName: 
+  displayName: Default Definition
   playerMaxHealth: 40
-  mapTemplate: {fileID: 3273336904907436118, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+  mapTemplate: {fileID: 3273336904907436118, guid: ec27a77740570478194fc410f546d453, type: 3}
   monsterWaveConfig: {fileID: 11400000, guid: fbd0a6e24c68c449a91d06afd66c2efc, type: 2}
   towerDraftPool:
   - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}

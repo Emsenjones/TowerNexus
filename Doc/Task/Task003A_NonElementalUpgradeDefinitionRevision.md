@@ -2,6 +2,8 @@
 
 Status: Completed and accepted; source, serialized authoring, static validation, Unity Play Mode inspection, and the post-change Task002 `Base Combat v0.3` regression are complete
 
+Supersession note: Task003B later replaces the Task003A High-Caliber probability contract with deterministic Damage Bonus, replaces family-specific additional-member damage authoring with the shared additional Attack Entity shape, and adopts `Expanded Patrol` as the final display name. Task003A remains the historical clean-break record for the earlier structural migration.
+
 Depends on: Completed Task002 `Base Combat v0.2`; approved Task003 Upgrade review
 
 Unblocks: Task003 Upgrade calibration

@@ -13,6 +13,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 
     private readonly List<Vector3> pendingTargetPositions = new List<Vector3>();
     private MonsterBehaviour pendingPrimaryTarget;
+    private AdditionalAttackEntityAuthoring pendingAdditionalAttackEntities;
     private bool hasLoggedInvalidExplosiveShellEffect;
 
     public override TowerFamily SupportedTowerFamily => TowerFamily.Cannon;
@@ -169,12 +170,25 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 
         for (int i = 0; i < pendingTargetPositions.Count; i++)
         {
-            int shellDamage = ResolveInitialShellDamage(i, resolvedStats.AttackDamage);
+            bool isAdditional = i > 0;
+            ProjectileBehaviour releasePrefab = projectilePrefab;
+
+            if (isAdditional &&
+                (pendingAdditionalAttackEntities == null ||
+                 pendingAdditionalAttackEntities.Prefab == null ||
+                 !pendingAdditionalAttackEntities.Prefab.TryGetComponent(out releasePrefab)))
+            {
+                continue;
+            }
+
+            int shellDamage = isAdditional
+                ? Mathf.Max(0, pendingAdditionalAttackEntities.BasicDamage + resolvedStats.DamageBonus)
+                : resolvedStats.AttackDamage;
             ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions(
-                locksDirectDamage: i > 0);
+                locksDirectDamage: isAdditional);
 
             if (TryReleaseProjectile(
-                    projectilePrefab,
+                    releasePrefab,
                     origin,
                     pendingTargetPositions[i],
                     target: null,
@@ -203,8 +217,11 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
     {
         pendingTargetPositions.Clear();
         pendingTargetPositions.Add(GetMonsterHitPosition(firstTarget));
+        pendingAdditionalAttackEntities = GetMultiShellsAdditionalAttackEntities();
 
-        int maximumInitialShellCount = ResolveMaximumInitialShellCount();
+        int maximumInitialShellCount = pendingAdditionalAttackEntities != null
+            ? 1 + pendingAdditionalAttackEntities.Count
+            : 1;
         HashSet<MonsterBehaviour> selectedTargets = new HashSet<MonsterBehaviour>
         {
             firstTarget
@@ -276,38 +293,24 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             bounceDamage: bounceDamage);
     }
 
-    private int ResolveInitialShellDamage(int slotIndex, int resolvedPrimaryDamage)
-    {
-        if (slotIndex <= 0 ||
-            !HasBehaviourPackage(TowerBehaviourPackageType.CannonMultiShells))
-        {
-            return resolvedPrimaryDamage;
-        }
-
-        return TryGetBehaviourPackageUpgrade(
-            TowerBehaviourPackageType.CannonMultiShells,
-            out TowerUpgradeDefinition upgradeDefinition)
-            ? upgradeDefinition.MultiShellsAdditionalDamage
-            : resolvedPrimaryDamage;
-    }
-
-    private int ResolveMaximumInitialShellCount()
+    private AdditionalAttackEntityAuthoring GetMultiShellsAdditionalAttackEntities()
     {
         if (!HasBehaviourPackage(TowerBehaviourPackageType.CannonMultiShells))
         {
-            return 1;
+            return null;
         }
 
         return TryGetBehaviourPackageUpgrade(
             TowerBehaviourPackageType.CannonMultiShells,
             out TowerUpgradeDefinition upgradeDefinition)
-            ? upgradeDefinition.MultiShellsMaxInitialShellCount
-            : 1;
+            ? upgradeDefinition.AdditionalAttackEntities
+            : null;
     }
 
     private void ResetPendingAttack()
     {
         pendingPrimaryTarget = null;
+        pendingAdditionalAttackEntities = null;
         pendingTargetPositions.Clear();
         SetIdle();
     }

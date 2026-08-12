@@ -23,37 +23,30 @@ public readonly struct DroneStatRefresh
 {
     public DroneStatRefresh(
         bool refreshDamage,
-        int newDamage,
+        int newDamageBonus,
         bool refreshAttackRange,
         float newAttackRange,
         bool refreshBurstCooldown,
-        float newBurstCooldown,
-        bool refreshProjectileBonusDamageChance,
-        float newProjectileBonusDamageChance)
+        float newBurstCooldown)
     {
         RefreshDamage = refreshDamage;
-        NewDamage = newDamage;
+        NewDamageBonus = newDamageBonus;
         RefreshAttackRange = refreshAttackRange;
         NewAttackRange = newAttackRange;
         RefreshBurstCooldown = refreshBurstCooldown;
         NewBurstCooldown = newBurstCooldown;
-        RefreshProjectileBonusDamageChance = refreshProjectileBonusDamageChance;
-        NewProjectileBonusDamageChance = newProjectileBonusDamageChance;
     }
 
     public bool RefreshDamage { get; }
-    public int NewDamage { get; }
+    public int NewDamageBonus { get; }
     public bool RefreshAttackRange { get; }
     public float NewAttackRange { get; }
     public bool RefreshBurstCooldown { get; }
     public float NewBurstCooldown { get; }
-    public bool RefreshProjectileBonusDamageChance { get; }
-    public float NewProjectileBonusDamageChance { get; }
     public bool HasAnyChange =>
         RefreshDamage ||
         RefreshAttackRange ||
-        RefreshBurstCooldown ||
-        RefreshProjectileBonusDamageChance;
+        RefreshBurstCooldown;
 }
 
 public class DroneBehaviour : MonoBehaviour
@@ -110,9 +103,9 @@ public class DroneBehaviour : MonoBehaviour
     private Vector3 releasePosition;
     private MonsterBehaviour currentTarget;
     private int attackDamage;
+    private int basicDamage;
     private float attackRange;
     private float currentBurstCooldown;
-    private float projectileBonusDamageChance;
     private float finalDiveHitThreshold;
     private float orbitAngleRadians;
     private int orbitDirection = 1;
@@ -139,6 +132,7 @@ public class DroneBehaviour : MonoBehaviour
     public DroneRuntimeState State { get; private set; } = DroneRuntimeState.Launching;
     public DroneBurstPhase BurstPhase => burstPhase;
     public bool IsInitialized => isInitialized;
+    public bool IsAdditionalAttackEntity { get; private set; }
     public float BaseBatteryDuration => batteryDuration;
     public float BaseBurstCooldown => burstCooldown;
 
@@ -161,6 +155,8 @@ public class DroneBehaviour : MonoBehaviour
         DroneReleaseData releaseData,
         DroneRuntimeOptions runtimeOptions,
         ResolvedTowerCombatStats resolvedStats,
+        int initializedBasicDamage,
+        bool isAdditionalAttackEntity,
         Vector3 releasePosition,
         Quaternion releaseRotation,
         MonsterBehaviour initialTarget)
@@ -176,10 +172,11 @@ public class DroneBehaviour : MonoBehaviour
         this.releasePosition = releasePosition;
 
         currentTarget = initialTarget;
-        attackDamage = resolvedStats.AttackDamage;
+        basicDamage = Mathf.Max(0, initializedBasicDamage);
+        attackDamage = Mathf.Max(0, basicDamage + resolvedStats.DamageBonus);
+        IsAdditionalAttackEntity = isAdditionalAttackEntity;
         attackRange = resolvedStats.AttackRange;
         currentBurstCooldown = resolvedStats.DroneBurstCooldown;
-        projectileBonusDamageChance = resolvedStats.DroneProjectileBonusDamageChance;
         orbitAngleRadians = 0f;
         orbitDirection = 1;
         batteryTimer = batteryDuration;
@@ -315,7 +312,7 @@ public class DroneBehaviour : MonoBehaviour
 
         if (refresh.RefreshDamage)
         {
-            attackDamage = Mathf.Max(0, refresh.NewDamage);
+            attackDamage = Mathf.Max(0, basicDamage + refresh.NewDamageBonus);
         }
 
         if (refresh.RefreshAttackRange)
@@ -328,11 +325,6 @@ public class DroneBehaviour : MonoBehaviour
             RefreshBurstCooldown(refresh.NewBurstCooldown);
         }
 
-        if (refresh.RefreshProjectileBonusDamageChance)
-        {
-            projectileBonusDamageChance = Mathf.Clamp01(
-                refresh.NewProjectileBonusDamageChance);
-        }
     }
 
     public void RefreshBlastRounds(
@@ -686,8 +678,6 @@ public class DroneBehaviour : MonoBehaviour
             projectilePrefab,
             spawnAnchor.position,
             Quaternion.identity);
-        int directDamageBonus = RollProjectileDirectDamageBonus();
-
         projectileBehaviour.Initialize(
             sourceTower,
             monsterManager,
@@ -699,7 +689,6 @@ public class DroneBehaviour : MonoBehaviour
             runtimeOptions: new ProjectileRuntimeOptions(
                 canPierce: false,
                 maxPierceHitCount: 1,
-                directDamageBonus: directDamageBonus,
                 blastRoundsSourceUpgrade: blastRoundsSourceUpgrade,
                 blastRoundsEffect: blastRoundsEffect)
         );
@@ -711,21 +700,6 @@ public class DroneBehaviour : MonoBehaviour
 
         OnProjectileReleased?.Invoke(projectileBehaviour);
         PlayAttackReleaseVfx(spawnAnchor, targetPosition);
-    }
-
-    private int RollProjectileDirectDamageBonus()
-    {
-        if (projectileBonusDamageChance <= 0f)
-        {
-            return 0;
-        }
-
-        if (projectileBonusDamageChance >= 1f)
-        {
-            return 1;
-        }
-
-        return Random.value < projectileBonusDamageChance ? 1 : 0;
     }
 
     private void EndDrone()

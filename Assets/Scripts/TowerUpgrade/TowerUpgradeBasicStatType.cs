@@ -4,6 +4,5 @@ public enum TowerUpgradeBasicStatType
     AttackCycleDuration = 1,
     DamageBonus = 2,
     MagicOrbRotationSpeed = 100,
-    DroneBurstCooldown = 201,
-    DroneProjectileBonusDamageChance = 202
+    DroneBurstCooldown = 201
 }
