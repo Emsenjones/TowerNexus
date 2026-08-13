@@ -70,6 +70,7 @@ public class MonsterBehaviour : MonoBehaviour
     public event Action<MonsterBehaviour> OnDestroyed;
     public event Action<MonsterBehaviour, int, int> OnHealthChanged;
     public event Action<MonsterBehaviour> OnBuffStateChanged;
+    public event Action<MonsterBehaviour, BuffRuntimeObservation> OnBuffRuntimeObserved;
 
     public bool TryInitializeRuntime(out string failureReason)
     {
@@ -81,7 +82,7 @@ public class MonsterBehaviour : MonoBehaviour
         currentHealth = maxHealth;
         ClearMovementControls();
         EnsureBuffRuntime();
-        buffRuntime.Clear();
+        buffRuntime.Clear(BuffRemovalReason.RuntimeReset);
         CacheBuffVisualController();
         isDead = false;
         isResolved = false;
@@ -343,11 +344,12 @@ public class MonsterBehaviour : MonoBehaviour
     private void OnDestroy()
     {
         monsterManager?.UnregisterMonster(this);
-        buffRuntime?.Clear();
+        buffRuntime?.Clear(BuffRemovalReason.TechnicalCleanup);
         ClearMovementControls();
         if (buffRuntime != null)
         {
             buffRuntime.OnStateChanged -= HandleBuffStateChanged;
+            buffRuntime.OnRuntimeObserved -= HandleBuffRuntimeObserved;
         }
         OnDestroyed?.Invoke(this);
     }
@@ -358,6 +360,7 @@ public class MonsterBehaviour : MonoBehaviour
         {
             buffRuntime = new MonsterBuffRuntime(this);
             buffRuntime.OnStateChanged += HandleBuffStateChanged;
+            buffRuntime.OnRuntimeObserved += HandleBuffRuntimeObserved;
         }
     }
 
@@ -379,6 +382,32 @@ public class MonsterBehaviour : MonoBehaviour
     private void HandleBuffStateChanged()
     {
         OnBuffStateChanged?.Invoke(this);
+    }
+
+    private void HandleBuffRuntimeObserved(BuffRuntimeObservation observation)
+    {
+        Action<MonsterBehaviour, BuffRuntimeObservation> handlers =
+            OnBuffRuntimeObserved;
+
+        if (handlers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = handlers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<MonsterBehaviour, BuffRuntimeObservation>)invocationList[i])
+                    .Invoke(this, observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
     }
 
     private void CacheAnimator()
@@ -495,7 +524,7 @@ public class MonsterBehaviour : MonoBehaviour
 
         isCleaningUp = true;
         isResolved = true;
-        StopGameplayState();
+        StopGameplayState(BuffRemovalReason.TechnicalCleanup);
         monsterManager?.UnregisterMonster(this);
         Destroy(gameObject);
     }
@@ -509,7 +538,10 @@ public class MonsterBehaviour : MonoBehaviour
 
         isResolved = true;
         isDead = !reachedTarget;
-        StopGameplayState();
+        StopGameplayState(
+            reachedTarget
+                ? BuffRemovalReason.MonsterLeaked
+                : BuffRemovalReason.MonsterKilled);
 
         OnResolved?.Invoke(this, reachedTarget);
 
@@ -525,9 +557,9 @@ public class MonsterBehaviour : MonoBehaviour
         Destroy(gameObject, GetDeathDelay());
     }
 
-    private void StopGameplayState()
+    private void StopGameplayState(BuffRemovalReason buffRemovalReason)
     {
-        buffRuntime?.Clear();
+        buffRuntime?.Clear(buffRemovalReason);
         StopMovement();
         ClearMovementControls();
         currentPath.Clear();

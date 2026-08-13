@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using UnityEngine;
 
@@ -23,6 +24,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         trackedMonsters =
             new Dictionary<MonsterBehaviour, MonsterObservation>();
     private readonly HashSet<int> seenMonsterInstanceIds = new HashSet<int>();
+    private readonly ElementalBuffRunAccumulator buffAccumulator =
+        new ElementalBuffRunAccumulator();
 
     private bool isSubscribed;
     private bool isTrackingRun;
@@ -163,6 +166,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 HandleAllSpawningCompleted;
         }
 
+        if (monsterManager != null)
+        {
+            monsterManager.OnMonsterRegistered += HandleMonsterRegistered;
+        }
+
         if (battleRuntimeCoordinator != null)
         {
             battleRuntimeCoordinator.OnBattleResultPublished +=
@@ -226,6 +234,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 HandleAllSpawningCompleted;
         }
 
+        if (monsterManager != null)
+        {
+            monsterManager.OnMonsterRegistered -= HandleMonsterRegistered;
+        }
+
         if (battleRuntimeCoordinator != null)
         {
             battleRuntimeCoordinator.OnBattleResultPublished -=
@@ -247,6 +260,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         UnsubscribeFromTrackedMonsters();
         trackedMonsters.Clear();
         seenMonsterInstanceIds.Clear();
+        buffAccumulator.Reset();
         spawnedCount = 0;
         resolvedCount = 0;
         killedCount = 0;
@@ -316,6 +330,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         monster.OnHealthChanged += HandleMonsterHealthChanged;
         monster.OnResolved += HandleMonsterResolved;
         monster.OnDestroyed += HandleMonsterDestroyed;
+        monster.OnBuffRuntimeObserved += HandleBuffRuntimeObserved;
 
         float observedTime = Time.time;
 
@@ -364,6 +379,24 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             0,
             observation.LastHealth - currentHealth);
         observation.LastHealth = currentHealth;
+    }
+
+    private void HandleMonsterRegistered(MonsterBehaviour monster)
+    {
+        if (isTrackingRun)
+        {
+            TrackMonster(monster);
+        }
+    }
+
+    private void HandleBuffRuntimeObserved(
+        MonsterBehaviour _,
+        BuffRuntimeObservation observation)
+    {
+        if (isTrackingRun)
+        {
+            buffAccumulator.Consume(observation);
+        }
     }
 
     private void HandleMonsterResolved(
@@ -459,7 +492,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         TrackCurrentMonsters();
         hasLoggedFinalSummary = true;
-        Debug.Log(BuildSummary(terminalState, failureReason), this);
+        string summary = BuildSummary(terminalState, failureReason);
+        string reportPath = TryWriteJsonReport(terminalState, failureReason);
+
+        if (!string.IsNullOrWhiteSpace(reportPath))
+        {
+            summary += "\nReport JSON: " + reportPath;
+        }
+
+        Debug.Log(summary, this);
         isTrackingRun = false;
         UnsubscribeFromTrackedMonsters();
     }
@@ -581,7 +622,274 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             .AppendLine();
 
         AppendTowerSnapshot(builder);
+        buffAccumulator.AppendSummary(builder);
         return builder.ToString().TrimEnd();
+    }
+
+    private string TryWriteJsonReport(
+        string terminalState,
+        string failureReason)
+    {
+        try
+        {
+            DateTime generatedAt = DateTime.Now;
+            CombatBalanceRunJsonReport report = CreateJsonReport(
+                terminalState,
+                failureReason,
+                generatedAt);
+            string outputDirectory = Path.GetFullPath(Path.Combine(
+                Application.dataPath,
+                "..",
+                "Library",
+                "CombatBalanceRuns"));
+            Directory.CreateDirectory(outputDirectory);
+
+            string timestamp = generatedAt.ToString(
+                "yyyyMMdd_HHmmss",
+                CultureInfo.InvariantCulture);
+            string outputPath = GetAvailableReportPath(
+                outputDirectory,
+                timestamp);
+            string json = JsonUtility.ToJson(report, true);
+            File.WriteAllText(
+                outputPath,
+                json,
+                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+            return outputPath;
+        }
+        catch (Exception exception)
+        {
+            Debug.LogWarning(
+                "Combat balance run recorder could not write its JSON report: " +
+                exception.Message,
+                this);
+            return null;
+        }
+    }
+
+    private CombatBalanceRunJsonReport CreateJsonReport(
+        string terminalState,
+        string failureReason,
+        DateTime generatedAt)
+    {
+        int unresolvedCount = Mathf.Max(0, spawnedCount - resolvedCount);
+        int notSpawnedCount = expectedMonsterCount > 0
+            ? Mathf.Max(0, expectedMonsterCount - spawnedCount)
+            : 0;
+        float killRate = spawnedCount > 0
+            ? (float)killedCount / spawnedCount
+            : 0f;
+        float averageObservedSpawnInterval = observedSpawnIntervalCount > 0
+            ? observedSpawnIntervalTotal / observedSpawnIntervalCount
+            : 0f;
+        float damageCoverage = observedTotalMonsterMaxHealth > 0
+            ? (float)effectiveDamage / observedTotalMonsterMaxHealth
+            : 0f;
+        float averageLeakedRemainingHealth = leakedCount > 0
+            ? (float)leakedRemainingHealth / leakedCount
+            : 0f;
+        float battleDuration = hasObservedFirstSpawn
+            ? Mathf.Max(
+                0f,
+                (lastResolutionTime > 0f ? lastResolutionTime : Time.time) -
+                firstSpawnTime)
+            : 0f;
+        float spawnSpan = hasObservedFirstSpawn
+            ? Mathf.Max(0f, lastSpawnTime - firstSpawnTime)
+            : 0f;
+        float spawningCompletionOffset =
+            hasObservedFirstSpawn && hasObservedSpawningCompletion
+                ? Mathf.Max(0f, spawningCompletedTime - firstSpawnTime)
+                : 0f;
+        int observedPlayerHealthLoss = playerSystem != null
+            ? Mathf.Max(0, initialPlayerHealth - playerSystem.CurrentHealth)
+            : 0;
+
+        CombatBalanceRunJsonReport report = new CombatBalanceRunJsonReport
+        {
+            generatedAtLocal = generatedAt.ToString(
+                "yyyy-MM-dd'T'HH:mm:sszzz",
+                CultureInfo.InvariantCulture),
+            runLabel = string.IsNullOrWhiteSpace(runLabel)
+                ? "Unlabeled"
+                : runLabel.Trim(),
+            terminalState = terminalState,
+            failureReason = failureReason ?? string.Empty
+        };
+
+        report.fixture.expectedMonsterCount = expectedMonsterCount;
+        report.fixture.observedMinimumMonsterHealth =
+            observedMinimumMonsterHealth == int.MaxValue
+                ? 0
+                : observedMinimumMonsterHealth;
+        report.fixture.observedMaximumMonsterHealth = observedMaximumMonsterHealth;
+        report.fixture.observedMinimumMonsterSpeed =
+            float.IsPositiveInfinity(observedMinimumMonsterSpeed)
+                ? 0f
+                : observedMinimumMonsterSpeed;
+        report.fixture.observedMaximumMonsterSpeed = observedMaximumMonsterSpeed;
+        report.fixture.observedAverageSpawnIntervalSeconds =
+            averageObservedSpawnInterval;
+
+        report.combat.spawned = spawnedCount;
+        report.combat.resolved = resolvedCount;
+        report.combat.killed = killedCount;
+        report.combat.leaked = leakedCount;
+        report.combat.unresolved = unresolvedCount;
+        report.combat.notSpawned = notSpawnedCount;
+        report.combat.killRate = killRate;
+        report.combat.effectiveDamage = effectiveDamage;
+        report.combat.totalObservedHealth = observedTotalMonsterMaxHealth;
+        report.combat.damageCoverage = damageCoverage;
+        report.combat.leakedRemainingHealth = leakedRemainingHealth;
+        report.combat.averageLeakedRemainingHealth = averageLeakedRemainingHealth;
+        report.combat.peakAlive = peakAliveCount;
+
+        report.timing.spawnSpanSeconds = spawnSpan;
+        report.timing.spawningCompleted = hasObservedSpawningCompletion;
+        report.timing.spawningCompletedAtSeconds = spawningCompletionOffset;
+        report.timing.battleDurationSeconds = battleDuration;
+
+        report.player.initialHealth = initialPlayerHealth;
+        report.player.finalHealth = playerSystem != null
+            ? playerSystem.CurrentHealth
+            : 0;
+        report.player.maximumHealth = playerSystem != null
+            ? playerSystem.MaxHealth
+            : 0;
+
+        report.integrity.resolutionCountsMatch =
+            resolvedCount == killedCount + leakedCount;
+        report.integrity.leakCountMatchesPlayerHealthLoss =
+            playerSystem != null && leakedCount == observedPlayerHealthLoss;
+
+        report.towers = CreateTowerJsonRecords();
+        report.buffs = buffAccumulator.CreateJsonRecords();
+        return report;
+    }
+
+    private static List<CombatBalanceTowerJson> CreateTowerJsonRecords()
+    {
+        TowerInstance[] towerInstances = FindObjectsByType<TowerInstance>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+        Array.Sort(
+            towerInstances,
+            (left, right) => string.CompareOrdinal(
+                GetTowerSortKey(left),
+                GetTowerSortKey(right)));
+
+        List<CombatBalanceTowerJson> records =
+            new List<CombatBalanceTowerJson>();
+
+        for (int i = 0; i < towerInstances.Length; i++)
+        {
+            TowerInstance towerInstance = towerInstances[i];
+
+            if (towerInstance == null || towerInstance.TowerDefinition == null)
+            {
+                continue;
+            }
+
+            TowerDefinition definition = towerInstance.TowerDefinition;
+            TowerCombatBehaviour combatBehaviour =
+                towerInstance.GetComponent<TowerCombatBehaviour>();
+            CombatBalanceTowerJson record = new CombatBalanceTowerJson
+            {
+                instanceId = towerInstance.GetInstanceID(),
+                displayName = GetDisplayName(
+                    definition.DisplayName,
+                    definition.name),
+                family = definition.TowerFamily.ToString(),
+                level = towerInstance.CurrentLevel,
+                hasCombatRuntime = combatBehaviour != null
+            };
+
+            if (combatBehaviour != null)
+            {
+                TowerCombatBaseStats baseStats = new TowerCombatBaseStats(
+                    combatBehaviour.BaseAttackDamage,
+                    combatBehaviour.BaseAttackRange,
+                    combatBehaviour.BaseAttackCycleDuration);
+                ResolvedTowerCombatStats resolvedStats =
+                    TowerRuntimeStatResolver.Resolve(towerInstance, baseStats);
+                record.baseDamage = combatBehaviour.BaseAttackDamage;
+                record.baseRange = combatBehaviour.BaseAttackRange;
+                record.baseCycleSeconds =
+                    combatBehaviour.BaseAttackCycleDuration;
+                record.resolvedDamage = resolvedStats.AttackDamage;
+                record.resolvedRange = resolvedStats.AttackRange;
+                record.resolvedCycleSeconds = resolvedStats.AttackCycleDuration;
+            }
+
+            IReadOnlyList<TowerUpgradeDefinition> upgrades =
+                towerInstance.AppliedUpgrades;
+
+            if (upgrades != null)
+            {
+                for (int upgradeIndex = 0;
+                     upgradeIndex < upgrades.Count;
+                     upgradeIndex++)
+                {
+                    TowerUpgradeDefinition upgrade = upgrades[upgradeIndex];
+
+                    if (upgrade == null)
+                    {
+                        continue;
+                    }
+
+                    record.upgrades.Add(new CombatBalanceUpgradeJson
+                    {
+                        displayName = GetDisplayName(
+                            upgrade.DisplayName,
+                            upgrade.name),
+                        layer = upgrade.UpgradeLayer.ToString(),
+                        requiredLevel = upgrade.RequiredTowerLevel,
+                        behaviourPackage =
+                            upgrade.UpgradeLayer == TowerUpgradeLayer.Behaviour
+                                ? upgrade.BehaviourPackageType.ToString()
+                                : string.Empty,
+                        element =
+                            upgrade.UpgradeLayer == TowerUpgradeLayer.Elemental
+                                ? upgrade.ElementType.ToString()
+                                : string.Empty
+                    });
+                }
+            }
+
+            records.Add(record);
+        }
+
+        return records;
+    }
+
+    private static string GetAvailableReportPath(
+        string outputDirectory,
+        string timestamp)
+    {
+        string outputPath = Path.Combine(outputDirectory, timestamp + ".json");
+
+        if (!File.Exists(outputPath))
+        {
+            return outputPath;
+        }
+
+        for (int suffix = 1; suffix < 1000; suffix++)
+        {
+            outputPath = Path.Combine(
+                outputDirectory,
+                timestamp + "_" + suffix.ToString("00", CultureInfo.InvariantCulture) +
+                ".json");
+
+            if (!File.Exists(outputPath))
+            {
+                return outputPath;
+            }
+        }
+
+        return Path.Combine(
+            outputDirectory,
+            timestamp + "_" + Guid.NewGuid().ToString("N") + ".json");
     }
 
     private static void AppendTowerSnapshot(StringBuilder builder)
@@ -793,6 +1101,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             monster.OnHealthChanged -= HandleMonsterHealthChanged;
             monster.OnResolved -= HandleMonsterResolved;
             monster.OnDestroyed -= HandleMonsterDestroyed;
+            monster.OnBuffRuntimeObserved -= HandleBuffRuntimeObserved;
         }
 
         trackedMonsters.Remove(monster);

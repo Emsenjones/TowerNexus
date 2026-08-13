@@ -14,6 +14,7 @@ public class MonsterManager : MonoBehaviour
     public int AliveMonsterCount => aliveMonsters.Count;
 
     public event Action OnMonsterResolutionCompleted;
+    public event Action<MonsterBehaviour> OnMonsterRegistered;
 
     public IReadOnlyList<MonsterBehaviour> GetAliveMonsters()
     {
@@ -86,6 +87,7 @@ public class MonsterManager : MonoBehaviour
 
         aliveMonsters.Add(monster);
         monster.OnResolved += HandleMonsterResolved;
+        PublishMonsterRegistered(monster);
         return true;
     }
 
@@ -195,6 +197,30 @@ public class MonsterManager : MonoBehaviour
         if (playerSystem.TryResolveMonster(reachedTarget))
         {
             OnMonsterResolutionCompleted?.Invoke();
+        }
+    }
+
+    private void PublishMonsterRegistered(MonsterBehaviour monster)
+    {
+        Action<MonsterBehaviour> handlers = OnMonsterRegistered;
+
+        if (handlers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = handlers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<MonsterBehaviour>)invocationList[i]).Invoke(monster);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
         }
     }
 }

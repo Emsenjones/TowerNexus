@@ -16,21 +16,24 @@ public class BuffDefinition : ScriptableObject
 
     [TitleGroup("Lifecycle")]
     [MinValue(0f)]
-    [SerializeField] private float duration = 1f;
+    [SerializeField] private float activeDuration = 1f;
     [TitleGroup("Lifecycle")]
+    [LabelText("Periodic Tick Interval")]
     [MinValue(0f)]
-    [SerializeField] private float tickInterval;
+    [SerializeField] private float periodicTickInterval;
 
     [TitleGroup("Stacking")]
     [SerializeField] private bool usesStacks;
     [TitleGroup("Stacking")]
     [ShowIf(nameof(UsesStacks))]
+    [LabelText("Maximum Stacks")]
     [MinValue(2)]
-    [SerializeField] private int maxStacks = 1;
+    [SerializeField] private int maximumStacks = 1;
     [TitleGroup("Stacking")]
     [ShowIf(nameof(UsesStacks))]
+    [LabelText("Per-Source Stack Cooldown")]
     [MinValue(0f)]
-    [SerializeField] private float buffApplyCooldown;
+    [SerializeField] private float sourceApplyCooldown;
 
     [TitleGroup("Buff Event Bindings")]
     [SerializeField] private List<BuffEventBinding> eventBindings = new List<BuffEventBinding>();
@@ -39,8 +42,9 @@ public class BuffDefinition : ScriptableObject
     [SerializeField] private ElementType elementType;
     [TitleGroup("Elemental")]
     [ShowIf(nameof(UsesStacks))]
+    [LabelText("Post-Overload Protection Duration")]
     [MinValue(0f)]
-    [SerializeField] private float protectionDuration;
+    [SerializeField] private float overloadProtectionDuration;
 
     [TitleGroup("Visual Feedback")]
     [SerializeField] private Sprite statusIcon;
@@ -49,14 +53,14 @@ public class BuffDefinition : ScriptableObject
 
     public string DisplayName => string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public string Description => description;
-    public float Duration => duration;
-    public float TickInterval => tickInterval;
+    public float ActiveDuration => activeDuration;
+    public float PeriodicTickInterval => periodicTickInterval;
     public bool UsesStacks => usesStacks;
-    public int MaxStacks => usesStacks ? Mathf.Max(2, maxStacks) : 1;
-    public float BuffApplyCooldown => usesStacks ? Mathf.Max(0f, buffApplyCooldown) : 0f;
+    public int MaximumStacks => usesStacks ? Mathf.Max(2, maximumStacks) : 1;
+    public float SourceApplyCooldown => usesStacks ? Mathf.Max(0f, sourceApplyCooldown) : 0f;
     public IReadOnlyList<BuffEventBinding> EventBindings => eventBindings;
     public ElementType ElementType => elementType;
-    public float ProtectionDuration => usesStacks ? Mathf.Max(0f, protectionDuration) : 0f;
+    public float OverloadProtectionDuration => usesStacks ? Mathf.Max(0f, overloadProtectionDuration) : 0f;
     public Sprite StatusIcon => statusIcon;
     public GameObject PersistentBuffVfxPrefab => persistentBuffVfxPrefab;
 
@@ -84,33 +88,33 @@ public class BuffDefinition : ScriptableObject
     {
         bool isValid = true;
 
-        if (duration <= 0f)
+        if (activeDuration <= 0f)
         {
-            Debug.LogWarning($"Buff definition '{name}' is invalid: duration must be greater than zero.", this);
+            Debug.LogWarning($"Buff definition '{name}' is invalid: active duration must be greater than zero.", this);
             isValid = false;
         }
 
-        if (tickInterval < 0f)
+        if (periodicTickInterval < 0f)
         {
-            Debug.LogWarning($"Buff definition '{name}' is invalid: tick interval cannot be negative.", this);
+            Debug.LogWarning($"Buff definition '{name}' is invalid: periodic tick interval cannot be negative.", this);
             isValid = false;
         }
 
-        if (usesStacks && maxStacks < 2)
+        if (usesStacks && maximumStacks < 2)
         {
-            Debug.LogWarning($"Buff definition '{name}' is invalid: stackable buffs require at least two max stacks.", this);
+            Debug.LogWarning($"Buff definition '{name}' is invalid: stackable buffs require at least two maximum stacks.", this);
             isValid = false;
         }
 
-        if (usesStacks && buffApplyCooldown < 0f)
+        if (usesStacks && sourceApplyCooldown < 0f)
         {
-            Debug.LogWarning($"Buff definition '{name}' is invalid: buff apply cooldown cannot be negative.", this);
+            Debug.LogWarning($"Buff definition '{name}' is invalid: source apply cooldown cannot be negative.", this);
             isValid = false;
         }
 
-        if (usesStacks && protectionDuration < 0f)
+        if (usesStacks && overloadProtectionDuration < 0f)
         {
-            Debug.LogWarning($"Buff definition '{name}' is invalid: protection duration cannot be negative.", this);
+            Debug.LogWarning($"Buff definition '{name}' is invalid: overload protection duration cannot be negative.", this);
             isValid = false;
         }
 
@@ -158,9 +162,9 @@ public class BuffDefinition : ScriptableObject
                 isValid = false;
             }
 
-            if (eventBinding.EventType == BuffEventType.PeriodicTick && tickInterval <= 0f)
+            if (eventBinding.EventType == BuffEventType.PeriodicTick && periodicTickInterval <= 0f)
             {
-                Debug.LogWarning($"Buff definition '{name}' is invalid: PeriodicTick requires a positive tick interval.", this);
+                Debug.LogWarning($"Buff definition '{name}' is invalid: PeriodicTick requires a positive periodic tick interval.", this);
                 isValid = false;
             }
         }

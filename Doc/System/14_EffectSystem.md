@@ -95,11 +95,11 @@ DealDamage result does not globally control whether another explicitly eligible 
 
 ### 5.2 ApplyBuff
 
-ApplyBuff is the only first-version link from an Effect to persistent Buff state. It executes on resolved targets and preserves source tower and source upgrade context when present. It may apply Burning, Cold, ElectricShock, Windcut, Frozen, or future BuffDefinitions.
+ApplyBuff is the only first-version link from an Effect to persistent Buff state. It executes on resolved targets and preserves source Tower and source Upgrade context when present. The source Tower is the contribution identity used by stackable Buff Source Apply Cooldown; Attack Entities created by that Tower do not become separate sources. ApplyBuff may apply Burning, Cold, ElectricShock, Windcut, Frozen, or future BuffDefinitions.
 
 The Buff System owns the resulting instance lifecycle. Effects do not update a Buff's duration, stacks, Protection, UI, or persistent VFX directly.
 
-Non-Elemental ApplyBuff actions require no Elemental authorization. Any ApplyBuff action whose BuffDefinition has an Elemental type requires the runtime context to explicitly authorize the opportunity. Its execution is independent from a sibling DealDamage action's amount or success while still requiring a gameplay-targetable Monster. Buff apply cooldown, Protection, and Buff runtime decide whether the request applies, refreshes, stacks, or is blocked.
+Non-Elemental ApplyBuff actions require no Elemental authorization. Any ApplyBuff action whose BuffDefinition has an Elemental type requires the runtime context to explicitly authorize the opportunity. Its execution is independent from a sibling DealDamage action's amount or success while still requiring a gameplay-targetable Monster. Source Apply Cooldown, Protection, and Buff runtime decide whether the request applies, refreshes, stacks, or is blocked.
 
 ### 5.3 ExecuteMultiTargetEffect
 

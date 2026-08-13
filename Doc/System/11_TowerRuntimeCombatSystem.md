@@ -347,6 +347,8 @@ Runtime Combat and Attack Entities grant Elemental application only at explicitl
 
 Eligibility is not inferred from being a Projectile, Effect, positive-damage result, or Attack Entity. Damage resolves first; if that result removes the Monster, the following Elemental attempt has no valid target.
 
+Every Elemental application opportunity carries the owning source Tower identity. Primary attacks, additional Attack Entities, area results, bounce children, contacts, and persistent attack entities produced by one Tower remain one contribution source for Source Apply Cooldown. Attack Entity identity never becomes an independent Buff cooldown source. Different Tower instances remain independent sources even when they share TowerFamily and ElementType.
+
 Effect System and Buff System own the application, cooldown, stacking, Protection, overload, and lifecycle result after an eligible opportunity is emitted.
 
 ---

@@ -4,6 +4,6 @@ public enum BuffApplyResult
     Applied,
     Refreshed,
     Stacked,
-    BlockedByBuffApplyCooldown,
+    BlockedBySourceApplyCooldown,
     BlockedByProtectionPhase
 }

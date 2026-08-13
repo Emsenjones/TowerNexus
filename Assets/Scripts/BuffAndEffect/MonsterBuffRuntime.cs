@@ -8,9 +8,12 @@ public class MonsterBuffRuntime
     private readonly List<MonsterBuffInstance> buffInstances = new List<MonsterBuffInstance>();
     private readonly List<MonsterBuffStateSnapshot> activeSnapshots = new List<MonsterBuffStateSnapshot>();
     private readonly HashSet<MonsterBuffInstance> removalInProgress = new HashSet<MonsterBuffInstance>();
+    private readonly List<BuffRuntimeObservation> pendingObservations =
+        new List<BuffRuntimeObservation>();
 
     private int stateMutationDepth;
     private bool stateRefreshPending;
+    private bool isPublishingObservations;
 
     public MonsterBuffRuntime(MonsterBehaviour owner)
     {
@@ -18,6 +21,7 @@ public class MonsterBuffRuntime
     }
 
     public event Action OnStateChanged;
+    public event Action<BuffRuntimeObservation> OnRuntimeObserved;
 
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveSnapshots => activeSnapshots;
 
@@ -32,6 +36,21 @@ public class MonsterBuffRuntime
 
         if (owner == null || buffDefinition == null || !buffDefinition.IsValid())
         {
+            QueueObservation(BuffRuntimeObservation.CreateApplicationAttempt(
+                request,
+                owner,
+                BuffApplyResult.Invalid,
+                false,
+                0,
+                BuffRuntimePhase.Stacking,
+                false,
+                0,
+                BuffRuntimePhase.Stacking,
+                false));
+            if (stateMutationDepth == 0)
+            {
+                PublishPendingObservations();
+            }
             return new BuffApplyOutcome(BuffApplyResult.Invalid, null, false, false);
         }
 
@@ -46,28 +65,62 @@ public class MonsterBuffRuntime
                 MonsterBuffInstance buffInstance = new MonsterBuffInstance(request, owner);
                 buffInstances.Add(buffInstance);
                 QueueStateRefresh();
+                QueueObservation(BuffRuntimeObservation.CreateApplicationAttempt(
+                    request,
+                    owner,
+                    BuffApplyResult.Applied,
+                    false,
+                    0,
+                    BuffRuntimePhase.Stacking,
+                    true,
+                    buffInstance.StackCount,
+                    buffInstance.Phase,
+                    false));
                 ExecuteLifecycleEffect(buffInstance, BuffEventType.Applied);
                 return new BuffApplyOutcome(BuffApplyResult.Applied, buffInstance, false, false);
             }
 
             if (removalInProgress.Contains(existingInstance))
             {
+                QueueApplicationObservation(
+                    request,
+                    existingInstance,
+                    BuffApplyResult.Invalid,
+                    existingInstance.StackCount,
+                    existingInstance.Phase,
+                    false);
                 return new BuffApplyOutcome(BuffApplyResult.Invalid, existingInstance, true, false);
             }
 
             int previousStackCount = existingInstance.StackCount;
+            BuffRuntimePhase previousPhase = existingInstance.Phase;
             BuffApplyResult result = existingInstance.TryReapply(request);
 
             if (!IsSuccessfulApplyResult(result))
             {
+                QueueApplicationObservation(
+                    request,
+                    existingInstance,
+                    result,
+                    previousStackCount,
+                    previousPhase,
+                    false);
                 return new BuffApplyOutcome(result, existingInstance, true, false);
             }
 
             QueueStateRefresh();
 
             bool reachedMaxStacks = result == BuffApplyResult.Stacked &&
-                                    previousStackCount < buffDefinition.MaxStacks &&
-                                    existingInstance.StackCount >= buffDefinition.MaxStacks;
+                                    previousStackCount < buffDefinition.MaximumStacks &&
+                                    existingInstance.StackCount >= buffDefinition.MaximumStacks;
+
+            QueueApplicationObservation(
+                request,
+                existingInstance,
+                result,
+                previousStackCount,
+                previousPhase,
+                reachedMaxStacks);
 
             if (result == BuffApplyResult.Stacked)
             {
@@ -85,7 +138,9 @@ public class MonsterBuffRuntime
                 }
                 else if (IsActive(existingInstance))
                 {
-                    RemoveBuffInstance(existingInstance);
+                    RemoveBuffInstance(
+                        existingInstance,
+                        BuffRemovalReason.OverloadWithoutProtection);
                 }
             }
 
@@ -103,7 +158,9 @@ public class MonsterBuffRuntime
 
         try
         {
-            return RemoveBuffInstance(FindBuffInstance(buffDefinition));
+            return RemoveBuffInstance(
+                FindBuffInstance(buffDefinition),
+                BuffRemovalReason.ExplicitRemoval);
         }
         finally
         {
@@ -152,7 +209,10 @@ public class MonsterBuffRuntime
 
                 if (!remainsActive && IsActive(buffInstance))
                 {
-                    RemoveBuffInstance(buffInstance);
+                    BuffRemovalReason removalReason = buffInstance.IsInProtectionPhase
+                        ? BuffRemovalReason.ProtectionExpired
+                        : BuffRemovalReason.ActiveDurationExpired;
+                    RemoveBuffInstance(buffInstance, removalReason);
                 }
             }
         }
@@ -162,7 +222,7 @@ public class MonsterBuffRuntime
         }
     }
 
-    public void Clear()
+    public void Clear(BuffRemovalReason removalReason)
     {
         if (buffInstances.Count == 0 && activeSnapshots.Count == 0)
         {
@@ -182,7 +242,7 @@ public class MonsterBuffRuntime
 
             for (int i = 0; i < clearSnapshot.Count; i++)
             {
-                RemoveBuffInstance(clearSnapshot[i]);
+                RemoveBuffInstance(clearSnapshot[i], removalReason);
             }
         }
         finally
@@ -191,7 +251,9 @@ public class MonsterBuffRuntime
         }
     }
 
-    private bool RemoveBuffInstance(MonsterBuffInstance buffInstance)
+    private bool RemoveBuffInstance(
+        MonsterBuffInstance buffInstance,
+        BuffRemovalReason removalReason)
     {
         if (buffInstance == null || !IsActive(buffInstance) || !removalInProgress.Add(buffInstance))
         {
@@ -200,7 +262,11 @@ public class MonsterBuffRuntime
 
         try
         {
-            ExecuteLifecycleEffect(buffInstance, BuffEventType.Removed);
+            ExecuteLifecycleEffect(
+                buffInstance,
+                BuffEventType.Removed,
+                removalReason,
+                hasStateAfter: false);
 
             if (!buffInstances.Remove(buffInstance))
             {
@@ -241,8 +307,18 @@ public class MonsterBuffRuntime
         return null;
     }
 
-    private void ExecuteLifecycleEffect(MonsterBuffInstance buffInstance, BuffEventType eventType)
+    private void ExecuteLifecycleEffect(
+        MonsterBuffInstance buffInstance,
+        BuffEventType eventType,
+        BuffRemovalReason removalReason = BuffRemovalReason.None,
+        bool hasStateAfter = true)
     {
+        QueueObservation(BuffRuntimeObservation.CreateLifecycleEvent(
+            buffInstance,
+            eventType,
+            removalReason,
+            hasStateAfter));
+
         BuffDefinition buffDefinition = buffInstance != null ? buffInstance.Definition : null;
         MonsterBehaviour buffOwner = buffInstance != null ? buffInstance.Owner : null;
         EffectDefinition effectDefinition = buffDefinition != null ? buffDefinition.GetEffectDefinition(eventType) : null;
@@ -284,10 +360,95 @@ public class MonsterBuffRuntime
     {
         stateMutationDepth--;
 
-        if (stateMutationDepth == 0 && stateRefreshPending)
+        if (stateMutationDepth != 0)
+        {
+            return;
+        }
+
+        if (stateRefreshPending)
         {
             stateRefreshPending = false;
             RefreshSnapshotsAndNotify();
+        }
+
+        PublishPendingObservations();
+    }
+
+    private void QueueApplicationObservation(
+        BuffApplyRequest request,
+        MonsterBuffInstance buffInstance,
+        BuffApplyResult result,
+        int stackCountBefore,
+        BuffRuntimePhase phaseBefore,
+        bool reachedMaximumStacks)
+    {
+        QueueObservation(BuffRuntimeObservation.CreateApplicationAttempt(
+            request,
+            owner,
+            result,
+            true,
+            stackCountBefore,
+            phaseBefore,
+            buffInstance != null && IsActive(buffInstance),
+            buffInstance != null ? buffInstance.StackCount : 0,
+            buffInstance != null ? buffInstance.Phase : phaseBefore,
+            reachedMaximumStacks));
+    }
+
+    private void QueueObservation(BuffRuntimeObservation observation)
+    {
+        pendingObservations.Add(observation);
+    }
+
+    private void PublishPendingObservations()
+    {
+        if (isPublishingObservations || pendingObservations.Count == 0)
+        {
+            return;
+        }
+
+        isPublishingObservations = true;
+
+        try
+        {
+            while (pendingObservations.Count > 0)
+            {
+                BuffRuntimeObservation[] observations = pendingObservations.ToArray();
+                pendingObservations.Clear();
+
+                for (int i = 0; i < observations.Length; i++)
+                {
+                    PublishObservationSafely(observations[i]);
+                }
+            }
+        }
+        finally
+        {
+            isPublishingObservations = false;
+        }
+    }
+
+    private void PublishObservationSafely(BuffRuntimeObservation observation)
+    {
+        Action<BuffRuntimeObservation> handlers = OnRuntimeObserved;
+
+        if (handlers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = handlers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<BuffRuntimeObservation>)invocationList[i]).Invoke(observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, owner);
+            }
         }
     }
 

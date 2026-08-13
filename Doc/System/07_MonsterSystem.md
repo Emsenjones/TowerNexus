@@ -129,6 +129,8 @@ partially created or registered Monster is cleaned up, Wave execution stops
 without normal-completion reporting, and Battle coordination receives a
 result-neutral technical failure.
 
+After successful alive-Monster registration, Monster System synchronously exposes the exact registered instance to passive observers. Observer failure cannot undo registration or interrupt spawn execution. This boundary allows diagnostics to attach before subsequent combat events without granting them spawn, combat, or resolution authority.
+
 ## 4.2 Death
 
 When health reaches zero:
