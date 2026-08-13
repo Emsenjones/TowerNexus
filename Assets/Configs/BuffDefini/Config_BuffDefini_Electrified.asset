@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Electrified
   description: Increases damage taken and triggers an electrical overload at maximum
     stacks
-  activeDuration: 12
+  activeDuration: 5
   periodicTickInterval: 0
   usesStacks: 1
   maximumStacks: 10

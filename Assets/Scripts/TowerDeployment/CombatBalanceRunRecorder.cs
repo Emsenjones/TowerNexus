@@ -5,12 +5,14 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 public sealed class CombatBalanceRunRecorder : MonoBehaviour
 {
     [Header("Run Identity")]
-    [SerializeField] private string runLabel = "Task002 / L / HP120";
+    [FormerlySerializedAs("runLabel")]
+    [SerializeField] private string runName;
     [Min(0)]
     [SerializeField] private int expectedMonsterCount = 40;
 
@@ -114,7 +116,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private void LogCurrentBalanceSummary()
     {
         TrackCurrentMonsters();
-        Debug.Log(BuildSummary("Manual Snapshot", null), this);
+        Debug.Log(BuildSummary("Manual Snapshot", null, DateTime.Now), this);
     }
 
     [ContextMenu("Reset Balance Recorder")]
@@ -492,8 +494,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         TrackCurrentMonsters();
         hasLoggedFinalSummary = true;
-        string summary = BuildSummary(terminalState, failureReason);
-        string reportPath = TryWriteJsonReport(terminalState, failureReason);
+        DateTime generatedAt = DateTime.Now;
+        string summary = BuildSummary(
+            terminalState,
+            failureReason,
+            generatedAt);
+        string reportPath = TryWriteJsonReport(
+            terminalState,
+            failureReason,
+            generatedAt);
 
         if (!string.IsNullOrWhiteSpace(reportPath))
         {
@@ -505,7 +514,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         UnsubscribeFromTrackedMonsters();
     }
 
-    private string BuildSummary(string terminalState, string failureReason)
+    private string BuildSummary(
+        string terminalState,
+        string failureReason,
+        DateTime generatedAt)
     {
         StringBuilder builder = new StringBuilder(1024);
         int unresolvedCount = Mathf.Max(0, spawnedCount - resolvedCount);
@@ -547,9 +559,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         builder.AppendLine("[Combat Balance Run]");
         builder.Append("Run: ")
-            .AppendLine(string.IsNullOrWhiteSpace(runLabel)
-                ? "Unlabeled"
-                : runLabel.Trim());
+            .AppendLine(ResolveRunName(generatedAt));
         builder.Append("Terminal State: ").AppendLine(terminalState);
 
         if (!string.IsNullOrWhiteSpace(failureReason))
@@ -628,11 +638,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
     private string TryWriteJsonReport(
         string terminalState,
-        string failureReason)
+        string failureReason,
+        DateTime generatedAt)
     {
         try
         {
-            DateTime generatedAt = DateTime.Now;
             CombatBalanceRunJsonReport report = CreateJsonReport(
                 terminalState,
                 failureReason,
@@ -640,16 +650,13 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             string outputDirectory = Path.GetFullPath(Path.Combine(
                 Application.dataPath,
                 "..",
-                "Library",
-                "CombatBalanceRuns"));
+                "Doc",
+                "GamePlayRecord"));
             Directory.CreateDirectory(outputDirectory);
 
-            string timestamp = generatedAt.ToString(
-                "yyyyMMdd_HHmmss",
-                CultureInfo.InvariantCulture);
-            string outputPath = GetAvailableReportPath(
+            string outputPath = GetReportPath(
                 outputDirectory,
-                timestamp);
+                report.runLabel);
             string json = JsonUtility.ToJson(report, true);
             File.WriteAllText(
                 outputPath,
@@ -710,9 +717,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             generatedAtLocal = generatedAt.ToString(
                 "yyyy-MM-dd'T'HH:mm:sszzz",
                 CultureInfo.InvariantCulture),
-            runLabel = string.IsNullOrWhiteSpace(runLabel)
-                ? "Unlabeled"
-                : runLabel.Trim(),
+            runLabel = ResolveRunName(generatedAt),
             terminalState = terminalState,
             failureReason = failureReason ?? string.Empty
         };
@@ -863,33 +868,29 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         return records;
     }
 
-    private static string GetAvailableReportPath(
+    private static string GetReportPath(
         string outputDirectory,
-        string timestamp)
+        string resolvedRunName)
     {
-        string outputPath = Path.Combine(outputDirectory, timestamp + ".json");
-
-        if (!File.Exists(outputPath))
+        if (resolvedRunName.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+            resolvedRunName.Contains(Path.DirectorySeparatorChar.ToString()) ||
+            resolvedRunName.Contains(Path.AltDirectorySeparatorChar.ToString()))
         {
-            return outputPath;
+            throw new InvalidOperationException(
+                "Run Name contains characters that cannot be used in a " +
+                "JSON filename: " + resolvedRunName);
         }
 
-        for (int suffix = 1; suffix < 1000; suffix++)
-        {
-            outputPath = Path.Combine(
-                outputDirectory,
-                timestamp + "_" + suffix.ToString("00", CultureInfo.InvariantCulture) +
-                ".json");
+        return Path.Combine(outputDirectory, resolvedRunName + ".json");
+    }
 
-            if (!File.Exists(outputPath))
-            {
-                return outputPath;
-            }
-        }
-
-        return Path.Combine(
-            outputDirectory,
-            timestamp + "_" + Guid.NewGuid().ToString("N") + ".json");
+    private string ResolveRunName(DateTime generatedAt)
+    {
+        return string.IsNullOrWhiteSpace(runName)
+            ? generatedAt.ToString(
+                "yyyyMMdd_HHmmss",
+                CultureInfo.InvariantCulture)
+            : runName.Trim();
     }
 
     private static void AppendTowerSnapshot(StringBuilder builder)

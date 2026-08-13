@@ -1,0 +1,132 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-13T18:50:02+08:00",
+    "runLabel": "L Route",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 120,
+        "observedMaximumMonsterHealth": 120,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.503314733505249
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 40,
+        "leaked": 0,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 1.0,
+        "effectiveDamage": 4800,
+        "totalObservedHealth": 4800,
+        "damageCoverage": 1.0,
+        "leakedRemainingHealth": 0,
+        "averageLeakedRemainingHealth": 0.0,
+        "peakAlive": 15
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.6292724609375,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.6292724609375,
+        "battleDurationSeconds": 135.1157684326172
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 40,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -9722,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 20,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 20,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "upgrades": [
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blazing Arrows",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Fire"
+                },
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Burning",
+            "element": "Fire",
+            "sourceElements": [
+                "Fire"
+            ],
+            "applicationAttempts": 286,
+            "applied": 36,
+            "refreshed": 0,
+            "stacked": 69,
+            "invalid": 0,
+            "blockedBySourceCooldown": 181,
+            "blockedByProtection": 0,
+            "distinctMonsters": 36,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 4,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 121,
+            "naturalExpiriesBeforeOverload": 0,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 36,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Archer",
+                    "applicationAttempts": 286,
+                    "successfulApplications": 105,
+                    "applied": 36,
+                    "refreshed": 0,
+                    "stacked": 69,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 181,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 121,
+                    "naturalExpiriesBeforeOverload": 0,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

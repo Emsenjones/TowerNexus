@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Burning
   description: Deals periodic Fire damage and explodes at maximum stacks to damage
     nearby enemies
-  activeDuration: 12
+  activeDuration: 5
   periodicTickInterval: 2
   usesStacks: 1
   maximumStacks: 10

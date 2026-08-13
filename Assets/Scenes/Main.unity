@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c69b96e78e584f878d4068749e0ab2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatBalanceRunRecorder
-  runLabel: L Route
+  runName: Archer_QuickDraw+ScatterArrow
   expectedMonsterCount: 40
   battleRuntimeCoordinator: {fileID: 7811906250627789308}
   monsterSpawner: {fileID: 7811906250627789307}

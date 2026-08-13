@@ -124,17 +124,19 @@ Before freezing the dedicated Map, use existing Maps to observe how many Grid in
 - Repeat when visual ambiguity or route geometry makes the final refresh point unclear.
 - This observation validates Map spacing; it does not itself revise Active Duration.
 
-The current Buff-parameter v0.2 pilot values are:
+The current Buff-parameter v0.3 pilot values are:
 
 | Parameter | Current Value | Meaning |
 |---|---:|---|
-| Active Duration | `12s` | Time since the latest successful application or refresh before natural expiry |
+| Active Duration | `5s` | Time since the latest successful application or refresh before natural expiry; at normal speed this is approximately `1.25` route Grids |
 | Periodic Tick Interval | Burning `2s`; other first-version Elemental Buffs `0s` | Burning lifecycle damage cadence; it does not control stacking, and the other Buffs have no PeriodicTick binding |
 | Maximum Stacks | `10` | Overload threshold |
 | Source Apply Cooldown | `2s` | Minimum successful contribution interval for one source Tower against one Monster and BuffDefinition |
 | Overload Protection Duration | `10s` | Same-definition application block for every source after Overload |
 
-`PeriodicTickInterval` is lifecycle periodic timing and is not the stack interval. With v0.2 values, one continuously successful source has a theoretical earliest Overload approximately `18s` after its first application. Two synchronized sources have a theoretical earliest Overload of approximately `8s`; actual timing remains attack- and target-opportunity-dependent. Tower A must never block Tower B merely because Tower A applied first.
+`PeriodicTickInterval` is lifecycle periodic timing and is not the stack interval. With v0.3 values, one continuously successful source has a theoretical earliest Overload approximately `18s` after its first application. Two synchronized sources have a theoretical earliest Overload of approximately `8s`; actual timing remains attack- and target-opportunity-dependent. Tower A must never block Tower B merely because Tower A applied first.
+
+The `5s` Active Duration is the v0.3 handoff candidate. With Node Size `1` and normal Monster Speed `0.25`, one Grid takes approximately `4s`; the extra second prevents Cannon's `3.5s` cycle plus ordinary impact timing from causing accidental expiry during otherwise continuous exposure. This Grid-distance conversion is a normal-speed calibration guide, not a separate spatial Buff rule. Chilled still uses the same time contract even though its movement reduction changes the distance travelled during those five seconds.
 
 Primary, additional, piercing, area, contact, bounce, and persistent application opportunities produced by one Tower all use that Tower's one source cooldown entry against a given Monster and BuffDefinition. For example, Scatter Arrow may produce three application attempts, but simultaneous hits on the same Monster do not contribute three stacks: the first successful attempt starts the Archer Tower's cooldown and the remaining same-source attempts are blocked until it expires.
 
@@ -149,7 +151,7 @@ The dedicated Map uses one straight route with three fixed Tower anchors:
 ```text
 Spawn
   -> Shared Cooperation Zone: Position 1 and Position 2 cover the same route segment
-  -> Neutral No-Hit Gap
+  -> Neutral No-Hit Gap: longer than `5s` between possible applications
   -> Isolated Zone: Position 3 covers a later route segment
   -> Destination
 ```
@@ -160,11 +162,11 @@ Map acceptance requires:
 - Their common effective coverage contains at least three consecutive Monster-route Grids. With Node Size `1` and Monster Speed `0.25`, this provisionally represents approximately `12s` of cooperative route travel.
 - Moving either shared-zone anchor by approximately one valid Grid position should not eliminate all useful shared-target opportunity. The diagnostic must not depend on a pixel-perfect placement.
 - Position 3 has no simultaneous effective-coverage overlap with Positions 1 or 2.
-- More importantly, the travel interval from the last possible hit in the shared zone to the first possible hit from Position 3 exceeds the observed natural-expiry distance, with at least one additional Grid of safety margin.
+- More importantly, the travel interval from the last possible hit in the shared zone to the first possible hit from Position 3 exceeds `5s`. At normal speed, use at least two complete no-hit Grid intervals between those possible application boundaries as the first robust authoring candidate.
 - Separation is measured between possible impact/application boundaries, not Tower anchor centers.
 - Position 2 and Position 3 provide comparable solo route exposure. A non-Elemental placement-parity run should keep their Effective Damage within an initial review guide of approximately `5-10%`; revise the anchors when placement strength, not overlap, dominates the comparison.
 
-The Position 3 gap is a deliberate negative control, not a normal gameplay placement recommendation. Ordinary Stage Maps may allow adjacent or sequential matching Towers to cooperate while a Buff persists. That persistence reduces the placement precision required from players. The three-Grid overlap is a provisional Stage6 derivation standard rather than a claim that all Maps must use the same geometry.
+The Position 3 gap is a deliberate negative control, not a third simultaneously deployed Tower and not a normal gameplay placement recommendation. The non-overlap run moves the same second Tower from Position 2 to Position 3. Ordinary Stage Maps may allow adjacent or sequential matching Towers to cooperate while a Buff persists. Overlap accelerates shared stacking because both independent sources contribute during the same exposure; sequential placement may preserve existing stacks but normally does not provide the same simultaneous contribution rate. The three-Grid overlap is a provisional Stage6 derivation standard rather than a claim that all Maps must use the same geometry.
 
 ### 7.4 Fixed Cooperation Pair
 
@@ -184,7 +186,7 @@ Required comparisons are:
 4. Mismatched Archer Position 1 plus Cannon Position 2, changing only Cannon's ElementType.
 5. Matching Archer Position 1 plus Cannon Position 3.
 
-Run matching overlap for every ElementType. One representative mismatched control is sufficient unless Element-specific evidence suggests otherwise. Run the non-overlap control with the longest-duration Elemental Buff; repeat it if later calibration gives another Element a longer duration.
+Run matching overlap for every ElementType. One representative mismatched control is sufficient unless Element-specific evidence suggests otherwise. Because all four current Elemental Buffs use `5s`, one representative matching non-overlap control is sufficient; repeat it only if later calibration creates an Element-specific duration or handoff behavior.
 
 ## 8. Elemental Diagnostic Contract
 
@@ -226,7 +228,7 @@ The final summary must still report `ResolutionCountsMatch=True` and `LeakCountM
 
 ### Phase A - Map And Instrumentation Gate
 
-1. Measure existing-Map natural-expiry Grid distance as described in Section 7.2.
+1. Validate the authored `5s` natural expiry once on the dedicated straight route: after the last successful refresh, the Buff should expire after approximately `1.25` normal-speed Grids and before a two-Grid no-hit handoff completes.
 2. Author the dedicated straight diagnostic Map and three fixed anchors.
 3. Run the Position 2 versus Position 3 non-Elemental placement-parity check.
 4. Validate the implemented read-only Elemental diagnostics in Unity Play Mode and inspect the generated JSON.
@@ -269,7 +271,7 @@ The proposed single-Tower ceiling remains `4.0x` relative to the naked same-fami
 
 1. Run the fixed Archer/Cannon matching overlap comparison for all four ElementTypes.
 2. Run the representative mismatched overlap control.
-3. Run the longest-duration matching non-overlap control.
+3. Run one representative matching non-overlap control by moving the second Tower from Position 2 to Position 3.
 4. Compare Overloads, time-to-Overload, blocked attempts, and total value against the two single-source runs.
 5. Revise Active Duration, Maximum Stacks, Source Apply Cooldown, Overload Protection Duration, Periodic Tick Interval, or lifecycle Effect output only after identifying which measurement causes the failure.
 
@@ -332,6 +334,7 @@ Record exact authored values with every accepted result. Do not mix runs made be
 - Validate all Elemental UpgradeDefinitions and shared BuffDefinition references.
 - Keep the first-pass Buff parameters unchanged until diagnostics identify a failure cause.
 - Confirm the three-Grid shared route zone at Monster Speed `0.25` before accepting cooperation results.
+- Confirm the Position 3 handoff leaves more than `5s`, provisionally at least two complete normal-speed no-hit Grid intervals, between possible applications.
 - Confirm Tower A cannot consume or delay Tower B's Source Apply Cooldown.
 - Test every named build without substituting an unnamed extra condition.
 - Test two different TowerFamilies using the same ElementType.

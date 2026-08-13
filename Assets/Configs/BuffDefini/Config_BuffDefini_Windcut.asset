@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Windcut
   description: Successful additional stacks strike another nearby monster and maximum
     stacks summon a WindVortex
-  activeDuration: 12
+  activeDuration: 5
   periodicTickInterval: 0
   usesStacks: 1
   maximumStacks: 10
