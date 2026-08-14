@@ -1,0 +1,132 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T17:05:48+08:00",
+  "runLabel": "HP240_P1_Cannon_FasterReload+TwinShells_Wind",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.506206750869751
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 5,
+        "leaked": 35,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.125,
+        "effectiveDamage": 4090,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.4260416626930237,
+        "leakedRemainingHealth": 5510,
+        "averageLeakedRemainingHealth": 157.42857360839845,
+        "peakAlive": 26
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.7420654296875,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.7420654296875,
+        "battleDurationSeconds": 162.43682861328126
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 5,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -728872,
+            "displayName": "Cannon Tower",
+            "family": "Cannon",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 60,
+            "baseRange": 3.0,
+            "baseCycleSeconds": 3.5,
+            "resolvedDamage": 60,
+            "resolvedRange": 3.0,
+            "resolvedCycleSeconds": 2.5,
+            "upgrades": [
+                {
+                    "displayName": "Faster Reload",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Twin Shells",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "CannonMultiShells",
+                    "element": ""
+                },
+                {
+                    "displayName": "Gale Shells",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Wind"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Windcut",
+            "element": "Wind",
+            "sourceElements": [
+                "Wind"
+            ],
+            "applicationAttempts": 71,
+            "applied": 36,
+            "refreshed": 0,
+            "stacked": 35,
+            "invalid": 0,
+            "blockedBySourceCooldown": 0,
+            "blockedByProtection": 0,
+            "distinctMonsters": 32,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 4,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 31,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 5,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Cannon",
+                    "applicationAttempts": 71,
+                    "successfulApplications": 71,
+                    "applied": 36,
+                    "refreshed": 0,
+                    "stacked": 35,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 0,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 31,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,184 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T19:30:15+08:00",
+    "runLabel": "HP240_P1Archer_P3Cannon_Matching_Fire_NonOverlap",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5096263885498049
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 25,
+        "leaked": 15,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.625,
+        "effectiveDamage": 9130,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.9510416388511658,
+        "leakedRemainingHealth": 470,
+        "averageLeakedRemainingHealth": 31.33333396911621,
+        "peakAlive": 25
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.87542724609375,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.87542724609375,
+        "battleDurationSeconds": 155.177978515625
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 25,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -2077662,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 20,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 20,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "upgrades": [
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blazing Arrows",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Fire"
+                }
+            ]
+        },
+        {
+            "instanceId": -2074812,
+            "displayName": "Cannon Tower",
+            "family": "Cannon",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 60,
+            "baseRange": 3.0,
+            "baseCycleSeconds": 3.5,
+            "resolvedDamage": 60,
+            "resolvedRange": 3.0,
+            "resolvedCycleSeconds": 2.5,
+            "upgrades": [
+                {
+                    "displayName": "Faster Reload",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Twin Shells",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "CannonMultiShells",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blazing Shells",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Fire"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Burning",
+            "element": "Fire",
+            "sourceElements": [
+                "Fire"
+            ],
+            "applicationAttempts": 393,
+            "applied": 87,
+            "refreshed": 0,
+            "stacked": 85,
+            "invalid": 0,
+            "blockedBySourceCooldown": 221,
+            "blockedByProtection": 0,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 2,
+            "maximumObservedStacks": 5,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 271,
+            "naturalExpiriesBeforeOverload": 64,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 22,
+            "monsterLeakedRemovals": 1,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Archer",
+                    "applicationAttempts": 339,
+                    "successfulApplications": 118,
+                    "applied": 45,
+                    "refreshed": 0,
+                    "stacked": 73,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 221,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 194,
+                    "naturalExpiriesBeforeOverload": 43,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                },
+                {
+                    "towerFamily": "Cannon",
+                    "applicationAttempts": 54,
+                    "successfulApplications": 54,
+                    "applied": 42,
+                    "refreshed": 0,
+                    "stacked": 12,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 0,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 77,
+                    "naturalExpiriesBeforeOverload": 21,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

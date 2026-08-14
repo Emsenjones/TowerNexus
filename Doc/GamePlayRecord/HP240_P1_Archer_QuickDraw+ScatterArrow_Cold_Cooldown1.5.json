@@ -1,0 +1,132 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-15T00:52:17+08:00",
+    "runLabel": "HP240_P1_Archer_QuickDraw+ScatterArrow_Cold_Cooldown1.5",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.50640869140625
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 2,
+        "leaked": 38,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.05000000074505806,
+        "effectiveDamage": 3655,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.38072916865348818,
+        "leakedRemainingHealth": 5945,
+        "averageLeakedRemainingHealth": 156.44737243652345,
+        "peakAlive": 31
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.74993896484375,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.74993896484375,
+        "battleDurationSeconds": 167.78355407714845
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 2,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -2302184,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 20,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 20,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "upgrades": [
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": ""
+                },
+                {
+                    "displayName": "Frostbound Arrows",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Cold"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Chilled",
+            "element": "Cold",
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 350,
+            "applied": 70,
+            "refreshed": 0,
+            "stacked": 144,
+            "invalid": 0,
+            "blockedBySourceCooldown": 136,
+            "blockedByProtection": 0,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 7,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 68,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 2,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Archer",
+                    "applicationAttempts": 350,
+                    "successfulApplications": 214,
+                    "applied": 70,
+                    "refreshed": 0,
+                    "stacked": 144,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 136,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 68,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

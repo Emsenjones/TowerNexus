@@ -9859,7 +9859,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WindVortexBehaviour
   lifetime: 10
-  movementSpeed: 0.3
+  movementSpeed: 0.1
   targetSearchRadius: 3
   arrivalThreshold: 0.2
   damageRadius: 1

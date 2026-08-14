@@ -30,9 +30,24 @@ public class MonsterSpawner : MonoBehaviour
     public bool IsSpawning => isSpawnExecutionRunning;
     public bool IsBattleActive => isBattleActive;
     public bool HasStageBinding => waveConfig != null && mapGenerator != null;
+    public string BoundWaveConfigName => waveConfig != null
+        ? waveConfig.name
+        : string.Empty;
 
     public event Action OnAllSpawningCompleted;
+    public event Action OnSpawningStarted;
     public event Action<string> OnSpawningFailed;
+
+    public bool TryGetExpectedMonsterCount(out int expectedMonsterCount)
+    {
+        if (waveConfig == null)
+        {
+            expectedMonsterCount = 0;
+            return false;
+        }
+
+        return waveConfig.TryGetExpectedMonsterCount(out expectedMonsterCount);
+    }
 
     public bool BindStage(
         MapGeneratorBehaviour activeMap,
@@ -144,6 +159,7 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         isSpawnExecutionRunning = true;
+        OnSpawningStarted?.Invoke();
         Coroutine startedRoutine = StartCoroutine(SpawnWavesRoutine());
 
         if (isSpawnExecutionRunning && startedRoutine == null)

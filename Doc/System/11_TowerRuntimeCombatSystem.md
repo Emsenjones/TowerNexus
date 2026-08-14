@@ -233,12 +233,12 @@ Successful release starts one Attack Cycle and transfers Arrow movement, hit, Pi
 
 # 10. Cannon Runtime
 
-Cannon confirmation captures one or more immutable target-position snapshots.
+Cannon confirmation captures one or more immutable target-position snapshots and the corresponding intended Monster references.
 
 - Baseline Cannon confirms one position.
 - Multi Shells may confirm one primary position plus its authored positive additional-member count.
 - One attack uses one presentation sequence and one Attack Cycle.
-- Source Monster invalidation after confirmation does not cancel or redirect a captured position.
+- Intended Monster invalidation after confirmation does not cancel or redirect a captured position. Projectile System may use the reference only to prioritize the optional direct Monster Hit at that position.
 - An Upgrade during the presentation wait does not add Shells or recapture positions.
 - Each successful initial Shell release receives one immutable integer direct-damage value plus Explosive Shell and eligible pre-impact Bouncing Shell data. The primary Shell uses the Tower's Shell template and current resolved Cannon Attack Damage; additional Shells use Multi Shells' additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
 - Damage Bonus live refresh may update an unresolved primary initial Shell, but it cannot overwrite an additional initial Shell's composed release-time direct damage or any bounce child's fixed Bounce Damage.

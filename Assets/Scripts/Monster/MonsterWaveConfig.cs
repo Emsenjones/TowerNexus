@@ -32,6 +32,50 @@ public class MonsterWaveConfig : ScriptableObject
 
     public IReadOnlyList<MonsterWaveEntry> Waves => waves;
 
+    public bool TryGetExpectedMonsterCount(out int expectedMonsterCount)
+    {
+        expectedMonsterCount = 0;
+
+        if (waves == null || waves.Count == 0)
+        {
+            return false;
+        }
+
+        long totalMonsterCount = 0;
+
+        for (int waveIndex = 0; waveIndex < waves.Count; waveIndex++)
+        {
+            MonsterWaveEntry wave = waves[waveIndex];
+            IReadOnlyList<MonsterSpawnEntry> spawnEntries =
+                wave != null ? wave.SpawnEntries : null;
+
+            if (spawnEntries == null || spawnEntries.Count == 0)
+            {
+                return false;
+            }
+
+            for (int entryIndex = 0; entryIndex < spawnEntries.Count; entryIndex++)
+            {
+                MonsterSpawnEntry spawnEntry = spawnEntries[entryIndex];
+
+                if (spawnEntry == null || spawnEntry.Count <= 0)
+                {
+                    return false;
+                }
+
+                totalMonsterCount += spawnEntry.Count;
+
+                if (totalMonsterCount > int.MaxValue)
+                {
+                    return false;
+                }
+            }
+        }
+
+        expectedMonsterCount = (int)totalMonsterCount;
+        return expectedMonsterCount > 0;
+    }
+
     public MonsterWaveValidationResult ValidateWaveConfig()
     {
         MonsterWaveValidationResult result = new MonsterWaveValidationResult();

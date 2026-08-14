@@ -1,0 +1,84 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T17:55:59+08:00",
+  "runLabel": "HP240_P1_Drone_OptimizedBurstModule+BlastRounds+DoubleDrones_Control",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5109519958496095
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 18,
+        "leaked": 22,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.44999998807907107,
+        "effectiveDamage": 6780,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.706250011920929,
+        "leakedRemainingHealth": 2820,
+        "averageLeakedRemainingHealth": 128.18182373046876,
+        "peakAlive": 23
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.9271240234375,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.9271240234375,
+        "battleDurationSeconds": 155.0909423828125
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 18,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -1169926,
+            "displayName": "Drone Tower",
+            "family": "Drone",
+            "level": 2,
+            "hasCombatRuntime": true,
+            "baseDamage": 10,
+            "baseRange": 4.0,
+            "baseCycleSeconds": 10.0,
+            "resolvedDamage": 10,
+            "resolvedRange": 4.0,
+            "resolvedCycleSeconds": 10.0,
+            "upgrades": [
+                {
+                    "displayName": "Optimized Burst Module",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blast Rounds",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "DroneBlastRounds",
+                    "element": ""
+                },
+                {
+                    "displayName": "Double Drones",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "DroneMultiDrones",
+                    "element": ""
+                }
+            ]
+        }
+    ],
+    "buffs": []
+}

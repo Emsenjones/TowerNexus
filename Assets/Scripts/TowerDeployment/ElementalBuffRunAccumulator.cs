@@ -36,9 +36,11 @@ internal sealed class ElementalBuffRunAccumulator
         public BuffAggregate(BuffDefinition definition)
         {
             Definition = definition;
+            Parameters = CreateParameterSnapshot(definition);
         }
 
         public BuffDefinition Definition { get; }
+        public CombatBalanceBuffParametersJson Parameters { get; }
         public HashSet<int> DistinctMonsterIds { get; } = new HashSet<int>();
         public HashSet<int> DistinctSourceTowerIds { get; } = new HashSet<int>();
         public HashSet<string> SourceElements { get; } = new HashSet<string>();
@@ -204,8 +206,10 @@ internal sealed class ElementalBuffRunAccumulator
             BuffAggregate aggregate = sortedAggregates[i];
             CombatBalanceBuffJson record = new CombatBalanceBuffJson
             {
+                definitionName = aggregate.Definition.name,
                 displayName = GetBuffDisplayName(aggregate.Definition),
                 element = aggregate.Definition.ElementType.ToString(),
+                parameters = aggregate.Parameters,
                 applicationAttempts = aggregate.ApplicationAttempts,
                 applied = aggregate.Applied,
                 refreshed = aggregate.Refreshed,
@@ -519,6 +523,59 @@ internal sealed class ElementalBuffRunAccumulator
         return string.IsNullOrWhiteSpace(definition.DisplayName)
             ? definition.name
             : definition.DisplayName.Trim();
+    }
+
+    private static CombatBalanceBuffParametersJson CreateParameterSnapshot(
+        BuffDefinition definition)
+    {
+        CombatBalanceBuffParametersJson snapshot =
+            new CombatBalanceBuffParametersJson
+        {
+            usesStacks = definition.UsesStacks,
+            activeDurationSeconds = definition.ActiveDuration,
+            periodicTickIntervalSeconds = definition.PeriodicTickInterval,
+            maximumStacks = definition.MaximumStacks,
+            sourceApplyCooldownSeconds = definition.SourceApplyCooldown,
+            overloadProtectionDurationSeconds =
+                definition.OverloadProtectionDuration
+        };
+
+        snapshot.moveSpeedMultiplierAvailable =
+            TryGetMoveSpeedMultiplier(definition, out float multiplier);
+        snapshot.moveSpeedMultiplier = multiplier;
+        return snapshot;
+    }
+
+    private static bool TryGetMoveSpeedMultiplier(
+        BuffDefinition definition,
+        out float multiplier)
+    {
+        multiplier = 0f;
+        EffectDefinition appliedEffect =
+            definition.GetEffectDefinition(BuffEventType.Applied);
+
+        if (appliedEffect == null || appliedEffect.Actions == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<EffectAction> actions = appliedEffect.Actions;
+
+        for (int i = 0; i < actions.Count; i++)
+        {
+            EffectAction action = actions[i];
+
+            if (action == null ||
+                action.ActionType != EffectActionType.SetMoveSpeedMultiplier)
+            {
+                continue;
+            }
+
+            multiplier = action.MoveSpeedMultiplier;
+            return true;
+        }
+
+        return false;
     }
 
     private static string GetBuffSortKey(BuffDefinition definition)

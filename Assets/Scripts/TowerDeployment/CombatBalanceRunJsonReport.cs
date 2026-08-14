@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 1;
+    public int schemaVersion = 6;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -22,6 +22,8 @@ internal sealed class CombatBalanceRunJsonReport
 [Serializable]
 internal sealed class CombatBalanceFixtureJson
 {
+    public string waveConfigName;
+    public bool expectedMonsterCountAvailable;
     public int expectedMonsterCount;
     public int observedMinimumMonsterHealth;
     public int observedMaximumMonsterHealth;
@@ -86,8 +88,29 @@ internal sealed class CombatBalanceTowerJson
     public int resolvedDamage;
     public float resolvedRange;
     public float resolvedCycleSeconds;
+    public CombatBalanceProjectileRuntimeJson projectileRuntime =
+        new CombatBalanceProjectileRuntimeJson();
     public List<CombatBalanceUpgradeJson> upgrades =
         new List<CombatBalanceUpgradeJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceProjectileRuntimeJson
+{
+    public int projectilesReleased;
+    public int initialProjectilesReleased;
+    public int childProjectilesReleased;
+    public int arcProjectilesReleased;
+    public int arcTargetResolvedImpacts;
+    public int arcIntendedTargetImpacts;
+    public int arcFallbackTargetImpacts;
+    public int arcPositionOnlyImpacts;
+    public int arcPositionOnlyIntendedInvalid;
+    public int arcPositionOnlyIntendedOutOfRange;
+    public int arcPositionOnlyWithoutIntendedTarget;
+    public int arcEndedWithoutImpact;
+    public int arcUnresolvedAtReport;
+    public float arcTargetResolutionRate;
 }
 
 [Serializable]
@@ -103,8 +126,11 @@ internal sealed class CombatBalanceUpgradeJson
 [Serializable]
 internal sealed class CombatBalanceBuffJson
 {
+    public string definitionName;
     public string displayName;
     public string element;
+    public CombatBalanceBuffParametersJson parameters =
+        new CombatBalanceBuffParametersJson();
     public List<string> sourceElements = new List<string>();
     public int applicationAttempts;
     public int applied;
@@ -130,6 +156,19 @@ internal sealed class CombatBalanceBuffJson
     public float averageFirstApplicationToOverloadSeconds;
     public List<CombatBalanceBuffSourceJson> sources =
         new List<CombatBalanceBuffSourceJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceBuffParametersJson
+{
+    public bool usesStacks;
+    public float activeDurationSeconds;
+    public float periodicTickIntervalSeconds;
+    public int maximumStacks;
+    public float sourceApplyCooldownSeconds;
+    public float overloadProtectionDurationSeconds;
+    public bool moveSpeedMultiplierAvailable;
+    public float moveSpeedMultiplier;
 }
 
 [Serializable]

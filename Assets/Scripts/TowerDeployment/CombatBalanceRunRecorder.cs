@@ -13,8 +13,6 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     [Header("Run Identity")]
     [FormerlySerializedAs("runLabel")]
     [SerializeField] private string runName;
-    [Min(0)]
-    [SerializeField] private int expectedMonsterCount = 40;
 
     [Header("Runtime References")]
     [SerializeField] private BattleRuntimeCoordinator battleRuntimeCoordinator;
@@ -28,6 +26,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly HashSet<int> seenMonsterInstanceIds = new HashSet<int>();
     private readonly ElementalBuffRunAccumulator buffAccumulator =
         new ElementalBuffRunAccumulator();
+    private readonly Dictionary<int, ProjectileRuntimeAggregate>
+        projectileRuntimeByTowerInstanceId =
+            new Dictionary<int, ProjectileRuntimeAggregate>();
 
     private bool isSubscribed;
     private bool isTrackingRun;
@@ -48,6 +49,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private int initialPlayerHealth;
     private int observedMinimumMonsterHealth;
     private int observedMaximumMonsterHealth;
+    private int expectedMonsterCount;
+    private bool hasExpectedMonsterCount;
+    private string waveConfigName;
     private float observedMinimumMonsterSpeed;
     private float observedMaximumMonsterSpeed;
     private float firstSpawnTime;
@@ -66,6 +70,22 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         public int LastHealth { get; set; }
         public bool IsResolved { get; set; }
+    }
+
+    private sealed class ProjectileRuntimeAggregate
+    {
+        public int ProjectilesReleased { get; set; }
+        public int InitialProjectilesReleased { get; set; }
+        public int ChildProjectilesReleased { get; set; }
+        public int ArcProjectilesReleased { get; set; }
+        public int ArcTargetResolvedImpacts { get; set; }
+        public int ArcIntendedTargetImpacts { get; set; }
+        public int ArcFallbackTargetImpacts { get; set; }
+        public int ArcPositionOnlyImpacts { get; set; }
+        public int ArcPositionOnlyIntendedInvalid { get; set; }
+        public int ArcPositionOnlyIntendedOutOfRange { get; set; }
+        public int ArcPositionOnlyWithoutIntendedTarget { get; set; }
+        public int ArcEndedWithoutImpact { get; set; }
     }
 
     private void OnEnable()
@@ -164,6 +184,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         if (monsterSpawner != null)
         {
+            monsterSpawner.OnSpawningStarted += HandleSpawningStarted;
             monsterSpawner.OnAllSpawningCompleted +=
                 HandleAllSpawningCompleted;
         }
@@ -180,6 +201,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             battleRuntimeCoordinator.OnBattleRuntimeFailed +=
                 HandleBattleRuntimeFailed;
         }
+
+        ProjectileBehaviour.OnRuntimeObserved +=
+            HandleProjectileRuntimeObserved;
 
         isSubscribed = true;
     }
@@ -232,6 +256,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         if (monsterSpawner != null)
         {
+            monsterSpawner.OnSpawningStarted -= HandleSpawningStarted;
             monsterSpawner.OnAllSpawningCompleted -=
                 HandleAllSpawningCompleted;
         }
@@ -249,6 +274,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 HandleBattleRuntimeFailed;
         }
 
+        ProjectileBehaviour.OnRuntimeObserved -=
+            HandleProjectileRuntimeObserved;
+
         isSubscribed = false;
     }
 
@@ -257,12 +285,19 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         BeginRun();
     }
 
+    private void HandleSpawningStarted()
+    {
+        CaptureExpectedMonsterFixture();
+    }
+
     private void BeginRun()
     {
         UnsubscribeFromTrackedMonsters();
         trackedMonsters.Clear();
         seenMonsterInstanceIds.Clear();
         buffAccumulator.Reset();
+        projectileRuntimeByTowerInstanceId.Clear();
+        ResetExpectedMonsterFixture();
         spawnedCount = 0;
         resolvedCount = 0;
         killedCount = 0;
@@ -291,6 +326,39 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         pendingTerminalState = null;
         pendingFailureReason = null;
         isTrackingRun = true;
+
+        if (monsterSpawner != null && monsterSpawner.IsSpawning)
+        {
+            CaptureExpectedMonsterFixture();
+        }
+    }
+
+    private void ResetExpectedMonsterFixture()
+    {
+        expectedMonsterCount = 0;
+        hasExpectedMonsterCount = false;
+        waveConfigName = monsterSpawner != null
+            ? monsterSpawner.BoundWaveConfigName
+            : string.Empty;
+    }
+
+    private void CaptureExpectedMonsterFixture()
+    {
+        ResetExpectedMonsterFixture();
+
+        if (monsterSpawner != null &&
+            monsterSpawner.TryGetExpectedMonsterCount(
+                out int resolvedExpectedMonsterCount))
+        {
+            expectedMonsterCount = resolvedExpectedMonsterCount;
+            hasExpectedMonsterCount = true;
+            return;
+        }
+
+        Debug.LogWarning(
+            "Combat balance run recorder could not resolve Expected Monster " +
+            "Count from the Monster Spawner's bound Wave Config.",
+            this);
     }
 
     private void TrackCurrentMonsters()
@@ -401,6 +469,91 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
     }
 
+    private void HandleProjectileRuntimeObserved(
+        ProjectileRuntimeObservation observation)
+    {
+        if (!isTrackingRun || observation.SourceTower == null)
+        {
+            return;
+        }
+
+        int towerInstanceId = observation.SourceTower.GetInstanceID();
+
+        if (!projectileRuntimeByTowerInstanceId.TryGetValue(
+                towerInstanceId,
+                out ProjectileRuntimeAggregate aggregate))
+        {
+            aggregate = new ProjectileRuntimeAggregate();
+            projectileRuntimeByTowerInstanceId.Add(
+                towerInstanceId,
+                aggregate);
+        }
+
+        switch (observation.ObservationType)
+        {
+            case ProjectileRuntimeObservationType.Released:
+                aggregate.ProjectilesReleased++;
+
+                if (observation.IsChildProjectile)
+                {
+                    aggregate.ChildProjectilesReleased++;
+                }
+                else
+                {
+                    aggregate.InitialProjectilesReleased++;
+                }
+
+                if (observation.FlightType == ProjectileFlightType.Arc)
+                {
+                    aggregate.ArcProjectilesReleased++;
+                }
+
+                break;
+            case ProjectileRuntimeObservationType.Impacted:
+                if (observation.FlightType != ProjectileFlightType.Arc)
+                {
+                    break;
+                }
+
+                if (observation.HasTargetMonster)
+                {
+                    aggregate.ArcTargetResolvedImpacts++;
+                }
+                else
+                {
+                    aggregate.ArcPositionOnlyImpacts++;
+                }
+
+                switch (observation.ArcImpactResolutionType)
+                {
+                    case ProjectileArcImpactResolutionType.IntendedTarget:
+                        aggregate.ArcIntendedTargetImpacts++;
+                        break;
+                    case ProjectileArcImpactResolutionType.FallbackTarget:
+                        aggregate.ArcFallbackTargetImpacts++;
+                        break;
+                    case ProjectileArcImpactResolutionType.PositionOnlyIntendedInvalid:
+                        aggregate.ArcPositionOnlyIntendedInvalid++;
+                        break;
+                    case ProjectileArcImpactResolutionType.PositionOnlyIntendedOutOfRange:
+                        aggregate.ArcPositionOnlyIntendedOutOfRange++;
+                        break;
+                    case ProjectileArcImpactResolutionType.PositionOnlyWithoutIntendedTarget:
+                        aggregate.ArcPositionOnlyWithoutIntendedTarget++;
+                        break;
+                }
+
+                break;
+            case ProjectileRuntimeObservationType.EndedWithoutImpact:
+                if (observation.FlightType == ProjectileFlightType.Arc)
+                {
+                    aggregate.ArcEndedWithoutImpact++;
+                }
+
+                break;
+        }
+    }
+
     private void HandleMonsterResolved(
         MonsterBehaviour monster,
         bool reachedTarget)
@@ -493,6 +646,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         TrackCurrentMonsters();
+
+        if (!hasExpectedMonsterCount)
+        {
+            CaptureExpectedMonsterFixture();
+        }
+
         hasLoggedFinalSummary = true;
         DateTime generatedAt = DateTime.Now;
         string summary = BuildSummary(
@@ -521,7 +680,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     {
         StringBuilder builder = new StringBuilder(1024);
         int unresolvedCount = Mathf.Max(0, spawnedCount - resolvedCount);
-        int notSpawnedCount = expectedMonsterCount > 0
+        int notSpawnedCount = hasExpectedMonsterCount
             ? Mathf.Max(0, expectedMonsterCount - spawnedCount)
             : 0;
         float killRate = spawnedCount > 0
@@ -568,7 +727,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         builder.Append("Monsters: Expected=")
-            .Append(expectedMonsterCount)
+            .Append(hasExpectedMonsterCount
+                ? expectedMonsterCount.ToString(CultureInfo.InvariantCulture)
+                : "Unavailable")
             .Append(", Spawned=")
             .Append(spawnedCount)
             .Append(", Resolved=")
@@ -584,7 +745,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             .Append(", KillRate=")
             .Append(FormatPercent(killRate))
             .AppendLine();
-        builder.Append("Monster Fixture: HP=")
+        builder.Append("Monster Fixture: WaveConfig=")
+            .Append(string.IsNullOrWhiteSpace(waveConfigName)
+                ? "Unavailable"
+                : waveConfigName)
+            .Append(", HP=")
             .Append(FormatObservedIntRange(
                 observedMinimumMonsterHealth,
                 observedMaximumMonsterHealth))
@@ -680,7 +845,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         DateTime generatedAt)
     {
         int unresolvedCount = Mathf.Max(0, spawnedCount - resolvedCount);
-        int notSpawnedCount = expectedMonsterCount > 0
+        int notSpawnedCount = hasExpectedMonsterCount
             ? Mathf.Max(0, expectedMonsterCount - spawnedCount)
             : 0;
         float killRate = spawnedCount > 0
@@ -722,6 +887,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             failureReason = failureReason ?? string.Empty
         };
 
+        report.fixture.waveConfigName = waveConfigName ?? string.Empty;
+        report.fixture.expectedMonsterCountAvailable =
+            hasExpectedMonsterCount;
         report.fixture.expectedMonsterCount = expectedMonsterCount;
         report.fixture.observedMinimumMonsterHealth =
             observedMinimumMonsterHealth == int.MaxValue
@@ -773,7 +941,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         return report;
     }
 
-    private static List<CombatBalanceTowerJson> CreateTowerJsonRecords()
+    private List<CombatBalanceTowerJson> CreateTowerJsonRecords()
     {
         TowerInstance[] towerInstances = FindObjectsByType<TowerInstance>(
             FindObjectsInactive.Exclude,
@@ -827,6 +995,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 record.resolvedCycleSeconds = resolvedStats.AttackCycleDuration;
             }
 
+            record.projectileRuntime = CreateProjectileRuntimeJson(
+                towerInstance.GetInstanceID());
+
             IReadOnlyList<TowerUpgradeDefinition> upgrades =
                 towerInstance.AppliedUpgrades;
 
@@ -866,6 +1037,52 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         return records;
+    }
+
+    private CombatBalanceProjectileRuntimeJson CreateProjectileRuntimeJson(
+        int towerInstanceId)
+    {
+        if (!projectileRuntimeByTowerInstanceId.TryGetValue(
+                towerInstanceId,
+                out ProjectileRuntimeAggregate aggregate))
+        {
+            return new CombatBalanceProjectileRuntimeJson();
+        }
+
+        int resolvedArcOutcomes =
+            aggregate.ArcTargetResolvedImpacts +
+            aggregate.ArcPositionOnlyImpacts;
+        int completedArcOutcomes =
+            resolvedArcOutcomes + aggregate.ArcEndedWithoutImpact;
+
+        return new CombatBalanceProjectileRuntimeJson
+        {
+            projectilesReleased = aggregate.ProjectilesReleased,
+            initialProjectilesReleased =
+                aggregate.InitialProjectilesReleased,
+            childProjectilesReleased = aggregate.ChildProjectilesReleased,
+            arcProjectilesReleased = aggregate.ArcProjectilesReleased,
+            arcTargetResolvedImpacts =
+                aggregate.ArcTargetResolvedImpacts,
+            arcIntendedTargetImpacts =
+                aggregate.ArcIntendedTargetImpacts,
+            arcFallbackTargetImpacts = aggregate.ArcFallbackTargetImpacts,
+            arcPositionOnlyImpacts = aggregate.ArcPositionOnlyImpacts,
+            arcPositionOnlyIntendedInvalid =
+                aggregate.ArcPositionOnlyIntendedInvalid,
+            arcPositionOnlyIntendedOutOfRange =
+                aggregate.ArcPositionOnlyIntendedOutOfRange,
+            arcPositionOnlyWithoutIntendedTarget =
+                aggregate.ArcPositionOnlyWithoutIntendedTarget,
+            arcEndedWithoutImpact = aggregate.ArcEndedWithoutImpact,
+            arcUnresolvedAtReport = Mathf.Max(
+                0,
+                aggregate.ArcProjectilesReleased - completedArcOutcomes),
+            arcTargetResolutionRate = resolvedArcOutcomes > 0
+                ? (float)aggregate.ArcTargetResolvedImpacts /
+                  resolvedArcOutcomes
+                : 0f
+        };
     }
 
     private static string GetReportPath(

@@ -57,11 +57,18 @@ public class ProjectileBehaviour : MonoBehaviour
     private bool isInitialized;
     private bool hasImpacted;
     private bool hasEnded;
+#if UNITY_EDITOR
+    private bool hasIntendedTargetSnapshot;
+    private ProjectileArcImpactResolutionType arcImpactResolutionType;
+#endif
 
     public event Action<ProjectileImpactContext> OnImpact;
     public event Action<EffectTriggerContext> OnEffectTriggerContextCreated;
     public event Action<ProjectileBehaviour> OnChildReleased;
     public event Action<ProjectileBehaviour> OnEnded;
+#if UNITY_EDITOR
+    public static event Action<ProjectileRuntimeObservation> OnRuntimeObserved;
+#endif
 
     public TowerInstance SourceTower => sourceTower;
     public float ProjectileSpeed => projectileSpeed;
@@ -150,6 +157,11 @@ public class ProjectileBehaviour : MonoBehaviour
         elapsedLifetime = 0f;
         hasImpacted = false;
         hasEnded = false;
+#if UNITY_EDITOR
+        hasIntendedTargetSnapshot = targetMonster != null;
+        arcImpactResolutionType =
+            ProjectileArcImpactResolutionType.NotApplicable;
+#endif
 
         if (!CanInitialize())
         {
@@ -162,7 +174,16 @@ public class ProjectileBehaviour : MonoBehaviour
         if (!isInitialized)
         {
             DestroyProjectile();
+            return;
         }
+
+#if UNITY_EDITOR
+        PublishRuntimeObservationSafely(
+            ProjectileRuntimeObservation.CreateReleased(
+                sourceTower,
+                flightType,
+                isBounceChild));
+#endif
     }
 
     private bool CanInitialize()
@@ -308,6 +329,9 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
+#if UNITY_EDITOR
+        PublishEndedWithoutImpactIfNeeded();
+#endif
         hasImpacted = true;
         EndProjectile();
     }
@@ -868,6 +892,15 @@ public class ProjectileBehaviour : MonoBehaviour
         );
 
         PlayImpactVfx(impactContext.ImpactPosition);
+#if UNITY_EDITOR
+        PublishRuntimeObservationSafely(
+            ProjectileRuntimeObservation.CreateImpact(
+                sourceTower,
+                flightType,
+                isBounceChild,
+                hitMonster != null,
+                arcImpactResolutionType));
+#endif
         OnImpact?.Invoke(impactContext);
         EffectTriggerContext effectTriggerContext = CreateEffectTriggerContext(hitMonster, impactPosition);
         OnEffectTriggerContextCreated?.Invoke(effectTriggerContext);
@@ -925,11 +958,29 @@ public class ProjectileBehaviour : MonoBehaviour
 
         if (monsterManager == null || hitDistanceThreshold <= 0f)
         {
+#if UNITY_EDITOR
+            arcImpactResolutionType = hasIntendedTargetSnapshot
+                ? ProjectileArcImpactResolutionType.PositionOnlyIntendedInvalid
+                : ProjectileArcImpactResolutionType.PositionOnlyWithoutIntendedTarget;
+#endif
             return false;
         }
 
         IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
         float hitDistanceThresholdSqr = hitDistanceThreshold * hitDistanceThreshold;
+
+        if (IsTrackedValidTarget(targetMonster) &&
+            GetHitDistanceSqrFromPosition(targetMonster, impactPosition) <=
+            hitDistanceThresholdSqr)
+        {
+            hitMonster = targetMonster;
+#if UNITY_EDITOR
+            arcImpactResolutionType =
+                ProjectileArcImpactResolutionType.IntendedTarget;
+#endif
+            return true;
+        }
+
         float nearestDistanceSqr = float.MaxValue;
 
         for (int i = 0; i < aliveMonsters.Count; i++)
@@ -941,8 +992,9 @@ public class ProjectileBehaviour : MonoBehaviour
                 continue;
             }
 
-            float distanceSqr =
-                (EffectTargetResolver.GetMonsterHitPosition(monster) - impactPosition).sqrMagnitude;
+            float distanceSqr = GetHitDistanceSqrFromPosition(
+                monster,
+                impactPosition);
 
             if (distanceSqr > hitDistanceThresholdSqr || distanceSqr >= nearestDistanceSqr)
             {
@@ -953,7 +1005,31 @@ public class ProjectileBehaviour : MonoBehaviour
             nearestDistanceSqr = distanceSqr;
         }
 
-        return hitMonster != null;
+        if (hitMonster != null)
+        {
+#if UNITY_EDITOR
+            arcImpactResolutionType =
+                ProjectileArcImpactResolutionType.FallbackTarget;
+#endif
+            return true;
+        }
+
+#if UNITY_EDITOR
+        arcImpactResolutionType = !hasIntendedTargetSnapshot
+            ? ProjectileArcImpactResolutionType.PositionOnlyWithoutIntendedTarget
+            : IsTrackedValidTarget(targetMonster)
+                ? ProjectileArcImpactResolutionType.PositionOnlyIntendedOutOfRange
+                : ProjectileArcImpactResolutionType.PositionOnlyIntendedInvalid;
+#endif
+        return false;
+    }
+
+    private static float GetHitDistanceSqrFromPosition(
+        MonsterBehaviour monster,
+        Vector3 position)
+    {
+        return (EffectTargetResolver.GetMonsterHitPosition(monster) - position)
+            .sqrMagnitude;
     }
 
     private bool TryGetDirectionProjectileHit(out MonsterBehaviour hitMonster)
@@ -1064,6 +1140,9 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
+#if UNITY_EDITOR
+        PublishEndedWithoutImpactIfNeeded();
+#endif
         hasEnded = true;
         isInitialized = false;
         OnEnded?.Invoke(this);
@@ -1077,9 +1156,57 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
+#if UNITY_EDITOR
+        PublishEndedWithoutImpactIfNeeded();
+#endif
         hasEnded = true;
         isInitialized = false;
         hasImpacted = true;
         OnEnded?.Invoke(this);
     }
+
+#if UNITY_EDITOR
+    private void PublishEndedWithoutImpactIfNeeded()
+    {
+        if (!isInitialized || hasImpacted)
+        {
+            return;
+        }
+
+        PublishRuntimeObservationSafely(
+            ProjectileRuntimeObservation.CreateEndedWithoutImpact(
+                sourceTower,
+                flightType,
+                isBounceChild));
+    }
+
+    private void PublishRuntimeObservationSafely(
+        ProjectileRuntimeObservation observation)
+    {
+        Action<ProjectileRuntimeObservation> handlers = OnRuntimeObserved;
+
+        if (handlers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = handlers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<ProjectileRuntimeObservation>)invocationList[i])
+                    .Invoke(observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    "Projectile runtime observation subscriber failed: " +
+                    exception.Message,
+                    this);
+            }
+        }
+    }
+#endif
 }

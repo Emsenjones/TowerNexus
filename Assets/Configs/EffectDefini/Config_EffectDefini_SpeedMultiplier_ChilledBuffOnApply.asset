@@ -19,5 +19,9 @@ MonoBehaviour:
   - actionType: 2
     damageAmount: 0
     buffDefinition: {fileID: 11400000, guid: e5e4aa3f395d3452a9d69215b703f764, type: 2}
-    moveSpeedMultiplier: 0.5
+    moveSpeedMultiplier: 0.7
     isMovementLocked: 0
+    multiTargetEffectDefinition: {fileID: 0}
+    targetCount: 1
+    excludeTriggerTarget: 0
+    windVortexPrefab: {fileID: 0}

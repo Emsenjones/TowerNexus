@@ -1,0 +1,231 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-15T00:56:22+08:00",
+    "runLabel": "HP240_P1Archer_P2Cannon_Matching_Cold_Overlap_Cooldown1.5",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.508880615234375
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 21,
+        "leaked": 19,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.5249999761581421,
+        "effectiveDamage": 7275,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.7578125,
+        "leakedRemainingHealth": 2325,
+        "averageLeakedRemainingHealth": 122.36842346191406,
+        "peakAlive": 24
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.84634399414063,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.84634399414063,
+        "battleDurationSeconds": 161.46188354492188
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 21,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -2347094,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 20,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 20,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "upgrades": [
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": ""
+                },
+                {
+                    "displayName": "Frostbound Arrows",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Cold"
+                }
+            ]
+        },
+        {
+            "instanceId": -2344498,
+            "displayName": "Cannon Tower",
+            "family": "Cannon",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 60,
+            "baseRange": 3.0,
+            "baseCycleSeconds": 3.5,
+            "resolvedDamage": 60,
+            "resolvedRange": 3.0,
+            "resolvedCycleSeconds": 2.5,
+            "upgrades": [
+                {
+                    "displayName": "Faster Reload",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Twin Shells",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "CannonMultiShells",
+                    "element": ""
+                },
+                {
+                    "displayName": "Frostbound Shells",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Cold"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Chilled",
+            "element": "Cold",
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 408,
+            "applied": 77,
+            "refreshed": 0,
+            "stacked": 167,
+            "invalid": 0,
+            "blockedBySourceCooldown": 161,
+            "blockedByProtection": 3,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 2,
+            "maximumObservedStacks": 10,
+            "overloads": 2,
+            "enteredProtection": 2,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 56,
+            "protectionExpiries": 1,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 20,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 22.532913208007814,
+            "sources": [
+                {
+                    "towerFamily": "Archer",
+                    "applicationAttempts": 328,
+                    "successfulApplications": 170,
+                    "applied": 40,
+                    "refreshed": 0,
+                    "stacked": 130,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 156,
+                    "blockedByProtection": 2,
+                    "overloads": 2,
+                    "enteredProtection": 2,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 30,
+                    "averageFirstApplicationToOverloadSeconds": 22.532913208007814
+                },
+                {
+                    "towerFamily": "Cannon",
+                    "applicationAttempts": 80,
+                    "successfulApplications": 74,
+                    "applied": 37,
+                    "refreshed": 0,
+                    "stacked": 37,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 5,
+                    "blockedByProtection": 1,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 26,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        },
+        {
+            "displayName": "Frozen",
+            "element": "None",
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 2,
+            "applied": 2,
+            "refreshed": 0,
+            "stacked": 0,
+            "invalid": 0,
+            "blockedBySourceCooldown": 0,
+            "blockedByProtection": 0,
+            "distinctMonsters": 2,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 1,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 24,
+            "naturalExpiriesBeforeOverload": 0,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 1,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Archer",
+                    "applicationAttempts": 2,
+                    "successfulApplications": 2,
+                    "applied": 2,
+                    "refreshed": 0,
+                    "stacked": 0,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 0,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 24,
+                    "naturalExpiriesBeforeOverload": 0,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

@@ -157,11 +157,12 @@ Arc flight consumes an explicitly present immutable target-position snapshot and
 - Arrival always produces Position Impact.
 - Initial Shell and bounce-child Arc heights come from their respective authoring owners.
 
-After Position Impact, one local query uses `Hit Distance Threshold` as its radius and the impact position as its center.
+After Position Impact, one local query uses `Hit Distance Threshold` as its radius and the impact position as its center. An Arc release may also retain its intended Monster identity without changing the captured landing position or becoming a tracking projectile.
 
 - Candidate distance uses Monster Hit References.
 - The threshold boundary is inclusive.
-- At most one nearest gameplay-targetable Monster is selected.
+- If the intended Monster remains gameplay-targetable inside the threshold, it is selected first.
+- Otherwise, at most one nearest gameplay-targetable Monster is selected as fallback.
 - Equal-distance candidates use stable source order.
 - A selected Monster additionally produces Monster Hit and may receive direct damage.
 - No selected Monster leaves Position Impact valid but produces no Monster-targeted direct result.

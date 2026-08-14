@@ -1,0 +1,161 @@
+{
+    "schemaVersion": 6,
+    "generatedAtLocal": "2026-08-15T05:04:40+08:00",
+    "runLabel": "HP240_P1_Cannon_FasterReload+TwinShells_Cold_Slow0.7_Cooldown1.5_Projectiles_ImpactClassification",
+    "terminalState": "Defeat",
+    "failureReason": "",
+    "fixture": {
+        "waveConfigName": "Config_MonsterWave_Default",
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5080506801605226
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 0,
+        "leaked": 40,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.0,
+        "effectiveDamage": 3210,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.3343749940395355,
+        "leakedRemainingHealth": 6390,
+        "averageLeakedRemainingHealth": 159.75,
+        "peakAlive": 28
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.81397247314453,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.81397247314453,
+        "battleDurationSeconds": 168.0585174560547
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 0,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -488168,
+            "displayName": "Cannon Tower",
+            "family": "Cannon",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 60,
+            "baseRange": 3.0,
+            "baseCycleSeconds": 3.5,
+            "resolvedDamage": 60,
+            "resolvedRange": 3.0,
+            "resolvedCycleSeconds": 2.5,
+            "projectileRuntime": {
+                "projectilesReleased": 83,
+                "initialProjectilesReleased": 83,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 83,
+                "arcTargetResolvedImpacts": 73,
+                "arcIntendedTargetImpacts": 46,
+                "arcFallbackTargetImpacts": 27,
+                "arcPositionOnlyImpacts": 10,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 10,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 0.8795180916786194
+            },
+            "upgrades": [
+                {
+                    "displayName": "Faster Reload",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Twin Shells",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "CannonMultiShells",
+                    "element": ""
+                },
+                {
+                    "displayName": "Frostbound Shells",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Cold"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "definitionName": "Config_BuffDefini_Chilled",
+            "displayName": "Chilled",
+            "element": "Cold",
+            "parameters": {
+                "usesStacks": true,
+                "activeDurationSeconds": 5.0,
+                "periodicTickIntervalSeconds": 0.0,
+                "maximumStacks": 10,
+                "sourceApplyCooldownSeconds": 1.5,
+                "overloadProtectionDurationSeconds": 10.0,
+                "moveSpeedMultiplierAvailable": true,
+                "moveSpeedMultiplier": 0.699999988079071
+            },
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 73,
+            "applied": 59,
+            "refreshed": 0,
+            "stacked": 14,
+            "invalid": 0,
+            "blockedBySourceCooldown": 0,
+            "blockedByProtection": 0,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 4,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 59,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 0,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Cannon",
+                    "applicationAttempts": 73,
+                    "successfulApplications": 73,
+                    "applied": 59,
+                    "refreshed": 0,
+                    "stacked": 14,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 0,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 59,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

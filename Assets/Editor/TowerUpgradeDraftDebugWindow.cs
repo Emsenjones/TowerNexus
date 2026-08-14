@@ -10,11 +10,14 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
     private readonly List<TowerInstance> runtimeTowers =
         new List<TowerInstance>();
 
+    [SerializeField]
+    private TowerDefinition selectedTowerDefinition;
     private TowerInstance selectedTower;
     [SerializeField]
     private List<TowerUpgradeDefinition> selectedUpgrades =
         new List<TowerUpgradeDefinition>();
     private SerializedObject serializedWindow;
+    private SerializedProperty selectedTowerDefinitionProperty;
     private SerializedProperty selectedUpgradesProperty;
     private Vector2 scrollPosition;
 
@@ -44,8 +47,9 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
             "Editor-only Task003/Task004 helper. Configure one Upgrade list " +
-            "to prepare a runtime Tower, grant real Pending Upgrade Drafts, " +
-            "or apply the list directly through TowerUpgradeSystem.",
+            "to prepare a runtime Tower, grant real Pending Tower / Upgrade " +
+            "Drafts, or apply the Upgrade list directly through " +
+            "TowerUpgradeSystem.",
             MessageType.Info);
 
         DrawRuntimeStatus();
@@ -56,12 +60,45 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         }
 
         EditorGUILayout.Space();
+        DrawPendingTowerDraftGrant();
+        EditorGUILayout.Space();
         DrawTowerSelection();
         DrawUpgradeSelection();
         DrawSelectionStatus();
         DrawActions();
 
         EditorGUILayout.EndScrollView();
+    }
+
+    private void DrawPendingTowerDraftGrant()
+    {
+        EditorGUILayout.LabelField(
+            "Pending Tower Draft",
+            EditorStyles.boldLabel);
+
+        EnsureSerializedProperties();
+        serializedWindow.Update();
+        EditorGUILayout.PropertyField(
+            selectedTowerDefinitionProperty,
+            new GUIContent("Tower Definition"));
+        serializedWindow.ApplyModifiedProperties();
+
+        bool canGrantTowerDraft =
+            Application.isPlaying && selectedTowerDefinition != null;
+
+        using (new EditorGUI.DisabledScope(!canGrantTowerDraft))
+        {
+            if (GUILayout.Button("Grant Tower As Pending Draft"))
+            {
+                GrantPendingTowerDraft();
+            }
+        }
+
+        EditorGUILayout.HelpBox(
+            "Drag one TowerDefinition here during Play Mode, then grant it " +
+            "to the Pending area. The item uses the normal Tower Draft " +
+            "drag, preview, placement, and consumption flow.",
+            MessageType.None);
     }
 
     private void DrawRuntimeStatus()
@@ -470,6 +507,79 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         Repaint();
     }
 
+    private void GrantPendingTowerDraft()
+    {
+        if (!Application.isPlaying)
+        {
+            Debug.LogWarning(
+                "Tower upgrade debug window actions require Play Mode.");
+            return;
+        }
+
+        TowerDefinition towerDefinition = selectedTowerDefinition;
+
+        if (towerDefinition == null)
+        {
+            Debug.LogWarning(
+                "Tower upgrade debug window requires a Tower Definition " +
+                "to grant a Pending Tower Draft.");
+            return;
+        }
+
+        if (!towerDefinition.IsValid())
+        {
+            Debug.LogWarning(
+                $"Tower upgrade debug window cannot grant " +
+                $"'{GetTowerDefinitionName(towerDefinition)}': the Tower " +
+                "Definition is invalid.",
+                towerDefinition);
+            return;
+        }
+
+        BattleHUDUI battleHud = FindFirstObjectByType<BattleHUDUI>();
+
+        if (battleHud == null)
+        {
+            Debug.LogWarning(
+                "Tower upgrade debug window cannot grant a Pending Tower " +
+                "Draft: BattleHUDUI is missing.");
+            return;
+        }
+
+        if (battleHud.IsDraftOpen)
+        {
+            Debug.LogWarning(
+                "Tower upgrade debug window cannot grant a Pending Tower " +
+                "Draft while the normal Draft window is open.",
+                battleHud);
+            return;
+        }
+
+        DraftResult draftResult =
+            DraftResult.CreateTowerDraft(towerDefinition);
+
+        if (!battleHud.TryAddPendingDraft(
+                draftResult,
+                out _,
+                out string failureReason))
+        {
+            Debug.LogWarning(
+                $"Tower upgrade debug window failed to grant " +
+                $"'{GetTowerDefinitionName(towerDefinition)}': " +
+                failureReason,
+                battleHud);
+            return;
+        }
+
+        Debug.Log(
+            $"Tower upgrade debug window granted " +
+            $"'{GetTowerDefinitionName(towerDefinition)}' as a Pending " +
+            "Tower Draft. It must be dragged through the normal placement " +
+            "flow.",
+            battleHud);
+        Repaint();
+    }
+
     private void ApplyUpgradesDirectly()
     {
         if (!TryGetEligibleBatch(
@@ -614,12 +724,16 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 
     private void EnsureSerializedProperties()
     {
-        if (serializedWindow != null && selectedUpgradesProperty != null)
+        if (serializedWindow != null &&
+            selectedTowerDefinitionProperty != null &&
+            selectedUpgradesProperty != null)
         {
             return;
         }
 
         serializedWindow = new SerializedObject(this);
+        selectedTowerDefinitionProperty =
+            serializedWindow.FindProperty(nameof(selectedTowerDefinition));
         selectedUpgradesProperty =
             serializedWindow.FindProperty(nameof(selectedUpgrades));
     }
@@ -807,6 +921,19 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         return string.IsNullOrEmpty(upgrade.DisplayName)
             ? upgrade.name
             : upgrade.DisplayName;
+    }
+
+    private static string GetTowerDefinitionName(
+        TowerDefinition towerDefinition)
+    {
+        if (towerDefinition == null)
+        {
+            return "Missing Tower";
+        }
+
+        return string.IsNullOrEmpty(towerDefinition.DisplayName)
+            ? towerDefinition.name
+            : towerDefinition.DisplayName;
     }
 
     private static string GetAppliedUpgradeSummary(TowerInstance tower)

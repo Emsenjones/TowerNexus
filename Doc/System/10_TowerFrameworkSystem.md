@@ -258,7 +258,7 @@ This section defines identity and gameplay direction. Runtime execution belongs 
 - Confirmation captures a target-position snapshot
 - Shell travels to that immutable position
 - Arrival always produces Position Impact
-- A local arrival query may additionally produce one Monster Hit and direct damage
+- A local arrival query may additionally produce one Monster Hit and direct damage; the still-valid intended target has priority inside the unchanged hit threshold, followed by nearest-target fallback
 - Area explosion is Upgrade content, not baseline Cannon behavior
 - Attack Cycle begins on successful Shell release
 

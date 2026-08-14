@@ -1,6 +1,6 @@
 # Task004 - Elemental, Effect, And Buff Baseline
 
-Status: Elemental diagnostics implemented and statically validated; dedicated fixture authoring, Unity Play Mode diagnostic acceptance, calibration, and final value acceptance remain pending
+Status: Structural diagnostics complete; Elemental numerical calibration in progress on the v0.4 first candidate
 
 Depends on: Completed Task003 Tower growth and non-Elemental Upgrade baseline
 
@@ -124,9 +124,9 @@ Before freezing the dedicated Map, use existing Maps to observe how many Grid in
 - Repeat when visual ambiguity or route geometry makes the final refresh point unclear.
 - This observation validates Map spacing; it does not itself revise Active Duration.
 
-The current Buff-parameter v0.3 pilot values are:
+The frozen pre-calibration Buff-parameter v0.3 baseline values are:
 
-| Parameter | Current Value | Meaning |
+| Parameter | Baseline Value | Meaning |
 |---|---:|---|
 | Active Duration | `5s` | Time since the latest successful application or refresh before natural expiry; at normal speed this is approximately `1.25` route Grids |
 | Periodic Tick Interval | Burning `2s`; other first-version Elemental Buffs `0s` | Burning lifecycle damage cadence; it does not control stacking, and the other Buffs have no PeriodicTick binding |
@@ -143,6 +143,27 @@ Primary, additional, piercing, area, contact, bounce, and persistent application
 Every successful application refreshes Active Duration. A Source Apply Cooldown-blocked or Protection-blocked attempt does not refresh Active Duration, add a stack, or execute StackApplied. Reaching Maximum Stacks is the only Overload condition; Task004 adds no Primed state or distinct-source gate.
 
 Keep these values for the first diagnostic pass. Revise them only after the Recorder distinguishes insufficient opportunity from blocked applications and natural expiry.
+
+An exploratory Inspector override does not revise this baseline by itself. A BuffDefinition-parameter result becomes calibration evidence only when its schema-v3-or-later JSON parameter snapshot identifies the exact runtime values. A lifecycle Effect parameter such as Chilled movement multiplier requires schema-v4-or-later output. Historical schema-v1 reports and filenames may still support functional diagnosis, but they are not self-describing evidence for accepting a parameter revision.
+
+### 7.2.1 Elemental Candidate v0.4
+
+The completed first-pass matrix justifies a narrow candidate rather than a global Elemental rewrite:
+
+| Parameter | v0.3 Baseline | v0.4 Candidate | State |
+|---|---:|---:|---|
+| Shared Active Duration | `5s` | `5s` | Frozen |
+| Shared Maximum Stacks | `10` | `10` | Frozen |
+| Shared Overload Protection Duration | `10s` | `10s` | Frozen |
+| Burning Periodic Tick Interval | `2s` | `2s` | Restored after an unaccepted `1s` Inspector exploration |
+| Burning Source Apply Cooldown | `2s` | `2s` | Frozen |
+| Chilled movement multiplier | `0.5x` | `0.7x` | Candidate requiring Section 9 targeted reruns and a schema-v4 snapshot |
+| Chilled Source Apply Cooldown | `2s` | `1.5s` | Candidate requiring a schema-v3 snapshot |
+| Electrified Source Apply Cooldown | `2s` | `2s` | Frozen |
+| Windcut Source Apply Cooldown | `2s` | `2s` | Frozen |
+| WindVortex movement speed | `0.3` | `0.1` | Accepted gameplay-identity candidate; HP960 lifecycle diagnostic passed |
+
+The Cold candidate changes only movement multiplier while retaining the exploratory `1.5s` Source Apply Cooldown. This isolates whether the observed Magic and Drone value outliers come from slow intensity. Fire, Electric, and Wind damage Effects remain unchanged during this pass.
 
 ### 7.3 Dedicated Map Contract
 
@@ -218,7 +239,41 @@ At Stage end, aggregate at minimum by ElementType and source TowerFamily:
 
 The existing human-readable report remains in the Unity Console. Each terminal run additionally writes exactly one JSON report under `Doc/GamePlayRecord/`. A non-empty authored Run Name becomes `<RunName>.json`; a blank Run Name falls back to local completion time `yyyyMMdd_HHmmss.json`. If that filename already exists, the Recorder preserves it and selects the first available numeric suffix such as `_01` or `_02`. The Recorder does not create TXT output or mutable `Latest` aliases.
 
-The JSON root carries `schemaVersion = 1`, generation time, run identity, Monster fixture, combat totals, timing, player and integrity results, Tower and Upgrade snapshots, and the Buff aggregates above. A failed JSON write emits a diagnostic warning but cannot change the Battle result or suppress the Console report. Manual context snapshots remain Console-only because they are not terminal balance runs.
+The JSON root carries `schemaVersion = 6`, generation time, run identity, Monster fixture, combat totals, timing, player and integrity results, Tower, Upgrade, Projectile-runtime snapshots, and the Buff aggregates above. The fixture snapshot obtains its expected count from the `MonsterWaveConfig` actually bound to `MonsterSpawner`, not from a Recorder Inspector field, and carries:
+
+- `waveConfigName`
+- `expectedMonsterCountAvailable`
+- `expectedMonsterCount`
+
+`expectedMonsterCount` is the sum of every authored Spawn Entry Count across every Wave in that bound config. `MonsterSpawner` publishes the spawning-start boundary immediately before starting its Wave coroutine, and the Recorder freezes the value at that boundary. This intentionally occurs after Stage preparation so a diagnostic Play Mode override made before spawning is captured, while later changes cannot rewrite the recorded expectation. If no valid bound WaveConfig is available, the Recorder retries at finalization, records `expectedMonsterCountAvailable = false`, uses `0` only as the unavailable JSON sentinel, prints `Expected=Unavailable`, and emits a warning. It must not replace the expected value with the observed Spawned count because that would hide incomplete spawn execution.
+
+Each observed Buff aggregate additionally carries `definitionName` plus a nested `parameters` snapshot containing:
+
+- `parameters.usesStacks`
+- `parameters.activeDurationSeconds`
+- `parameters.periodicTickIntervalSeconds`
+- `parameters.maximumStacks`
+- `parameters.sourceApplyCooldownSeconds`
+- `parameters.overloadProtectionDurationSeconds`
+- `parameters.moveSpeedMultiplierAvailable`
+- `parameters.moveSpeedMultiplier`
+
+The Recorder freezes this parameter snapshot when the BuffDefinition is first observed during the run. The movement multiplier is resolved from the first `SetMoveSpeedMultiplier` action on that BuffDefinition's `Applied` Effect binding. `moveSpeedMultiplierAvailable = false` and `moveSpeedMultiplier = 0` mean that no such action was authored; zero is not interpreted as a runtime movement multiplier. The Recorder does not reread mutable authoring state at Stage end. This makes each schema-v4-or-later report self-describing even when an exploratory Inspector value differs from the frozen baseline. A failed JSON write emits a diagnostic warning but cannot change the Battle result or suppress the Console report. Manual context snapshots remain Console-only because they are not terminal balance runs.
+
+Each Tower snapshot additionally carries aggregate `projectileRuntime` diagnostics. These observations are not authored balance parameters:
+
+- total, initial, and child Projectile releases;
+- Arc Projectile releases;
+- Arc impacts that resolved a direct Monster target;
+- Arc impacts that reached the authored position without resolving a direct target;
+- resolved Arc impacts split between intended-target and fallback-target results;
+- position-only Arc impacts split between intended-target invalidation, intended-target out-of-range, and releases without an intended target;
+- Arc Projectiles that ended without impact and those still unresolved when the report was written;
+- the target-resolution rate across completed Arc impacts.
+
+An Arc position-only impact is not labelled as a generic miss because it may still execute an authored area Effect or release a bounce child. Initial and child releases remain separate so Bouncing Shell children do not distort Twin Shells' initial-release diagnosis. Projectile observation is Editor-only and read-only: it cannot alter targeting, damage, flight, Effect execution, or the Battle result.
+
+The Cannon + Twin Shells + Chilled diagnostic identified repeated position-only arrivals despite unchanged release count and complete projectile resolution. The correction candidate preserves every captured landing position and authored hit threshold while retaining each initial Shell's intended Monster identity. At arrival, a still-valid intended Monster inside the threshold is preferred before the ordinary nearest-target fallback. Its first paired run produced Control `98.77%` versus Cold `88.37%` target resolution and left `10` Cold position-only arrivals, so intended-target priority alone is not accepted as the complete correction. One schema-v6 Cold diagnostic must classify resolved impacts as intended or fallback and position-only impacts as intended-invalid, intended-out-of-range, or without-intended-target before the candidate is kept, revised, or removed.
 
 When sharing results, identify the named file or ask Codex to inspect the newest files in `Doc/GamePlayRecord/`; copying the whole Console block is no longer required. Repeated calibration runs may reuse one logical Run Name because the exported filename suffix preserves every result.
 
@@ -275,6 +330,39 @@ The proposed single-Tower ceiling remains `4.0x` relative to the naked same-fami
 4. Compare Overloads, time-to-Overload, blocked attempts, and total value against the two single-source runs.
 5. Revise Active Duration, Maximum Stacks, Source Apply Cooldown, Overload Protection Duration, Periodic Tick Interval, or lifecycle Effect output only after identifying which measurement causes the failure.
 
+### Current Calibration Evidence Status - 2026-08-15
+
+The current `Doc/GamePlayRecord/` inventory contains `50` parseable reports: `43` schema-v1, one schema-v2, and six schema-v3 reports. Every report satisfies `ResolutionCountsMatch=True` and `LeakCountMatchesPlayerHealthLoss=True`. Historical schema-v1 reports remain valid screening evidence but cannot by themselves accept an exact parameter revision.
+
+Structural evidence is complete:
+
+- the `5s` natural-expiry smoke observation, dedicated straight Map, and three authored positions;
+- Position 2 `3810` versus Position 3 `3450` Cannon Effective Damage, a `9.45%` placement difference inside the initial `5-10%` guide;
+- all four Pre-Elemental Reference Controls and all sixteen single-source TowerFamily-by-ElementType runs;
+- the four representative upper-stress controls and Elemental runs, plus HP480 Archer and Cannon ceiling diagnostics;
+- all four matching overlap runs, one mismatched overlap control, and one matching non-overlap control;
+- schema-v3 Electric and Wind HP960 diagnostics with `Expected=3`, two contributing source Towers, Maximum Stacks `10`, two Overloads, two Protection entries, and internally balanced application counts;
+- manual confirmation that Overcharged damages nearby Monsters and that the slower WindVortex preserves its persistent moving-zone identity;
+- Fire Overload and Protection, Cold Overload and Frozen lifecycle output, independent source cooldowns, and non-recursive reaction damage.
+
+The first numerical screen identifies one primary outlier rather than a global Elemental failure:
+
+- Electric gain spans `1.087x-1.333x` and Wind spans `1.186x-1.528x`; keep their normal Effect values.
+- Fire spans `1.214x-1.790x`, while HP480 upper-stress reruns remain `1.249x-1.332x`; keep its tested `2s` periodic cadence and diagnose FlameBurst separately.
+- Cold spans `1.008x-2.014x`; Magic and Drone receive disproportionate value from the `0.5x` movement multiplier, while Archer and Cannon primarily expose its support identity.
+
+Required v0.4 candidate runs before value acceptance:
+
+1. `Diagnostic_HP960_3Monsters_P1Archer_P2Cannon_Control`.
+2. `HP240_P1_Archer_QuickDraw+ScatterArrow_Cold_Slow0.7_Cooldown1.5`.
+3. `HP240_P1_Cannon_FasterReload+TwinShells_Cold_Slow0.7_Cooldown1.5`.
+4. `HP240_P1_Magic_ArcaneRecovery+TwinOrbs_Cold_Slow0.7_Cooldown1.5`.
+5. `HP240_P1_Drone_OptimizedBurstModule+BlastRounds_Cold_Slow0.7_Cooldown1.5`.
+6. `Diagnostic_HP960_3Monsters_P1Archer_P2Cannon_Matching_Cold_Slow0.7_Cooldown1.5`.
+7. `Diagnostic_HP960_3Monsters_P1Archer_P2Cannon_Matching_Fire_Tick2_Cooldown2`.
+
+Electric and Wind do not require blanket reruns during this candidate pass.
+
 ## 10. Required Measurements And Decision Rules
 
 - Effective Damage, Damage Coverage, leaks, Peak Alive, and ceiling state
@@ -298,6 +386,13 @@ Interpretation targets:
 - The forced non-overlap pair cannot carry shared progress across the accepted neutral gap.
 - Protection prevents immediate repeated Overload for the same BuffDefinition.
 
+First numerical review guides:
+
+- Do not force every ElementType or TowerFamily to one identical gain ratio; Element identity and attack opportunity remain material.
+- Fire, Electric, and Wind normal-stage results generally use `1.10x-1.60x` as a review guide rather than a hard gate. A ratio outside it requires an absolute-damage, ceiling, route, or attack-archetype explanation.
+- Cold is judged as a team-support Element. Archer or Cannon may show little single-Tower damage gain, but persistent-contact Towers should not receive an unexplained near-double multiplier before Frozen cooperation.
+- The first Cold `0.7x` candidate aims provisionally for Magic around `1.35x-1.55x` and Drone around `1.20x-1.40x`; Play Mode evidence, not the projection, decides acceptance.
+
 If a single source Overloads nearly every target, matching-source identity is too weak. If a matching pair rarely reaches Overload despite the accepted broad shared zone, the cooperation requirement is too strict. These observations trigger diagnosis, not an automatic one-parameter revision.
 
 ## 11. Ownership
@@ -315,9 +410,24 @@ If a single source Overloads nearly every target, matching-source identity is to
 
 | ElementType | Tower / Test Build | Position Set | Control Result | Elemental Result | Gain | Applied / Stacked / Blocked | Overloads / Avg Time | Ceiling | Decision |
 |---|---|---|---:|---:|---:|---|---|---|---|
-| Each supported ElementType | One named required build | Fixed anchors | Filled after Play Mode | Filled after Play Mode | Calculated | Recorder output | Recorder output | Yes / No | Keep or revise |
+| Cold | Archer Reference Core | P1 | `3560` | `3590` | `1.008x` | `73 / 84 / 187` | `0 / -` | No | Retest `Slow0.7` candidate |
+| Electric | Archer Reference Core | P1 | `3560` | `4275` | `1.201x` | `42 / 75 / 221` | `0 / -` | No | Keep first-pass values |
+| Fire | Archer Reference Core | P1 | `3560` | `5470` | `1.537x` | `46 / 72 / 219` | `0 / -` | No | Keep `Tick2`; diagnose FlameBurst |
+| Wind | Archer Reference Core | P1 | `3560` | `5075` | `1.426x` | `42 / 77 / 221` | `0 / -` | No | Keep first-pass values |
+| Cold | Cannon Reference Core | P1 | `3450` | `3570` | `1.035x` | `54 / 21 / 1` | `0 / -` | No | Retest `Slow0.7` candidate |
+| Electric | Cannon Reference Core | P1 | `3450` | `3750` | `1.087x` | `31 / 40 / 0` | `0 / -` | No | Keep first-pass values |
+| Fire | Cannon Reference Core | P1 | `3450` | `4190` | `1.214x` | `31 / 37 / 0` | `0 / -` | No | Keep `Tick2`; diagnose FlameBurst |
+| Wind | Cannon Reference Core | P1 | `3450` | `4090` | `1.186x` | `36 / 35 / 0` | `0 / -` | No | Keep first-pass values |
+| Cold | Magic Reference Core | P1 | `1734` | `3492` | `2.014x` | `40 / 115 / 7` | `0 / -` | No | Revise slow intensity |
+| Electric | Magic Reference Core | P1 | `1734` | `2312` | `1.333x` | `40 / 47 / 2` | `0 / -` | No | Keep first-pass values |
+| Fire | Magic Reference Core | P1 | `1734` | `3104` | `1.790x` | `40 / 46 / 3` | `0 / -` | No | Keep `Tick2`; low-Control exception |
+| Wind | Magic Reference Core | P1 | `1734` | `2650` | `1.528x` | `40 / 44 / 2` | `0 / -` | No | Keep first-pass values |
+| Cold | Drone Reference Core | P1 | `4132` | `6608` | `1.599x` | `46 / 235 / 1010` | `7 / 20.616s` | No | Revise slow intensity |
+| Electric | Drone Reference Core | P1 | `4132` | `5320` | `1.288x` | `41 / 108 / 564` | `0 / -` | No | Keep first-pass values |
+| Fire | Drone Reference Core | P1 | `4132` | `5998` | `1.452x` | `40 / 110 / 565` | `0 / -` | No | Keep `Tick2`; diagnose FlameBurst |
+| Wind | Drone Reference Core | P1 | `4132` | `5644` | `1.366x` | `38 / 96 / 514` | `0 / -` | No | Keep first-pass values |
 
-Record exact authored values with every accepted result. Do not mix runs made before and after an Effect, Buff, Map, or fixture revision under one candidate row.
+Record exact authored values with every accepted result. Schema-v3-or-later BuffDefinition snapshots are sufficient for Buff-only revisions; schema-v4-or-later snapshots are required when accepting a lifecycle Effect parameter such as Chilled movement multiplier. Do not mix runs made before and after an Effect, Buff, Map, or fixture revision under one candidate row.
 
 ## 13. Execution Collaboration
 
@@ -340,7 +450,8 @@ Record exact authored values with every accepted result. Do not mix runs made be
 - Test two different TowerFamilies using the same ElementType.
 - Test the mismatched and non-overlap controls.
 - Validate StackApplied, Overload, EnteredProtection, natural expiry, and cleanup removal reporting.
-- Confirm each terminal run creates one parseable timestamped JSON report and no TXT or `Latest` alias.
+- Confirm the JSON WaveConfig identity and automatically derived Expected Monster Count match the bound diagnostic fixture.
+- Confirm each terminal run creates one parseable named JSON report, or a timestamp-fallback report when Run Name is blank, and no TXT or `Latest` alias.
 - Record accepted Effect and Buff values.
 
 ## 15. Acceptance Criteria
