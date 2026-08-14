@@ -91,11 +91,19 @@ public static class EffectExecutor
             case EffectActionType.ApplyBuff:
                 return ExecuteApplyBuff(action, triggerContext, targets);
             case EffectActionType.SetMoveSpeedMultiplier:
-                return ExecuteSetMoveSpeedMultiplier(action, targets);
+                return ExecuteSetMoveSpeedMultiplier(
+                    action,
+                    triggerContext,
+                    targets);
             case EffectActionType.ClearMoveSpeedMultiplier:
-                return ExecuteClearMoveSpeedMultiplier(targets);
+                return ExecuteClearMoveSpeedMultiplier(
+                    triggerContext,
+                    targets);
             case EffectActionType.SetMovementLock:
-                return ExecuteSetMovementLock(action, targets);
+                return ExecuteSetMovementLock(
+                    action,
+                    triggerContext,
+                    targets);
             case EffectActionType.ExecuteMultiTargetEffect:
                 return ExecuteMultiTargetEffect(action, triggerContext, targets);
             case EffectActionType.SpawnWindVortex:
@@ -189,6 +197,7 @@ public static class EffectExecutor
 
     private static bool ExecuteSetMoveSpeedMultiplier(
         EffectAction action,
+        EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
     {
         bool updatedMoveSpeed = false;
@@ -197,7 +206,10 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (EffectTargetResolver.IsValidMonsterTarget(target) && target.SetMoveSpeedMultiplier(action.MoveSpeedMultiplier))
+            if (EffectTargetResolver.IsValidEffectContextTarget(
+                    target,
+                    triggerContext) &&
+                target.SetMoveSpeedMultiplier(action.MoveSpeedMultiplier))
             {
                 updatedMoveSpeed = true;
             }
@@ -206,7 +218,9 @@ public static class EffectExecutor
         return updatedMoveSpeed;
     }
 
-    private static bool ExecuteClearMoveSpeedMultiplier(IReadOnlyList<MonsterBehaviour> targets)
+    private static bool ExecuteClearMoveSpeedMultiplier(
+        EffectTriggerContext triggerContext,
+        IReadOnlyList<MonsterBehaviour> targets)
     {
         bool clearedMoveSpeed = false;
 
@@ -214,7 +228,9 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+            if (!EffectTargetResolver.IsValidEffectContextTarget(
+                    target,
+                    triggerContext))
             {
                 continue;
             }
@@ -228,6 +244,7 @@ public static class EffectExecutor
 
     private static bool ExecuteSetMovementLock(
         EffectAction action,
+        EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
     {
         bool updatedMovementLock = false;
@@ -236,7 +253,9 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+            if (!EffectTargetResolver.IsValidEffectContextTarget(
+                    target,
+                    triggerContext))
             {
                 continue;
             }

@@ -340,7 +340,9 @@ public class MonsterBuffRuntime
                 hasTriggerPosition: true,
                 triggerPosition: triggerPosition,
                 resolvedDamage: 0,
-                allowsElementalApplication: false)
+                allowsElementalApplication: false,
+                allowsLifecycleOwnerTarget:
+                    eventType == BuffEventType.Removed)
         );
     }
 

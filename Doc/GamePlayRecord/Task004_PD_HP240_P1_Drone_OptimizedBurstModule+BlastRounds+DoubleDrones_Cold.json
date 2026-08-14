@@ -1,0 +1,186 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T17:58:53+08:00",
+  "runLabel": "Task004_PD_HP240_P1_Drone_OptimizedBurstModule+BlastRounds+DoubleDrones_Cold",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5096685886383058
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 28,
+        "leaked": 12,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.699999988079071,
+        "effectiveDamage": 8590,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.8947916626930237,
+        "leakedRemainingHealth": 1010,
+        "averageLeakedRemainingHealth": 84.16666412353516,
+        "peakAlive": 21
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.8770751953125,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.8770751953125,
+        "battleDurationSeconds": 135.11480712890626
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 28,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -1246306,
+            "displayName": "Drone Tower",
+            "family": "Drone",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 10,
+            "baseRange": 4.0,
+            "baseCycleSeconds": 10.0,
+            "resolvedDamage": 10,
+            "resolvedRange": 4.0,
+            "resolvedCycleSeconds": 10.0,
+            "upgrades": [
+                {
+                    "displayName": "Optimized Burst Module",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blast Rounds",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "DroneBlastRounds",
+                    "element": ""
+                },
+                {
+                    "displayName": "Double Drones",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "DroneMultiDrones",
+                    "element": ""
+                },
+                {
+                    "displayName": "Frostbound Drones",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Cold"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Chilled",
+            "element": "Cold",
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 1727,
+            "applied": 57,
+            "refreshed": 0,
+            "stacked": 227,
+            "invalid": 0,
+            "blockedBySourceCooldown": 1426,
+            "blockedByProtection": 17,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 10,
+            "overloads": 2,
+            "enteredProtection": 2,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 29,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 28,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 20.39453125,
+            "sources": [
+                {
+                    "towerFamily": "Drone",
+                    "applicationAttempts": 1727,
+                    "successfulApplications": 284,
+                    "applied": 57,
+                    "refreshed": 0,
+                    "stacked": 227,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 1426,
+                    "blockedByProtection": 17,
+                    "overloads": 2,
+                    "enteredProtection": 2,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 29,
+                    "averageFirstApplicationToOverloadSeconds": 20.39453125
+                }
+            ]
+        },
+        {
+            "displayName": "Frozen",
+            "element": "None",
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 2,
+            "applied": 2,
+            "refreshed": 0,
+            "stacked": 0,
+            "invalid": 0,
+            "blockedBySourceCooldown": 0,
+            "blockedByProtection": 0,
+            "distinctMonsters": 2,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 1,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 8,
+            "naturalExpiriesBeforeOverload": 0,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 2,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Drone",
+                    "applicationAttempts": 2,
+                    "successfulApplications": 2,
+                    "applied": 2,
+                    "refreshed": 0,
+                    "stacked": 0,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 0,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 8,
+                    "naturalExpiriesBeforeOverload": 0,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

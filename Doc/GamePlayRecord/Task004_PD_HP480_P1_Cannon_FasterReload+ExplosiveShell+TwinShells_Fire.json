@@ -1,0 +1,139 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T18:33:30+08:00",
+  "runLabel": "Task004_PD_HP480_P1_Cannon_FasterReload+ExplosiveShell+TwinShells_Fire",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 480,
+        "observedMaximumMonsterHealth": 480,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5089259147644045
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 2,
+        "leaked": 38,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.05000000074505806,
+        "effectiveDamage": 11740,
+        "totalObservedHealth": 19200,
+        "damageCoverage": 0.6114583611488342,
+        "leakedRemainingHealth": 7460,
+        "averageLeakedRemainingHealth": 196.3157958984375,
+        "peakAlive": 26
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.84810638427735,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.84810638427735,
+        "battleDurationSeconds": 157.52406311035157
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 2,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -1638340,
+            "displayName": "Cannon Tower",
+            "family": "Cannon",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 60,
+            "baseRange": 3.0,
+            "baseCycleSeconds": 3.5,
+            "resolvedDamage": 60,
+            "resolvedRange": 3.0,
+            "resolvedCycleSeconds": 2.5,
+            "upgrades": [
+                {
+                    "displayName": "Faster Reload",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Explosive Shell",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "CannonExplosiveShell",
+                    "element": ""
+                },
+                {
+                    "displayName": "Twin Shells",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "CannonMultiShells",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blazing Shells",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Fire"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Burning",
+            "element": "Fire",
+            "sourceElements": [
+                "Fire"
+            ],
+            "applicationAttempts": 303,
+            "applied": 47,
+            "refreshed": 0,
+            "stacked": 125,
+            "invalid": 0,
+            "blockedBySourceCooldown": 131,
+            "blockedByProtection": 0,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 7,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 258,
+            "naturalExpiriesBeforeOverload": 45,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 2,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Cannon",
+                    "applicationAttempts": 303,
+                    "successfulApplications": 172,
+                    "applied": 47,
+                    "refreshed": 0,
+                    "stacked": 125,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 131,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 258,
+                    "naturalExpiriesBeforeOverload": 45,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

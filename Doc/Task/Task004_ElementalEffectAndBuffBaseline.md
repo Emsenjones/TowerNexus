@@ -64,14 +64,14 @@ An all-compatible-Upgrades Tower may receive one optional runtime-stability smok
 
 | Term | Exact Construction | Purpose |
 |---|---|---|
-| Pre-Elemental Reference Control | One Level 3 Tower with exactly one accepted Basic and one accepted Behaviour Upgrade; no Elemental Upgrade | Same-Tower baseline before Elemental value |
-| Single-Source Elemental Reference Core | The same Control plus exactly one Elemental Upgrade; no second Tower applies that ElementType | Normal Stage5-style Elemental value |
+| Pre-Elemental Reference Control | One natural Level 2 Tower with exactly one accepted Basic and one accepted Behaviour Upgrade; no Elemental Upgrade | Actual pre-Elemental baseline before the Level 3 Draft |
+| Single-Source Elemental Reference Core | The same build after its normal Level 3 transition plus exactly one Elemental Upgrade; no second Tower applies that ElementType | Normal Stage5-style Elemental value |
 | Representative Upper-Stress Elemental Build | One accepted Task003 upper-stress build plus exactly one Elemental Upgrade | Realistic strong-Core ceiling and interaction check |
 | Matching-source pair | Two Single-Source Elemental Reference Cores using the same ElementType and sharing targets in overlapping effective coverage | Shared stacks and Overload |
 | Mismatched-source control | The same two Towers and placements using different ElementTypes | Prove matching Element identity matters |
 | Non-overlap control | The same two matching Cores placed so the first Buff expires before the second source can affect that Monster | Prove shared-target opportunity matters |
 
-The unqualified term `Elemental Core` means one Level 3 Tower with one Basic, one Behaviour, and one Elemental Upgrade. The non-Elemental comparison is always called a `Pre-Elemental Reference Control`.
+The unqualified term `Elemental Core` means one Level 3 Tower with one Basic, one Behaviour, and one Elemental Upgrade. The non-Elemental comparison is always called a `Pre-Elemental Reference Control` and remains at its natural Level 2 state. Tower Level has no direct combat-stat or combat-logic bonus, so Task004 does not create an artificial Level 3 Tower without an Elemental Draft merely to match the Core's level number.
 
 ### 6.2 Frozen Pre-Elemental Reference Controls
 
@@ -216,11 +216,11 @@ At Stage end, aggregate at minimum by ElementType and source TowerFamily:
 - Distinct Monsters receiving the Buff
 - Distinct source Towers contributing successful applications
 
-The existing human-readable report remains in the Unity Console. Each terminal run additionally writes exactly one JSON report under `Library/CombatBalanceRuns/`, named from local completion time as `yyyyMMdd_HHmmss.json`. A numeric suffix is added only if two reports would otherwise collide within the same second. The Recorder does not create TXT output or mutable `Latest` aliases.
+The existing human-readable report remains in the Unity Console. Each terminal run additionally writes exactly one JSON report under `Doc/GamePlayRecord/`. A non-empty authored Run Name becomes `<RunName>.json`; a blank Run Name falls back to local completion time `yyyyMMdd_HHmmss.json`. If that filename already exists, the Recorder preserves it and selects the first available numeric suffix such as `_01` or `_02`. The Recorder does not create TXT output or mutable `Latest` aliases.
 
 The JSON root carries `schemaVersion = 1`, generation time, run identity, Monster fixture, combat totals, timing, player and integrity results, Tower and Upgrade snapshots, and the Buff aggregates above. A failed JSON write emits a diagnostic warning but cannot change the Battle result or suppress the Console report. Manual context snapshots remain Console-only because they are not terminal balance runs.
 
-When sharing results, identify the timestamped filename or ask Codex to inspect the newest named files in `Library/CombatBalanceRuns/`; copying the whole Console block is no longer required.
+When sharing results, identify the named file or ask Codex to inspect the newest files in `Doc/GamePlayRecord/`; copying the whole Console block is no longer required. Repeated calibration runs may reuse one logical Run Name because the exported filename suffix preserves every result.
 
 The final summary must still report `ResolutionCountsMatch=True` and `LeakCountMatchesPlayerHealthLoss=True` before a balance run is accepted.
 

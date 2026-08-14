@@ -12,7 +12,10 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 
     private TowerInstance selectedTower;
     [SerializeField]
-    private TowerUpgradeDefinition selectedUpgrade;
+    private List<TowerUpgradeDefinition> selectedUpgrades =
+        new List<TowerUpgradeDefinition>();
+    private SerializedObject serializedWindow;
+    private SerializedProperty selectedUpgradesProperty;
     private Vector2 scrollPosition;
 
     [MenuItem(WindowMenuPath)]
@@ -28,6 +31,7 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 
     private void OnEnable()
     {
+        EnsureSerializedProperties();
         RefreshContent();
     }
 
@@ -39,9 +43,9 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             "Tower Upgrade Draft Debug",
             EditorStyles.boldLabel);
         EditorGUILayout.HelpBox(
-            "Editor-only Task003 helper. It can prepare a runtime Tower " +
-            "level, inject a real Pending Upgrade Draft, or apply an Upgrade " +
-            "directly through TowerUpgradeSystem.",
+            "Editor-only Task003/Task004 helper. Configure one Upgrade list " +
+            "to prepare a runtime Tower, grant real Pending Upgrade Drafts, " +
+            "or apply the list directly through TowerUpgradeSystem.",
             MessageType.Info);
 
         DrawRuntimeStatus();
@@ -126,20 +130,21 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
     {
         EditorGUILayout.Space();
         EditorGUILayout.LabelField(
-            "Upgrade Definition",
+            "Upgrade Definitions",
             EditorStyles.boldLabel);
 
-        selectedUpgrade =
-            (TowerUpgradeDefinition)EditorGUILayout.ObjectField(
-                "Upgrade Definition",
-                selectedUpgrade,
-                typeof(TowerUpgradeDefinition),
-                false);
+        EnsureSerializedProperties();
+        serializedWindow.Update();
+        EditorGUILayout.PropertyField(
+            selectedUpgradesProperty,
+            new GUIContent("Upgrade Definitions"),
+            includeChildren: true);
+        serializedWindow.ApplyModifiedProperties();
 
         EditorGUILayout.HelpBox(
-            "Assign the TowerUpgradeDefinition asset to test. TowerFamily, " +
-            "Required Tower Level, duplicate, package, and Elemental rules " +
-            "remain enforced by TowerUpgradeSystem.",
+            "Assign the complete Basic / Behaviour / Elemental build to test. " +
+            "TowerFamily, Required Tower Level, duplicate, package, and " +
+            "Elemental rules remain enforced.",
             MessageType.None);
     }
 
@@ -148,11 +153,22 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Selection Status", EditorStyles.boldLabel);
 
-        if (selectedTower == null || selectedUpgrade == null)
+        if (selectedTower == null)
         {
             EditorGUILayout.HelpBox(
-                "A runtime Tower and compatible Upgrade are required.",
+                "A runtime Tower and Upgrade list are required.",
                 MessageType.None);
+            return;
+        }
+
+        if (!TryGetConfiguredUpgrades(
+                selectedTower,
+                out List<TowerUpgradeDefinition> upgrades,
+                out string configurationFailureReason))
+        {
+            EditorGUILayout.HelpBox(
+                configurationFailureReason,
+                MessageType.Warning);
             return;
         }
 
@@ -160,14 +176,19 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             "Current Tower Level",
             selectedTower.CurrentLevel.ToString());
         EditorGUILayout.LabelField(
-            "Required Tower Level",
-            selectedUpgrade.RequiredTowerLevel.ToString());
-        EditorGUILayout.LabelField(
-            "Upgrade Layer",
-            selectedUpgrade.UpgradeLayer.ToString());
+            "Maximum Required Level",
+            GetMaximumRequiredLevel(upgrades).ToString());
         EditorGUILayout.LabelField(
             "Applied Upgrades",
             GetAppliedUpgradeSummary(selectedTower));
+
+        for (int i = 0; i < upgrades.Count; i++)
+        {
+            TowerUpgradeDefinition upgrade = upgrades[i];
+            EditorGUILayout.LabelField(
+                $"#{i + 1} {GetUpgradeName(upgrade)}",
+                $"{upgrade.UpgradeLayer} / L{upgrade.RequiredTowerLevel}");
+        }
 
         TowerUpgradeSystem upgradeSystem =
             FindFirstObjectByType<TowerUpgradeSystem>();
@@ -180,18 +201,46 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             return;
         }
 
-        if (upgradeSystem.CanApplyUpgrade(
-                selectedTower,
-                selectedUpgrade,
-                out string failureReason))
+        int eligibleCount = 0;
+        int appliedCount = 0;
+        List<string> blockedReasons = new List<string>();
+
+        for (int i = 0; i < upgrades.Count; i++)
+        {
+            TowerUpgradeDefinition upgrade = upgrades[i];
+
+            if (selectedTower.HasUpgrade(upgrade))
+            {
+                appliedCount++;
+                continue;
+            }
+
+            if (upgradeSystem.CanApplyUpgrade(
+                    selectedTower,
+                    upgrade,
+                    out string failureReason))
+            {
+                eligibleCount++;
+                continue;
+            }
+
+            blockedReasons.Add(
+                $"{GetUpgradeName(upgrade)}: {failureReason}");
+        }
+
+        if (blockedReasons.Count == 0)
         {
             EditorGUILayout.HelpBox(
-                "The selected Upgrade is currently eligible.",
+                $"List status: {appliedCount} applied, {eligibleCount} " +
+                "currently eligible.",
                 MessageType.Info);
             return;
         }
 
-        EditorGUILayout.HelpBox(failureReason, MessageType.Warning);
+        EditorGUILayout.HelpBox(
+            "Prepare the required level or resolve these eligibility issues:\n" +
+            string.Join("\n", blockedReasons),
+            MessageType.Warning);
     }
 
     private void DrawActions()
@@ -202,31 +251,38 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         bool hasSelection =
             Application.isPlaying &&
             selectedTower != null &&
-            selectedUpgrade != null;
+            selectedUpgrades != null &&
+            selectedUpgrades.Count > 0;
 
         using (new EditorGUI.DisabledScope(!hasSelection))
         {
-            if (GUILayout.Button("Prepare Required Level (Debug)"))
+            if (GUILayout.Button("Prepare List Required Level (Debug)"))
             {
-                PrepareRequiredLevel();
+                PrepareRequiredLevels();
             }
 
-            if (GUILayout.Button("Grant Pending Upgrade Draft"))
+            EditorGUILayout.BeginHorizontal();
+
+            if (GUILayout.Button("Grant List As Pending Drafts"))
             {
-                GrantPendingUpgradeDraft();
+                GrantPendingUpgradeDrafts();
             }
 
-            if (GUILayout.Button("Apply Upgrade Directly"))
+            if (GUILayout.Button("Apply List Directly"))
             {
-                ApplyUpgradeDirectly();
+                ApplyUpgradesDirectly();
             }
+
+            EditorGUILayout.EndHorizontal();
         }
 
         EditorGUILayout.HelpBox(
-            "Prepare Required Level intentionally bypasses Player Progress, " +
-            "Draft cost, and Stage level caps. Grant and Direct Apply still " +
-            "use TowerUpgradeSystem eligibility. Restart Play Mode between " +
-            "independent balance runs; this tool does not remove Upgrades.",
+            "Prepare bypasses Player Progress, Draft cost, and Stage level " +
+            "caps. Grant and Direct Apply are alternative paths: Grant " +
+            "creates Pending Draft items for normal dragging; Direct Apply " +
+            "builds the Tower immediately. Both preserve eligibility rules. " +
+            "Restart Play Mode between independent balance runs; this tool " +
+            "does not remove Upgrades.",
             MessageType.None);
     }
 
@@ -264,21 +320,23 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         Repaint();
     }
 
-    private void PrepareRequiredLevel()
+    private void PrepareRequiredLevels()
     {
-        if (!TryGetSelection(out TowerInstance tower, out TowerUpgradeDefinition upgrade))
+        if (!TryGetBatchSelection(
+                out TowerInstance tower,
+                out List<TowerUpgradeDefinition> upgrades))
         {
             return;
         }
 
-        int requiredLevel = upgrade.RequiredTowerLevel;
+        int requiredLevel = GetMaximumRequiredLevel(upgrades);
 
         if (tower.CurrentLevel >= requiredLevel)
         {
             Debug.Log(
                 $"Tower upgrade debug window did not change '{tower.name}': " +
-                $"current level {tower.CurrentLevel} already satisfies " +
-                $"Required Tower Level {requiredLevel}.",
+                $"current level {tower.CurrentLevel} already satisfies the " +
+                $"list's maximum Required Tower Level {requiredLevel}.",
                 tower);
             return;
         }
@@ -291,7 +349,7 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             {
                 Debug.LogWarning(
                     $"Tower upgrade debug window could not prepare " +
-                    $"'{tower.name}' for '{GetUpgradeName(upgrade)}': " +
+                    $"'{tower.name}' for the configured Upgrade list: " +
                     $"Tower Level {nextLevel} is not configured.",
                     tower);
                 return;
@@ -306,19 +364,18 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         }
 
         Debug.Log(
-            $"Tower upgrade debug window prepared '{tower.name}' at " +
-            $"Tower Level {tower.CurrentLevel} for " +
-            $"'{GetUpgradeName(upgrade)}'. No Player Progress or Draft was " +
-            "consumed.",
+            $"Tower upgrade debug window prepared '{tower.name}' at Tower " +
+            $"Level {tower.CurrentLevel} for {upgrades.Count} configured " +
+            "Upgrades. No Player Progress or Draft was consumed.",
             tower);
         Repaint();
     }
 
-    private void GrantPendingUpgradeDraft()
+    private void GrantPendingUpgradeDrafts()
     {
-        if (!TryGetEligibleSelection(
+        if (!TryGetEligibleBatch(
                 out TowerInstance tower,
-                out TowerUpgradeDefinition upgrade,
+                out List<TowerUpgradeDefinition> upgrades,
                 out _))
         {
             return;
@@ -329,7 +386,7 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         if (battleHud == null)
         {
             Debug.LogWarning(
-                "Tower upgrade debug window cannot grant a Pending Draft: " +
+                "Tower upgrade debug window cannot grant Pending Drafts: " +
                 "BattleHUDUI is missing.");
             return;
         }
@@ -337,53 +394,116 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         if (battleHud.IsDraftOpen)
         {
             Debug.LogWarning(
-                "Tower upgrade debug window cannot grant a Pending Draft " +
+                "Tower upgrade debug window cannot grant Pending Drafts " +
                 "while the normal Draft window is open.",
                 battleHud);
             return;
         }
 
-        DraftResult draftResult =
-            DraftResult.CreateTowerUpgradeDraft(upgrade);
-
-        if (!battleHud.TryAddPendingDraft(
-                draftResult,
-                out PendingDraftUIItem committedItem,
-                out string failureReason))
+        for (int i = 0; i < upgrades.Count; i++)
         {
+            TowerUpgradeDefinition upgrade = upgrades[i];
+
+            if (tower.HasUpgrade(upgrade))
+            {
+                continue;
+            }
+
+            if (TryGetPendingDraftConflict(
+                    battleHud,
+                    upgrade,
+                    out string pendingFailureReason))
+            {
+                Debug.LogWarning(
+                    "Tower upgrade debug window cannot grant the configured " +
+                    "list: " + pendingFailureReason,
+                    battleHud);
+                return;
+            }
+        }
+
+        List<PendingDraftUIItem> committedItems =
+            new List<PendingDraftUIItem>();
+
+        for (int i = 0; i < upgrades.Count; i++)
+        {
+            TowerUpgradeDefinition upgrade = upgrades[i];
+
+            if (tower.HasUpgrade(upgrade))
+            {
+                continue;
+            }
+
+            DraftResult draftResult =
+                DraftResult.CreateTowerUpgradeDraft(upgrade);
+
+            if (battleHud.TryAddPendingDraft(
+                    draftResult,
+                    out PendingDraftUIItem committedItem,
+                    out string failureReason))
+            {
+                committedItems.Add(committedItem);
+                continue;
+            }
+
+            for (int committedIndex = 0;
+                 committedIndex < committedItems.Count;
+                 committedIndex++)
+            {
+                battleHud.RemovePendingDraft(committedItems[committedIndex]);
+            }
+
             Debug.LogWarning(
                 $"Tower upgrade debug window failed to grant " +
-                $"'{GetUpgradeName(upgrade)}': {failureReason}",
+                $"'{GetUpgradeName(upgrade)}': {failureReason}. Pending " +
+                "Drafts created by this batch were rolled back.",
                 battleHud);
             return;
         }
 
         Debug.Log(
-            $"Tower upgrade debug window granted Pending Draft " +
-            $"'{GetUpgradeName(upgrade)}' after validating " +
-            $"'{tower.name}'. The Draft remains target-independent and must " +
-            "be dragged through the normal flow.",
-            committedItem);
+            $"Tower upgrade debug window granted {committedItems.Count} " +
+            $"Pending Upgrade Drafts after validating '{tower.name}'. The " +
+            "Drafts remain target-independent and must be dragged through " +
+            "the normal flow.",
+            battleHud);
+        Repaint();
     }
 
-    private void ApplyUpgradeDirectly()
+    private void ApplyUpgradesDirectly()
     {
-        if (!TryGetEligibleSelection(
+        if (!TryGetEligibleBatch(
                 out TowerInstance tower,
-                out TowerUpgradeDefinition upgrade,
+                out List<TowerUpgradeDefinition> upgrades,
                 out TowerUpgradeSystem upgradeSystem))
         {
             return;
         }
 
-        if (!upgradeSystem.TryApplyUpgrade(
-                tower,
-                upgrade,
-                out string failureReason))
+        int appliedCount = 0;
+
+        for (int i = 0; i < upgrades.Count; i++)
         {
+            TowerUpgradeDefinition upgrade = upgrades[i];
+
+            if (tower.HasUpgrade(upgrade))
+            {
+                continue;
+            }
+
+            if (upgradeSystem.TryApplyUpgrade(
+                    tower,
+                    upgrade,
+                    out string failureReason))
+            {
+                appliedCount++;
+                continue;
+            }
+
             Debug.LogWarning(
                 $"Tower upgrade debug window failed to apply " +
-                $"'{GetUpgradeName(upgrade)}' to '{tower.name}': " +
+                $"'{GetUpgradeName(upgrade)}' to '{tower.name}' after " +
+                $"committing {appliedCount} earlier list entries: " +
                 failureReason,
                 tower);
             return;
@@ -391,24 +511,27 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 
         TowerBehaviour towerBehaviour = tower.GetComponent<TowerBehaviour>();
 
-        if (towerBehaviour != null && towerBehaviour.VisualController != null)
+        if (appliedCount > 0 &&
+            towerBehaviour != null &&
+            towerBehaviour.VisualController != null)
         {
             towerBehaviour.VisualController.PlayUpgradeAppliedFeedback();
         }
 
         Debug.Log(
-            $"Tower upgrade debug window directly applied " +
-            $"'{GetUpgradeName(upgrade)}' to '{tower.name}'.",
+            $"Tower upgrade debug window directly applied {appliedCount} " +
+            $"configured Upgrades to '{tower.name}'. Entries already applied " +
+            "were skipped.",
             tower);
         Repaint();
     }
 
-    private bool TryGetSelection(
+    private bool TryGetBatchSelection(
         out TowerInstance tower,
-        out TowerUpgradeDefinition upgrade)
+        out List<TowerUpgradeDefinition> upgrades)
     {
         tower = selectedTower;
-        upgrade = selectedUpgrade;
+        upgrades = null;
 
         if (!Application.isPlaying)
         {
@@ -417,25 +540,36 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             return false;
         }
 
-        if (tower == null || upgrade == null)
+        if (tower == null)
         {
             Debug.LogWarning(
-                "Tower upgrade debug window requires a runtime Tower and " +
-                "compatible Upgrade selection.");
+                "Tower upgrade debug window requires a runtime Tower.");
             return false;
         }
 
-        return true;
+        if (TryGetConfiguredUpgrades(
+                tower,
+                out upgrades,
+                out string failureReason))
+        {
+            return true;
+        }
+
+        Debug.LogWarning(
+            "Tower upgrade debug window rejected the configured Upgrade " +
+            "list: " + failureReason,
+            tower);
+        return false;
     }
 
-    private bool TryGetEligibleSelection(
+    private bool TryGetEligibleBatch(
         out TowerInstance tower,
-        out TowerUpgradeDefinition upgrade,
+        out List<TowerUpgradeDefinition> upgrades,
         out TowerUpgradeSystem upgradeSystem)
     {
         upgradeSystem = null;
 
-        if (!TryGetSelection(out tower, out upgrade))
+        if (!TryGetBatchSelection(out tower, out upgrades))
         {
             return false;
         }
@@ -450,19 +584,199 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             return false;
         }
 
-        if (upgradeSystem.CanApplyUpgrade(
-                tower,
-                upgrade,
-                out string failureReason))
+        for (int i = 0; i < upgrades.Count; i++)
         {
-            return true;
+            TowerUpgradeDefinition upgrade = upgrades[i];
+
+            if (tower.HasUpgrade(upgrade))
+            {
+                continue;
+            }
+
+            if (upgradeSystem.CanApplyUpgrade(
+                    tower,
+                    upgrade,
+                    out string failureReason))
+            {
+                continue;
+            }
+
+            Debug.LogWarning(
+                $"Tower upgrade debug window rejected " +
+                $"'{GetUpgradeName(upgrade)}' for '{tower.name}': " +
+                failureReason,
+                tower);
+            return false;
         }
 
-        Debug.LogWarning(
-            $"Tower upgrade debug window rejected " +
-            $"'{GetUpgradeName(upgrade)}' for '{tower.name}': " +
-            failureReason,
-            tower);
+        return true;
+    }
+
+    private void EnsureSerializedProperties()
+    {
+        if (serializedWindow != null && selectedUpgradesProperty != null)
+        {
+            return;
+        }
+
+        serializedWindow = new SerializedObject(this);
+        selectedUpgradesProperty =
+            serializedWindow.FindProperty(nameof(selectedUpgrades));
+    }
+
+    private bool TryGetConfiguredUpgrades(
+        TowerInstance tower,
+        out List<TowerUpgradeDefinition> upgrades,
+        out string failureReason)
+    {
+        upgrades = new List<TowerUpgradeDefinition>();
+        failureReason = string.Empty;
+
+        if (tower == null || tower.TowerDefinition == null)
+        {
+            failureReason = "A valid runtime Tower is required.";
+            return false;
+        }
+
+        if (selectedUpgrades == null || selectedUpgrades.Count == 0)
+        {
+            failureReason = "Configure at least one Upgrade Definition.";
+            return false;
+        }
+
+        HashSet<TowerUpgradeDefinition> uniqueUpgrades =
+            new HashSet<TowerUpgradeDefinition>();
+        HashSet<TowerBehaviourPackageType> behaviourPackages =
+            new HashSet<TowerBehaviourPackageType>();
+        int elementalCount = 0;
+
+        for (int i = 0; i < selectedUpgrades.Count; i++)
+        {
+            TowerUpgradeDefinition upgrade = selectedUpgrades[i];
+
+            if (upgrade == null)
+            {
+                failureReason =
+                    $"Upgrade list entry #{i + 1} is missing.";
+                return false;
+            }
+
+            if (!uniqueUpgrades.Add(upgrade))
+            {
+                failureReason =
+                    $"'{GetUpgradeName(upgrade)}' appears more than once.";
+                return false;
+            }
+
+            if (upgrade.TowerFamily != tower.TowerDefinition.TowerFamily)
+            {
+                failureReason =
+                    $"'{GetUpgradeName(upgrade)}' belongs to " +
+                    $"{upgrade.TowerFamily}, but the selected Tower belongs " +
+                    $"to {tower.TowerDefinition.TowerFamily}.";
+                return false;
+            }
+
+            if (!upgrade.IsValid())
+            {
+                failureReason =
+                    $"'{GetUpgradeName(upgrade)}' is not a valid Upgrade " +
+                    "Definition.";
+                return false;
+            }
+
+            if (upgrade.UpgradeLayer == TowerUpgradeLayer.Elemental)
+            {
+                elementalCount++;
+
+                if (elementalCount > 1)
+                {
+                    failureReason =
+                        "A configured build may contain at most one " +
+                        "Elemental Upgrade.";
+                    return false;
+                }
+            }
+
+            if (upgrade.UpgradeLayer == TowerUpgradeLayer.Behaviour &&
+                upgrade.BehaviourPackageType !=
+                    TowerBehaviourPackageType.None &&
+                !behaviourPackages.Add(upgrade.BehaviourPackageType))
+            {
+                failureReason =
+                    $"Behaviour package '{upgrade.BehaviourPackageType}' " +
+                    "appears more than once in the configured build.";
+                return false;
+            }
+
+            upgrades.Add(upgrade);
+        }
+
+        return true;
+    }
+
+    private static int GetMaximumRequiredLevel(
+        IReadOnlyList<TowerUpgradeDefinition> upgrades)
+    {
+        int requiredLevel = 1;
+
+        for (int i = 0; i < upgrades.Count; i++)
+        {
+            requiredLevel = Mathf.Max(
+                requiredLevel,
+                upgrades[i].RequiredTowerLevel);
+        }
+
+        return requiredLevel;
+    }
+
+    private static bool TryGetPendingDraftConflict(
+        BattleHUDUI battleHud,
+        TowerUpgradeDefinition candidate,
+        out string failureReason)
+    {
+        failureReason = string.Empty;
+
+        if (battleHud == null || candidate == null)
+        {
+            return false;
+        }
+
+        IReadOnlyList<PendingDraftUIItem> pendingItems =
+            battleHud.PendingDraftItems;
+
+        for (int i = 0; i < pendingItems.Count; i++)
+        {
+            PendingDraftUIItem pendingItem = pendingItems[i];
+            TowerUpgradeDefinition pendingUpgrade = pendingItem != null
+                ? pendingItem.TowerUpgradeDefinition
+                : null;
+
+            if (pendingUpgrade == null)
+            {
+                continue;
+            }
+
+            if (pendingUpgrade == candidate)
+            {
+                failureReason =
+                    $"'{GetUpgradeName(candidate)}' is already pending.";
+                return true;
+            }
+
+            if (pendingUpgrade.UpgradeLayer ==
+                    TowerUpgradeLayer.Elemental &&
+                candidate.UpgradeLayer == TowerUpgradeLayer.Elemental &&
+                pendingUpgrade.TowerFamily == candidate.TowerFamily)
+            {
+                failureReason =
+                    $"TowerFamily '{candidate.TowerFamily}' already has " +
+                    $"pending Elemental Upgrade " +
+                    $"'{GetUpgradeName(pendingUpgrade)}'.";
+                return true;
+            }
+        }
+
         return false;
     }
 

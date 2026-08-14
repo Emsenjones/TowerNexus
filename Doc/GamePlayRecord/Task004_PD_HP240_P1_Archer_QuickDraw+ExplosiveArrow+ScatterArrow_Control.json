@@ -1,0 +1,84 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T17:31:47+08:00",
+  "runLabel": "Task004_PD_HP240_P1_Archer_QuickDraw+ExplosiveArrow+ScatterArrow_Control",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5071074962615969
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 7,
+        "leaked": 33,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.17499999701976777,
+        "effectiveDamage": 8190,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.8531249761581421,
+        "leakedRemainingHealth": 1410,
+        "averageLeakedRemainingHealth": 42.727272033691409,
+        "peakAlive": 26
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.7771987915039,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.7771987915039,
+        "battleDurationSeconds": 162.50390625
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 7,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -850056,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 2,
+            "hasCombatRuntime": true,
+            "baseDamage": 20,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 20,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "upgrades": [
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Explosive Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherExplosiveArrow",
+                    "element": ""
+                },
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": ""
+                }
+            ]
+        }
+    ],
+    "buffs": []
+}

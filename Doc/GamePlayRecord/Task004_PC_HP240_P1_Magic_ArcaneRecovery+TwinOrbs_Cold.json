@@ -1,0 +1,132 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T17:12:46+08:00",
+  "runLabel": "Task004_PC_HP240_P1_Magic_ArcaneRecovery+TwinOrbs_Cold",
+    "terminalState": "Defeat",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.506316661834717
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 0,
+        "leaked": 40,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.0,
+        "effectiveDamage": 3492,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.36375001072883608,
+        "leakedRemainingHealth": 6108,
+        "averageLeakedRemainingHealth": 152.6999969482422,
+        "peakAlive": 29
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.74635314941406,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.74635314941406,
+        "battleDurationSeconds": 169.24427795410157
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 0,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -788920,
+            "displayName": "Magic Tower",
+            "family": "Magic",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 30,
+            "baseRange": 1.5,
+            "baseCycleSeconds": 20.0,
+            "resolvedDamage": 30,
+            "resolvedRange": 1.5,
+            "resolvedCycleSeconds": 17.0,
+            "upgrades": [
+                {
+                    "displayName": "Arcane Recovery",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Twin Orbs",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "MagicMultiOrbs",
+                    "element": ""
+                },
+                {
+                    "displayName": "Frostbound Orbs",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Cold"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Chilled",
+            "element": "Cold",
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 162,
+            "applied": 40,
+            "refreshed": 0,
+            "stacked": 115,
+            "invalid": 0,
+            "blockedBySourceCooldown": 7,
+            "blockedByProtection": 0,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 5,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 40,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 0,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Magic",
+                    "applicationAttempts": 162,
+                    "successfulApplications": 155,
+                    "applied": 40,
+                    "refreshed": 0,
+                    "stacked": 115,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 7,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 40,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

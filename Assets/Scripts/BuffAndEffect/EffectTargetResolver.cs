@@ -8,6 +8,16 @@ public static class EffectTargetResolver
         return monster != null && monster.IsGameplayTargetable;
     }
 
+    public static bool IsValidEffectContextTarget(
+        MonsterBehaviour monster,
+        EffectTriggerContext triggerContext)
+    {
+        return IsValidMonsterTarget(monster) ||
+               (triggerContext.AllowsLifecycleOwnerTarget &&
+                monster != null &&
+                monster == triggerContext.TargetMonster);
+    }
+
     public static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
     {
         if (monster == null)
@@ -93,7 +103,7 @@ public static class EffectTargetResolver
     {
         MonsterBehaviour targetMonster = triggerContext.TargetMonster;
 
-        if (!IsValidMonsterTarget(targetMonster))
+        if (!IsValidEffectContextTarget(targetMonster, triggerContext))
         {
             Debug.LogWarning("Effect target resolver cannot resolve single-target effect: target monster is missing or invalid.");
             return false;
@@ -134,7 +144,7 @@ public static class EffectTargetResolver
     {
         MonsterBehaviour targetMonster = triggerContext.TargetMonster;
 
-        if (IsValidMonsterTarget(targetMonster))
+        if (IsValidEffectContextTarget(targetMonster, triggerContext))
         {
             center = GetMonsterHitPosition(targetMonster);
             return true;

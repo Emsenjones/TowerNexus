@@ -1,0 +1,132 @@
+{
+    "schemaVersion": 1,
+    "generatedAtLocal": "2026-08-14T16:37:27+08:00",
+  "runLabel": "Task004_PC_HP240_P1_Drone_OptimizedBurstModule+BlastRounds_Electric",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.506788492202759
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 15,
+        "leaked": 25,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.375,
+        "effectiveDamage": 5320,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.5541666746139526,
+        "leakedRemainingHealth": 4280,
+        "averageLeakedRemainingHealth": 171.1999969482422,
+        "peakAlive": 23
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.76475524902344,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.76475524902344,
+        "battleDurationSeconds": 149.98641967773438
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 15,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -482990,
+            "displayName": "Drone Tower",
+            "family": "Drone",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 10,
+            "baseRange": 4.0,
+            "baseCycleSeconds": 10.0,
+            "resolvedDamage": 10,
+            "resolvedRange": 4.0,
+            "resolvedCycleSeconds": 10.0,
+            "upgrades": [
+                {
+                    "displayName": "Optimized Burst Module",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blast Rounds",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "DroneBlastRounds",
+                    "element": ""
+                },
+                {
+                    "displayName": "Charged Drones",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Electric"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "displayName": "Electrified",
+            "element": "Electric",
+            "sourceElements": [
+                "Electric"
+            ],
+            "applicationAttempts": 713,
+            "applied": 41,
+            "refreshed": 0,
+            "stacked": 108,
+            "invalid": 0,
+            "blockedBySourceCooldown": 564,
+            "blockedByProtection": 0,
+            "distinctMonsters": 35,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 8,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 26,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 15,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Drone",
+                    "applicationAttempts": 713,
+                    "successfulApplications": 149,
+                    "applied": 41,
+                    "refreshed": 0,
+                    "stacked": 108,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 564,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 26,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

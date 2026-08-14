@@ -881,7 +881,32 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 "JSON filename: " + resolvedRunName);
         }
 
-        return Path.Combine(outputDirectory, resolvedRunName + ".json");
+        string outputPath = Path.Combine(
+            outputDirectory,
+            resolvedRunName + ".json");
+
+        if (!File.Exists(outputPath))
+        {
+            return outputPath;
+        }
+
+        for (int suffix = 1; suffix < 1000; suffix++)
+        {
+            outputPath = Path.Combine(
+                outputDirectory,
+                resolvedRunName + "_" +
+                suffix.ToString("00", CultureInfo.InvariantCulture) +
+                ".json");
+
+            if (!File.Exists(outputPath))
+            {
+                return outputPath;
+            }
+        }
+
+        return Path.Combine(
+            outputDirectory,
+            resolvedRunName + "_" + Guid.NewGuid().ToString("N") + ".json");
     }
 
     private string ResolveRunName(DateTime generatedAt)
