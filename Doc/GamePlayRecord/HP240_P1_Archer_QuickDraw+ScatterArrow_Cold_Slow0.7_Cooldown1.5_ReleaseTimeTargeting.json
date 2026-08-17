@@ -1,0 +1,249 @@
+{
+    "schemaVersion": 7,
+    "generatedAtLocal": "2026-08-17T13:45:10+08:00",
+    "runLabel": "HP240_P1_Archer_QuickDraw+ScatterArrow_Cold_Slow0.7_Cooldown1.5_ReleaseTimeTargeting",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "waveConfigName": "Config_MonsterWave_Default",
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 40,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5058975219726564
+    },
+    "combat": {
+        "spawned": 40,
+        "resolved": 40,
+        "killed": 2,
+        "leaked": 38,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.05000000074505806,
+        "effectiveDamage": 3685,
+        "totalObservedHealth": 9600,
+        "damageCoverage": 0.3838541805744171,
+        "leakedRemainingHealth": 5915,
+        "averageLeakedRemainingHealth": 155.65789794921876,
+        "peakAlive": 29
+    },
+    "timing": {
+        "spawnSpanSeconds": 97.7300033569336,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 97.7300033569336,
+        "battleDurationSeconds": 165.5648193359375
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 2,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true
+    },
+    "towers": [
+        {
+            "instanceId": -197956,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 20,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 20,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "projectileRuntime": {
+                "projectilesReleased": 384,
+                "initialProjectilesReleased": 384,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 0,
+                "arcTargetResolvedImpacts": 0,
+                "arcIntendedTargetImpacts": 0,
+                "arcFallbackTargetImpacts": 0,
+                "arcPositionOnlyImpacts": 0,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 0,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 0.0,
+                "arcTargetRelation": {
+                    "sampledInitialImpacts": 0,
+                    "primaryIntendedTargetImpacts": 0,
+                    "primaryFallbackTargetImpacts": 0,
+                    "primaryPositionOnlyImpacts": 0,
+                    "additionalIntendedTargetImpacts": 0,
+                    "additionalFallbackTargetImpacts": 0,
+                    "additionalPositionOnlyImpacts": 0,
+                    "fallbackImmediateLaterSpawnImpacts": 0,
+                    "fallbackImmediateEarlierSpawnImpacts": 0,
+                    "fallbackNonAdjacentImpacts": 0,
+                    "fallbackUnknownRelationImpacts": 0,
+                    "positionOnlyNearestOtherAvailable": 0,
+                    "positionOnlyNearestOtherImmediateLaterSpawn": 0,
+                    "positionOnlyNearestOtherImmediateEarlierSpawn": 0,
+                    "positionOnlyNearestOtherNonAdjacent": 0,
+                    "positionOnlyNearestOtherUnknownRelation": 0,
+                    "positionOnlyWithoutNearestOther": 0,
+                    "observedMinimumHitDistanceThreshold": 0.0,
+                    "observedMaximumHitDistanceThreshold": 0.0,
+                    "confirmationToReleaseSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "releaseToImpactSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "plannedTravelTimeSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToFallbackDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "fallbackMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToPositionOnlyNearestOtherDistance": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "positionOnlyNearestOtherMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "samples": []
+                }
+            },
+            "upgrades": [
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": ""
+                },
+                {
+                    "displayName": "Frostbound Arrows",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Cold"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "definitionName": "Config_BuffDefini_Chilled",
+            "displayName": "Chilled",
+            "element": "Cold",
+            "parameters": {
+                "usesStacks": true,
+                "activeDurationSeconds": 5.0,
+                "periodicTickIntervalSeconds": 0.0,
+                "maximumStacks": 10,
+                "sourceApplyCooldownSeconds": 1.5,
+                "overloadProtectionDurationSeconds": 10.0,
+                "moveSpeedMultiplierAvailable": true,
+                "moveSpeedMultiplier": 0.699999988079071
+            },
+            "sourceElements": [
+                "Cold"
+            ],
+            "applicationAttempts": 352,
+            "applied": 47,
+            "refreshed": 0,
+            "stacked": 136,
+            "invalid": 0,
+            "blockedBySourceCooldown": 169,
+            "blockedByProtection": 0,
+            "distinctMonsters": 40,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 8,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 0,
+            "naturalExpiriesBeforeOverload": 45,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 2,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Archer",
+                    "applicationAttempts": 352,
+                    "successfulApplications": 183,
+                    "applied": 47,
+                    "refreshed": 0,
+                    "stacked": 136,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 169,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 0,
+                    "naturalExpiriesBeforeOverload": 45,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

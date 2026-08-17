@@ -14,7 +14,7 @@ It owns:
 - Resolving current Tower combat values
 - Monster detection and target selection
 - Attack readiness and Attack Cycle timing
-- Attack confirmation and presentation-gated release
+- Windup admission, release confirmation, and presentation-gated release
 - Attack Entity release and ownership registration
 - Coordination of approved Live Refresh
 - Technical invalidation and cleanup
@@ -53,7 +53,7 @@ Common per-Tower runtime state includes:
 - Remaining Attack Cycle time
 - Detected valid Monsters
 - Current selected target when required
-- Optional pending attack confirmation
+- Optional pending attack topology
 - Active released-entity registries
 - Archetype-specific scheduler state
 
@@ -63,8 +63,8 @@ The shared attack state is conceptually:
 
 | State | Meaning |
 |---|---|
-| Ready | No confirmed attack is waiting for presentation release |
-| Waiting For Release | Attack topology and confirmation snapshots are locked while awaiting the authored release moment |
+| Ready | No admitted attack is waiting for presentation release |
+| Waiting For Release | Windup topology is locked while awaiting release-time target confirmation |
 
 Long-lived Magic Orb and Drone entities have their own runtime state after release.
 
@@ -82,30 +82,31 @@ Detection and selection never spawn, move, damage, or change Monster state.
 
 ---
 
-# 5. Attack Confirmation And Release
+# 5. Windup Admission, Release Confirmation, And Release
 
-An attack confirmation is distinct from Attack Entity release.
+For presentation-driven Archer and Cannon attacks, Windup admission is distinct from release confirmation and Attack Entity release.
 
-Confirmation locks only information that represents the already-made attack decision:
+Windup admission requires at least one current valid target. That target only proves that the Tower may begin its attack presentation; it is not the locked target of the future Projectile. Windup freezes only the already-started attack's structural identity:
 
-- Main target identity where required
-- Captured target positions
 - Release-group identity
 - Member or slot topology such as Center, Left, and Right Arrow slots
 - Initial Shell count
-- Confirmation-time fallback directions
+- Package-owned additional-member identity required by that topology
 
-Values that define the entity at actual release, such as unresolved damage and approved current package options, are resolved at release unless their contract explicitly says they are confirmation snapshots.
+At the presentation Release Moment, Archer and Cannon select again from current valid in-range candidates. This release confirmation freezes the target identity, direction, and target-position snapshot required by the actual Projectile. Values that define the entity at release, such as unresolved damage and approved current package options, are also resolved there unless their contract explicitly says they are Windup snapshots.
 
 ```text
 Ready And Valid Target
-    -> Confirm Attack
-    -> Lock Confirmation Topology And Snapshots
+    -> Admit Windup
+    -> Lock Attack Topology
     -> Request Attack Presentation
     -> Receive Release Moment Or Use Fallback
-    -> Revalidate Required Confirmation Data
+    -> Select Current Release Target Or Targets
+    -> Lock Release Identity, Direction, And Position
     -> Release Attack Entity Or Cancel
 ```
+
+If no valid primary target exists at the Release Moment, the pending attack is cancelled, no Attack Entity is created, and no Attack Cycle begins. A successfully released Projectile receives immutable launch direction or landing position and never tracks later Monster movement.
 
 Pending attacks are not released Attack Entities. They are not registered as active entities and do not receive Live Refresh commands intended for released runtime state.
 
@@ -113,7 +114,7 @@ Pending attacks are not released Attack Entities. They are not registered as act
 
 If a Tower level change replaces the active level model while an attack waits for release:
 
-- The pending confirmation remains unchanged.
+- The pending Windup topology remains unchanged.
 - The new model presentation receives the same attack presentation request.
 - The current Attack Origin is resolved from the new model.
 - If the new presentation cannot accept the request, the attack releases immediately through the approved fallback.
@@ -132,7 +133,7 @@ Attack Cycle Duration begins when the approved Attack Entity is successfully rel
 - Drone: after one Drone is successfully launched
 - Magic: after one complete Magic Orb group is successfully created and activated
 
-Failed confirmation, missing required release data, or failed entity creation does not start an Attack Cycle.
+Failed Windup admission, failed release confirmation, missing required release data, or failed entity creation does not start an Attack Cycle.
 
 Projectile completion does not delay Archer or Cannon readiness. Drone additionally requires active Drone count below current capacity.
 
@@ -149,7 +150,7 @@ Every combat value belongs to one timing category:
 | Category | Contract |
 |---|---|
 | Static Authoring | Reusable data that does not change during the battle |
-| Confirmation Snapshot | Identity, topology, or position locked when the attack is confirmed |
+| Windup Snapshot | Release-group and member topology locked when attack presentation begins |
 | Release Snapshot | Value resolved when an Attack Entity is actually released |
 | Live Refresh | Approved future behavior of an already released owned entity may change |
 | Entity State | Consumed history, elapsed time, progress, and completed results that never reset |
@@ -217,15 +218,15 @@ Detailed projectile refresh behavior belongs to Projectile System. Detailed pack
 
 # 9. Archer Runtime
 
-Archer confirmation creates one stable release group with Center and optional Left/Right slots.
+Archer Windup admission creates one stable release group with Center and optional Left/Right slots.
 
 - The Center slot is the authoritative main attack.
-- Each confirmed slot captures a distinct target candidate when available and a fallback direction.
-- Scatter Arrow fixes the slot topology at confirmation.
+- Scatter Arrow fixes the slot topology and side-member authoring identity at Windup admission.
 - An Upgrade during the presentation wait does not add slots.
-- At release, current Damage, Piercing, and Explosive Arrow values are resolved while confirmed topology remains unchanged. The Center uses the Tower's Arrow template and resolved Attack Damage; side members use Scatter Arrow's additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
-- If the Center release requirement is invalid, the group is cancelled.
-- An invalid secondary target uses its confirmation-time fallback direction rather than free retargeting.
+- At release, Archer selects one current valid in-range Center target and freezes its current direction. Side directions are derived from that release direction and the Windup-frozen Scatter shape.
+- Current Damage, Piercing, and Explosive Arrow values are resolved while Windup topology remains unchanged. The Center uses the Tower's Arrow template and resolved Attack Damage; side members use Scatter Arrow's additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
+- If no valid Center target exists at release, the group is cancelled without starting an Attack Cycle.
+- Released directions are immutable and do not follow later target movement.
 
 Successful release starts one Attack Cycle and transfers Arrow movement, hit, Piercing, Explosive Arrow, and completion behavior to Projectile System.
 
@@ -233,13 +234,15 @@ Successful release starts one Attack Cycle and transfers Arrow movement, hit, Pi
 
 # 10. Cannon Runtime
 
-Cannon confirmation captures one or more immutable target-position snapshots and the corresponding intended Monster references.
+Cannon Windup admission freezes only the initial Shell count and additional-member authoring identity.
 
-- Baseline Cannon confirms one position.
-- Multi Shells may confirm one primary position plus its authored positive additional-member count.
+- Baseline Cannon admits one initial Shell.
+- Multi Shells may admit one primary Shell plus its authored positive additional-member count.
 - One attack uses one presentation sequence and one Attack Cycle.
-- Intended Monster invalidation after confirmation does not cancel or redirect a captured position. Projectile System may use the reference only to prioritize the optional direct Monster Hit at that position.
-- An Upgrade during the presentation wait does not add Shells or recapture positions.
+- At release, Cannon selects one current valid in-range primary target and as many distinct additional targets as the frozen Shell topology permits. Each released Shell freezes that intended Monster identity and its current Hit Reference as the immutable landing position.
+- If no valid primary target exists at release, the group is cancelled without starting an Attack Cycle. Missing additional targets reduce the released member count but do not redirect multiple Shells to one target implicitly.
+- Intended Monster movement or invalidation after release does not cancel or redirect a captured position. Projectile System may use the reference only to prioritize the optional direct Monster Hit at that position.
+- An Upgrade during the presentation wait does not add Shells.
 - Each successful initial Shell release receives one immutable integer direct-damage value plus Explosive Shell and eligible pre-impact Bouncing Shell data. The primary Shell uses the Tower's Shell template and current resolved Cannon Attack Damage; additional Shells use Multi Shells' additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
 - Damage Bonus live refresh may update an unresolved primary initial Shell, but it cannot overwrite an additional initial Shell's composed release-time direct damage or any bounce child's fixed Bounce Damage.
 
@@ -359,7 +362,7 @@ Technical cleanup applies when a combat session is replaced, invalidated, disabl
 
 It:
 
-- Cancels pending confirmation and release work
+- Cancels pending Windup, release-confirmation, and release work
 - Removes persistent Tower-owned runtime such as Arcane Field
 - Force-completes every still-owned Attack Entity
 - Clears registries and scheduler state
@@ -385,7 +388,7 @@ Runtime validation should reject or report at minimum:
 - Duplicate active group identity or invalid slot membership
 - Release data that cannot satisfy its archetype contract
 
-Presentation-only failure uses approved fallback behavior and must not silently change confirmation topology.
+Presentation-only failure uses approved fallback behavior and must not silently change Windup topology.
 
 ---
 

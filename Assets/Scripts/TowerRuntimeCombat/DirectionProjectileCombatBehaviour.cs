@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
@@ -33,8 +32,8 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     [Required]
     [SerializeField] private ProjectileBehaviour projectilePrefab;
 
-    private readonly MonsterBehaviour[] pendingCandidateTargets =
-        new MonsterBehaviour[ArcherSlotCount];
+    private readonly List<MonsterBehaviour> releaseCandidates =
+        new List<MonsterBehaviour>();
     private readonly Vector3[] pendingFallbackDirections =
         new Vector3[ArcherSlotCount];
     private MonsterBehaviour pendingProjectileTarget;
@@ -43,7 +42,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     private long pendingReleaseGroupId;
     private int pendingSlotCount;
     private int cachedPiercingMaximum = 1;
-    private bool pendingIsScatter;
+    private float pendingScatterAngleOffset;
     private AdditionalAttackEntityAuthoring pendingAdditionalAttackEntities;
 
     public override TowerFamily SupportedTowerFamily => TowerFamily.Archer;
@@ -85,12 +84,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     {
         if (IsWaitingForAnimationRelease)
         {
-            if (!IsValidTarget(pendingProjectileTarget) ||
-                !IsInAttackRange(pendingProjectileTarget))
-            {
-                ResetPendingAttack();
-            }
-
             return;
         }
 
@@ -107,14 +100,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        Transform origin = GetAttackOrigin();
-
-        if (origin == null)
-        {
-            return;
-        }
-
-        CapturePendingAttack(target, origin);
+        CapturePendingAttackTopology();
         SetWaitingForAnimationRelease();
 
         if (!SetAttackAnimatorTrigger())
@@ -148,41 +134,20 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private void CapturePendingAttack(MonsterBehaviour firstTarget, Transform origin)
+    private void CapturePendingAttackTopology()
     {
         ResetPendingAttack();
-        pendingProjectileTarget = firstTarget;
-        pendingProjectileTargetPosition = GetMonsterHitPosition(firstTarget);
         pendingReleaseGroupId = nextReleaseGroupId++;
-        pendingIsScatter = IsScatterArrowActive();
-        pendingAdditionalAttackEntities = pendingIsScatter
+        bool isScatter = IsScatterArrowActive();
+        pendingAdditionalAttackEntities = isScatter
             ? GetScatterAdditionalAttackEntities()
             : null;
+        pendingScatterAngleOffset = isScatter
+            ? GetScatterArrowAngleOffset()
+            : 0f;
         pendingSlotCount = pendingAdditionalAttackEntities != null
             ? Mathf.Min(ArcherSlotCount, 1 + pendingAdditionalAttackEntities.Count)
             : 1;
-
-        Vector3 centerDirection = pendingProjectileTargetPosition - origin.position;
-
-        if (centerDirection.sqrMagnitude <= 0.0001f)
-        {
-            centerDirection = origin.forward;
-        }
-
-        centerDirection.Normalize();
-        float scatterAngle = pendingIsScatter ? GetScatterArrowAngleOffset() : 0f;
-        pendingFallbackDirections[(int)ArcherProjectileSlot.Center] = centerDirection;
-        pendingFallbackDirections[(int)ArcherProjectileSlot.Left] =
-            Quaternion.AngleAxis(-scatterAngle, Vector3.up) * centerDirection;
-        pendingFallbackDirections[(int)ArcherProjectileSlot.Right] =
-            Quaternion.AngleAxis(scatterAngle, Vector3.up) * centerDirection;
-        pendingCandidateTargets[(int)ArcherProjectileSlot.Center] = firstTarget;
-
-        if (!pendingIsScatter)
-        {
-            return;
-        }
-
     }
 
     private void ReleasePendingAttack()
@@ -204,15 +169,24 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
+        CollectTargetCandidates(
+            releaseCandidates,
+            origin.position,
+            resolvedStats.AttackRange);
+        MonsterBehaviour releaseTarget = SelectTargetFromCandidates(
+            releaseCandidates,
+            origin.position);
 
-        if (!IsCapturedCandidateValid(
-                pendingCandidateTargets[(int)ArcherProjectileSlot.Center],
-                origin.position,
-                resolvedStats.AttackRange))
+        if (!IsValidTarget(releaseTarget))
         {
             ResetPendingAttack();
             return;
         }
+
+        pendingProjectileTarget = releaseTarget;
+        pendingProjectileTargetPosition = GetMonsterHitPosition(releaseTarget);
+        SetCurrentTarget(releaseTarget);
+        CaptureReleaseDirections(origin);
 
         int releasedCount = 0;
 
@@ -237,6 +211,23 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         PlayAttackReleaseVfx(GetReleaseVfxRotation(origin));
         RaiseProjectileReleased(pendingProjectileTarget);
         ResetPendingAttack();
+    }
+
+    private void CaptureReleaseDirections(Transform origin)
+    {
+        Vector3 centerDirection = pendingProjectileTargetPosition - origin.position;
+
+        if (centerDirection.sqrMagnitude <= 0.0001f)
+        {
+            centerDirection = origin.forward;
+        }
+
+        centerDirection.Normalize();
+        pendingFallbackDirections[(int)ArcherProjectileSlot.Center] = centerDirection;
+        pendingFallbackDirections[(int)ArcherProjectileSlot.Left] =
+            Quaternion.AngleAxis(-pendingScatterAngleOffset, Vector3.up) * centerDirection;
+        pendingFallbackDirections[(int)ArcherProjectileSlot.Right] =
+            Quaternion.AngleAxis(pendingScatterAngleOffset, Vector3.up) * centerDirection;
     }
 
     private bool TryReleasePendingSlot(
@@ -279,16 +270,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             initialArcHeight: 0f,
             runtimeOptions: CreateRuntimeOptions(isAdditional),
             archerReleaseIdentity: releaseIdentity);
-    }
-
-    private bool IsCapturedCandidateValid(
-        MonsterBehaviour candidate,
-        Vector3 rangeOrigin,
-        float attackRange)
-    {
-        return IsRegisteredGameplayTarget(candidate) &&
-               candidate.IsGameplayTargetable &&
-               IsInRange(rangeOrigin, GetMonsterHitPosition(candidate), attackRange);
     }
 
     private void RefreshActivePiercing(int newResolvedMaximum)
@@ -394,10 +375,10 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         pendingProjectileTargetPosition = Vector3.zero;
         pendingReleaseGroupId = 0;
         pendingSlotCount = 0;
-        pendingIsScatter = false;
+        pendingScatterAngleOffset = 0f;
         pendingAdditionalAttackEntities = null;
-        Array.Clear(pendingCandidateTargets, 0, pendingCandidateTargets.Length);
-        Array.Clear(pendingFallbackDirections, 0, pendingFallbackDirections.Length);
+        releaseCandidates.Clear();
+        System.Array.Clear(pendingFallbackDirections, 0, pendingFallbackDirections.Length);
         SetIdle();
     }
 }

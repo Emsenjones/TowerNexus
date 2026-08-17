@@ -10,6 +10,14 @@ using UnityEngine.Serialization;
 [DisallowMultipleComponent]
 public sealed class CombatBalanceRunRecorder : MonoBehaviour
 {
+    private enum SpawnOrdinalRelation
+    {
+        Unknown = 0,
+        ImmediateLaterSpawn = 1,
+        ImmediateEarlierSpawn = 2,
+        NonAdjacent = 3
+    }
+
     [Header("Run Identity")]
     [FormerlySerializedAs("runLabel")]
     [SerializeField] private string runName;
@@ -63,13 +71,84 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
     private sealed class MonsterObservation
     {
-        public MonsterObservation(int currentHealth)
+        public MonsterObservation(int currentHealth, int spawnOrdinal)
         {
             LastHealth = currentHealth;
+            SpawnOrdinal = spawnOrdinal;
         }
 
         public int LastHealth { get; set; }
+        public int SpawnOrdinal { get; }
         public bool IsResolved { get; set; }
+    }
+
+    private sealed class FloatMetricAggregate
+    {
+        public int Samples { get; private set; }
+        public float Sum { get; private set; }
+        public float Minimum { get; private set; } = float.PositiveInfinity;
+        public float Maximum { get; private set; } = float.NegativeInfinity;
+
+        public void Add(float value)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value) || value < 0f)
+            {
+                return;
+            }
+
+            Samples++;
+            Sum += value;
+            Minimum = Mathf.Min(Minimum, value);
+            Maximum = Mathf.Max(Maximum, value);
+        }
+    }
+
+    private sealed class ArcTargetRelationAggregate
+    {
+        public int SampledInitialImpacts { get; set; }
+        public int PrimaryIntendedTargetImpacts { get; set; }
+        public int PrimaryFallbackTargetImpacts { get; set; }
+        public int PrimaryPositionOnlyImpacts { get; set; }
+        public int AdditionalIntendedTargetImpacts { get; set; }
+        public int AdditionalFallbackTargetImpacts { get; set; }
+        public int AdditionalPositionOnlyImpacts { get; set; }
+        public int FallbackImmediateLaterSpawnImpacts { get; set; }
+        public int FallbackImmediateEarlierSpawnImpacts { get; set; }
+        public int FallbackNonAdjacentImpacts { get; set; }
+        public int FallbackUnknownRelationImpacts { get; set; }
+        public int PositionOnlyNearestOtherAvailable { get; set; }
+        public int PositionOnlyNearestOtherImmediateLaterSpawn { get; set; }
+        public int PositionOnlyNearestOtherImmediateEarlierSpawn { get; set; }
+        public int PositionOnlyNearestOtherNonAdjacent { get; set; }
+        public int PositionOnlyNearestOtherUnknownRelation { get; set; }
+        public int PositionOnlyWithoutNearestOther { get; set; }
+        public float MinimumHitDistanceThreshold { get; set; } =
+            float.PositiveInfinity;
+        public float MaximumHitDistanceThreshold { get; set; }
+        public FloatMetricAggregate ConfirmationToReleaseSeconds { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate ReleaseToImpactSeconds { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate PlannedTravelTimeSeconds { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate LandingToIntendedDistanceAtRelease { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate IntendedMoveSpeedAtRelease { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate LandingToIntendedDistanceAtImpact { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate IntendedMoveSpeedAtImpact { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate LandingToFallbackDistanceAtImpact { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate FallbackMoveSpeedAtImpact { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate LandingToPositionOnlyNearestOtherDistance { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate PositionOnlyNearestOtherMoveSpeedAtImpact { get; } =
+            new FloatMetricAggregate();
+        public List<CombatBalanceArcTargetRelationSampleJson> Samples { get; } =
+            new List<CombatBalanceArcTargetRelationSampleJson>();
     }
 
     private sealed class ProjectileRuntimeAggregate
@@ -86,6 +165,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public int ArcPositionOnlyIntendedOutOfRange { get; set; }
         public int ArcPositionOnlyWithoutIntendedTarget { get; set; }
         public int ArcEndedWithoutImpact { get; set; }
+        public ArcTargetRelationAggregate ArcTargetRelation { get; } =
+            new ArcTargetRelationAggregate();
     }
 
     private void OnEnable()
@@ -392,7 +473,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         MonsterObservation observation =
-            new MonsterObservation(monster.CurrentHealth);
+            new MonsterObservation(
+                monster.CurrentHealth,
+                spawnedCount + 1);
         trackedMonsters.Add(monster, observation);
         effectiveDamage += Mathf.Max(
             0,
@@ -543,6 +626,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                         break;
                 }
 
+                ConsumeArcTargetRelationObservation(
+                    aggregate.ArcTargetRelation,
+                    observation);
+
                 break;
             case ProjectileRuntimeObservationType.EndedWithoutImpact:
                 if (observation.FlightType == ProjectileFlightType.Arc)
@@ -552,6 +639,254 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
                 break;
         }
+    }
+
+    private void ConsumeArcTargetRelationObservation(
+        ArcTargetRelationAggregate aggregate,
+        ProjectileRuntimeObservation observation)
+    {
+        ProjectileArcTargetRelationObservation relation =
+            observation.ArcTargetRelation;
+        bool isPrimary =
+            relation.MemberType == ProjectileArcMemberType.PrimaryInitial;
+        bool isAdditional =
+            relation.MemberType == ProjectileArcMemberType.AdditionalInitial;
+
+        if (!isPrimary && !isAdditional)
+        {
+            return;
+        }
+
+        aggregate.SampledInitialImpacts++;
+        aggregate.Samples.Add(CreateArcTargetRelationSampleJson(
+            observation.ArcImpactResolutionType,
+            relation));
+        aggregate.MinimumHitDistanceThreshold = Mathf.Min(
+            aggregate.MinimumHitDistanceThreshold,
+            relation.HitDistanceThreshold);
+        aggregate.MaximumHitDistanceThreshold = Mathf.Max(
+            aggregate.MaximumHitDistanceThreshold,
+            relation.HitDistanceThreshold);
+        aggregate.ConfirmationToReleaseSeconds.Add(
+            relation.ConfirmationToReleaseSeconds);
+        aggregate.ReleaseToImpactSeconds.Add(
+            relation.ReleaseToImpactSeconds);
+        aggregate.PlannedTravelTimeSeconds.Add(
+            relation.PlannedTravelTimeSeconds);
+
+        if (relation.HasIntendedAtRelease)
+        {
+            aggregate.LandingToIntendedDistanceAtRelease.Add(
+                relation.LandingToIntendedDistanceAtRelease);
+            aggregate.IntendedMoveSpeedAtRelease.Add(
+                relation.IntendedMoveSpeedAtRelease);
+        }
+
+        if (relation.HasIntendedAtImpact)
+        {
+            aggregate.LandingToIntendedDistanceAtImpact.Add(
+                relation.LandingToIntendedDistanceAtImpact);
+            aggregate.IntendedMoveSpeedAtImpact.Add(
+                relation.IntendedMoveSpeedAtImpact);
+        }
+
+        switch (observation.ArcImpactResolutionType)
+        {
+            case ProjectileArcImpactResolutionType.IntendedTarget:
+                if (isPrimary)
+                {
+                    aggregate.PrimaryIntendedTargetImpacts++;
+                }
+                else
+                {
+                    aggregate.AdditionalIntendedTargetImpacts++;
+                }
+                break;
+            case ProjectileArcImpactResolutionType.FallbackTarget:
+                if (isPrimary)
+                {
+                    aggregate.PrimaryFallbackTargetImpacts++;
+                }
+                else
+                {
+                    aggregate.AdditionalFallbackTargetImpacts++;
+                }
+
+                if (relation.HasResolvedTargetAtImpact)
+                {
+                    aggregate.LandingToFallbackDistanceAtImpact.Add(
+                        relation.LandingToResolvedTargetDistanceAtImpact);
+                    aggregate.FallbackMoveSpeedAtImpact.Add(
+                        relation.ResolvedTargetMoveSpeedAtImpact);
+                }
+
+                ConsumeFallbackSpawnRelation(
+                    aggregate,
+                    ResolveSpawnOrdinalRelation(
+                        relation.IntendedTarget,
+                        relation.ResolvedTarget));
+                break;
+            case ProjectileArcImpactResolutionType.PositionOnlyIntendedInvalid:
+            case ProjectileArcImpactResolutionType.PositionOnlyIntendedOutOfRange:
+            case ProjectileArcImpactResolutionType.PositionOnlyWithoutIntendedTarget:
+                if (isPrimary)
+                {
+                    aggregate.PrimaryPositionOnlyImpacts++;
+                }
+                else
+                {
+                    aggregate.AdditionalPositionOnlyImpacts++;
+                }
+
+                ConsumePositionOnlyNearestOther(
+                    aggregate,
+                    relation);
+                break;
+        }
+    }
+
+    private void ConsumeFallbackSpawnRelation(
+        ArcTargetRelationAggregate aggregate,
+        SpawnOrdinalRelation relation)
+    {
+        switch (relation)
+        {
+            case SpawnOrdinalRelation.ImmediateLaterSpawn:
+                aggregate.FallbackImmediateLaterSpawnImpacts++;
+                break;
+            case SpawnOrdinalRelation.ImmediateEarlierSpawn:
+                aggregate.FallbackImmediateEarlierSpawnImpacts++;
+                break;
+            case SpawnOrdinalRelation.NonAdjacent:
+                aggregate.FallbackNonAdjacentImpacts++;
+                break;
+            default:
+                aggregate.FallbackUnknownRelationImpacts++;
+                break;
+        }
+    }
+
+    private void ConsumePositionOnlyNearestOther(
+        ArcTargetRelationAggregate aggregate,
+        ProjectileArcTargetRelationObservation relation)
+    {
+        if (!relation.HasNearestOtherTargetAtImpact)
+        {
+            aggregate.PositionOnlyWithoutNearestOther++;
+            return;
+        }
+
+        aggregate.PositionOnlyNearestOtherAvailable++;
+        aggregate.LandingToPositionOnlyNearestOtherDistance.Add(
+            relation.LandingToNearestOtherTargetDistanceAtImpact);
+        aggregate.PositionOnlyNearestOtherMoveSpeedAtImpact.Add(
+            relation.NearestOtherTargetMoveSpeedAtImpact);
+
+        switch (ResolveSpawnOrdinalRelation(
+                    relation.IntendedTarget,
+                    relation.NearestOtherTarget))
+        {
+            case SpawnOrdinalRelation.ImmediateLaterSpawn:
+                aggregate.PositionOnlyNearestOtherImmediateLaterSpawn++;
+                break;
+            case SpawnOrdinalRelation.ImmediateEarlierSpawn:
+                aggregate.PositionOnlyNearestOtherImmediateEarlierSpawn++;
+                break;
+            case SpawnOrdinalRelation.NonAdjacent:
+                aggregate.PositionOnlyNearestOtherNonAdjacent++;
+                break;
+            default:
+                aggregate.PositionOnlyNearestOtherUnknownRelation++;
+                break;
+        }
+    }
+
+    private SpawnOrdinalRelation ResolveSpawnOrdinalRelation(
+        MonsterBehaviour intendedTarget,
+        MonsterBehaviour otherTarget)
+    {
+        int intendedOrdinal = GetSpawnOrdinal(intendedTarget);
+        int otherOrdinal = GetSpawnOrdinal(otherTarget);
+
+        if (intendedOrdinal <= 0 || otherOrdinal <= 0)
+        {
+            return SpawnOrdinalRelation.Unknown;
+        }
+
+        int delta = otherOrdinal - intendedOrdinal;
+
+        if (delta == 1)
+        {
+            return SpawnOrdinalRelation.ImmediateLaterSpawn;
+        }
+
+        if (delta == -1)
+        {
+            return SpawnOrdinalRelation.ImmediateEarlierSpawn;
+        }
+
+        return SpawnOrdinalRelation.NonAdjacent;
+    }
+
+    private int GetSpawnOrdinal(MonsterBehaviour monster)
+    {
+        return monster != null &&
+               trackedMonsters.TryGetValue(
+                   monster,
+                   out MonsterObservation observation)
+            ? observation.SpawnOrdinal
+            : 0;
+    }
+
+    private CombatBalanceArcTargetRelationSampleJson
+        CreateArcTargetRelationSampleJson(
+            ProjectileArcImpactResolutionType resolutionType,
+            ProjectileArcTargetRelationObservation relation)
+    {
+        int intendedOrdinal = GetSpawnOrdinal(relation.IntendedTarget);
+        int resolvedOrdinal = GetSpawnOrdinal(relation.ResolvedTarget);
+        int nearestOtherOrdinal = GetSpawnOrdinal(
+            relation.NearestOtherTarget);
+
+        return new CombatBalanceArcTargetRelationSampleJson
+        {
+            memberType = relation.MemberType.ToString(),
+            resolutionType = resolutionType.ToString(),
+            intendedSpawnOrdinal = intendedOrdinal,
+            resolvedSpawnOrdinal = resolvedOrdinal,
+            nearestOtherSpawnOrdinal = nearestOtherOrdinal,
+            resolvedOrdinalDelta = intendedOrdinal > 0 && resolvedOrdinal > 0
+                ? resolvedOrdinal - intendedOrdinal
+                : 0,
+            nearestOtherOrdinalDelta =
+                intendedOrdinal > 0 && nearestOtherOrdinal > 0
+                    ? nearestOtherOrdinal - intendedOrdinal
+                    : 0,
+            confirmationToReleaseSeconds =
+                relation.ConfirmationToReleaseSeconds,
+            releaseToImpactSeconds = relation.ReleaseToImpactSeconds,
+            plannedTravelTimeSeconds = relation.PlannedTravelTimeSeconds,
+            hitDistanceThreshold = relation.HitDistanceThreshold,
+            hasIntendedAtRelease = relation.HasIntendedAtRelease,
+            landingToIntendedDistanceAtRelease =
+                relation.LandingToIntendedDistanceAtRelease,
+            intendedMoveSpeedAtRelease = relation.IntendedMoveSpeedAtRelease,
+            hasIntendedAtImpact = relation.HasIntendedAtImpact,
+            landingToIntendedDistanceAtImpact =
+                relation.LandingToIntendedDistanceAtImpact,
+            intendedMoveSpeedAtImpact = relation.IntendedMoveSpeedAtImpact,
+            hasResolvedTargetAtImpact = relation.HasResolvedTargetAtImpact,
+            landingToResolvedTargetDistanceAtImpact =
+                relation.LandingToResolvedTargetDistanceAtImpact,
+            resolvedTargetMoveSpeedAtImpact =
+                relation.ResolvedTargetMoveSpeedAtImpact,
+            hasNearestOtherTargetAtImpact =
+                relation.HasNearestOtherTargetAtImpact,
+            landingToNearestOtherTargetDistanceAtImpact =
+                relation.LandingToNearestOtherTargetDistanceAtImpact,
+            nearestOtherTargetMoveSpeedAtImpact =
+                relation.NearestOtherTargetMoveSpeedAtImpact
+        };
     }
 
     private void HandleMonsterResolved(
@@ -1081,7 +1416,96 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             arcTargetResolutionRate = resolvedArcOutcomes > 0
                 ? (float)aggregate.ArcTargetResolvedImpacts /
                   resolvedArcOutcomes
-                : 0f
+                : 0f,
+            arcTargetRelation = CreateArcTargetRelationJson(
+                aggregate.ArcTargetRelation)
+        };
+    }
+
+    private static CombatBalanceArcTargetRelationJson
+        CreateArcTargetRelationJson(ArcTargetRelationAggregate aggregate)
+    {
+        return new CombatBalanceArcTargetRelationJson
+        {
+            sampledInitialImpacts = aggregate.SampledInitialImpacts,
+            primaryIntendedTargetImpacts =
+                aggregate.PrimaryIntendedTargetImpacts,
+            primaryFallbackTargetImpacts =
+                aggregate.PrimaryFallbackTargetImpacts,
+            primaryPositionOnlyImpacts =
+                aggregate.PrimaryPositionOnlyImpacts,
+            additionalIntendedTargetImpacts =
+                aggregate.AdditionalIntendedTargetImpacts,
+            additionalFallbackTargetImpacts =
+                aggregate.AdditionalFallbackTargetImpacts,
+            additionalPositionOnlyImpacts =
+                aggregate.AdditionalPositionOnlyImpacts,
+            fallbackImmediateLaterSpawnImpacts =
+                aggregate.FallbackImmediateLaterSpawnImpacts,
+            fallbackImmediateEarlierSpawnImpacts =
+                aggregate.FallbackImmediateEarlierSpawnImpacts,
+            fallbackNonAdjacentImpacts =
+                aggregate.FallbackNonAdjacentImpacts,
+            fallbackUnknownRelationImpacts =
+                aggregate.FallbackUnknownRelationImpacts,
+            positionOnlyNearestOtherAvailable =
+                aggregate.PositionOnlyNearestOtherAvailable,
+            positionOnlyNearestOtherImmediateLaterSpawn =
+                aggregate.PositionOnlyNearestOtherImmediateLaterSpawn,
+            positionOnlyNearestOtherImmediateEarlierSpawn =
+                aggregate.PositionOnlyNearestOtherImmediateEarlierSpawn,
+            positionOnlyNearestOtherNonAdjacent =
+                aggregate.PositionOnlyNearestOtherNonAdjacent,
+            positionOnlyNearestOtherUnknownRelation =
+                aggregate.PositionOnlyNearestOtherUnknownRelation,
+            positionOnlyWithoutNearestOther =
+                aggregate.PositionOnlyWithoutNearestOther,
+            observedMinimumHitDistanceThreshold =
+                aggregate.SampledInitialImpacts > 0
+                    ? aggregate.MinimumHitDistanceThreshold
+                    : 0f,
+            observedMaximumHitDistanceThreshold =
+                aggregate.SampledInitialImpacts > 0
+                    ? aggregate.MaximumHitDistanceThreshold
+                    : 0f,
+            confirmationToReleaseSeconds = CreateMetricJson(
+                aggregate.ConfirmationToReleaseSeconds),
+            releaseToImpactSeconds = CreateMetricJson(
+                aggregate.ReleaseToImpactSeconds),
+            plannedTravelTimeSeconds = CreateMetricJson(
+                aggregate.PlannedTravelTimeSeconds),
+            landingToIntendedDistanceAtRelease = CreateMetricJson(
+                aggregate.LandingToIntendedDistanceAtRelease),
+            intendedMoveSpeedAtRelease = CreateMetricJson(
+                aggregate.IntendedMoveSpeedAtRelease),
+            landingToIntendedDistanceAtImpact = CreateMetricJson(
+                aggregate.LandingToIntendedDistanceAtImpact),
+            intendedMoveSpeedAtImpact = CreateMetricJson(
+                aggregate.IntendedMoveSpeedAtImpact),
+            landingToFallbackDistanceAtImpact = CreateMetricJson(
+                aggregate.LandingToFallbackDistanceAtImpact),
+            fallbackMoveSpeedAtImpact = CreateMetricJson(
+                aggregate.FallbackMoveSpeedAtImpact),
+            landingToPositionOnlyNearestOtherDistance = CreateMetricJson(
+                aggregate.LandingToPositionOnlyNearestOtherDistance),
+            positionOnlyNearestOtherMoveSpeedAtImpact = CreateMetricJson(
+                aggregate.PositionOnlyNearestOtherMoveSpeedAtImpact),
+            samples = new List<CombatBalanceArcTargetRelationSampleJson>(
+                aggregate.Samples)
+        };
+    }
+
+    private static CombatBalanceMetricJson CreateMetricJson(
+        FloatMetricAggregate aggregate)
+    {
+        return new CombatBalanceMetricJson
+        {
+            samples = aggregate.Samples,
+            minimum = aggregate.Samples > 0 ? aggregate.Minimum : 0f,
+            average = aggregate.Samples > 0
+                ? aggregate.Sum / aggregate.Samples
+                : 0f,
+            maximum = aggregate.Samples > 0 ? aggregate.Maximum : 0f
         };
     }
 

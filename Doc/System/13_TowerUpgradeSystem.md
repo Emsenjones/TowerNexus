@@ -232,10 +232,10 @@ Package definitions own upgrade-level authoring values and complete runtime-pref
 | Package | Existing Runtime Contract |
 |---|---|
 | Piercing Arrow | Add capacity delta to eligible active Arrows without clearing history |
-| Scatter Arrow | Future release only; never add side Arrows to a pending or released group |
+| Scatter Arrow | Future Windup only; never add side Arrows to a pending or released group |
 | Explosive Arrow | Future release only; never add an explosion result to an active Arrow |
 | Explosive Shell | May affect unresolved airborne Shell impacts |
-| Multi Shells | Future confirmation only; never add Shells to a pending or released group |
+| Multi Shells | Future Windup only; never add Shells to a pending or released group |
 | Bouncing Shell | May affect an initial Shell only before its first Position Impact; never rewrite an active chain |
 | Multi Orbs | Atomically add missing members to the active group while preserving its lifecycle |
 | Arcane Detonation | Give an incomplete active group future normal-completion eligibility; never detonate immediately |

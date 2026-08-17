@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 6;
+    public int schemaVersion = 7;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -111,6 +111,93 @@ internal sealed class CombatBalanceProjectileRuntimeJson
     public int arcEndedWithoutImpact;
     public int arcUnresolvedAtReport;
     public float arcTargetResolutionRate;
+    public CombatBalanceArcTargetRelationJson arcTargetRelation =
+        new CombatBalanceArcTargetRelationJson();
+}
+
+[Serializable]
+internal sealed class CombatBalanceArcTargetRelationJson
+{
+    public int sampledInitialImpacts;
+    public int primaryIntendedTargetImpacts;
+    public int primaryFallbackTargetImpacts;
+    public int primaryPositionOnlyImpacts;
+    public int additionalIntendedTargetImpacts;
+    public int additionalFallbackTargetImpacts;
+    public int additionalPositionOnlyImpacts;
+    public int fallbackImmediateLaterSpawnImpacts;
+    public int fallbackImmediateEarlierSpawnImpacts;
+    public int fallbackNonAdjacentImpacts;
+    public int fallbackUnknownRelationImpacts;
+    public int positionOnlyNearestOtherAvailable;
+    public int positionOnlyNearestOtherImmediateLaterSpawn;
+    public int positionOnlyNearestOtherImmediateEarlierSpawn;
+    public int positionOnlyNearestOtherNonAdjacent;
+    public int positionOnlyNearestOtherUnknownRelation;
+    public int positionOnlyWithoutNearestOther;
+    public float observedMinimumHitDistanceThreshold;
+    public float observedMaximumHitDistanceThreshold;
+    public CombatBalanceMetricJson confirmationToReleaseSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson releaseToImpactSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson plannedTravelTimeSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson landingToIntendedDistanceAtRelease =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson intendedMoveSpeedAtRelease =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson landingToIntendedDistanceAtImpact =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson intendedMoveSpeedAtImpact =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson landingToFallbackDistanceAtImpact =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson fallbackMoveSpeedAtImpact =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson landingToPositionOnlyNearestOtherDistance =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson positionOnlyNearestOtherMoveSpeedAtImpact =
+        new CombatBalanceMetricJson();
+    public List<CombatBalanceArcTargetRelationSampleJson> samples =
+        new List<CombatBalanceArcTargetRelationSampleJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceMetricJson
+{
+    public int samples;
+    public float minimum;
+    public float average;
+    public float maximum;
+}
+
+[Serializable]
+internal sealed class CombatBalanceArcTargetRelationSampleJson
+{
+    public string memberType;
+    public string resolutionType;
+    public int intendedSpawnOrdinal;
+    public int resolvedSpawnOrdinal;
+    public int nearestOtherSpawnOrdinal;
+    public int resolvedOrdinalDelta;
+    public int nearestOtherOrdinalDelta;
+    public float confirmationToReleaseSeconds;
+    public float releaseToImpactSeconds;
+    public float plannedTravelTimeSeconds;
+    public float hitDistanceThreshold;
+    public bool hasIntendedAtRelease;
+    public float landingToIntendedDistanceAtRelease;
+    public float intendedMoveSpeedAtRelease;
+    public bool hasIntendedAtImpact;
+    public float landingToIntendedDistanceAtImpact;
+    public float intendedMoveSpeedAtImpact;
+    public bool hasResolvedTargetAtImpact;
+    public float landingToResolvedTargetDistanceAtImpact;
+    public float resolvedTargetMoveSpeedAtImpact;
+    public bool hasNearestOtherTargetAtImpact;
+    public float landingToNearestOtherTargetDistanceAtImpact;
+    public float nearestOtherTargetMoveSpeedAtImpact;
 }
 
 [Serializable]

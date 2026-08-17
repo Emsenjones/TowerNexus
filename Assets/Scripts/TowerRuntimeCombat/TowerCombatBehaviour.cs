@@ -365,6 +365,33 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         ProjectileRuntimeOptions runtimeOptions,
         ArcherProjectileReleaseIdentity archerReleaseIdentity = default)
     {
+        return TryReleaseProjectile(
+            projectilePrefab,
+            origin,
+            targetPosition,
+            target,
+            attackDamage,
+            flightType,
+            initialArcHeight,
+            runtimeOptions,
+            out _,
+            archerReleaseIdentity);
+    }
+
+    protected bool TryReleaseProjectile(
+        ProjectileBehaviour projectilePrefab,
+        Transform origin,
+        Vector3 targetPosition,
+        MonsterBehaviour target,
+        int attackDamage,
+        ProjectileFlightType flightType,
+        float initialArcHeight,
+        ProjectileRuntimeOptions runtimeOptions,
+        out ProjectileBehaviour releasedProjectile,
+        ArcherProjectileReleaseIdentity archerReleaseIdentity = default)
+    {
+        releasedProjectile = null;
+
         if (projectilePrefab == null || origin == null)
         {
             return false;
@@ -393,6 +420,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             return false;
         }
 
+        releasedProjectile = projectileBehaviour;
         RegisterOwnedProjectile(projectileBehaviour);
         return true;
     }

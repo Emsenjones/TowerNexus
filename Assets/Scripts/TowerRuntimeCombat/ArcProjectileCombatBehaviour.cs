@@ -11,11 +11,15 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
     [MinValue(0f)]
     [SerializeField] private float arcHeight = 1f;
 
+    private readonly List<MonsterBehaviour> releaseCandidates =
+        new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> pendingTargets =
         new List<MonsterBehaviour>();
     private readonly List<Vector3> pendingTargetPositions = new List<Vector3>();
     private MonsterBehaviour pendingPrimaryTarget;
     private AdditionalAttackEntityAuthoring pendingAdditionalAttackEntities;
+    private int pendingInitialShellCount;
+    private float pendingWindupAdmissionTime;
     private bool hasLoggedInvalidExplosiveShellEffect;
 
     public override TowerFamily SupportedTowerFamily => TowerFamily.Cannon;
@@ -87,8 +91,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        pendingPrimaryTarget = target;
-        CaptureTargetsAndPositions(target);
+        CapturePendingAttackTopology();
         SetWaitingForAnimationRelease();
 
         if (!SetAttackAnimatorTrigger())
@@ -157,13 +160,6 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        if (pendingTargetPositions.Count == 0 ||
-            pendingTargets.Count != pendingTargetPositions.Count)
-        {
-            ResetPendingAttack();
-            return;
-        }
-
         Transform origin = GetAttackOrigin();
 
         if (origin == null || projectilePrefab.HitDistanceThreshold <= 0f)
@@ -173,6 +169,31 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         ResolvedTowerCombatStats resolvedStats = ResolveCombatStats();
+        CollectTargetCandidates(
+            releaseCandidates,
+            origin.position,
+            resolvedStats.AttackRange);
+        MonsterBehaviour releaseTarget = SelectTargetFromCandidates(
+            releaseCandidates,
+            origin.position);
+
+        if (!IsValidTarget(releaseTarget))
+        {
+            ResetPendingAttack();
+            return;
+        }
+
+        pendingPrimaryTarget = releaseTarget;
+        SetCurrentTarget(releaseTarget);
+        CaptureReleaseTargetsAndPositions(releaseTarget, origin.position);
+
+        if (pendingTargetPositions.Count == 0 ||
+            pendingTargets.Count != pendingTargetPositions.Count)
+        {
+            ResetPendingAttack();
+            return;
+        }
+
         int releasedCount = 0;
 
         for (int i = 0; i < pendingTargetPositions.Count; i++)
@@ -202,8 +223,16 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
                     shellDamage,
                     ProjectileFlightType.Arc,
                     arcHeight,
-                    runtimeOptions))
+                    runtimeOptions,
+                    out ProjectileBehaviour releasedProjectile))
             {
+#if UNITY_EDITOR
+                releasedProjectile.ConfigureArcRuntimeObservation(
+                    isAdditional
+                        ? ProjectileArcMemberType.AdditionalInitial
+                        : ProjectileArcMemberType.PrimaryInitial,
+                    Time.time - pendingWindupAdmissionTime);
+#endif
                 releasedCount++;
             }
         }
@@ -220,25 +249,35 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         ResetPendingAttack();
     }
 
-    private void CaptureTargetsAndPositions(MonsterBehaviour firstTarget)
+    private void CapturePendingAttackTopology()
+    {
+        ResetPendingAttack();
+        pendingWindupAdmissionTime = Time.time;
+        pendingAdditionalAttackEntities = GetMultiShellsAdditionalAttackEntities();
+        pendingInitialShellCount = pendingAdditionalAttackEntities != null
+            ? 1 + pendingAdditionalAttackEntities.Count
+            : 1;
+    }
+
+    private void CaptureReleaseTargetsAndPositions(
+        MonsterBehaviour firstTarget,
+        Vector3 selectionOrigin)
     {
         pendingTargets.Clear();
         pendingTargetPositions.Clear();
         pendingTargets.Add(firstTarget);
         pendingTargetPositions.Add(GetMonsterHitPosition(firstTarget));
-        pendingAdditionalAttackEntities = GetMultiShellsAdditionalAttackEntities();
-
-        int maximumInitialShellCount = pendingAdditionalAttackEntities != null
-            ? 1 + pendingAdditionalAttackEntities.Count
-            : 1;
         HashSet<MonsterBehaviour> selectedTargets = new HashSet<MonsterBehaviour>
         {
             firstTarget
         };
 
-        while (pendingTargetPositions.Count < maximumInitialShellCount)
+        while (pendingTargetPositions.Count < pendingInitialShellCount)
         {
-            MonsterBehaviour additionalTarget = SelectTarget(selectedTargets);
+            MonsterBehaviour additionalTarget = SelectTargetFromCandidates(
+                releaseCandidates,
+                selectionOrigin,
+                selectedTargets);
 
             if (!IsValidTarget(additionalTarget))
             {
@@ -321,6 +360,9 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
     {
         pendingPrimaryTarget = null;
         pendingAdditionalAttackEntities = null;
+        pendingInitialShellCount = 0;
+        pendingWindupAdmissionTime = 0f;
+        releaseCandidates.Clear();
         pendingTargets.Clear();
         pendingTargetPositions.Clear();
         SetIdle();

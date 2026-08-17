@@ -41,6 +41,87 @@ public enum ProjectileArcImpactResolutionType
     PositionOnlyWithoutIntendedTarget = 5
 }
 
+public enum ProjectileArcMemberType
+{
+    NotApplicable = 0,
+    PrimaryInitial = 1,
+    AdditionalInitial = 2,
+    BounceChild = 3
+}
+
+public readonly struct ProjectileArcTargetRelationObservation
+{
+    public ProjectileArcTargetRelationObservation(
+        ProjectileArcMemberType memberType,
+        MonsterBehaviour intendedTarget,
+        MonsterBehaviour resolvedTarget,
+        MonsterBehaviour nearestOtherTarget,
+        float confirmationToReleaseSeconds,
+        float releaseToImpactSeconds,
+        float plannedTravelTimeSeconds,
+        float hitDistanceThreshold,
+        bool hasIntendedAtRelease,
+        float landingToIntendedDistanceAtRelease,
+        float intendedMoveSpeedAtRelease,
+        bool hasIntendedAtImpact,
+        float landingToIntendedDistanceAtImpact,
+        float intendedMoveSpeedAtImpact,
+        bool hasResolvedTargetAtImpact,
+        float landingToResolvedTargetDistanceAtImpact,
+        float resolvedTargetMoveSpeedAtImpact,
+        bool hasNearestOtherTargetAtImpact,
+        float landingToNearestOtherTargetDistanceAtImpact,
+        float nearestOtherTargetMoveSpeedAtImpact)
+    {
+        MemberType = memberType;
+        IntendedTarget = intendedTarget;
+        ResolvedTarget = resolvedTarget;
+        NearestOtherTarget = nearestOtherTarget;
+        ConfirmationToReleaseSeconds = confirmationToReleaseSeconds;
+        ReleaseToImpactSeconds = releaseToImpactSeconds;
+        PlannedTravelTimeSeconds = plannedTravelTimeSeconds;
+        HitDistanceThreshold = hitDistanceThreshold;
+        HasIntendedAtRelease = hasIntendedAtRelease;
+        LandingToIntendedDistanceAtRelease =
+            landingToIntendedDistanceAtRelease;
+        IntendedMoveSpeedAtRelease = intendedMoveSpeedAtRelease;
+        HasIntendedAtImpact = hasIntendedAtImpact;
+        LandingToIntendedDistanceAtImpact =
+            landingToIntendedDistanceAtImpact;
+        IntendedMoveSpeedAtImpact = intendedMoveSpeedAtImpact;
+        HasResolvedTargetAtImpact = hasResolvedTargetAtImpact;
+        LandingToResolvedTargetDistanceAtImpact =
+            landingToResolvedTargetDistanceAtImpact;
+        ResolvedTargetMoveSpeedAtImpact = resolvedTargetMoveSpeedAtImpact;
+        HasNearestOtherTargetAtImpact = hasNearestOtherTargetAtImpact;
+        LandingToNearestOtherTargetDistanceAtImpact =
+            landingToNearestOtherTargetDistanceAtImpact;
+        NearestOtherTargetMoveSpeedAtImpact =
+            nearestOtherTargetMoveSpeedAtImpact;
+    }
+
+    public ProjectileArcMemberType MemberType { get; }
+    public MonsterBehaviour IntendedTarget { get; }
+    public MonsterBehaviour ResolvedTarget { get; }
+    public MonsterBehaviour NearestOtherTarget { get; }
+    public float ConfirmationToReleaseSeconds { get; }
+    public float ReleaseToImpactSeconds { get; }
+    public float PlannedTravelTimeSeconds { get; }
+    public float HitDistanceThreshold { get; }
+    public bool HasIntendedAtRelease { get; }
+    public float LandingToIntendedDistanceAtRelease { get; }
+    public float IntendedMoveSpeedAtRelease { get; }
+    public bool HasIntendedAtImpact { get; }
+    public float LandingToIntendedDistanceAtImpact { get; }
+    public float IntendedMoveSpeedAtImpact { get; }
+    public bool HasResolvedTargetAtImpact { get; }
+    public float LandingToResolvedTargetDistanceAtImpact { get; }
+    public float ResolvedTargetMoveSpeedAtImpact { get; }
+    public bool HasNearestOtherTargetAtImpact { get; }
+    public float LandingToNearestOtherTargetDistanceAtImpact { get; }
+    public float NearestOtherTargetMoveSpeedAtImpact { get; }
+}
+
 public readonly struct ProjectileRuntimeObservation
 {
     private ProjectileRuntimeObservation(
@@ -49,7 +130,8 @@ public readonly struct ProjectileRuntimeObservation
         ProjectileFlightType flightType,
         bool isChildProjectile,
         bool hasTargetMonster,
-        ProjectileArcImpactResolutionType arcImpactResolutionType)
+        ProjectileArcImpactResolutionType arcImpactResolutionType,
+        ProjectileArcTargetRelationObservation arcTargetRelation)
     {
         ObservationType = observationType;
         SourceTower = sourceTower;
@@ -57,6 +139,7 @@ public readonly struct ProjectileRuntimeObservation
         IsChildProjectile = isChildProjectile;
         HasTargetMonster = hasTargetMonster;
         ArcImpactResolutionType = arcImpactResolutionType;
+        ArcTargetRelation = arcTargetRelation;
     }
 
     public ProjectileRuntimeObservationType ObservationType { get; }
@@ -65,6 +148,7 @@ public readonly struct ProjectileRuntimeObservation
     public bool IsChildProjectile { get; }
     public bool HasTargetMonster { get; }
     public ProjectileArcImpactResolutionType ArcImpactResolutionType { get; }
+    public ProjectileArcTargetRelationObservation ArcTargetRelation { get; }
 
     public static ProjectileRuntimeObservation CreateReleased(
         TowerInstance sourceTower,
@@ -78,7 +162,8 @@ public readonly struct ProjectileRuntimeObservation
             isChildProjectile,
             hasTargetMonster: false,
             arcImpactResolutionType:
-                ProjectileArcImpactResolutionType.NotApplicable);
+                ProjectileArcImpactResolutionType.NotApplicable,
+            arcTargetRelation: default);
     }
 
     public static ProjectileRuntimeObservation CreateImpact(
@@ -86,7 +171,8 @@ public readonly struct ProjectileRuntimeObservation
         ProjectileFlightType flightType,
         bool isChildProjectile,
         bool hasTargetMonster,
-        ProjectileArcImpactResolutionType arcImpactResolutionType)
+        ProjectileArcImpactResolutionType arcImpactResolutionType,
+        ProjectileArcTargetRelationObservation arcTargetRelation)
     {
         return new ProjectileRuntimeObservation(
             ProjectileRuntimeObservationType.Impacted,
@@ -94,7 +180,8 @@ public readonly struct ProjectileRuntimeObservation
             flightType,
             isChildProjectile,
             hasTargetMonster,
-            arcImpactResolutionType);
+            arcImpactResolutionType,
+            arcTargetRelation);
     }
 
     public static ProjectileRuntimeObservation CreateEndedWithoutImpact(
@@ -109,7 +196,8 @@ public readonly struct ProjectileRuntimeObservation
             isChildProjectile,
             hasTargetMonster: false,
             arcImpactResolutionType:
-                ProjectileArcImpactResolutionType.NotApplicable);
+                ProjectileArcImpactResolutionType.NotApplicable,
+            arcTargetRelation: default);
     }
 }
 #endif

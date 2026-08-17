@@ -162,7 +162,7 @@ Tower-side responsibilities:
 - Detect valid Monsters
 - Select targets when required
 - Manage attack readiness
-- Confirm an attack
+- Admit or confirm an attack at its archetype-owned timing boundary
 - Release Attack Entities
 
 Attack Entity responsibilities:
@@ -247,7 +247,8 @@ This section defines identity and gameplay direction. Runtime execution belongs 
 ## 10.1 Archer
 
 - Short range, high attack speed, low damage per Arrow
-- Selected Monster defines initial launch direction
+- A valid in-range Monster admits the attack Windup without becoming the locked Projectile target
+- The current release-time selected Monster defines the immutable initial launch direction
 - Released Arrow travels independently
 - Direction flight may hit the nearest valid Monster within its hit threshold
 - Attack Cycle begins on successful Arrow release
@@ -255,7 +256,8 @@ This section defines identity and gameplay direction. Runtime execution belongs 
 ## 10.2 Cannon
 
 - Long range and low attack speed
-- Confirmation captures a target-position snapshot
+- A valid in-range Monster admits the attack Windup without becoming the locked Shell target
+- Release confirmation captures the current selected Monster identity and target-position snapshot
 - Shell travels to that immutable position
 - Arrival always produces Position Impact
 - A local arrival query may additionally produce one Monster Hit and direct damage; the still-valid intended target has priority inside the unchanged hit threshold, followed by nearest-target fallback

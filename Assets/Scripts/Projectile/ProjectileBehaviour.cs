@@ -60,6 +60,15 @@ public class ProjectileBehaviour : MonoBehaviour
 #if UNITY_EDITOR
     private bool hasIntendedTargetSnapshot;
     private ProjectileArcImpactResolutionType arcImpactResolutionType;
+    private ProjectileArcMemberType arcMemberType;
+    private float arcConfirmationToReleaseSeconds;
+    private bool hasArcIntendedTargetAtRelease;
+    private float arcLandingToIntendedDistanceAtRelease;
+    private float arcIntendedMoveSpeedAtRelease;
+    private MonsterBehaviour arcNearestOtherTargetAtImpact;
+    private float arcLandingToNearestOtherDistanceAtImpact;
+    private ProjectileArcTargetRelationObservation
+        arcTargetRelationObservationAtResolution;
 #endif
 
     public event Action<ProjectileImpactContext> OnImpact;
@@ -83,6 +92,22 @@ public class ProjectileBehaviour : MonoBehaviour
     public bool IsActiveForRefresh =>
         isInitialized && !hasImpacted && !hasEnded && gameObject.activeInHierarchy;
     public ArcherProjectileReleaseIdentity ArcherReleaseIdentity => archerReleaseIdentity;
+
+#if UNITY_EDITOR
+    public void ConfigureArcRuntimeObservation(
+        ProjectileArcMemberType memberType,
+        float confirmationToReleaseSeconds)
+    {
+        if (flightType != ProjectileFlightType.Arc)
+        {
+            return;
+        }
+
+        arcMemberType = memberType;
+        arcConfirmationToReleaseSeconds =
+            Mathf.Max(0f, confirmationToReleaseSeconds);
+    }
+#endif
 
     public bool IsValid()
     {
@@ -161,6 +186,30 @@ public class ProjectileBehaviour : MonoBehaviour
         hasIntendedTargetSnapshot = targetMonster != null;
         arcImpactResolutionType =
             ProjectileArcImpactResolutionType.NotApplicable;
+        arcMemberType = flightType != ProjectileFlightType.Arc
+            ? ProjectileArcMemberType.NotApplicable
+            : isBounceChild
+                ? ProjectileArcMemberType.BounceChild
+                : locksDirectDamage
+                    ? ProjectileArcMemberType.AdditionalInitial
+                    : ProjectileArcMemberType.PrimaryInitial;
+        arcConfirmationToReleaseSeconds = 0f;
+        hasArcIntendedTargetAtRelease =
+            flightType == ProjectileFlightType.Arc &&
+            IsTrackedValidTarget(targetMonster);
+        arcLandingToIntendedDistanceAtRelease =
+            hasArcIntendedTargetAtRelease
+                ? Mathf.Sqrt(GetHitDistanceSqrFromPosition(
+                    targetMonster,
+                    targetPosition))
+                : 0f;
+        arcIntendedMoveSpeedAtRelease =
+            hasArcIntendedTargetAtRelease
+                ? targetMonster.CurrentMoveSpeed
+                : 0f;
+        arcNearestOtherTargetAtImpact = null;
+        arcLandingToNearestOtherDistanceAtImpact = 0f;
+        arcTargetRelationObservationAtResolution = default;
 #endif
 
         if (!CanInitialize())
@@ -644,10 +693,22 @@ public class ProjectileBehaviour : MonoBehaviour
         hasImpacted = true;
         Vector3 impactPosition = transform.position;
         MonsterBehaviour hitMonster = null;
+        bool hasResolvedMonster = TryResolveArcImpactTarget(
+            impactPosition,
+            out MonsterBehaviour resolvedMonster);
 
-        if (TryResolveArcImpactTarget(impactPosition, out MonsterBehaviour resolvedMonster))
+        if (hasResolvedMonster)
         {
             hitMonster = resolvedMonster;
+        }
+
+#if UNITY_EDITOR
+        arcTargetRelationObservationAtResolution =
+            CreateArcTargetRelationObservation(hitMonster);
+#endif
+
+        if (hasResolvedMonster)
+        {
             bounceHitHistory.Add(hitMonster);
             hitMonster.TakeDamage(ResolveDirectDamage());
             ElementalApplication.TryApplyFromTowerAttack(
@@ -899,7 +960,10 @@ public class ProjectileBehaviour : MonoBehaviour
                 flightType,
                 isBounceChild,
                 hitMonster != null,
-                arcImpactResolutionType));
+                arcImpactResolutionType,
+                flightType == ProjectileFlightType.Arc
+                    ? arcTargetRelationObservationAtResolution
+                    : default));
 #endif
         OnImpact?.Invoke(impactContext);
         EffectTriggerContext effectTriggerContext = CreateEffectTriggerContext(hitMonster, impactPosition);
@@ -955,6 +1019,10 @@ public class ProjectileBehaviour : MonoBehaviour
         out MonsterBehaviour hitMonster)
     {
         hitMonster = null;
+#if UNITY_EDITOR
+        arcNearestOtherTargetAtImpact = null;
+        arcLandingToNearestOtherDistanceAtImpact = 0f;
+#endif
 
         if (monsterManager == null || hitDistanceThreshold <= 0f)
         {
@@ -996,6 +1064,19 @@ public class ProjectileBehaviour : MonoBehaviour
                 monster,
                 impactPosition);
 
+#if UNITY_EDITOR
+            if (monster != targetMonster &&
+                (arcNearestOtherTargetAtImpact == null ||
+                 distanceSqr <
+                 arcLandingToNearestOtherDistanceAtImpact *
+                 arcLandingToNearestOtherDistanceAtImpact))
+            {
+                arcNearestOtherTargetAtImpact = monster;
+                arcLandingToNearestOtherDistanceAtImpact =
+                    Mathf.Sqrt(distanceSqr);
+            }
+#endif
+
             if (distanceSqr > hitDistanceThresholdSqr || distanceSqr >= nearestDistanceSqr)
             {
                 continue;
@@ -1023,6 +1104,56 @@ public class ProjectileBehaviour : MonoBehaviour
 #endif
         return false;
     }
+
+#if UNITY_EDITOR
+    private ProjectileArcTargetRelationObservation
+        CreateArcTargetRelationObservation(MonsterBehaviour resolvedTarget)
+    {
+        if (flightType != ProjectileFlightType.Arc)
+        {
+            return default;
+        }
+
+        bool hasIntendedAtImpact = IsTrackedValidTarget(targetMonster);
+        bool hasResolvedAtImpact = IsTrackedValidTarget(resolvedTarget);
+        bool hasNearestOtherAtImpact =
+            IsTrackedValidTarget(arcNearestOtherTargetAtImpact);
+
+        return new ProjectileArcTargetRelationObservation(
+            arcMemberType,
+            targetMonster,
+            resolvedTarget,
+            arcNearestOtherTargetAtImpact,
+            arcConfirmationToReleaseSeconds,
+            elapsedLifetime,
+            arcTravelTime,
+            hitDistanceThreshold,
+            hasArcIntendedTargetAtRelease,
+            arcLandingToIntendedDistanceAtRelease,
+            arcIntendedMoveSpeedAtRelease,
+            hasIntendedAtImpact,
+            hasIntendedAtImpact
+                ? Mathf.Sqrt(GetHitDistanceSqrFromPosition(
+                    targetMonster,
+                    targetPosition))
+                : 0f,
+            hasIntendedAtImpact ? targetMonster.CurrentMoveSpeed : 0f,
+            hasResolvedAtImpact,
+            hasResolvedAtImpact
+                ? Mathf.Sqrt(GetHitDistanceSqrFromPosition(
+                    resolvedTarget,
+                    targetPosition))
+                : 0f,
+            hasResolvedAtImpact ? resolvedTarget.CurrentMoveSpeed : 0f,
+            hasNearestOtherAtImpact,
+            hasNearestOtherAtImpact
+                ? arcLandingToNearestOtherDistanceAtImpact
+                : 0f,
+            hasNearestOtherAtImpact
+                ? arcNearestOtherTargetAtImpact.CurrentMoveSpeed
+                : 0f);
+    }
+#endif
 
     private static float GetHitDistanceSqrFromPosition(
         MonsterBehaviour monster,

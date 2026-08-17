@@ -126,7 +126,7 @@ Scatter members are independent projectiles inside one stable release group. Eac
 
 The Center member uses the Tower-authored Arrow template and resolved Attack Damage. Side members use Scatter Arrow's additional-entity template and immutable release damage equal to its authored Basic Damage plus the release-time resolved Damage Bonus.
 
-Scatter topology is fixed at attack confirmation and never adds projectiles to an already released group.
+Scatter topology is fixed when the Archer enters Windup and never adds projectiles to that pending or already released group. The Center target and launch direction are selected and frozen at the Release Moment.
 
 ---
 
@@ -149,10 +149,10 @@ Explosive Arrow is intentionally a small, frequent direct-hit splash. Cannon Exp
 
 # 7. Arc Flight
 
-Arc flight consumes an explicitly present immutable target-position snapshot and initial Arc height.
+Arc flight consumes an explicitly present release-time immutable target-position snapshot and initial Arc height.
 
 - Any world position, including the origin, may be valid; absence must be represented explicitly rather than through a sentinel coordinate.
-- Source Monster invalidation does not cancel or redirect the Shell.
+- Source Monster movement or invalidation after release does not cancel or redirect the Shell.
 - Arc travel completes at normalized progress one and resolves exactly at the captured position.
 - Arrival always produces Position Impact.
 - Initial Shell and bounce-child Arc heights come from their respective authoring owners.

@@ -17,5 +17,5 @@ MonoBehaviour:
     waveDelay: 4
     spawnEntries:
     - monsterPrefab: {fileID: 5918628833992865121, guid: fea114b78b71741fa89ac0ed135e6a17, type: 3}
-      count: 40
+      count: 3
       spawnInterval: 2.5

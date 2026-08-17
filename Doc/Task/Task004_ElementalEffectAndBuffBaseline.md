@@ -1,6 +1,6 @@
 # Task004 - Elemental, Effect, And Buff Baseline
 
-Status: Structural diagnostics complete; Elemental numerical calibration in progress on the v0.4 first candidate
+Status: Complete; Elemental baseline v0.4 accepted
 
 Depends on: Completed Task003 Tower growth and non-Elemental Upgrade baseline
 
@@ -146,24 +146,24 @@ Keep these values for the first diagnostic pass. Revise them only after the Reco
 
 An exploratory Inspector override does not revise this baseline by itself. A BuffDefinition-parameter result becomes calibration evidence only when its schema-v3-or-later JSON parameter snapshot identifies the exact runtime values. A lifecycle Effect parameter such as Chilled movement multiplier requires schema-v4-or-later output. Historical schema-v1 reports and filenames may still support functional diagnosis, but they are not self-describing evidence for accepting a parameter revision.
 
-### 7.2.1 Elemental Candidate v0.4
+### 7.2.1 Accepted Elemental Baseline v0.4
 
-The completed first-pass matrix justifies a narrow candidate rather than a global Elemental rewrite:
+The completed first-pass matrix accepts a narrow v0.4 revision rather than a global Elemental rewrite:
 
-| Parameter | v0.3 Baseline | v0.4 Candidate | State |
+| Parameter | v0.3 Baseline | Accepted v0.4 | State |
 |---|---:|---:|---|
 | Shared Active Duration | `5s` | `5s` | Frozen |
 | Shared Maximum Stacks | `10` | `10` | Frozen |
 | Shared Overload Protection Duration | `10s` | `10s` | Frozen |
 | Burning Periodic Tick Interval | `2s` | `2s` | Restored after an unaccepted `1s` Inspector exploration |
 | Burning Source Apply Cooldown | `2s` | `2s` | Frozen |
-| Chilled movement multiplier | `0.5x` | `0.7x` | Candidate requiring Section 9 targeted reruns and a schema-v4 snapshot |
-| Chilled Source Apply Cooldown | `2s` | `1.5s` | Candidate requiring a schema-v3 snapshot |
+| Chilled movement multiplier | `0.5x` | `0.7x` | Accepted by schema-v7 single-source and matching-source reruns |
+| Chilled Source Apply Cooldown | `2s` | `1.5s` | Accepted by schema-v7 single-source and matching-source reruns |
 | Electrified Source Apply Cooldown | `2s` | `2s` | Frozen |
 | Windcut Source Apply Cooldown | `2s` | `2s` | Frozen |
-| WindVortex movement speed | `0.3` | `0.1` | Accepted gameplay-identity candidate; HP960 lifecycle diagnostic passed |
+| WindVortex movement speed | `0.3` | `0.1` | Accepted; HP960 lifecycle diagnostic passed |
 
-The Cold candidate changes only movement multiplier while retaining the exploratory `1.5s` Source Apply Cooldown. This isolates whether the observed Magic and Drone value outliers come from slow intensity. Fire, Electric, and Wind damage Effects remain unchanged during this pass.
+The accepted Cold revision changes only movement multiplier and Source Apply Cooldown. Schema-v7 Archer, Cannon, and matching-source reports freeze the exact `0.7x / 1.5s` runtime parameters. The earlier named Magic and Drone schema-v3 reruns remain supporting cross-family value evidence rather than the sole parameter-identity proof. Fire, Electric, and Wind damage Effects remain unchanged.
 
 ### 7.3 Dedicated Map Contract
 
@@ -239,7 +239,7 @@ At Stage end, aggregate at minimum by ElementType and source TowerFamily:
 
 The existing human-readable report remains in the Unity Console. Each terminal run additionally writes exactly one JSON report under `Doc/GamePlayRecord/`. A non-empty authored Run Name becomes `<RunName>.json`; a blank Run Name falls back to local completion time `yyyyMMdd_HHmmss.json`. If that filename already exists, the Recorder preserves it and selects the first available numeric suffix such as `_01` or `_02`. The Recorder does not create TXT output or mutable `Latest` aliases.
 
-The JSON root carries `schemaVersion = 6`, generation time, run identity, Monster fixture, combat totals, timing, player and integrity results, Tower, Upgrade, Projectile-runtime snapshots, and the Buff aggregates above. The fixture snapshot obtains its expected count from the `MonsterWaveConfig` actually bound to `MonsterSpawner`, not from a Recorder Inspector field, and carries:
+The JSON root carries `schemaVersion = 7`, generation time, run identity, Monster fixture, combat totals, timing, player and integrity results, Tower, Upgrade, Projectile-runtime snapshots, and the Buff aggregates above. The fixture snapshot obtains its expected count from the `MonsterWaveConfig` actually bound to `MonsterSpawner`, not from a Recorder Inspector field, and carries:
 
 - `waveConfigName`
 - `expectedMonsterCountAvailable`
@@ -271,9 +271,39 @@ Each Tower snapshot additionally carries aggregate `projectileRuntime` diagnosti
 - Arc Projectiles that ended without impact and those still unresolved when the report was written;
 - the target-resolution rate across completed Arc impacts.
 
+Schema v7 additionally carries `projectileRuntime.arcTargetRelation`. Only initial Arc members contribute to this relation diagnostic; bounce children remain counted by the existing release/outcome totals but cannot distort the Primary/Additional comparison. It records:
+
+- Primary and Additional initial-Shell outcomes split into intended-target, fallback-target, and position-only counts;
+- fallback spawn-order relations split into immediate later spawn (`ResolvedOrdinal - IntendedOrdinal = +1`), immediate earlier spawn (`-1`), non-adjacent, and unavailable identity;
+- for a position-only result, the same relation categories for the nearest other gameplay-targetable Monster even when that Monster lies outside `Hit Distance Threshold`;
+- observed Hit Distance Threshold;
+- minimum, average, maximum, and sample count for confirmation-to-release time, release-to-impact time, planned Arc travel time, landing-to-target distances, and relevant Monster move speeds;
+- one ordered sample per completed initial Arc member containing its member type, resolution type, intended/resolved/nearest-other spawn ordinals and deltas, timings, distances, move speeds, and availability flags.
+
+Spawn ordinal is the Recorder's one-based Monster registration order for the current run. On the fixed single-route fixture, `+1` means the immediately later-spawned Monster, which normally follows behind the intended Monster. It is diagnostic identity rather than a targeting input. The nearest-other query is read-only and may observe a candidate outside the authored threshold, but it cannot promote that candidate into a hit.
+
+Arc relation identity, distance, and move-speed values are frozen immediately after impact target resolution and before direct damage, Elemental application, or other impact results execute. A lethal hit or the current Shell's own Chilled application therefore cannot erase or rewrite the observation that explains how that Shell arrived.
+
+For schema compatibility, the JSON metric remains named `confirmationToReleaseSeconds`. After the release-targeting refactor, it measures Windup admission to presentation Release Moment; target identity and position are not captured at the start of that interval.
+
 An Arc position-only impact is not labelled as a generic miss because it may still execute an authored area Effect or release a bounce child. Initial and child releases remain separate so Bouncing Shell children do not distort Twin Shells' initial-release diagnosis. Projectile observation is Editor-only and read-only: it cannot alter targeting, damage, flight, Effect execution, or the Battle result.
 
-The Cannon + Twin Shells + Chilled diagnostic identified repeated position-only arrivals despite unchanged release count and complete projectile resolution. The correction candidate preserves every captured landing position and authored hit threshold while retaining each initial Shell's intended Monster identity. At arrival, a still-valid intended Monster inside the threshold is preferred before the ordinary nearest-target fallback. Its first paired run produced Control `98.77%` versus Cold `88.37%` target resolution and left `10` Cold position-only arrivals, so intended-target priority alone is not accepted as the complete correction. One schema-v6 Cold diagnostic must classify resolved impacts as intended or fallback and position-only impacts as intended-invalid, intended-out-of-range, or without-intended-target before the candidate is kept, revised, or removed.
+The Cannon + Twin Shells + Chilled diagnostic identified repeated position-only arrivals despite unchanged release count and complete projectile resolution. Intended-target priority preserves every captured landing position and authored hit threshold while retaining each initial Shell's intended Monster identity. Its first paired run produced Control `98.77%` versus Cold `88.37%` target resolution and left `10` Cold position-only arrivals, so intended-target priority alone was not accepted as the complete correction. The schema-v6 classification then showed Control `39` intended / `41` fallback / `1` position-only versus Cold `47` intended / `24` fallback / `12` position-only.
+
+The schema-v7 Control/Cold pair confirmed the relationship rather than a generic unresolved-Projectile failure. Control produced `37` intended / `43` fallback / `1` position-only results, and every fallback was the immediately later-spawned Monster. Cold produced `46` intended / `25` fallback / `12` position-only results; every fallback remained the immediately later-spawned Monster, while most position-only arrivals left that same nearby candidate just outside the unchanged `0.4` threshold. Confirmation-to-release timing remained approximately `0.25s`, and release-to-impact remained approximately `1.25s`. The normal Control therefore benefited from repeatedly hitting the following Monster, while Chilled changed that incidental interception geometry.
+
+The accepted correction changes Archer and Cannon to a two-stage attack contract. Windup admission requires one valid target but freezes only release-group/member topology. At the animation Release Moment, the Tower selects current valid in-range targets and freezes Arrow direction or Shell intended identity and landing position. Released Projectiles remain non-tracking. Applying Scatter Arrow or Multi Shells during Windup cannot change the pending member count. A Release Moment with no valid primary target cancels the group and does not start the Attack Cycle.
+
+This correction intentionally does not change Cannon Arc travel time, Projectile speed, Arc height, or `Hit Distance Threshold`. The accepted paired Control/Cold rerun produced `100% / 98.81%` Arc target resolution and removed the earlier negative-Upgrade behavior. Cannon Projectile Speed remains `2` to preserve readable ballistic weight; no flight revision is required by Task004.
+
+Post-refactor acceptance used the existing Straight Route, HP `240`, speed `0.25`, spawn interval `2.5s`, and Position 1:
+
+1. `HP240_P1_Archer_QuickDraw+ScatterArrow_Control_ReleaseTimeTargeting`.
+2. `HP240_P1_Archer_QuickDraw+ScatterArrow_Cold_Slow0.7_Cooldown1.5_ReleaseTimeTargeting`.
+3. `HP240_P1_Cannon_FasterReload+TwinShells_Control_Projectiles_ReleaseTimeTargeting`.
+4. `HP240_P1_Cannon_FasterReload+TwinShells_Cold_Slow0.7_Cooldown1.5_Projectiles_ReleaseTimeTargeting`.
+
+All four reports completed Monster resolution with both integrity flags true. Archer Control/Cold produced `3570 / 3685` Effective Damage with `378 / 384` released Arrows, preserving complete three-member Scatter groups. Cannon Control/Cold produced `3720 / 3780` Effective Damage with `100% / 98.81%` Arc target resolution. A manual cancellation smoke confirmed that a Monster invalidated during Windup produces no Arrow or Shell, starts no Attack Cycle, and allows immediate reacquisition when a valid target returns.
 
 When sharing results, identify the named file or ask Codex to inspect the newest files in `Doc/GamePlayRecord/`; copying the whole Console block is no longer required. Repeated calibration runs may reuse one logical Run Name because the exported filename suffix preserves every result.
 
@@ -330,9 +360,9 @@ The proposed single-Tower ceiling remains `4.0x` relative to the naked same-fami
 4. Compare Overloads, time-to-Overload, blocked attempts, and total value against the two single-source runs.
 5. Revise Active Duration, Maximum Stacks, Source Apply Cooldown, Overload Protection Duration, Periodic Tick Interval, or lifecycle Effect output only after identifying which measurement causes the failure.
 
-### Current Calibration Evidence Status - 2026-08-15
+### Current Calibration Evidence Status - 2026-08-17
 
-The current `Doc/GamePlayRecord/` inventory contains `50` parseable reports: `43` schema-v1, one schema-v2, and six schema-v3 reports. Every report satisfies `ResolutionCountsMatch=True` and `LeakCountMatchesPlayerHealthLoss=True`. Historical schema-v1 reports remain valid screening evidence but cannot by themselves accept an exact parameter revision.
+The current `Doc/GamePlayRecord/` inventory contains `83` parseable reports: `43` schema-v1, one schema-v2, `14` schema-v3, two schema-v4, five schema-v5, seven schema-v6, and `11` schema-v7 reports. Every report satisfies `ResolutionCountsMatch=True` and `LeakCountMatchesPlayerHealthLoss=True`. Historical schema-v1 reports remain valid screening evidence but cannot by themselves accept an exact parameter revision.
 
 Structural evidence is complete:
 
@@ -343,25 +373,15 @@ Structural evidence is complete:
 - all four matching overlap runs, one mismatched overlap control, and one matching non-overlap control;
 - schema-v3 Electric and Wind HP960 diagnostics with `Expected=3`, two contributing source Towers, Maximum Stacks `10`, two Overloads, two Protection entries, and internally balanced application counts;
 - manual confirmation that Overcharged damages nearby Monsters and that the slower WindVortex preserves its persistent moving-zone identity;
-- Fire Overload and Protection, Cold Overload and Frozen lifecycle output, independent source cooldowns, and non-recursive reaction damage.
+- Fire Overload and Protection, Cold Overload and Frozen lifecycle output, independent source cooldowns, and non-recursive reaction damage;
+- release-time target confirmation for Archer and Cannon, immutable released direction/position, and cancellation without Attack Cycle when no release target remains.
 
-The first numerical screen identifies one primary outlier rather than a global Elemental failure:
+Final numerical decisions are:
 
 - Electric gain spans `1.087x-1.333x` and Wind spans `1.186x-1.528x`; keep their normal Effect values.
-- Fire spans `1.214x-1.790x`, while HP480 upper-stress reruns remain `1.249x-1.332x`; keep its tested `2s` periodic cadence and diagnose FlameBurst separately.
-- Cold spans `1.008x-2.014x`; Magic and Drone receive disproportionate value from the `0.5x` movement multiplier, while Archer and Cannon primarily expose its support identity.
-
-Required v0.4 candidate runs before value acceptance:
-
-1. `Diagnostic_HP960_3Monsters_P1Archer_P2Cannon_Control`.
-2. `HP240_P1_Archer_QuickDraw+ScatterArrow_Cold_Slow0.7_Cooldown1.5`.
-3. `HP240_P1_Cannon_FasterReload+TwinShells_Cold_Slow0.7_Cooldown1.5`.
-4. `HP240_P1_Magic_ArcaneRecovery+TwinOrbs_Cold_Slow0.7_Cooldown1.5`.
-5. `HP240_P1_Drone_OptimizedBurstModule+BlastRounds_Cold_Slow0.7_Cooldown1.5`.
-6. `Diagnostic_HP960_3Monsters_P1Archer_P2Cannon_Matching_Cold_Slow0.7_Cooldown1.5`.
-7. `Diagnostic_HP960_3Monsters_P1Archer_P2Cannon_Matching_Fire_Tick2_Cooldown2`.
-
-Electric and Wind do not require blanket reruns during this candidate pass.
+- Fire single-source screening spans `1.214x-1.790x`, while HP480 upper-stress reruns remain `1.249x-1.332x`. The post-refactor HP960 matching pair produced `1715` versus `1405` Control (`1.221x`), two Overloads, `23` periodic ticks, and no ceiling. Keep Burning Tick Interval `2s`, Source Apply Cooldown `2s`, and current FlameBurst output.
+- Cold `0.7x / 1.5s` single-source gains are Archer `1.032x`, Cannon `1.016x`, Magic `1.464x`, and Drone `1.203x`. The post-refactor HP960 matching pair produced `2140` versus `1405` Control (`1.523x`), three Overloads across three Monsters, three Protection entries, and complete Frozen application. Accept the v0.4 Cold revision.
+- Electric and Wind require no blanket reruns. All Phase A-E structural, value, stress, and cooperation gates are complete.
 
 ## 10. Required Measurements And Decision Rules
 
@@ -391,7 +411,7 @@ First numerical review guides:
 - Do not force every ElementType or TowerFamily to one identical gain ratio; Element identity and attack opportunity remain material.
 - Fire, Electric, and Wind normal-stage results generally use `1.10x-1.60x` as a review guide rather than a hard gate. A ratio outside it requires an absolute-damage, ceiling, route, or attack-archetype explanation.
 - Cold is judged as a team-support Element. Archer or Cannon may show little single-Tower damage gain, but persistent-contact Towers should not receive an unexplained near-double multiplier before Frozen cooperation.
-- The first Cold `0.7x` candidate aims provisionally for Magic around `1.35x-1.55x` and Drone around `1.20x-1.40x`; Play Mode evidence, not the projection, decides acceptance.
+- The accepted Cold `0.7x` result produced `1.464x` for Magic and `1.203x` for Drone, while the post-refactor Archer and Cannon comparisons remained non-negative at `1.032x` and `1.016x`.
 
 If a single source Overloads nearly every target, matching-source identity is too weak. If a matching pair rarely reaches Overload despite the accepted broad shared zone, the cooperation requirement is too strict. These observations trigger diagnosis, not an automatic one-parameter revision.
 
@@ -410,24 +430,31 @@ If a single source Overloads nearly every target, matching-source identity is to
 
 | ElementType | Tower / Test Build | Position Set | Control Result | Elemental Result | Gain | Applied / Stacked / Blocked | Overloads / Avg Time | Ceiling | Decision |
 |---|---|---|---:|---:|---:|---|---|---|---|
-| Cold | Archer Reference Core | P1 | `3560` | `3590` | `1.008x` | `73 / 84 / 187` | `0 / -` | No | Retest `Slow0.7` candidate |
+| Cold | Archer Reference Core | P1 | `3570` | `3685` | `1.032x` | `47 / 136 / 169` | `0 / -` | No | Accept `Slow0.7 / Cooldown1.5` |
 | Electric | Archer Reference Core | P1 | `3560` | `4275` | `1.201x` | `42 / 75 / 221` | `0 / -` | No | Keep first-pass values |
-| Fire | Archer Reference Core | P1 | `3560` | `5470` | `1.537x` | `46 / 72 / 219` | `0 / -` | No | Keep `Tick2`; diagnose FlameBurst |
+| Fire | Archer Reference Core | P1 | `3560` | `5470` | `1.537x` | `46 / 72 / 219` | `0 / -` | No | Accept `Tick2 / Cooldown2 / current FlameBurst` |
 | Wind | Archer Reference Core | P1 | `3560` | `5075` | `1.426x` | `42 / 77 / 221` | `0 / -` | No | Keep first-pass values |
-| Cold | Cannon Reference Core | P1 | `3450` | `3570` | `1.035x` | `54 / 21 / 1` | `0 / -` | No | Retest `Slow0.7` candidate |
+| Cold | Cannon Reference Core | P1 | `3720` | `3780` | `1.016x` | `70 / 13 / 0` | `0 / -` | No | Accept `Slow0.7 / Cooldown1.5` |
 | Electric | Cannon Reference Core | P1 | `3450` | `3750` | `1.087x` | `31 / 40 / 0` | `0 / -` | No | Keep first-pass values |
-| Fire | Cannon Reference Core | P1 | `3450` | `4190` | `1.214x` | `31 / 37 / 0` | `0 / -` | No | Keep `Tick2`; diagnose FlameBurst |
+| Fire | Cannon Reference Core | P1 | `3450` | `4190` | `1.214x` | `31 / 37 / 0` | `0 / -` | No | Accept `Tick2 / Cooldown2 / current FlameBurst` |
 | Wind | Cannon Reference Core | P1 | `3450` | `4090` | `1.186x` | `36 / 35 / 0` | `0 / -` | No | Keep first-pass values |
-| Cold | Magic Reference Core | P1 | `1734` | `3492` | `2.014x` | `40 / 115 / 7` | `0 / -` | No | Revise slow intensity |
+| Cold | Magic Reference Core | P1 | `1734` | `2538` | `1.464x` | `40 / 77 / 3` | `0 / -` | No | Accept `Slow0.7 / Cooldown1.5` |
 | Electric | Magic Reference Core | P1 | `1734` | `2312` | `1.333x` | `40 / 47 / 2` | `0 / -` | No | Keep first-pass values |
 | Fire | Magic Reference Core | P1 | `1734` | `3104` | `1.790x` | `40 / 46 / 3` | `0 / -` | No | Keep `Tick2`; low-Control exception |
 | Wind | Magic Reference Core | P1 | `1734` | `2650` | `1.528x` | `40 / 44 / 2` | `0 / -` | No | Keep first-pass values |
-| Cold | Drone Reference Core | P1 | `4132` | `6608` | `1.599x` | `46 / 235 / 1010` | `7 / 20.616s` | No | Revise slow intensity |
+| Cold | Drone Reference Core | P1 | `4132` | `4972` | `1.203x` | `49 / 157 / 685` | `3 / -` | No | Accept `Slow0.7 / Cooldown1.5` |
 | Electric | Drone Reference Core | P1 | `4132` | `5320` | `1.288x` | `41 / 108 / 564` | `0 / -` | No | Keep first-pass values |
-| Fire | Drone Reference Core | P1 | `4132` | `5998` | `1.452x` | `40 / 110 / 565` | `0 / -` | No | Keep `Tick2`; diagnose FlameBurst |
+| Fire | Drone Reference Core | P1 | `4132` | `5998` | `1.452x` | `40 / 110 / 565` | `0 / -` | No | Accept `Tick2 / Cooldown2 / current FlameBurst` |
 | Wind | Drone Reference Core | P1 | `4132` | `5644` | `1.366x` | `38 / 96 / 514` | `0 / -` | No | Keep first-pass values |
 
 Record exact authored values with every accepted result. Schema-v3-or-later BuffDefinition snapshots are sufficient for Buff-only revisions; schema-v4-or-later snapshots are required when accepting a lifecycle Effect parameter such as Chilled movement multiplier. Do not mix runs made before and after an Effect, Buff, Map, or fixture revision under one candidate row.
+
+Final cooperation acceptance:
+
+| ElementType | Build | Control Result | Matching Result | Gain | Overloads | Decision |
+|---|---|---:|---:|---:|---:|---|
+| Cold | P1 Archer + P2 Cannon | `1405` | `2140` | `1.523x` | `3 / 3 Monsters` | Accept v0.4 cooperation |
+| Fire | P1 Archer + P2 Cannon | `1405` | `1715` | `1.221x` | `2 / 3 Monsters` | Accept Tick2 / Cooldown2 / current FlameBurst |
 
 ## 13. Execution Collaboration
 
@@ -484,4 +511,4 @@ Record exact authored values with every accepted result. Schema-v3-or-later Buff
 
 ## 17. Review Note
 
-Task004 owns matching-source and Overload calibration, including accepted Required Levels, authored parameters, candidate targets, fixtures, diagnostics, and test evidence. `01_TowerGrowthAndUpgradeIdentity.md` remains the qualitative growth contract. `15_BuffSystem.md` remains the stable lifecycle and ownership contract. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task006 from the Blueprint's required capabilities.
+Task004 is complete. It owns the accepted matching-source and Overload calibration, Required Levels, authored parameters, fixtures, diagnostics, and test evidence. `01_TowerGrowthAndUpgradeIdentity.md` remains the qualitative growth contract. `15_BuffSystem.md` remains the stable lifecycle and ownership contract. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task006 from the Blueprint's required capabilities.
