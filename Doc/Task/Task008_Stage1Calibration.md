@@ -1,8 +1,8 @@
-# Task007 - Stage1 Calibration
+# Task008 - Stage1 Calibration
 
-Status: Planned; Stage1 Reference Build v0.1 and both capability Anti-patterns are defined, while execution waits for Task006 inputs
+Status: Planned; Stage1 Reference Build v0.1 and both capability Anti-patterns are defined, while execution waits for Task007 inputs
 
-Depends on: Task006 Global Progression And Stage Skeleton
+Depends on: Task007 Global Progression And Stage Skeleton
 
 ## 1. Goal
 
@@ -26,7 +26,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 | Input | Value | Source |
 |---|---|---|
 | Implementation Map Size | 8x8 | Task001 v0.2 |
-| Derived Total Draft | 6 | Reference Build cost, formalized by Task006 |
+| Derived Total Draft | 6 | Reference Build cost, formalized by Task007 |
 | Reference Build | Two Archers; one L3 with one Basic and one Behaviour, one L1 | Stage Design Blueprint v0.1 |
 | Required Capability | Concentrated growth plus a second coverage point | Stage Design Blueprint |
 | Anti-patterns | Over-expand with undeveloped L1 Archers; or fully concentrate into one Archer without the second coverage point | Stage Design Blueprint |
@@ -51,12 +51,12 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 ## 6. Calibration Sequence
 
 1. Fix the approved Stage1 Reference Build and placements.
-2. Confirm the Task006 skeleton provides exactly six total Draft opportunities.
+2. Confirm the Task007 skeleton provides exactly six total Draft opportunities.
 3. Tune Monster order, count, delay, and interval.
 4. Preserve combat after the sixth Draft.
 5. Confirm the Reference Build clears with deliberate margin.
 6. Run the legal L1 Archer over-expansion Anti-pattern.
-7. Run the Task006-confirmed legal single-Archer concentration Anti-pattern using the same total Draft budget.
+7. Run the Task007-confirmed legal single-Archer concentration Anti-pattern using the same total Draft budget.
 8. Adjust Stage-local Wave or Map pressure one axis at a time.
 9. Record the accepted Stage1 baseline.
 
@@ -79,7 +79,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 | StageDefinition | Stage1 composition and maximum health |
 | MonsterWaveConfig | Stage1 Monster order, count, and timing |
 | Map Prefab | Stage1 route and placement geometry |
-| Task007 | Derived Wave proposal, Stage-local calibration evidence, and accepted result |
+| Task008 | Derived Wave proposal, Stage-local calibration evidence, and accepted result |
 
 ## 9. Required Calibration Table
 
@@ -92,7 +92,7 @@ Codex prepares the first Stage calibration table:
 ## 10. Execution Collaboration
 
 - The user owns Unity authoring, fixed Reference and Anti-pattern runs, and reporting Draft timing, leaks, final health, and Stage duration.
-- Codex fills the first MonsterWaveConfig table from the Blueprint, Task006 Draft skeleton, accepted Map, and global combat baselines.
+- Codex fills the first MonsterWaveConfig table from the Blueprint, Task007 Draft skeleton, accepted Map, and global combat baselines.
 - Codex compares the observed run with the expected result and changes one Stage-local pressure axis at a time.
 
 ## 11. Unity Authoring Checklist

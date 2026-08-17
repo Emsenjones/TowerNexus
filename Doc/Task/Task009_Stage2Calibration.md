@@ -1,8 +1,8 @@
-# Task008 - Stage2 Calibration
+# Task009 - Stage2 Calibration
 
 Status: Planned; Stage2 Reference Build v0.1 is defined and execution waits for upstream implementation inputs
 
-Depends on: Task007 Stage1 Calibration
+Depends on: Task008 Stage1 Calibration
 
 ## 1. Goal
 
@@ -26,7 +26,7 @@ Stage2 introduces a second TowerFamily without erasing the Stage1 lesson of conc
 
 The Stage Design Blueprint must approve the Stage2 Reference Build, Required Capability, Expected Anti-pattern, and Notes.
 
-Task001 must provide an accepted Stage2 greybox with Reference placement and range/route evidence. Task006 must provide the derived Draft count, exact Draft pools, and Stage2 skeleton. A viable alternative is proposed and tested inside this Task rather than approved in the Blueprint.
+Task001 must provide an accepted Stage2 greybox with Reference placement and range/route evidence. Task007 must provide the derived Draft count, exact Draft pools, and Stage2 skeleton. A viable alternative is proposed and tested inside this Task rather than approved in the Blueprint.
 
 First-pass inputs:
 
@@ -35,7 +35,7 @@ First-pass inputs:
 | Map Size | 10x10 |
 | Reference Towers | 3 |
 | Core | One L3 Cannon with one Basic and one Behaviour |
-| Support | Two L1 Towers with no Upgrades; Archer is required and the repeated family is resolved by Task006 |
+| Support | Two L1 Towers with no Upgrades; Archer is required and the repeated family is resolved by Task007 |
 | Total Draft Opportunities | 7 |
 | Elemental | Not available |
 
@@ -47,7 +47,7 @@ First-pass inputs:
 - Wave and Spawn timing
 - Local Stage2 Map refinement
 - Reference, proposed-alternative, and Anti-pattern runs
-- A Task006-confirmed legal one-Tower concentration run
+- A Task007-confirmed legal one-Tower concentration run
 - Stage1 regression after any global revision
 
 ## 5. Out Of Scope
@@ -60,7 +60,7 @@ First-pass inputs:
 ## 6. Calibration Sequence
 
 1. Fix the approved Stage2 Reference Build and placements.
-2. Confirm the Task006-derived Draft count.
+2. Confirm the Task007-derived Draft count.
 3. Tune Wave content to expose range and cadence complement.
 4. Let Codex propose and test at least one coherent alternative build.
 5. Test the approved undeveloped horizontal-growth Anti-pattern.
@@ -86,7 +86,7 @@ First-pass inputs:
 | StageDefinition | Stage2 composition and maximum health |
 | MonsterWaveConfig | Stage2 Monster order, count, and timing |
 | Map Prefab | Stage2 route and placement geometry |
-| Task008 | Derived Wave and alternative-build proposal, Stage-local calibration, and Stage1 regression evidence |
+| Task009 | Derived Wave and alternative-build proposal, Stage-local calibration, and Stage1 regression evidence |
 
 ## 9. Required Calibration Table
 
@@ -106,7 +106,7 @@ The same proposal records one coherent alternative Build and its expected margin
 
 ## 11. Unity Authoring Checklist
 
-- Confirm the Stage2 Blueprint contract and Task006-derived inputs.
+- Confirm the Stage2 Blueprint contract and Task007-derived inputs.
 - Assign the approved Stage2 Map, Wave, and Draft pools.
 - Author the Stage2 MonsterWaveConfig.
 - Place the Reference, alternative, horizontal-growth, and one-Tower concentration builds.
@@ -116,7 +116,7 @@ The same proposal records one coherent alternative Build and its expected margin
 
 ## 12. Acceptance Criteria
 
-- Stage2 reaches its Task006-derived Draft count.
+- Stage2 reaches its Task007-derived Draft count.
 - The Reference Build clears reliably.
 - Archer and Cannon have understandable complementary value.
 - At least one viable alternative exists.
@@ -134,4 +134,4 @@ The same proposal records one coherent alternative Build and its expected margin
 
 ## 14. Review Note
 
-Task008 is expected to propose Stage2 numeric values. They remain provisional until the user's fixed Unity runs confirm the intended Blueprint experience.
+Task009 is expected to propose Stage2 numeric values. They remain provisional until the user's fixed Unity runs confirm the intended Blueprint experience.

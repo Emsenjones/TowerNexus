@@ -1,0 +1,339 @@
+{
+    "schemaVersion": 8,
+    "generatedAtLocal": "2026-08-17T16:48:21+08:00",
+    "runLabel": "Roster_HP240_Dragon_P1_Cannon_Base",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "waveConfigName": "Config_MonsterWave_Default",
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 1,
+        "observedMinimumMonsterHealth": 240,
+        "observedMaximumMonsterHealth": 240,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 0.0
+    },
+    "combat": {
+        "spawned": 1,
+        "resolved": 1,
+        "killed": 1,
+        "leaked": 0,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 1.0,
+        "effectiveDamage": 240,
+        "totalObservedHealth": 240,
+        "damageCoverage": 1.0,
+        "leakedRemainingHealth": 0,
+        "averageLeakedRemainingHealth": 0.0,
+        "peakAlive": 1
+    },
+    "timing": {
+        "spawnSpanSeconds": 0.0,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 0.0,
+        "battleDurationSeconds": 20.23200225830078
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 40,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true,
+        "monsterRuntimeCountsMatch": true,
+        "monsterRuntimeDamageMatches": true,
+        "monsterRuntimeRegistrationCoverageMatch": true,
+        "monsterRuntimeStartedAtFullHealth": true
+    },
+    "monsterRuntime": {
+        "observedTypes": 1,
+        "instanceSamples": 1,
+        "registrationObservedInstances": 1,
+        "fallbackObservedInstances": 0,
+        "instancesObservedAtFullHealth": 1,
+        "instancesObservedAfterDamage": 0,
+        "unobservedDamageAtObservationStart": 0,
+        "successfulDamageApplications": 4,
+        "types": [
+            {
+                "runtimeTemplateName": "Prefab_Monster_Dragon",
+                "displayName": "Dragon",
+                "maximumHealth": 240,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 1,
+                "resolved": 1,
+                "killed": 1,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 1,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 1,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 4,
+                "effectiveDamage": 240,
+                "leakedRemainingHealth": 0,
+                "resolutionLifetimeSeconds": {
+                    "samples": 1,
+                    "minimum": 20.23200225830078,
+                    "average": 20.23200225830078,
+                    "maximum": 20.23200225830078
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 1,
+                    "minimum": 20.23200225830078,
+                    "average": 20.23200225830078,
+                    "maximum": 20.23200225830078
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 0,
+                    "minimum": 0.0,
+                    "average": 0.0,
+                    "maximum": 0.0
+                }
+            }
+        ],
+        "instances": [
+            {
+                "spawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_Dragon",
+                "displayName": "Dragon",
+                "maximumHealth": 240,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 240,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 4,
+                "effectiveDamage": 240,
+                "lifetimeSeconds": 20.23200225830078
+            }
+        ]
+    },
+    "towers": [
+        {
+            "instanceId": -399408,
+            "displayName": "Cannon Tower",
+            "family": "Cannon",
+            "level": 1,
+            "hasCombatRuntime": true,
+            "baseDamage": 60,
+            "baseRange": 3.0,
+            "baseCycleSeconds": 3.5,
+            "resolvedDamage": 60,
+            "resolvedRange": 3.0,
+            "resolvedCycleSeconds": 3.5,
+            "projectileRuntime": {
+                "projectilesReleased": 4,
+                "initialProjectilesReleased": 4,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 4,
+                "arcTargetResolvedImpacts": 4,
+                "arcIntendedTargetImpacts": 4,
+                "arcFallbackTargetImpacts": 0,
+                "arcPositionOnlyImpacts": 0,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 0,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 1.0,
+                "arcTargetRelation": {
+                    "sampledInitialImpacts": 4,
+                    "primaryIntendedTargetImpacts": 4,
+                    "primaryFallbackTargetImpacts": 0,
+                    "primaryPositionOnlyImpacts": 0,
+                    "additionalIntendedTargetImpacts": 0,
+                    "additionalFallbackTargetImpacts": 0,
+                    "additionalPositionOnlyImpacts": 0,
+                    "fallbackImmediateLaterSpawnImpacts": 0,
+                    "fallbackImmediateEarlierSpawnImpacts": 0,
+                    "fallbackNonAdjacentImpacts": 0,
+                    "fallbackUnknownRelationImpacts": 0,
+                    "positionOnlyNearestOtherAvailable": 0,
+                    "positionOnlyNearestOtherImmediateLaterSpawn": 0,
+                    "positionOnlyNearestOtherImmediateEarlierSpawn": 0,
+                    "positionOnlyNearestOtherNonAdjacent": 0,
+                    "positionOnlyNearestOtherUnknownRelation": 0,
+                    "positionOnlyWithoutNearestOther": 0,
+                    "observedMinimumHitDistanceThreshold": 0.4000000059604645,
+                    "observedMaximumHitDistanceThreshold": 0.4000000059604645,
+                    "confirmationToReleaseSeconds": {
+                        "samples": 4,
+                        "minimum": 0.2514915466308594,
+                        "average": 0.25544190406799319,
+                        "maximum": 0.2578716278076172
+                    },
+                    "releaseToImpactSeconds": {
+                        "samples": 4,
+                        "minimum": 1.0805977582931519,
+                        "average": 1.230454921722412,
+                        "maximum": 1.4609076976776124
+                    },
+                    "plannedTravelTimeSeconds": {
+                        "samples": 4,
+                        "minimum": 1.0792956352233887,
+                        "average": 1.2282729148864747,
+                        "maximum": 1.4597121477127076
+                    },
+                    "landingToIntendedDistanceAtRelease": {
+                        "samples": 4,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtRelease": {
+                        "samples": 4,
+                        "minimum": 0.25,
+                        "average": 0.25,
+                        "maximum": 0.25
+                    },
+                    "landingToIntendedDistanceAtImpact": {
+                        "samples": 4,
+                        "minimum": 0.2701491713523865,
+                        "average": 0.3076135516166687,
+                        "maximum": 0.36522674560546877
+                    },
+                    "intendedMoveSpeedAtImpact": {
+                        "samples": 4,
+                        "minimum": 0.25,
+                        "average": 0.25,
+                        "maximum": 0.25
+                    },
+                    "landingToFallbackDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "fallbackMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToPositionOnlyNearestOtherDistance": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "positionOnlyNearestOtherMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "samples": [
+                        {
+                            "memberType": "PrimaryInitial",
+                            "resolutionType": "IntendedTarget",
+                            "intendedSpawnOrdinal": 1,
+                            "resolvedSpawnOrdinal": 1,
+                            "nearestOtherSpawnOrdinal": 0,
+                            "resolvedOrdinalDelta": 0,
+                            "nearestOtherOrdinalDelta": 0,
+                            "confirmationToReleaseSeconds": 0.2565298080444336,
+                            "releaseToImpactSeconds": 1.4609076976776124,
+                            "plannedTravelTimeSeconds": 1.4597121477127076,
+                            "hitDistanceThreshold": 0.4000000059604645,
+                            "hasIntendedAtRelease": true,
+                            "landingToIntendedDistanceAtRelease": 0.0,
+                            "intendedMoveSpeedAtRelease": 0.25,
+                            "hasIntendedAtImpact": true,
+                            "landingToIntendedDistanceAtImpact": 0.36522674560546877,
+                            "intendedMoveSpeedAtImpact": 0.25,
+                            "hasResolvedTargetAtImpact": true,
+                            "landingToResolvedTargetDistanceAtImpact": 0.36522674560546877,
+                            "resolvedTargetMoveSpeedAtImpact": 0.25,
+                            "hasNearestOtherTargetAtImpact": false,
+                            "landingToNearestOtherTargetDistanceAtImpact": 0.0,
+                            "nearestOtherTargetMoveSpeedAtImpact": 0.0
+                        },
+                        {
+                            "memberType": "PrimaryInitial",
+                            "resolutionType": "IntendedTarget",
+                            "intendedSpawnOrdinal": 1,
+                            "resolvedSpawnOrdinal": 1,
+                            "nearestOtherSpawnOrdinal": 0,
+                            "resolvedOrdinalDelta": 0,
+                            "nearestOtherOrdinalDelta": 0,
+                            "confirmationToReleaseSeconds": 0.2558746337890625,
+                            "releaseToImpactSeconds": 1.1840986013412476,
+                            "plannedTravelTimeSeconds": 1.1840777397155762,
+                            "hitDistanceThreshold": 0.4000000059604645,
+                            "hasIntendedAtRelease": true,
+                            "landingToIntendedDistanceAtRelease": 0.0,
+                            "intendedMoveSpeedAtRelease": 0.25,
+                            "hasIntendedAtImpact": true,
+                            "landingToIntendedDistanceAtImpact": 0.2960245609283447,
+                            "intendedMoveSpeedAtImpact": 0.25,
+                            "hasResolvedTargetAtImpact": true,
+                            "landingToResolvedTargetDistanceAtImpact": 0.2960245609283447,
+                            "resolvedTargetMoveSpeedAtImpact": 0.25,
+                            "hasNearestOtherTargetAtImpact": false,
+                            "landingToNearestOtherTargetDistanceAtImpact": 0.0,
+                            "nearestOtherTargetMoveSpeedAtImpact": 0.0
+                        },
+                        {
+                            "memberType": "PrimaryInitial",
+                            "resolutionType": "IntendedTarget",
+                            "intendedSpawnOrdinal": 1,
+                            "resolvedSpawnOrdinal": 1,
+                            "nearestOtherSpawnOrdinal": 0,
+                            "resolvedOrdinalDelta": 0,
+                            "nearestOtherOrdinalDelta": 0,
+                            "confirmationToReleaseSeconds": 0.2578716278076172,
+                            "releaseToImpactSeconds": 1.0805977582931519,
+                            "plannedTravelTimeSeconds": 1.0792956352233887,
+                            "hitDistanceThreshold": 0.4000000059604645,
+                            "hasIntendedAtRelease": true,
+                            "landingToIntendedDistanceAtRelease": 0.0,
+                            "intendedMoveSpeedAtRelease": 0.25,
+                            "hasIntendedAtImpact": true,
+                            "landingToIntendedDistanceAtImpact": 0.2701491713523865,
+                            "intendedMoveSpeedAtImpact": 0.25,
+                            "hasResolvedTargetAtImpact": true,
+                            "landingToResolvedTargetDistanceAtImpact": 0.2701491713523865,
+                            "resolvedTargetMoveSpeedAtImpact": 0.25,
+                            "hasNearestOtherTargetAtImpact": false,
+                            "landingToNearestOtherTargetDistanceAtImpact": 0.0,
+                            "nearestOtherTargetMoveSpeedAtImpact": 0.0
+                        },
+                        {
+                            "memberType": "PrimaryInitial",
+                            "resolutionType": "IntendedTarget",
+                            "intendedSpawnOrdinal": 1,
+                            "resolvedSpawnOrdinal": 1,
+                            "nearestOtherSpawnOrdinal": 0,
+                            "resolvedOrdinalDelta": 0,
+                            "nearestOtherOrdinalDelta": 0,
+                            "confirmationToReleaseSeconds": 0.2514915466308594,
+                            "releaseToImpactSeconds": 1.1962155103683472,
+                            "plannedTravelTimeSeconds": 1.1900063753128052,
+                            "hitDistanceThreshold": 0.4000000059604645,
+                            "hasIntendedAtRelease": true,
+                            "landingToIntendedDistanceAtRelease": 0.0,
+                            "intendedMoveSpeedAtRelease": 0.25,
+                            "hasIntendedAtImpact": true,
+                            "landingToIntendedDistanceAtImpact": 0.29905378818511965,
+                            "intendedMoveSpeedAtImpact": 0.25,
+                            "hasResolvedTargetAtImpact": true,
+                            "landingToResolvedTargetDistanceAtImpact": 0.29905378818511965,
+                            "resolvedTargetMoveSpeedAtImpact": 0.25,
+                            "hasNearestOtherTargetAtImpact": false,
+                            "landingToNearestOtherTargetDistanceAtImpact": 0.0,
+                            "nearestOtherTargetMoveSpeedAtImpact": 0.0
+                        }
+                    ]
+                }
+            },
+            "upgrades": []
+        }
+    ],
+    "buffs": []
+}

@@ -1,0 +1,349 @@
+{
+    "schemaVersion": 8,
+    "generatedAtLocal": "2026-08-17T17:13:26+08:00",
+    "runLabel": "Roster_HP120_Bat_3Monsters_P1_Archer_QuickDraw+ScatterArrow_Fire",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "waveConfigName": "Config_MonsterWave_Default",
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 3,
+        "observedMinimumMonsterHealth": 120,
+        "observedMaximumMonsterHealth": 120,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.5028903484344484
+    },
+    "combat": {
+        "spawned": 3,
+        "resolved": 3,
+        "killed": 3,
+        "leaked": 0,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 1.0,
+        "effectiveDamage": 360,
+        "totalObservedHealth": 360,
+        "damageCoverage": 1.0,
+        "leakedRemainingHealth": 0,
+        "averageLeakedRemainingHealth": 0.0,
+        "peakAlive": 3
+    },
+    "timing": {
+        "spawnSpanSeconds": 5.0057806968688969,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 5.0057806968688969,
+        "battleDurationSeconds": 21.006046295166017
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 40,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true,
+        "monsterRuntimeCountsMatch": true,
+        "monsterRuntimeDamageMatches": true,
+        "monsterRuntimeRegistrationCoverageMatch": true,
+        "monsterRuntimeStartedAtFullHealth": true
+    },
+    "monsterRuntime": {
+        "observedTypes": 1,
+        "instanceSamples": 3,
+        "registrationObservedInstances": 3,
+        "fallbackObservedInstances": 0,
+        "instancesObservedAtFullHealth": 3,
+        "instancesObservedAfterDamage": 0,
+        "unobservedDamageAtObservationStart": 0,
+        "successfulDamageApplications": 33,
+        "types": [
+            {
+                "runtimeTemplateName": "Prefab_Monster_Bat",
+                "displayName": "Bat",
+                "maximumHealth": 120,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 3,
+                "resolved": 3,
+                "killed": 3,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 3,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 3,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 33,
+                "effectiveDamage": 360,
+                "leakedRemainingHealth": 0,
+                "resolutionLifetimeSeconds": {
+                    "samples": 3,
+                    "minimum": 14.939783096313477,
+                    "average": 15.604225158691407,
+                    "maximum": 16.00026512145996
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 3,
+                    "minimum": 14.939783096313477,
+                    "average": 15.604225158691407,
+                    "maximum": 16.00026512145996
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 0,
+                    "minimum": 0.0,
+                    "average": 0.0,
+                    "maximum": 0.0
+                }
+            }
+        ],
+        "instances": [
+            {
+                "spawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_Bat",
+                "displayName": "Bat",
+                "maximumHealth": 120,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 120,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 8,
+                "effectiveDamage": 120,
+                "lifetimeSeconds": 14.939783096313477
+            },
+            {
+                "spawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_Bat",
+                "displayName": "Bat",
+                "maximumHealth": 120,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 120,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 11,
+                "effectiveDamage": 120,
+                "lifetimeSeconds": 15.872625350952149
+            },
+            {
+                "spawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_Bat",
+                "displayName": "Bat",
+                "maximumHealth": 120,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 120,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 14,
+                "effectiveDamage": 120,
+                "lifetimeSeconds": 16.00026512145996
+            }
+        ]
+    },
+    "towers": [
+        {
+            "instanceId": -476036,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 3,
+            "hasCombatRuntime": true,
+            "baseDamage": 20,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 20,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "projectileRuntime": {
+                "projectilesReleased": 36,
+                "initialProjectilesReleased": 36,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 0,
+                "arcTargetResolvedImpacts": 0,
+                "arcIntendedTargetImpacts": 0,
+                "arcFallbackTargetImpacts": 0,
+                "arcPositionOnlyImpacts": 0,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 0,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 0.0,
+                "arcTargetRelation": {
+                    "sampledInitialImpacts": 0,
+                    "primaryIntendedTargetImpacts": 0,
+                    "primaryFallbackTargetImpacts": 0,
+                    "primaryPositionOnlyImpacts": 0,
+                    "additionalIntendedTargetImpacts": 0,
+                    "additionalFallbackTargetImpacts": 0,
+                    "additionalPositionOnlyImpacts": 0,
+                    "fallbackImmediateLaterSpawnImpacts": 0,
+                    "fallbackImmediateEarlierSpawnImpacts": 0,
+                    "fallbackNonAdjacentImpacts": 0,
+                    "fallbackUnknownRelationImpacts": 0,
+                    "positionOnlyNearestOtherAvailable": 0,
+                    "positionOnlyNearestOtherImmediateLaterSpawn": 0,
+                    "positionOnlyNearestOtherImmediateEarlierSpawn": 0,
+                    "positionOnlyNearestOtherNonAdjacent": 0,
+                    "positionOnlyNearestOtherUnknownRelation": 0,
+                    "positionOnlyWithoutNearestOther": 0,
+                    "observedMinimumHitDistanceThreshold": 0.0,
+                    "observedMaximumHitDistanceThreshold": 0.0,
+                    "confirmationToReleaseSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "releaseToImpactSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "plannedTravelTimeSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToFallbackDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "fallbackMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToPositionOnlyNearestOtherDistance": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "positionOnlyNearestOtherMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "samples": []
+                }
+            },
+            "upgrades": [
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": ""
+                },
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": ""
+                },
+                {
+                    "displayName": "Blazing Arrows",
+                    "layer": "Elemental",
+                    "requiredLevel": 3,
+                    "behaviourPackage": "",
+                    "element": "Fire"
+                }
+            ]
+        }
+    ],
+    "buffs": [
+        {
+            "definitionName": "Config_BuffDefini_Burning",
+            "displayName": "Burning",
+            "element": "Fire",
+            "parameters": {
+                "usesStacks": true,
+                "activeDurationSeconds": 5.0,
+                "periodicTickIntervalSeconds": 2.0,
+                "maximumStacks": 10,
+                "sourceApplyCooldownSeconds": 2.0,
+                "overloadProtectionDurationSeconds": 10.0,
+                "moveSpeedMultiplierAvailable": false,
+                "moveSpeedMultiplier": 0.0
+            },
+            "sourceElements": [
+                "Fire"
+            ],
+            "applicationAttempts": 23,
+            "applied": 3,
+            "refreshed": 0,
+            "stacked": 4,
+            "invalid": 0,
+            "blockedBySourceCooldown": 16,
+            "blockedByProtection": 0,
+            "distinctMonsters": 3,
+            "distinctSourceTowers": 1,
+            "maximumObservedStacks": 3,
+            "overloads": 0,
+            "enteredProtection": 0,
+            "periodicTicks": 7,
+            "naturalExpiriesBeforeOverload": 0,
+            "protectionExpiries": 0,
+            "explicitRemovals": 0,
+            "monsterKilledRemovals": 3,
+            "monsterLeakedRemovals": 0,
+            "technicalCleanupRemovals": 0,
+            "runtimeResetRemovals": 0,
+            "overloadWithoutProtectionRemovals": 0,
+            "averageFirstApplicationToOverloadSeconds": 0.0,
+            "sources": [
+                {
+                    "towerFamily": "Archer",
+                    "applicationAttempts": 23,
+                    "successfulApplications": 7,
+                    "applied": 3,
+                    "refreshed": 0,
+                    "stacked": 4,
+                    "invalid": 0,
+                    "blockedBySourceCooldown": 16,
+                    "blockedByProtection": 0,
+                    "overloads": 0,
+                    "enteredProtection": 0,
+                    "periodicTicks": 7,
+                    "naturalExpiriesBeforeOverload": 0,
+                    "averageFirstApplicationToOverloadSeconds": 0.0
+                }
+            ]
+        }
+    ]
+}

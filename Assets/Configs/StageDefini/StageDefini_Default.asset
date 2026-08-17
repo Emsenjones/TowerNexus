@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
   displayName: Default Definition
   playerMaxHealth: 40
-  mapTemplate: {fileID: 3273336904907436118, guid: 5480f5390a536498b96a0c60e291948c, type: 3}
+  mapTemplate: {fileID: 3273336904907436118, guid: e7fdfa2ba65a04429b089a81b6e0af74, type: 3}
   monsterWaveConfig: {fileID: 11400000, guid: fbd0a6e24c68c449a91d06afd66c2efc, type: 2}
   towerDraftPool:
   - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}

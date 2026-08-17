@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 7;
+    public int schemaVersion = 8;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -15,6 +15,8 @@ internal sealed class CombatBalanceRunJsonReport
     public CombatBalanceTimingJson timing = new CombatBalanceTimingJson();
     public CombatBalancePlayerJson player = new CombatBalancePlayerJson();
     public CombatBalanceIntegrityJson integrity = new CombatBalanceIntegrityJson();
+    public CombatBalanceMonsterRuntimeJson monsterRuntime =
+        new CombatBalanceMonsterRuntimeJson();
     public List<CombatBalanceTowerJson> towers = new List<CombatBalanceTowerJson>();
     public List<CombatBalanceBuffJson> buffs = new List<CombatBalanceBuffJson>();
 }
@@ -60,6 +62,69 @@ internal sealed class CombatBalanceTimingJson
 }
 
 [Serializable]
+internal sealed class CombatBalanceMonsterRuntimeJson
+{
+    public int observedTypes;
+    public int instanceSamples;
+    public int registrationObservedInstances;
+    public int fallbackObservedInstances;
+    public int instancesObservedAtFullHealth;
+    public int instancesObservedAfterDamage;
+    public int unobservedDamageAtObservationStart;
+    public int successfulDamageApplications;
+    public List<CombatBalanceMonsterTypeJson> types =
+        new List<CombatBalanceMonsterTypeJson>();
+    public List<CombatBalanceMonsterInstanceJson> instances =
+        new List<CombatBalanceMonsterInstanceJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceMonsterTypeJson
+{
+    public string runtimeTemplateName;
+    public string displayName;
+    public int maximumHealth;
+    public float moveSpeedAtSpawn;
+    public int spawned;
+    public int resolved;
+    public int killed;
+    public int leaked;
+    public int unresolvedAtReport;
+    public int registrationObservedInstances;
+    public int fallbackObservedInstances;
+    public int instancesObservedAtFullHealth;
+    public int instancesObservedAfterDamage;
+    public int unobservedDamageAtObservationStart;
+    public int successfulDamageApplications;
+    public int effectiveDamage;
+    public int leakedRemainingHealth;
+    public CombatBalanceMetricJson resolutionLifetimeSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson killedLifetimeSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson leakedLifetimeSeconds =
+        new CombatBalanceMetricJson();
+}
+
+[Serializable]
+internal sealed class CombatBalanceMonsterInstanceJson
+{
+    public int spawnOrdinal;
+    public string runtimeTemplateName;
+    public string displayName;
+    public int maximumHealth;
+    public float moveSpeedAtSpawn;
+    public bool observedThroughRegistrationEvent;
+    public int healthAtObservationStart;
+    public int unobservedDamageAtObservationStart;
+    public string resolutionType;
+    public int finalHealth;
+    public int successfulDamageApplications;
+    public int effectiveDamage;
+    public float lifetimeSeconds;
+}
+
+[Serializable]
 internal sealed class CombatBalancePlayerJson
 {
     public int initialHealth;
@@ -72,6 +137,10 @@ internal sealed class CombatBalanceIntegrityJson
 {
     public bool resolutionCountsMatch;
     public bool leakCountMatchesPlayerHealthLoss;
+    public bool monsterRuntimeCountsMatch;
+    public bool monsterRuntimeDamageMatches;
+    public bool monsterRuntimeRegistrationCoverageMatch;
+    public bool monsterRuntimeStartedAtFullHealth;
 }
 
 [Serializable]

@@ -1,8 +1,8 @@
-# Task006 - Global Progression And Stage Skeleton
+# Task007 - Global Progression And Stage Skeleton
 
-Status: Planned; v0.1 Draft inputs are derived, while execution still depends on accepted Task001-Task005 baselines
+Status: Planned; v0.1 Draft inputs are derived, while execution still depends on accepted Task001-Task006 baselines
 
-Depends on: Task001-Task005
+Depends on: Task001-Task006
 
 ## 1. Goal
 
@@ -30,7 +30,7 @@ The Stage Design Blueprint must approve for every Stage:
 - Expected Anti-pattern
 - Any non-negotiable Stage Notes
 
-Task001-Task005 must provide accepted Map and Stage-independent combat baselines. Reference Build Draft costs and total Draft opportunities are already derivable from Blueprint v0.1. Exact Draft pools, Progress nodes, Monster budgets, repeated support families, UpgradeDefinitions, ElementTypes, and candidate rules remain outputs of this Task.
+Task001-Task006 must provide accepted Map and Stage-independent combat, Monster-HP, movement-identity, and Wave-composition baselines. Reference Build Draft costs and total Draft opportunities are already derivable from Blueprint v0.1. Exact Draft pools, Progress nodes, Monster budgets, repeated support families, UpgradeDefinitions, ElementTypes, and candidate rules remain outputs of this Task.
 
 ## 4. Required Derived Planning Table
 
@@ -68,7 +68,7 @@ The one-Basic and one-Behaviour Core is the Reference budget unit, not the maxim
 
 Stage4-Stage6 intentionally share five Reference Towers and the same proposed Map scale, but their Total Draft Opportunities remain 9, 10, and 15 because their Reference Builds require different vertical and Elemental investment.
 
-These values are the first trajectory estimate. Task006 does not treat the Progress sequence, Monster totals, Draft pools, or candidate availability as accepted until the derived table has been structurally tested.
+These values are the first trajectory estimate. Task007 does not treat the Progress sequence, Monster totals, Draft pools, or candidate availability as accepted until the derived table has been structurally tested.
 
 ## 5. In Scope
 
@@ -82,6 +82,7 @@ These values are the first trajectory estimate. Task006 does not treat the Progr
 - Stage1-Stage6 StageDefinitions
 - Map references
 - MonsterWaveConfig references and initial Wave skeletons
+- Consumption of the Task006 homogeneous-Wave convention and accepted per-role Move Speeds
 - Stage maximum-health authoring
 - Post-final-Draft validation segment targets
 - Candidate solvability where required by the Blueprint
@@ -119,18 +120,19 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 6. Choose rough Monster-resolution totals.
 7. Solve one positive global Progress Requirement sequence.
 8. Verify cumulative Draft nodes against every Stage.
-9. Author six StageDefinitions and six MonsterWaveConfig skeletons.
-10. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
-11. Reserve combat after the last intended Draft.
-12. Revalidate Task001 Reference and reasonable alternative placements against the exact pools.
-13. Validate each Stage composition without final difficulty claims.
+9. Reconfirm the Task006 movement identities and homogeneous-Wave convention.
+10. Author six StageDefinitions and six MonsterWaveConfig skeletons.
+11. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
+12. Reserve combat after the last intended Draft.
+13. Revalidate Task001 Reference and reasonable alternative placements against the exact pools.
+14. Validate each Stage composition without final difficulty claims.
 
 ## 9. Ownership
 
 | Owner | Responsibility |
 |---|---|
 | Stage Design Blueprint | Reference Build, Stage lesson, required capability, Anti-pattern, and non-negotiable constraints |
-| Task006 | Derived planning table, cross-Stage constraint solving, and structural validation |
+| Task007 | Derived planning table, cross-Stage constraint solving, and structural validation |
 | Player System | One shared Progress Requirement sequence |
 | StageDefinition | Map, Wave, Draft pools, and maximum health composition |
 | MonsterWaveConfig | Ordered Wave skeleton and rough Monster totals |
@@ -155,6 +157,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Confirm every represented TowerFamily's derived Stage cap and continuous Required-Level ladder.
 - Author positive Stage maximum health.
 - Create structurally valid Wave content with the rough Monster totals.
+- Keep each campaign Wave to one Monster runtime template unless Task006 explicitly accepts another convention.
 - Verify the Initial Draft and first-Wave gate.
 - Record cumulative resolution nodes and observed Draft counts.
 - Recheck Reference and reasonable alternative placements when an exact pool changes the available Tower set.
@@ -165,6 +168,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - One global Progress Requirement sequence exists and validates.
 - Every Stage skeleton reaches its derived Draft count in resolution-count space.
 - Six StageDefinitions reference the intended Maps, Waves, and Draft pools.
+- Every Wave skeleton consumes an accepted Task006 Monster identity and composition convention.
 - Every approved Reference Build is obtainable under its authored Draft structure.
 - Every planned calibration and Anti-pattern build is either legally constructible or explicitly replaced before Stage testing.
 - Every allowed Tower level transition unlocks at least one Upgrade at the reached Required Tower Level.
@@ -190,4 +194,4 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 
 ## 14. Review Note
 
-Task007-Task012 own final Stage experience. If one Stage cannot satisfy its Blueprint without changing a global baseline, return the proposed revision to the owning earlier Task and rerun affected regressions.
+Task008-Task013 own final Stage experience. If one Stage cannot satisfy its Blueprint without changing a global baseline, return the proposed revision to the owning earlier Task and rerun affected regressions.

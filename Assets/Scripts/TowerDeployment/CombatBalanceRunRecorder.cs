@@ -31,6 +31,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly Dictionary<MonsterBehaviour, MonsterObservation>
         trackedMonsters =
             new Dictionary<MonsterBehaviour, MonsterObservation>();
+    private readonly List<MonsterObservation> monsterObservations =
+        new List<MonsterObservation>();
     private readonly HashSet<int> seenMonsterInstanceIds = new HashSet<int>();
     private readonly ElementalBuffRunAccumulator buffAccumulator =
         new ElementalBuffRunAccumulator();
@@ -71,15 +73,80 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
     private sealed class MonsterObservation
     {
-        public MonsterObservation(int currentHealth, int spawnOrdinal)
+        public MonsterObservation(
+            string runtimeTemplateName,
+            string displayName,
+            int maximumHealth,
+            float moveSpeedAtSpawn,
+            int currentHealth,
+            int spawnOrdinal,
+            float spawnTime,
+            bool observedThroughRegistrationEvent)
         {
+            RuntimeTemplateName = runtimeTemplateName;
+            DisplayName = displayName;
+            MaximumHealth = maximumHealth;
+            MoveSpeedAtSpawn = moveSpeedAtSpawn;
             LastHealth = currentHealth;
             SpawnOrdinal = spawnOrdinal;
+            SpawnTime = spawnTime;
+            ObservedThroughRegistrationEvent =
+                observedThroughRegistrationEvent;
+            HealthAtObservationStart = currentHealth;
+            EffectiveDamage = Mathf.Max(0, maximumHealth - currentHealth);
         }
 
+        public string RuntimeTemplateName { get; }
+        public string DisplayName { get; }
+        public int MaximumHealth { get; }
+        public float MoveSpeedAtSpawn { get; }
         public int LastHealth { get; set; }
         public int SpawnOrdinal { get; }
+        public float SpawnTime { get; }
+        public bool ObservedThroughRegistrationEvent { get; }
+        public int HealthAtObservationStart { get; }
+        public int UnobservedDamageAtObservationStart =>
+            Mathf.Max(0, MaximumHealth - HealthAtObservationStart);
+        public float ResolutionTime { get; set; }
+        public int FinalHealth { get; set; }
+        public int SuccessfulDamageApplications { get; set; }
+        public int EffectiveDamage { get; set; }
+        public bool ReachedTarget { get; set; }
         public bool IsResolved { get; set; }
+    }
+
+    private sealed class MonsterTypeAggregate
+    {
+        public MonsterTypeAggregate(MonsterObservation observation)
+        {
+            RuntimeTemplateName = observation.RuntimeTemplateName;
+            DisplayName = observation.DisplayName;
+            MaximumHealth = observation.MaximumHealth;
+            MoveSpeedAtSpawn = observation.MoveSpeedAtSpawn;
+        }
+
+        public string RuntimeTemplateName { get; }
+        public string DisplayName { get; }
+        public int MaximumHealth { get; }
+        public float MoveSpeedAtSpawn { get; }
+        public int Spawned { get; set; }
+        public int Resolved { get; set; }
+        public int Killed { get; set; }
+        public int Leaked { get; set; }
+        public int SuccessfulDamageApplications { get; set; }
+        public int EffectiveDamage { get; set; }
+        public int LeakedRemainingHealth { get; set; }
+        public int RegistrationObservedInstances { get; set; }
+        public int FallbackObservedInstances { get; set; }
+        public int InstancesObservedAtFullHealth { get; set; }
+        public int InstancesObservedAfterDamage { get; set; }
+        public int UnobservedDamageAtObservationStart { get; set; }
+        public FloatMetricAggregate ResolutionLifetimeSeconds { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate KilledLifetimeSeconds { get; } =
+            new FloatMetricAggregate();
+        public FloatMetricAggregate LeakedLifetimeSeconds { get; } =
+            new FloatMetricAggregate();
     }
 
     private sealed class FloatMetricAggregate
@@ -174,6 +241,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         ResolveReferences();
         WarnAboutMissingReferences();
         SubscribeToRuntime();
+
+        if (battleRuntimeCoordinator != null &&
+            battleRuntimeCoordinator.IsBattleActive)
+        {
+            BeginRun();
+        }
     }
 
     private void OnDisable()
@@ -368,6 +441,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
     private void HandleSpawningStarted()
     {
+        if (!isTrackingRun)
+        {
+            BeginRun();
+            return;
+        }
+
         CaptureExpectedMonsterFixture();
     }
 
@@ -375,6 +454,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     {
         UnsubscribeFromTrackedMonsters();
         trackedMonsters.Clear();
+        monsterObservations.Clear();
         seenMonsterInstanceIds.Clear();
         buffAccumulator.Reset();
         projectileRuntimeByTowerInstanceId.Clear();
@@ -454,11 +534,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         for (int i = 0; i < aliveMonsters.Count; i++)
         {
-            TrackMonster(aliveMonsters[i]);
+            TrackMonster(
+                aliveMonsters[i],
+                observedThroughRegistrationEvent: false);
         }
     }
 
-    private void TrackMonster(MonsterBehaviour monster)
+    private void TrackMonster(
+        MonsterBehaviour monster,
+        bool observedThroughRegistrationEvent)
     {
         if (monster == null)
         {
@@ -472,11 +556,20 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             return;
         }
 
+        float observedTime = Time.time;
+        string runtimeTemplateName = ResolveRuntimeTemplateName(monster.name);
         MonsterObservation observation =
             new MonsterObservation(
+                runtimeTemplateName,
+                GetDisplayName(monster.DisplayName, runtimeTemplateName),
+                monster.MaxHealth,
+                monster.CurrentMoveSpeed,
                 monster.CurrentHealth,
-                spawnedCount + 1);
+                spawnedCount + 1,
+                observedTime,
+                observedThroughRegistrationEvent);
         trackedMonsters.Add(monster, observation);
+        monsterObservations.Add(observation);
         effectiveDamage += Mathf.Max(
             0,
             monster.MaxHealth - monster.CurrentHealth);
@@ -484,8 +577,6 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         monster.OnResolved += HandleMonsterResolved;
         monster.OnDestroyed += HandleMonsterDestroyed;
         monster.OnBuffRuntimeObserved += HandleBuffRuntimeObserved;
-
-        float observedTime = Time.time;
 
         if (hasObservedFirstSpawn)
         {
@@ -528,9 +619,17 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             return;
         }
 
-        effectiveDamage += Mathf.Max(
+        int appliedDamage = Mathf.Max(
             0,
             observation.LastHealth - currentHealth);
+        effectiveDamage += appliedDamage;
+
+        if (appliedDamage > 0)
+        {
+            observation.SuccessfulDamageApplications++;
+            observation.EffectiveDamage += appliedDamage;
+        }
+
         observation.LastHealth = currentHealth;
     }
 
@@ -538,7 +637,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     {
         if (isTrackingRun)
         {
-            TrackMonster(monster);
+            TrackMonster(
+                monster,
+                observedThroughRegistrationEvent: true);
         }
     }
 
@@ -902,7 +1003,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 monster,
                 out MonsterObservation observation))
         {
-            TrackMonster(monster);
+            TrackMonster(
+                monster,
+                observedThroughRegistrationEvent: false);
             trackedMonsters.TryGetValue(monster, out observation);
         }
 
@@ -912,8 +1015,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         observation.IsResolved = true;
+        observation.ReachedTarget = reachedTarget;
+        observation.ResolutionTime = Time.time;
+        observation.FinalHealth = monster.CurrentHealth;
         resolvedCount++;
-        lastResolutionTime = Time.time;
+        lastResolutionTime = observation.ResolutionTime;
 
         if (reachedTarget)
         {
@@ -1050,6 +1156,16 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             resolvedCount == killedCount + leakedCount;
         bool leakCountMatchesPlayerHealth =
             playerSystem != null && leakedCount == observedPlayerHealthLoss;
+        CombatBalanceMonsterRuntimeJson monsterRuntime =
+            CreateMonsterRuntimeJson();
+        bool monsterRuntimeCountsMatch =
+            MonsterRuntimeCountsMatch(monsterRuntime);
+        bool monsterRuntimeDamageMatches =
+            MonsterRuntimeDamageMatches(monsterRuntime);
+        bool monsterRuntimeRegistrationCoverageMatch =
+            MonsterRuntimeRegistrationCoverageMatches(monsterRuntime);
+        bool monsterRuntimeStartedAtFullHealth =
+            MonsterRuntimeStartedAtFullHealth(monsterRuntime);
 
         builder.AppendLine("[Combat Balance Run]");
         builder.Append("Run: ")
@@ -1129,8 +1245,17 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             .Append(resolutionCountsMatch)
             .Append(", LeakCountMatchesPlayerHealthLoss=")
             .Append(leakCountMatchesPlayerHealth)
+            .Append(", MonsterRuntimeCountsMatch=")
+            .Append(monsterRuntimeCountsMatch)
+            .Append(", MonsterRuntimeDamageMatches=")
+            .Append(monsterRuntimeDamageMatches)
+            .Append(", MonsterRuntimeRegistrationCoverageMatch=")
+            .Append(monsterRuntimeRegistrationCoverageMatch)
+            .Append(", MonsterRuntimeStartedAtFullHealth=")
+            .Append(monsterRuntimeStartedAtFullHealth)
             .AppendLine();
 
+        AppendMonsterRuntimeSummary(builder, monsterRuntime);
         AppendTowerSnapshot(builder);
         buffAccumulator.AppendSummary(builder);
         return builder.ToString().TrimEnd();
@@ -1266,14 +1391,350 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             ? playerSystem.MaxHealth
             : 0;
 
+        report.monsterRuntime = CreateMonsterRuntimeJson();
         report.integrity.resolutionCountsMatch =
             resolvedCount == killedCount + leakedCount;
         report.integrity.leakCountMatchesPlayerHealthLoss =
             playerSystem != null && leakedCount == observedPlayerHealthLoss;
-
+        report.integrity.monsterRuntimeCountsMatch =
+            MonsterRuntimeCountsMatch(report.monsterRuntime);
+        report.integrity.monsterRuntimeDamageMatches =
+            MonsterRuntimeDamageMatches(report.monsterRuntime);
+        report.integrity.monsterRuntimeRegistrationCoverageMatch =
+            MonsterRuntimeRegistrationCoverageMatches(report.monsterRuntime);
+        report.integrity.monsterRuntimeStartedAtFullHealth =
+            MonsterRuntimeStartedAtFullHealth(report.monsterRuntime);
         report.towers = CreateTowerJsonRecords();
         report.buffs = buffAccumulator.CreateJsonRecords();
         return report;
+    }
+
+    private CombatBalanceMonsterRuntimeJson CreateMonsterRuntimeJson()
+    {
+        CombatBalanceMonsterRuntimeJson runtime =
+            new CombatBalanceMonsterRuntimeJson();
+        List<MonsterTypeAggregate> aggregates =
+            new List<MonsterTypeAggregate>();
+        float observedAtTime = Time.time;
+
+        for (int i = 0; i < monsterObservations.Count; i++)
+        {
+            MonsterObservation observation = monsterObservations[i];
+
+            if (observation == null)
+            {
+                continue;
+            }
+
+            float lifetimeSeconds = ResolveMonsterLifetimeSeconds(
+                observation,
+                observedAtTime);
+            int finalHealth = observation.IsResolved
+                ? observation.FinalHealth
+                : observation.LastHealth;
+            string resolutionType = ResolveMonsterResolutionType(observation);
+            MonsterTypeAggregate aggregate = GetOrCreateMonsterTypeAggregate(
+                aggregates,
+                observation);
+
+            aggregate.Spawned++;
+            aggregate.SuccessfulDamageApplications +=
+                observation.SuccessfulDamageApplications;
+            aggregate.EffectiveDamage += observation.EffectiveDamage;
+            aggregate.UnobservedDamageAtObservationStart +=
+                observation.UnobservedDamageAtObservationStart;
+            runtime.successfulDamageApplications +=
+                observation.SuccessfulDamageApplications;
+            runtime.unobservedDamageAtObservationStart +=
+                observation.UnobservedDamageAtObservationStart;
+
+            if (observation.ObservedThroughRegistrationEvent)
+            {
+                aggregate.RegistrationObservedInstances++;
+                runtime.registrationObservedInstances++;
+            }
+            else
+            {
+                aggregate.FallbackObservedInstances++;
+                runtime.fallbackObservedInstances++;
+            }
+
+            if (observation.HealthAtObservationStart ==
+                observation.MaximumHealth)
+            {
+                aggregate.InstancesObservedAtFullHealth++;
+                runtime.instancesObservedAtFullHealth++;
+            }
+            else
+            {
+                aggregate.InstancesObservedAfterDamage++;
+                runtime.instancesObservedAfterDamage++;
+            }
+
+            if (observation.IsResolved)
+            {
+                aggregate.Resolved++;
+                aggregate.ResolutionLifetimeSeconds.Add(lifetimeSeconds);
+
+                if (observation.ReachedTarget)
+                {
+                    aggregate.Leaked++;
+                    aggregate.LeakedRemainingHealth += finalHealth;
+                    aggregate.LeakedLifetimeSeconds.Add(lifetimeSeconds);
+                }
+                else
+                {
+                    aggregate.Killed++;
+                    aggregate.KilledLifetimeSeconds.Add(lifetimeSeconds);
+                }
+            }
+
+            runtime.instances.Add(new CombatBalanceMonsterInstanceJson
+            {
+                spawnOrdinal = observation.SpawnOrdinal,
+                runtimeTemplateName = observation.RuntimeTemplateName,
+                displayName = observation.DisplayName,
+                maximumHealth = observation.MaximumHealth,
+                moveSpeedAtSpawn = observation.MoveSpeedAtSpawn,
+                observedThroughRegistrationEvent =
+                    observation.ObservedThroughRegistrationEvent,
+                healthAtObservationStart =
+                    observation.HealthAtObservationStart,
+                unobservedDamageAtObservationStart =
+                    observation.UnobservedDamageAtObservationStart,
+                resolutionType = resolutionType,
+                finalHealth = finalHealth,
+                successfulDamageApplications =
+                    observation.SuccessfulDamageApplications,
+                effectiveDamage = observation.EffectiveDamage,
+                lifetimeSeconds = lifetimeSeconds
+            });
+        }
+
+        for (int i = 0; i < aggregates.Count; i++)
+        {
+            MonsterTypeAggregate aggregate = aggregates[i];
+            runtime.types.Add(new CombatBalanceMonsterTypeJson
+            {
+                runtimeTemplateName = aggregate.RuntimeTemplateName,
+                displayName = aggregate.DisplayName,
+                maximumHealth = aggregate.MaximumHealth,
+                moveSpeedAtSpawn = aggregate.MoveSpeedAtSpawn,
+                spawned = aggregate.Spawned,
+                resolved = aggregate.Resolved,
+                killed = aggregate.Killed,
+                leaked = aggregate.Leaked,
+                unresolvedAtReport = Mathf.Max(
+                    0,
+                    aggregate.Spawned - aggregate.Resolved),
+                registrationObservedInstances =
+                    aggregate.RegistrationObservedInstances,
+                fallbackObservedInstances =
+                    aggregate.FallbackObservedInstances,
+                instancesObservedAtFullHealth =
+                    aggregate.InstancesObservedAtFullHealth,
+                instancesObservedAfterDamage =
+                    aggregate.InstancesObservedAfterDamage,
+                unobservedDamageAtObservationStart =
+                    aggregate.UnobservedDamageAtObservationStart,
+                successfulDamageApplications =
+                    aggregate.SuccessfulDamageApplications,
+                effectiveDamage = aggregate.EffectiveDamage,
+                leakedRemainingHealth = aggregate.LeakedRemainingHealth,
+                resolutionLifetimeSeconds = CreateMetricJson(
+                    aggregate.ResolutionLifetimeSeconds),
+                killedLifetimeSeconds = CreateMetricJson(
+                    aggregate.KilledLifetimeSeconds),
+                leakedLifetimeSeconds = CreateMetricJson(
+                    aggregate.LeakedLifetimeSeconds)
+            });
+        }
+
+        runtime.observedTypes = runtime.types.Count;
+        runtime.instanceSamples = runtime.instances.Count;
+        return runtime;
+    }
+
+    private static MonsterTypeAggregate GetOrCreateMonsterTypeAggregate(
+        List<MonsterTypeAggregate> aggregates,
+        MonsterObservation observation)
+    {
+        for (int i = 0; i < aggregates.Count; i++)
+        {
+            MonsterTypeAggregate aggregate = aggregates[i];
+
+            if (string.Equals(
+                    aggregate.RuntimeTemplateName,
+                    observation.RuntimeTemplateName,
+                    StringComparison.Ordinal) &&
+                aggregate.MaximumHealth == observation.MaximumHealth &&
+                Mathf.Approximately(
+                    aggregate.MoveSpeedAtSpawn,
+                    observation.MoveSpeedAtSpawn))
+            {
+                return aggregate;
+            }
+        }
+
+        MonsterTypeAggregate created =
+            new MonsterTypeAggregate(observation);
+        aggregates.Add(created);
+        return created;
+    }
+
+    private static float ResolveMonsterLifetimeSeconds(
+        MonsterObservation observation,
+        float observedAtTime)
+    {
+        float resolvedTime = observation.IsResolved
+            ? observation.ResolutionTime
+            : observedAtTime;
+        return Mathf.Max(0f, resolvedTime - observation.SpawnTime);
+    }
+
+    private static string ResolveMonsterResolutionType(
+        MonsterObservation observation)
+    {
+        if (!observation.IsResolved)
+        {
+            return "Unresolved";
+        }
+
+        return observation.ReachedTarget ? "Leaked" : "Killed";
+    }
+
+    private void AppendMonsterRuntimeSummary(
+        StringBuilder builder,
+        CombatBalanceMonsterRuntimeJson runtime)
+    {
+        builder.Append("Monster Runtime: Types=")
+            .Append(runtime.observedTypes)
+            .Append(", InstanceSamples=")
+            .Append(runtime.instanceSamples)
+            .Append(", RegistrationObserved=")
+            .Append(runtime.registrationObservedInstances)
+            .Append(", FallbackObserved=")
+            .Append(runtime.fallbackObservedInstances)
+            .Append(", ObservedAfterDamage=")
+            .Append(runtime.instancesObservedAfterDamage)
+            .Append(", UnobservedInitialDamage=")
+            .Append(runtime.unobservedDamageAtObservationStart)
+            .Append(", SuccessfulDamageApplications=")
+            .Append(runtime.successfulDamageApplications)
+            .AppendLine();
+
+        for (int i = 0; i < runtime.types.Count; i++)
+        {
+            CombatBalanceMonsterTypeJson type = runtime.types[i];
+            builder.Append("- Monster Type: ")
+                .Append(type.displayName)
+                .Append(" {Template=")
+                .Append(type.runtimeTemplateName)
+                .Append(", HP=")
+                .Append(type.maximumHealth)
+                .Append(", Speed=")
+                .Append(FormatFloat(type.moveSpeedAtSpawn))
+                .Append(", Spawned=")
+                .Append(type.spawned)
+                .Append(", Killed=")
+                .Append(type.killed)
+                .Append(", Leaked=")
+                .Append(type.leaked)
+                .Append(", Unresolved=")
+                .Append(type.unresolvedAtReport)
+                .Append(", RegistrationObserved=")
+                .Append(type.registrationObservedInstances)
+                .Append(", FallbackObserved=")
+                .Append(type.fallbackObservedInstances)
+                .Append(", ObservedAfterDamage=")
+                .Append(type.instancesObservedAfterDamage)
+                .Append(", UnobservedInitialDamage=")
+                .Append(type.unobservedDamageAtObservationStart)
+                .Append(", DamageApplications=")
+                .Append(type.successfulDamageApplications)
+                .Append(", EffectiveDamage=")
+                .Append(type.effectiveDamage)
+                .Append(", KilledLifetime=")
+                .Append(FormatMetricAverageSeconds(
+                    type.killedLifetimeSeconds))
+                .Append(", LeakedLifetime=")
+                .Append(FormatMetricAverageSeconds(
+                    type.leakedLifetimeSeconds))
+                .AppendLine("}");
+        }
+    }
+
+    private static string FormatMetricAverageSeconds(
+        CombatBalanceMetricJson metric)
+    {
+        return metric != null && metric.samples > 0
+            ? FormatSeconds(metric.average)
+            : "N/A";
+    }
+
+    private bool MonsterRuntimeCountsMatch(
+        CombatBalanceMonsterRuntimeJson runtime)
+    {
+        if (runtime == null || runtime.instanceSamples != spawnedCount)
+        {
+            return false;
+        }
+
+        int observedSpawned = 0;
+        int observedResolved = 0;
+        int observedKilled = 0;
+        int observedLeaked = 0;
+
+        for (int i = 0; i < runtime.types.Count; i++)
+        {
+            CombatBalanceMonsterTypeJson type = runtime.types[i];
+            observedSpawned += type.spawned;
+            observedResolved += type.resolved;
+            observedKilled += type.killed;
+            observedLeaked += type.leaked;
+        }
+
+        return observedSpawned == spawnedCount &&
+               observedResolved == resolvedCount &&
+               observedKilled == killedCount &&
+               observedLeaked == leakedCount;
+    }
+
+    private bool MonsterRuntimeDamageMatches(
+        CombatBalanceMonsterRuntimeJson runtime)
+    {
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        int observedEffectiveDamage = 0;
+
+        for (int i = 0; i < runtime.types.Count; i++)
+        {
+            observedEffectiveDamage += runtime.types[i].effectiveDamage;
+        }
+
+        return observedEffectiveDamage == effectiveDamage;
+    }
+
+    private bool MonsterRuntimeRegistrationCoverageMatches(
+        CombatBalanceMonsterRuntimeJson runtime)
+    {
+        return runtime != null &&
+               runtime.instanceSamples == spawnedCount &&
+               runtime.registrationObservedInstances == spawnedCount &&
+               runtime.fallbackObservedInstances == 0;
+    }
+
+    private static bool MonsterRuntimeStartedAtFullHealth(
+        CombatBalanceMonsterRuntimeJson runtime)
+    {
+        return runtime != null &&
+               runtime.instancesObservedAtFullHealth ==
+                   runtime.instanceSamples &&
+               runtime.instancesObservedAfterDamage == 0 &&
+               runtime.unobservedDamageAtObservationStart == 0;
     }
 
     private List<CombatBalanceTowerJson> CreateTowerJsonRecords()
@@ -1790,6 +2251,25 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         return string.IsNullOrWhiteSpace(displayName)
             ? fallback
             : displayName.Trim();
+    }
+
+    private static string ResolveRuntimeTemplateName(string runtimeName)
+    {
+        const string cloneSuffix = "(Clone)";
+        string resolvedName = string.IsNullOrWhiteSpace(runtimeName)
+            ? "Unknown Monster Template"
+            : runtimeName.Trim();
+
+        if (resolvedName.EndsWith(
+                cloneSuffix,
+                StringComparison.Ordinal))
+        {
+            resolvedName = resolvedName.Substring(
+                0,
+                resolvedName.Length - cloneSuffix.Length).TrimEnd();
+        }
+
+        return resolvedName;
     }
 
     private static string FormatObservedIntRange(int minimum, int maximum)

@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c69b96e78e584f878d4068749e0ab2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatBalanceRunRecorder
-  runName: HP240_P1_Archer_QuickDraw+ScatterArrow_Cold_Slow0.7_Cooldown1.5_ReleaseTimeTargeting
+  runName: Roster_HP480_Golem_3Monsters_P1_Archer_QuickDraw+ScatterArrow_Control
   battleRuntimeCoordinator: {fileID: 7811906250627789308}
   monsterSpawner: {fileID: 7811906250627789307}
   monsterManager: {fileID: 7811906250627789306}

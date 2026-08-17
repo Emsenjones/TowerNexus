@@ -57,7 +57,7 @@ The Expected Anti-pattern is a build that rejects the Stage lesson and should fa
 
 Concentrated investment is not intrinsically an Anti-pattern. A highly developed Core should fail only when the Stage also requires coverage, role complement, or a second matching Elemental source that the concentrated build does not provide. Conversely, horizontal expansion should fail only when it leaves the required Core capability undeveloped.
 
-New Content describes the first campaign introduction of a mechanic or TowerFamily. Previously introduced content remains generally available unless a Stage Note explicitly says otherwise. Exact Draft pool composition is authored later by Task006.
+New Content describes the first campaign introduction of a mechanic or TowerFamily. Previously introduced content remains generally available unless a Stage Note explicitly says otherwise. Exact Draft pool composition is authored later by Task007.
 
 Reference Build v0.1 uses these shared rules:
 
@@ -71,7 +71,7 @@ Reference Build v0.1 uses these shared rules:
 
 The listed one-Basic and one-Behaviour Core is the Reference Build used to derive Stage budgets. It is not the maximum legal Upgrade stack on one Tower. Cross-Stage qualitative growth principles belong to `01_TowerGrowthAndUpgradeIdentity.md`; realized-power targets, cumulative single-Tower guardrails, exact Upgrade values, and Stage pressure remain Task outputs.
 
-The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain Task006 design work.
+The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain Task007 design work.
 
 ---
 
@@ -230,10 +230,10 @@ Task ownership:
 | Task | Derived Responsibility |
 |---|---|
 | Task001 | Candidate Grid size, Reference placement demand, attack-range separation, route zones, and Map Prefabs |
-| Task002-Task005 | Stage-independent Tower, Upgrade, Elemental, Buff, Effect, and Monster baselines |
-| Task006 | Draft totals, exact Draft pools, candidate availability, one shared Progress curve, and StageDefinition skeletons |
-| Task007-Task012 | Stage-specific Wave tables, measurable Reference Runs, Anti-pattern checks, and accepted local calibration |
+| Task002-Task006 | Stage-independent Tower, Upgrade, Elemental, Buff, Effect, Monster-HP, movement-identity, and Wave-composition baselines |
+| Task007 | Draft totals, exact Draft pools, candidate availability, one shared Progress curve, and StageDefinition skeletons |
+| Task008-Task013 | Stage-specific Wave tables, measurable Reference Runs, Anti-pattern checks, and accepted local calibration |
 
 Task calculations are reviewable implementation inputs, not new Stage intent. Accepted executable values live in their owning Unity assets. If a derived result cannot realize an approved Stage design, the Task proposes a Blueprint revision explicitly rather than silently changing the intended experience.
 
-Task006 must confirm that every planned Anti-pattern run is constructible under the authored pools and remaining Draft opportunities. Task007-Task012 test only legal builds; they must not manufacture an impossible build or add a hidden penalty in order to demonstrate the Stage lesson.
+Task007 must confirm that every planned Anti-pattern run is constructible under the authored pools and remaining Draft opportunities. Task008-Task013 test only legal builds; they must not manufacture an impossible build or add a hidden penalty in order to demonstrate the Stage lesson.

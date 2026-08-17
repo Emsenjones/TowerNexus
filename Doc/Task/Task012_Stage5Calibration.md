@@ -1,8 +1,8 @@
-# Task011 - Stage5 Calibration
+# Task012 - Stage5 Calibration
 
-Status: Planned; Stage5 Reference Build v0.1 is defined and execution waits for Task006 Elemental inputs
+Status: Planned; Stage5 Reference Build v0.1 is defined and execution waits for Task007 Elemental inputs
 
-Depends on: Task010 Stage4 Calibration
+Depends on: Task011 Stage4 Calibration
 
 ## 1. Goal
 
@@ -30,7 +30,7 @@ The Stage Design Blueprint must approve:
 - Expected Anti-pattern
 - Stage Notes
 
-Task001 must provide an accepted Stage5 greybox with Reference placement and range/route evidence. Task006 must provide the derived Draft count, exact Elemental Upgrade pool, and Stage5 skeleton. A viable alternative is proposed and tested inside this Task.
+Task001 must provide an accepted Stage5 greybox with Reference placement and range/route evidence. Task007 must provide the derived Draft count, exact Elemental Upgrade pool, and Stage5 skeleton. A viable alternative is proposed and tested inside this Task.
 
 First-pass inputs:
 
@@ -41,18 +41,18 @@ First-pass inputs:
 | Core | One L3 Tower with one Basic, one Behaviour, and one Elemental |
 | Support | Four L1 Towers with no Upgrades; all four TowerFamilies appear in the Reference roster |
 | Total Draft Opportunities | 10 |
-| Elemental Detail | Core TowerFamily and ElementType are resolved by Task006 |
+| Elemental Detail | Core TowerFamily and ElementType are resolved by Task007 |
 
 ## 4. In Scope
 
 - Stage5 MonsterWaveConfig
 - Timing at which the first Elemental core becomes available
 - Sustained exposure for Elemental application and stacks
-- Elemental Draft availability within the Task006-authored pool
+- Elemental Draft availability within the Task007-authored pool
 - Monster composition and timing
 - Local Stage5 Map refinement
 - Reference, alternative, and Anti-pattern runs
-- A secondary legal over-concentrated single-Tower coverage run when Task006 can construct it
+- A secondary legal over-concentrated single-Tower coverage run when Task007 can construct it
 - Prior-Stage regression
 
 ## 5. Out Of Scope
@@ -60,12 +60,12 @@ First-pass inputs:
 - Requiring two matching Elemental Towers
 - Per-Stage Progress Requirements
 - New Elemental lifecycle mechanics
-- Silent modification of the Stage Design Blueprint or Task006-authored pool
+- Silent modification of the Stage Design Blueprint or Task007-authored pool
 
 ## 6. Calibration Sequence
 
 1. Fix the approved Reference Build and Elemental choice.
-2. Confirm the Task006-derived Draft count and Elemental unlock timing.
+2. Confirm the Task007-derived Draft count and Elemental unlock timing.
 3. Tune remaining Wave exposure after the Elemental core becomes active.
 4. Confirm application and stacking are readable.
 5. Test a Codex-proposed alternative Element or TowerFamily when allowed.
@@ -87,12 +87,12 @@ First-pass inputs:
 | Owner | Responsibility |
 |---|---|
 | Stage Design Blueprint | Approved Stage5 experience, Reference Build, required capability, and Anti-pattern |
-| Task006 | Derived Draft count, Elemental pool, candidate access, and Stage skeleton |
+| Task007 | Derived Draft count, Elemental pool, candidate access, and Stage skeleton |
 | StageDefinition | Stage5 composition and maximum health |
 | MonsterWaveConfig | Stage5 Monster order, count, and timing |
 | Map Prefab | Stage5 Elemental exposure geometry |
 | Buff and Effect Systems | Existing Elemental lifecycle behavior |
-| Task011 | Derived Wave and alternative-build proposal, Stage-local calibration, and prior-Stage regression evidence |
+| Task012 | Derived Wave and alternative-build proposal, Stage-local calibration, and prior-Stage regression evidence |
 
 ## 9. Required Calibration Table
 
@@ -107,12 +107,12 @@ The proposal also records one coherent alternative Elemental Build and its expec
 ## 10. Execution Collaboration
 
 - The user supplies or approves the Stage5 experience and Reference Build, then owns Unity authoring and Play Mode Elemental-state observation.
-- Codex derives the first Wave table and alternative Build from the Blueprint, Task006 pool, and accepted Elemental baseline.
+- Codex derives the first Wave table and alternative Build from the Blueprint, Task007 pool, and accepted Elemental baseline.
 - Codex revises Stage-local exposure, timing, or Monster pressure from activation time, stacks, leaks, health, and remaining combat.
 
 ## 11. Unity Authoring Checklist
 
-- Confirm the Stage5 Blueprint contract and Task006-derived Elemental inputs.
+- Confirm the Stage5 Blueprint contract and Task007-derived Elemental inputs.
 - Assign the approved Stage5 Map, Wave, and Draft pools.
 - Author the Stage5 MonsterWaveConfig.
 - Place the Reference, alternative, no-Elemental-core, and legal single-Tower coverage builds.

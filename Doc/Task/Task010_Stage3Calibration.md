@@ -1,8 +1,8 @@
-# Task009 - Stage3 Calibration
+# Task010 - Stage3 Calibration
 
 Status: Planned; Stage3 Reference Build v0.1 is defined and execution waits for upstream implementation inputs
 
-Depends on: Task008 Stage2 Calibration
+Depends on: Task009 Stage2 Calibration
 
 ## 1. Goal
 
@@ -25,7 +25,7 @@ Calibrate Stage3 so Magic's route-adjacent persistent contact and wider multi-zo
 
 The Stage Design Blueprint must approve the Stage3 Reference Build, Required Capability, Expected Anti-pattern, and Notes.
 
-Task001 must provide an accepted Stage3 greybox with Reference placement and range/route evidence. Task006 must provide the derived Draft count, exact Draft pools, and Stage3 skeleton. A viable alternative is proposed and tested inside this Task.
+Task001 must provide an accepted Stage3 greybox with Reference placement and range/route evidence. Task007 must provide the derived Draft count, exact Draft pools, and Stage3 skeleton. A viable alternative is proposed and tested inside this Task.
 
 First-pass inputs:
 
@@ -34,7 +34,7 @@ First-pass inputs:
 | Map Size | 12x12 |
 | Reference Towers | 4 |
 | Core | One L3 Magic with one Basic and one Behaviour |
-| Support | Three L1 Towers with no Upgrades; Archer and Cannon are required and the repeated family is resolved by Task006 |
+| Support | Three L1 Towers with no Upgrades; Archer and Cannon are required and the repeated family is resolved by Task007 |
 | Total Draft Opportunities | 8 |
 | Elemental | Not available |
 
@@ -58,11 +58,11 @@ First-pass inputs:
 ## 6. Calibration Sequence
 
 1. Fix the approved Reference Build and placement plan.
-2. Confirm the Task006-derived Stage3 Draft count.
+2. Confirm the Task007-derived Stage3 Draft count.
 3. Tune Monster movement and Wave timing through Magic's intended contact zone.
 4. Maintain meaningful pressure outside that local zone.
 5. Test a Codex-proposed viable alternative.
-6. Test the Task006-confirmed legal single-zone overconcentration Anti-pattern, including its one-Tower concentration form when the pool permits it.
+6. Test the Task007-confirmed legal single-zone overconcentration Anti-pattern, including its one-Tower concentration form when the pool permits it.
 7. Regress earlier Stages after any global revision.
 
 ## 7. Required Measurements
@@ -83,7 +83,7 @@ First-pass inputs:
 | StageDefinition | Stage3 composition and maximum health |
 | MonsterWaveConfig | Stage3 Monster order, count, and timing |
 | Map Prefab | Stage3 contact zones and wider route geometry |
-| Task009 | Derived Wave and alternative-build proposal, Stage-local calibration, and prior-Stage regression evidence |
+| Task010 | Derived Wave and alternative-build proposal, Stage-local calibration, and prior-Stage regression evidence |
 
 ## 9. Required Calibration Table
 
@@ -101,7 +101,7 @@ Codex prepares:
 
 ## 11. Unity Authoring Checklist
 
-- Confirm the Stage3 Blueprint contract and Task006-derived inputs.
+- Confirm the Stage3 Blueprint contract and Task007-derived inputs.
 - Assign the approved Stage3 Map, Wave, and Draft pools.
 - Author the Stage3 MonsterWaveConfig.
 - Place the Reference, alternative, and legal single-zone concentration builds.

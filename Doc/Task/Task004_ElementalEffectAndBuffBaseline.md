@@ -28,7 +28,7 @@ Task004 is the sole calibration owner for Elemental power targets. Task003 suppl
 
 - Task003 remains accepted and its Base, Basic, and Behaviour values are frozen during the first Task004 pass.
 - Stage5 and Stage6 Elemental pool authoring may remain unresolved during isolated content tests.
-- Final Stage acceptance cannot proceed until Task006 authors and validates those pools.
+- Final Stage acceptance cannot proceed until Task007 authors and validates those pools.
 - A dedicated Task004 Elemental cooperation Map must satisfy Section 7 before matching-source results are accepted.
 - The Elemental diagnostic output in Section 8 must exist before lifecycle counts are treated as acceptance evidence. Manual visual observation remains valid for initial Map calibration and presentation checks.
 
@@ -239,7 +239,7 @@ At Stage end, aggregate at minimum by ElementType and source TowerFamily:
 
 The existing human-readable report remains in the Unity Console. Each terminal run additionally writes exactly one JSON report under `Doc/GamePlayRecord/`. A non-empty authored Run Name becomes `<RunName>.json`; a blank Run Name falls back to local completion time `yyyyMMdd_HHmmss.json`. If that filename already exists, the Recorder preserves it and selects the first available numeric suffix such as `_01` or `_02`. The Recorder does not create TXT output or mutable `Latest` aliases.
 
-The JSON root carries `schemaVersion = 7`, generation time, run identity, Monster fixture, combat totals, timing, player and integrity results, Tower, Upgrade, Projectile-runtime snapshots, and the Buff aggregates above. The fixture snapshot obtains its expected count from the `MonsterWaveConfig` actually bound to `MonsterSpawner`, not from a Recorder Inspector field, and carries:
+The accepted Task004 JSON contract used `schemaVersion = 7` and carries generation time, run identity, Monster fixture, combat totals, timing, player and integrity results, Tower, Upgrade, Projectile-runtime snapshots, and the Buff aggregates above. The current schema v8 preserves every schema-v7 field and adds Task005 Monster runtime identity, lifetime, resolution, damage-application, and observation-completeness diagnostics without reinterpreting Task004 evidence. The fixture snapshot obtains its expected count from the `MonsterWaveConfig` actually bound to `MonsterSpawner`, not from a Recorder Inspector field, and carries:
 
 - `waveConfigName`
 - `expectedMonsterCountAvailable`
@@ -461,7 +461,7 @@ Final cooperation acceptance:
 - The user owns Unity Map and asset authoring, visible lifecycle observation, and Play Mode execution.
 - Codex owns the first-pass result table, ratio and timing calculations, evidence review, and smallest justified revision proposal.
 - Manual visual notes supplement the Recorder but do not replace its lifecycle counts after the instrumentation gate.
-- Exact Stage5 and Stage6 pool composition remains a Task006 output rather than a prerequisite for isolated Task004 tests.
+- Exact Stage5 and Stage6 pool composition remains a Task007 output rather than a prerequisite for isolated Task004 tests.
 
 ## 14. Unity Authoring Checklist
 
@@ -511,4 +511,4 @@ Final cooperation acceptance:
 
 ## 17. Review Note
 
-Task004 is complete. It owns the accepted matching-source and Overload calibration, Required Levels, authored parameters, fixtures, diagnostics, and test evidence. `01_TowerGrowthAndUpgradeIdentity.md` remains the qualitative growth contract. `15_BuffSystem.md` remains the stable lifecycle and ownership contract. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task006 from the Blueprint's required capabilities.
+Task004 is complete. It owns the accepted matching-source and Overload calibration, Required Levels, authored parameters, fixtures, diagnostics, and test evidence. `01_TowerGrowthAndUpgradeIdentity.md` remains the qualitative growth contract. `15_BuffSystem.md` remains the stable lifecycle and ownership contract. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task007 from the Blueprint's required capabilities.
