@@ -59,7 +59,9 @@ The higher-health Monsters used to prevent measurement ceilings in Task003 or Ta
 | Tough | Dragon | `240` | `0.25` | Survives approximately twice the Reference direct-hit budget and extends Behaviour or Elemental exposure | Accepted |
 | Elite | Golem | `480` | `0.25` | Durable late-Stage target that preserves specialization and Overload opportunities | Accepted |
 
-The first pass deliberately omits a Fragile role. Stage-local Count and Spawn Interval remain available to create early quantity pressure without adding another global health tier. A Fragile role is added only if later Stage calibration demonstrates a tactical need that Wave timing cannot express.
+The first pass deliberately omits a Fragile role. Stage-local Count and Wave Delay remain available to create early quantity pressure without adding another global health tier, while standard campaign Spawn Interval follows Task006's accepted spatial-gap contract. A Fragile role is added only if later Stage calibration demonstrates a tactical need that Wave timing cannot express.
+
+The Bat, Dragon, and Golem rows above remain the historical HP-only controls used by Task005. Task006 supersedes their campaign Profile-to-Prefab mapping without reinterpreting this evidence.
 
 These candidates use simple integer breakpoints against frozen Level 1 direct damage:
 

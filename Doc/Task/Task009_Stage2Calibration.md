@@ -44,7 +44,7 @@ First-pass inputs:
 - Stage2 MonsterWaveConfig
 - Archer/Cannon exposure and role complement
 - Monster identities, counts, and order
-- Wave and Spawn timing
+- Profile-derived Spawn Interval and Map-specific Wave Delay
 - Local Stage2 Map refinement
 - Reference, proposed-alternative, and Anti-pattern runs
 - A Task007-confirmed legal one-Tower concentration run
@@ -61,7 +61,7 @@ First-pass inputs:
 
 1. Fix the approved Stage2 Reference Build and placements.
 2. Confirm the Task007-derived Draft count.
-3. Tune Wave content to expose range and cadence complement.
+3. Tune Wave content and Map-specific Wave Delay to expose range and cadence complement while preserving the Task006 standard spatial gap.
 4. Let Codex propose and test at least one coherent alternative build.
 5. Test the approved undeveloped horizontal-growth Anti-pattern.
 6. Test a legal one-Tower concentration that omits the Archer/Cannon complement.
@@ -94,7 +94,7 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Expected Draft Milestone | Archer/Cannon Test | Observed Result |
 |---|---|---:|---:|---:|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | First-pass timing | First-pass timing | Expected cumulative Draft | Intended role-complement pressure | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended role-complement pressure | Filled after Play Mode |
 
 The same proposal records one coherent alternative Build and its expected margin.
 
@@ -120,6 +120,7 @@ The same proposal records one coherent alternative Build and its expected margin
 - The Reference Build clears reliably.
 - Archer and Cannon have understandable complementary value.
 - At least one viable alternative exists.
+- Every standard Spawn Entry preserves the Task006 reference spatial gap.
 - The Anti-pattern fails for the intended capability gap.
 - Concentrated investment receives no hidden penalty; its test fails only when the missing TowerFamily role matters.
 - Stage1 remains accepted.

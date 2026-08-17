@@ -44,7 +44,7 @@ First-pass inputs:
 - Drone launch, pursuit, battery, and coverage opportunity
 - Expanded route pressure
 - Large-footprint placement usability
-- Monster composition and timing
+- Monster composition, Profile-derived Spawn Interval, and Map-specific Wave Delay
 - Local Stage4 Map refinement
 - Reference, proposed-alternative, and Anti-pattern runs
 - Prior-Stage regression
@@ -60,7 +60,7 @@ First-pass inputs:
 
 1. Fix the approved Reference Build and legal placements.
 2. Confirm Task001 Reference and reasonable alternative placements against Task007's exact pools.
-3. Tune route exposure and Wave timing for meaningful Drone pursuit.
+3. Tune route exposure and Map-specific Wave Delay for meaningful Drone pursuit while preserving the Task006 standard spatial gap.
 4. Preserve useful roles for Archer, Cannon, and Magic.
 5. Test a Codex-proposed viable alternative.
 6. Test the local-only fixed-firepower Anti-pattern.
@@ -92,7 +92,7 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Expected Draft Milestone | Drone Pursuit Test | Fixed-Tower Test | Observed Result |
 |---|---|---:|---:|---:|---|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | First-pass timing | First-pass timing | Expected cumulative Draft | Intended expanded-route pressure | Expected retained fixed-Tower value | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended expanded-route pressure | Expected retained fixed-Tower value | Filled after Play Mode |
 
 ## 10. Execution Collaboration
 

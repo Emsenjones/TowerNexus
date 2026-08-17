@@ -43,7 +43,7 @@ First-pass inputs:
 - Stage3 MonsterWaveConfig
 - Magic contact-zone exposure
 - Pressure across multiple useful route zones
-- Monster composition and timing
+- Monster composition, Profile-derived Spawn Interval, and Map-specific Wave Delay
 - Local Stage3 Map refinement
 - Reference, proposed-alternative, and Anti-pattern runs
 - Stage1-Stage2 regression after any global revision
@@ -59,7 +59,7 @@ First-pass inputs:
 
 1. Fix the approved Reference Build and placement plan.
 2. Confirm the Task007-derived Stage3 Draft count.
-3. Tune Monster movement and Wave timing through Magic's intended contact zone.
+3. Tune Monster composition and Map-specific Wave Delay through Magic's intended contact zone while preserving the Task006 standard spatial gap.
 4. Maintain meaningful pressure outside that local zone.
 5. Test a Codex-proposed viable alternative.
 6. Test the Task007-confirmed legal single-zone overconcentration Anti-pattern, including its one-Tower concentration form when the pool permits it.
@@ -91,7 +91,7 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Expected Draft Milestone | Magic Contact Test | Wider Coverage Test | Observed Result |
 |---|---|---:|---:|---:|---|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | First-pass timing | First-pass timing | Expected cumulative Draft | Intended contact exposure | Intended secondary-zone pressure | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended contact exposure | Intended secondary-zone pressure | Filled after Play Mode |
 
 ## 10. Execution Collaboration
 

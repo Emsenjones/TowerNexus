@@ -82,7 +82,7 @@ These values are the first trajectory estimate. Task007 does not treat the Progr
 - Stage1-Stage6 StageDefinitions
 - Map references
 - MonsterWaveConfig references and initial Wave skeletons
-- Consumption of the Task006 homogeneous-Wave convention and accepted per-role Move Speeds
+- Consumption of the Task006 homogeneous-Wave convention, accepted per-Profile Move Speeds, and standard spatial-gap interval rule
 - Stage maximum-health authoring
 - Post-final-Draft validation segment targets
 - Candidate solvability where required by the Blueprint
@@ -91,7 +91,7 @@ These values are the first trajectory estimate. Task007 does not treat the Progr
 
 ## 6. Out Of Scope
 
-- Final Spawn Interval, Wave Delay, or Stage duration
+- Final Wave Delay, Stage duration, or any intentional departure from the standard spatial-gap interval
 - Final Monster composition
 - Final local Map route refinement
 - Rebalancing frozen Tower, Monster, Effect, or Buff baselines
@@ -120,7 +120,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 6. Choose rough Monster-resolution totals.
 7. Solve one positive global Progress Requirement sequence.
 8. Verify cumulative Draft nodes against every Stage.
-9. Reconfirm the Task006 movement identities and homogeneous-Wave convention.
+9. Reconfirm the Task006 movement identities, homogeneous-Wave convention, and Profile-derived Spawn Intervals.
 10. Author six StageDefinitions and six MonsterWaveConfig skeletons.
 11. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
 12. Reserve combat after the last intended Draft.
@@ -158,6 +158,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Author positive Stage maximum health.
 - Create structurally valid Wave content with the rough Monster totals.
 - Keep each campaign Wave to one Monster runtime template unless Task006 explicitly accepts another convention.
+- Seed each Spawn Entry with the Task006 interval derived from its Profile Move Speed; do not use interval drift as an unstated density adjustment.
 - Verify the Initial Draft and first-Wave gate.
 - Record cumulative resolution nodes and observed Draft counts.
 - Recheck Reference and reasonable alternative placements when an exact pool changes the available Tower set.
@@ -169,6 +170,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Every Stage skeleton reaches its derived Draft count in resolution-count space.
 - Six StageDefinitions reference the intended Maps, Waves, and Draft pools.
 - Every Wave skeleton consumes an accepted Task006 Monster identity and composition convention.
+- Every standard Spawn Entry preserves the Task006 reference spatial gap through its explicit Profile-derived interval.
 - Every approved Reference Build is obtainable under its authored Draft structure.
 - Every planned calibration and Anti-pattern build is either legally constructible or explicitly replaced before Stage testing.
 - Every allowed Tower level transition unlocks at least one Upgrade at the reached Required Tower Level.

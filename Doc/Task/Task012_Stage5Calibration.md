@@ -49,7 +49,7 @@ First-pass inputs:
 - Timing at which the first Elemental core becomes available
 - Sustained exposure for Elemental application and stacks
 - Elemental Draft availability within the Task007-authored pool
-- Monster composition and timing
+- Monster composition, Profile-derived Spawn Interval, and Map-specific Wave Delay
 - Local Stage5 Map refinement
 - Reference, alternative, and Anti-pattern runs
 - A secondary legal over-concentrated single-Tower coverage run when Task007 can construct it
@@ -66,7 +66,7 @@ First-pass inputs:
 
 1. Fix the approved Reference Build and Elemental choice.
 2. Confirm the Task007-derived Draft count and Elemental unlock timing.
-3. Tune remaining Wave exposure after the Elemental core becomes active.
+3. Tune remaining Wave exposure and Map-specific Wave Delay after the Elemental core becomes active while preserving the Task006 standard spatial gap.
 4. Confirm application and stacking are readable.
 5. Test a Codex-proposed alternative Element or TowerFamily when allowed.
 6. Test the primary no-Elemental-core Anti-pattern.
@@ -100,7 +100,7 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Elemental Activation Milestone | Expected Stack Exposure | Observed Result |
 |---|---|---:|---:|---:|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | First-pass timing | First-pass timing | Expected Draft index and time | Intended applications before resolution | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected Draft index and time | Intended applications before resolution | Filled after Play Mode |
 
 The proposal also records one coherent alternative Elemental Build and its expected margin.
 

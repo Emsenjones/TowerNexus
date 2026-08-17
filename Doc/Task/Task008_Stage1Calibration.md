@@ -35,7 +35,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 
 - Stage1 MonsterWaveConfig
 - Monster identities, counts, and order
-- First Wave delay, Wave delay, and Spawn Interval
+- First Wave delay, Wave Delay, and Task006-derived Spawn Interval
 - Stage1 maximum health if required
 - Local Stage1 route or placement refinement
 - Reference Build and both legal Anti-pattern runs
@@ -52,7 +52,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 
 1. Fix the approved Stage1 Reference Build and placements.
 2. Confirm the Task007 skeleton provides exactly six total Draft opportunities.
-3. Tune Monster order, count, delay, and interval.
+3. Tune Monster order, Count, and Map-specific Wave Delay while deriving Spawn Interval from the Task006 standard spatial gap.
 4. Preserve combat after the sixth Draft.
 5. Confirm the Reference Build clears with deliberate margin.
 6. Run the legal L1 Archer over-expansion Anti-pattern.
@@ -87,7 +87,7 @@ Codex prepares the first Stage calibration table:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Expected Draft Milestone | Expected Pressure | Observed Result |
 |---|---|---:|---:|---:|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | First-pass timing | First-pass timing | Expected cumulative Draft | Intended Reference Build test | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended Reference Build test | Filled after Play Mode |
 
 ## 10. Execution Collaboration
 
@@ -113,6 +113,7 @@ Codex prepares the first Stage calibration table:
 - The legal single-Archer concentration Anti-pattern fails because it omits the required second coverage point, not because concentrated investment receives a hidden penalty.
 - Failure is not caused by an invalid route or missing placement.
 - The final Draft has enough remaining combat to matter.
+- Every standard Spawn Entry preserves the Task006 reference spatial gap; Stage1 difficulty does not silently come from interval-driven density changes.
 - No global baseline is changed solely to repair Stage1.
 
 ## 13. Validation

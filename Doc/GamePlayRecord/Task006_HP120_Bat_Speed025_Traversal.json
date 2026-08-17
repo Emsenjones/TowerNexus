@@ -1,0 +1,119 @@
+{
+    "schemaVersion": 8,
+    "generatedAtLocal": "2026-08-17T18:27:42+08:00",
+    "runLabel": "Task006_HP120_Bat_Speed025_Traversal",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "waveConfigName": "Config_MonsterWave_Default",
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 1,
+        "observedMinimumMonsterHealth": 120,
+        "observedMaximumMonsterHealth": 120,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 0.0
+    },
+    "combat": {
+        "spawned": 1,
+        "resolved": 1,
+        "killed": 0,
+        "leaked": 1,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.0,
+        "effectiveDamage": 0,
+        "totalObservedHealth": 120,
+        "damageCoverage": 0.0,
+        "leakedRemainingHealth": 120,
+        "averageLeakedRemainingHealth": 120.0,
+        "peakAlive": 1
+    },
+    "timing": {
+        "spawnSpanSeconds": 0.0,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 0.0,
+        "battleDurationSeconds": 34.23992919921875
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 39,
+        "maximumHealth": 40
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true,
+        "monsterRuntimeCountsMatch": true,
+        "monsterRuntimeDamageMatches": true,
+        "monsterRuntimeRegistrationCoverageMatch": true,
+        "monsterRuntimeStartedAtFullHealth": true
+    },
+    "monsterRuntime": {
+        "observedTypes": 1,
+        "instanceSamples": 1,
+        "registrationObservedInstances": 1,
+        "fallbackObservedInstances": 0,
+        "instancesObservedAtFullHealth": 1,
+        "instancesObservedAfterDamage": 0,
+        "unobservedDamageAtObservationStart": 0,
+        "successfulDamageApplications": 0,
+        "types": [
+            {
+                "runtimeTemplateName": "Prefab_Monster_Bat",
+                "displayName": "Bat",
+                "maximumHealth": 120,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 1,
+                "resolved": 1,
+                "killed": 0,
+                "leaked": 1,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 1,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 1,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 0,
+                "effectiveDamage": 0,
+                "leakedRemainingHealth": 120,
+                "resolutionLifetimeSeconds": {
+                    "samples": 1,
+                    "minimum": 34.23992919921875,
+                    "average": 34.23992919921875,
+                    "maximum": 34.23992919921875
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 0,
+                    "minimum": 0.0,
+                    "average": 0.0,
+                    "maximum": 0.0
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 1,
+                    "minimum": 34.23992919921875,
+                    "average": 34.23992919921875,
+                    "maximum": 34.23992919921875
+                }
+            }
+        ],
+        "instances": [
+            {
+                "spawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_Bat",
+                "displayName": "Bat",
+                "maximumHealth": 120,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 120,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 120,
+                "successfulDamageApplications": 0,
+                "effectiveDamage": 0,
+                "lifetimeSeconds": 34.23992919921875
+            }
+        ]
+    },
+    "towers": [],
+    "buffs": []
+}

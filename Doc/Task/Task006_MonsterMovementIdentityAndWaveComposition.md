@@ -1,23 +1,16 @@
 # Task006 - Monster Movement Identity And Wave Composition
 
-Status: Planned; qualitative fast-assault and slow-durable identities proposed, exact Move Speed values pending controlled Play Mode evidence
+Status: Completed; four movement Profiles, homogeneous campaign Waves, the standard spatial-gap rule, Stage-local Wave Delay, and final normalized-spacing combat regressions were accepted on 2026-08-18
 
 Depends on: Task005 Monster Roster Baseline
 
-Blocks: Task007 MonsterWaveConfig skeleton authoring
+Blocks: Task007 Global Progression And Stage Skeleton
 
 ## 1. Goal
 
-Decide whether the accepted HP120 Normal, HP240 Tough, and HP480 Elite roster should also carry deliberate movement-speed identities, and define the campaign Wave-composition convention that consumes those identities.
+Establish readable Monster identities from Maximum Health and Move Speed, bind the first accepted identities to runtime Prefabs, and define the campaign Wave-composition and timing contracts consumed by later Stage authoring.
 
-The current experience hypothesis is:
-
-- each campaign Wave presents one Monster type;
-- different Waves may present different Monster types;
-- a faster Monster creates assault pressure;
-- a slower high-health Monster creates a durable, readable tank window.
-
-This Task isolates those decisions before Task007 creates six Stage Wave skeletons. It does not reopen Task005 Maximum Health unless movement evidence demonstrates that a speed revision destroys an accepted role.
+Task006 owns Stage-independent Monster movement identity and standard formation density. It does not decide final Stage order, Count, Wave Delay, duration, or difficulty.
 
 ## 2. Source Documents
 
@@ -26,112 +19,193 @@ This Task isolates those decisions before Task007 creates six Stage Wave skeleto
 - `Doc/Balance/00_StageDesignBlueprint.md`
 - `Doc/System/07_MonsterSystem.md`
 
-## 3. Baseline And Candidate Identities
+## 3. Accepted Profiles
 
-| Role | Runtime Prefab | Accepted HP | Task005 Control Speed | Task006 Movement Hypothesis |
+| Profile | Runtime Prefab | Maximum Health | Move Speed | Tactical Meaning |
 |---|---|---:|---:|---|
-| Normal | Bat | `120` | `0.25` | Preserve as the stable Reference speed |
-| Tough | Dragon | `240` | `0.25` | Faster assault candidate; exact value TBD |
-| Elite | Golem | `480` | `0.25` | Slower durable candidate; exact value TBD |
+| Normal | `Prefab_Monster_Slime1` | `120` | `0.25` | Stable ordinary Wave body and movement reference |
+| Rush | `Prefab_Monster_Bat1` | `120` | `0.35` | Short handling window that reduces realized Tower efficiency, especially for slow-cadence or slow-projectile attacks |
+| Tough | `Prefab_Monster_TurtuleShell1` | `240` | `0.25` | Normal-speed durability pressure |
+| Tank | `Prefab_Monster_Orc1` | `480` | `0.20` | High durability with a slower, longer exposure window |
 
-The first candidate scan should use a narrow step before a stronger identity:
+These four mappings are the first campaign roster. Task006 does not require every future Health and Move Speed combination to receive a separate Prefab. Additional identities are added only when Stage calibration demonstrates a distinct tactical need.
 
-- Dragon: test `0.275`; test `0.30` only if the first change is not readable.
-- Golem: test `0.225`; test `0.20` only if the first change is not readable.
+## 4. Campaign Wave Authoring Contracts
 
-These are diagnostic candidates, not accepted values. Faster movement shortens Tower exposure and increases threat; slower movement lengthens exposure and may partially cancel the Elite's HP advantage. The accepted result must preserve the Task005 Normal/Tough/Elite ordering rather than judging speed in isolation.
+### 4.1 Homogeneous Waves
 
-## 4. Homogeneous-Wave Authoring Hypothesis
+One campaign Wave contains one Monster runtime template. A Wave may use multiple Spawn Entries only when every entry references that same template to express authored timing groups.
 
-For the six campaign Stages, one authored Wave should contain one unique Monster runtime template. A Wave may use multiple Spawn Entries only when those entries reference the same template to express timing groups. The next Wave may select another accepted Monster type.
+`MonsterWaveConfig` remains structurally capable of mixed-template Waves. Homogeneous composition is a campaign content contract rather than a new runtime restriction.
 
-This is initially a campaign content convention, not a universal Monster System restriction. `MonsterWaveConfig` remains structurally capable of mixed-type Spawn Entries unless this Task later proves that an explicit validation rule is useful and approves that change separately.
+### 4.2 Standard Spatial Gap
 
-Homogeneous Waves make one movement identity readable at a time and keep Stage-local Count, Spawn Interval, and Wave Delay as independent calibration levers. Transitions between Waves must still be observed because a fast later Wave can catch a slow earlier Wave when their active windows overlap.
+Standard homogeneous Waves preserve the spatial gap created by the accepted Reference fixture:
 
-## 5. In Scope
+```text
+Reference Spatial Gap
+    = Move Speed 0.25 * Spawn Interval 2.5s
+    = 0.625 world units
 
-- Per-role Move Speed candidates
-- Route traversal time and Grid-per-second confirmation
-- HP-role preservation after speed changes
-- Homogeneous-Wave readability
-- Cross-Wave catch-up, separation, and clustering
-- Cannon projectile interception regression
-- Cold/Slow interaction regression
-- Buff continuity and Active Duration exposure
-- Campaign Wave-composition convention
+Profile Spawn Interval
+    = 0.625 / Profile Move Speed
+```
 
-## 6. Out Of Scope
+| Profile | Move Speed | Accepted Derived Spawn Interval | Resulting Gap |
+|---|---:|---:|---:|
+| Normal | `0.25` | `2.5s` | `0.625` |
+| Rush | `0.35` | `1.7857s` | approximately `0.625` |
+| Tough | `0.25` | `2.5s` | `0.625` |
+| Tank | `0.20` | `3.125s` | `0.625` |
 
-- New Monster mechanics, armor, resistance, collision, or blocking
-- Final Stage counts, Spawn Intervals, Wave Delays, or difficulty
-- Final Stage-specific Monster order
-- Tower, Projectile, Buff, or Effect rebalance unrelated to a demonstrated movement regression
-- Adding all ten visual Prefabs to the roster
+The interval is written with sufficient precision into each Spawn Entry; runtime does not derive or mutate it from Prefab Move Speed.
 
-## 7. Calibration Sequence
+This contract isolates formation density from movement identity. Rush pressure should primarily come from shorter route exposure and harder projectile interception, not from an incidental wider formation that further reduces area, piercing, or multi-target coverage. A deliberately dense or loose Wave requires a separately approved identity rather than silent Stage-local interval drift.
 
-### Phase A - Traversal Identity
+### 4.3 Stage-Local Wave Delay
 
-Use the Straight diagnostic route and one Monster per run with no effective Tower coverage. Compare the accepted `0.25` control against each candidate speed. Record complete registration coverage, full-health observation, leaked lifetime, and approximate Grid traversal.
+Wave execution is schedule-driven rather than resolution-gated. After the current Wave's last Monster spawns, execution advances to the next Wave and waits that next Wave's authored Wave Delay. It does not wait for earlier Monsters to die or reach the Target.
 
-Accept a candidate only when the difference is visually readable and the measured traversal ratio agrees with the authored speed direction.
+Consequently:
 
-### Phase B - HP Role Preservation
+- clearing a Wave faster does not make the next Wave spawn early;
+- leaked or surviving Monsters do not block the next Wave;
+- cross-Wave overlap may occur when the authored schedule and active combat state produce it;
+- no generic requirement says that every previous Monster must resolve before the next Wave begins.
 
-Repeat the smallest representative Tower comparisons for changed Dragon and Golem candidates. Verify that:
+Each Stage manually selects Wave Delay from its Map size, route length, Monster Count, outgoing Wave spawn duration, Reference Build, desired rhythm, and acceptable overlap. Wave Delay may minimize unintended chase or deliberately accumulate pressure, but Task006 does not freeze one global value.
 
-- Dragon remains Tough rather than becoming an unintended Elite rush unit;
-- Golem remains Elite rather than becoming easier than Dragon because of excessive exposure;
-- Bat remains the unchanged Reference control.
+For one Spawn Entry:
 
-### Phase C - Projectile And Slow Regression
+```text
+Next Wave First Spawn Time
+    = Current Wave First Spawn Time
+    + (Current Count - 1) * Current Spawn Interval
+    + Next Wave Wave Delay
+```
 
-Run targeted Cannon Control and Cannon + Cold comparisons using the changed-speed candidates. Observe releases, intended/fallback/position-only Arc outcomes, successful Damage Applications, Slow snapshots, and final combat efficiency.
+## 5. Accepted Evidence
 
-The purpose is regression protection: movement identity must not recreate the previously corrected negative Cannon + Cold interaction or rely on incidental interception of a following Monster.
+### 5.1 Traversal Identity
 
-### Phase D - Homogeneous-Wave Formation
+Five one-Monster Straight-route runs confirmed that leaked lifetime changes inversely with authored Move Speed and that `0.20 / 0.25 / 0.35` are visually and measurably distinct.
 
-Run a small same-type Wave for each accepted role using one fixed Count and Spawn Interval. Confirm that the Wave reads as one coherent movement identity and that spacing remains stable enough for the intended Tower, AoE, Piercing, and Buff interactions.
+| Move Speed | Average Leaked Lifetime |
+|---:|---:|
+| `0.15` | `57.04s` |
+| `0.20` | `42.79s` |
+| `0.25` | `34.24s` |
+| `0.30` | `28.55s` |
+| `0.35` | `24.46s` |
 
-Then run a short sequence of different homogeneous Waves. Observe whether a faster later Wave catches a slower earlier Wave before the prior Wave resolves. Any resulting clustering must be an intentional Stage authoring option rather than an unnoticed global side effect.
+### 5.2 Three-Monster Archer And Cannon Screening
 
-## 8. Required Measurements
+The accepted Profile-Prefab mappings were screened on Straight Route, Position 1, Count `3`, and the historical fixed `2.5s` interval.
 
-- Authored and observed Move Speed
-- Route traversal lifetime
-- Kill/leak result and final Health
-- Successful Damage Applications
-- Projectile releases and Arc target-relation outcomes where applicable
-- Cold movement multiplier and Source Apply Cooldown snapshot
-- Buff applications, natural expiries, maximum Stacks, and Overloads
-- Same-Wave spacing and cross-Wave catch-up observation
-- All schema-v8 completeness and integrity flags
+| Tower | Profile | Effective Damage | Damage Coverage | Killed / Leaked | Successful Damage Applications |
+|---|---|---:|---:|---:|---:|
+| Archer Base | Normal | `360` | `100%` | `3 / 0` | `18` |
+| Archer Base | Rush | `280` | `77.78%` | `1 / 2` | `14` |
+| Archer Base | Tough | `360` | `50%` | `1 / 2` | `18` |
+| Archer Base | Tank | `420` | `29.17%` | `0 / 3` | `21` |
+| Cannon Base | Normal | `360` | `100%` | `3 / 0` | `6` |
+| Cannon Base | Rush | `180` | `50%` | `0 / 3` | `3` |
+| Cannon Base | Tough | `300` | `41.67%` | `0 / 3` | `5` |
+| Cannon Base | Tank | `420` | `29.17%` | `0 / 3` | `7` |
+
+Normal Archer and Rush Cannon repeats reproduced their headline outcomes. Rush established the intended hard Cannon matchup under the historical fixture, while Normal, Tough, and Tank retained explainable survival ordering.
+
+Because this screening used one fixed temporal interval, Rush began with a wider formation and Tank with a denser formation. These runs accept the four identity candidates but do not by themselves quantify final Radius behavior under the new normalized-spacing contract.
+
+### 5.3 Cannon And Cold Regression
+
+Matched Level 3 Cannon controls showed that Frostbound Shells was neutral against Rush and positive against Tank rather than intrinsically negative:
+
+| Profile | Configuration | Effective Damage | Damage Coverage | Successful Damage Applications |
+|---|---|---:|---:|---:|
+| Rush | L3 Cannon, no Upgrade | `60` | `16.67%` | `1` |
+| Rush | L3 Cannon, Frostbound Shells only | `60` | `16.67%` | `1` |
+| Tank | L3 Cannon, no Upgrade | `420` | `29.17%` | `7` |
+| Tank | L3 Cannon, Frostbound Shells only | `480` | `33.33%` | `8` |
+
+Rush remains an intentional Cannon weakness. Stage-local Rush Count and timing are calibrated against the legal Reference Build before any global speed revision is considered.
+
+All named schema-v8 runs completed with all six Recorder integrity flags true. Normal Archer and Rush Cannon each supplied an exact repeat for the primary comparison.
+
+### 5.4 Final Normalized-Spacing Regression
+
+The final integration fixture replaced the historical fixed temporal interval with the accepted Profile-derived intervals. Straight Route, Position 1, Count `3`, Health `120`, and all other comparison conditions remained fixed.
+
+Matched Level 2 Archer controls and Explosive Arrow-only runs produced:
+
+| Profile | Configuration | Observed Spawn Interval | Effective Damage | Damage Coverage | Killed / Leaked | Projectile Releases | Successful Damage Applications | Average Resolution Lifetime |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Normal | L2 Archer, no Upgrade | `2.5064s` | `360` | `100%` | `3 / 0` | `18` | `18` | `20.03s` |
+| Normal | L2 Archer, Explosive Arrow only | `2.5033s` | `360` | `100%` | `3 / 0` | `13` | `33` | `16.90s` |
+| Rush | L2 Archer, no Upgrade | `1.7913s` | `260` | `72.22%` | `1 / 2` | `13` | `13` | `20.85s` |
+| Rush | L2 Archer, Explosive Arrow only | `1.7865s` | `360` | `100%` | `3 / 0` | `13` | `33` | `14.83s` |
+
+Both Explosive Arrow runs converted `13` Projectile releases into `33` successful Damage Applications and cleared all three Monsters. Combined with the Play Mode formation observation, this confirms that the faster Rush identity remains inside the accepted `0.75` explosion Radius when its Spawn Interval preserves the Reference spatial gap. Normal reached the same total-Health ceiling with fewer releases and a shorter lifetime, while Rush improved from `260` to `360` Effective Damage and from `1 / 2` to `3 / 0` Killed / Leaked.
+
+The first final-spacing Rush Cannon run and its repeat produced the same headline result:
+
+| Run | Observed Spawn Interval | Effective Damage | Damage Coverage | Killed / Leaked | Arc Releases | Intended / Fallback / Position-only | Arc Target Resolution |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Final Spacing | `1.7909s` | `240` | `66.67%` | `1 / 2` | `4` | `2 / 2 / 0` | `100%` |
+| Final Spacing Repeat | `1.7921s` | `240` | `66.67%` | `1 / 2` | `4` | `2 / 2 / 0` | `100%` |
+
+The final-spacing result supersedes the historical fixed-`2.5s` Rush Cannon result for campaign formation interpretation. Rush still reduces Cannon output relative to Normal because the faster Wave supplies fewer release opportunities, but equalized formation spacing lets following Bats resolve otherwise missed landings as fallback hits. The accepted Rush identity therefore reduces realized Attack Efficiency through its shorter handling window without also receiving an incidental loose-formation advantage.
+
+Every final normalized-spacing report used schema v8, matched its Run identity and authored fixture, completed all expected Monster resolutions, and passed all six Recorder integrity flags.
+
+## 6. Completion Decision
+
+The final normalized-spacing regressions preserve all four accepted Profile identities and validate the campaign spacing contract. No additional no-Tower spacing run, generic Tank-to-Rush catch-up experiment, full Profile matrix, or Cold rerun is required for Task006. Actual cross-Wave overlap remains a Stage-local observation for Task008-Task013.
+
+Task006 completed on 2026-08-18.
+
+## 7. In Scope
+
+- Accepted per-Profile Move Speed
+- First Profile-to-Prefab mapping
+- Homogeneous campaign Wave convention
+- Reference spatial gap and Profile-derived Spawn Interval
+- Stage-local, non-resolution-gated Wave Delay contract
+- Targeted movement, projectile, Slow, Radius, and multi-target regression
+
+## 8. Out Of Scope
+
+- New Monster armor, resistance, collision, blocking, or mechanics
+- Automatic runtime SpawnInterval derivation
+- Resolution-gated Wave progression
+- Final Stage Monster order, Count, Wave Delay, duration, or difficulty
+- Adding every available visual Prefab to the roster
+- Unapproved dense, loose, or mixed-template campaign Wave identities
 
 ## 9. Ownership
 
 | Owner | Responsibility |
 |---|---|
-| Task005 | Accepted HP120/HP240/HP480 role baseline |
-| Task006 | Movement identities and campaign homogeneous-Wave convention |
-| Monster runtime template | Accepted per-type Move Speed |
-| MonsterWaveConfig | Authored Wave template, Count, interval, and delay structure |
-| Task007 | Six structural Wave skeletons consuming accepted identities |
-| Task008-Task013 | Final Stage-local Monster order, Count, timing, and difficulty |
+| Task005 | Historical HP120/HP240/HP480 health-only baseline |
+| Task006 | Four movement Profiles, homogeneous-Wave convention, and standard spatial-gap contract |
+| Monster runtime template | Accepted per-type Maximum Health and Move Speed |
+| MonsterWaveConfig | Explicit Wave template, Count, derived Spawn Interval, and Stage-local Wave Delay |
+| Task007 | Six structural Wave skeletons consuming accepted identities and the derived interval rule |
+| Task008-Task013 | Final Stage-local Monster order, Count, Wave Delay, overlap, duration, and difficulty |
 
 ## 10. Acceptance Criteria
 
-- Every changed Move Speed communicates a distinct tactical role in motion.
-- Bat remains the stable `0.25` Reference unless a separate baseline revision is explicitly approved.
-- Dragon and Golem retain the accepted Tough and Elite survival ordering.
-- Faster movement creates pressure without silently combining excessive HP and insufficient exposure.
-- Slower movement creates a durable tank window without erasing Elite threat through excessive Tower exposure.
-- Cannon and Cannon + Cold remain functionally non-negative under accepted movement identities.
-- Buff duration, stacking, and Overload behavior remain explainable from exposure rather than a runtime defect.
-- The homogeneous-Wave convention is clear enough for Task007 to author six skeletons.
-- Cross-Wave catch-up is either intentionally used or prevented through Stage-local timing.
+- Normal, Rush, Tough, and Tank have distinct and explainable tactical identities.
+- The accepted Prefab mappings carry the intended Health and Move Speed values.
+- Every campaign Wave contains one Monster runtime template.
+- Standard Profile intervals preserve approximately the `0.625` Reference spatial gap.
+- Faster movement does not silently gain additional initial formation spacing.
+- Wave execution remains schedule-driven and does not wait for Monster resolution.
+- Each Stage manually calibrates Wave Delay from its Map and Reference Build.
+- Cannon and Cannon plus Cold behavior remains explainable under accepted identities.
+- The normalized-spacing Radius or multi-target regression does not invalidate the accepted identities.
+- All formal Recorder runs pass their completeness and integrity checks.
 
 ## 11. Handoff
 
-Task007 begins only after Task006 either accepts distinct Move Speeds or explicitly keeps all three roles at `0.25`. Task007 authors rough homogeneous-Wave skeletons from that result. Task008-Task013 then tune Stage-local Monster order, Count, Spawn Interval, Wave Delay, and difficulty without redefining global movement identities.
+Task007 begins from the four accepted Profiles, homogeneous-Wave convention, and Profile-derived interval baselines while authoring six rough Wave skeletons. Task008-Task013 then calibrate Stage-local Monster order, Count, Wave Delay, overlap, duration, and difficulty without redefining global movement identities or silently changing standard formation density.

@@ -52,7 +52,7 @@ First-pass inputs:
 - Shared-target overlap geometry
 - Overload-required pressure
 - Candidate availability under the Task007-authored Draft pool and solvability rule
-- Monster composition and timing
+- Monster composition, Profile-derived Spawn Interval, and Map-specific Wave Delay
 - Local Stage6 Map refinement
 - Reference, alternative, and Anti-pattern runs
 - Full Stage1-Stage5 regression after global revisions
@@ -69,7 +69,7 @@ First-pass inputs:
 1. Fix the Blueprint-approved matching-Element Reference Build.
 2. Confirm when both Elemental sources become active.
 3. Preserve enough remaining combat for repeated shared-stack attempts.
-4. Tune Map overlap and Wave exposure before changing global Buff values.
+4. Tune Map overlap, Wave exposure, and Map-specific Wave Delay before changing global Buff values while preserving the Task006 standard spatial gap.
 5. Confirm at least one required Overload.
 6. Test a Codex-proposed different-TowerFamily matching pair when permitted.
 7. Test the one-Elemental-Core, mismatched-Element, and non-overlapping Anti-patterns.
@@ -103,7 +103,7 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Matching Pair Milestone | Expected Overload Window | Observed Result |
 |---|---|---:|---:|---:|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | First-pass timing | First-pass timing | Expected Draft index and time | Intended shared-stack and Overload opportunities | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected Draft index and time | Intended shared-stack and Overload opportunities | Filled after Play Mode |
 
 The proposal also records one alternative matching-Element pair, the candidate path that makes it obtainable, and the one-Core, mismatched, and non-overlap Anti-pattern expectations.
 

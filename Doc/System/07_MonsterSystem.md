@@ -75,13 +75,51 @@ Each Spawn Entry contains:
 |---|---|
 | Monster Runtime Template | Unique Monster type to spawn |
 | Count | Number of instances |
-| Spawn Interval | Time between adjacent instances inside this entry; it adds no delay after the entry's final instance |
+| Spawn Interval | Explicit authored time between adjacent instances inside this entry; it adds no delay after the entry's final instance |
+
+Campaign homogeneous Waves use one Monster runtime template per Wave. Their
+standard initial formation preserves one reference spatial gap across Monster
+movement identities:
+
+```text
+Reference Spatial Gap
+    = Reference Move Speed 0.25 * Reference Spawn Interval 2.5s
+    = 0.625 world units
+
+Spawn Interval
+    = Reference Spatial Gap / Authored Base Move Speed
+```
+
+The derived interval is authored explicitly in each Spawn Entry. Monster
+System does not infer it from the referenced template at runtime. Changing a
+template's base Move Speed therefore requires the corresponding campaign Spawn
+Intervals to be re-derived. This keeps initial formation density independent
+from movement identity, so faster Monsters do not silently gain additional
+resistance to area, piercing, or multi-target behavior merely because they
+spawn farther apart.
+
+An intentionally denser or looser formation is a separate authored Monster or
+Wave identity and must be stated explicitly; it is not an incidental
+Stage-local difficulty adjustment. Runtime movement modifiers may still
+compress or expand an active formation as an explainable combat result.
 
 The current Map contract provides one Spawn node and one Target node. Multiple Spawn Routes and route-specific Wave entries are deferred.
 
 Wave execution begins only after Stage composition has established the active Map, supplied a valid MonsterWaveConfig, and the required Initial Tower Draft has produced one held Tower Draft item. Entering the Battle state or merely opening the Initial Draft Window does not begin Wave timing.
 
 The first Wave Delay starts when Monster System receives authorization after the Initial Draft selection is accepted. Tower deployment is not an additional prerequisite; the player may deploy the held Tower Draft item while the first Wave Delay advances.
+
+After a Wave's final configured Monster has spawned, execution advances to the
+next Wave and waits that next Wave's authored Wave Delay. It does not wait for
+the previous Wave's Monsters to die or reach the Target. Clearing a Wave early
+therefore does not accelerate later spawning, and unresolved Monsters do not
+block the authored schedule.
+
+Wave Delay is a Stage-local authoring value selected manually from the active
+Map, route length, Monster counts, Reference Build, desired Stage rhythm, and
+acceptable cross-Wave overlap. It may reduce unintended catch-up or create
+deliberate accumulated pressure, but it does not guarantee that only one Wave
+can be alive at a time.
 
 Wave timing, spawning, Monster movement, and Monster-driven gameplay output do not advance while an Initial or Player level-up Draft Window holds the approved battle-simulation pause. Draft presentation remains interactive outside Monster System. The pause is released before Initial Draft completion authorizes the first Wave Delay.
 
