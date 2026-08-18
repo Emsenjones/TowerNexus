@@ -103,3 +103,9 @@
 20. players can remove Tower pending items;
 21. Camera focuses on the tower which the player taped and pop up TowerInfoWindow;
 22. Develop Monster & Projectile object pool;
+
+
+1. Players should be level up faster at the beigin;
+2. Normal monsters are too strong at the begining of Stage, but they are weak at the end of stage;
+2. The player can randomly build towers because monsters cannon give players pressure;
+3. Draft system should be more smart because the proportion of tower draft will decrease during stage.

@@ -9876,7 +9876,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MagicOrbBehaviour
   rotationSpeed: 90
   orbitRadius: 1
-  contactDistance: 0.25
+  contactDistance: 0.4
   sameTargetHitCooldown: 0.5
   maxLifetime: 18
 --- !u!1 &7702116986669340077

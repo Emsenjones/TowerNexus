@@ -13,31 +13,31 @@ MonoBehaviour:
   m_Name: Config_MonsterWave_Lv6
   m_EditorClassIdentifier: Assembly-CSharp::MonsterWaveConfig
   waves:
-  - waveDelay: 5
+  - waveDelay: 10
     monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
     count: 12
     spawnInterval: 2.5
-  - waveDelay: 5
+  - waveDelay: 10
     monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
     count: 12
     spawnInterval: 2.5
-  - waveDelay: 5
+  - waveDelay: 10
     monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
     count: 12
     spawnInterval: 2.5
-  - waveDelay: 5
+  - waveDelay: 10
     monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
     count: 12
     spawnInterval: 2.5
-  - waveDelay: 5
+  - waveDelay: 10
     monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
     count: 11
     spawnInterval: 2.5
-  - waveDelay: 5
-    monsterRuntimeTemplate: {fileID: 0}
+  - waveDelay: 10
+    monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
     count: 11
     spawnInterval: 2.5
-  - waveDelay: 5
+  - waveDelay: 10
     monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
     count: 19
     spawnInterval: 2.5

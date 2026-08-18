@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 8;
+    public int schemaVersion = 9;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -14,6 +14,8 @@ internal sealed class CombatBalanceRunJsonReport
     public CombatBalanceCombatJson combat = new CombatBalanceCombatJson();
     public CombatBalanceTimingJson timing = new CombatBalanceTimingJson();
     public CombatBalancePlayerJson player = new CombatBalancePlayerJson();
+    public CombatBalanceProgressionJson progression =
+        new CombatBalanceProgressionJson();
     public CombatBalanceIntegrityJson integrity = new CombatBalanceIntegrityJson();
     public CombatBalanceMonsterRuntimeJson monsterRuntime =
         new CombatBalanceMonsterRuntimeJson();
@@ -133,6 +135,37 @@ internal sealed class CombatBalancePlayerJson
 }
 
 [Serializable]
+internal sealed class CombatBalanceProgressionJson
+{
+    public List<int> requirements = new List<int>();
+    public int expectedLevelUpCount;
+    public int expectedTotalDraftCount;
+    public int expectedFinalDraftResolutionNode;
+    public bool initialDraftCompleted;
+    public int observedLevelUpCount;
+    public int observedTotalDraftCount;
+    public int finalLevel;
+    public int finalProgress;
+    public int finalRequiredProgress;
+    public int observedFinalDraftResolutionNode;
+    public int resolutionsAfterFinalDraft;
+    public List<CombatBalanceProgressionEventJson> events =
+        new List<CombatBalanceProgressionEventJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceProgressionEventJson
+{
+    public int ordinal;
+    public string kind;
+    public int resolvedMonsterCount;
+    public int playerLevel;
+    public int currentProgress;
+    public int requiredProgress;
+    public float activeTimeSeconds;
+}
+
+[Serializable]
 internal sealed class CombatBalanceIntegrityJson
 {
     public bool resolutionCountsMatch;
@@ -141,6 +174,11 @@ internal sealed class CombatBalanceIntegrityJson
     public bool monsterRuntimeDamageMatches;
     public bool monsterRuntimeRegistrationCoverageMatch;
     public bool monsterRuntimeStartedAtFullHealth;
+    public bool initialDraftCountMatches;
+    public bool levelUpCountMatches;
+    public bool levelUpResolutionNodesMatch;
+    public bool finalPlayerLevelMatches;
+    public bool postFinalDraftCombatObserved;
 }
 
 [Serializable]

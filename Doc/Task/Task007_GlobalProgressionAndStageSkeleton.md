@@ -1,6 +1,6 @@
 # Task007 - Per-Stage Progression And Stage Skeleton
 
-Status: In progress; Stage-owned progression runtime, six StageDefinitions, per-Stage Progress Requirements, and Normal-only Wave skeletons are authored, while structural Play Mode validation and value acceptance remain pending
+Status: Completed; Stage-owned progression, six StageDefinitions, cumulative Draft pools, Normal-only Wave skeletons, Reference Player Health, and structural Play Mode validation were accepted on 2026-08-19
 
 Depends on: Task001-Task006
 
@@ -223,6 +223,27 @@ The Initial Tower Draft is separate and is not represented by an entry. Every en
 - Progress and Draft-count Play Mode smoke test
 - Static asset-reference review
 
-## 14. Review Note
+## 14. Accepted Baseline And Evidence
+
+The accepted Task007 skeleton is:
+
+| Stage | Total Drafts | Player Progress Requirements | Final Draft Node | Wave Counts | Total Monsters | Post-Final-Draft Resolutions | Reference Player Health | Theoretical Minimum Duration |
+|---|---:|---|---:|---|---:|---:|---:|---:|
+| Stage1 | 5 | 3 / 3 / 4 / 4 | 14 | 14 / 8 | 22 | 8 | 11 | 1:00 |
+| Stage2 | 6 | 3 / 3 / 4 / 4 / 8 | 22 | 11 / 11 / 10 | 32 | 10 | 16 | 1:27.5 |
+| Stage3 | 7 | 3 / 3 / 4 / 4 / 8 / 8 | 30 | 10 / 10 / 10 / 12 | 42 | 12 | 21 | 1:55 |
+| Stage4 | 8 | 3 / 3 / 4 / 4 / 8 / 8 / 10 | 40 | 10 / 10 / 10 / 10 / 14 | 54 | 14 | 27 | 2:27.5 |
+| Stage5 | 10 | 3 / 3 / 4 / 4 / 8 / 8 / 10 / 12 / 12 | 64 | 13 / 13 / 13 / 13 / 12 / 12 | 76 | 12 | 38 | 3:25 |
+| Stage6 | 15 | 4 / 4 / 4 / 4 / 5 / 5 / 5 / 5 / 5 / 5 / 6 / 6 / 6 / 6 | 70 | 12 / 12 / 12 / 12 / 11 / 11 / 19 | 89 | 19 | 45 | 4:35 |
+
+The duration estimate includes every authored Wave Delay and every interval between consecutive spawns within a Wave, with each Monster resolving immediately when spawned. Stage6 uses the currently authored 10-second delay on all seven Waves; the other five Stages use 5-second delays. Reference Player Health is the Task007 structural baseline `ceil(Total Monsters / 2)`, not a final difficulty target.
+
+Schema-v9 reports accepted the complete progression path for all six Stages. Each accepted run completed one Initial Draft, reached the intended Level-up and total Draft counts, resolved the configured Monster total, retained combat after the final Draft, and passed every integrity flag. The accepted Stage5 Recorder regression records final Draft node 64 and 12 later Resolutions after the same-frame Resolution bookkeeping fix.
+
+Play Mode also confirmed fresh Retry state and a fresh Stage1-to-Stage2 Next Stage transition. The observed Build evidence includes the Stage1 two-Tower L2 Core structure, a Stage5 L3 Elemental core, and a Stage6 matching-Cold L3 Cannon/Magic pair. The Stage6 report records two contributing source Towers and shared-target Cold stacking, confirming an achievable different-family matching-Element overlap path without introducing a guaranteed candidate offer.
+
+The cumulative pools and successful Stage runtime binding confirm an L2 cap with a continuous Basic-to-Behaviour ladder in Stage1-Stage4 and an L3 cap with a continuous Basic-to-Behaviour-to-Elemental ladder in Stage5-Stage6. Exact reproducible Upgrade identities, candidate success rates, final Wave composition, Reference clear margins, and Anti-pattern outcomes remain owned by Task008-Task013.
+
+## 15. Review Note
 
 Task008-Task013 own final Stage experience. If one Stage cannot satisfy its Blueprint, revise that Stage's Progress Requirements, Wave budget, Draft structure, or accepted build envelope through the smallest owning contract change, then rerun affected regressions.

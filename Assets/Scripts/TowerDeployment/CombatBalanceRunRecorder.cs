@@ -27,6 +27,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     [SerializeField] private MonsterSpawner monsterSpawner;
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
+    [SerializeField] private DraftSystem draftSystem;
 
     private readonly Dictionary<MonsterBehaviour, MonsterObservation>
         trackedMonsters =
@@ -34,6 +35,13 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly List<MonsterObservation> monsterObservations =
         new List<MonsterObservation>();
     private readonly HashSet<int> seenMonsterInstanceIds = new HashSet<int>();
+    private readonly List<int> progressionRequirementsSnapshot =
+        new List<int>();
+    private readonly List<CombatBalanceProgressionEventJson>
+        progressionEvents =
+            new List<CombatBalanceProgressionEventJson>();
+    private readonly List<PendingLevelUpObservation> pendingLevelUps =
+        new List<PendingLevelUpObservation>();
     private readonly ElementalBuffRunAccumulator buffAccumulator =
         new ElementalBuffRunAccumulator();
     private readonly Dictionary<int, ProjectileRuntimeAggregate>
@@ -70,6 +78,16 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private float spawningCompletedTime;
     private float observedSpawnIntervalTotal;
     private int observedSpawnIntervalCount;
+    private float runStartedAtTime;
+    private int initialDraftCompletionCount;
+
+    private sealed class PendingLevelUpObservation
+    {
+        public int PlayerLevel { get; set; }
+        public int CurrentProgress { get; set; }
+        public int RequiredProgress { get; set; }
+        public float ActiveTimeSeconds { get; set; }
+    }
 
     private sealed class MonsterObservation
     {
@@ -283,6 +301,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
     private void LateUpdate()
     {
+        FlushPendingProgressionEvents();
         FlushPendingFinalSummary();
     }
 
@@ -321,6 +340,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             playerSystem = FindFirstObjectByType<PlayerSystem>();
         }
+
+        if (draftSystem == null)
+        {
+            draftSystem = FindFirstObjectByType<DraftSystem>();
+        }
     }
 
     private void SubscribeToRuntime()
@@ -334,6 +358,13 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             playerSystem.OnBattleStateInitialized +=
                 HandleBattleStateInitialized;
+            playerSystem.OnLevelUp += HandlePlayerLevelUp;
+        }
+
+        if (draftSystem != null)
+        {
+            draftSystem.OnInitialDraftCompleted +=
+                HandleInitialDraftCompleted;
         }
 
         if (monsterSpawner != null)
@@ -386,6 +417,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             missingReferences.Add(nameof(playerSystem));
         }
 
+        if (draftSystem == null)
+        {
+            missingReferences.Add(nameof(draftSystem));
+        }
+
         if (missingReferences.Count > 0)
         {
             Debug.LogWarning(
@@ -406,6 +442,13 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             playerSystem.OnBattleStateInitialized -=
                 HandleBattleStateInitialized;
+            playerSystem.OnLevelUp -= HandlePlayerLevelUp;
+        }
+
+        if (draftSystem != null)
+        {
+            draftSystem.OnInitialDraftCompleted -=
+                HandleInitialDraftCompleted;
         }
 
         if (monsterSpawner != null)
@@ -439,6 +482,73 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         BeginRun();
     }
 
+    private void HandleInitialDraftCompleted(DraftAttemptToken attemptToken)
+    {
+        if (!isTrackingRun || !attemptToken.IsValid)
+        {
+            return;
+        }
+
+        initialDraftCompletionCount++;
+        progressionEvents.Add(new CombatBalanceProgressionEventJson
+        {
+            ordinal = progressionEvents.Count + 1,
+            kind = "Initial",
+            resolvedMonsterCount = resolvedCount,
+            playerLevel = playerSystem != null
+                ? playerSystem.CurrentLevel
+                : 0,
+            currentProgress = playerSystem != null
+                ? playerSystem.CurrentProgress
+                : 0,
+            requiredProgress = playerSystem != null
+                ? playerSystem.RequiredProgress
+                : 0,
+            activeTimeSeconds = GetRunActiveTimeSeconds()
+        });
+    }
+
+    private void HandlePlayerLevelUp(int playerLevel)
+    {
+        if (!isTrackingRun)
+        {
+            return;
+        }
+
+        pendingLevelUps.Add(new PendingLevelUpObservation
+        {
+            PlayerLevel = playerLevel,
+            CurrentProgress = playerSystem != null
+                ? playerSystem.CurrentProgress
+                : 0,
+            RequiredProgress = playerSystem != null
+                ? playerSystem.RequiredProgress
+                : 0,
+            ActiveTimeSeconds = GetRunActiveTimeSeconds()
+        });
+    }
+
+    private void FlushPendingProgressionEvents()
+    {
+        for (int i = 0; i < pendingLevelUps.Count; i++)
+        {
+            PendingLevelUpObservation observation = pendingLevelUps[i];
+
+            progressionEvents.Add(new CombatBalanceProgressionEventJson
+            {
+                ordinal = progressionEvents.Count + 1,
+                kind = "LevelUp",
+                resolvedMonsterCount = resolvedCount,
+                playerLevel = observation.PlayerLevel,
+                currentProgress = observation.CurrentProgress,
+                requiredProgress = observation.RequiredProgress,
+                activeTimeSeconds = observation.ActiveTimeSeconds
+            });
+        }
+
+        pendingLevelUps.Clear();
+    }
+
     private void HandleSpawningStarted()
     {
         if (!isTrackingRun)
@@ -456,6 +566,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         trackedMonsters.Clear();
         monsterObservations.Clear();
         seenMonsterInstanceIds.Clear();
+        progressionRequirementsSnapshot.Clear();
+        progressionEvents.Clear();
+        pendingLevelUps.Clear();
         buffAccumulator.Reset();
         projectileRuntimeByTowerInstanceId.Clear();
         ResetExpectedMonsterFixture();
@@ -480,6 +593,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         spawningCompletedTime = 0f;
         observedSpawnIntervalTotal = 0f;
         observedSpawnIntervalCount = 0;
+        runStartedAtTime = Time.time;
+        initialDraftCompletionCount = 0;
         hasObservedFirstSpawn = false;
         hasObservedSpawningCompletion = false;
         hasLoggedFinalSummary = false;
@@ -487,6 +602,21 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         pendingTerminalState = null;
         pendingFailureReason = null;
         isTrackingRun = true;
+
+        if (playerSystem != null)
+        {
+            IReadOnlyList<int> progressRequirements =
+                playerSystem.ProgressRequirements;
+
+            if (progressRequirements != null)
+            {
+                for (int i = 0; i < progressRequirements.Count; i++)
+                {
+                    progressionRequirementsSnapshot.Add(
+                        progressRequirements[i]);
+                }
+            }
+        }
 
         if (monsterSpawner != null && monsterSpawner.IsSpawning)
         {
@@ -1019,6 +1149,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         observation.ResolutionTime = Time.time;
         observation.FinalHealth = monster.CurrentHealth;
         resolvedCount++;
+        // PlayerSystem publishes Level-up before this resolution callback.
+        // Flush now so later resolutions in the same frame cannot shift its node.
+        FlushPendingProgressionEvents();
         lastResolutionTime = observation.ResolutionTime;
 
         if (reachedTarget)
@@ -1086,6 +1219,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             return;
         }
 
+        FlushPendingProgressionEvents();
         TrackCurrentMonsters();
 
         if (!hasExpectedMonsterCount)
@@ -1391,6 +1525,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             ? playerSystem.MaxHealth
             : 0;
 
+        report.progression = CreateProgressionJson();
+
         report.monsterRuntime = CreateMonsterRuntimeJson();
         report.integrity.resolutionCountsMatch =
             resolvedCount == killedCount + leakedCount;
@@ -1404,9 +1540,128 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             MonsterRuntimeRegistrationCoverageMatches(report.monsterRuntime);
         report.integrity.monsterRuntimeStartedAtFullHealth =
             MonsterRuntimeStartedAtFullHealth(report.monsterRuntime);
+        report.integrity.initialDraftCountMatches =
+            initialDraftCompletionCount == 1;
+        report.integrity.levelUpCountMatches =
+            report.progression.observedLevelUpCount ==
+            report.progression.expectedLevelUpCount;
+        report.integrity.levelUpResolutionNodesMatch =
+            LevelUpResolutionNodesMatch(report.progression);
+        report.integrity.finalPlayerLevelMatches =
+            report.progression.finalLevel ==
+            report.progression.expectedLevelUpCount + 1;
+        report.integrity.postFinalDraftCombatObserved =
+            report.progression.resolutionsAfterFinalDraft > 0;
         report.towers = CreateTowerJsonRecords();
         report.buffs = buffAccumulator.CreateJsonRecords();
         return report;
+    }
+
+    private CombatBalanceProgressionJson CreateProgressionJson()
+    {
+        CombatBalanceProgressionJson progression =
+            new CombatBalanceProgressionJson
+            {
+                requirements = new List<int>(
+                    progressionRequirementsSnapshot),
+                expectedLevelUpCount =
+                    progressionRequirementsSnapshot.Count,
+                expectedTotalDraftCount =
+                    progressionRequirementsSnapshot.Count + 1,
+                initialDraftCompleted = initialDraftCompletionCount > 0,
+                finalLevel = playerSystem != null
+                    ? playerSystem.CurrentLevel
+                    : 0,
+                finalProgress = playerSystem != null
+                    ? playerSystem.CurrentProgress
+                    : 0,
+                finalRequiredProgress = playerSystem != null
+                    ? playerSystem.RequiredProgress
+                    : 0,
+                events = new List<CombatBalanceProgressionEventJson>(
+                    progressionEvents)
+            };
+
+        for (int i = 0; i < progression.requirements.Count; i++)
+        {
+            progression.expectedFinalDraftResolutionNode +=
+                progression.requirements[i];
+        }
+
+        for (int i = 0; i < progression.events.Count; i++)
+        {
+            CombatBalanceProgressionEventJson progressionEvent =
+                progression.events[i];
+
+            if (!string.Equals(
+                    progressionEvent.kind,
+                    "LevelUp",
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            progression.observedLevelUpCount++;
+            progression.observedFinalDraftResolutionNode =
+                progressionEvent.resolvedMonsterCount;
+        }
+
+        progression.observedTotalDraftCount =
+            initialDraftCompletionCount + progression.observedLevelUpCount;
+
+        if (progression.observedLevelUpCount > 0)
+        {
+            progression.resolutionsAfterFinalDraft = Mathf.Max(
+                0,
+                resolvedCount - progression.observedFinalDraftResolutionNode);
+        }
+
+        return progression;
+    }
+
+    private static bool LevelUpResolutionNodesMatch(
+        CombatBalanceProgressionJson progression)
+    {
+        if (progression == null ||
+            progression.observedLevelUpCount !=
+            progression.expectedLevelUpCount)
+        {
+            return false;
+        }
+
+        int expectedResolutionNode = 0;
+        int levelUpIndex = 0;
+
+        for (int i = 0; i < progression.events.Count; i++)
+        {
+            CombatBalanceProgressionEventJson progressionEvent =
+                progression.events[i];
+
+            if (!string.Equals(
+                    progressionEvent.kind,
+                    "LevelUp",
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            expectedResolutionNode += progression.requirements[levelUpIndex];
+
+            if (progressionEvent.resolvedMonsterCount !=
+                expectedResolutionNode)
+            {
+                return false;
+            }
+
+            levelUpIndex++;
+        }
+
+        return levelUpIndex == progression.expectedLevelUpCount;
+    }
+
+    private float GetRunActiveTimeSeconds()
+    {
+        return Mathf.Max(0f, Time.time - runStartedAtTime);
     }
 
     private CombatBalanceMonsterRuntimeJson CreateMonsterRuntimeJson()

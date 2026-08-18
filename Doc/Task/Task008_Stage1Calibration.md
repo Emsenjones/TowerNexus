@@ -1,6 +1,6 @@
 # Task008 - Stage1 Calibration
 
-Status: Planned; Stage1 Reference Build v0.2 and both capability Anti-patterns are defined, while execution waits for Task007 inputs
+Status: Ready; Task007 Stage1 skeleton inputs are accepted, and Stage1 Reference, adaptive, and Anti-pattern calibration runs can begin
 
 Depends on: Task007 Global Progression And Stage Skeleton
 
