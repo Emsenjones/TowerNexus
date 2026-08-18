@@ -1,6 +1,6 @@
 # Task010 - Stage3 Calibration
 
-Status: Planned; Stage3 Reference Build v0.1 is defined and execution waits for upstream implementation inputs
+Status: Planned; Stage3 Reference Build v0.2 is defined and execution waits for upstream implementation inputs
 
 Depends on: Task009 Stage2 Calibration
 
@@ -29,13 +29,13 @@ Task001 must provide an accepted Stage3 greybox with Reference placement and ran
 
 First-pass inputs:
 
-| Input | v0.1 Value |
+| Input | v0.2 Value |
 |---|---|
 | Map Size | 12x12 |
 | Reference Towers | 4 |
-| Core | One L3 Magic with one Basic and one Behaviour |
-| Support | Three L1 Towers with no Upgrades; Archer and Cannon are required and the repeated family is resolved by Task007 |
-| Total Draft Opportunities | 8 |
+| Core | One L2 Magic with one Basic and one Behaviour |
+| Support | Three L1 Towers with no Upgrades; Archer and Cannon are required and the repeated family is selected and recorded by Stage3 calibration |
+| Total Draft Opportunities | 7 |
 | Elemental | Not available |
 
 ## 4. In Scope

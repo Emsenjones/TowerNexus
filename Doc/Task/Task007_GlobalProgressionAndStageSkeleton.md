@@ -1,14 +1,14 @@
-# Task007 - Global Progression And Stage Skeleton
+# Task007 - Per-Stage Progression And Stage Skeleton
 
-Status: Planned; v0.1 Draft inputs are derived, while execution still depends on accepted Task001-Task006 baselines
+Status: In progress; Stage-owned progression runtime, six StageDefinitions, per-Stage Progress Requirements, and Normal-only Wave skeletons are authored, while structural Play Mode validation and value acceptance remain pending
 
 Depends on: Task001-Task006
 
 ## 1. Goal
 
-Translate the six approved Stage Reference Builds into one shared Player progression axis and six complete StageDefinition content skeletons ready for individual calibration.
+Translate the six approved Stage Reference Builds into six independently authored Player progression sequences and six complete StageDefinition content skeletons ready for individual calibration.
 
-This Task derives Draft budgets, exact Draft pools, Progress requirements, and structural Wave budgets. It does not finalize Stage difficulty or add those implementation numbers back into the Stage Design Blueprint.
+This Task derives Draft budgets, exact Draft pools, per-Stage Progress requirements, structural Wave budgets, and theoretical minimum active-Wave duration. It does not finalize Stage difficulty or add those implementation numbers back into the Stage Design Blueprint.
 
 ## 2. Source Documents
 
@@ -30,7 +30,7 @@ The Stage Design Blueprint must approve for every Stage:
 - Expected Anti-pattern
 - Any non-negotiable Stage Notes
 
-Task001-Task006 must provide accepted Map and Stage-independent combat, Monster-HP, movement-identity, and Wave-composition baselines. Reference Build Draft costs and total Draft opportunities are already derivable from Blueprint v0.1. Exact Draft pools, Progress nodes, Monster budgets, repeated support families, UpgradeDefinitions, ElementTypes, and candidate rules remain outputs of this Task.
+Task001-Task006 provide accepted Map and Stage-independent combat, Monster-HP, movement-identity, and Wave-composition baselines. Reference Build Draft costs, total Draft opportunities, and the cumulative content-unlock policy are approved by Blueprint v0.2. Task007 materializes the exact Stage asset lists and derives Progress nodes, Monster budgets, candidate-solvability evidence, and the six Stage skeletons. Exact repeated support families, Reference-run Upgrade identities, and ElementTypes remain downstream calibration choices unless required for a specific solvability check.
 
 ## 4. Required Derived Planning Table
 
@@ -41,34 +41,55 @@ Before Unity authoring, Codex prepares one reviewable row per Stage containing:
 | Reference Build Draft Cost | Count deployments, Level-ups, and applied Upgrades in the Reference Build |
 | Total Draft Opportunities | Match the Reference Build Draft cost |
 | Required Player Level-Ups | Total Draft Opportunities minus the Initial Draft |
-| Exact Tower Draft Pool | Derive from the campaign unlock line and intended Stage build space |
-| Exact Tower Upgrade Draft Pool | Derive from required build access and Stage lesson |
+| Exact Tower Draft Pool | Materialize every cumulatively unlocked TowerFamily as Stage asset references |
+| Exact Tower Upgrade Draft Pool | Materialize every currently unlocked UpgradeDefinition for the represented families |
 | Per-Family Stage Level Cap | Highest Required Tower Level in that family's Stage Upgrade pool, with a continuous unlock path |
-| Rough Monster Resolutions | Solve against the shared Progress sequence |
+| Player Progress Requirements | Author one positive ordered sequence whose length equals the required Player Level-Ups for this Stage |
+| Rough Monster Resolutions | Sum this Stage's Progress Requirement sequence, then add any intended post-final-Draft reserve |
+| Theoretical Minimum Active-Wave Duration | Derive from authored Wave Delay, Spawn Intervals, and Counts under immediate Monster resolution |
 | Last-Draft Combat Reserve | Preserve enough combat for the final choice to affect the result |
 | Candidate Solvability Rule | Measure remaining opportunities and practical sampling access without guaranteeing the next offer |
 | Legal Calibration Builds | Confirm that the Reference, viable alternative, and planned Anti-pattern allocations can actually be formed from the authored pools and Draft budget |
 
 The table begins as a proposed numeric pass. It becomes accepted only after structural validation and user Play Mode evidence.
 
-Current Blueprint-derived v0.1 inputs:
+Current Blueprint-derived v0.2 inputs:
 
 | Stage | Reference Towers | Core Towers | Reference Build Draft Cost | Total Draft Opportunities | Required Player Level-Ups After Initial Draft | Elemental Build Requirement |
 |---|---:|---:|---:|---:|---:|---|
-| Stage1 | 2 | 1 | 6 | 6 | 5 | None |
-| Stage2 | 3 | 1 | 7 | 7 | 6 | None |
-| Stage3 | 4 | 1 | 8 | 8 | 7 | None |
-| Stage4 | 5 | 1 | 9 | 9 | 8 | None |
+| Stage1 | 2 | 1 | 5 | 5 | 4 | None |
+| Stage2 | 3 | 1 | 6 | 6 | 5 | None |
+| Stage3 | 4 | 1 | 7 | 7 | 6 | None |
+| Stage4 | 5 | 1 | 8 | 8 | 7 | None |
 | Stage5 | 5 | 1 | 10 | 10 | 9 | One Elemental Core |
 | Stage6 | 5 | 2 | 15 | 15 | 14 | Two overlapping Cores with the same ElementType |
+
+Stage1-Stage4 each use one L2 Core. Their Draft costs equal the number of Tower deployments plus one Core Level-up, one Basic Upgrade, and one Behaviour Upgrade.
+
+Stage5 costs 10 Drafts: five Tower deployments plus two Level-ups and one Basic, Behaviour, and Elemental Upgrade for its Core.
 
 Stage6 costs 15 Drafts: five Tower deployments plus two Cores, each requiring two Level-ups, one Basic Upgrade, one Behaviour Upgrade, and one Elemental Upgrade.
 
 The one-Basic and one-Behaviour Core is the Reference budget unit, not the maximum legal Upgrade stack. Exact pools must also expose whether a player can legally redirect multiple Upgrades into one Tower; later Stage Tasks use that legal concentrated build only when it tests a required coverage, complement, or cooperation gap.
 
-Stage4-Stage6 intentionally share five Reference Towers and the same proposed Map scale, but their Total Draft Opportunities remain 9, 10, and 15 because their Reference Builds require different vertical and Elemental investment.
+Stage4-Stage6 intentionally share five Reference Towers and the same proposed Map scale, but their Total Draft Opportunities remain 8, 10, and 15 because their Reference Builds require different vertical and Elemental investment.
 
-These values are the first trajectory estimate. Task007 does not treat the Progress sequence, Monster totals, Draft pools, or candidate availability as accepted until the derived table has been structurally tested.
+The cumulative v0.2 Draft-pool policy is:
+
+| Stage | Tower Draft Families | Unlocked Upgrade Content |
+|---|---|---|
+| Stage1 | Archer | All Archer Basic and Behaviour definitions |
+| Stage2 | Archer, Cannon | All Basic and Behaviour definitions for both families |
+| Stage3 | Archer, Cannon, Magic | All Basic and Behaviour definitions for all three families |
+| Stage4 | Archer, Cannon, Magic, Drone | All Basic and Behaviour definitions for all four families |
+| Stage5 | Archer, Cannon, Magic, Drone | All Basic, Behaviour, and Elemental definitions for all four families |
+| Stage6 | Archer, Cannon, Magic, Drone | All Basic, Behaviour, and Elemental definitions for all four families |
+
+This policy fixes pool membership without prescribing one exact player Build. Downstream Reference Runs record the specific Upgrade identities they used for reproducibility.
+
+The cumulative pool produces an L2 Stage cap for every represented family in Stage1-Stage4 and an L3 Stage cap for every represented family in Stage5-Stage6. Core is a strategic role selected by the player's investment, not a separately authored Tower identity.
+
+These values are the first trajectory estimate. Task007 does not treat a Stage's Progress sequence, Monster totals, duration estimate, Draft pools, or candidate availability as accepted until the derived table has been structurally tested.
 
 ## 5. In Scope
 
@@ -77,8 +98,9 @@ These values are the first trajectory estimate. Task007 does not treat the Progr
 - Per-Stage, per-TowerFamily level caps
 - Continuous Required-Level unlock paths from Level 1 through each Stage cap
 - Rough total Monster-resolution budget per Stage
-- One global `progressRequiredPerLevel` sequence
+- One Stage-authored Player Progress Requirements sequence per StageDefinition
 - Cumulative Draft nodes
+- Theoretical minimum active-Wave duration derived from immediate Monster resolution
 - Stage1-Stage6 StageDefinitions
 - Map references
 - MonsterWaveConfig references and initial Wave skeletons
@@ -91,7 +113,8 @@ These values are the first trajectory estimate. Task007 does not treat the Progr
 
 ## 6. Out Of Scope
 
-- Final Wave Delay, Stage duration, or any intentional departure from the standard spatial-gap interval
+- Final observed Stage duration or combat-duration guarantee
+- Final Wave Delay or any intentional departure from the standard spatial-gap interval
 - Final Monster composition
 - Final local Map route refinement
 - Rebalancing frozen Tower, Monster, Effect, or Buff baselines
@@ -108,22 +131,24 @@ Required Player Level-Ups
     = Reference Build Draft Cost - 1
 ```
 
-All six Stages use one ordered Progress Requirement sequence. Stage differences come from Monster totals, Wave content, Draft pools, and Map pressure rather than per-Stage Progress Requirement forks.
+Each StageDefinition authors one independent ordered Progress Requirement sequence. Its entry count equals that Stage's Required Player Level-Ups, and its sum is the earliest Monster-resolution count at which the final intended level-up Draft can occur.
+
+The Initial Tower Draft is separate and is not represented by an entry. Every entry must be positive. Stage composition supplies the selected sequence to Player System, which validates and snapshots it for the battle without mutating StageDefinition. Retry reloads the same Stage sequence into fresh state; next Stage loads its own sequence. No Player-global fallback or supplementary Progress Requirement sequence remains.
 
 ## 8. Authoring Sequence
 
-1. Reconfirm the v0.1 Draft cost for all six approved Reference Builds.
-2. Propose exact Tower and Tower Upgrade Draft pools.
+1. Reconfirm the v0.2 Draft cost for all six approved Reference Builds.
+2. Materialize the approved cumulative Tower and Tower Upgrade Draft pools as exact Stage asset lists.
 3. Derive every represented TowerFamily's Stage cap and validate each intermediate unlock level.
 4. Check that every required Reference Build remains obtainable.
 5. Confirm that each planned viable alternative and Anti-pattern is legal under the same pools and opportunities; remove or revise an impossible test rather than manufacturing it.
-6. Choose rough Monster-resolution totals.
-7. Solve one positive global Progress Requirement sequence.
-8. Verify cumulative Draft nodes against every Stage.
+6. Solve one positive Player Progress Requirements sequence for each Stage.
+7. Verify each sequence length, cumulative Draft nodes, and final intended Draft resolution count.
+8. Choose rough Monster-resolution totals and reserve combat after the last intended Draft.
 9. Reconfirm the Task006 movement identities, homogeneous-Wave convention, and Profile-derived Spawn Intervals.
-10. Author six StageDefinitions and six MonsterWaveConfig skeletons.
-11. Assign Map, Tower pool, Upgrade pool, and Stage maximum health.
-12. Reserve combat after the last intended Draft.
+10. Calculate each Stage's theoretical minimum active-Wave duration under immediate Monster resolution.
+11. Author six StageDefinitions and six MonsterWaveConfig skeletons.
+12. Assign Map, Player Progress Requirements, Tower pool, Upgrade pool, and Stage maximum health.
 13. Revalidate Task001 Reference and reasonable alternative placements against the exact pools.
 14. Validate each Stage composition without final difficulty claims.
 
@@ -133,8 +158,8 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 |---|---|
 | Stage Design Blueprint | Reference Build, Stage lesson, required capability, Anti-pattern, and non-negotiable constraints |
 | Task007 | Derived planning table, cross-Stage constraint solving, and structural validation |
-| Player System | One shared Progress Requirement sequence |
-| StageDefinition | Map, Wave, Draft pools, and maximum health composition |
+| Player System | Battle-local snapshot, validation, progress consumption, and level transitions for the selected Stage sequence |
+| StageDefinition | Map, Wave, Draft pools, maximum health, and reusable Player Progress Requirements authoring |
 | MonsterWaveConfig | Ordered Wave skeleton and rough Monster totals |
 | Draft System | Candidate generation according to the authored pools and approved solvability contract |
 | Tower Upgrade System | Stage-derived Tower level cap and final level-up eligibility |
@@ -142,7 +167,7 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 ## 10. Execution Collaboration
 
 - The user supplies or approves the intended Stage experience and Reference Builds.
-- Codex calculates the first complete Draft, pool, Progress, Monster-budget, and candidate-solvability table from those inputs.
+- Codex calculates the first complete Draft, pool, per-Stage Progress, Monster-budget, theoretical-duration, and candidate-solvability table from those inputs.
 - The user authors or confirms the proposed values in Unity and performs the structural Play Mode smoke test.
 - Codex compares observed Draft timing and counts against the table, then proposes the smallest next revision.
 - No proposed value is treated as accepted before the corresponding Unity validation.
@@ -150,27 +175,28 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 ## 11. Unity Authoring Checklist
 
 - Review the six-row derived planning table.
-- Author the accepted global Progress Requirement sequence.
+- Author the accepted Player Progress Requirements sequence on each StageDefinition.
 - Create or update Stage1-Stage6 StageDefinitions.
 - Assign the intended Map and MonsterWaveConfig to each Stage.
 - Assign the reviewed Tower and Tower Upgrade pools.
 - Confirm every represented TowerFamily's derived Stage cap and continuous Required-Level ladder.
 - Author positive Stage maximum health.
 - Create structurally valid Wave content with the rough Monster totals.
-- Keep each campaign Wave to one Monster runtime template unless Task006 explicitly accepts another convention.
-- Seed each Spawn Entry with the Task006 interval derived from its Profile Move Speed; do not use interval drift as an unstated density adjustment.
+- Keep each Wave to its single authored Monster Runtime Template.
+- Seed each Wave with the Task006 interval derived from its Monster Runtime Template's Profile Move Speed; do not use interval drift as an unstated density adjustment.
 - Verify the Initial Draft and first-Wave gate.
 - Record cumulative resolution nodes and observed Draft counts.
+- Compare the calculated theoretical minimum duration with observed Play Mode timing.
 - Recheck Reference and reasonable alternative placements when an exact pool changes the available Tower set.
 
 ## 12. Acceptance Criteria
 
 - One reviewed derived planning table covers all six Stages.
-- One global Progress Requirement sequence exists and validates.
+- Every StageDefinition has one positive Player Progress Requirements sequence whose length matches its required Player Level-Ups.
 - Every Stage skeleton reaches its derived Draft count in resolution-count space.
 - Six StageDefinitions reference the intended Maps, Waves, and Draft pools.
 - Every Wave skeleton consumes an accepted Task006 Monster identity and composition convention.
-- Every standard Spawn Entry preserves the Task006 reference spatial gap through its explicit Profile-derived interval.
+- Every standard Wave preserves the Task006 reference spatial gap through its explicit Profile-derived interval.
 - Every approved Reference Build is obtainable under its authored Draft structure.
 - Every planned calibration and Anti-pattern build is either legally constructible or explicitly replaced before Stage testing.
 - Every allowed Tower level transition unlocks at least one Upgrade at the reached Required Tower Level.
@@ -178,7 +204,8 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Stage6 retains at least one achievable matching-Element build path if Overload is mandatory.
 - Every fresh Stage begins with one Initial Tower Draft.
 - Every Stage retains a post-final-Draft validation segment.
-- No Stage-specific Progress Requirement fork exists.
+- Player System contains no reusable global Progress Requirement authoring or fallback.
+- Every Stage has a reviewed theoretical minimum active-Wave duration estimate.
 
 ## 13. Validation
 
@@ -187,6 +214,8 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 - Reference, alternative, and Anti-pattern legal-constructibility review
 - Per-Family Stage-cap and Required-Level continuity review
 - Cumulative Draft-node calculation review
+- Per-Stage Progress Requirement length, positivity, sum, and runtime-snapshot review
+- Theoretical minimum active-Wave duration calculation review
 - Task001 Reference-placement and range/route regression
 - StageDefinition validation
 - MonsterWaveConfig structural validation
@@ -196,4 +225,4 @@ All six Stages use one ordered Progress Requirement sequence. Stage differences 
 
 ## 14. Review Note
 
-Task008-Task013 own final Stage experience. If one Stage cannot satisfy its Blueprint without changing a global baseline, return the proposed revision to the owning earlier Task and rerun affected regressions.
+Task008-Task013 own final Stage experience. If one Stage cannot satisfy its Blueprint, revise that Stage's Progress Requirements, Wave budget, Draft structure, or accepted build envelope through the smallest owning contract change, then rerun affected regressions.

@@ -16,6 +16,7 @@ It owns:
 - Distribution of the selected Map's authored 3D Camera movement boundary
 - Distribution of the selected MonsterWaveConfig
 - Distribution of the selected Player maximum health
+- Distribution of the selected Player progress requirements
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
 - Distribution of the Stage Upgrade pool as Tower level-eligibility authoring
 - Establishment of a fresh battle-local Player runtime for the selected Stage
@@ -36,6 +37,7 @@ StageDefinition is one reusable playable-Stage composition.
 |---|---|
 | Display Name | Optional player-facing Stage name |
 | Player Max Health | Positive health cap and full-health start value for this Stage battle |
+| Player Progress Requirements | Ordered positive resolved-Monster requirements for each Player level transition in this Stage |
 | Map Template | Authored Map used by this Stage |
 | Monster Wave Config | Wave sequence executed in this Stage |
 | Tower Draft Pool | TowerDefinitions allowed in this Stage's Drafts |
@@ -47,6 +49,10 @@ StageDefinition is one reusable playable-Stage composition.
 The asset or resource name is sufficient as authoring identity. A separate StageId is not required while selection uses direct references and no persistence or external lookup contract needs one.
 
 StageDefinition references content owned by other systems. It does not duplicate their rules.
+
+Each Stage independently authors one Player Progress Requirements sequence. Its first entry is the requirement from Player Level 1 to Level 2, and each following entry governs the next transition. The sequence length therefore defines that Stage's maximum Player level and the number of Player level-up Draft opportunities that can be produced. The separate Initial Tower Draft is not represented in this sequence.
+
+StageDefinition owns the reusable progression authoring. Player System receives a battle-local snapshot during Stage composition and owns runtime progress, threshold consumption, and level-up transitions. There is no shared progression curve that overrides or supplements the selected Stage's sequence.
 
 Because every fresh Stage battle begins with one Initial Tower Draft, the Tower Draft Pool must contain at least one valid TowerDefinition. A Stage with no valid Initial Tower Draft candidate is not playable and cannot proceed to Monster Wave execution.
 
@@ -71,9 +77,10 @@ Receive Selected StageDefinition
     -> Supply Map To Runtime Consumers
     -> Supply MonsterWaveConfig To Monster System
     -> Supply Player Max Health To Player System
+    -> Supply Player Progress Requirements To Player System
     -> Supply Draft Pools To Draft System
     -> Supply Stage Upgrade Pool To Tower Upgrade System
-    -> Initialize Fresh Player Battle-Local State At Full Health
+    -> Initialize Fresh Player Battle-Local State At Full Health, Level 1, And Zero Progress
     -> Confirm No Deferred Release
     -> Commit Exact Staged Camera Identity And Default Pose
     -> Commit Candidate Stage
@@ -95,7 +102,7 @@ Every successfully composed initial Stage, next Stage, and retry establishes fre
 
 Domain owners remain responsible for their own technical cleanup.
 
-Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next or into a retry. StageDefinition authors the positive maximum-health value for the selected Stage. Player System owns the applied runtime maximum, current health, and their rules; Stage composition only supplies the authored value and establishes a fresh full-health runtime before the prepared Stage may begin.
+Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next or into a retry. StageDefinition authors the positive maximum-health value and ordered Player progress requirements for the selected Stage. Player System owns their applied runtime snapshots, current state, threshold consumption, and transition rules; Stage composition supplies the authored values and establishes a fresh full-health, Level 1 runtime before the prepared Stage may begin. A retry reloads the same Stage-authored requirements into new runtime state, while a next Stage supplies its own sequence.
 
 ---
 
@@ -107,7 +114,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 | Map System | Selected Map template and active-instance role | Grid state, spatial queries, Map presentation, and validation |
 | Monster System | Active Map and MonsterWaveConfig | Wave timing, spawning, pathfinding, movement, and resolution |
 | Draft System | Tower and Tower Upgrade pools | Candidate generation, reservation, sampling, and results |
-| Player System | Player Max Health and fresh Stage-battle initialization | Applied maximum health, current health, level progress, level-up, and defeat state |
+| Player System | Player Max Health, Player Progress Requirements, and fresh Stage-battle initialization | Applied runtime snapshots, current health, level progress, level-up, and defeat state |
 | Tower Upgrade System | Stage Upgrade pool as level-eligibility authoring | Stage-bound level cap, Upgrade schema, eligibility, and application |
 | Tower Placement System | Active Map availability | Placement, occupancy commit, and topology requests |
 | Camera System | Exact Active Map, authored 3D boundary, and authored default pose | Initial framing, pan input, and enforcement of Camera movement bounds |
@@ -123,6 +130,8 @@ Stage validation should report at minimum:
 - Missing, ambiguous, invalid, or externally owned default Camera pose
 - Missing MonsterWaveConfig or invalid Wave content
 - Non-positive Player Max Health
+- Missing or empty Player Progress Requirements
+- Non-positive Player progress requirement
 - Null or duplicate TowerDefinition references
 - No valid TowerDefinition available for the required Initial Tower Draft
 - Null or duplicate TowerUpgradeDefinition references
@@ -150,6 +159,7 @@ Current scope includes:
 - One Map template and one MonsterWaveConfig per Stage
 - One valid authored 3D Camera movement boundary per Map template
 - One positive Player Max Health value per Stage
+- One non-empty ordered Player Progress Requirements sequence per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
 - Stage-derived per-TowerFamily level caps with continuous unlock paths
 - At least one valid TowerDefinition for the Initial Tower Draft

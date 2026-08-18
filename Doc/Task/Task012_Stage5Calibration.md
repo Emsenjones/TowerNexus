@@ -1,6 +1,6 @@
 # Task012 - Stage5 Calibration
 
-Status: Planned; Stage5 Reference Build v0.1 is defined and execution waits for Task007 Elemental inputs
+Status: Planned; Stage5 Reference Build v0.2 is defined and execution waits for Task007 Elemental inputs
 
 Depends on: Task011 Stage4 Calibration
 
@@ -30,18 +30,18 @@ The Stage Design Blueprint must approve:
 - Expected Anti-pattern
 - Stage Notes
 
-Task001 must provide an accepted Stage5 greybox with Reference placement and range/route evidence. Task007 must provide the derived Draft count, exact Elemental Upgrade pool, and Stage5 skeleton. A viable alternative is proposed and tested inside this Task.
+Task001 must provide an accepted Stage5 greybox with Reference placement and range/route evidence. Task007 must provide the derived Draft count, cumulative all-family Elemental Upgrade pool, candidate-access evidence, and Stage5 skeleton. A viable alternative and the reproducible Reference Core family and ElementType are selected and recorded inside this Task.
 
 First-pass inputs:
 
-| Input | v0.1 Value |
+| Input | v0.2 Value |
 |---|---|
 | Map Size | 14x14 |
 | Reference Towers | 5 |
 | Core | One L3 Tower with one Basic, one Behaviour, and one Elemental |
 | Support | Four L1 Towers with no Upgrades; all four TowerFamilies appear in the Reference roster |
 | Total Draft Opportunities | 10 |
-| Elemental Detail | Core TowerFamily and ElementType are resolved by Task007 |
+| Elemental Detail | All four TowerFamilies and all currently authored ElementTypes are available; the Reference Core family and ElementType are selected and recorded by Stage5 calibration |
 
 ## 4. In Scope
 

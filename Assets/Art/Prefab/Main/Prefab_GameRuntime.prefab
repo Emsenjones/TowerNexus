@@ -2757,11 +2757,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2576880cd6cf4c1aacbfdf6d153b0fa7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerLevelSystem
-  progressRequiredPerLevel: 6400000005000000070000000a0000000a0000000a0000000a0000000a0000000a0000000a000000
-  currentLevel: 1
-  currentProgress: 0
-  currentHealth: 100
-  isDefeated: 0
 --- !u!1 &4792207004415416737
 GameObject:
   m_ObjectHideFlags: 0

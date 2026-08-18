@@ -31,7 +31,7 @@ The Demo game loop is:
 Enter Main Menu
     -> Start New Run At First Stage
     -> Prepare Current Stage
-        -> Establish Fresh Player State At Current Stage Maximum Health
+        -> Establish Fresh Player State From Current Stage Health And Progress Requirements
         -> Establish Current Map, 3D Camera Boundary, Wave, And Draft Content
         -> Reset Camera To Default Active-Map Framing
     -> Show Optional Stage Introduction
@@ -69,7 +69,7 @@ Core flow and battle rules:
 
 - A new run begins from the first Stage in the ordered Demo sequence.
 - One selected Stage composition is active during one battle.
-- Every initial Stage, next Stage, and retry prepares fresh Player state and resets current health to the selected Stage's positive maximum health.
+- Every initial Stage, next Stage, and retry prepares fresh Player state from the selected Stage's positive maximum health and ordered Player progress requirements.
 - Every initial Stage, next Stage, and retry binds the selected Map's authored 3D Camera movement boundary and restores the authored default Camera framing without inheriting prior Pan displacement.
 - Battle gameplay remains inactive during Stage preparation and optional Stage Introduction.
 - Every fresh Stage battle grants exactly one Initial Tower Draft after Battle start permission and before Monster Wave execution begins.
@@ -113,6 +113,7 @@ Stage composition follows this relationship:
 ```text
 StageDefinition
     + Player Maximum Health
+    + Player Progress Requirements
     + Map Template
         + MapVisualTheme
         + Authored 3D Camera Movement Boundary
@@ -128,10 +129,10 @@ Monster Wave configuration follows this relationship:
 ```text
 MonsterWaveConfig
     + Ordered Waves
-        + Ordered Spawn Entries
-            + Monster Runtime Template
-            + Count
-            + Spawn Interval
+        + Wave Delay
+        + Monster Runtime Template
+        + Count
+        + Spawn Interval
 ```
 
 The demo uses one directly referenced runtime template for each unique Monster
@@ -169,13 +170,13 @@ It selects the StageDefinition supplied to Stage System and consumes one authori
 
 ## 4.2 Stage System
 
-Owns composition of the StageDefinition selected for the current battle. It establishes the active Map, supplies its authored 3D Camera movement boundary, requests fresh default Camera framing, and supplies the selected Wave and Draft content before battle runtime begins.
+Owns composition of the StageDefinition selected for the current battle. It establishes the active Map, supplies its authored 3D Camera movement boundary, requests fresh default Camera framing, and supplies the selected Player, Wave, and Draft content before battle runtime begins.
 
 It establishes a prepared Stage with fresh Player and Camera framing state, then waits for Game Flow start permission. It does not own Stage ordering, result transitions, Camera movement, Map behavior, Wave execution, or Draft generation.
 
 ## 4.3 Player System
 
-Owns battle-local player level, level progress, health, level-up notification, and defeat state.
+Owns battle-local player level, level progress, health, level-up notification, defeat state, and the runtime snapshot and consumption of the selected Stage's Player progress requirements. StageDefinition owns the reusable authoring of those requirements.
 
 It does not own Draft generation, UI presentation, Monster lifecycle, or Stage flow.
 
@@ -260,6 +261,8 @@ Game Flow
     -> Select Current StageDefinition
         -> Stage Composition
             -> Fresh Player State
+                -> Stage Maximum Health
+                -> Stage Progress Requirements
             -> Active Map
                 -> Authored 3D Camera Movement Boundary
                 -> Default Camera Framing Reset

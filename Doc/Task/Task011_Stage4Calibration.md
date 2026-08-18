@@ -1,6 +1,6 @@
 # Task011 - Stage4 Calibration
 
-Status: Planned; Stage4 Reference Build v0.1 is defined and execution waits for upstream implementation inputs
+Status: Planned; Stage4 Reference Build v0.2 is defined and execution waits for upstream implementation inputs
 
 Depends on: Task010 Stage3 Calibration
 
@@ -29,13 +29,13 @@ Task001 must provide an accepted Stage4 greybox with Reference placement and ran
 
 First-pass inputs:
 
-| Input | v0.1 Value |
+| Input | v0.2 Value |
 |---|---|
 | Map Size | 14x14 |
 | Reference Towers | 5 |
-| Core | One L3 Drone with one Basic and one Behaviour |
-| Support | Four L1 Towers with no Upgrades; Archer, Cannon, and Magic are required and the repeated family is resolved by Task007 |
-| Total Draft Opportunities | 9 |
+| Core | One L2 Drone with one Basic and one Behaviour |
+| Support | Four L1 Towers with no Upgrades; Archer, Cannon, and Magic are required and the repeated family is selected and recorded by Stage4 calibration |
+| Total Draft Opportunities | 8 |
 | Elemental | Not available |
 
 ## 4. In Scope

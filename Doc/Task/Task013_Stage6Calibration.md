@@ -1,6 +1,6 @@
 # Task013 - Stage6 Calibration
 
-Status: Planned; Stage6 Reference Build v0.1 is defined and execution waits for Task007 Elemental solvability inputs
+Status: Planned; Stage6 Reference Build v0.2 is defined and execution waits for Task007 Elemental solvability inputs
 
 Depends on: Task012 Stage5 Calibration
 
@@ -32,18 +32,18 @@ The Stage Design Blueprint must approve:
 - Expected Anti-pattern
 - The non-negotiable requirement that at least one matching-Element build path remains achievable
 
-Task001 must provide an accepted Stage6 greybox with Reference placement, range/route evidence, and matching-Element overlap geometry. Task007 must provide the derived Draft count, exact Elemental Upgrade pool, candidate-solvability rule, and Stage6 skeleton. A viable alternative is proposed and tested inside this Task.
+Task001 must provide an accepted Stage6 greybox with Reference placement, range/route evidence, and matching-Element overlap geometry. Task007 must provide the derived Draft count, cumulative all-family Elemental Upgrade pool, candidate-solvability evidence, and Stage6 skeleton. A reproducible matching-Element Reference pair and a viable alternative are selected and recorded inside this Task.
 
 First-pass inputs:
 
-| Input | v0.1 Value |
+| Input | v0.2 Value |
 |---|---|
 | Map Size | 14x14 |
 | Reference Towers | 5 |
 | Core | Two L3 Towers, each with one Basic, one Behaviour, and one matching Elemental |
 | Support | Three L1 Towers with no Upgrades; all four TowerFamilies appear in the complete five-Tower Reference roster |
 | Total Draft Opportunities | 15 |
-| Elemental Detail | The two Cores share one ElementType; exact Core families and ElementType are resolved by Task007 |
+| Elemental Detail | All four TowerFamilies and all currently authored ElementTypes are available; Stage6 calibration records one reproducible pair whose Cores share an ElementType |
 
 ## 4. In Scope
 

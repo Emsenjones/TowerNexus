@@ -12,6 +12,7 @@ It owns:
 
 - Current player level
 - Resolved Monster progress toward the next level
+- Runtime snapshot and consumption of the selected Stage's Player progress requirements
 - Current and maximum health
 - Level-up transitions
 - Defeat state
@@ -27,6 +28,7 @@ It does not own Monster resolution detection, Draft generation, battle UI, Tower
 |---|---|
 | Current Level | Current battle progression level |
 | Resolved Progress | Progress retained toward the next level |
+| Progress Requirements | Battle-local snapshot of the selected Stage's ordered requirements for each Player level transition |
 | Current Health | Remaining player survival value |
 | Maximum Health | Runtime health cap supplied by the selected Stage and used as its full-health start value |
 | Defeated | Terminal player-survival state for the battle |
@@ -60,7 +62,7 @@ Progress carries across multiple level thresholds. At maximum player level, addi
 
 ## 3.1 Player Level Requirements
 
-Player System authors the ordered resolved-progress requirement for each transition:
+The selected StageDefinition authors the ordered resolved-progress requirement for each transition:
 
 ```text
 Level 1 Requirement -> Level 2
@@ -69,6 +71,10 @@ Level 2 Requirement -> Level 3
 ```
 
 Requirements must be positive. Missing next-level data means the current level is the configured maximum.
+
+Stage composition supplies the selected sequence when it establishes a fresh Player runtime. Player System validates and snapshots the sequence, then consumes that battle-local snapshot without mutating the reusable StageDefinition. The first entry governs Level 1 to Level 2, and each following entry governs the next transition. Sequence length defines the maximum Player level for that Stage and the maximum number of Player level-up opportunities it can produce.
+
+There is no Player-global fallback or supplementary progression curve. A retry snapshots the same Stage-authored sequence into fresh Level 1 state, while the next Stage supplies its own sequence. Additional Monster resolutions at the configured maximum level do not create further level-ups.
 
 ---
 
@@ -97,7 +103,7 @@ After defeat:
 
 Stopping the current battle does not itself choose a presentation or Stage transition. Game Flow System consumes the authoritative Defeat result and decides whether the player retries the current Stage or returns to the main menu.
 
-Each newly prepared Stage battle, including a retry, starts with fresh Player level progress, defeat state, and the positive maximum health authored by its StageDefinition. Current health starts equal to that maximum. Player state and maximum health from a previous Stage battle or failed attempt are not reused.
+Each newly prepared Stage battle, including a retry, starts with fresh Player level progress, defeat state, and the maximum health and Player progress requirements authored by its StageDefinition. Current health starts equal to that maximum. Player state and applied runtime configuration from a previous Stage battle or failed attempt are not reused.
 
 The Initial Tower Draft granted at the beginning of a fresh Stage battle is not a Player level-up and does not add progress, consume a level requirement, or change the starting Player level. Player System remains at Level 1 with zero resolved progress until Monster resolution advances it.
 
@@ -122,15 +128,15 @@ Player configuration validation should report at minimum:
 
 - Rejection of a non-positive Stage-supplied maximum health
 - Starting health outside the valid range
-- Non-positive level requirements
-- Missing or ambiguous maximum-level progression data
+- Missing or empty Stage-supplied Player progress requirements
+- Non-positive Player progress requirement
 - Invalid duplicate Monster resolution or Target-arrival reports
 
 ---
 
 # 7. Approved Scope And Deferred Topics
 
-Current scope includes battle-local level, one-point-per-resolution progress, health, one damage per Target arrival, level-up opportunities, defeat state, and the terminal Defeat fact consumed by battle result coordination.
+Current scope includes Stage-authored Player progress requirements, their battle-local runtime snapshot, battle-local level, one-point-per-resolution progress, health, one damage per Target arrival, level-up opportunities, defeat state, and the terminal Defeat fact consumed by battle result coordination.
 
 Defeat presentation, retry, and return-to-main-menu behavior belong to Game Flow System rather than Player System.
 

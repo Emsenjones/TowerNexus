@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f1fd7e4d8684ac4870eaec94bee5846, type: 3}
+  m_Name: StageDefini_Lv2
+  m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
+  displayName: Level2
+  playerMaxHealth: 10
+  playerProgressRequirements: 0300000003000000040000000400000008000000
+  mapTemplate: {fileID: 3273336904907436118, guid: 592880c1fc9e54e4d80cacc7a858264b, type: 3}
+  monsterWaveConfig: {fileID: 11400000, guid: 68e21234e80794dc48f30dd4acec963f, type: 2}
+  towerDraftPool:
+  - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+  - {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
+  towerUpgradeDraftPool:
+  - {fileID: 11400000, guid: fced72daa7b7c42419e4cb626f897805, type: 2}
+  - {fileID: 11400000, guid: 76b13c72bfb594d89beecab5f1ce3520, type: 2}
+  - {fileID: 11400000, guid: 83605bc8a0ade4983a10e00192c09e89, type: 2}
+  - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
+  - {fileID: 11400000, guid: 81c23c8d23a140038f44a43dd92745e6, type: 2}
+  - {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}
+  - {fileID: 11400000, guid: 43d1ce78aedd8460fb2773003312c23b, type: 2}
+  - {fileID: 11400000, guid: 499144ae5a9eb4bdeb291f0123049068, type: 2}
+  - {fileID: 11400000, guid: 24709742dca2046779cfef5ef0de9612, type: 2}
+  - {fileID: 11400000, guid: 957a38297f6b9405ea399f0a4fc87b44, type: 2}
+  - {fileID: 11400000, guid: a761134c011b44da1be91512116d7f61, type: 2}
+  - {fileID: 11400000, guid: 10331f3655bcf43a6bf22a9e7b39930d, type: 2}
+  showStageIntroduction: 1
+  introducedTowers:
+  - {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
+  introducedTowerUpgrades:
+  - {fileID: 11400000, guid: 43d1ce78aedd8460fb2773003312c23b, type: 2}
+  - {fileID: 11400000, guid: 499144ae5a9eb4bdeb291f0123049068, type: 2}
+  - {fileID: 11400000, guid: 24709742dca2046779cfef5ef0de9612, type: 2}
+  - {fileID: 11400000, guid: 957a38297f6b9405ea399f0a4fc87b44, type: 2}
+  - {fileID: 11400000, guid: a761134c011b44da1be91512116d7f61, type: 2}
+  - {fileID: 11400000, guid: 10331f3655bcf43a6bf22a9e7b39930d, type: 2}

@@ -1,15 +1,23 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 [Serializable]
 public class MonsterWaveEntry
 {
-    [SerializeField] private string waveId;
     [SerializeField] private float waveDelay;
-    [SerializeField] private List<MonsterSpawnEntry> spawnEntries = new List<MonsterSpawnEntry>();
+    [SerializeField] private MonsterBehaviour monsterRuntimeTemplate;
+    [SerializeField] private int count = 1;
+    [SerializeField] private float spawnInterval = 1f;
 
-    public string WaveId => waveId;
     public float WaveDelay => waveDelay;
-    public IReadOnlyList<MonsterSpawnEntry> SpawnEntries => spawnEntries;
+    public MonsterBehaviour MonsterRuntimeTemplate => monsterRuntimeTemplate;
+    public int Count => count;
+    public float SpawnInterval => spawnInterval;
+
+    public bool HasValidSpawnData()
+    {
+        return monsterRuntimeTemplate != null &&
+               count > 0 &&
+               spawnInterval >= 0f;
+    }
 }

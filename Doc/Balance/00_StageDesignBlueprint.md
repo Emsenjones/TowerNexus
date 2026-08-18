@@ -2,7 +2,7 @@
 
 Document Set: Balance
 
-Status: Campaign learning arc and Stage1-Stage6 Reference Build v0.1 shapes approved; exact repeated support families, UpgradeDefinitions, ElementTypes, and Stage-local calibration values remain downstream decisions
+Status: Campaign learning arc and Stage1-Stage6 Reference Build v0.2 shapes approved; exact repeated support families, Reference-run UpgradeDefinitions, ElementTypes, and Stage-local calibration values remain downstream decisions
 
 ---
 
@@ -24,7 +24,7 @@ It does not own:
 
 - Exact Map Grid size
 - Target Draft count
-- Exact Tower or Tower Upgrade Draft pools
+- Serialized Tower or Tower Upgrade Draft pool asset lists
 - Player Progress Requirements
 - Monster counts, Wave timing, or Stage difficulty values
 - Candidate-generation algorithms
@@ -57,21 +57,23 @@ The Expected Anti-pattern is a build that rejects the Stage lesson and should fa
 
 Concentrated investment is not intrinsically an Anti-pattern. A highly developed Core should fail only when the Stage also requires coverage, role complement, or a second matching Elemental source that the concentrated build does not provide. Conversely, horizontal expansion should fail only when it leaves the required Core capability undeveloped.
 
-New Content describes the first campaign introduction of a mechanic or TowerFamily. Previously introduced content remains generally available unless a Stage Note explicitly says otherwise. Exact Draft pool composition is authored later by Task007.
+New Content describes the first campaign introduction of a mechanic or TowerFamily. Tower and Upgrade access is cumulative unless a Stage Note explicitly says otherwise. Each Stage Tower Draft pool contains every TowerFamily introduced by that Stage, and its Tower Upgrade Draft pool contains all currently unlocked UpgradeDefinitions for those represented families. Stage1-Stage4 unlock Basic and Behaviour content; Stage5-Stage6 additionally unlock Elemental content. Task007 materializes those rules as exact Stage asset lists.
 
-Reference Build v0.1 uses these shared rules:
+Reference Build v0.2 uses these shared rules:
 
 - Every non-core Tower is L1 and has no Basic, Behaviour, or Elemental Upgrade.
-- Every Stage1-Stage4 Core Tower is L3 with one Basic and one Behaviour Upgrade.
+- Every Stage1-Stage4 Core Tower is L2 with one Basic and one Behaviour Upgrade.
 - Stage1-Stage4 do not use Elemental Upgrades.
 - The Stage5 Core Tower is L3 with one Basic, one Behaviour, and one Elemental Upgrade.
 - Both Stage6 Core Towers are L3 with one Basic, one Behaviour, and one Elemental Upgrade.
 - The two Stage6 Core Towers use the same ElementType and must have overlapping effective coverage.
-- Exact Basic, Behaviour, and Elemental definitions are selected by downstream calibration.
+- Exact Basic, Behaviour, and Elemental identities used by a reproducible Reference Run are selected and recorded by downstream calibration. They are not mandatory player answers.
 
 The listed one-Basic and one-Behaviour Core is the Reference Build used to derive Stage budgets. It is not the maximum legal Upgrade stack on one Tower. Cross-Stage qualitative growth principles belong to `01_TowerGrowthAndUpgradeIdentity.md`; realized-power targets, cumulative single-Tower guardrails, exact Upgrade values, and Stage pressure remain Task outputs.
 
 The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain Task007 design work.
+
+The early campaign teaches the player to establish useful route coverage and then concentrate enough Draft investment to unlock and apply higher-level content. A player following that lesson should not need one uniquely named Upgrade combination to clear. Pure horizontal expansion into many undeveloped Towers remains an intentional Anti-pattern when it rejects the Stage's required Core capability.
 
 ---
 
@@ -94,26 +96,26 @@ Campaign spatial scale should generally increase from Stage1 through Stage4. Sta
 
 ## 4.1 Stage1
 
-Status: Reference Build Baseline v0.1
+Status: Reference Build Baseline v0.2
 
 | Field | Design Target |
 |---|---|
 | Primary Experience | Learn that concentrated growth is required; pure horizontal expansion is insufficient |
 | New Content | Archer |
-| Required Capability | One developed L3 Archer core plus a second coverage point |
+| Required Capability | One developed L2 Archer core plus a second coverage point |
 | Expected Anti-pattern | Either over-expand with undeveloped L1 Archers, or concentrate every legal investment into one Archer while omitting the required second coverage point |
-| Notes | Exact Basic and Behaviour definitions remain downstream calibration choices |
+| Notes | All unlocked Archer Basic and Behaviour definitions enter the Stage pool; the exact pair recorded by a Reference Run remains a downstream calibration choice rather than a mandatory player answer |
 
 Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
-| Core | 1 | Archer | L3, one Basic, one Behaviour, no Elemental |
+| Core | 1 | Archer | L2, one Basic, one Behaviour, no Elemental |
 | Support | 1 | Archer | L1, no Upgrades |
 
 ## 4.2 Stage2
 
-Status: Reference Build Baseline v0.1
+Status: Reference Build Baseline v0.2
 
 | Field | Design Target |
 |---|---|
@@ -127,12 +129,12 @@ Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
-| Core | 1 | Cannon | L3, one Basic, one Behaviour, no Elemental |
+| Core | 1 | Cannon | L2, one Basic, one Behaviour, no Elemental |
 | Support | 2 | Archer is required; the second support is Archer or Cannon, TBD | L1, no Upgrades |
 
 ## 4.3 Stage3
 
-Status: Reference Build Baseline v0.1
+Status: Reference Build Baseline v0.2
 
 | Field | Design Target |
 |---|---|
@@ -146,12 +148,12 @@ Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
-| Core | 1 | Magic | L3, one Basic, one Behaviour, no Elemental |
+| Core | 1 | Magic | L2, one Basic, one Behaviour, no Elemental |
 | Support | 3 | Archer and Cannon are required; the third support family is TBD | L1, no Upgrades |
 
 ## 4.4 Stage4
 
-Status: Reference Build Baseline v0.1
+Status: Reference Build Baseline v0.2
 
 | Field | Design Target |
 |---|---|
@@ -165,12 +167,12 @@ Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
-| Core | 1 | Drone | L3, one Basic, one Behaviour, no Elemental |
+| Core | 1 | Drone | L2, one Basic, one Behaviour, no Elemental |
 | Support | 4 | Archer, Cannon, and Magic are required; the fourth support family is TBD | L1, no Upgrades |
 
 ## 4.5 Stage5
 
-Status: Reference Build Baseline v0.1
+Status: Reference Build Baseline v0.2
 
 | Field | Design Target |
 |---|---|
@@ -191,7 +193,7 @@ Dual-source Elemental cooperation is not required for the intended Stage5 clear.
 
 ## 4.6 Stage6
 
-Status: Reference Build Baseline v0.1
+Status: Reference Build Baseline v0.2
 
 | Field | Design Target |
 |---|---|

@@ -44,7 +44,7 @@ path state, movement state, Buff state, and resolution state.
 | Status UI Offset | Monster-specific placement offset for the combined health and active-Buff status display |
 | Damage Number Offset | Monster-specific placement offset for transient damage-number presentation |
 
-Spawn Entries reference the runtime template directly. A separate Monster data
+Waves reference the runtime template directly. A separate Monster data
 definition is not required while one template represents one unique demo
 Monster type. Shared visual templates with multiple independent stat profiles
 are deferred until a concrete variant requirement exists.
@@ -67,17 +67,11 @@ A MonsterWaveConfig contains an ordered list of Waves. Each Wave contains:
 | Data | Contract |
 |---|---|
 | Wave Delay | Time before the Wave begins |
-| Spawn Entries | Ordered Monster groups spawned by the Wave |
+| Monster Runtime Template | The single Monster type spawned by this Wave |
+| Count | Number of instances spawned by this Wave |
+| Spawn Interval | Explicit authored time between adjacent instances in this Wave; it adds no delay after the final instance |
 
-Each Spawn Entry contains:
-
-| Data | Contract |
-|---|---|
-| Monster Runtime Template | Unique Monster type to spawn |
-| Count | Number of instances |
-| Spawn Interval | Explicit authored time between adjacent instances inside this entry; it adds no delay after the entry's final instance |
-
-Campaign homogeneous Waves use one Monster runtime template per Wave. Their
+Every Wave uses exactly one Monster runtime template. Standard campaign Waves
 standard initial formation preserves one reference spatial gap across Monster
 movement identities:
 
@@ -90,7 +84,7 @@ Spawn Interval
     = Reference Spatial Gap / Authored Base Move Speed
 ```
 
-The derived interval is authored explicitly in each Spawn Entry. Monster
+The derived interval is authored explicitly in each Wave. Monster
 System does not infer it from the referenced template at runtime. Changing a
 template's base Move Speed therefore requires the corresponding campaign Spawn
 Intervals to be re-derived. This keeps initial formation density independent
@@ -354,9 +348,9 @@ Exact typography, easing, animation channels, preview tools, and pooling strateg
 
 Monster and Wave authoring validation should report at minimum:
 
-- Missing or invalid Monster runtime template in a Spawn Entry
-- Non-positive maximum health
-- Negative move speed, count, delay, or interval where invalid
+- Missing or invalid Monster Runtime Template in a Wave
+- Non-positive maximum health or Wave Count
+- Negative move speed, Wave Delay, or Spawn Interval
 - Empty or invalid Wave content
 - Wave execution or the first Wave Delay beginning before the Initial Tower Draft is accepted
 - Wave timing, spawning, or Monster movement advancing while a Draft Window holds the battle-simulation pause

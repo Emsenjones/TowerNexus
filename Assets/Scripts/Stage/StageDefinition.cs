@@ -31,6 +31,10 @@ public class StageDefinition : ScriptableObject
     [SerializeField] private string displayName;
     [MinValue(1)]
     [SerializeField] private int playerMaxHealth = 10;
+    [Tooltip("Resolved Monster progress required for each Player level transition in this Stage.")]
+    [MinValue(1)]
+    [SerializeField] private List<int> playerProgressRequirements =
+        new List<int>();
     [Required]
     [SerializeField] private GameObject mapTemplate;
     [Required]
@@ -46,6 +50,8 @@ public class StageDefinition : ScriptableObject
 
     public string DisplayName => displayName;
     public int PlayerMaxHealth => playerMaxHealth;
+    public IReadOnlyList<int> PlayerProgressRequirements =>
+        playerProgressRequirements;
     public GameObject MapTemplate => mapTemplate;
     public MonsterWaveConfig MonsterWaveConfig => monsterWaveConfig;
     public IReadOnlyList<TowerDefinition> TowerDraftPool => towerDraftPool;
@@ -78,6 +84,25 @@ public class StageDefinition : ScriptableObject
         {
             result.AddError(
                 $"Player Max Health must be positive, but is {playerMaxHealth}.");
+        }
+
+        if (playerProgressRequirements == null ||
+            playerProgressRequirements.Count == 0)
+        {
+            result.AddError("Player Progress Requirements must contain at least one entry.");
+            return;
+        }
+
+        for (int i = 0; i < playerProgressRequirements.Count; i++)
+        {
+            int requirement = playerProgressRequirements[i];
+
+            if (requirement <= 0)
+            {
+                result.AddError(
+                    $"Player Progress Requirement entry {i} must be positive, " +
+                    $"but is {requirement}.");
+            }
         }
     }
 

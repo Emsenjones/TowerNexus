@@ -1,6 +1,6 @@
 # Task008 - Stage1 Calibration
 
-Status: Planned; Stage1 Reference Build v0.1 and both capability Anti-patterns are defined, while execution waits for Task007 inputs
+Status: Planned; Stage1 Reference Build v0.2 and both capability Anti-patterns are defined, while execution waits for Task007 inputs
 
 Depends on: Task007 Global Progression And Stage Skeleton
 
@@ -26,8 +26,8 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 | Input | Value | Source |
 |---|---|---|
 | Implementation Map Size | 8x8 | Task001 v0.2 |
-| Derived Total Draft | 6 | Reference Build cost, formalized by Task007 |
-| Reference Build | Two Archers; one L3 with one Basic and one Behaviour, one L1 | Stage Design Blueprint v0.1 |
+| Derived Total Draft | 5 | Reference Build cost, formalized by Task007 |
+| Reference Build | Two Archers; one L2 with one Basic and one Behaviour, one L1; exact Upgrade identities are not mandatory player answers | Stage Design Blueprint v0.2 |
 | Required Capability | Concentrated growth plus a second coverage point | Stage Design Blueprint |
 | Anti-patterns | Over-expand with undeveloped L1 Archers; or fully concentrate into one Archer without the second coverage point | Stage Design Blueprint |
 
@@ -39,6 +39,8 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 - Stage1 maximum health if required
 - Local Stage1 route or placement refinement
 - Reference Build and both legal Anti-pattern runs
+- Selection and recording of one reproducible Reference Basic/Behaviour pair without making that pair a mandatory player answer
+- At least one legal non-Reference Upgrade combination or adaptive Build check
 - Stage duration and Draft timing
 
 ## 5. Out Of Scope
@@ -50,11 +52,11 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 
 ## 6. Calibration Sequence
 
-1. Fix the approved Stage1 Reference Build and placements.
-2. Confirm the Task007 skeleton provides exactly six total Draft opportunities.
+1. Fix the approved structural Stage1 Reference Build and placements, then record the exact Basic and Behaviour identities used by the reproducible run.
+2. Confirm the Task007 skeleton provides exactly five total Draft opportunities.
 3. Tune Monster order, Count, and Map-specific Wave Delay while deriving Spawn Interval from the Task006 standard spatial gap.
-4. Preserve combat after the sixth Draft.
-5. Confirm the Reference Build clears with deliberate margin.
+4. Preserve combat after the fifth Draft.
+5. Confirm the Reference Build clears with deliberate margin without treating its exact Upgrade identities as the only valid answer.
 6. Run the legal L1 Archer over-expansion Anti-pattern.
 7. Run the Task007-confirmed legal single-Archer concentration Anti-pattern using the same total Draft budget.
 8. Adjust Stage-local Wave or Map pressure one axis at a time.
@@ -107,13 +109,14 @@ Codex prepares the first Stage calibration table:
 
 ## 12. Acceptance Criteria
 
-- Stage1 grants exactly six total Drafts.
+- Stage1 grants exactly five total Drafts.
 - The approved Reference Build clears consistently.
+- At least one legal non-Reference Upgrade combination or adaptive Build can clear; success does not depend on one uniquely named Basic/Behaviour pair.
 - The legal L1 Archer over-expansion Anti-pattern fails because of insufficient developed output.
 - The legal single-Archer concentration Anti-pattern fails because it omits the required second coverage point, not because concentrated investment receives a hidden penalty.
 - Failure is not caused by an invalid route or missing placement.
 - The final Draft has enough remaining combat to matter.
-- Every standard Spawn Entry preserves the Task006 reference spatial gap; Stage1 difficulty does not silently come from interval-driven density changes.
+- Every standard Wave preserves the Task006 reference spatial gap; Stage1 difficulty does not silently come from interval-driven density changes.
 - No global baseline is changed solely to repair Stage1.
 
 ## 13. Validation

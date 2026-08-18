@@ -29,6 +29,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private bool isStartingSpawner;
     private string pendingSynchronousSpawningFailureReason;
     private int preparedPlayerMaxHealth;
+    private readonly List<int> preparedPlayerProgressRequirements =
+        new List<int>();
     private bool isLifecycleOperationInProgress;
     private bool releaseRequested;
     public bool IsBattleActive { get; private set; }
@@ -101,6 +103,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         MapGeneratorBehaviour activeMap,
         MonsterWaveConfig waveConfig,
         int playerMaxHealth,
+        IReadOnlyList<int> playerProgressRequirements,
         IReadOnlyList<TowerDefinition> towerPool,
         IReadOnlyList<TowerUpgradeDefinition> upgradePool)
     {
@@ -124,6 +127,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         if (activeMap == null ||
             waveConfig == null ||
             playerMaxHealth <= 0 ||
+            playerProgressRequirements == null ||
+            playerProgressRequirements.Count == 0 ||
             towerPool == null ||
             upgradePool == null)
         {
@@ -143,6 +148,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 activeMap,
                 waveConfig,
                 playerMaxHealth,
+                playerProgressRequirements,
                 towerPool,
                 upgradePool);
         }
@@ -181,6 +187,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         MapGeneratorBehaviour activeMap,
         MonsterWaveConfig waveConfig,
         int playerMaxHealth,
+        IReadOnlyList<int> playerProgressRequirements,
         IReadOnlyList<TowerDefinition> towerPool,
         IReadOnlyList<TowerUpgradeDefinition> upgradePool)
     {
@@ -239,7 +246,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return FailPreparation("preparation was cancelled by a deferred release.");
         }
 
-        if (!InitializeFreshPlayerState(playerMaxHealth))
+        if (!InitializeFreshPlayerState(
+                playerMaxHealth,
+                playerProgressRequirements))
         {
             return FailPreparation("fresh Player state initialization failed.");
         }
@@ -260,10 +269,13 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         return true;
     }
 
-    private bool InitializeFreshPlayerState(int playerMaxHealth)
+    private bool InitializeFreshPlayerState(
+        int playerMaxHealth,
+        IReadOnlyList<int> playerProgressRequirements)
     {
         hasFreshPlayerState = false;
         preparedPlayerMaxHealth = 0;
+        preparedPlayerProgressRequirements.Clear();
 
         if (playerSystem == null)
         {
@@ -283,12 +295,21 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        if (!playerSystem.TryInitializeFreshBattle(playerMaxHealth))
+        if (!playerSystem.TryInitializeFreshBattle(
+                playerMaxHealth,
+                playerProgressRequirements))
         {
             return false;
         }
 
         preparedPlayerMaxHealth = playerMaxHealth;
+
+        for (int i = 0; i < playerProgressRequirements.Count; i++)
+        {
+            preparedPlayerProgressRequirements.Add(
+                playerProgressRequirements[i]);
+        }
+
         hasFreshPlayerState = HasValidFreshPlayerState();
         return hasFreshPlayerState;
     }
@@ -391,6 +412,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
         hasFreshPlayerState = false;
         preparedPlayerMaxHealth = 0;
+        preparedPlayerProgressRequirements.Clear();
         isBattlePrepared = false;
         return true;
     }
@@ -400,6 +422,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         IsBattleActive = false;
         hasFreshPlayerState = false;
         preparedPlayerMaxHealth = 0;
+        preparedPlayerProgressRequirements.Clear();
         isBattlePrepared = false;
         monsterSpawner?.StopBattle();
         playerSystem?.StopBattle();
@@ -564,7 +587,30 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                playerSystem.CurrentProgress == 0 &&
                playerSystem.MaxHealth == preparedPlayerMaxHealth &&
                playerSystem.CurrentHealth == preparedPlayerMaxHealth &&
+               HasMatchingPreparedPlayerProgressRequirements() &&
                !playerSystem.IsDefeated;
+    }
+
+    private bool HasMatchingPreparedPlayerProgressRequirements()
+    {
+        IReadOnlyList<int> playerRequirements =
+            playerSystem.ProgressRequirements;
+
+        if (playerRequirements == null ||
+            playerRequirements.Count != preparedPlayerProgressRequirements.Count)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < playerRequirements.Count; i++)
+        {
+            if (playerRequirements[i] != preparedPlayerProgressRequirements[i])
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private bool AreConsumerGatesClosed()

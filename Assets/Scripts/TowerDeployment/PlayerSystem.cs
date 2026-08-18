@@ -1,30 +1,38 @@
 using System;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class PlayerSystem : MonoBehaviour
 {
-    [Tooltip("Resolved progress required to level up from each current level to the next level.")]
-    [SerializeField] private List<int> progressRequiredPerLevel =
-        new List<int>();
-    [SerializeField] private int currentLevel = 1;
-    [SerializeField] private int currentProgress;
+    private int currentLevel = 1;
+    private int currentProgress;
     private int maxHealth = 1;
-    [SerializeField] private int currentHealth = 10;
-    [SerializeField] private bool isDefeated;
+    private int currentHealth = 1;
+    private bool isDefeated;
 
+    private readonly List<int> activeProgressRequirements =
+        new List<int>();
     private readonly List<int> resolvedLevelUps = new List<int>();
     private bool isBattleActive;
 
+    [ShowInInspector, ReadOnly]
     public int CurrentLevel => currentLevel;
+    [ShowInInspector, ReadOnly]
     public int CurrentProgress => currentProgress;
+    [ShowInInspector, ReadOnly]
     public int RequiredProgress => GetRequiredProgress();
+    [ShowInInspector, ReadOnly]
     public int CurrentHealth => currentHealth;
+    [ShowInInspector, ReadOnly]
     public int MaxHealth => maxHealth;
+    [ShowInInspector, ReadOnly]
     public bool IsDefeated => isDefeated;
+    [ShowInInspector, ReadOnly]
     public bool IsBattleActive => isBattleActive;
-    public IReadOnlyList<int> ProgressRequiredPerLevel =>
-        progressRequiredPerLevel;
+    [ShowInInspector, ReadOnly]
+    public IReadOnlyList<int> ProgressRequirements =>
+        activeProgressRequirements;
 
     public event Action OnBattleStateInitialized;
     public event Action<int> OnLevelChanged;
@@ -39,7 +47,9 @@ public class PlayerSystem : MonoBehaviour
         isBattleActive = false;
     }
 
-    public bool TryInitializeFreshBattle(int stageMaxHealth)
+    public bool TryInitializeFreshBattle(
+        int stageMaxHealth,
+        IReadOnlyList<int> stageProgressRequirements)
     {
         if (stageMaxHealth <= 0)
         {
@@ -50,14 +60,60 @@ public class PlayerSystem : MonoBehaviour
             return false;
         }
 
+        if (!TryValidateProgressRequirements(
+                stageProgressRequirements,
+                out string progressionFailureReason))
+        {
+            Debug.LogError(
+                $"Player system cannot initialize a fresh battle: " +
+                progressionFailureReason,
+                this);
+            return false;
+        }
+
         isBattleActive = false;
         maxHealth = stageMaxHealth;
+        activeProgressRequirements.Clear();
+
+        for (int i = 0; i < stageProgressRequirements.Count; i++)
+        {
+            activeProgressRequirements.Add(stageProgressRequirements[i]);
+        }
+
         currentLevel = 1;
         currentProgress = 0;
         currentHealth = maxHealth;
         isDefeated = false;
         resolvedLevelUps.Clear();
         OnBattleStateInitialized?.Invoke();
+        return true;
+    }
+
+    private static bool TryValidateProgressRequirements(
+        IReadOnlyList<int> requirements,
+        out string failureReason)
+    {
+        if (requirements == null || requirements.Count == 0)
+        {
+            failureReason =
+                "Stage Player Progress Requirements must contain at least one entry.";
+            return false;
+        }
+
+        for (int i = 0; i < requirements.Count; i++)
+        {
+            if (requirements[i] > 0)
+            {
+                continue;
+            }
+
+            failureReason =
+                $"Stage Player Progress Requirement entry {i} must be positive, " +
+                $"but is {requirements[i]}.";
+            return false;
+        }
+
+        failureReason = string.Empty;
         return true;
     }
 
@@ -187,23 +243,19 @@ public class PlayerSystem : MonoBehaviour
             return false;
         }
 
-        if (progressRequiredPerLevel == null ||
-            progressRequiredPerLevel.Count == 0)
+        if (activeProgressRequirements.Count == 0)
         {
-            Debug.LogWarning(
-                "Player system has no progress requirements configured.",
-                this);
             return false;
         }
 
         int requirementIndex = currentLevel - 1;
 
-        if (requirementIndex >= progressRequiredPerLevel.Count)
+        if (requirementIndex >= activeProgressRequirements.Count)
         {
             return false;
         }
 
-        requiredProgress = progressRequiredPerLevel[requirementIndex];
+        requiredProgress = activeProgressRequirements[requirementIndex];
 
         if (requiredProgress <= 0)
         {

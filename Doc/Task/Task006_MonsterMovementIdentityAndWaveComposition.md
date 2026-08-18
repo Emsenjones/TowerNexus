@@ -34,9 +34,9 @@ These four mappings are the first campaign roster. Task006 does not require ever
 
 ### 4.1 Homogeneous Waves
 
-One campaign Wave contains one Monster runtime template. A Wave may use multiple Spawn Entries only when every entry references that same template to express authored timing groups.
+One Wave contains exactly one Monster runtime template, one Count, and one Spawn Interval. `MonsterWaveConfig` enforces homogeneous composition structurally rather than relying on a campaign-only content convention.
 
-`MonsterWaveConfig` remains structurally capable of mixed-template Waves. Homogeneous composition is a campaign content contract rather than a new runtime restriction.
+Additional timing groups are represented as consecutive Waves with their own Delay, template, Count, and Interval. Mixed-template Waves and nested spawn groups are not part of the approved schema.
 
 ### 4.2 Standard Spatial Gap
 
@@ -58,7 +58,7 @@ Profile Spawn Interval
 | Tough | `0.25` | `2.5s` | `0.625` |
 | Tank | `0.20` | `3.125s` | `0.625` |
 
-The interval is written with sufficient precision into each Spawn Entry; runtime does not derive or mutate it from Prefab Move Speed.
+The interval is written with sufficient precision into each Wave; runtime does not derive or mutate it from Prefab Move Speed.
 
 This contract isolates formation density from movement identity. Rush pressure should primarily come from shorter route exposure and harder projectile interception, not from an incidental wider formation that further reduces area, piercing, or multi-target coverage. A deliberately dense or loose Wave requires a separately approved identity rather than silent Stage-local interval drift.
 
@@ -75,7 +75,7 @@ Consequently:
 
 Each Stage manually selects Wave Delay from its Map size, route length, Monster Count, outgoing Wave spawn duration, Reference Build, desired rhythm, and acceptable overlap. Wave Delay may minimize unintended chase or deliberately accumulate pressure, but Task006 does not freeze one global value.
 
-For one Spawn Entry:
+For one Wave:
 
 ```text
 Next Wave First Spawn Time

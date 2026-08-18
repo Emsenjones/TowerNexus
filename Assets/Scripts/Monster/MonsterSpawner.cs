@@ -236,16 +236,14 @@ public class MonsterSpawner : MonoBehaviour
                 }
             }
 
-            IReadOnlyList<MonsterSpawnEntry> spawnEntries = wave.SpawnEntries;
-
-            if (spawnEntries == null || spawnEntries.Count == 0)
+            if (!wave.HasValidSpawnData())
             {
                 FailSpawnExecution(
-                    $"Wave entry {waveIndex} has no Spawn Entries.");
+                    $"Wave entry {waveIndex} has invalid spawn data.");
                 yield break;
             }
 
-            for (int entryIndex = 0; entryIndex < spawnEntries.Count; entryIndex++)
+            for (int countIndex = 0; countIndex < wave.Count; countIndex++)
             {
                 if (!isBattleActive)
                 {
@@ -253,44 +251,26 @@ public class MonsterSpawner : MonoBehaviour
                     yield break;
                 }
 
-                MonsterSpawnEntry spawnEntry = spawnEntries[entryIndex];
-
-                if (spawnEntry == null || !spawnEntry.IsValid())
+                if (!TrySpawnMonster(
+                        wave.MonsterRuntimeTemplate,
+                        out string failureReason))
                 {
                     FailSpawnExecution(
-                        $"Spawn Entry {entryIndex} in Wave {waveIndex} became invalid.");
+                        $"Monster {countIndex} in Wave {waveIndex} failed: " +
+                        failureReason);
                     yield break;
                 }
 
-                for (int countIndex = 0; countIndex < spawnEntry.Count; countIndex++)
+                bool hasMoreMonstersInWave = countIndex < wave.Count - 1;
+
+                if (hasMoreMonstersInWave && wave.SpawnInterval > 0f)
                 {
+                    yield return new WaitForSeconds(wave.SpawnInterval);
+
                     if (!isBattleActive)
                     {
                         CancelSpawnExecution();
                         yield break;
-                    }
-
-                    if (!TrySpawnMonster(
-                            spawnEntry.MonsterPrefab,
-                            out string failureReason))
-                    {
-                        FailSpawnExecution(
-                            $"Monster {countIndex} in Spawn Entry {entryIndex}, " +
-                            $"Wave {waveIndex} failed: {failureReason}");
-                        yield break;
-                    }
-
-                    bool hasMoreMonstersInEntry = countIndex < spawnEntry.Count - 1;
-
-                    if (hasMoreMonstersInEntry && spawnEntry.SpawnInterval > 0f)
-                    {
-                        yield return new WaitForSeconds(spawnEntry.SpawnInterval);
-
-                        if (!isBattleActive)
-                        {
-                            CancelSpawnExecution();
-                            yield break;
-                        }
                     }
                 }
             }
@@ -300,7 +280,7 @@ public class MonsterSpawner : MonoBehaviour
     }
 
     private bool TrySpawnMonster(
-        MonsterBehaviour monsterPrefab,
+        MonsterBehaviour monsterRuntimeTemplate,
         out string failureReason)
     {
         if (!isBattleActive)
@@ -309,25 +289,27 @@ public class MonsterSpawner : MonoBehaviour
             return false;
         }
 
-        if (monsterPrefab == null)
+        if (monsterRuntimeTemplate == null)
         {
             failureReason = "the Monster runtime prefab is missing.";
             return false;
         }
 
-        if (monsterPrefab.transform.parent != null)
+        if (monsterRuntimeTemplate.transform.parent != null)
         {
             failureReason =
-                $"Monster runtime prefab '{monsterPrefab.name}' must reference " +
+                $"Monster Runtime Template '{monsterRuntimeTemplate.name}' " +
+                "must reference " +
                 "MonsterBehaviour on the prefab root.";
             return false;
         }
 
-        if (!monsterPrefab.TryValidateAuthoredConfiguration(
+        if (!monsterRuntimeTemplate.TryValidateAuthoredConfiguration(
                 out string monsterFailureReason))
         {
             failureReason =
-                $"Monster runtime prefab '{monsterPrefab.name}' is invalid: " +
+                $"Monster Runtime Template '{monsterRuntimeTemplate.name}' " +
+                "is invalid: " +
                 monsterFailureReason;
             return false;
         }
@@ -371,7 +353,7 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         MonsterBehaviour monsterBehaviour = Instantiate(
-            monsterPrefab,
+            monsterRuntimeTemplate,
             spawnNode.WorldPosition,
             Quaternion.identity,
             monsterRoot
@@ -380,7 +362,8 @@ public class MonsterSpawner : MonoBehaviour
         if (monsterBehaviour == null)
         {
             failureReason =
-                $"Monster runtime prefab '{monsterPrefab.name}' could not be instantiated.";
+                $"Monster Runtime Template '{monsterRuntimeTemplate.name}' " +
+                "could not be instantiated.";
             return false;
         }
 

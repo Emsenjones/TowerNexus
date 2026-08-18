@@ -68,6 +68,7 @@ public class StageCompositionController : MonoBehaviour
                             candidateMap,
                             selectedStage.MonsterWaveConfig,
                             selectedStage.PlayerMaxHealth,
+                            selectedStage.PlayerProgressRequirements,
                             selectedStage.TowerDraftPool,
                             selectedStage.TowerUpgradeDraftPool))
                     {

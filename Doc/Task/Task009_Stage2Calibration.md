@@ -1,6 +1,6 @@
 # Task009 - Stage2 Calibration
 
-Status: Planned; Stage2 Reference Build v0.1 is defined and execution waits for upstream implementation inputs
+Status: Planned; Stage2 Reference Build v0.2 is defined and execution waits for upstream implementation inputs
 
 Depends on: Task008 Stage1 Calibration
 
@@ -30,13 +30,13 @@ Task001 must provide an accepted Stage2 greybox with Reference placement and ran
 
 First-pass inputs:
 
-| Input | v0.1 Value |
+| Input | v0.2 Value |
 |---|---|
 | Map Size | 10x10 |
 | Reference Towers | 3 |
-| Core | One L3 Cannon with one Basic and one Behaviour |
-| Support | Two L1 Towers with no Upgrades; Archer is required and the repeated family is resolved by Task007 |
-| Total Draft Opportunities | 7 |
+| Core | One L2 Cannon with one Basic and one Behaviour |
+| Support | Two L1 Towers with no Upgrades; Archer is required and the repeated family is selected and recorded by Stage2 calibration |
+| Total Draft Opportunities | 6 |
 | Elemental | Not available |
 
 ## 4. In Scope
@@ -120,7 +120,7 @@ The same proposal records one coherent alternative Build and its expected margin
 - The Reference Build clears reliably.
 - Archer and Cannon have understandable complementary value.
 - At least one viable alternative exists.
-- Every standard Spawn Entry preserves the Task006 reference spatial gap.
+- Every standard Wave preserves the Task006 reference spatial gap.
 - The Anti-pattern fails for the intended capability gap.
 - Concentrated investment receives no hidden penalty; its test fails only when the missing TowerFamily role matters.
 - Stage1 remains accepted.

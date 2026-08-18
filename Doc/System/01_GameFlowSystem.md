@@ -103,6 +103,7 @@ Select Current StageDefinition
     -> Validate And Prepare Selected Stage
     -> Establish Fresh Player Battle-Local State
         -> Maximum Health = Selected Stage Player Maximum Health
+        -> Progress Requirements = Selected Stage Player Progress Requirements
         -> Current Health = Maximum Health
         -> Reset Player Level And Progress
         -> Clear Player Defeat State
@@ -221,7 +222,7 @@ Stage Defeat offers:
 - Retry the current Stage through the complete Stage Preparing flow.
 - Return to the main menu.
 
-Next-Stage and retry transitions both release the previous Stage runtime before preparing the selected Stage. They never reuse prior Player state, Map state, Camera boundary or Pan displacement, Monsters, Towers, pending Drafts, Wave execution state, or battle-active authority.
+Next-Stage and retry transitions both release the previous Stage runtime before preparing the selected Stage. They never reuse prior Player state or applied Player configuration, Map state, Camera boundary or Pan displacement, Monsters, Towers, pending Drafts, Wave execution state, or battle-active authority.
 
 A valid result-neutral runtime failure transitions directly from the active Battle to Main Menu after releasing the failed Stage. No retry, victory, defeat, or technical-error window is implied.
 
@@ -276,6 +277,7 @@ Game Flow validation should report at minimum:
 - Current Stage position outside the configured sequence
 - Invalid Stage preparation entering Battle
 - Player state not reset to the selected Stage's positive maximum health
+- Player state not initialized from the selected Stage's Player progress requirements
 - Camera boundary or Pan displacement retained by an initial Stage, next Stage, or retry
 - Introduction Tower content outside the selected Stage Tower Draft Pool
 - Introduction Upgrade content outside the selected Stage Tower Upgrade Draft Pool

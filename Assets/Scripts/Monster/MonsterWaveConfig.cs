@@ -46,29 +46,17 @@ public class MonsterWaveConfig : ScriptableObject
         for (int waveIndex = 0; waveIndex < waves.Count; waveIndex++)
         {
             MonsterWaveEntry wave = waves[waveIndex];
-            IReadOnlyList<MonsterSpawnEntry> spawnEntries =
-                wave != null ? wave.SpawnEntries : null;
 
-            if (spawnEntries == null || spawnEntries.Count == 0)
+            if (wave == null || wave.Count <= 0)
             {
                 return false;
             }
 
-            for (int entryIndex = 0; entryIndex < spawnEntries.Count; entryIndex++)
+            totalMonsterCount += wave.Count;
+
+            if (totalMonsterCount > int.MaxValue)
             {
-                MonsterSpawnEntry spawnEntry = spawnEntries[entryIndex];
-
-                if (spawnEntry == null || spawnEntry.Count <= 0)
-                {
-                    return false;
-                }
-
-                totalMonsterCount += spawnEntry.Count;
-
-                if (totalMonsterCount > int.MaxValue)
-                {
-                    return false;
-                }
+                return false;
             }
         }
 
@@ -102,73 +90,53 @@ public class MonsterWaveConfig : ScriptableObject
                     $"Wave {waveIndex} has negative Wave Delay {wave.WaveDelay}.");
             }
 
-            IReadOnlyList<MonsterSpawnEntry> spawnEntries = wave.SpawnEntries;
-
-            if (spawnEntries == null || spawnEntries.Count == 0)
-            {
-                result.AddError(
-                    $"Wave {waveIndex} must contain at least one Spawn Entry.");
-                continue;
-            }
-
-            for (int entryIndex = 0; entryIndex < spawnEntries.Count; entryIndex++)
-            {
-                ValidateSpawnEntry(
-                    result,
-                    spawnEntries[entryIndex],
-                    waveIndex,
-                    entryIndex);
-            }
+            ValidateWaveSpawnData(result, wave, waveIndex);
         }
 
         return result;
     }
 
-    private static void ValidateSpawnEntry(
+    private static void ValidateWaveSpawnData(
         MonsterWaveValidationResult result,
-        MonsterSpawnEntry spawnEntry,
-        int waveIndex,
-        int entryIndex)
+        MonsterWaveEntry wave,
+        int waveIndex)
     {
-        string entryLabel = $"Wave {waveIndex} Spawn Entry {entryIndex}";
+        string waveLabel = $"Wave {waveIndex}";
+        MonsterBehaviour monsterRuntimeTemplate =
+            wave.MonsterRuntimeTemplate;
 
-        if (spawnEntry == null)
+        if (monsterRuntimeTemplate == null)
         {
-            result.AddError($"{entryLabel} is missing.");
-            return;
+            result.AddError($"{waveLabel} has no Monster Runtime Template.");
         }
-
-        MonsterBehaviour monsterPrefab = spawnEntry.MonsterPrefab;
-
-        if (monsterPrefab == null)
-        {
-            result.AddError($"{entryLabel} has no Monster runtime prefab.");
-        }
-        else if (monsterPrefab.transform.parent != null)
+        else if (monsterRuntimeTemplate.transform.parent != null)
         {
             result.AddError(
-                $"{entryLabel} Monster runtime prefab '{monsterPrefab.name}' " +
+                $"{waveLabel} Monster Runtime Template " +
+                $"'{monsterRuntimeTemplate.name}' " +
                 "must reference MonsterBehaviour on the prefab root.");
         }
-        else if (!monsterPrefab.TryValidateAuthoredConfiguration(
+        else if (!monsterRuntimeTemplate.TryValidateAuthoredConfiguration(
                      out string monsterFailureReason))
         {
             result.AddError(
-                $"{entryLabel} Monster runtime prefab '{monsterPrefab.name}' " +
+                $"{waveLabel} Monster Runtime Template " +
+                $"'{monsterRuntimeTemplate.name}' " +
                 $"failed owner validation: {monsterFailureReason}");
         }
 
-        if (spawnEntry.Count <= 0)
+        if (wave.Count <= 0)
         {
             result.AddError(
-                $"{entryLabel} Count must be greater than zero; found {spawnEntry.Count}.");
+                $"{waveLabel} Count must be greater than zero; " +
+                $"found {wave.Count}.");
         }
 
-        if (spawnEntry.SpawnInterval < 0f)
+        if (wave.SpawnInterval < 0f)
         {
             result.AddError(
-                $"{entryLabel} Spawn Interval cannot be negative; " +
-                $"found {spawnEntry.SpawnInterval}.");
+                $"{waveLabel} Spawn Interval cannot be negative; " +
+                $"found {wave.SpawnInterval}.");
         }
     }
 }
