@@ -89,6 +89,8 @@ Both roots use the same UI coordinate space. The drag-visual root has no layout 
 
 The Draft Item Interaction Area displays selected rewards that have not yet been consumed.
 
+Before a held item participates in an accepted gameplay transaction, the HUD can confirm that the exact item still belongs to the pending-item collection. Successful Tower placement consumes that same held item synchronously inside the placement gameplay commit, after Tower and Monster readiness has been established. Post-commit presentation failure does not restore the consumed item. Rejection, cancellation, or pre-commit failure preserves it.
+
 It supports:
 
 - Tower Draft items

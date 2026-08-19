@@ -75,6 +75,8 @@ Runtime occupancy never changes Base Walkable and must not be saved back into th
 
 Spawn and Target nodes must be Base Walkable. The current Map contract contains exactly one Spawn and one Target.
 
+A Grid Node's World Position remains its center and the stable spatial reference for topology queries. Monster System may resolve a bounded movement target inside a walkable Grid using the Map's local XZ frame. That movement target does not change Grid Position, World Position, node identity, walkability, or neighbor relationships. Spawn and Target movement targets remain their exact Grid centers.
+
 ---
 
 # 4. Authored Hierarchy Contract
@@ -197,12 +199,17 @@ Generated presentation begins at its authored local origin; presentation templat
 
 Approved runtime blockers such as placed Towers change Runtime Occupied.
 
+Candidate occupancy simulation is read-only. It may query the ordered Spawn-to-Target route that would exist after the proposed blockers, but it does not change authored Base Walkable state, active Runtime Occupied state, Tile presentation, or Monster route state.
+
+For accepted Tower placement, affected-Monster revisions are prepared against the same simulated topology before Runtime Occupied changes. Monsters whose existing routes do not intersect the candidate footprint remain unaffected and require no new path query. Tower Placement System coordinates the commit; Map System supplies topology and occupancy state but does not select, move, or reproject Monsters.
+
 After one committed occupancy change:
 
 1. Effective Is Walkable changes.
-2. Pathfinding and placement consume the new state.
-3. Tile connection presentation refreshes using neighboring effective Is Walkable states.
-4. Feature presentation remains unchanged.
+2. The prepared Monster route revision becomes active before gameplay advances to another frame.
+3. Pathfinding and placement consume the new state.
+4. Tile connection presentation refreshes using neighboring effective Is Walkable states.
+5. Feature presentation remains unchanged.
 
 Runtime refresh must not:
 
@@ -211,7 +218,7 @@ Runtime refresh must not:
 - Remove or replace Spawn or Target presentation
 - Modify Base Walkable
 
-Runtime refresh also completes a full Tile-only preflight before removing any Tile presentation. A failure leaves all existing Tile and Feature presentation unchanged; partial refresh is invalid.
+Runtime refresh also completes a full Tile-only preflight before removing any Tile presentation. A failure leaves all existing Tile and Feature presentation unchanged; partial refresh is invalid. Because runtime Tile refresh is post-commit presentation, its failure does not roll back accepted Runtime Occupied state, Monster revisions, or held-Draft consumption.
 
 The current version may refresh all Tile visuals after one topology change. Partial refresh of the changed nodes and orthogonal neighbors is an optimization that must preserve identical results.
 
@@ -313,6 +320,6 @@ Warnings identify the relevant Map or Grid Node and never silently rewrite autho
 
 # 12. Approved Scope And Deferred Topics
 
-Current scope includes rectangular handcrafted Maps, one Spawn, one Target, deterministic theme-based presentation, runtime Tower occupancy, Tile-only runtime refresh, Map-template Stage composition, a complete rectangular gameplay footprint, and one Map-authored 3D Camera movement boundary.
+Current scope includes rectangular handcrafted Maps, one Spawn, one Target, deterministic theme-based presentation, runtime Tower occupancy, read-only candidate-topology queries, bounded grid-local Monster movement targets, Tile-only runtime refresh, Map-template Stage composition, a complete rectangular gameplay footprint, and one Map-authored 3D Camera movement boundary.
 
 Deferred topics include Multiple Spawn Routes, multiple Targets, special terrain, destructible terrain, runtime authored-feature replacement, multi-layer terrain, and procedural Map-data generation.

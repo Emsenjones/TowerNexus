@@ -28,7 +28,7 @@ Task004 is the sole calibration owner for Elemental power targets. Task003 suppl
 
 - Task003 remains accepted and its Base, Basic, and Behaviour values are frozen during the first Task004 pass.
 - Stage5 and Stage6 Elemental pool authoring may remain unresolved during isolated content tests.
-- Final Stage acceptance cannot proceed until Task007 authors and validates those pools.
+- Final Stage acceptance cannot proceed until Task008 authors and validates those pools.
 - A dedicated Task004 Elemental cooperation Map must satisfy Section 7 before matching-source results are accepted.
 - The Elemental diagnostic output in Section 8 must exist before lifecycle counts are treated as acceptance evidence. Manual visual observation remains valid for initial Map calibration and presentation checks.
 
@@ -461,7 +461,7 @@ Final cooperation acceptance:
 - The user owns Unity Map and asset authoring, visible lifecycle observation, and Play Mode execution.
 - Codex owns the first-pass result table, ratio and timing calculations, evidence review, and smallest justified revision proposal.
 - Manual visual notes supplement the Recorder but do not replace its lifecycle counts after the instrumentation gate.
-- Exact Stage5 and Stage6 pool composition remains a Task007 output rather than a prerequisite for isolated Task004 tests.
+- Exact Stage5 and Stage6 pool composition remains a Task008 output rather than a prerequisite for isolated Task004 tests.
 
 ## 14. Unity Authoring Checklist
 
@@ -511,4 +511,4 @@ Final cooperation acceptance:
 
 ## 17. Review Note
 
-Task004 is complete. It owns the accepted matching-source and Overload calibration, Required Levels, authored parameters, fixtures, diagnostics, and test evidence. `01_TowerGrowthAndUpgradeIdentity.md` remains the qualitative growth contract. `15_BuffSystem.md` remains the stable lifecycle and ownership contract. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task007 from the Blueprint's required capabilities.
+Task004 is complete. It owns the accepted matching-source and Overload calibration, Required Levels, authored parameters, fixtures, diagnostics, and test evidence. `01_TowerGrowthAndUpgradeIdentity.md` remains the qualitative growth contract. `15_BuffSystem.md` remains the stable lifecycle and ownership contract. Final Stage5 and Stage6 Elemental pool composition is derived and authored by Task008 from the Blueprint's required capabilities.

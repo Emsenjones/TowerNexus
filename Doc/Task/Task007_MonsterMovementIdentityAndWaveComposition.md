@@ -1,16 +1,16 @@
-# Task006 - Monster Movement Identity And Wave Composition
+# Task007 - Monster Movement Identity And Wave Composition
 
-Status: Completed; four movement Profiles, homogeneous campaign Waves, the standard spatial-gap rule, Stage-local Wave Delay, and final normalized-spacing combat regressions were accepted on 2026-08-18
+Status: Completed baseline; the four movement Profiles, homogeneous campaign Waves, standard spatial-gap rule, Stage-local Wave Delay, and normalized-spacing combat regressions were accepted on 2026-08-18, but Task006 route/lane regression and the proposed Fodder/Scout extension remain pending before Stage calibration
 
-Depends on: Task005 Monster Roster Baseline
+Depends on: Task005 Monster Roster Baseline; Task006 Monster Route Reprojection And Lane Movement for the pending regression and extension
 
-Blocks: Task007 Global Progression And Stage Skeleton
+Blocks: Task008 Global Progression And Stage Skeleton regression and Task009-Task014 Stage calibration
 
 ## 1. Goal
 
 Establish readable Monster identities from Maximum Health and Move Speed, bind the first accepted identities to runtime Prefabs, and define the campaign Wave-composition and timing contracts consumed by later Stage authoring.
 
-Task006 owns Stage-independent Monster movement identity and standard formation density. It does not decide final Stage order, Count, Wave Delay, duration, or difficulty.
+Task007 owns Stage-independent Monster movement identity and standard formation density. It does not decide final Stage order, Count, Wave Delay, duration, or difficulty.
 
 ## 2. Source Documents
 
@@ -28,7 +28,7 @@ Task006 owns Stage-independent Monster movement identity and standard formation 
 | Tough | `Prefab_Monster_TurtuleShell1` | `240` | `0.25` | Normal-speed durability pressure |
 | Tank | `Prefab_Monster_Orc1` | `480` | `0.20` | High durability with a slower, longer exposure window |
 
-These four mappings are the first campaign roster. Task006 does not require every future Health and Move Speed combination to receive a separate Prefab. Additional identities are added only when Stage calibration demonstrates a distinct tactical need.
+These four mappings are the accepted baseline roster. Task007 does not require every future Health and Move Speed combination to receive a separate Prefab. The proposed Fodder/Scout identity remains a Task007 extension that must be specified and validated after Task006; it is not accepted by this renumbering edit.
 
 ## 4. Campaign Wave Authoring Contracts
 
@@ -73,7 +73,7 @@ Consequently:
 - cross-Wave overlap may occur when the authored schedule and active combat state produce it;
 - no generic requirement says that every previous Monster must resolve before the next Wave begins.
 
-Each Stage manually selects Wave Delay from its Map size, route length, Monster Count, outgoing Wave spawn duration, Reference Build, desired rhythm, and acceptable overlap. Wave Delay may minimize unintended chase or deliberately accumulate pressure, but Task006 does not freeze one global value.
+Each Stage manually selects Wave Delay from its Map size, route length, Monster Count, outgoing Wave spawn duration, Reference Build, desired rhythm, and acceptable overlap. Wave Delay may minimize unintended chase or deliberately accumulate pressure, but Task007 does not freeze one global value.
 
 For one Wave:
 
@@ -160,9 +160,9 @@ Every final normalized-spacing report used schema v8, matched its Run identity a
 
 ## 6. Completion Decision
 
-The final normalized-spacing regressions preserve all four accepted Profile identities and validate the campaign spacing contract. No additional no-Tower spacing run, generic Tank-to-Rush catch-up experiment, full Profile matrix, or Cold rerun is required for Task006. Actual cross-Wave overlap remains a Stage-local observation for Task008-Task013.
+The final normalized-spacing regressions preserve all four accepted Profile identities and validate the campaign spacing contract. No additional no-Tower spacing run, generic Tank-to-Rush catch-up experiment, full Profile matrix, or Cold rerun was required for the completed baseline. Task006 lane movement and the proposed Fodder/Scout extension require a focused Task007 regression before Task009-Task014 calibration. Actual cross-Wave overlap remains a Stage-local observation for Task009-Task014.
 
-Task006 completed on 2026-08-18.
+The original four-Profile Task007 baseline completed on 2026-08-18. Its post-Task006 regression and Fodder/Scout extension remain pending.
 
 ## 7. In Scope
 
@@ -187,11 +187,11 @@ Task006 completed on 2026-08-18.
 | Owner | Responsibility |
 |---|---|
 | Task005 | Historical HP120/HP240/HP480 health-only baseline |
-| Task006 | Four movement Profiles, homogeneous-Wave convention, and standard spatial-gap contract |
+| Task007 | Four accepted movement Profiles, pending Fodder/Scout extension, homogeneous-Wave convention, and standard spatial-gap contract |
 | Monster runtime template | Accepted per-type Maximum Health and Move Speed |
 | MonsterWaveConfig | Explicit Wave template, Count, derived Spawn Interval, and Stage-local Wave Delay |
-| Task007 | Six structural Wave skeletons consuming accepted identities and the derived interval rule |
-| Task008-Task013 | Final Stage-local Monster order, Count, Wave Delay, overlap, duration, and difficulty |
+| Task008 | Six structural Wave skeletons consuming accepted identities and the derived interval rule |
+| Task009-Task014 | Final Stage-local Monster order, Count, Wave Delay, overlap, duration, and difficulty |
 
 ## 10. Acceptance Criteria
 
@@ -208,4 +208,4 @@ Task006 completed on 2026-08-18.
 
 ## 11. Handoff
 
-Task007 begins from the four accepted Profiles, homogeneous-Wave convention, and Profile-derived interval baselines while authoring six rough Wave skeletons. Task008-Task013 then calibrate Stage-local Monster order, Count, Wave Delay, overlap, duration, and difficulty without redefining global movement identities or silently changing standard formation density.
+Task006 first establishes route reprojection and lane movement. Task007 then regresses the four accepted Profiles, specifies and tests the proposed Fodder/Scout identity, and preserves the Profile-derived interval rule before Task008 rechecks the six structural Wave skeletons. Task009-Task014 may begin Stage-local calibration only after those handoffs are accepted.

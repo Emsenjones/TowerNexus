@@ -1,8 +1,8 @@
-# Task009 - Stage2 Calibration
+# Task010 - Stage2 Calibration
 
 Status: Planned; Stage2 Reference Build v0.2 is defined and execution waits for upstream implementation inputs
 
-Depends on: Task008 Stage1 Calibration
+Depends on: Task009 Stage1 Calibration
 
 ## 1. Goal
 
@@ -26,7 +26,7 @@ Stage2 introduces a second TowerFamily without erasing the Stage1 lesson of conc
 
 The Stage Design Blueprint must approve the Stage2 Reference Build, Required Capability, Expected Anti-pattern, and Notes.
 
-Task001 must provide an accepted Stage2 greybox with Reference placement and range/route evidence. Task007 must provide the derived Draft count, exact Draft pools, and Stage2 skeleton. A viable alternative is proposed and tested inside this Task rather than approved in the Blueprint.
+Task001 must provide an accepted Stage2 greybox with Reference placement and range/route evidence. Task008 must provide the derived Draft count, exact Draft pools, and Stage2 skeleton. A viable alternative is proposed and tested inside this Task rather than approved in the Blueprint.
 
 First-pass inputs:
 
@@ -47,7 +47,7 @@ First-pass inputs:
 - Profile-derived Spawn Interval and Map-specific Wave Delay
 - Local Stage2 Map refinement
 - Reference, proposed-alternative, and Anti-pattern runs
-- A Task007-confirmed legal one-Tower concentration run
+- A Task008-confirmed legal one-Tower concentration run
 - Stage1 regression after any global revision
 
 ## 5. Out Of Scope
@@ -60,8 +60,8 @@ First-pass inputs:
 ## 6. Calibration Sequence
 
 1. Fix the approved Stage2 Reference Build and placements.
-2. Confirm the Task007-derived Draft count.
-3. Tune Wave content and Map-specific Wave Delay to expose range and cadence complement while preserving the Task006 standard spatial gap.
+2. Confirm the Task008-derived Draft count.
+3. Tune Wave content and Map-specific Wave Delay to expose range and cadence complement while preserving the Task007 standard spatial gap.
 4. Let Codex propose and test at least one coherent alternative build.
 5. Test the approved undeveloped horizontal-growth Anti-pattern.
 6. Test a legal one-Tower concentration that omits the Archer/Cannon complement.
@@ -86,7 +86,7 @@ First-pass inputs:
 | StageDefinition | Stage2 composition and maximum health |
 | MonsterWaveConfig | Stage2 Monster order, count, and timing |
 | Map Prefab | Stage2 route and placement geometry |
-| Task009 | Derived Wave and alternative-build proposal, Stage-local calibration, and Stage1 regression evidence |
+| Task010 | Derived Wave and alternative-build proposal, Stage-local calibration, and Stage1 regression evidence |
 
 ## 9. Required Calibration Table
 
@@ -94,7 +94,7 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Expected Draft Milestone | Archer/Cannon Test | Observed Result |
 |---|---|---:|---:|---:|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended role-complement pressure | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task007 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended role-complement pressure | Filled after Play Mode |
 
 The same proposal records one coherent alternative Build and its expected margin.
 
@@ -106,7 +106,7 @@ The same proposal records one coherent alternative Build and its expected margin
 
 ## 11. Unity Authoring Checklist
 
-- Confirm the Stage2 Blueprint contract and Task007-derived inputs.
+- Confirm the Stage2 Blueprint contract and Task008-derived inputs.
 - Assign the approved Stage2 Map, Wave, and Draft pools.
 - Author the Stage2 MonsterWaveConfig.
 - Place the Reference, alternative, horizontal-growth, and one-Tower concentration builds.
@@ -116,11 +116,11 @@ The same proposal records one coherent alternative Build and its expected margin
 
 ## 12. Acceptance Criteria
 
-- Stage2 reaches its Task007-derived Draft count.
+- Stage2 reaches its Task008-derived Draft count.
 - The Reference Build clears reliably.
 - Archer and Cannon have understandable complementary value.
 - At least one viable alternative exists.
-- Every standard Wave preserves the Task006 reference spatial gap.
+- Every standard Wave preserves the Task007 reference spatial gap.
 - The Anti-pattern fails for the intended capability gap.
 - Concentrated investment receives no hidden penalty; its test fails only when the missing TowerFamily role matters.
 - Stage1 remains accepted.
@@ -135,4 +135,4 @@ The same proposal records one coherent alternative Build and its expected margin
 
 ## 14. Review Note
 
-Task009 is expected to propose Stage2 numeric values. They remain provisional until the user's fixed Unity runs confirm the intended Blueprint experience.
+Task010 is expected to propose Stage2 numeric values. They remain provisional until the user's fixed Unity runs confirm the intended Blueprint experience.

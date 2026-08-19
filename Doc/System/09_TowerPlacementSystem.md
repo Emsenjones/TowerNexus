@@ -75,16 +75,17 @@ Begin Tower Draft Drag
 
 An accepted placement performs one transaction:
 
-1. Revalidate the final footprint and route rule.
-2. Create the deployed Tower at the resolved placement.
-3. Record the occupied Grid Nodes on the Tower instance.
-4. Commit Runtime Occupied state through Map System.
-5. Request Tile topology refresh without regenerating static Map features.
-6. Request Monster path recalculation.
+1. Complete final Tower and held-Draft preflight, including Tower definition, Level 1 configuration and model, runtime visual and combat requirements, required runtime owners, and Pending Draft ownership.
+2. Revalidate the final footprint and obtain one authoritative projection route from the simulated post-placement topology.
+3. Capture living Monster movement state, preserve unaffected Monsters, and prepare every affected-Monster reprojection without runtime mutation.
+4. Create and initialize the Tower to a ready but inactive state without committing occupancy or consuming the Draft. Its required level model and visual state exist, its combat ownership is valid, and combat has not begun.
+5. Commit Runtime Occupied state, apply the complete prepared Monster revision batch, register the deployed Tower, activate its battle runtime, and consume the held Tower Draft as one gameplay change.
+6. Request Tile topology refresh without regenerating static Map features.
 7. Request Tower-local placement success presentation.
-8. Consume the held Tower Draft item.
 
-If any required step before commit fails, no occupancy or held-item state is consumed. Cleanup of presentation after commit does not undo an otherwise accepted gameplay result.
+If any required step before commit fails, any temporary Tower is removed and no occupancy, Monster state, Tower registration, combat activation, or held-item state is consumed. After readiness succeeds, gameplay-commit steps are synchronous prevalidated state writes without ordinary failure results. Prepared Monster application performs no pathfinding, projection, classification, or new validation during commit.
+
+Tile refresh and success feedback are post-commit presentation. Their failure is diagnosed as an accepted result with a presentation warning; it does not roll back an otherwise accepted Tower, occupancy state, Monster revision, registration, combat activation, or Draft consumption.
 
 ---
 
@@ -97,9 +98,7 @@ A candidate new-Tower placement is valid only when:
 1. Every occupied anchor resolves to a Grid Node.
 2. Every resolved node is effectively walkable and available for placement.
 3. The simulated occupancy preserves every required Spawn-to-Target route.
-4. No candidate node is the current node of an alive Monster.
-5. Every alive Monster retains a route from its current node to the Target.
-6. The Tower and active Map references remain valid at final confirmation.
+4. The Tower and active Map references remain valid at final confirmation.
 
 An invalid candidate remains visible as invalid feedback but cannot commit occupancy or consume the item.
 
@@ -109,18 +108,30 @@ Route validation uses the same topology rules as Monster pathfinding:
 
 ```text
 Simulate Candidate Nodes As Occupied
-    -> Query Required Spawn-To-Target Route
-    -> Query Each Alive Monster's Current-Node-To-Target Route
-    -> Restore Simulation
-    -> All Required Routes Exist: Candidate May Continue
-    -> Any Required Route Missing: Reject Candidate
+    -> Query One Authoritative Spawn-To-Target Projection Route
+    -> No Route: Reject Candidate
+    -> Route Exists: Candidate May Continue
 ```
 
 Simulation does not change authored Base Walkable state, active Runtime Occupied state, or active Monster paths.
 
-An alive Monster's current node is not a valid placement node even when another route query would otherwise succeed. This prevents a committed Tower from occupying the Monster's current gameplay position.
+Live Monster instances do not participate in placement legality. A candidate is not rejected because a Monster occupies or approaches its footprint, or because the placement disconnects the old branch that Monster entered. After topology acceptance, Monster System preserves every unaffected Monster unchanged and prepares affected-Monster reprojections before commit.
 
 The current one-Spawn/one-Target Map requires one surviving route. Multiple Spawn Routes will require an explicit route-validation contract before expanding this rule.
+
+## 5.2 Monster Route Revision
+
+All living Monster movement state is captured after final topology validation and before Runtime Occupied changes. The accepted authoritative Spawn-to-Target projection route is shared by every affected Monster in that placement transaction.
+
+Current placement only adds blockers. A Monster is affected when its reached node, active next node, or remaining route intersects the candidate footprint, or its captured movement state is invalid. A Monster whose remaining movement state does not intersect the footprint is unaffected: it preserves its world position, active segment, route position, and complete remaining route without another path query or prepared movement revision.
+
+An affected Monster is mapped to the spatially closest eligible Grid on that route. Remaining-route continuity, avoidance of free forward progress, and stable route order break ties. Target is not eligible for a living unresolved Monster; Spawn remains eligible. Multiple Monsters may share the same projection Grid.
+
+Reprojection is movement correction only. It preserves Monster gameplay state and does not cause damage, healing, death, Target arrival, progress, registration, or deregistration. Already released Projectiles keep their release-time direction or landing position and may hit or miss under their existing rules.
+
+Monster route preparation cannot create a second placement-legality gate. Once the global route and ordinary placement constraints pass, live Monster positions cannot delay or reject deployment. Prepared affected-Monster revisions apply through one non-failing state-write boundary and do not pathfind during gameplay commit.
+
+An invalid Monster movement snapshot, unavailable spatial comparison, proximity to Target, or inability to continue an old route uses deterministic projection fallback. Only transaction-wide technical preconditions such as an invalid topology plan, missing required runtime owner, or authoritative route without an eligible non-Target Grid may fail preparation.
 
 ---
 
@@ -219,7 +230,8 @@ When occupancy changes:
 - Effective walkability changes.
 - Tile connection presentation refreshes from current effective walkability.
 - Static Obstacle, Spawn, and Target presentation remains unchanged.
-- Alive Monsters request path recalculation.
+- Unaffected Monsters retain their complete valid routes without another path query.
+- The prepared batch reprojects affected Monsters before gameplay advances to another frame.
 
 Tower Placement System never rewrites Base Walkable or converts a placed Tower into an authored Map obstacle.
 
@@ -238,6 +250,14 @@ Placement authoring and runtime validation should report or reject at minimum:
 - Candidate anchors outside the Map
 - Candidate nodes that are unwalkable or already occupied
 - Candidate occupancy that blocks a required route
+- Placement preflight that mutates occupancy or Monster state
+- Incomplete Tower definition, Level 1 model, visual, combat, runtime-owner, or Pending Draft ownership preflight
+- An additional path query or prepared revision for an unaffected Monster
+- Prepared revision application that performs pathfinding or exposes an ordinary commit-time failure
+- A committed placement without its complete prepared Monster route revision
+- A committed Tower or Monster revision whose held Draft was not consumed
+- A living unresolved Monster projected directly onto Target
+- Reprojection that causes combat, resolution, registration, or progress side effects
 - Stale or unavailable target Tower
 - A second drag or confirmation competing with the active operation
 - Camera pan competing for an active Draft-item drag gesture
@@ -256,6 +276,8 @@ Current scope includes:
 - Grid snapping and anchor-defined footprint validation
 - Occupied-node Tower target detection
 - Route-preserving placement validation
+- Placement legality independent of live Monster positions
+- Atomic occupancy, affected-Monster reprojection, and held-Draft consumption commit
 - Runtime occupancy and Tile-only topology refresh
 - New-Tower, level-up, attack-range, and eligible-target feedback
 - General return-to-area drag cancellation

@@ -387,7 +387,7 @@ MonoBehaviour:
   baseAttackDamage: 60
   attackRange: 3
   attackCycleDuration: 3.5
-  targetSelectionType: 2
+  targetSelectionType: 1
   attackReleaseVfxPrefab: {fileID: 1703296453783264684, guid: c322bec26b475401b9e70147095b03fb, type: 3}
   projectilePrefab: {fileID: -7195602320074236366, guid: 97060cd06ba0c4272b519291bdddd705, type: 3}
   arcHeight: 1

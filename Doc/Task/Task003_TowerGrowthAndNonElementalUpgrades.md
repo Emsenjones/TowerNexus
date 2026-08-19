@@ -33,7 +33,7 @@ System documents own stable runtime, authoring, eligibility, application, and li
 
 This Task owns the fixed fixture, proposed and accepted numerical values, route results, combination evidence, reviewed exceptions, and Keep/Revise decisions. Unity assets remain the executable source for the accepted authored parameters.
 
-Exact Stage pools, Draft budgets, concentrated-build availability, and Stage sampling feasibility remain Task007 responsibilities.
+Exact Stage pools, Draft budgets, concentrated-build availability, and Stage sampling feasibility remain Task008 responsibilities.
 
 ## 4. Scope
 

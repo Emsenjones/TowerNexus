@@ -8,7 +8,7 @@ Depends on: Task002 Base Combat baseline; Task003 and Task004 for regression cov
 
 Create the smallest useful Monster roster for Stage calibration while preserving one stable Reference Monster.
 
-This Task uses maximum health as the sole first-pass differentiation axis. Movement-speed identity and homogeneous-Wave composition are deferred to Task006 so their effects on route exposure, projectile interception, Slow, Buff continuity, and Wave formation can be measured independently.
+This Task uses maximum health as the sole first-pass differentiation axis. Movement-speed identity and homogeneous-Wave composition are deferred to Task007 so their effects on route exposure, projectile interception, Slow, Buff continuity, and Wave formation can be measured independently.
 
 The ten available Monster Prefabs are an authoring pool, not a requirement to create ten numerical roles. Task005 accepts only the smallest set whose members produce distinct survival and tactical decisions. Unselected Prefabs may remain unused until a later Stage establishes a concrete role requirement.
 
@@ -34,7 +34,7 @@ The ten available Monster Prefabs are an authoring pool, not a requirement to cr
 
 - MonsterWaveConfig
 - Stage-specific Monster counts
-- Monster movement-speed role differentiation and homogeneous-Wave authoring; owned by Task006
+- Monster movement-speed role differentiation and homogeneous-Wave authoring; owned by Task007
 - New armor, resistance, or broad crowd-control frameworks
 - Player Progress Requirements
 - Final Stage difficulty
@@ -46,7 +46,7 @@ The ten available Monster Prefabs are an authoring pool, not a requirement to cr
 3. Estimate health from effective reference damage and target survival time.
 4. Check discrete shot, contact, and burst breakpoints.
 5. Keep movement speed common for the first pass.
-6. Hand any movement-speed identity proposal to Task006.
+6. Hand any movement-speed identity proposal to Task007.
 7. Regress Base, Behaviour, and Elemental interactions.
 
 The higher-health Monsters used to prevent measurement ceilings in Task003 or Task004 are calibration fixtures, not automatically accepted roster roles. A fixture becomes roster content only when this Task gives it a named tactical purpose and accepts it through the full role comparison.
@@ -59,9 +59,9 @@ The higher-health Monsters used to prevent measurement ceilings in Task003 or Ta
 | Tough | Dragon | `240` | `0.25` | Survives approximately twice the Reference direct-hit budget and extends Behaviour or Elemental exposure | Accepted |
 | Elite | Golem | `480` | `0.25` | Durable late-Stage target that preserves specialization and Overload opportunities | Accepted |
 
-The first pass deliberately omits a Fragile role. Stage-local Count and Wave Delay remain available to create early quantity pressure without adding another global health tier, while standard campaign Spawn Interval follows Task006's accepted spatial-gap contract. A Fragile role is added only if later Stage calibration demonstrates a tactical need that Wave timing cannot express.
+The first pass deliberately omits a Fragile role. Stage-local Count and Wave Delay remain available to create early quantity pressure without adding another global health tier, while standard campaign Spawn Interval follows Task007's accepted spatial-gap contract. A Fragile role is added only if later Stage calibration demonstrates a tactical need that Wave timing cannot express.
 
-The Bat, Dragon, and Golem rows above remain the historical HP-only controls used by Task005. Task006 supersedes their campaign Profile-to-Prefab mapping without reinterpreting this evidence.
+The Bat, Dragon, and Golem rows above remain the historical HP-only controls used by Task005. Task007 supersedes their campaign Profile-to-Prefab mapping without reinterpreting this evidence.
 
 These candidates use simple integer breakpoints against frozen Level 1 direct damage:
 
@@ -208,13 +208,13 @@ Every accepted schema-v8 result must report `SpawningCompleted=True` plus all si
 
 - The user describes how durable or urgent each Monster role should feel and owns Unity asset authoring plus Play Mode runs.
 - Codex fills the initial health and movement table from accepted Tower output, checks shot and burst breakpoints, and revises the smallest necessary parameter set.
-- Task005 freezes shared Move Speed `0.25`; Task006 owns any later movement-identity proposal and regression.
+- Task005 freezes shared Move Speed `0.25`; Task007 owns any later movement-identity proposal and regression.
 
 ## 10. Unity Authoring Checklist
 
 - Identify the canonical Reference Monster.
 - Record every Monster runtime template used by the roster.
-- Preserve shared Move Speed `0.25` until Task006 accepts a deliberate revision.
+- Preserve shared Move Speed `0.25` until Task007 accepts a deliberate revision.
 - Author health tiers from measured survival targets.
 - Validate all Monster runtime references.
 - Test death and Target-arrival resolution.
@@ -242,4 +242,4 @@ Every accepted schema-v8 result must report `SpawningCompleted=True` plus all si
 
 ## 13. Review Note
 
-Health-only differentiation is sufficient for the first roster baseline, so Task005 stops with three accepted roles. Task006 may later revise Move Speed only through its independent movement, Wave-formation, Cannon-projectile, Slow, Buff-continuity, and role-preservation evidence. Task007 consumes the accepted result of both Tasks when constructing Stage Wave skeletons.
+Health-only differentiation is sufficient for the first roster baseline, so Task005 stops with three accepted roles. Task007 may later revise Move Speed only through its independent movement, Wave-formation, Cannon-projectile, Slow, Buff-continuity, and role-preservation evidence. Task008 consumes the accepted result after Task006 route/lane implementation and Task007 regression when revisiting Stage Wave skeletons.

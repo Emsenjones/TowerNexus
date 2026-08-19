@@ -1,8 +1,8 @@
-# Task011 - Stage4 Calibration
+# Task012 - Stage4 Calibration
 
 Status: Planned; Stage4 Reference Build v0.2 is defined and execution waits for upstream implementation inputs
 
-Depends on: Task010 Stage3 Calibration
+Depends on: Task011 Stage3 Calibration
 
 ## 1. Goal
 
@@ -25,7 +25,7 @@ Calibrate Stage4 so Drone pursuit answers expanded route pressure and larger pla
 
 The Stage Design Blueprint must approve the Stage4 Reference Build, Required Capability, Expected Anti-pattern, and Notes.
 
-Task001 must provide an accepted Stage4 greybox with Reference placement and range/route evidence. Task007 must provide the derived Draft count, exact Draft pools, and Stage4 skeleton. A viable alternative is proposed and tested inside this Task.
+Task001 must provide an accepted Stage4 greybox with Reference placement and range/route evidence. Task008 must provide the derived Draft count, exact Draft pools, and Stage4 skeleton. A viable alternative is proposed and tested inside this Task.
 
 First-pass inputs:
 
@@ -59,12 +59,12 @@ First-pass inputs:
 ## 6. Calibration Sequence
 
 1. Fix the approved Reference Build and legal placements.
-2. Confirm Task001 Reference and reasonable alternative placements against Task007's exact pools.
-3. Tune route exposure and Map-specific Wave Delay for meaningful Drone pursuit while preserving the Task006 standard spatial gap.
+2. Confirm Task001 Reference and reasonable alternative placements against Task008's exact pools.
+3. Tune route exposure and Map-specific Wave Delay for meaningful Drone pursuit while preserving the Task007 standard spatial gap.
 4. Preserve useful roles for Archer, Cannon, and Magic.
 5. Test a Codex-proposed viable alternative.
 6. Test the local-only fixed-firepower Anti-pattern.
-7. Test a Task007-confirmed legal single-Tower concentration against the expanded route.
+7. Test a Task008-confirmed legal single-Tower concentration against the expanded route.
 8. Regress Stage1-Stage3 after any global revision.
 
 ## 7. Required Measurements
@@ -84,7 +84,7 @@ First-pass inputs:
 | StageDefinition | Stage4 composition and maximum health |
 | MonsterWaveConfig | Stage4 Monster order, count, and timing |
 | Map Prefab | Stage4 route and large-footprint placement geometry |
-| Task011 | Derived Wave and alternative-build proposal, Stage-local calibration, and prior-Stage regression evidence |
+| Task012 | Derived Wave and alternative-build proposal, Stage-local calibration, and prior-Stage regression evidence |
 
 ## 9. Required Calibration Table
 
@@ -92,7 +92,7 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Expected Draft Milestone | Drone Pursuit Test | Fixed-Tower Test | Observed Result |
 |---|---|---:|---:|---:|---|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended expanded-route pressure | Expected retained fixed-Tower value | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task007 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended expanded-route pressure | Expected retained fixed-Tower value | Filled after Play Mode |
 
 ## 10. Execution Collaboration
 
@@ -102,7 +102,7 @@ Codex prepares:
 
 ## 11. Unity Authoring Checklist
 
-- Confirm the Stage4 Blueprint contract and Task001/Task007-derived inputs.
+- Confirm the Stage4 Blueprint contract and Task001/Task008-derived inputs.
 - Assign the approved Stage4 Map, Wave, and Draft pools.
 - Author the Stage4 MonsterWaveConfig.
 - Place the Reference, alternative, local fixed-firepower, and single-Tower concentration builds.

@@ -49,7 +49,7 @@ Each supported Tower level provides:
 | Tower Level Model | Model/presentation template used at that level |
 | Display Icon | Optional level-specific presentation |
 
-Tower level data defines progression identity and model replacement. It does not contain combat stats. TowerUpgradeDefinition defines separately acquired stat, Behaviour, and Elemental content.
+Tower level data defines progression identity and model replacement. A valid supported level has a positive unique Level and a usable Tower Level Model. It does not contain combat stats. TowerUpgradeDefinition defines separately acquired stat, Behaviour, and Elemental content.
 
 ---
 
@@ -127,7 +127,7 @@ Rules:
 - The permanent Tower base remains unchanged.
 - Runtime combat consumes the active model's Attack Origin.
 - If it is missing, the Tower reports an authoring warning and uses AttackOriginFallback.
-- Missing model presentation does not block combat; presentation-gated attacks use their approved fallback release rule.
+- A missing Tower Level Model is an invalid level configuration and blocks readiness for a new deployment. Optional model-local attack presentation may be absent; presentation-gated attacks then use their approved fallback release rule.
 - Released Attack Entities retain the positions and references captured at release and do not depend on a later model replacement.
 
 Model presentation may receive attack-presentation requests and report the authored release moment. It does not select targets, manage cooldowns, create gameplay results, or apply upgrades.

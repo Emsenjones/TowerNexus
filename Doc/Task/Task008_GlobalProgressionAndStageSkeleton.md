@@ -1,8 +1,8 @@
-# Task007 - Per-Stage Progression And Stage Skeleton
+# Task008 - Per-Stage Progression And Stage Skeleton
 
-Status: Completed; Stage-owned progression, six StageDefinitions, cumulative Draft pools, Normal-only Wave skeletons, Reference Player Health, and structural Play Mode validation were accepted on 2026-08-19
+Status: Completed structural baseline; Stage-owned progression and six Stage skeletons were accepted on 2026-08-19, while early-Draft pacing and Wave Delay regression wait for Task006 implementation and Task007 revision before Task009 calibration
 
-Depends on: Task001-Task006
+Depends on: Task001-Task007
 
 ## 1. Goal
 
@@ -30,7 +30,7 @@ The Stage Design Blueprint must approve for every Stage:
 - Expected Anti-pattern
 - Any non-negotiable Stage Notes
 
-Task001-Task006 provide accepted Map and Stage-independent combat, Monster-HP, movement-identity, and Wave-composition baselines. Reference Build Draft costs, total Draft opportunities, and the cumulative content-unlock policy are approved by Blueprint v0.2. Task007 materializes the exact Stage asset lists and derives Progress nodes, Monster budgets, candidate-solvability evidence, and the six Stage skeletons. Exact repeated support families, Reference-run Upgrade identities, and ElementTypes remain downstream calibration choices unless required for a specific solvability check.
+Task001-Task007 provide accepted Map and Stage-independent combat, Monster-HP, route/lane, movement-identity, and Wave-composition baselines. Reference Build Draft costs, total Draft opportunities, and the cumulative content-unlock policy are approved by Blueprint v0.2. Task008 materializes the exact Stage asset lists and derives Progress nodes, Monster budgets, candidate-solvability evidence, and the six Stage skeletons. Exact repeated support families, Reference-run Upgrade identities, and ElementTypes remain downstream calibration choices unless required for a specific solvability check.
 
 ## 4. Required Derived Planning Table
 
@@ -89,7 +89,7 @@ This policy fixes pool membership without prescribing one exact player Build. Do
 
 The cumulative pool produces an L2 Stage cap for every represented family in Stage1-Stage4 and an L3 Stage cap for every represented family in Stage5-Stage6. Core is a strategic role selected by the player's investment, not a separately authored Tower identity.
 
-These values are the first trajectory estimate. Task007 does not treat a Stage's Progress sequence, Monster totals, duration estimate, Draft pools, or candidate availability as accepted until the derived table has been structurally tested.
+These values are the first trajectory estimate. Task008 does not treat a Stage's Progress sequence, Monster totals, duration estimate, Draft pools, or candidate availability as accepted until the derived table has been structurally tested.
 
 ## 5. In Scope
 
@@ -104,7 +104,7 @@ These values are the first trajectory estimate. Task007 does not treat a Stage's
 - Stage1-Stage6 StageDefinitions
 - Map references
 - MonsterWaveConfig references and initial Wave skeletons
-- Consumption of the Task006 homogeneous-Wave convention, accepted per-Profile Move Speeds, and standard spatial-gap interval rule
+- Consumption of the Task007 homogeneous-Wave convention, accepted per-Profile Move Speeds, and standard spatial-gap interval rule
 - Stage maximum-health authoring
 - Post-final-Draft validation segment targets
 - Candidate solvability where required by the Blueprint
@@ -145,7 +145,7 @@ The Initial Tower Draft is separate and is not represented by an entry. Every en
 6. Solve one positive Player Progress Requirements sequence for each Stage.
 7. Verify each sequence length, cumulative Draft nodes, and final intended Draft resolution count.
 8. Choose rough Monster-resolution totals and reserve combat after the last intended Draft.
-9. Reconfirm the Task006 movement identities, homogeneous-Wave convention, and Profile-derived Spawn Intervals.
+9. Reconfirm the Task007 movement identities, homogeneous-Wave convention, and Profile-derived Spawn Intervals after Task006 lane movement is accepted.
 10. Calculate each Stage's theoretical minimum active-Wave duration under immediate Monster resolution.
 11. Author six StageDefinitions and six MonsterWaveConfig skeletons.
 12. Assign Map, Player Progress Requirements, Tower pool, Upgrade pool, and Stage maximum health.
@@ -157,7 +157,7 @@ The Initial Tower Draft is separate and is not represented by an entry. Every en
 | Owner | Responsibility |
 |---|---|
 | Stage Design Blueprint | Reference Build, Stage lesson, required capability, Anti-pattern, and non-negotiable constraints |
-| Task007 | Derived planning table, cross-Stage constraint solving, and structural validation |
+| Task008 | Derived planning table, cross-Stage constraint solving, and structural validation |
 | Player System | Battle-local snapshot, validation, progress consumption, and level transitions for the selected Stage sequence |
 | StageDefinition | Map, Wave, Draft pools, maximum health, and reusable Player Progress Requirements authoring |
 | MonsterWaveConfig | Ordered Wave skeleton and rough Monster totals |
@@ -183,7 +183,7 @@ The Initial Tower Draft is separate and is not represented by an entry. Every en
 - Author positive Stage maximum health.
 - Create structurally valid Wave content with the rough Monster totals.
 - Keep each Wave to its single authored Monster Runtime Template.
-- Seed each Wave with the Task006 interval derived from its Monster Runtime Template's Profile Move Speed; do not use interval drift as an unstated density adjustment.
+- Seed each Wave with the Task007 interval derived from its Monster Runtime Template's Profile Move Speed; do not use interval drift as an unstated density adjustment.
 - Verify the Initial Draft and first-Wave gate.
 - Record cumulative resolution nodes and observed Draft counts.
 - Compare the calculated theoretical minimum duration with observed Play Mode timing.
@@ -195,8 +195,8 @@ The Initial Tower Draft is separate and is not represented by an entry. Every en
 - Every StageDefinition has one positive Player Progress Requirements sequence whose length matches its required Player Level-Ups.
 - Every Stage skeleton reaches its derived Draft count in resolution-count space.
 - Six StageDefinitions reference the intended Maps, Waves, and Draft pools.
-- Every Wave skeleton consumes an accepted Task006 Monster identity and composition convention.
-- Every standard Wave preserves the Task006 reference spatial gap through its explicit Profile-derived interval.
+- Every Wave skeleton consumes an accepted Task007 Monster identity and composition convention.
+- Every standard Wave preserves the Task007 reference spatial gap through its explicit Profile-derived interval.
 - Every approved Reference Build is obtainable under its authored Draft structure.
 - Every planned calibration and Anti-pattern build is either legally constructible or explicitly replaced before Stage testing.
 - Every allowed Tower level transition unlocks at least one Upgrade at the reached Required Tower Level.
@@ -225,7 +225,7 @@ The Initial Tower Draft is separate and is not represented by an entry. Every en
 
 ## 14. Accepted Baseline And Evidence
 
-The accepted Task007 skeleton is:
+The accepted Task008 structural skeleton is:
 
 | Stage | Total Drafts | Player Progress Requirements | Final Draft Node | Wave Counts | Total Monsters | Post-Final-Draft Resolutions | Reference Player Health | Theoretical Minimum Duration |
 |---|---:|---|---:|---|---:|---:|---:|---:|
@@ -236,14 +236,14 @@ The accepted Task007 skeleton is:
 | Stage5 | 10 | 3 / 3 / 4 / 4 / 8 / 8 / 10 / 12 / 12 | 64 | 13 / 13 / 13 / 13 / 12 / 12 | 76 | 12 | 38 | 3:25 |
 | Stage6 | 15 | 4 / 4 / 4 / 4 / 5 / 5 / 5 / 5 / 5 / 5 / 6 / 6 / 6 / 6 | 70 | 12 / 12 / 12 / 12 / 11 / 11 / 19 | 89 | 19 | 45 | 4:35 |
 
-The duration estimate includes every authored Wave Delay and every interval between consecutive spawns within a Wave, with each Monster resolving immediately when spawned. Stage6 uses the currently authored 10-second delay on all seven Waves; the other five Stages use 5-second delays. Reference Player Health is the Task007 structural baseline `ceil(Total Monsters / 2)`, not a final difficulty target.
+The duration estimate includes every authored Wave Delay and every interval between consecutive spawns within a Wave, with each Monster resolving immediately when spawned. Stage6 uses the currently authored 10-second delay on all seven Waves; the other five Stages use 5-second delays. Reference Player Health is the Task008 structural baseline `ceil(Total Monsters / 2)`, not a final difficulty target. These delays are historical structural inputs, not accepted pacing values; Wave Delay perception must be retested after Task006 and Task007.
 
 Schema-v9 reports accepted the complete progression path for all six Stages. Each accepted run completed one Initial Draft, reached the intended Level-up and total Draft counts, resolved the configured Monster total, retained combat after the final Draft, and passed every integrity flag. The accepted Stage5 Recorder regression records final Draft node 64 and 12 later Resolutions after the same-frame Resolution bookkeeping fix.
 
 Play Mode also confirmed fresh Retry state and a fresh Stage1-to-Stage2 Next Stage transition. The observed Build evidence includes the Stage1 two-Tower L2 Core structure, a Stage5 L3 Elemental core, and a Stage6 matching-Cold L3 Cannon/Magic pair. The Stage6 report records two contributing source Towers and shared-target Cold stacking, confirming an achievable different-family matching-Element overlap path without introducing a guaranteed candidate offer.
 
-The cumulative pools and successful Stage runtime binding confirm an L2 cap with a continuous Basic-to-Behaviour ladder in Stage1-Stage4 and an L3 cap with a continuous Basic-to-Behaviour-to-Elemental ladder in Stage5-Stage6. Exact reproducible Upgrade identities, candidate success rates, final Wave composition, Reference clear margins, and Anti-pattern outcomes remain owned by Task008-Task013.
+The cumulative pools and successful Stage runtime binding confirm an L2 cap with a continuous Basic-to-Behaviour ladder in Stage1-Stage4 and an L3 cap with a continuous Basic-to-Behaviour-to-Elemental ladder in Stage5-Stage6. Exact reproducible Upgrade identities, candidate success rates, final Wave composition, Reference clear margins, and Anti-pattern outcomes remain owned by Task009-Task014.
 
 ## 15. Review Note
 
-Task008-Task013 own final Stage experience. If one Stage cannot satisfy its Blueprint, revise that Stage's Progress Requirements, Wave budget, Draft structure, or accepted build envelope through the smallest owning contract change, then rerun affected regressions.
+Task008 first rechecks early-Draft cadence and Wave Delay perception after Task006 route/lane implementation and Task007 roster/spacing revision. Task009-Task014 then own final Stage experience. If one Stage cannot satisfy its Blueprint, revise that Stage's Progress Requirements, Wave budget, Draft structure, or accepted build envelope through the smallest owning contract change, then rerun affected regressions.

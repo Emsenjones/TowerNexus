@@ -1,8 +1,8 @@
-# Task008 - Stage1 Calibration
+# Task009 - Stage1 Calibration
 
-Status: Ready; Task007 Stage1 skeleton inputs are accepted, and Stage1 Reference, adaptive, and Anti-pattern calibration runs can begin
+Status: Blocked; waits for Task006 route/lane implementation, Task007 roster/spacing revision, and Task008 pacing/Wave Delay regression
 
-Depends on: Task007 Global Progression And Stage Skeleton
+Depends on: Task008 Global Progression And Stage Skeleton regression
 
 ## 1. Goal
 
@@ -26,7 +26,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 | Input | Value | Source |
 |---|---|---|
 | Implementation Map Size | 8x8 | Task001 v0.2 |
-| Derived Total Draft | 5 | Reference Build cost, formalized by Task007 |
+| Derived Total Draft | 5 | Reference Build cost, formalized by Task008 |
 | Reference Build | Two Archers; one L2 with one Basic and one Behaviour, one L1; exact Upgrade identities are not mandatory player answers | Stage Design Blueprint v0.2 |
 | Required Capability | Concentrated growth plus a second coverage point | Stage Design Blueprint |
 | Anti-patterns | Over-expand with undeveloped L1 Archers; or fully concentrate into one Archer without the second coverage point | Stage Design Blueprint |
@@ -35,7 +35,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 
 - Stage1 MonsterWaveConfig
 - Monster identities, counts, and order
-- First Wave delay, Wave Delay, and Task006-derived Spawn Interval
+- First Wave delay, Wave Delay, and Task007-derived Spawn Interval
 - Stage1 maximum health if required
 - Local Stage1 route or placement refinement
 - Reference Build and both legal Anti-pattern runs
@@ -53,12 +53,12 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 ## 6. Calibration Sequence
 
 1. Fix the approved structural Stage1 Reference Build and placements, then record the exact Basic and Behaviour identities used by the reproducible run.
-2. Confirm the Task007 skeleton provides exactly five total Draft opportunities.
-3. Tune Monster order, Count, and Map-specific Wave Delay while deriving Spawn Interval from the Task006 standard spatial gap.
+2. Confirm the Task008 skeleton provides exactly five total Draft opportunities after its pacing regression.
+3. Tune Monster order, Count, and Map-specific Wave Delay while deriving Spawn Interval from the Task007 standard spatial gap.
 4. Preserve combat after the fifth Draft.
 5. Confirm the Reference Build clears with deliberate margin without treating its exact Upgrade identities as the only valid answer.
 6. Run the legal L1 Archer over-expansion Anti-pattern.
-7. Run the Task007-confirmed legal single-Archer concentration Anti-pattern using the same total Draft budget.
+7. Run the Task008-confirmed legal single-Archer concentration Anti-pattern using the same total Draft budget.
 8. Adjust Stage-local Wave or Map pressure one axis at a time.
 9. Record the accepted Stage1 baseline.
 
@@ -81,7 +81,7 @@ Stage1 establishes the first complete Stage calibration method used by later Sta
 | StageDefinition | Stage1 composition and maximum health |
 | MonsterWaveConfig | Stage1 Monster order, count, and timing |
 | Map Prefab | Stage1 route and placement geometry |
-| Task008 | Derived Wave proposal, Stage-local calibration evidence, and accepted result |
+| Task009 | Derived Wave proposal, Stage-local calibration evidence, and accepted result |
 
 ## 9. Required Calibration Table
 
@@ -89,12 +89,12 @@ Codex prepares the first Stage calibration table:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Expected Draft Milestone | Expected Pressure | Observed Result |
 |---|---|---:|---:|---:|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended Reference Build test | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task007 Profile-derived interval | Map-calibrated delay | Expected cumulative Draft | Intended Reference Build test | Filled after Play Mode |
 
 ## 10. Execution Collaboration
 
 - The user owns Unity authoring, fixed Reference and Anti-pattern runs, and reporting Draft timing, leaks, final health, and Stage duration.
-- Codex fills the first MonsterWaveConfig table from the Blueprint, Task007 Draft skeleton, accepted Map, and global combat baselines.
+- Codex fills the first MonsterWaveConfig table from the Blueprint, Task008 Draft skeleton, accepted Map, and global combat baselines.
 - Codex compares the observed run with the expected result and changes one Stage-local pressure axis at a time.
 
 ## 11. Unity Authoring Checklist
@@ -116,7 +116,7 @@ Codex prepares the first Stage calibration table:
 - The legal single-Archer concentration Anti-pattern fails because it omits the required second coverage point, not because concentrated investment receives a hidden penalty.
 - Failure is not caused by an invalid route or missing placement.
 - The final Draft has enough remaining combat to matter.
-- Every standard Wave preserves the Task006 reference spatial gap; Stage1 difficulty does not silently come from interval-driven density changes.
+- Every standard Wave preserves the Task007 reference spatial gap; Stage1 difficulty does not silently come from interval-driven density changes.
 - No global baseline is changed solely to repair Stage1.
 
 ## 13. Validation

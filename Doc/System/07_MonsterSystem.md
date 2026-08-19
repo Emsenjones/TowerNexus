@@ -38,6 +38,7 @@ path state, movement state, Buff state, and resolution state.
 | Display Name | Player-facing Monster name |
 | Move Speed | Base movement speed |
 | Maximum Health | Initial health capacity |
+| Lane Offset Range | Maximum bounded XZ variation permitted inside one walkable Grid; Spawn and Target ignore this range |
 | Hit Reference | Optional authored reference point for targeting and presentation |
 | Movement And Death Presentation | Animation identities and death-presentation timing required by this Monster type |
 | Hit Feedback Configuration | Hit-reaction and flash authoring owned by the template's hit-feedback behavior |
@@ -228,30 +229,64 @@ Monster System owns runtime pathfinding and movement. Map System owns the graph 
 
 The first version uses A* over an orthogonal grid:
 
-- Movement starts from the Monster's current Grid Node.
+- Movement follows one ordered Grid route toward the active Target node.
 - The destination is the active Target node.
 - Diagonal traversal is disabled.
 - Missing or effectively unwalkable nodes are not traversable.
-- Movement follows Grid Node center positions.
-- The Monster tracks its current node while moving.
+- Each Monster tracks the reached node, active next node, one complete ordered route, current route position, physical position along the active segment, and stable battle-local lane identity. While a segment is active, the route position identifies the active next node, the immediately preceding route node is the reached node, and the final route node is the active Target.
+- A bounded per-instance lane target may vary the physical destination inside a non-terminal route Grid without changing the Grid route or topology.
 
-When effective walkability changes, every alive non-terminal Monster requests a new path from its current node. Recalculation never restarts from the original Spawn node.
+Route assignment preserves the Monster's physical position and active segment when that segment remains valid. It must not reinterpret a Monster between nodes as physically located at its previously reached node or make it turn back toward that stale position.
+
+When route-reprojection fairness compares remaining distance, Monster System uses a centerline measurement in the active Map's local XZ frame: the logical remainder of the current centerline segment plus Grid-center-to-Grid-center distance for later segments. It records separately whether that measurement is comparable. Lane-offset path length, a zero numeric result, snapshot validity, and Target proximity do not substitute for that comparability fact.
 
 Movement modifiers and movement locks are owned by Monster runtime state. Effects and Buffs request changes through Monster System rather than directly moving the Monster, changing its current node, or bypassing pathfinding.
 
-## 6.1 Placement Path Validation
+## 6.1 Lane Movement
 
-Tower Placement System owns the decision to accept or reject placement. It uses the same pathfinding rules to simulate the candidate occupied nodes and verifies both the authored Spawn-to-Target route and every alive Monster's current-node-to-Target route.
+Each spawned Monster owns one stable battle-local lane identity. Its movement target inside a non-terminal Grid is derived deterministically from exactly that identity, the destination Grid Position, and the authored symmetric maximum Lane Offset Range. Each local axis resolves between the negative and positive authored maximum.
+
+- The same Monster resolving the same destination Grid receives the same movement target after path assignment.
+- Lane selection does not consume the gameplay random stream.
+- The target remains inside the safe walkable corridor and does not change Grid ownership.
+- The Monster gameplay root follows the resolved target, so visuals, Hit Reference, range, area inclusion, and hit checks share one physical position.
+- Spawn and Target always use their exact Grid centers with zero lane offset.
+
+The first version does not include segment identity or optional hash inputs. Monster System resolves the bounded offset in the active Map's local XZ frame from its Node Size and Nodes Root. Grid Nodes remain topology and node-state owners; they do not own Monster lane configuration or lane resolution.
+
+Lane movement is visual and spatial variation inside the grid route. It is not free-space navigation, collision avoidance, Monster blocking, or a second pathfinding authority.
+
+Lane variation must not create obvious left-right zigzag on straight routes or unstable cornering. Its no-Tower traversal time remains acceptably close to the centerline baseline without movement-speed compensation.
+
+## 6.2 Placement Route Revision
+
+Tower Placement System owns placement acceptance. It simulates candidate occupancy and accepts the topology when all ordinary placement constraints pass and at least one Spawn-to-Target route remains. A living Monster's position, reached node, next node, or old branch never vetoes an otherwise legal placement.
 
 ```text
 Simulate Candidate Occupancy
-    -> Query Spawn-To-Target Route
-    -> Query Each Alive Monster's Current-Node-To-Target Route
-    -> All Required Routes Exist: Continue Placement Validation
-    -> Any Required Route Missing: Reject Placement
+    -> Query One Authoritative Spawn-To-Target Projection Route
+    -> No Route: Reject Without Mutation
+    -> Route Exists: Capture Living Monster Movement State
+    -> Preserve Every Unaffected Monster Without Another Path Query
+    -> Prepare Every Affected Monster Reprojection
+    -> Commit Tower Occupancy, Prepared Monster Revisions, And Held-Draft Consumption
 ```
 
-Candidate occupancy must not include an alive Monster's current Grid Node. Validation queries must not mutate the active Map or active Monster paths before placement is committed.
+Current placement only adds blockers. An affected Monster is therefore one whose reached node, active next node, or remaining route intersects the new footprint, or whose captured movement state is invalid and cannot continue safely. An existing remaining route that does not intersect the footprint remains valid.
+
+Unaffected Monsters preserve their world positions, active segments, route positions, and complete remaining routes. They receive no additional A* query and no prepared movement revision.
+
+Every affected Monster is mapped against the same authoritative post-placement route. The primary selection is the route Grid center closest to its captured pre-placement world position. Equal-distance candidates first minimize remaining-route-distance change, then avoid free forward progress when practical, and finally use stable route and Grid order. Multiple Monsters may select the same Grid because Monster Grid occupancy is not exclusive.
+
+The Target Grid is excluded from reprojection candidates for living unresolved Monsters. Even when Target is spatially closest, the Monster projects to an earlier route Grid and must reach the exact Target center through ordinary movement. Spawn remains a valid candidate.
+
+Route revision preserves Health, Buffs, Effects, movement controls, registration, resolution state, and valid target/source relationships. It does not deal damage, heal, kill, leak, resolve, grant progress, register, or deregister a Monster.
+
+All affected-Monster route revisions are prepared before placement commit and become active in the same logical gameplay transaction as Runtime Occupied state and held-Draft consumption. Prepared revisions use one prevalidated state-write boundary that performs no pathfinding or new validation during commit. No committed footprint may remain visible to gameplay while affected Monsters continue along an invalid old route for another frame. Because the accepted topology already supplies a valid authoritative route, a Monster-specific condition cannot convert that placement into an ordinary rejection.
+
+Preparation may reject an invalid topology plan, missing required owner, or authoritative route without an eligible non-Target projection Grid. It does not reject an affected Monster because its snapshot is invalid, it is near Target, it occupies the footprint, or its old route cannot continue. Invalid movement state uses deterministic fallback. If spatial comparison is unavailable, stable authoritative-route order selects the first eligible non-Target Grid and records the degraded comparison rather than rejecting placement.
+
+Released Projectiles retain their existing direction, landing-position snapshot, lifetime, and hit rules. Route reprojection does not destroy, recreate, redirect, or guarantee a hit for an in-flight Projectile; later Monster displacement may cause it to miss.
 
 ---
 
@@ -358,6 +393,13 @@ Monster and Wave authoring validation should report at minimum:
 - Post-resolution alive-Monster state reported before Player resolution completes
 - Missing active Spawn or Target node
 - Missing initial Spawn-to-Target route
+- Negative or unsafe Lane Offset Range
+- A lane target outside its owning walkable Grid corridor
+- A placement route revision that mutates Monster or Map state during preflight
+- An additional path query or prepared movement revision for an unaffected Monster
+- A prepared revision that performs pathfinding or can ordinarily fail during gameplay commit
+- A living unresolved Monster reprojected directly onto Target
+- A placement reprojection that produces damage, resolution, registration, or progress side effects
 - Presentation references that are configured but unusable
 
 Validation reports authored errors without silently rewriting content.
@@ -374,6 +416,8 @@ Current scope includes:
 - Initial-Draft-gated start of the first Wave Delay
 - Normal spawning-completion and post-resolution alive-Monster facts
 - A* pathfinding and dynamic recalculation
+- Active-segment movement state and deterministic per-instance lane targets
+- Placement-time authoritative projection route and affected-only Monster reprojection
 - Health, death, arrival, and exactly-once resolution
 - One-point Player progress and one-damage Target-arrival reporting
 - Hit Reference
@@ -387,6 +431,7 @@ Deferred topics include:
 - Route identifiers and route-specific Wave entries
 - Boss and elite behavior
 - Flying or non-grid movement
+- Local avoidance, collision separation, flocking, and physical Monster blocking
 - Threat and advanced AI systems
 - Monster skills
 - Boss-specific global UI

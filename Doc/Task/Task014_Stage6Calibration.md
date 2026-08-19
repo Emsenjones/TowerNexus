@@ -1,8 +1,8 @@
-# Task013 - Stage6 Calibration
+# Task014 - Stage6 Calibration
 
-Status: Planned; Stage6 Reference Build v0.2 is defined and execution waits for Task007 Elemental solvability inputs
+Status: Planned; Stage6 Reference Build v0.2 is defined and execution waits for Task008 Elemental solvability inputs
 
-Depends on: Task012 Stage5 Calibration
+Depends on: Task013 Stage5 Calibration
 
 ## 1. Goal
 
@@ -32,7 +32,7 @@ The Stage Design Blueprint must approve:
 - Expected Anti-pattern
 - The non-negotiable requirement that at least one matching-Element build path remains achievable
 
-Task001 must provide an accepted Stage6 greybox with Reference placement, range/route evidence, and matching-Element overlap geometry. Task007 must provide the derived Draft count, cumulative all-family Elemental Upgrade pool, candidate-solvability evidence, and Stage6 skeleton. A reproducible matching-Element Reference pair and a viable alternative are selected and recorded inside this Task.
+Task001 must provide an accepted Stage6 greybox with Reference placement, range/route evidence, and matching-Element overlap geometry. Task008 must provide the derived Draft count, cumulative all-family Elemental Upgrade pool, candidate-solvability evidence, and Stage6 skeleton. A reproducible matching-Element Reference pair and a viable alternative are selected and recorded inside this Task.
 
 First-pass inputs:
 
@@ -51,7 +51,7 @@ First-pass inputs:
 - Matching-Element pair timing
 - Shared-target overlap geometry
 - Overload-required pressure
-- Candidate availability under the Task007-authored Draft pool and solvability rule
+- Candidate availability under the Task008-authored Draft pool and solvability rule
 - Monster composition, Profile-derived Spawn Interval, and Map-specific Wave Delay
 - Local Stage6 Map refinement
 - Reference, alternative, and Anti-pattern runs
@@ -69,7 +69,7 @@ First-pass inputs:
 1. Fix the Blueprint-approved matching-Element Reference Build.
 2. Confirm when both Elemental sources become active.
 3. Preserve enough remaining combat for repeated shared-stack attempts.
-4. Tune Map overlap, Wave exposure, and Map-specific Wave Delay before changing global Buff values while preserving the Task006 standard spatial gap.
+4. Tune Map overlap, Wave exposure, and Map-specific Wave Delay before changing global Buff values while preserving the Task007 standard spatial gap.
 5. Confirm at least one required Overload.
 6. Test a Codex-proposed different-TowerFamily matching pair when permitted.
 7. Test the one-Elemental-Core, mismatched-Element, and non-overlapping Anti-patterns.
@@ -90,12 +90,12 @@ First-pass inputs:
 | Owner | Responsibility |
 |---|---|
 | Stage Design Blueprint | Approved Stage6 experience, Reference Build, required capability, Anti-pattern, and solvability constraint |
-| Task007 | Derived Draft count, Elemental pool, candidate-solvability rule, and Stage skeleton |
+| Task008 | Derived Draft count, Elemental pool, candidate-solvability rule, and Stage skeleton |
 | StageDefinition | Stage6 composition and maximum health |
 | MonsterWaveConfig | Stage6 Monster order, count, and timing |
 | Map Prefab | Matching-pair overlap geometry |
 | Buff and Effect Systems | Existing shared-stack, Overload, and Protection behavior |
-| Task013 | Derived Wave and alternative-build proposal, final Stage calibration, and full regression evidence |
+| Task014 | Derived Wave and alternative-build proposal, final Stage calibration, and full regression evidence |
 
 ## 9. Required Calibration Table
 
@@ -103,19 +103,19 @@ Codex prepares:
 
 | Wave | Monster Role | Count | Spawn Interval | Wave Delay | Matching Pair Milestone | Expected Overload Window | Observed Result |
 |---|---|---:|---:|---:|---|---|---|
-| Proposed Wave | Proposed roster entry | First-pass count | Task006 Profile-derived interval | Map-calibrated delay | Expected Draft index and time | Intended shared-stack and Overload opportunities | Filled after Play Mode |
+| Proposed Wave | Proposed roster entry | First-pass count | Task007 Profile-derived interval | Map-calibrated delay | Expected Draft index and time | Intended shared-stack and Overload opportunities | Filled after Play Mode |
 
 The proposal also records one alternative matching-Element pair, the candidate path that makes it obtainable, and the one-Core, mismatched, and non-overlap Anti-pattern expectations.
 
 ## 10. Execution Collaboration
 
 - The user supplies or approves the Stage6 experience and Reference Build, then owns Unity authoring and Play Mode Overload observation.
-- Codex derives the first Wave table, candidate-path check, and alternative matching pair from the Blueprint, Task007 pool, and accepted Elemental baseline.
+- Codex derives the first Wave table, candidate-path check, and alternative matching pair from the Blueprint, Task008 pool, and accepted Elemental baseline.
 - Codex revises Stage-local overlap, exposure, timing, or Monster pressure from pair activation, stack timing, Overloads, leaks, health, and remaining combat.
 
 ## 11. Unity Authoring Checklist
 
-- Confirm the Stage6 Blueprint contract and Task007-derived Elemental solvability inputs.
+- Confirm the Stage6 Blueprint contract and Task008-derived Elemental solvability inputs.
 - Assign the approved Stage6 Map, Wave, and Draft pools.
 - Author the Stage6 MonsterWaveConfig.
 - Place the matching-Element Reference and alternative builds.
@@ -125,13 +125,13 @@ The proposal also records one alternative matching-Element pair, the candidate p
 
 ## 12. Acceptance Criteria
 
-- The Reference Build can form a matching-Element pair within the Task007-derived Draft structure.
+- The Reference Build can form a matching-Element pair within the Task008-derived Draft structure.
 - The pair has meaningful overlapping coverage.
 - Overload is required and observable.
 - Different TowerFamilies may cooperate through the same ElementType.
 - One fully developed Elemental Core is insufficient because Stage6 requires a second matching source, not because the first Core receives a hidden penalty.
 - Mismatched Elements or separated matching Towers fail for the intended reason.
-- Candidate generation does not silently remove every valid solution path under the Task007 solvability rule.
+- Candidate generation does not silently remove every valid solution path under the Task008 solvability rule.
 - Stage1-Stage5 remain accepted.
 
 ## 13. Validation
@@ -146,4 +146,4 @@ The proposal also records one alternative matching-Element pair, the candidate p
 
 ## 14. Review Note
 
-If the Stage is unwinnable because no valid matching candidate route appears, return to Task007 candidate solvability rather than compensating through Wave weakness.
+If the Stage is unwinnable because no valid matching candidate route appears, return to Task008 candidate solvability rather than compensating through Wave weakness.
