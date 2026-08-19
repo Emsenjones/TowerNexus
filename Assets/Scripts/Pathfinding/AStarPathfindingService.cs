@@ -47,7 +47,7 @@ public class AStarPathfindingService : MonoBehaviour
         return FindPath(startNode, targetNode, temporaryBlockedNodes).Count > 0;
     }
 
-    private List<GridNodeBehaviour> FindPath(
+    public List<GridNodeBehaviour> FindPath(
         GridNodeBehaviour startNode,
         GridNodeBehaviour targetNode,
         IReadOnlyCollection<GridNodeBehaviour> temporaryBlockedNodes)

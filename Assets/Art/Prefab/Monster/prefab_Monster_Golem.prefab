@@ -61,6 +61,7 @@ MonoBehaviour:
   buffVisualController: {fileID: 4631483941930043226}
   hitAnchor: {fileID: 2759143581031939007}
   arriveDistanceThreshold: 0.05
+  maximumLaneOffset: {x: 0.1, y: 0.1}
 --- !u!114 &2367576008043052619
 MonoBehaviour:
   m_ObjectHideFlags: 0

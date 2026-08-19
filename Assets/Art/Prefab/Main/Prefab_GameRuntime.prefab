@@ -2575,7 +2575,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerPlacementValidator
   pathfindingService: {fileID: 4731439007408284308}
-  monsterManager: {fileID: 8246104796970957583}
 --- !u!1 &4594445376789324366
 GameObject:
   m_ObjectHideFlags: 0

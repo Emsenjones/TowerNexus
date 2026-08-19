@@ -177,12 +177,17 @@ public class TowerDefinition : ScriptableObject
 
     private bool AreTowerLevelConfigsValid()
     {
-        if (towerLevelConfigs == null)
+        if (towerLevelConfigs == null || towerLevelConfigs.Count == 0)
         {
-            return true;
+            Debug.LogWarning(
+                $"Tower definition '{GetDebugName()}' is invalid: at least " +
+                "one tower level configuration is required.",
+                this);
+            return false;
         }
 
         HashSet<int> configuredLevels = new HashSet<int>();
+        bool hasInitialLevel = false;
 
         for (int i = 0; i < towerLevelConfigs.Count; i++)
         {
@@ -196,7 +201,10 @@ public class TowerDefinition : ScriptableObject
 
             if (!levelConfig.IsValid())
             {
-                Debug.LogWarning($"Tower definition '{GetDebugName()}' is invalid: tower level config at index {i} has an invalid level.", this);
+                Debug.LogWarning(
+                    $"Tower definition '{GetDebugName()}' is invalid: tower " +
+                    $"level configuration at index {i} is invalid.",
+                    this);
                 return false;
             }
 
@@ -205,6 +213,20 @@ public class TowerDefinition : ScriptableObject
                 Debug.LogWarning($"Tower definition '{GetDebugName()}' is invalid: duplicate tower level config for level {levelConfig.Level}.", this);
                 return false;
             }
+
+            if (levelConfig.Level == 1)
+            {
+                hasInitialLevel = true;
+            }
+        }
+
+        if (!hasInitialLevel)
+        {
+            Debug.LogWarning(
+                $"Tower definition '{GetDebugName()}' is invalid: a Level 1 " +
+                "tower configuration is required for deployment.",
+                this);
+            return false;
         }
 
         return true;

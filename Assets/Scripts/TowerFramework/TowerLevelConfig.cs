@@ -12,6 +12,6 @@ public class TowerLevelConfig
 
     public bool IsValid()
     {
-        return level > 0;
+        return level > 0 && towerModelPrefab != null;
     }
 }

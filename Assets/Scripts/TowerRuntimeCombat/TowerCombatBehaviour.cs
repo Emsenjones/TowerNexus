@@ -41,6 +41,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     private bool hasExplicitInitialization;
     private bool hasCompletedSubtypeInitialization;
     private bool hasResolvedStatsCache;
+    private bool isPreparedForBattleActivation;
     private bool isRuntimeSessionActive;
     private bool isBattleActive;
     private bool hasLoggedMissingAttackOrigin;
@@ -77,6 +78,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         towerDefinition = towerInstance != null ? towerInstance.TowerDefinition : null;
         hasExplicitInitialization = towerInstance != null && towerDefinition != null;
         hasCompletedSubtypeInitialization = false;
+        isPreparedForBattleActivation = false;
         CacheOptionalReferences();
 
         attackCycleTimer = 0f;
@@ -106,13 +108,76 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     public void BeginBattle()
     {
+        if (isPreparedForBattleActivation)
+        {
+            ActivatePreparedBattleRuntime();
+            return;
+        }
+
         isBattleActive = true;
         TryRecoverRuntimeSession();
     }
 
+    internal bool TryPrepareBattleActivation(out string failureReason)
+    {
+        if (isBattleActive || isRuntimeSessionActive)
+        {
+            failureReason = "the combat runtime is already active.";
+            return false;
+        }
+
+        if (!isActiveAndEnabled)
+        {
+            failureReason = "the combat component is not active and enabled.";
+            return false;
+        }
+
+        if (!TryValidateExplicitOwner())
+        {
+            failureReason =
+                "the combat runtime does not have a valid explicit Tower owner.";
+            return false;
+        }
+
+        if (monsterManager == null ||
+            !monsterManager.isActiveAndEnabled ||
+            !monsterManager.IsBattleActive)
+        {
+            failureReason =
+                "the combat runtime does not have an active Monster Manager.";
+            return false;
+        }
+
+        if (!IsAuthoredConfigurationValid())
+        {
+            failureReason = "the combat authored configuration is invalid.";
+            return false;
+        }
+
+        EstablishResolvedBaseline();
+        OnCombatInitialized();
+        hasCompletedSubtypeInitialization = true;
+        isPreparedForBattleActivation = true;
+        failureReason = string.Empty;
+        return true;
+    }
+
+    internal bool IsPreparedForBattleActivation =>
+        isPreparedForBattleActivation;
+
+    internal void ActivatePreparedBattleRuntime()
+    {
+        isBattleActive = true;
+        isPreparedForBattleActivation = false;
+        isRuntimeSessionActive = true;
+        SubscribeToRuntimeNotifications();
+    }
+
     public void StopBattle()
     {
-        if (!isBattleActive && !isRuntimeSessionActive)
+        if (!isBattleActive &&
+            !isRuntimeSessionActive &&
+            !isPreparedForBattleActivation)
         {
             return;
         }
@@ -914,6 +979,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         }
 
         isRuntimeSessionActive = true;
+        isPreparedForBattleActivation = false;
         SubscribeToRuntimeNotifications();
         return true;
     }
@@ -1062,6 +1128,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         }
 
         isRuntimeSessionActive = false;
+        isPreparedForBattleActivation = false;
         hasResolvedStatsCache = false;
         attackCycleTimer = 0f;
         currentTarget = null;

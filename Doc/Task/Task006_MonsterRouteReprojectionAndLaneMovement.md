@@ -1,6 +1,6 @@
 # Task006 - Monster Route Reprojection And Lane Movement
 
-Status: Planned; System contracts synchronized, runtime implementation and validation pending
+Status: Completed; System contracts synchronized; Phases A-D runtime, static, and Play Mode validation accepted
 
 Depends on: Task001 Stage1 To Stage6 Greybox Map Prefabs; Task005 Monster Roster Baseline; existing Map, Monster, Pathfinding, and Tower Placement runtime contracts
 

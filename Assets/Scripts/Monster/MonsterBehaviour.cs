@@ -1,10 +1,66 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
 using Sirenix.OdinInspector;
 
+internal sealed class MonsterMovementSnapshot
+{
+    private readonly ReadOnlyCollection<GridNodeBehaviour> currentRoute;
+
+    internal MonsterMovementSnapshot(
+        GridNodeBehaviour reachedNode,
+        GridNodeBehaviour activeNextNode,
+        GridNodeBehaviour targetNode,
+        IReadOnlyList<GridNodeBehaviour> currentRoute,
+        int routeIndex,
+        Vector3 worldPosition,
+        float activeSegmentProgress,
+        float remainingCenterlineDistance,
+        bool hasComparableRemainingDistance,
+        bool hasComparableWorldPosition,
+        bool isValid)
+    {
+        ReachedNode = reachedNode;
+        ActiveNextNode = activeNextNode;
+        TargetNode = targetNode;
+        RouteIndex = routeIndex;
+        WorldPosition = worldPosition;
+        ActiveSegmentProgress = activeSegmentProgress;
+        RemainingCenterlineDistance = remainingCenterlineDistance;
+        HasComparableRemainingDistance = hasComparableRemainingDistance;
+        HasComparableWorldPosition = hasComparableWorldPosition;
+        IsValid = isValid;
+
+        GridNodeBehaviour[] routeCopy = currentRoute != null
+            ? new GridNodeBehaviour[currentRoute.Count]
+            : Array.Empty<GridNodeBehaviour>();
+
+        for (int i = 0; i < routeCopy.Length; i++)
+        {
+            routeCopy[i] = currentRoute[i];
+        }
+
+        this.currentRoute = Array.AsReadOnly(routeCopy);
+    }
+
+    internal GridNodeBehaviour ReachedNode { get; }
+    internal GridNodeBehaviour ActiveNextNode { get; }
+    internal GridNodeBehaviour TargetNode { get; }
+    internal IReadOnlyList<GridNodeBehaviour> CurrentRoute => currentRoute;
+    internal int RouteIndex { get; }
+    internal Vector3 WorldPosition { get; }
+    internal float ActiveSegmentProgress { get; }
+    internal float RemainingCenterlineDistance { get; }
+    internal bool HasComparableRemainingDistance { get; }
+    internal bool HasComparableWorldPosition { get; }
+    internal bool IsValid { get; }
+}
+
 public class MonsterBehaviour : MonoBehaviour
 {
+    private const float MaximumLaneOffsetNodeFraction = 0.25f;
+
     [SerializeField] private string displayName;
     [SerializeField] private float moveSpeed = 1f;
     [SerializeField] private int maxHealth = 1;
@@ -28,6 +84,12 @@ public class MonsterBehaviour : MonoBehaviour
     [SerializeField] private MonsterBuffVisualController buffVisualController;
     [SerializeField] private Transform hitAnchor;
     [SerializeField] private float arriveDistanceThreshold = 0.05f;
+    [TitleGroup("Movement Lane")]
+    [Tooltip(
+        "Symmetric maximum Map-local XZ offset. Runtime targets resolve " +
+        "within [-X,+X] and [-Y,+Y].")]
+    [SerializeField] private Vector2 maximumLaneOffset =
+        new Vector2(0.18f, 0.18f);
 
     [ShowInInspector, ReadOnly] private GridNodeBehaviour currentNode;
     [ShowInInspector, ReadOnly] private GridNodeBehaviour targetNode;
@@ -35,6 +97,8 @@ public class MonsterBehaviour : MonoBehaviour
     [ShowInInspector, ReadOnly] private bool isDead;
     [ShowInInspector, ReadOnly] private bool isResolved;
     [ShowInInspector, ReadOnly] private bool isCleaningUp;
+    [TitleGroup("Movement Lane")]
+    [ShowInInspector, ReadOnly] private int laneIdentity;
 
     private readonly List<GridNodeBehaviour> currentPath = new List<GridNodeBehaviour>();
     private MonsterBuffRuntime buffRuntime;
@@ -52,12 +116,18 @@ public class MonsterBehaviour : MonoBehaviour
     public Animator Animator => animator;
     public Transform HitAnchor => hitAnchor != null ? hitAnchor : transform;
     public GridNodeBehaviour CurrentNode => currentNode;
+    public GridNodeBehaviour ReachedNode => currentNode;
+    public GridNodeBehaviour ActiveNextNode => GetActiveNextNode();
     public GridNodeBehaviour TargetNode => targetNode;
     public IReadOnlyList<GridNodeBehaviour> CurrentPath => currentPath;
+    public IReadOnlyList<GridNodeBehaviour> CurrentRoute => currentPath;
     public int PathIndex => pathIndex;
+    public int RouteIndex => pathIndex;
     public bool IsMoving => isMoving;
     public float MoveSpeedMultiplier => moveSpeedMultiplier;
     public bool IsMovementLocked => isMovementLocked;
+    public int LaneIdentity => laneIdentity;
+    public Vector2 MaximumLaneOffset => maximumLaneOffset;
     public bool IsGameplayTargetable =>
         isActiveAndEnabled && !isResolved && !isCleaningUp;
     [TitleGroup("Buff Runtime")]
@@ -79,6 +149,7 @@ public class MonsterBehaviour : MonoBehaviour
             return false;
         }
 
+        laneIdentity = GetInstanceID();
         currentHealth = maxHealth;
         ClearMovementControls();
         EnsureBuffRuntime();
@@ -121,6 +192,15 @@ public class MonsterBehaviour : MonoBehaviour
         {
             failureReason =
                 $"Death Delay cannot be negative; found {deathDelay}.";
+            return false;
+        }
+
+        if (!IsFinite(maximumLaneOffset) ||
+            maximumLaneOffset.x < 0f ||
+            maximumLaneOffset.y < 0f)
+        {
+            failureReason =
+                "Maximum Lane Offset must contain finite, non-negative XZ values.";
             return false;
         }
 
@@ -183,51 +263,102 @@ public class MonsterBehaviour : MonoBehaviour
         return targetNode;
     }
 
-    public void SetPath(List<GridNodeBehaviour> path)
+    public void SetPath(IReadOnlyList<GridNodeBehaviour> path)
     {
         if (isResolved || isCleaningUp)
         {
             return;
         }
 
-        currentPath.Clear();
-
         if (path == null || path.Count == 0)
         {
-            StopMovement();
+            ClearRouteAndStopMovement();
             return;
         }
 
-        for (int i = 0; i < path.Count; i++)
-        {
-            GridNodeBehaviour pathNode = path[i];
+        GridNodeBehaviour reachedNode = currentNode;
 
-            if (pathNode != null)
+        if (reachedNode == null)
+        {
+            reachedNode = path[0];
+        }
+
+        if (!TryBuildCompleteRoute(
+                path,
+                reachedNode,
+                out List<GridNodeBehaviour> completeRoute))
+        {
+            ClearRouteAndStopMovement();
+            return;
+        }
+
+        currentPath.Clear();
+        currentPath.AddRange(completeRoute);
+        currentNode = reachedNode;
+
+        if (currentPath.Count == 1)
+        {
+            if (currentNode == targetNode)
             {
-                currentPath.Add(pathNode);
+                HandleTargetReached();
+                return;
             }
-        }
 
-        if (currentPath.Count == 0)
-        {
-            StopMovement();
+            ClearRouteAndStopMovement();
             return;
         }
 
-        if (currentNode == null)
+        pathIndex = 1;
+        isMoving = true;
+        RefreshMovementAnimation();
+    }
+
+    internal MonsterMovementSnapshot CaptureMovementSnapshot(
+        MapGeneratorBehaviour activeMap)
+    {
+        GridNodeBehaviour activeNextNode = GetActiveNextNode();
+        bool hasValidRouteInvariant = HasValidActiveRouteInvariant(activeNextNode);
+        float activeSegmentProgress = 0f;
+        float remainingCenterlineDistance = 0f;
+        bool hasComparableRemainingDistance =
+            hasValidRouteInvariant &&
+            TryCalculateRemainingCenterlineDistance(
+                activeMap,
+                out activeSegmentProgress,
+                out remainingCenterlineDistance);
+
+        Vector3 worldPosition = transform.position;
+        bool hasComparableWorldPosition = IsFinite(worldPosition);
+
+        return new MonsterMovementSnapshot(
+            currentNode,
+            activeNextNode,
+            targetNode,
+            currentPath,
+            pathIndex,
+            worldPosition,
+            activeSegmentProgress,
+            remainingCenterlineDistance,
+            hasComparableRemainingDistance,
+            hasComparableWorldPosition,
+            hasValidRouteInvariant);
+    }
+
+    internal void ApplyPreparedMovementRevision(
+        MonsterRouteRevisionEntry revisionEntry)
+    {
+        transform.position = revisionEntry.ProjectedWorldPosition;
+        currentNode = revisionEntry.ReachedNode;
+        targetNode = revisionEntry.TargetNode;
+        currentPath.Clear();
+
+        for (int i = 0; i < revisionEntry.CurrentRoute.Count; i++)
         {
-            currentNode = currentPath[0];
+            currentPath.Add(revisionEntry.CurrentRoute[i]);
         }
 
-        pathIndex = currentPath[0] == currentNode && currentPath.Count > 1 ? 1 : 0;
-
-        if (currentPath.Count == 1 && currentPath[0] == targetNode)
-        {
-            HandleTargetReached();
-            return;
-        }
-
-        isMoving = pathIndex < currentPath.Count;
+        pathIndex = revisionEntry.RouteIndex;
+        isMoving = true;
         RefreshMovementAnimation();
     }
 
@@ -461,8 +592,7 @@ public class MonsterBehaviour : MonoBehaviour
             return;
         }
 
-        Vector3 targetPosition = nextNode.WorldPosition;
-        targetPosition.y = transform.position.y;
+        Vector3 targetPosition = ResolveMovementTargetPosition(nextNode);
 
         Vector3 moveDirection = targetPosition - transform.position;
         moveDirection.y = 0f;
@@ -488,6 +618,259 @@ public class MonsterBehaviour : MonoBehaviour
         pathIndex++;
 
         if (currentNode == targetNode || pathIndex >= currentPath.Count) HandleTargetReached();
+    }
+
+    private bool TryBuildCompleteRoute(
+        IReadOnlyList<GridNodeBehaviour> path,
+        GridNodeBehaviour reachedNode,
+        out List<GridNodeBehaviour> completeRoute)
+    {
+        completeRoute = new List<GridNodeBehaviour>();
+
+        if (reachedNode == null || targetNode == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < path.Count; i++)
+        {
+            if (path[i] == null)
+            {
+                return false;
+            }
+        }
+
+        if (path[path.Count - 1] != targetNode)
+        {
+            return false;
+        }
+
+        GridNodeBehaviour activeNextNode = GetActiveNextNode();
+
+        if (path[0] == reachedNode)
+        {
+            for (int i = 0; i < path.Count; i++)
+            {
+                completeRoute.Add(path[i]);
+            }
+
+            return true;
+        }
+
+        if (activeNextNode == null || path[0] != activeNextNode)
+        {
+            return false;
+        }
+
+        completeRoute.Add(reachedNode);
+
+        for (int i = 0; i < path.Count; i++)
+        {
+            completeRoute.Add(path[i]);
+        }
+
+        return true;
+    }
+
+    private GridNodeBehaviour GetActiveNextNode()
+    {
+        return isMoving && pathIndex >= 0 && pathIndex < currentPath.Count
+            ? currentPath[pathIndex]
+            : null;
+    }
+
+    private bool HasValidActiveRouteInvariant(
+        GridNodeBehaviour activeNextNode)
+    {
+        if (!isMoving ||
+            currentNode == null ||
+            activeNextNode == null ||
+            targetNode == null ||
+            pathIndex <= 0 ||
+            pathIndex >= currentPath.Count ||
+            currentPath[pathIndex] != activeNextNode ||
+            currentPath[pathIndex - 1] != currentNode ||
+            currentPath[currentPath.Count - 1] != targetNode)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < currentPath.Count; i++)
+        {
+            if (currentPath[i] == null)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool TryCalculateRemainingCenterlineDistance(
+        MapGeneratorBehaviour activeMap,
+        out float activeSegmentProgress,
+        out float remainingCenterlineDistance)
+    {
+        activeSegmentProgress = 0f;
+        remainingCenterlineDistance = 0f;
+
+        if (activeMap == null || activeMap.NodesRoot == null)
+        {
+            return false;
+        }
+
+        Vector3 reachedLocalPosition =
+            activeMap.NodesRoot.InverseTransformPoint(currentNode.WorldPosition);
+        Vector3 nextLocalPosition =
+            activeMap.NodesRoot.InverseTransformPoint(currentPath[pathIndex].WorldPosition);
+        Vector3 monsterLocalPosition =
+            activeMap.NodesRoot.InverseTransformPoint(transform.position);
+
+        if (!IsFinite(reachedLocalPosition) ||
+            !IsFinite(nextLocalPosition) ||
+            !IsFinite(monsterLocalPosition))
+        {
+            return false;
+        }
+
+        Vector2 reachedCenter =
+            new Vector2(reachedLocalPosition.x, reachedLocalPosition.z);
+        Vector2 nextCenter =
+            new Vector2(nextLocalPosition.x, nextLocalPosition.z);
+        Vector2 monsterPosition =
+            new Vector2(monsterLocalPosition.x, monsterLocalPosition.z);
+        Vector2 activeSegment = nextCenter - reachedCenter;
+        float activeSegmentLengthSquared = activeSegment.sqrMagnitude;
+
+        if (activeSegmentLengthSquared <= Mathf.Epsilon)
+        {
+            return false;
+        }
+
+        activeSegmentProgress = Mathf.Clamp01(
+            Vector2.Dot(monsterPosition - reachedCenter, activeSegment) /
+            activeSegmentLengthSquared);
+
+        float activeSegmentLength = Mathf.Sqrt(activeSegmentLengthSquared);
+        remainingCenterlineDistance =
+            activeSegmentLength * (1f - activeSegmentProgress);
+
+        for (int i = pathIndex; i < currentPath.Count - 1; i++)
+        {
+            Vector3 fromLocalPosition =
+                activeMap.NodesRoot.InverseTransformPoint(currentPath[i].WorldPosition);
+            Vector3 toLocalPosition =
+                activeMap.NodesRoot.InverseTransformPoint(currentPath[i + 1].WorldPosition);
+
+            if (!IsFinite(fromLocalPosition) || !IsFinite(toLocalPosition))
+            {
+                activeSegmentProgress = 0f;
+                remainingCenterlineDistance = 0f;
+                return false;
+            }
+
+            Vector2 fromCenter =
+                new Vector2(fromLocalPosition.x, fromLocalPosition.z);
+            Vector2 toCenter =
+                new Vector2(toLocalPosition.x, toLocalPosition.z);
+            remainingCenterlineDistance += Vector2.Distance(fromCenter, toCenter);
+        }
+
+        return !float.IsNaN(remainingCenterlineDistance) &&
+               !float.IsInfinity(remainingCenterlineDistance);
+    }
+
+    internal Vector3 ResolveMovementTargetPosition(
+        GridNodeBehaviour destinationNode)
+    {
+        Vector3 targetPosition = destinationNode.WorldPosition;
+        targetPosition.y = transform.position.y;
+
+        if (destinationNode == targetNode ||
+            destinationNode.NodeType == GridNodeType.Spawn ||
+            destinationNode.NodeType == GridNodeType.Target)
+        {
+            return targetPosition;
+        }
+
+        MapGeneratorBehaviour activeMap =
+            monsterManager != null ? monsterManager.ActiveMap : null;
+
+        if (activeMap == null ||
+            activeMap.NodesRoot == null ||
+            activeMap.NodeSize <= 0f)
+        {
+            return targetPosition;
+        }
+
+        float safeMaximum =
+            activeMap.NodeSize * MaximumLaneOffsetNodeFraction;
+        Vector2 safeLaneMaximum = new Vector2(
+            Mathf.Min(maximumLaneOffset.x, safeMaximum),
+            Mathf.Min(maximumLaneOffset.y, safeMaximum));
+        Vector2 laneOffset = ResolveDeterministicLaneOffset(
+            laneIdentity,
+            destinationNode.GridPosition,
+            safeLaneMaximum);
+        Vector3 destinationLocalPosition =
+            activeMap.NodesRoot.InverseTransformPoint(
+                destinationNode.WorldPosition);
+        destinationLocalPosition.x += laneOffset.x;
+        destinationLocalPosition.z += laneOffset.y;
+        targetPosition =
+            activeMap.NodesRoot.TransformPoint(destinationLocalPosition);
+        targetPosition.y = transform.position.y;
+        return targetPosition;
+    }
+
+    private static Vector2 ResolveDeterministicLaneOffset(
+        int instanceLaneIdentity,
+        Vector2Int destinationGridPosition,
+        Vector2 safeMaximum)
+    {
+        uint hash = 2166136261u;
+
+        unchecked
+        {
+            hash = (hash ^ (uint)instanceLaneIdentity) * 16777619u;
+            hash = (hash ^ (uint)destinationGridPosition.x) * 16777619u;
+            hash = (hash ^ (uint)destinationGridPosition.y) * 16777619u;
+            hash ^= hash >> 16;
+            hash *= 0x7feb352du;
+            hash ^= hash >> 15;
+            hash *= 0x846ca68bu;
+            hash ^= hash >> 16;
+        }
+
+        float normalizedX = (hash & 0xFFFFu) / 65535f;
+        float normalizedZ = ((hash >> 16) & 0xFFFFu) / 65535f;
+        return new Vector2(
+            (normalizedX * 2f - 1f) * safeMaximum.x,
+            (normalizedZ * 2f - 1f) * safeMaximum.y);
+    }
+
+    private void ClearRouteAndStopMovement()
+    {
+        currentPath.Clear();
+        StopMovement();
+    }
+
+    private static bool IsFinite(Vector3 value)
+    {
+        return !float.IsNaN(value.x) &&
+               !float.IsInfinity(value.x) &&
+               !float.IsNaN(value.y) &&
+               !float.IsInfinity(value.y) &&
+               !float.IsNaN(value.z) &&
+               !float.IsInfinity(value.z);
+    }
+
+    private static bool IsFinite(Vector2 value)
+    {
+        return !float.IsNaN(value.x) &&
+               !float.IsInfinity(value.x) &&
+               !float.IsNaN(value.y) &&
+               !float.IsInfinity(value.y);
     }
 
     private void HandleTargetReached()

@@ -1,37 +1,62 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using UnityEngine;
+
+internal sealed class TowerPlacementTopologyPlan
+{
+    private readonly ReadOnlyCollection<GridNodeBehaviour> footprint;
+    private readonly ReadOnlyCollection<GridNodeBehaviour> authoritativeRoute;
+
+    internal TowerPlacementTopologyPlan(
+        IReadOnlyList<GridNodeBehaviour> footprint,
+        IReadOnlyList<GridNodeBehaviour> authoritativeRoute)
+    {
+        this.footprint = CopyNodes(footprint);
+        this.authoritativeRoute = CopyNodes(authoritativeRoute);
+    }
+
+    internal IReadOnlyList<GridNodeBehaviour> Footprint => footprint;
+    internal IReadOnlyList<GridNodeBehaviour> AuthoritativeRoute =>
+        authoritativeRoute;
+
+    private static ReadOnlyCollection<GridNodeBehaviour> CopyNodes(
+        IReadOnlyList<GridNodeBehaviour> source)
+    {
+        GridNodeBehaviour[] copy = source != null
+            ? new GridNodeBehaviour[source.Count]
+            : Array.Empty<GridNodeBehaviour>();
+
+        for (int i = 0; i < copy.Length; i++)
+        {
+            copy[i] = source[i];
+        }
+
+        return Array.AsReadOnly(copy);
+    }
+}
 
 public class TowerPlacementValidator : MonoBehaviour
 {
     [SerializeField] private AStarPathfindingService pathfindingService;
-    [SerializeField] private MonsterManager monsterManager;
 
     private MapGeneratorBehaviour mapGenerator;
 
-    public void Initialize(MapGeneratorBehaviour mapGenerator)
-    {
-        this.mapGenerator = mapGenerator;
-    }
-
     public void Initialize(
         MapGeneratorBehaviour mapGenerator,
-        AStarPathfindingService pathfindingService,
-        MonsterManager monsterManager)
+        AStarPathfindingService pathfindingService)
     {
         this.mapGenerator = mapGenerator;
         this.pathfindingService = pathfindingService;
-        this.monsterManager = monsterManager;
     }
 
     public bool IsConfiguredFor(
         MapGeneratorBehaviour activeMap,
-        AStarPathfindingService activePathfindingService,
-        MonsterManager activeMonsterManager)
+        AStarPathfindingService activePathfindingService)
     {
         return activeMap != null &&
                mapGenerator == activeMap &&
-               pathfindingService == activePathfindingService &&
-               monsterManager == activeMonsterManager;
+               pathfindingService == activePathfindingService;
     }
 
     public bool TryGetOccupiedNodes(TowerPlacementPreview preview, out List<GridNodeBehaviour> occupiedNodes)
@@ -78,10 +103,33 @@ public class TowerPlacementValidator : MonoBehaviour
         return occupiedNodes.Count > 0;
     }
 
-    public bool CanPlaceTower(TowerPlacementPreview preview, out List<GridNodeBehaviour> occupiedNodes)
+    public bool CanPlaceTower(TowerPlacementPreview preview)
     {
-        if (!TryGetOccupiedNodes(preview, out occupiedNodes))
+        return TryCreateTopologyPlan(
+            preview,
+            out _,
+            out _,
+            out _,
+            out _,
+            captureDiagnostics: false);
+    }
+
+    internal bool TryCreateTopologyPlan(
+        TowerPlacementPreview preview,
+        out TowerPlacementTopologyPlan topologyPlan,
+        out IReadOnlyList<GridNodeBehaviour> diagnosticFootprint,
+        out bool? routeExists,
+        out string failureReason,
+        bool captureDiagnostics = true)
+    {
+        topologyPlan = null;
+        diagnosticFootprint = null;
+        routeExists = null;
+
+        if (!TryGetOccupiedNodes(preview, out List<GridNodeBehaviour> occupiedNodes))
         {
+            failureReason =
+                "the candidate Tower footprint could not be resolved on the Active Map.";
             return false;
         }
 
@@ -91,17 +139,32 @@ public class TowerPlacementValidator : MonoBehaviour
 
             if (node == null || !node.IsWalkable)
             {
+                diagnosticFootprint = CopyDiagnosticFootprint(
+                    occupiedNodes,
+                    captureDiagnostics);
+                failureReason =
+                    "the candidate Tower footprint contains an unavailable Grid Node.";
                 return false;
             }
         }
 
-        return ValidatePathBlocking(occupiedNodes);
-    }
-
-    private bool ValidatePathBlocking(List<GridNodeBehaviour> occupiedNodes)
-    {
         if (pathfindingService == null || mapGenerator == null)
         {
+            diagnosticFootprint = CopyDiagnosticFootprint(
+                occupiedNodes,
+                captureDiagnostics);
+            failureReason =
+                "the Active Map or A* pathfinding service is not assigned.";
+            return false;
+        }
+
+        if (pathfindingService.ActiveMap != mapGenerator)
+        {
+            diagnosticFootprint = CopyDiagnosticFootprint(
+                occupiedNodes,
+                captureDiagnostics);
+            failureReason =
+                "the A* pathfinding service is not bound to the same Active Map.";
             return false;
         }
 
@@ -110,62 +173,57 @@ public class TowerPlacementValidator : MonoBehaviour
 
         if (spawnNode == null || targetNode == null)
         {
+            diagnosticFootprint = CopyDiagnosticFootprint(
+                occupiedNodes,
+                captureDiagnostics);
+            failureReason =
+                "the Active Map does not provide both Spawn and Target Grid Nodes.";
             return false;
         }
 
-        HashSet<GridNodeBehaviour> temporaryBlockedNodes = new HashSet<GridNodeBehaviour>();
+        List<GridNodeBehaviour> authoritativeRoute = pathfindingService.FindPath(
+            spawnNode,
+            targetNode,
+            occupiedNodes);
+        routeExists =
+            authoritativeRoute != null && authoritativeRoute.Count > 0;
 
-        for (int i = 0; i < occupiedNodes.Count; i++)
+        if (!routeExists.Value)
         {
-            GridNodeBehaviour occupiedNode = occupiedNodes[i];
-
-            if (occupiedNode == null)
-            {
-                return false;
-            }
-
-            temporaryBlockedNodes.Add(occupiedNode);
-        }
-
-        if (!pathfindingService.HasValidPath(spawnNode, targetNode, temporaryBlockedNodes))
-        {
+            diagnosticFootprint = CopyDiagnosticFootprint(
+                occupiedNodes,
+                captureDiagnostics);
+            failureReason =
+                "the candidate Tower footprint blocks the Spawn-to-Target route.";
             return false;
         }
 
-        if (monsterManager == null)
-        {
-            return true;
-        }
-
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
-
-        for (int i = 0; i < aliveMonsters.Count; i++)
-        {
-            MonsterBehaviour monster = aliveMonsters[i];
-
-            if (monster == null || monster.IsDead())
-            {
-                continue;
-            }
-
-            GridNodeBehaviour monsterCurrentNode = monster.GetCurrentNode();
-
-            if (monsterCurrentNode == null)
-            {
-                continue;
-            }
-
-            if (temporaryBlockedNodes.Contains(monsterCurrentNode))
-            {
-                return false;
-            }
-
-            if (!pathfindingService.HasValidPath(monsterCurrentNode, targetNode, temporaryBlockedNodes))
-            {
-                return false;
-            }
-        }
-
+        topologyPlan = new TowerPlacementTopologyPlan(
+            occupiedNodes,
+            authoritativeRoute);
+        diagnosticFootprint = captureDiagnostics
+            ? topologyPlan.Footprint
+            : null;
+        failureReason = string.Empty;
         return true;
+    }
+
+    private static IReadOnlyList<GridNodeBehaviour> CopyDiagnosticFootprint(
+        IReadOnlyList<GridNodeBehaviour> footprint,
+        bool captureDiagnostics)
+    {
+        if (!captureDiagnostics || footprint == null)
+        {
+            return null;
+        }
+
+        GridNodeBehaviour[] copy = new GridNodeBehaviour[footprint.Count];
+
+        for (int i = 0; i < footprint.Count; i++)
+        {
+            copy[i] = footprint[i];
+        }
+
+        return Array.AsReadOnly(copy);
     }
 }

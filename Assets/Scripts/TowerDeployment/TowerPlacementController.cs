@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 public class TowerPlacementController : MonoBehaviour
@@ -83,11 +84,6 @@ public class TowerPlacementController : MonoBehaviour
         {
             CompletePlacement();
         }
-    }
-
-    public void BeginPlacement(TowerDefinition towerDefinition)
-    {
-        BeginPlacement(towerDefinition, null);
     }
 
     public void BeginPlacement(TowerDefinition towerDefinition, PendingDraftUIItem draftedDraftEntry)
@@ -305,19 +301,14 @@ public class TowerPlacementController : MonoBehaviour
         if (placementValidator == null ||
             !placementValidator.IsConfiguredFor(
                 mapGenerator,
-                pathfindingService,
-                monsterManager))
+                pathfindingService))
         {
             failureReason = "Tower Placement Validator is not bound to Stage dependencies.";
             return false;
         }
 
         if (deployController == null ||
-            !deployController.IsConfiguredFor(
-                mapGenerator,
-                placementValidator,
-                monsterManager,
-                battleHUDUI))
+            !deployController.IsConfiguredFor(monsterManager))
         {
             failureReason = "Tower Deploy Controller is not bound to Stage dependencies.";
             return false;
@@ -422,17 +413,17 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
-        if (currentPreview != null && deployController != null)
+        if (currentPreview != null)
         {
-            if (deployController.TryDeployTower(currentPreview, currentDraftEntry, out TowerBehaviour deployedTower))
+            if (deployController == null)
             {
-                RegisterDeployedTower(deployedTower);
-                if (deployedTower != null && deployedTower.VisualController != null)
-                {
-                    deployedTower.VisualController.PlayTowerSpawnRefreshFeedback();
-                }
-
-                currentDraftEntry = null;
+                LogPlacementRejected(
+                    "TowerReadiness",
+                    "Tower Deploy Controller is not assigned.");
+            }
+            else
+            {
+                TryCommitNewTowerPlacement();
             }
         }
 
@@ -558,7 +549,7 @@ public class TowerPlacementController : MonoBehaviour
 
             currentPreview.SetPlacementState(
                 placementValidator != null &&
-                placementValidator.CanPlaceTower(currentPreview, out _)
+                placementValidator.CanPlaceTower(currentPreview)
             );
             return;
         }
@@ -697,22 +688,365 @@ public class TowerPlacementController : MonoBehaviour
         isLevelUpPreviewActive = false;
     }
 
-    private void RegisterDeployedTower(TowerBehaviour tower)
+    private bool TryCommitNewTowerPlacement()
     {
-        if (tower == null ||
-            tower.TowerInstance == null ||
-            tower.TowerInstance.OccupiedNodes.Count == 0 ||
-            deployedTowers.Contains(tower))
+        string topologyFailureReason = placementValidator == null
+            ? "Tower Placement Validator is not assigned."
+            : string.Empty;
+        IReadOnlyList<GridNodeBehaviour> diagnosticFootprint = null;
+        bool? routeExists = null;
+
+        if (placementValidator == null ||
+            !placementValidator.TryCreateTopologyPlan(
+                currentPreview,
+                out TowerPlacementTopologyPlan topologyPlan,
+                out diagnosticFootprint,
+                out routeExists,
+                out topologyFailureReason))
+        {
+            LogPlacementRejected(
+                "TopologyPlan",
+                topologyFailureReason,
+                diagnosticFootprint,
+                routeExists);
+            return false;
+        }
+
+        if (!TryValidateHeldTowerDraft(out string draftFailureReason))
+        {
+            LogPlacementRejected(
+                "DraftPreflight",
+                draftFailureReason,
+                topologyPlan.Footprint,
+                routeExists: true);
+            return false;
+        }
+
+        string revisionFailureReason = monsterManager == null
+            ? "Monster Manager is not assigned."
+            : string.Empty;
+
+        if (monsterManager == null ||
+            !monsterManager.TryPrepareTopologyRevision(
+                topologyPlan,
+                out MonsterRouteRevisionBatch revisionBatch,
+                out revisionFailureReason))
+        {
+            LogPlacementRejected(
+                "MonsterRevisionPreparation",
+                revisionFailureReason,
+                topologyPlan.Footprint,
+                routeExists: true);
+            return false;
+        }
+
+        if (!deployController.TryPrepareTower(
+                currentPreview,
+                topologyPlan,
+                out TowerBehaviour preparedTower,
+                out string towerFailureReason))
+        {
+            LogPlacementRejected(
+                "TowerReadiness",
+                towerFailureReason,
+                topologyPlan.Footprint,
+                routeExists: true);
+            return false;
+        }
+
+        if (!TryValidatePreparedTowerForCommit(
+                preparedTower,
+                topologyPlan,
+                out TowerCombatBehaviour preparedCombat,
+                out string commitFailureReason))
+        {
+            DiscardPreparedTower(preparedTower);
+            LogPlacementRejected(
+                "CommitPreflight",
+                commitFailureReason,
+                topologyPlan.Footprint,
+                routeExists: true);
+            return false;
+        }
+
+        PendingDraftUIItem consumedDraft = currentDraftEntry;
+        CommitPreparedPlacement(
+            topologyPlan,
+            revisionBatch,
+            preparedTower,
+            preparedCombat,
+            consumedDraft);
+        currentDraftEntry = null;
+
+        bool hasPresentationWarning =
+            !TryRunPlacementPresentation(preparedTower);
+        LogPlacementAccepted(
+            topologyPlan,
+            revisionBatch,
+            hasPresentationWarning
+                ? "AcceptedWithPresentationWarning"
+                : "Accepted");
+        return true;
+    }
+
+    private bool TryValidateHeldTowerDraft(out string failureReason)
+    {
+        if (battleHUDUI == null)
+        {
+            failureReason = "Battle HUD UI is not assigned.";
+            return false;
+        }
+
+        if (currentDraftEntry == null ||
+            !battleHUDUI.OwnsPendingDraft(currentDraftEntry))
+        {
+            failureReason =
+                "the exact held Tower Draft is not owned by the active " +
+                "pending-item collection.";
+            return false;
+        }
+
+        if (currentDraftResult == null ||
+            !currentDraftResult.IsValid ||
+            currentDraftResult.ResultType != DraftResultType.TowerDraft ||
+            currentDraftEntry.DraftResult != currentDraftResult ||
+            currentDraftEntry.TowerDefinition != currentTowerDefinition ||
+            currentPreview == null ||
+            currentPreview.TowerDefinition != currentTowerDefinition)
+        {
+            failureReason =
+                "the held Tower Draft identity does not match the active " +
+                "placement preview.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    private bool TryValidatePreparedTowerForCommit(
+        TowerBehaviour preparedTower,
+        TowerPlacementTopologyPlan topologyPlan,
+        out TowerCombatBehaviour preparedCombat,
+        out string failureReason)
+    {
+        preparedCombat = null;
+
+        if (preparedTower == null ||
+            preparedTower.TowerInstance == null ||
+            preparedTower.VisualController == null ||
+            preparedTower.VisualController.CurrentTowerModelInstance == null)
+        {
+            failureReason = "the prepared Tower is missing required runtime state.";
+            return false;
+        }
+
+        IReadOnlyList<GridNodeBehaviour> preparedFootprint =
+            preparedTower.TowerInstance.OccupiedNodes;
+
+        if (preparedFootprint.Count != topologyPlan.Footprint.Count)
+        {
+            failureReason =
+                "the prepared Tower footprint differs from the topology plan.";
+            return false;
+        }
+
+        for (int i = 0; i < topologyPlan.Footprint.Count; i++)
+        {
+            if (!ContainsNode(preparedFootprint, topologyPlan.Footprint[i]))
+            {
+                failureReason =
+                    "the prepared Tower footprint differs from the topology plan.";
+                return false;
+            }
+        }
+
+        if (deployedTowers.Contains(preparedTower) ||
+            !preparedTower.TryGetComponent(out preparedCombat) ||
+            !preparedCombat.IsPreparedForBattleActivation)
+        {
+            failureReason =
+                "the prepared Tower combat runtime is not ready for activation.";
+            preparedCombat = null;
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
+    private void CommitPreparedPlacement(
+        TowerPlacementTopologyPlan topologyPlan,
+        MonsterRouteRevisionBatch revisionBatch,
+        TowerBehaviour preparedTower,
+        TowerCombatBehaviour preparedCombat,
+        PendingDraftUIItem consumedDraft)
+    {
+        for (int i = 0; i < topologyPlan.Footprint.Count; i++)
+        {
+            topologyPlan.Footprint[i].SetRuntimeOccupied(true);
+        }
+
+        monsterManager.ApplyPreparedMovementRevisionBatch(revisionBatch);
+        deployedTowers.Add(preparedTower);
+        preparedCombat.ActivatePreparedBattleRuntime();
+        battleHUDUI.ConsumePendingDraft(consumedDraft);
+    }
+
+    private bool TryRunPlacementPresentation(TowerBehaviour deployedTower)
+    {
+        bool succeeded = true;
+
+        try
+        {
+            if (mapGenerator == null ||
+                !mapGenerator.RefreshRuntimeTileVisuals())
+            {
+                succeeded = false;
+            }
+        }
+        catch (System.Exception exception)
+        {
+            succeeded = false;
+            Debug.LogException(exception, this);
+        }
+
+        try
+        {
+            deployedTower.VisualController?.PlayTowerSpawnRefreshFeedback();
+        }
+        catch (System.Exception exception)
+        {
+            succeeded = false;
+            Debug.LogException(exception, this);
+        }
+
+        return succeeded;
+    }
+
+    private void LogPlacementRejected(
+        string failureStage,
+        string failureReason,
+        IReadOnlyList<GridNodeBehaviour> footprint = null,
+        bool? routeExists = null)
+    {
+        Debug.LogWarning(
+            $"Tower placement transaction: Outcome=Rejected; " +
+            $"FootprintGridPositions={FormatGridPositions(footprint)}; " +
+            $"RouteExists={FormatRouteExists(routeExists)}; " +
+            $"FailureStage={failureStage}; FailureReason={failureReason}",
+            this);
+    }
+
+    private void LogPlacementAccepted(
+        TowerPlacementTopologyPlan topologyPlan,
+        MonsterRouteRevisionBatch revisionBatch,
+        string outcome)
+    {
+        Debug.Log(
+            $"Tower placement transaction: Outcome={outcome}; " +
+            $"FootprintNodes={topologyPlan.Footprint.Count}; " +
+            $"FootprintGridPositions=" +
+            $"{FormatGridPositions(topologyPlan.Footprint)}; " +
+            $"RouteExists=True; " +
+            $"AuthoritativeRouteNodes={topologyPlan.AuthoritativeRoute.Count}; " +
+            $"AffectedMonsters={revisionBatch.AffectedMonsterCount}",
+            this);
+
+        for (int i = 0; i < revisionBatch.Entries.Count; i++)
+        {
+            MonsterRouteRevisionEntry entry = revisionBatch.Entries[i];
+            string progressDirection =
+                !entry.HasComparableRemainingDistance
+                    ? "Uncompared"
+                    : entry.RemainingCenterlineDistanceDelta < 0f
+                        ? "Forward"
+                        : entry.RemainingCenterlineDistanceDelta > 0f
+                            ? "Backward"
+                            : "Unchanged";
+
+            Debug.Log(
+                $"Tower placement Monster revision: " +
+                $"Monster={entry.Monster.name}; " +
+                $"PrePosition={entry.PrePlacementWorldPosition}; " +
+                $"ProjectionGrid={entry.ReachedNode.GridPosition}; " +
+                $"Displacement={entry.WorldDisplacementDistance}; " +
+                $"RemainingDistanceDelta=" +
+                $"{entry.RemainingCenterlineDistanceDelta}; " +
+                $"ProgressDirection={progressDirection}; " +
+                $"UsedFallback={entry.UsedDeterministicFallback}",
+                entry.Monster);
+        }
+    }
+
+    private static string FormatGridPositions(
+        IReadOnlyList<GridNodeBehaviour> footprint)
+    {
+        if (footprint == null)
+        {
+            return "Unresolved";
+        }
+
+        StringBuilder builder = new StringBuilder("[");
+
+        for (int i = 0; i < footprint.Count; i++)
+        {
+            if (i > 0)
+            {
+                builder.Append(',');
+            }
+
+            GridNodeBehaviour node = footprint[i];
+
+            if (node == null)
+            {
+                builder.Append("Null");
+                continue;
+            }
+
+            Vector2Int gridPosition = node.GridPosition;
+            builder.Append('(');
+            builder.Append(gridPosition.x);
+            builder.Append(',');
+            builder.Append(gridPosition.y);
+            builder.Append(')');
+        }
+
+        builder.Append(']');
+        return builder.ToString();
+    }
+
+    private static string FormatRouteExists(bool? routeExists)
+    {
+        return routeExists.HasValue
+            ? routeExists.Value ? "True" : "False"
+            : "Unresolved";
+    }
+
+    private void DiscardPreparedTower(TowerBehaviour preparedTower)
+    {
+        if (preparedTower == null)
         {
             return;
         }
 
-        deployedTowers.Add(tower);
+        preparedTower.gameObject.SetActive(false);
+        Destroy(preparedTower.gameObject);
+    }
 
-        if (isBattleActive)
+    private static bool ContainsNode(
+        IReadOnlyList<GridNodeBehaviour> nodes,
+        GridNodeBehaviour targetNode)
+    {
+        for (int i = 0; i < nodes.Count; i++)
         {
-            tower.GetComponent<TowerCombatBehaviour>()?.BeginBattle();
+            if (nodes[i] == targetNode)
+            {
+                return true;
+            }
         }
+
+        return false;
     }
 
     private void RemoveNullDeployedTowerEntries()
@@ -1051,7 +1385,7 @@ public class TowerPlacementController : MonoBehaviour
     {
         if (placementValidator != null)
         {
-            placementValidator.Initialize(mapGenerator, pathfindingService, monsterManager);
+            placementValidator.Initialize(mapGenerator, pathfindingService);
         }
 
         if (deployController == null)
@@ -1059,6 +1393,6 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
-        deployController.Initialize(placementValidator, mapGenerator, battleHUDUI, monsterManager);
+        deployController.Initialize(monsterManager);
     }
 }

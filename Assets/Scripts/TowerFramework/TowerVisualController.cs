@@ -87,7 +87,7 @@ public class TowerVisualController : MonoBehaviour
         return currentTowerModelPresentation;
     }
 
-    public void SetTowerVisual(GameObject towerModelPrefab)
+    public bool SetTowerVisual(GameObject towerModelPrefab)
     {
         DestroyCurrentTowerModel();
         requestedTowerModelPrefab = towerModelPrefab;
@@ -96,23 +96,34 @@ public class TowerVisualController : MonoBehaviour
         {
             Debug.LogWarning("Tower visual controller cannot set tower visual: tower model prefab is null.", this);
             ResolveCurrentAttackOrigin();
-            return;
+            return false;
         }
 
         if (towerPrefabSpawnPoint == null)
         {
             Debug.LogWarning("Tower visual controller cannot set tower visual: TowerPrefabSpawnPoint is missing.", this);
             ResolveCurrentAttackOrigin();
-            return;
+            return false;
         }
 
         currentTowerModelInstance = Instantiate(towerModelPrefab, towerPrefabSpawnPoint);
+
+        if (currentTowerModelInstance == null)
+        {
+            Debug.LogWarning(
+                "Tower visual controller could not instantiate the requested tower model.",
+                this);
+            ResolveCurrentAttackOrigin();
+            return false;
+        }
+
         currentTowerModelInstance.transform.localPosition = Vector3.zero;
         currentTowerModelInstance.transform.localRotation = Quaternion.identity;
         currentTowerModelInstance.transform.localScale = Vector3.one;
         ResolveCurrentTowerModelPresentation();
         ResolveCurrentAttackOrigin();
         RecachePreviewMaterialBindings();
+        return true;
     }
 
     public void ClearCurrentTowerModel()

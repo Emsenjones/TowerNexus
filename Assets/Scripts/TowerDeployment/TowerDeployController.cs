@@ -1,163 +1,173 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class TowerDeployController : MonoBehaviour
 {
-    private TowerPlacementValidator placementValidator;
     [SerializeField] private Transform deployedTowerRoot;
     [SerializeField] private MonsterManager monsterManager;
-    private BattleHUDUI battleHUDUI;
-    private MapGeneratorBehaviour mapGenerator;
 
-    public bool IsConfiguredFor(
-        MapGeneratorBehaviour activeMap,
-        TowerPlacementValidator activePlacementValidator,
-        MonsterManager activeMonsterManager,
-        BattleHUDUI activeBattleHudUi)
+    public bool IsConfiguredFor(MonsterManager activeMonsterManager)
     {
-        return activeMap != null &&
-               mapGenerator == activeMap &&
-               placementValidator == activePlacementValidator &&
+        return activeMonsterManager != null &&
                monsterManager == activeMonsterManager &&
-               battleHUDUI == activeBattleHudUi &&
                deployedTowerRoot != null;
     }
 
-    public void Initialize(
-        TowerPlacementValidator placementValidator,
-        MapGeneratorBehaviour mapGenerator,
-        BattleHUDUI battleHUDUI)
+    public void Initialize(MonsterManager monsterManager)
     {
-        this.placementValidator = placementValidator;
-        this.mapGenerator = mapGenerator;
-        this.battleHUDUI = battleHUDUI;
-    }
-
-    public void Initialize(
-        TowerPlacementValidator placementValidator,
-        MapGeneratorBehaviour mapGenerator,
-        BattleHUDUI battleHUDUI,
-        MonsterManager monsterManager)
-    {
-        this.placementValidator = placementValidator;
-        this.mapGenerator = mapGenerator;
-        this.battleHUDUI = battleHUDUI;
         this.monsterManager = monsterManager;
     }
 
-    public bool TryDeployTower(TowerPlacementPreview preview, PendingDraftUIItem draftedDraftEntry)
-    {
-        return TryDeployTower(preview, draftedDraftEntry, out _);
-    }
-
-    public bool TryDeployTower(
+    internal bool TryPrepareTower(
         TowerPlacementPreview preview,
-        PendingDraftUIItem draftedDraftEntry,
-        out TowerBehaviour deployedTower)
+        TowerPlacementTopologyPlan topologyPlan,
+        out TowerBehaviour preparedTower,
+        out string failureReason)
     {
-        deployedTower = null;
+        preparedTower = null;
 
         if (preview == null)
         {
-            Debug.LogWarning("Tower deploy controller cannot deploy tower: placement preview is null.", this);
+            failureReason = "the Tower placement preview is missing.";
+            return false;
+        }
+
+        if (topologyPlan == null || topologyPlan.Footprint.Count == 0)
+        {
+            failureReason = "the Tower placement topology plan is invalid.";
+            return false;
+        }
+
+        if (deployedTowerRoot == null)
+        {
+            failureReason = "the Deployed Tower Root is not assigned.";
+            return false;
+        }
+
+        if (monsterManager == null ||
+            !monsterManager.isActiveAndEnabled ||
+            !monsterManager.IsBattleActive)
+        {
+            failureReason = "the active Monster Manager is unavailable.";
             return false;
         }
 
         TowerDefinition towerDefinition = preview.TowerDefinition;
 
-        if (towerDefinition == null)
+        if (towerDefinition == null || !towerDefinition.IsValid())
         {
-            Debug.LogWarning("Tower deploy controller cannot deploy tower: tower definition is null.", preview);
+            failureReason = "the Tower definition is invalid.";
             return false;
         }
 
-        if (towerDefinition.TowerPrefab == null)
+        TowerLevelConfig initialLevelConfig = towerDefinition.GetLevelConfig(1);
+
+        if (initialLevelConfig == null || !initialLevelConfig.IsValid())
         {
-            Debug.LogWarning("Tower deploy controller cannot deploy tower: tower prefab is not assigned.", towerDefinition);
+            failureReason = "the Level 1 Tower configuration is invalid.";
             return false;
         }
 
-        if (!towerDefinition.TryGetCombatBehaviour(out _, out string combatFailureReason))
+        List<GridNodeBehaviour> occupiedNodes =
+            new List<GridNodeBehaviour>(topologyPlan.Footprint.Count);
+
+        for (int i = 0; i < topologyPlan.Footprint.Count; i++)
         {
-            Debug.LogWarning(
-                $"Tower deploy controller cannot deploy tower: {combatFailureReason}",
-                towerDefinition);
-            return false;
+            occupiedNodes.Add(topologyPlan.Footprint[i]);
         }
 
-        if (placementValidator == null)
+        GameObject towerObject = null;
+
+        try
         {
-            Debug.LogWarning("Tower deploy controller cannot deploy tower: placement validator is not assigned.", this);
-            return false;
-        }
+            towerObject = Instantiate(
+                towerDefinition.TowerPrefab,
+                deployedTowerRoot);
 
-        if (!placementValidator.CanPlaceTower(preview, out List<GridNodeBehaviour> occupiedNodes))
-        {
-            return false;
-        }
-
-        if (draftedDraftEntry != null && battleHUDUI == null)
-        {
-            Debug.LogWarning("Tower deploy controller cannot deploy tower: battle HUD UI is not assigned for drafted tower entry removal.", this);
-            return false;
-        }
-
-        GameObject towerObject = Instantiate(towerDefinition.TowerPrefab, deployedTowerRoot);
-        towerObject.transform.SetPositionAndRotation(preview.transform.position, preview.transform.rotation);
-        towerObject.transform.localScale = preview.transform.localScale;
-
-        if (!towerObject.TryGetComponent(out TowerInstance towerInstance))
-        {
-            towerInstance = towerObject.AddComponent<TowerInstance>();
-        }
-
-        towerInstance.Initialize(towerDefinition, occupiedNodes);
-
-        if (!towerObject.TryGetComponent(out TowerBehaviour towerBehaviour))
-        {
-            towerBehaviour = towerObject.AddComponent<TowerBehaviour>();
-        }
-
-        towerBehaviour.Initialize(towerInstance);
-        towerBehaviour.RefreshTowerVisual();
-
-        if (!towerObject.TryGetComponent(out TowerCombatBehaviour towerCombatBehaviour))
-        {
-            Debug.LogWarning(
-                "Tower deploy controller rejected instantiated tower: validated root combat component is missing.",
-                towerObject);
-            Destroy(towerObject);
-            return false;
-        }
-
-        towerCombatBehaviour.Initialize(towerInstance, monsterManager);
-
-        for (int i = 0; i < occupiedNodes.Count; i++)
-        {
-            GridNodeBehaviour node = occupiedNodes[i];
-
-            if (node != null)
+            if (towerObject == null)
             {
-                node.SetRuntimeOccupied(true);
+                failureReason = "Unity did not create the Tower runtime instance.";
+                return false;
             }
-        }
 
-        if (mapGenerator != null)
+            towerObject.transform.SetPositionAndRotation(
+                preview.transform.position,
+                preview.transform.rotation);
+            towerObject.transform.localScale = preview.transform.localScale;
+
+            if (!towerObject.TryGetComponent(out TowerInstance towerInstance))
+            {
+                towerInstance = towerObject.AddComponent<TowerInstance>();
+            }
+
+            towerInstance.Initialize(towerDefinition, occupiedNodes);
+
+            if (!towerObject.TryGetComponent(out TowerBehaviour towerBehaviour))
+            {
+                towerBehaviour = towerObject.AddComponent<TowerBehaviour>();
+            }
+
+            towerBehaviour.Initialize(towerInstance);
+
+            if (!towerBehaviour.RefreshTowerVisual() ||
+                towerBehaviour.VisualController == null ||
+                towerBehaviour.VisualController.CurrentTowerModelInstance == null)
+            {
+                return FailPreparation(
+                    towerObject,
+                    "the Tower Level 1 visual could not reach ready state.",
+                    out failureReason);
+            }
+
+            if (!towerObject.TryGetComponent(
+                    out TowerCombatBehaviour towerCombatBehaviour))
+            {
+                return FailPreparation(
+                    towerObject,
+                    "the validated root combat component is missing from the " +
+                    "Tower runtime instance.",
+                    out failureReason);
+            }
+
+            towerCombatBehaviour.Initialize(towerInstance, monsterManager);
+
+            if (!towerCombatBehaviour.TryPrepareBattleActivation(
+                    out string combatFailureReason))
+            {
+                return FailPreparation(
+                    towerObject,
+                    $"the Tower combat runtime is not ready: " +
+                    combatFailureReason,
+                    out failureReason);
+            }
+
+            preparedTower = towerBehaviour;
+            failureReason = string.Empty;
+            return true;
+        }
+        catch (Exception exception)
         {
-            mapGenerator.RefreshRuntimeTileVisuals();
+            Debug.LogException(exception, this);
+            return FailPreparation(
+                towerObject,
+                $"Tower readiness threw {exception.GetType().Name}.",
+                out failureReason);
         }
+    }
 
-        if (monsterManager != null)
+    private bool FailPreparation(
+        GameObject towerObject,
+        string reason,
+        out string failureReason)
+    {
+        if (towerObject != null)
         {
-            monsterManager.RecalculateAllMonsterPaths();
+            towerObject.SetActive(false);
+            Destroy(towerObject);
         }
 
-        if (battleHUDUI != null && draftedDraftEntry != null)
-        {
-            battleHUDUI.RemovePendingDraft(draftedDraftEntry);
-        }
-
-        deployedTower = towerBehaviour;
-        return true;
+        failureReason = reason;
+        return false;
     }
 }

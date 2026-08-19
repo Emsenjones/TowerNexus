@@ -50,7 +50,10 @@ public class TowerBehaviour : MonoBehaviour
             return false;
         }
 
-        visualController.SetTowerVisual(levelConfig.TowerModelPrefab);
+        if (!visualController.SetTowerVisual(levelConfig.TowerModelPrefab))
+        {
+            return false;
+        }
 
         if (TryGetComponent(out TowerCombatBehaviour combatBehaviour))
         {

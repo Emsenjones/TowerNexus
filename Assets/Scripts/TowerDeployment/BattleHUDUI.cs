@@ -239,12 +239,27 @@ public class BattleHUDUI : MonoBehaviour
 
     public void RemovePendingDraft(PendingDraftUIItem item)
     {
-        if (item == null)
+        if (!OwnsPendingDraft(item))
         {
-            Debug.LogWarning("Battle HUD UI cannot remove pending draft: item is null.", this);
+            Debug.LogWarning(
+                "Battle HUD UI cannot remove pending draft: the item is not " +
+                "owned by the active pending-item collection.",
+                this);
             return;
         }
 
+        ConsumePendingDraft(item);
+    }
+
+    internal bool OwnsPendingDraft(PendingDraftUIItem item)
+    {
+        return isBattleActive &&
+               item != null &&
+               pendingDraftItems.Contains(item);
+    }
+
+    internal void ConsumePendingDraft(PendingDraftUIItem item)
+    {
         pendingDraftItems.Remove(item);
         Destroy(item.gameObject);
     }
