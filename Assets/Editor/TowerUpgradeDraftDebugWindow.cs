@@ -378,32 +378,12 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             return;
         }
 
-        for (int nextLevel = tower.CurrentLevel + 1;
-             nextLevel <= requiredLevel;
-             nextLevel++)
-        {
-            if (!tower.TrySetLevel(nextLevel))
-            {
-                Debug.LogWarning(
-                    $"Tower upgrade debug window could not prepare " +
-                    $"'{tower.name}' for the configured Upgrade list: " +
-                    $"Tower Level {nextLevel} is not configured.",
-                    tower);
-                return;
-            }
-        }
-
-        TowerBehaviour towerBehaviour = tower.GetComponent<TowerBehaviour>();
-
-        if (towerBehaviour != null)
-        {
-            towerBehaviour.RefreshTowerVisual();
-        }
-
-        Debug.Log(
-            $"Tower upgrade debug window prepared '{tower.name}' at Tower " +
-            $"Level {tower.CurrentLevel} for {upgrades.Count} configured " +
-            "Upgrades. No Player Progress or Draft was consumed.",
+        Debug.LogWarning(
+            $"Tower upgrade debug window cannot force '{tower.name}' from " +
+            $"Level {tower.CurrentLevel} to Level {requiredLevel}. Tower Level " +
+            "changes now require the prepared Level-Up transaction and exact " +
+            "held Draft consumption. Use a Fixed Draft calibration sequence " +
+            "to reach the required Level before applying this Upgrade list.",
             tower);
         Repaint();
     }

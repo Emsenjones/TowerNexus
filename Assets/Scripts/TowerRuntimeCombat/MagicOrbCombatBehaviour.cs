@@ -29,7 +29,6 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         }
 
         return new TowerCombatBaseStats(
-            BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration,
             rotationSpeed);
@@ -117,15 +116,10 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             return;
         }
 
-        bool refreshDamage = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.DamageBonus);
         bool refreshRotationSpeed = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.MagicOrbRotationSpeed);
         group.ApplyStatRefresh(new MagicOrbStatRefresh(
-            refreshDamage,
-            currentStats.DamageBonus,
             refreshRotationSpeed,
             currentStats.MagicOrbRotationSpeed));
     }
@@ -298,12 +292,12 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
                 memberPrefab,
                 orbitCenterPosition,
                 Quaternion.identity);
-            int memberBasicDamage = isAdditional
-                ? additionalAttackEntities.BasicDamage
-                : BaseAttackDamage;
+            float memberDamageScale = isAdditional
+                ? additionalAttackEntities.DamageScale
+                : 1f;
 
             if (!orbObject.TryGetComponent(out MagicOrbBehaviour member) ||
-                !group.TryAddMember(member, i, memberCount, memberBasicDamage))
+                !group.TryAddMember(member, i, memberCount, memberDamageScale))
             {
                 Debug.LogWarning(
                     "Magic Orb group release failed: every instance root requires a valid MagicOrbBehaviour.",
@@ -366,7 +360,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         if (!group.TryCommitStagedMembers(
                 stagedMembers,
                 desiredMemberCount,
-                additionalAttackEntities.BasicDamage))
+                additionalAttackEntities.DamageScale))
         {
             CleanupStagedMembers(stagedMembers);
         }

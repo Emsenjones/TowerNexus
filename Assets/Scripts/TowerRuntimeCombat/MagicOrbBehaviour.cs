@@ -6,22 +6,16 @@ using UnityEngine;
 public readonly struct MagicOrbStatRefresh
 {
     public MagicOrbStatRefresh(
-        bool refreshDamage,
-        int newDamageBonus,
         bool refreshRotationSpeed,
         float newRotationSpeed)
     {
-        RefreshDamage = refreshDamage;
-        NewDamageBonus = newDamageBonus;
         RefreshRotationSpeed = refreshRotationSpeed;
         NewRotationSpeed = newRotationSpeed;
     }
 
-    public bool RefreshDamage { get; }
-    public int NewDamageBonus { get; }
     public bool RefreshRotationSpeed { get; }
     public float NewRotationSpeed { get; }
-    public bool HasAnyChange => RefreshDamage || RefreshRotationSpeed;
+    public bool HasAnyChange => RefreshRotationSpeed;
 }
 
 public class MagicOrbBehaviour : MonoBehaviour
@@ -50,8 +44,8 @@ public class MagicOrbBehaviour : MonoBehaviour
     private MagicOrbGroupRuntime ownerGroup;
     private int memberSlot;
     private float angleOffset;
-    private int basicDamage;
-    private int attackDamage;
+    private float damageScale;
+    private TowerDamageSourceIdentity damageSourceIdentity;
     private bool isInitialized;
     private bool hasEnded;
 
@@ -67,7 +61,6 @@ public class MagicOrbBehaviour : MonoBehaviour
     public float BaseContactDistance => contactDistance;
     public float BaseMaxLifetime => maxLifetime;
     public float BaseSameTargetHitCooldown => sameTargetHitCooldown;
-    public int AttackDamage => attackDamage;
 
     public bool IsAuthoredConfigurationValid()
     {
@@ -82,14 +75,14 @@ public class MagicOrbBehaviour : MonoBehaviour
         MagicOrbGroupRuntime initializedOwnerGroup,
         int initializedMemberSlot,
         float initializedAngleOffset,
-        int initializedBasicDamage,
-        int damageBonus)
+        float initializedDamageScale,
+        TowerDamageSourceIdentity initializedDamageSourceIdentity)
     {
         ownerGroup = initializedOwnerGroup;
         memberSlot = initializedMemberSlot;
         angleOffset = initializedAngleOffset;
-        basicDamage = Mathf.Max(0, initializedBasicDamage);
-        attackDamage = Mathf.Max(0, basicDamage + damageBonus);
+        damageScale = initializedDamageScale;
+        damageSourceIdentity = initializedDamageSourceIdentity;
         monsterHitCooldownEnds.Clear();
         hasEnded = false;
         isInitialized = ownerGroup != null && memberSlot >= 0;
@@ -115,14 +108,14 @@ public class MagicOrbBehaviour : MonoBehaviour
         MagicOrbGroupRuntime initializedOwnerGroup,
         int initializedMemberSlot,
         float initializedAngleOffset,
-        int initializedBasicDamage,
-        int damageBonus)
+        float initializedDamageScale,
+        TowerDamageSourceIdentity initializedDamageSourceIdentity)
     {
         ownerGroup = initializedOwnerGroup;
         memberSlot = initializedMemberSlot;
         angleOffset = initializedAngleOffset;
-        basicDamage = Mathf.Max(0, initializedBasicDamage);
-        attackDamage = Mathf.Max(0, basicDamage + damageBonus);
+        damageScale = initializedDamageScale;
+        damageSourceIdentity = initializedDamageSourceIdentity;
         monsterHitCooldownEnds.Clear();
         hasEnded = false;
         isInitialized = ownerGroup != null && memberSlot >= 0;
@@ -136,12 +129,17 @@ public class MagicOrbBehaviour : MonoBehaviour
         }
     }
 
-    internal void RefreshDamageBonus(int damageBonus)
+    internal bool TryResolveDamage(
+        out TowerOwnedDamageResolution damageResolution)
     {
-        if (isInitialized && !hasEnded)
-        {
-            attackDamage = Mathf.Max(0, basicDamage + damageBonus);
-        }
+        damageResolution = default;
+        return isInitialized &&
+               !hasEnded &&
+               TowerRuntimeStatResolver.TryResolveTowerOwnedDamage(
+                   SourceTower,
+                   damageSourceIdentity,
+                   damageScale,
+                   out damageResolution);
     }
 
     internal bool IsTargetOnCooldown(MonsterBehaviour monster, float currentTime)
@@ -230,7 +228,6 @@ internal sealed class MagicOrbGroupRuntime
 
     private TowerUpgradeDefinition arcaneDetonationSourceUpgrade;
     private EffectDefinition arcaneDetonationEffect;
-    private int damageBonus;
     private float rotationSpeed;
     private float orbitPhase;
     private float elapsedLifetime;
@@ -253,7 +250,6 @@ internal sealed class MagicOrbGroupRuntime
         this.sourceTower = sourceTower;
         this.monsterManager = monsterManager;
         this.orbitCenterPosition = orbitCenterPosition;
-        damageBonus = resolvedStats.DamageBonus;
         rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
         arcaneDetonationSourceUpgrade = runtimeOptions.ArcaneDetonationSourceUpgrade;
         arcaneDetonationEffect = runtimeOptions.ArcaneDetonationEffect;
@@ -287,7 +283,7 @@ internal sealed class MagicOrbGroupRuntime
         MagicOrbBehaviour member,
         int memberSlot,
         int desiredMemberCount,
-        int basicDamage)
+        float damageScale)
     {
         if (hasEnded ||
             isActive ||
@@ -304,8 +300,10 @@ internal sealed class MagicOrbGroupRuntime
                 this,
                 memberSlot,
                 angleOffset,
-                basicDamage,
-                damageBonus))
+                damageScale,
+                memberSlot == 0
+                    ? TowerDamageSourceIdentity.PrimaryDirect
+                    : TowerDamageSourceIdentity.AdditionalDirect))
         {
             return false;
         }
@@ -364,16 +362,6 @@ internal sealed class MagicOrbGroupRuntime
             return;
         }
 
-        if (refresh.RefreshDamage)
-        {
-            damageBonus = refresh.NewDamageBonus;
-
-            for (int i = 0; i < members.Count; i++)
-            {
-                members[i].RefreshDamageBonus(damageBonus);
-            }
-        }
-
         if (refresh.RefreshRotationSpeed)
         {
             rotationSpeed = Mathf.Max(0f, refresh.NewRotationSpeed);
@@ -397,7 +385,7 @@ internal sealed class MagicOrbGroupRuntime
     public bool TryCommitStagedMembers(
         IReadOnlyList<MagicOrbBehaviour> stagedMembers,
         int desiredMemberCount,
-        int basicDamage)
+        float damageScale)
     {
         if (!IsActive ||
             stagedMembers == null ||
@@ -428,8 +416,8 @@ internal sealed class MagicOrbGroupRuntime
                 this,
                 slot,
                 angleOffset,
-                basicDamage,
-                damageBonus);
+                damageScale,
+                TowerDamageSourceIdentity.AdditionalDirect);
             members.Add(candidate);
             SetMemberPosition(candidate);
         }
@@ -528,7 +516,16 @@ internal sealed class MagicOrbGroupRuntime
             return false;
         }
 
-        monster.TakeDamage(member.AttackDamage);
+        if (!member.TryResolveDamage(
+                out TowerOwnedDamageResolution damageResolution))
+        {
+            return false;
+        }
+
+        monster.TakeDamage(damageResolution.FinalDamage);
+        TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+            damageResolution,
+            1);
         ElementalApplication.TryApplyFromTowerAttack(sourceTower, monster, hitPosition);
         member.RecordContact(monster, Time.time + sameTargetHitCooldown);
 
@@ -573,7 +570,12 @@ internal sealed class MagicOrbGroupRuntime
             Vector3 detonationPosition = completionPositions[i];
             resolvedArcaneDetonationTargets.Clear();
 
-            EffectExecutor.ExecuteWithResolvedTargets(
+            if (members.Count <= i || members[i] == null)
+            {
+                continue;
+            }
+
+            bool executed = EffectExecutor.ExecuteWithResolvedTargets(
                 arcaneDetonationEffect,
                 new EffectTriggerContext(
                     sourceTower: sourceTower,
@@ -581,11 +583,13 @@ internal sealed class MagicOrbGroupRuntime
                     targetMonster: null,
                     hasTriggerPosition: true,
                     triggerPosition: detonationPosition,
-                    resolvedDamage: members.Count > i && members[i] != null
-                        ? members[i].AttackDamage
-                        : 0,
                     allowsElementalApplication: false),
                 resolvedArcaneDetonationTargets);
+
+            if (!executed)
+            {
+                continue;
+            }
 
             for (int targetIndex = 0;
                  targetIndex < resolvedArcaneDetonationTargets.Count;

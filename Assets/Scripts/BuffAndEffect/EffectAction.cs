@@ -3,6 +3,13 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+public enum EffectDamageMode
+{
+    None = 0,
+    TowerScaled = 1,
+    FixedBuff = 2
+}
+
 [Serializable]
 public class EffectAction
 {
@@ -10,8 +17,15 @@ public class EffectAction
     [SerializeField] private EffectActionType actionType;
     [TitleGroup("Effect Action")]
     [ShowIf(nameof(IsDealDamageAction))]
-    [MinValue(0)]
-    [SerializeField] private int damageAmount;
+    [SerializeField] private EffectDamageMode damageMode;
+    [TitleGroup("Effect Action")]
+    [ShowIf(nameof(IsTowerScaledDamageAction))]
+    [MinValue(0.01f)]
+    [SerializeField] private float damageScale;
+    [TitleGroup("Effect Action")]
+    [ShowIf(nameof(IsFixedBuffDamageAction))]
+    [MinValue(1)]
+    [SerializeField] private int fixedDamage;
     [TitleGroup("Effect Action")]
     [ShowIf(nameof(IsApplyBuffAction))]
     [SerializeField] private BuffDefinition buffDefinition;
@@ -43,7 +57,9 @@ public class EffectAction
     [SerializeField] private GameObject windVortexPrefab;
 
     public EffectActionType ActionType => actionType;
-    public int DamageAmount => Mathf.Max(0, damageAmount);
+    public EffectDamageMode DamageMode => damageMode;
+    public float DamageScale => damageScale;
+    public int FixedDamage => fixedDamage;
     public BuffDefinition BuffDefinition => buffDefinition;
     public float MoveSpeedMultiplier => moveSpeedMultiplier;
     public bool IsMovementLocked => isMovementLocked;
@@ -54,6 +70,11 @@ public class EffectAction
 
     public bool IsValid()
     {
+        if (!IsDamageAuthoringValid())
+        {
+            return false;
+        }
+
         if (actionType == EffectActionType.ApplyBuff && buffDefinition == null)
         {
             Debug.LogWarning("Effect action is invalid: ApplyBuff action requires a BuffDefinition.");
@@ -86,10 +107,6 @@ public class EffectAction
                 return false;
             }
 
-            if (!multiTargetEffectDefinition.IsValid())
-            {
-                return false;
-            }
         }
 
         if (actionType == EffectActionType.SpawnWindVortex)
@@ -115,6 +132,53 @@ public class EffectAction
         return true;
     }
 
+    private bool IsDamageAuthoringValid()
+    {
+        if (actionType != EffectActionType.DealDamage)
+        {
+            if (damageMode != EffectDamageMode.None ||
+                damageScale != 0f ||
+                fixedDamage != 0)
+            {
+                Debug.LogWarning(
+                    "Effect action is invalid: non-damage actions cannot author Damage Mode, Damage Scale, or Fixed Damage.");
+                return false;
+            }
+
+            return true;
+        }
+
+        switch (damageMode)
+        {
+            case EffectDamageMode.TowerScaled:
+                if (float.IsNaN(damageScale) ||
+                    float.IsInfinity(damageScale) ||
+                    damageScale <= 0f ||
+                    fixedDamage != 0)
+                {
+                    Debug.LogWarning(
+                        "Effect action is invalid: TowerScaled damage requires a positive finite Damage Scale and no Fixed Damage.");
+                    return false;
+                }
+
+                return true;
+            case EffectDamageMode.FixedBuff:
+                if (fixedDamage <= 0 || damageScale != 0f)
+                {
+                    Debug.LogWarning(
+                        "Effect action is invalid: FixedBuff damage requires positive Fixed Damage and no Damage Scale.");
+                    return false;
+                }
+
+                return true;
+            case EffectDamageMode.None:
+            default:
+                Debug.LogWarning(
+                    "Effect action is invalid: DealDamage requires TowerScaled or FixedBuff Damage Mode.");
+                return false;
+        }
+    }
+
     private bool IsApplyBuffAction()
     {
         return actionType == EffectActionType.ApplyBuff;
@@ -123,6 +187,18 @@ public class EffectAction
     private bool IsDealDamageAction()
     {
         return actionType == EffectActionType.DealDamage;
+    }
+
+    private bool IsTowerScaledDamageAction()
+    {
+        return IsDealDamageAction() &&
+               damageMode == EffectDamageMode.TowerScaled;
+    }
+
+    private bool IsFixedBuffDamageAction()
+    {
+        return IsDealDamageAction() &&
+               damageMode == EffectDamageMode.FixedBuff;
     }
 
     private bool IsSetMoveSpeedMultiplierAction()

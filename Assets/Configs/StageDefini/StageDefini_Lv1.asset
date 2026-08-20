@@ -13,12 +13,13 @@ MonoBehaviour:
   m_Name: StageDefini_Lv1
   m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
   displayName: Level1
-  playerMaxHealth: 11
+  playerMaxHealth: 4
   playerProgressRequirements: 03000000030000000400000004000000
   mapTemplate: {fileID: 3273336904907436118, guid: a1fcbb10e6ba74a0da2adad3faa9db97, type: 3}
   monsterWaveConfig: {fileID: 11400000, guid: 2d14da0049f6b4deb9d0ed1185670759, type: 2}
   towerDraftPool:
   - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+  - {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
   towerUpgradeDraftPool:
   - {fileID: 11400000, guid: fced72daa7b7c42419e4cb626f897805, type: 2}
   - {fileID: 11400000, guid: 76b13c72bfb594d89beecab5f1ce3520, type: 2}
@@ -26,6 +27,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
   - {fileID: 11400000, guid: 81c23c8d23a140038f44a43dd92745e6, type: 2}
   - {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}
+  - {fileID: 11400000, guid: 43d1ce78aedd8460fb2773003312c23b, type: 2}
+  - {fileID: 11400000, guid: 10331f3655bcf43a6bf22a9e7b39930d, type: 2}
   showStageIntroduction: 1
   introducedTowers:
   - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}

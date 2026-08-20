@@ -95,7 +95,7 @@ Windup admission requires at least one current valid target. That target only pr
 - Initial Shell count
 - Package-owned additional-member identity required by that topology
 
-At the presentation Release Moment, Archer and Cannon select again from current valid in-range candidates. This release confirmation freezes the target identity, direction, and target-position snapshot required by the actual Projectile. Values that define the entity at release, such as unresolved damage and approved current package options, are also resolved there unless their contract explicitly says they are Windup snapshots.
+At the presentation Release Moment, Archer and Cannon select again from current valid in-range candidates. This release confirmation freezes the target identity, direction, and target-position snapshot required by the actual Projectile. Package identity and DamageScale are resolved at their reviewed Windup or Release boundary. The final Tower-owned integer damage is not frozen merely because release occurred; it resolves from the source Tower's current BasicDamage at the actual future damage boundary.
 
 ```text
 Ready And Valid Target
@@ -169,11 +169,32 @@ Live Refresh changes only future unresolved behavior. It never rewrites:
 
 Elemental identity remains a live lookup at each explicitly eligible attack boundary. Earlier attack results are never replayed.
 
+Every Tower-owned damage result uses:
+
+```text
+TowerOwnedDamage
+    = RoundToInt(CurrentResolvedBasicDamage At Damage Boundary * Stable DamageScale)
+```
+
+The source Tower identity, damage-source identity, and DamageScale are stable inputs of the released or persistent result. Damage-source identity distinguishes Primary, Additional, Bounce, and Behaviour Effect results; a Behaviour Effect additionally identifies its EffectDefinition and authored action ordinal. CurrentResolvedBasicDamage is read when that result actually damages a Monster. A Level or Basic Damage Bonus change may therefore change later unresolved hits, contacts, explosions, field ticks, or dive impacts without changing topology, targets, captured positions, histories, package identity, or already completed results.
+
+One immutable damage-resolution fact is produced at each actual damage boundary. It contains the source Tower family and Level, Level BasicDamage, raw Damage Bonus, resolved BasicDamage, damage-source identity, DamageScale, raw product, and final integer. Gameplay, result context, and read-only diagnostics consume that same fact; none recalculates it. DamageScale, resolved BasicDamage, and raw product must be finite and positive. Invalid source or numeric state rejects the complete Tower-owned result rather than clamping it or partially continuing its Behaviour or Elemental consequences.
+
+Resolution and application observations are exception-isolated and read-only.
+A resolution observation records either the immutable successful fact or one
+explicit rejection reason. A later application observation references that
+same fact and records the number of successful target applications. Diagnostic
+failure cannot reject, repeat, or modify gameplay damage. Combat-balance JSON
+aggregates these observations by complete TowerScaled signature instead of
+emitting one record per hit.
+
 ---
 
 # 8. Accepted Combat-Value Change Transaction
 
-After an accepted Basic Upgrade changes resolved combat values, the bound runtime performs one ordered semantic transaction:
+An accepted Level Up arrives with its next combat baseline already prepared. Its semantic commit applies that baseline through pure cache assignment after the Tower Level changes and before the exact held Draft is consumed. Baseline apply performs no validation, virtual callback, active-entity traversal, event publication, or diagnostics. `OnLevelChanged` is an exception-isolated post-commit notification and never owns gameplay refresh.
+
+An accepted Basic Upgrade that changes non-damage scheduler or package values performs one ordered runtime refresh transaction:
 
 ```text
 Read Previous Resolved Baseline
@@ -186,7 +207,7 @@ Read Previous Resolved Baseline
 
 Committing the new baseline before entity dispatch ensures multiple accepted changes in the same frame compose from the immediately preceding state.
 
-Rejected changes create no refresh transaction. Tower Level changes replace level presentation and eligibility state without creating a combat-value refresh transaction in the v0.1 growth model.
+Rejected changes create no refresh transaction. A Level-only BasicDamage change needs no active-entity damage rewrite because every unresolved Tower-owned result reads the committed baseline at its actual damage boundary. Model presentation, notification, and Upgrade eligibility remain separate post-commit consequences.
 
 Before dispatch, active registries are treated as stable snapshots so entity completion during refresh cannot skip another entity or mutate the iteration source.
 
@@ -208,7 +229,7 @@ The result is non-negative. Completing an Attack Cycle through refresh does not 
 
 ## 8.2 Entity Refresh
 
-- Unresolved damage may refresh for eligible active entities.
+- Future unresolved Tower-owned damage observes the committed current resolved BasicDamage through live resolution while retaining its existing stable DamageScale and package timing; no entity receives a replacement integer-damage snapshot or damage-refresh payload.
 - Additive capacities such as Piercing change remaining state by the resolved delta rather than resetting from a new maximum.
 - Atomic multi-field changes are applied together before completion is evaluated.
 - Ended, disabled, impacted, or otherwise terminal entities reject refresh.
@@ -226,7 +247,7 @@ Archer Windup admission creates one stable release group with Center and optiona
 - Scatter Arrow fixes the slot topology and side-member authoring identity at Windup admission.
 - An Upgrade during the presentation wait does not add slots.
 - At release, Archer selects one current valid in-range Center target and freezes its current direction. Side directions are derived from that release direction and the Windup-frozen Scatter shape.
-- Current Damage, Piercing, and Explosive Arrow values are resolved while Windup topology remains unchanged. The Center uses the Tower's Arrow template and resolved Attack Damage; side members use Scatter Arrow's additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
+- Current Piercing and Explosive Arrow package values are resolved while Windup topology remains unchanged. The Center uses the Tower's Arrow template and DamageScale `1`; side members use Scatter Arrow's additional-entity template and package DamageScale. Every later direct or explosion result resolves current BasicDamage at its own damage boundary.
 - If no valid Center target exists at release, the group is cancelled without starting an Attack Cycle.
 - Released directions are immutable and do not follow later target movement.
 
@@ -245,8 +266,8 @@ Cannon Windup admission freezes only the initial Shell count and additional-memb
 - If no valid primary target exists at release, the group is cancelled without starting an Attack Cycle. Missing additional targets reduce the released member count but do not redirect multiple Shells to one target implicitly.
 - Intended Monster movement or invalidation after release does not cancel or redirect a captured position. Projectile System may use the reference only to prioritize the optional direct Monster Hit at that position.
 - An Upgrade during the presentation wait does not add Shells.
-- Each successful initial Shell release receives one immutable integer direct-damage value plus Explosive Shell and eligible pre-impact Bouncing Shell data. The primary Shell uses the Tower's Shell template and current resolved Cannon Attack Damage; additional Shells use Multi Shells' additional-entity template and `Additional Basic Damage + resolved Damage Bonus`.
-- Damage Bonus live refresh may update an unresolved primary initial Shell, but it cannot overwrite an additional initial Shell's composed release-time direct damage or any bounce child's fixed Bounce Damage.
+- Each successful initial Shell release receives one stable direct DamageScale plus Explosive Shell and eligible pre-impact Bouncing Shell data. The primary Shell uses the Tower's Shell template and DamageScale `1`; additional Shells use Multi Shells' additional-entity template and package DamageScale.
+- A BasicDamage refresh does not rewrite Shell topology, landing position, chain history, or stable scale. Initial and bounce direct results read current resolved BasicDamage when each impact damage result occurs.
 
 Successful release starts one Attack Cycle. Arc movement, Position Impact, direct arrival query, bounce-chain behavior, and completion belong to Projectile System.
 
@@ -265,10 +286,10 @@ Group contract:
 - Independent contact history per member
 - Shared lifetime completion ends the whole group
 - Group completion is idempotent
-- The primary member uses the Tower's Orb template and base damage; additional members use Multi Orbs' additional-entity template and authored Basic Damage.
-- Every member composes its own Basic Damage with the current shared resolved Damage Bonus.
+- The primary member uses the Tower's Orb template and DamageScale `1`; additional members use Multi Orbs' additional-entity template and authored DamageScale.
+- Every contact resolves damage from the current shared resolved BasicDamage and that member's stable DamageScale.
 
-Approved active-group refresh may update unresolved damage, orbit speed, and reviewed Behaviour packages. No gameplay hit capacity, hit-exhaustion completion branch, or maximum-hit refresh exists.
+Approved active-group refresh may update orbit speed and reviewed Behaviour packages. Unresolved damage is not refreshed or rewritten: every later contact or Effect execution reads the source Tower's current resolved BasicDamage at that boundary. No gameplay hit capacity, hit-exhaustion completion branch, or maximum-hit refresh exists.
 
 Multi Orbs reconciliation is atomic:
 
@@ -277,7 +298,7 @@ Multi Orbs reconciliation is atomic:
 - If any candidate fails, discard only candidates and preserve the original group.
 - Revalidate the group and commit all missing members together.
 - Existing members keep lifetime and contact history.
-- Newly committed members use the active package's configured template and Basic Damage.
+- Newly committed members use the active package's configured template and DamageScale.
 
 Arcane Detonation is eligible only on normal group completion and executes once at each active member's current position before the group disappears. Technical cleanup never triggers it.
 
@@ -291,6 +312,7 @@ Arcane Field is one Tower-owned persistent field created when its Upgrade become
 - It does not duplicate on unrelated changes.
 - Its complete runtime prefab comes from the Upgrade definition and owns its presentation. The prefab root's MagicArcaneFieldBehaviour owns its authored radius, interval, and tick Effect.
 - Each tick resolves valid Monsters inside its radius and grants the reviewed Elemental opportunity.
+- Each tick's Behaviour damage is Tower-owned and uses the current resolved BasicDamage with the field Effect's stable DamageScale.
 - It ends when the owning combat session or Tower ends.
 
 It is not an Attack Entity released by the ordinary Magic scheduler.
@@ -301,7 +323,7 @@ It is not an Attack Entity released by the ordinary Magic scheduler.
 
 Drone Tower launches one Drone per successful scheduler pass while active count is below current capacity.
 
-The primary active slot uses the Tower's Drone template and base damage. Multi Drones adds the package-authored number of secondary slots; each secondary slot uses its configured additional-entity template and `Additional Basic Damage + resolved Damage Bonus`. Capacity changes do not batch-fill slots. If the primary slot becomes vacant while secondary Drones remain active, the next eligible scheduler pass restores the primary slot.
+The primary active slot uses the Tower's Drone template and DamageScale `1`. Multi Drones adds the package-authored number of secondary slots; each secondary slot uses its configured additional-entity template and DamageScale. Capacity changes do not batch-fill slots. If the primary slot becomes vacant while secondary Drones remain active, the next eligible scheduler pass restores the primary slot.
 
 Each Drone owns:
 
@@ -329,7 +351,7 @@ Burst cadence has three semantic phases:
 
 Battery Duration is static Drone entity authoring for the battle. Applying a Tower Upgrade does not refresh remaining battery or rewrite the battery-end boundary.
 
-High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates eligible active Drones through the same Damage Bonus refresh path and affects future Drone projectile direct damage. It does not alter Blast Rounds or other independently authored Effect damage.
+High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates current resolved BasicDamage and therefore affects future unresolved Drone direct, Blast Rounds, and Final Dive Tower-owned damage. It does not alter fixed Buff-lifecycle or Elemental-reaction damage.
 
 Final Dive, when active at battery end, locks one target and becomes one-way:
 
@@ -386,7 +408,7 @@ Runtime validation should reject or report at minimum:
 - Missing Monster source
 - Missing required Attack Entity configuration
 - Missing active Attack Origin at release time
-- Invalid base damage, range, Attack Cycle duration, capacity, or package values
+- Invalid Level-authored BasicDamage, range, Attack Cycle duration, capacity, or package values
 - Duplicate active group identity or invalid slot membership
 - Release data that cannot satisfy its archetype contract
 

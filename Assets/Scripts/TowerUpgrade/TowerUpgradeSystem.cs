@@ -1,6 +1,24 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+internal readonly struct PreparedTowerLevelUp
+{
+    internal PreparedTowerLevelUp(
+        TowerInstance targetTower,
+        int previousLevel,
+        TowerLevelConfig nextLevelConfig)
+    {
+        TargetTower = targetTower;
+        PreviousLevel = previousLevel;
+        NextLevelConfig = nextLevelConfig;
+    }
+
+    internal TowerInstance TargetTower { get; }
+    internal int PreviousLevel { get; }
+    internal TowerLevelConfig NextLevelConfig { get; }
+    internal int NextLevel => NextLevelConfig.Level;
+}
+
 public class TowerUpgradeSystem : MonoBehaviour
 {
     public const int SupportedMaximumTowerLevel = 3;
@@ -176,6 +194,8 @@ public class TowerUpgradeSystem : MonoBehaviour
         }
 
         int candidateNextLevel = targetTower.CurrentLevel + 1;
+        TowerLevelConfig candidateNextConfig =
+            targetDefinition.GetLevelConfig(candidateNextLevel);
         int maxAllowedLevel = Mathf.Min(
             targetTower.GetMaxConfiguredLevel(),
             SupportedMaximumTowerLevel,
@@ -183,7 +203,7 @@ public class TowerUpgradeSystem : MonoBehaviour
 
         if (maxAllowedLevel <= 0 ||
             candidateNextLevel > maxAllowedLevel ||
-            !targetTower.CanSetLevel(candidateNextLevel))
+            !targetTower.CanCommitLevelConfig(candidateNextConfig))
         {
             return false;
         }
@@ -192,17 +212,51 @@ public class TowerUpgradeSystem : MonoBehaviour
         return true;
     }
 
-    public bool TryLevelUpTower(
+    internal bool TryPrepareLevelUp(
         TowerInstance targetTower,
         TowerDefinition draftTowerDefinition,
-        out int nextLevel)
+        out PreparedTowerLevelUp preparedLevelUp,
+        out string failureReason)
     {
-        if (!CanLevelUpTower(targetTower, draftTowerDefinition, out nextLevel))
+        preparedLevelUp = default;
+
+        if (!CanLevelUpTower(
+                targetTower,
+                draftTowerDefinition,
+                out int nextLevel))
         {
+            failureReason = "the Tower Level-Up request is not eligible.";
             return false;
         }
 
-        return targetTower.TrySetLevel(nextLevel);
+        TowerLevelConfig nextLevelConfig =
+            targetTower.TowerDefinition.GetLevelConfig(nextLevel);
+
+        if (!targetTower.CanCommitLevelConfig(nextLevelConfig))
+        {
+            failureReason = "the next Tower Level configuration is invalid.";
+            return false;
+        }
+
+        preparedLevelUp = new PreparedTowerLevelUp(
+            targetTower,
+            targetTower.CurrentLevel,
+            nextLevelConfig);
+        failureReason = string.Empty;
+        return true;
+    }
+
+    internal void CommitPreparedLevelUp(PreparedTowerLevelUp preparedLevelUp)
+    {
+        preparedLevelUp.TargetTower.CommitPreparedLevel(
+            preparedLevelUp.NextLevelConfig);
+    }
+
+    internal void PublishPreparedLevelUp(PreparedTowerLevelUp preparedLevelUp)
+    {
+        preparedLevelUp.TargetTower.PublishLevelChangedSafely(
+            preparedLevelUp.PreviousLevel,
+            preparedLevelUp.NextLevel);
     }
 
     public bool CanApplyUpgrade(

@@ -650,7 +650,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a91d0412b85f4f04ba6dd9f2ff12e107, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DroneCombatBehaviour
-  baseAttackDamage: 10
   attackRange: 4
   attackCycleDuration: 10
   targetSelectionType: 3

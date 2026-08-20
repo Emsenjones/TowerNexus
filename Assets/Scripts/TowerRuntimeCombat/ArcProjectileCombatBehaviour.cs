@@ -29,7 +29,6 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
     protected override TowerCombatBaseStats CreateBaseStats()
     {
         return new TowerCombatBaseStats(
-            BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration);
     }
@@ -146,7 +145,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
                             upgradeDefinition.MaxBounceCount,
                             upgradeDefinition.BounceArcHeight,
                             upgradeDefinition.BounceTargetSelectionType,
-                            upgradeDefinition.BounceDamage);
+                            upgradeDefinition.BounceDamageScale);
                     }
                 }
                 break;
@@ -209,18 +208,21 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
                 continue;
             }
 
-            int shellDamage = isAdditional
-                ? Mathf.Max(0, pendingAdditionalAttackEntities.BasicDamage + resolvedStats.DamageBonus)
-                : resolvedStats.AttackDamage;
-            ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions(
-                locksDirectDamage: isAdditional);
+            float damageScale = isAdditional
+                ? pendingAdditionalAttackEntities.DamageScale
+                : 1f;
+            TowerDamageSourceIdentity damageSourceIdentity = isAdditional
+                ? TowerDamageSourceIdentity.AdditionalDirect
+                : TowerDamageSourceIdentity.PrimaryDirect;
+            ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions();
 
             if (TryReleaseProjectile(
                     releasePrefab,
                     origin,
                     pendingTargetPositions[i],
                     pendingTargets[i],
-                    shellDamage,
+                    damageScale,
+                    damageSourceIdentity,
                     ProjectileFlightType.Arc,
                     arcHeight,
                     runtimeOptions,
@@ -290,14 +292,14 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private ProjectileRuntimeOptions CreateRuntimeOptions(bool locksDirectDamage)
+    private ProjectileRuntimeOptions CreateRuntimeOptions()
     {
         TowerUpgradeDefinition explosiveShellSourceUpgrade = null;
         EffectDefinition explosiveShellEffect = null;
         float bounceSearchRadius = 0f;
         int remainingBounceCount = 0;
         float bounceArcHeight = 0f;
-        int bounceDamage = 0;
+        float bounceDamageScale = 0f;
         TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest;
 
         if (HasBehaviourPackage(TowerBehaviourPackageType.CannonExplosiveShell) &&
@@ -326,20 +328,19 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             remainingBounceCount = resolvedBouncingShellUpgrade.MaxBounceCount;
             bounceArcHeight = resolvedBouncingShellUpgrade.BounceArcHeight;
             bounceTargetSelectionType = resolvedBouncingShellUpgrade.BounceTargetSelectionType;
-            bounceDamage = resolvedBouncingShellUpgrade.BounceDamage;
+            bounceDamageScale = resolvedBouncingShellUpgrade.BounceDamageScale;
         }
 
         return new ProjectileRuntimeOptions(
             canPierce: false,
             maxPierceHitCount: 1,
-            locksDirectDamage: locksDirectDamage,
             explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,
             explosiveShellEffect: explosiveShellEffect,
             bounceSearchRadius: bounceSearchRadius,
             remainingBounceCount: remainingBounceCount,
             bounceArcHeight: bounceArcHeight,
             bounceTargetSelectionType: bounceTargetSelectionType,
-            bounceDamage: bounceDamage);
+            bounceDamageScale: bounceDamageScale);
     }
 
     private AdditionalAttackEntityAuthoring GetMultiShellsAdditionalAttackEntities()

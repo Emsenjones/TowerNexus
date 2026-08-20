@@ -8,7 +8,6 @@ public readonly struct EffectTriggerContext
         MonsterBehaviour targetMonster,
         bool hasTriggerPosition,
         Vector3 triggerPosition,
-        int resolvedDamage,
         bool allowsElementalApplication,
         bool allowsLifecycleOwnerTarget = false)
     {
@@ -17,7 +16,6 @@ public readonly struct EffectTriggerContext
         TargetMonster = targetMonster;
         HasTriggerPosition = hasTriggerPosition;
         TriggerPosition = triggerPosition;
-        ResolvedDamage = resolvedDamage;
         AllowsElementalApplication = allowsElementalApplication;
         AllowsLifecycleOwnerTarget = allowsLifecycleOwnerTarget;
     }
@@ -29,7 +27,6 @@ public readonly struct EffectTriggerContext
     // TriggerPosition is valid only when HasTriggerPosition is true.
     // Producers provide the relevant hit, impact, owner, or zone position.
     public Vector3 TriggerPosition { get; }
-    public int ResolvedDamage { get; }
     public bool AllowsElementalApplication { get; }
     // Removed lifecycle Effects may release owner-bound state after the owner
     // has stopped being a gameplay target. This does not reopen combat targeting.

@@ -38,7 +38,7 @@ Monster
         -> Buff Instances
 ```
 
-An instance includes definition reference, owner monster, remaining phase duration, Periodic Tick timer, stack count, phase, and source-scoped cooldown tracking. The latest successful source Tower and source Upgrade remain available to lifecycle Effects and diagnostics. Source Tower identity additionally selects the cooldown entry; it does not create parallel Buff state or change the shared stack count.
+An instance includes definition reference, owner monster, remaining phase duration, Periodic Tick timer, stack count, phase, and source-scoped cooldown tracking. The latest successful source Tower and source Upgrade remain available to lifecycle Effects and diagnostics. Source Tower identity additionally selects the cooldown entry; it does not create parallel Buff state, change the shared stack count, or scale Buff-lifecycle damage.
 
 ### 3.1 Two First-Version Runtime Models
 
@@ -51,7 +51,7 @@ Maximum Stacks, Source Apply Cooldown, and Overload Protection Duration are auth
 
 Applications return explicit results such as Applied, Refreshed, Stacked, BlockedBySourceApplyCooldown, BlockedByProtectionPhase, or Invalid.
 
-Buff System receives application requests after another system has resolved the relevant target and eligibility. It does not inspect the associated damage amount or DealDamage result. Zero damage, non-positive damage, or unsuccessful damage execution is not a Buff-level reason to reject an otherwise valid application request. A Monster killed or removed before the request is no longer a valid Buff target; this is lifecycle invalidation rather than damage-result gating.
+Buff System receives application requests after another system has resolved the relevant target and eligibility. It does not inspect the associated damage amount or DealDamage result. An ordinary unsuccessful damage action is not a Buff-level reason to reject an otherwise valid application request. The producing Tower-owned boundary is responsible for withholding the request entirely when its source Tower or TowerScaled numeric context is invalid. A Monster killed or removed before the request is no longer a valid Buff target; this is lifecycle invalidation rather than damage-result gating.
 
 ## 4. Lifecycle Effect Bindings
 
@@ -93,6 +93,13 @@ Buff System publishes immutable diagnostic observations for application attempts
 Removal observations distinguish Active Duration expiry, Protection expiry, explicit removal, Monster death, Target arrival, technical cleanup, runtime reset, and the no-Protection overload path. Diagnostics therefore consume event history instead of trying to reconstruct expired or removed state from active snapshots.
 
 Observations are published after the outermost Buff state mutation has completed and read-only snapshots have been refreshed. Diagnostic consumers have no gameplay authority; their absence or failure cannot change application, lifecycle Effect execution, Protection, or removal results.
+
+FixedBuff damage diagnostics use a FixedBuff-specific signature: EffectDefinition identity, authored action ordinal, and FixedDamage. Source Tower may be retained as nullable diagnostic context, but Tower Level, Level BasicDamage, Damage Bonus, and DamageScale are not required and never participate in FixedBuff aggregation. Repeated ticks and reactions aggregate counts and totals by this signature rather than requiring one exported JSON record per result.
+
+Each FixedBuff DealDamage execution publishes one exception-isolated read-only
+observation after its synchronous target applications. The observation records
+resolved-target count, successful-application count, and the authored fixed
+amount; it cannot change Buff lifecycle or Monster damage.
 
 ## 6. Elemental Buff Rules
 
@@ -136,7 +143,7 @@ This ordering is shared Buff runtime lifecycle behavior, not an Element-specific
 
 ### 7.1 Fire
 
-Burning PeriodicTick binds an Effect that deals persistent damage. Its Maximum-Stacks Overload binding runs FlameBurst area damage. Both use authored Effect values rather than the source tower's resolved attack damage.
+Burning PeriodicTick binds a FixedBuff Effect that deals persistent damage. Its Maximum-Stacks Overload binding runs FixedBuff FlameBurst area damage. Both use authored FixedDamage rather than the source Tower's resolved BasicDamage.
 
 ### 7.2 Cold And Frozen
 
@@ -148,13 +155,13 @@ Frozen is non-Elemental and non-stackable. Its Applied binding requests movement
 
 ### 7.3 Electric
 
-ElectricShock StackApplied binds an authored extra-damage Effect. Because StackApplied runs only after a successful later stack, first application, pure refresh, and blocked application do not execute that damage.
+ElectricShock StackApplied binds an authored FixedBuff extra-damage Effect. Because StackApplied runs only after a successful later stack, first application, pure refresh, and blocked application do not execute that damage.
 
 ElectricShock Overload invokes the instant Overcharged Effect. Overcharged uses its authored radius to resolve nearby candidates, then ExecuteMultiTargetEffect randomly selects up to its authored target count without repetition and immediately executes one single-target LightningStrike Effect on each selected monster. Overcharged has no interval, runtime state, or persistent Buff of its own.
 
 ### 7.4 Wind
 
-Windcut StackApplied invokes a radius-based Effect that excludes its owner, randomly selects up to one remaining valid monster, and executes an authored single-target Wind attack. The initial Windcut application, pure refresh, cooldown-blocked application, Buff tick, and Protection-phase application do not run this Effect. When there is no other valid nearby monster, a configured parent execution VFX still plays at the owner trigger position, but the owner is never used as a fallback damage target.
+Windcut StackApplied invokes a radius-based Effect that excludes its owner, randomly selects up to one remaining valid monster, and executes an authored single-target FixedBuff Wind attack. The initial Windcut application, pure refresh, cooldown-blocked application, Buff tick, and Protection-phase application do not run this Effect. When there is no other valid nearby monster, a configured parent execution VFX still plays at the owner trigger position, but the owner is never used as a fallback damage target.
 
 Windcut Overload invokes SpawnWindVortex at the owner's current world position, then the existing Buff runtime enters Protection when configured. WindVortex is an Effect System-owned persistent gameplay entity; it moves itself directly between nearby valid Monsters, independently ticks area damage, and never relocates a Monster. Buff System does not modify world position, Grid Node, or path state.
 
@@ -165,7 +172,7 @@ Windcut Overload invokes SpawnWindVortex at the owner's current world position, 
 - Tower Runtime Combat and reviewed Behaviour runtime decide attack-boundary eligibility and supply the Elemental apply Effect at that boundary.
 - Monster System owns movement, pathfinding, lifecycle cleanup, and safe requested operations.
 
-Direct base attack damage remains independent unless a future unified damage-context design is explicitly reviewed. The configuration relationship remains one-directional: Buff lifecycle bindings invoke Effects, and an Effect may request another Buff. BuffDefinitions never directly reference other BuffDefinitions.
+Tower-owned direct and Behaviour damage follows the TowerScaled contract. Every damage action invoked from Buff lifecycle or Elemental reaction content follows FixedBuff and ignores later source-Tower BasicDamage changes. The configuration relationship remains one-directional: Buff lifecycle bindings invoke Effects, and an Effect may request another Buff. BuffDefinitions never directly reference other BuffDefinitions.
 
 ## 9. Validation
 

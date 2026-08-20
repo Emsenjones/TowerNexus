@@ -22,29 +22,22 @@ public enum DroneBurstPhase
 public readonly struct DroneStatRefresh
 {
     public DroneStatRefresh(
-        bool refreshDamage,
-        int newDamageBonus,
         bool refreshAttackRange,
         float newAttackRange,
         bool refreshBurstCooldown,
         float newBurstCooldown)
     {
-        RefreshDamage = refreshDamage;
-        NewDamageBonus = newDamageBonus;
         RefreshAttackRange = refreshAttackRange;
         NewAttackRange = newAttackRange;
         RefreshBurstCooldown = refreshBurstCooldown;
         NewBurstCooldown = newBurstCooldown;
     }
 
-    public bool RefreshDamage { get; }
-    public int NewDamageBonus { get; }
     public bool RefreshAttackRange { get; }
     public float NewAttackRange { get; }
     public bool RefreshBurstCooldown { get; }
     public float NewBurstCooldown { get; }
     public bool HasAnyChange =>
-        RefreshDamage ||
         RefreshAttackRange ||
         RefreshBurstCooldown;
 }
@@ -102,8 +95,8 @@ public class DroneBehaviour : MonoBehaviour
     private EffectDefinition finalDiveExplosionEffect;
     private Vector3 releasePosition;
     private MonsterBehaviour currentTarget;
-    private int attackDamage;
-    private int basicDamage;
+    private float damageScale;
+    private TowerDamageSourceIdentity damageSourceIdentity;
     private float attackRange;
     private float currentBurstCooldown;
     private float finalDiveHitThreshold;
@@ -155,7 +148,7 @@ public class DroneBehaviour : MonoBehaviour
         DroneReleaseData releaseData,
         DroneRuntimeOptions runtimeOptions,
         ResolvedTowerCombatStats resolvedStats,
-        int initializedBasicDamage,
+        float initializedDamageScale,
         bool isAdditionalAttackEntity,
         Vector3 releasePosition,
         Quaternion releaseRotation,
@@ -172,8 +165,10 @@ public class DroneBehaviour : MonoBehaviour
         this.releasePosition = releasePosition;
 
         currentTarget = initialTarget;
-        basicDamage = Mathf.Max(0, initializedBasicDamage);
-        attackDamage = Mathf.Max(0, basicDamage + resolvedStats.DamageBonus);
+        damageScale = initializedDamageScale;
+        damageSourceIdentity = isAdditionalAttackEntity
+            ? TowerDamageSourceIdentity.AdditionalDirect
+            : TowerDamageSourceIdentity.PrimaryDirect;
         IsAdditionalAttackEntity = isAdditionalAttackEntity;
         attackRange = resolvedStats.AttackRange;
         currentBurstCooldown = resolvedStats.DroneBurstCooldown;
@@ -202,9 +197,22 @@ public class DroneBehaviour : MonoBehaviour
 
     private bool CanInitialize()
     {
-        if (monsterManager == null)
+        if (sourceTower == null || monsterManager == null)
         {
-            Debug.LogWarning("Drone cannot initialize: monster manager is null.", this);
+            Debug.LogWarning(
+                "Drone cannot initialize: source Tower or monster manager is null.",
+                this);
+            return false;
+        }
+
+        if (!damageSourceIdentity.IsValid ||
+            float.IsNaN(damageScale) ||
+            float.IsInfinity(damageScale) ||
+            damageScale <= 0f)
+        {
+            Debug.LogWarning(
+                "Drone cannot initialize: direct Damage Scale and source identity must be valid.",
+                this);
             return false;
         }
 
@@ -308,11 +316,6 @@ public class DroneBehaviour : MonoBehaviour
         if (!isInitialized || hasEnded || !refresh.HasAnyChange)
         {
             return;
-        }
-
-        if (refresh.RefreshDamage)
-        {
-            attackDamage = Mathf.Max(0, basicDamage + refresh.NewDamageBonus);
         }
 
         if (refresh.RefreshAttackRange)
@@ -509,16 +512,29 @@ public class DroneBehaviour : MonoBehaviour
         hasResolvedFinalDiveImpact = true;
         Vector3 impactPosition = transform.position;
 
+        if (!TowerRuntimeStatResolver.TryResolveTowerOwnedDamage(
+                sourceTower,
+                TowerDamageSourceIdentity.FinalDiveDirect,
+                damageScale,
+                out TowerOwnedDamageResolution damageResolution))
+        {
+            Despawn();
+            return;
+        }
+
         if (TryResolveFinalDiveDirectTarget(impactPosition, out MonsterBehaviour directTarget))
         {
-            directTarget.TakeDamage(attackDamage);
+            directTarget.TakeDamage(damageResolution.FinalDamage);
+            TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+                damageResolution,
+                1);
             ElementalApplication.TryApplyFromTowerAttack(
                 sourceTower,
                 directTarget,
                 impactPosition);
         }
 
-        EffectExecutor.ExecuteWithResolvedTargets(
+        bool executedExplosion = EffectExecutor.ExecuteWithResolvedTargets(
             finalDiveExplosionEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -526,11 +542,12 @@ public class DroneBehaviour : MonoBehaviour
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                resolvedDamage: attackDamage,
                 allowsElementalApplication: false),
             resolvedFinalDiveExplosionTargets);
 
-        for (int i = 0; i < resolvedFinalDiveExplosionTargets.Count; i++)
+        for (int i = 0;
+             executedExplosion && i < resolvedFinalDiveExplosionTargets.Count;
+             i++)
         {
             ElementalApplication.TryApplyFromTowerAttack(
                 sourceTower,
@@ -684,7 +701,8 @@ public class DroneBehaviour : MonoBehaviour
             projectilePrefab,
             target,
             targetPosition,
-            attackDamage,
+            damageScale,
+            damageSourceIdentity,
             flightType: ProjectileFlightType.Direction,
             runtimeOptions: new ProjectileRuntimeOptions(
                 canPierce: false,

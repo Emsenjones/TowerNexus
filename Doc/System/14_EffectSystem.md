@@ -6,7 +6,7 @@ Document Set: System
 
 The Effect System executes reusable, one-shot gameplay rules. It consumes runtime trigger context, resolves targets, executes ordered actions, and owns the reviewed WindVortex gameplay entity.
 
-An Effect is execution, not persistent state. Direct base attack damage may remain on the existing attack and projectile path; the Effect System handles additional reusable results such as area damage, Buff application, elemental overload results, and movement requests.
+An Effect is execution, not persistent state. Tower-owned direct attack damage may remain on the existing attack and projectile path while using the shared TowerScaled formula. The Effect System handles reusable results such as TowerScaled area damage, FixedBuff lifecycle/reaction damage, Buff application, elemental overload results, and movement requests.
 
 ```text
 Attack Entity / Projectile / Buff lifecycle
@@ -39,7 +39,7 @@ Effects request Monster System capabilities for damage, slow, and movement lock.
 | Concept | Meaning |
 |---|---|
 | Effect | One reusable rule execution, defined by an EffectDefinition and its ordered actions |
-| EffectTriggerContext | Runtime source, target, position, damage, and eligibility data for an execution |
+| EffectTriggerContext | Runtime source, target, position, Attack Entity, and eligibility data for an execution |
 | Buff | Persistent runtime state owned by the Buff System; an Effect action may apply one |
 | WindVortex | A reviewed specialized moving effect entity, not a generic moving-zone requirement |
 
@@ -51,7 +51,14 @@ EffectTriggerContext is created when an explicit runtime boundary requires Effec
 
 The first version does not serialize or transport one shared trigger enum. Producers express event semantics through their reviewed runtime entry points, then construct EffectTriggerContext with only the execution data that Effect System consumes. Elemental tower attacks use their actual runtime attack event with an explicit elemental-application eligibility flag.
 
-Context may carry source Tower, source Upgrade, target Monster, trigger or impact position, zone radius, resolved damage, Attack Entity identity, Elemental type, and Elemental-application eligibility. Position presence must be explicit; no valid world coordinate is treated as a missing-value sentinel.
+EffectTriggerContext does not carry an inherited integer damage value or a
+direct-hit damage resolution. A TowerScaled DealDamage action creates its own
+immutable resolution from the current source Tower at that Effect's execution
+boundary. A FixedBuff action reads only its authored FixedDamage. Direct-hit
+resolution facts remain in their attack-specific result contexts for gameplay
+and diagnostics and are never a fallback Effect damage authority.
+
+Context may carry source Tower, source Upgrade, target Monster, trigger or impact position, zone radius, Attack Entity identity, Elemental type, and Elemental-application eligibility. Position presence must be explicit; no valid world coordinate is treated as a missing-value sentinel.
 
 Position Impact and Monster Hit are independent semantic facts. Position Impact means an Attack Entity reached its intended gameplay position and does not require a resolved Monster. Monster Hit requires a valid Monster. One Cannon or Final Dive landing may produce both facts, while an empty landing may produce Position Impact only. The System contract does not require these facts to become separate serialized Effect fields; the implementation may represent them through trigger context and reviewed runtime entry points.
 
@@ -87,11 +94,29 @@ Every authored action executes once in authored order. Earlier action success or
 
 ### 5.1 DealDamage
 
-DealDamage is instant Effect damage. It supports area impact damage, Burning tick damage, FlameBurst, Electric extra damage, LightningStrike, and WindVortex hits. An action may use a positive authored amount or fall back to resolved damage carried by its trigger context.
+DealDamage is instant Effect damage with one explicit authored DamageMode. It never falls back from one mode to another.
+
+| DamageMode | Required Data | Formula And Ownership |
+|---|---|---|
+| TowerScaled | Positive finite DamageScale and valid source Tower | `RoundToInt(source Tower current resolved BasicDamage * DamageScale)` at execution time |
+| FixedBuff | Positive integer FixedDamage | Apply the authored amount; source Tower may remain diagnostic/cooldown context but never changes this damage |
+
+TowerScaled is used by Tower-owned Behaviour results. FixedBuff is used by Buff lifecycle and Elemental-reaction results. A Level or Basic Damage Bonus change may affect a later TowerScaled execution, but it never replays an earlier execution or alters FixedBuff damage.
+
+One TowerScaled action resolves one immutable damage fact and uses that same
+fact for Monster damage, execution context, and read-only diagnostics. Its
+damage-source identity includes the EffectDefinition and authored action
+ordinal. Diagnostics never call the resolver again. Non-finite scale, resolved
+BasicDamage, or raw product, non-positive resolved BasicDamage, or an invalid
+source Tower rejects the complete owning Tower result rather than clamping it.
+For a Tower-owned attack boundary, invalid source context also suppresses its
+Behaviour Effects and Elemental opportunity. This source-context rejection is
+distinct from an ordinary valid-context DealDamage action that simply finds no
+target or cannot apply damage.
 
 Reaction-generated damage does not apply Elemental stacks by default.
 
-DealDamage result does not globally control whether another explicitly eligible Elemental ApplyBuff action may execute. Zero damage, non-positive resolved damage, or unsuccessful damage execution does not suppress a separately authorized application attempt. If damage kills or removes a target before the later action boundary, that target is no longer gameplay-targetable; skipping its Buff request is lifecycle invalidation, not damage-result gating.
+With valid Tower source and numeric context, one target-specific DealDamage result does not globally control whether another explicitly eligible Elemental ApplyBuff action may execute. An ordinary unsuccessful damage action, such as one with no valid resolved target, does not suppress a separately authorized application attempt against another valid target. Invalid Tower source or invalid TowerScaled numeric context rejects the owning Tower result before sibling Behaviour or Elemental actions run. If valid damage kills or removes a target before the later action boundary, that target is no longer gameplay-targetable; skipping its Buff request is lifecycle invalidation, not damage-result gating.
 
 ### 5.2 ApplyBuff
 
@@ -129,11 +154,33 @@ Explosive Arrow, Explosive Shell, Blast Rounds, Arcane Detonation, Arcane Field 
 
 Explosive Arrow is an additive area Effect after a direct Arrow Monster Hit. It centers on that hit and includes the direct target when that Monster remains gameplay-targetable after direct damage. Explosive Shell is an additive Position Impact Effect after the baseline Cannon direct result. Blast Rounds is an additive area Effect after a Drone projectile direct hit. Arcane Detonation executes only after reviewed normal Magic Orb completion. Final Dive first performs its Behaviour-owned local direct-target result, then executes its additive explosion at Position Impact even when no direct Monster Hit was resolved. The optional direct target and every separately resolved explosion target receive independent Elemental opportunities. Each of these explicitly reviewed Behaviour results may provide Elemental eligibility to its resolved targets independently from DealDamage success.
 
-Cannon primary, additional, and bounced Shells own independent integer direct-damage values. An additional Shell composes its package-authored Basic Damage with the release-time resolved Basic Damage Bonus; Explosive Shell damage remains independently authored by its EffectDefinition and is not derived from any Shell's direct damage.
+Cannon primary, additional, and bounced Shells own independent stable DamageScale values and use current resolved BasicDamage at their actual damage boundaries. Explosive Shell uses its own TowerScaled DealDamage action rather than inheriting a Shell's direct scale.
 
 Arcane Field remains a Tower Runtime Combat-owned entity. Tower runtime owns the tower-attached field instance, follow behavior, uniqueness, and cleanup. Effect System resolves and executes each tick. Every valid target resolved by a V1 field tick receives one 100% Elemental application attempt; this exception is explicit to Arcane Field and does not broaden periodic Effect defaults.
 
 Bouncing Shell remains Projectile runtime behavior triggered after Position Impact results complete, whether or not that landing resolved a direct Monster Hit. Effect System may execute its landing explosion, but it does not gain a generic SpawnProjectile action or own bounce target selection, chain history, child creation, or remaining bounce count.
+
+### 5.8 Damage Ownership Inventory
+
+Current TowerScaled Behaviour Effect damage:
+
+- Explosive Arrow
+- Explosive Shell
+- Blast Rounds impact
+- Final Dive impact
+- Arcane Detonation
+- Arcane Field tick
+
+Current FixedBuff lifecycle or reaction damage:
+
+- Burning PeriodicTick
+- Burning Overload / FlameBurst
+- Electric StackApplied extra damage
+- Electric Overload LightningStrike
+- Windcut StackApplied secondary attack
+- WindVortex tick
+
+ApplyBuff, movement multiplier, movement lock, multi-target wrapper, and WindVortex-spawn actions do not own damage. Composite wrappers preserve the damage mode authored by their child Effect; they do not add or infer one.
 
 ## 6. Elemental Eligibility And Recursion
 
@@ -182,11 +229,23 @@ Effect authoring validation should report at minimum:
 - Radius execution without a valid way to resolve its center
 - Invalid movement-speed multiplier or unsupported movement action combination
 - Elemental ApplyBuff content without an explicit eligible runtime producer
+- TowerScaled DealDamage without a valid source-Tower execution path, with non-positive or non-finite DamageScale, or whose runtime resolved BasicDamage or raw product is non-positive or non-finite
+- FixedBuff DealDamage with non-positive FixedDamage
+- DealDamage that authors fields for both modes or for neither mode
+- Behaviour owner referencing FixedBuff damage or Buff lifecycle, reaction, or WindVortex owner referencing TowerScaled damage
+- Recursive EffectDefinition reference cycle, including a nested multi-target cycle
 
 Validation reports the source definition and does not silently change target scope or action order.
+
+Local action validation is not sufficient to prove ownership. Behaviour
+package owners must recursively validate that referenced damage actions are
+TowerScaled. Buff lifecycle, reaction, and WindVortex owners must recursively
+validate FixedBuff damage. Nested multi-target children preserve the expected
+mode; revisiting an EffectDefinition in the active validation traversal reports
+an invalid cycle rather than silently ending recursion.
 
 ## 10. Approved Scope And Deferred Topics
 
 Current scope includes ordered one-shot actions, single-target and radius resolution, ApplyBuff, multi-target child execution, the reviewed WindVortex entity, movement requests, execution presentation, and explicit Elemental eligibility.
 
-Deferred topics include persistent Effect Zones, delayed or repeated generic Effect execution, a generic moving-Zone framework, arbitrary action graphs, recursive Elemental propagation, generalized projectile spawning, and a unified damage-context migration.
+Deferred topics include persistent Effect Zones, delayed or repeated generic Effect execution, a generic moving-Zone framework, arbitrary action graphs, recursive Elemental propagation, and generalized projectile spawning.

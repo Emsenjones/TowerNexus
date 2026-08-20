@@ -49,7 +49,7 @@ Each Draft asks the player to allocate limited growth between:
 2. Vertical growth through Tower levels.
 3. Specialization through Basic, Behaviour, and later Elemental Upgrades.
 
-Tower Level is a future-eligibility investment under the approved v0.1 growth baseline. It does not directly increase combat stats. A Stage may require a Core to reach a level only when its Tower Upgrade pool provides a continuous newly eligible Upgrade path through that level.
+Tower Level is a concentrated BasicDamage and future-eligibility investment under the approved v0.2 growth contract. A Stage may require a Core to reach a level only when its Tower Upgrade pool provides a continuous newly eligible Upgrade path through that level.
 
 The Reference Build is the stable standard solution used to derive implementation budgets and perform controlled Stage calibration. It is not intended to be the only legal solution.
 
@@ -57,7 +57,7 @@ The Expected Anti-pattern is a build that rejects the Stage lesson and should fa
 
 Concentrated investment is not intrinsically an Anti-pattern. A highly developed Core should fail only when the Stage also requires coverage, role complement, or a second matching Elemental source that the concentrated build does not provide. Conversely, horizontal expansion should fail only when it leaves the required Core capability undeveloped.
 
-New Content describes the first campaign introduction of a mechanic or TowerFamily. Tower and Upgrade access is cumulative unless a Stage Note explicitly says otherwise. Each Stage Tower Draft pool contains every TowerFamily introduced by that Stage, and its Tower Upgrade Draft pool contains all currently unlocked UpgradeDefinitions for those represented families. Stage1-Stage4 unlock Basic and Behaviour content; Stage5-Stage6 additionally unlock Elemental content. Task008 materializes those rules as exact Stage asset lists.
+New Content describes the first campaign introduction of a mechanic or TowerFamily. Tower and Upgrade access is cumulative unless a Stage Note explicitly says otherwise. Each Stage Tower Draft pool contains every TowerFamily introduced by that Stage, and its Tower Upgrade Draft pool contains all currently unlocked UpgradeDefinitions for those represented families. Stage1-Stage4 unlock Basic and Behaviour content; Stage5-Stage6 additionally unlock Elemental content. CombatMathV2 Task007 materializes those rules as exact Stage asset lists and reproducible calibration fixtures.
 
 Reference Build v0.2 uses these shared rules:
 
@@ -71,7 +71,7 @@ Reference Build v0.2 uses these shared rules:
 
 The listed one-Basic and one-Behaviour Core is the Reference Build used to derive Stage budgets. It is not the maximum legal Upgrade stack on one Tower. Cross-Stage qualitative growth principles belong to `01_TowerGrowthAndUpgradeIdentity.md`; realized-power targets, cumulative single-Tower guardrails, exact Upgrade values, and Stage pressure remain Task outputs.
 
-The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain Task008 design work.
+The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain CombatMathV2 Task007 design work.
 
 The early campaign teaches the player to establish useful route coverage and then concentrate enough Draft investment to unlock and apply higher-level content. A player following that lesson should not need one uniquely named Upgrade combination to clear. Pure horizontal expansion into many undeveloped Towers remains an intentional Anti-pattern when it rejects the Stage's required Core capability.
 
@@ -88,7 +88,7 @@ The early campaign teaches the player to establish useful route coverage and the
 | Stage5 | Create the first Elemental core and understand Elemental application and stacking | Elemental Layer |
 | Stage6 | Coordinate two Towers with the same ElementType in one overlapping fire zone to trigger Overload | Elemental cooperation |
 
-Campaign spatial scale should generally increase from Stage1 through Stage4. Stage5 and Stage6 reuse the Stage4 spatial scale so their additional pressure comes from Elemental specialization and cooperation rather than from larger boards. Exact Grid sizes are Task001 implementation inputs and may be revised when Reference Build placement, attack-range separation, and route validation require it.
+Campaign spatial scale should generally increase from Stage1 through Stage4. Stage5 and Stage6 reuse the Stage4 spatial scale so their additional pressure comes from Elemental specialization and cooperation rather than from larger boards. The accepted Map Prefabs remain foundation inputs. CombatMathV2 Stage calibration may propose a Map revision only when reproducible placement, attack-range separation, or route evidence identifies a concrete spatial defect.
 
 ---
 
@@ -231,11 +231,12 @@ Task ownership:
 
 | Task | Derived Responsibility |
 |---|---|
-| Task001 | Candidate Grid size, Reference placement demand, attack-range separation, route zones, and Map Prefabs |
-| Task002-Task007 | Stage-independent Tower, Upgrade, Elemental, Buff, Effect, Monster-HP, route/lane, movement-identity, and Wave-composition baselines |
-| Task008 | Draft totals, exact Draft pools, candidate availability, one shared Progress curve, and StageDefinition skeletons |
-| Task009-Task014 | Stage-specific Wave tables, measurable Reference Runs, Anti-pattern checks, and accepted local calibration |
+| CombatMathV2 Task001 | Damage formula, Tower Level BasicDamage authority, DamageScale/FixedDamage migration, and diagnostics |
+| CombatMathV2 Task002-Task006 | Level 1 Tower, Tower Level, non-Elemental, Elemental/Buff, and fixed-speed Monster HP baselines |
+| CombatMathV2 Task007 | Draft totals, exact Draft pools, candidate availability, Progress requirements, and reproducible calibration fixtures |
+| CombatMathV2 Task008-Task013 | Stage-specific Wave tables, Player Health, measurable Reference Runs, Anti-pattern checks, and accepted local calibration |
+| CombatMathV2 Task014 | Fast-Monster identity plus reviewed substitutions into accepted Stage Waves |
 
 Task calculations are reviewable implementation inputs, not new Stage intent. Accepted executable values live in their owning Unity assets. If a derived result cannot realize an approved Stage design, the Task proposes a Blueprint revision explicitly rather than silently changing the intended experience.
 
-Task008 must confirm that every planned Anti-pattern run is constructible under the authored pools and remaining Draft opportunities. Task009-Task014 test only legal builds; they must not manufacture an impossible build or add a hidden penalty in order to demonstrate the Stage lesson.
+CombatMathV2 Task007 must confirm that every planned Anti-pattern run is constructible under the authored pools and remaining Draft opportunities. Task008-Task013 test only legal builds; they must not manufacture an impossible build or add a hidden penalty in order to demonstrate the Stage lesson.

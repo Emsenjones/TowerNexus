@@ -63,6 +63,34 @@ public class TowerBehaviour : MonoBehaviour
         return true;
     }
 
+    internal bool TryPrepareLevelVisualRefresh(
+        TowerLevelConfig nextLevelConfig,
+        out string failureReason)
+    {
+        if (towerInstance == null)
+        {
+            failureReason = "TowerInstance is missing.";
+            return false;
+        }
+
+        if (visualController == null ||
+            visualController.TowerPrefabSpawnPoint == null)
+        {
+            failureReason =
+                "TowerVisualController or TowerPrefabSpawnPoint is missing.";
+            return false;
+        }
+
+        if (nextLevelConfig == null || !nextLevelConfig.IsValid())
+        {
+            failureReason = "the next Tower Level configuration is invalid.";
+            return false;
+        }
+
+        failureReason = string.Empty;
+        return true;
+    }
+
     private void EnsureReferences()
     {
         if (towerInstance == null)

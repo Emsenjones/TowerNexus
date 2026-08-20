@@ -41,7 +41,8 @@ public class ProjectileBehaviour : MonoBehaviour
     private EffectDefinition explosiveArrowEffect;
     private EffectDefinition explosiveShellEffect;
     private EffectDefinition blastRoundsEffect;
-    private int attackDamage;
+    private float damageScale;
+    private TowerDamageSourceIdentity damageSourceIdentity;
     private int remainingPiercingHitCount;
     private int remainingBounceCount;
     private float elapsedLifetime;
@@ -49,11 +50,10 @@ public class ProjectileBehaviour : MonoBehaviour
     private float initialArcHeight;
     private float bounceSearchRadius;
     private float bounceArcHeight;
-    private int bounceDamage;
+    private float bounceDamageScale;
     private TargetSelectionType bounceTargetSelectionType;
     private bool canPierce;
     private bool isBounceChild;
-    private bool locksDirectDamage;
     private bool isInitialized;
     private bool hasImpacted;
     private bool hasEnded;
@@ -138,7 +138,8 @@ public class ProjectileBehaviour : MonoBehaviour
         ProjectileBehaviour projectileTemplate,
         MonsterBehaviour targetMonster,
         Vector3 targetPosition,
-        int attackDamage,
+        float damageScale,
+        TowerDamageSourceIdentity damageSourceIdentity,
         ProjectileFlightType flightType,
         float initialArcHeight = 0f,
         ProjectileRuntimeOptions runtimeOptions = default,
@@ -152,14 +153,14 @@ public class ProjectileBehaviour : MonoBehaviour
         this.targetMonster = targetMonster;
         this.targetPosition = targetPosition;
         this.archerReleaseIdentity = archerReleaseIdentity;
-        this.attackDamage = Mathf.Max(0, attackDamage);
+        this.damageScale = damageScale;
+        this.damageSourceIdentity = damageSourceIdentity;
         this.initialArcHeight = Mathf.Max(0f, initialArcHeight);
         canPierce = runtimeOptions.CanPierce;
         remainingPiercingHitCount = canPierce
             ? Mathf.Max(1, runtimeOptions.MaxPierceHitCount)
             : 1;
         isBounceChild = runtimeOptions.IsBounceChild;
-        locksDirectDamage = runtimeOptions.LocksDirectDamage;
         explosiveArrowSourceUpgrade = runtimeOptions.ExplosiveArrowSourceUpgrade;
         explosiveArrowEffect = runtimeOptions.ExplosiveArrowEffect;
         explosiveShellSourceUpgrade = runtimeOptions.ExplosiveShellSourceUpgrade;
@@ -168,7 +169,7 @@ public class ProjectileBehaviour : MonoBehaviour
         remainingBounceCount = runtimeOptions.RemainingBounceCount;
         bounceArcHeight = runtimeOptions.BounceArcHeight;
         bounceTargetSelectionType = runtimeOptions.BounceTargetSelectionType;
-        bounceDamage = runtimeOptions.BounceDamage;
+        bounceDamageScale = runtimeOptions.BounceDamageScale;
         blastRoundsSourceUpgrade = runtimeOptions.BlastRoundsSourceUpgrade;
         blastRoundsEffect = runtimeOptions.BlastRoundsEffect;
 
@@ -190,7 +191,8 @@ public class ProjectileBehaviour : MonoBehaviour
             ? ProjectileArcMemberType.NotApplicable
             : isBounceChild
                 ? ProjectileArcMemberType.BounceChild
-                : locksDirectDamage
+                : damageSourceIdentity.SourceType ==
+                  TowerDamageSourceType.AdditionalDirect
                     ? ProjectileArcMemberType.AdditionalInitial
                     : ProjectileArcMemberType.PrimaryInitial;
         arcConfirmationToReleaseSeconds = 0f;
@@ -252,6 +254,17 @@ public class ProjectileBehaviour : MonoBehaviour
         if (maxLifetime <= 0f)
         {
             Debug.LogWarning("Projectile behaviour cannot initialize: max lifetime must be greater than zero.", this);
+            return false;
+        }
+
+        if (!damageSourceIdentity.IsValid ||
+            float.IsNaN(damageScale) ||
+            float.IsInfinity(damageScale) ||
+            damageScale <= 0f)
+        {
+            Debug.LogWarning(
+                "Projectile behaviour cannot initialize: direct Damage Scale and source identity must be valid.",
+                this);
             return false;
         }
 
@@ -385,17 +398,6 @@ public class ProjectileBehaviour : MonoBehaviour
         EndProjectile();
     }
 
-    public bool TryRefreshDamage(int resolvedDamage)
-    {
-        if (!IsActiveForRefresh || locksDirectDamage)
-        {
-            return false;
-        }
-
-        attackDamage = Mathf.Max(0, resolvedDamage);
-        return true;
-    }
-
     public bool TryAddPiercingCapacity(int capacityDelta)
     {
         if (!IsActiveForRefresh ||
@@ -437,12 +439,14 @@ public class ProjectileBehaviour : MonoBehaviour
         int maxBounceCount,
         float arcHeight,
         TargetSelectionType selectionType,
-        int resolvedBounceDamage)
+        float resolvedBounceDamageScale)
     {
         if (!IsActiveForRefresh ||
             flightType != ProjectileFlightType.Arc ||
             isBounceChild ||
-            resolvedBounceDamage <= 0)
+            float.IsNaN(resolvedBounceDamageScale) ||
+            float.IsInfinity(resolvedBounceDamageScale) ||
+            resolvedBounceDamageScale <= 0f)
         {
             return false;
         }
@@ -451,7 +455,7 @@ public class ProjectileBehaviour : MonoBehaviour
         remainingBounceCount = Mathf.Max(0, maxBounceCount);
         bounceArcHeight = Mathf.Max(0f, arcHeight);
         bounceTargetSelectionType = selectionType;
-        bounceDamage = resolvedBounceDamage;
+        bounceDamageScale = resolvedBounceDamageScale;
         return true;
     }
 
@@ -608,13 +612,24 @@ public class ProjectileBehaviour : MonoBehaviour
     private void ApplyDirectionProjectileImpact(MonsterBehaviour hitMonster)
     {
         Vector3 impactPosition = transform.position;
-        hitMonster.TakeDamage(ResolveDirectDamage());
+
+        if (!TryResolveDirectDamage(out TowerOwnedDamageResolution damageResolution))
+        {
+            return;
+        }
+
+        hitMonster.TakeDamage(damageResolution.FinalDamage);
+        TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+            damageResolution,
+            1);
         ElementalApplication.TryApplyFromTowerAttack(
             sourceTower,
             hitMonster,
             impactPosition);
-        RaiseImpact(hitMonster, impactPosition);
-        ExecuteExplosiveArrowImpact(hitMonster, impactPosition);
+        RaiseImpact(hitMonster, impactPosition, damageResolution);
+        ExecuteExplosiveArrowImpact(
+            hitMonster,
+            impactPosition);
         ExecuteBlastRoundsImpact(impactPosition);
     }
 
@@ -627,7 +642,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        EffectExecutor.ExecuteWithResolvedTargets(
+        bool executed = EffectExecutor.ExecuteWithResolvedTargets(
             explosiveArrowEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -635,9 +650,13 @@ public class ProjectileBehaviour : MonoBehaviour
                 targetMonster: directTarget,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                resolvedDamage: 0,
                 allowsElementalApplication: false),
             resolvedExplosiveArrowTargets);
+
+        if (!executed)
+        {
+            return;
+        }
 
         for (int i = 0; i < resolvedExplosiveArrowTargets.Count; i++)
         {
@@ -655,7 +674,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        EffectExecutor.ExecuteWithResolvedTargets(
+        bool executed = EffectExecutor.ExecuteWithResolvedTargets(
             blastRoundsEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -663,10 +682,14 @@ public class ProjectileBehaviour : MonoBehaviour
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                resolvedDamage: attackDamage,
                 // Elemental Buff actions stay gated here; Blast Rounds grants explicit opportunities below.
                 allowsElementalApplication: false),
             resolvedBlastRoundsTargets);
+
+        if (!executed)
+        {
+            return;
+        }
 
         for (int i = 0; i < resolvedBlastRoundsTargets.Count; i++)
         {
@@ -702,6 +725,12 @@ public class ProjectileBehaviour : MonoBehaviour
             hitMonster = resolvedMonster;
         }
 
+        if (!TryResolveDirectDamage(out TowerOwnedDamageResolution damageResolution))
+        {
+            DestroyProjectile();
+            return;
+        }
+
 #if UNITY_EDITOR
         arcTargetRelationObservationAtResolution =
             CreateArcTargetRelationObservation(hitMonster);
@@ -710,14 +739,17 @@ public class ProjectileBehaviour : MonoBehaviour
         if (hasResolvedMonster)
         {
             bounceHitHistory.Add(hitMonster);
-            hitMonster.TakeDamage(ResolveDirectDamage());
+            hitMonster.TakeDamage(damageResolution.FinalDamage);
+            TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+                damageResolution,
+                1);
             ElementalApplication.TryApplyFromTowerAttack(
                 sourceTower,
                 hitMonster,
                 impactPosition);
         }
 
-        RaiseImpact(hitMonster, impactPosition);
+        RaiseImpact(hitMonster, impactPosition, damageResolution);
         ExecuteExplosiveShellImpact(impactPosition);
         TryReleaseBounceChild(impactPosition);
         DestroyProjectile();
@@ -748,7 +780,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        EffectExecutor.ExecuteWithResolvedTargets(
+        bool executed = EffectExecutor.ExecuteWithResolvedTargets(
             explosiveShellEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -756,10 +788,14 @@ public class ProjectileBehaviour : MonoBehaviour
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                resolvedDamage: 0,
                 // Elemental Buff actions stay gated here; non-elemental authored Buff actions may still execute.
                 allowsElementalApplication: false),
             resolvedExplosiveShellTargets);
+
+        if (!executed)
+        {
+            return;
+        }
 
         for (int i = 0; i < resolvedExplosiveShellTargets.Count; i++)
         {
@@ -907,7 +943,8 @@ public class ProjectileBehaviour : MonoBehaviour
             projectileTemplate,
             targetMonster: null,
             targetPosition: bounceTargetPosition,
-            attackDamage: bounceDamage,
+            damageScale: bounceDamageScale,
+            damageSourceIdentity: TowerDamageSourceIdentity.BounceDirect,
             flightType: ProjectileFlightType.Arc,
             initialArcHeight: bounceArcHeight,
             runtimeOptions: CreateBounceChildRuntimeOptions(),
@@ -928,17 +965,19 @@ public class ProjectileBehaviour : MonoBehaviour
             canPierce: false,
             maxPierceHitCount: 1,
             isBounceChild: true,
-            locksDirectDamage: true,
             explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,
             explosiveShellEffect: explosiveShellEffect,
             bounceSearchRadius: bounceSearchRadius,
             remainingBounceCount: remainingBounceCount - 1,
             bounceArcHeight: bounceArcHeight,
             bounceTargetSelectionType: bounceTargetSelectionType,
-            bounceDamage: bounceDamage);
+            bounceDamageScale: bounceDamageScale);
     }
 
-    private void RaiseImpact(MonsterBehaviour hitMonster, Vector3 impactPosition)
+    private void RaiseImpact(
+        MonsterBehaviour hitMonster,
+        Vector3 impactPosition,
+        TowerOwnedDamageResolution damageResolution)
     {
         bool isArcPositionImpact = flightType == ProjectileFlightType.Arc;
         EffectDefinition impactEffectDefinition = isArcPositionImpact
@@ -948,7 +987,7 @@ public class ProjectileBehaviour : MonoBehaviour
             sourceTower,
             hitMonster,
             impactPosition,
-            ResolveDirectDamage(),
+            damageResolution,
             impactEffectDefinition
         );
 
@@ -966,7 +1005,9 @@ public class ProjectileBehaviour : MonoBehaviour
                     : default));
 #endif
         OnImpact?.Invoke(impactContext);
-        EffectTriggerContext effectTriggerContext = CreateEffectTriggerContext(hitMonster, impactPosition);
+        EffectTriggerContext effectTriggerContext = CreateEffectTriggerContext(
+            hitMonster,
+            impactPosition);
         OnEffectTriggerContextCreated?.Invoke(effectTriggerContext);
 
         if (isArcPositionImpact)
@@ -987,7 +1028,6 @@ public class ProjectileBehaviour : MonoBehaviour
             targetMonster: flightType == ProjectileFlightType.Arc ? null : hitMonster,
             hasTriggerPosition: true,
             triggerPosition: triggerPosition,
-            resolvedDamage: attackDamage,
             allowsElementalApplication: false
         );
     }
@@ -1247,9 +1287,14 @@ public class ProjectileBehaviour : MonoBehaviour
         return false;
     }
 
-    private int ResolveDirectDamage()
+    private bool TryResolveDirectDamage(
+        out TowerOwnedDamageResolution damageResolution)
     {
-        return attackDamage;
+        return TowerRuntimeStatResolver.TryResolveTowerOwnedDamage(
+            sourceTower,
+            damageSourceIdentity,
+            damageScale,
+            out damageResolution);
     }
 
     private static bool IsValidTarget(MonsterBehaviour monster)

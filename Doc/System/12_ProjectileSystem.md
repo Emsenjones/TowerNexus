@@ -77,7 +77,7 @@ The root faces its current movement direction. Imported model differences are co
 
 # 4. Runtime Data Categories
 
-A projectile receives only data relevant to its own execution, such as source context, flight identity, launch direction or target snapshot, resolved damage, Elemental context, and approved package options.
+A projectile receives only data relevant to its own execution, such as source Tower context, stable damage-source identity, flight identity, launch direction or target snapshot, stable direct DamageScale, Elemental context, and approved package options. Archer and Cannon projectiles, Drone-fired projectiles, and bounce children are direct-damage carriers under this same contract; none stores an already resolved integer damage or a damage-refresh snapshot.
 
 Immutable Entity State includes:
 
@@ -90,9 +90,18 @@ Immutable Entity State includes:
 - Started bounce-chain contract
 - Completed results
 
-Approved Live Refresh may replace future unresolved values such as damage, remaining Piercing capacity by delta, pre-impact Explosive or Bouncing capability, and Blast Rounds.
+Approved Live Refresh may replace future unresolved package eligibility such as remaining Piercing capacity by delta, pre-impact Explosive or Bouncing capability, and Blast Rounds. Level and Basic Damage Bonus changes are observed through the source Tower's current resolved BasicDamage at the actual damage boundary; they do not rewrite projectile state.
 
 Live Refresh never resets immutable Entity State or replays completed results.
+
+At one actual Monster Hit, Projectile System asks the shared Tower-owned resolver
+once. The resulting immutable resolution fact supplies both Monster damage and
+the Impact context observed by downstream systems. Diagnostics may observe that
+same fact but never invoke the resolver again. If source Tower or numeric inputs
+are invalid, the complete Tower-owned hit result is rejected: no direct damage,
+Tower-owned Effect, Elemental opportunity, bounce child, package follow-up, or
+successful-damage observation is produced. The projectile then uses technical
+cleanup rather than ordinary gameplay completion.
 
 ---
 
@@ -123,9 +132,9 @@ Applying or increasing Piercing on an active eligible Arrow changes remaining ca
 
 ## 5.2 Scatter Arrow
 
-Scatter members are independent projectiles inside one stable release group. Each owns its own movement, hit history, remaining Piercing capacity, lifetime, damage, and Elemental results.
+Scatter members are independent projectiles inside one stable release group. Each owns its own movement, hit history, remaining Piercing capacity, lifetime, stable DamageScale, and Elemental results.
 
-The Center member uses the Tower-authored Arrow template and resolved Attack Damage. Side members use Scatter Arrow's additional-entity template and immutable release damage equal to its authored Basic Damage plus the release-time resolved Damage Bonus.
+The Center member uses the Tower-authored Arrow template and DamageScale `1`. Side members use Scatter Arrow's additional-entity template and package-authored DamageScale. Each Monster Hit calculates its integer direct damage from the source Tower's current resolved BasicDamage and that member's stable scale.
 
 Scatter topology is fixed when the Archer enters Windup and never adds projectiles to that pending or already released group. The Center target and launch direction are selected and frozen at the Release Moment.
 
@@ -220,18 +229,18 @@ Direct Monster Hit and positive direct damage are not required to continue the c
 
 The local selector does not use the source Tower's full Attack Range or normal target-selection value. It operates only after radius and chain-history filtering.
 
-Before an initial Shell's first Position Impact, approved refresh may change unresolved primary damage, Explosive Shell, or whether Bouncing Shell is available. The first Position Impact fixes the chain's remaining count, resolved-target history, fixed Bounce Damage, bounce Arc height, search radius, and local selector. Later refresh cannot extend or rewrite that active chain.
+Before an initial Shell's first Position Impact, approved refresh may change Explosive Shell or whether Bouncing Shell is available. The first Position Impact fixes the chain's remaining count, resolved-target history, Bounce DamageScale, bounce Arc height, search radius, and local selector. Later refresh cannot extend or rewrite that active chain.
 
 Bounce children:
 
 - Inherit only relevant typed source and package data.
-- Use the package-authored positive integer Bounce Damage rather than inheriting parent direct damage.
+- Use the package-authored positive Bounce DamageScale rather than inheriting the parent scale.
 - Use package-authored bounce Arc height.
 - Do not consume Multi Shells again.
 - Do not inspect the source Tower's complete Upgrade state.
 - Retain live Elemental lookup at each eligible result boundary.
 
-Primary initial Shells use the Tower-authored Shell template and current resolved Cannon Attack Damage. Additional initial Shells use the Multi Shells package's additional-entity template and immutable release damage equal to its positive integer Basic Damage plus the release-time resolved Damage Bonus. Bounce children always use the Bouncing Shell package's positive integer Bounce Damage, including when the parent was an additional Shell or another bounce child. Additional and bounce direct damage is immutable against later refresh, while an unresolved primary initial Shell remains eligible for its reviewed live Damage refresh. Explosive Shell remains an independently authored Effect and uses the same authored Effect damage at every eligible impact. No Cannon Behaviour composes a general damage multiplier.
+Primary initial Shells use the Tower-authored Shell template and DamageScale `1`. Additional initial Shells use the Multi Shells package's additional-entity template and positive DamageScale. Bounce children always use the Bouncing Shell package's positive Bounce DamageScale, including when the parent was an additional Shell or another bounce child. The scale and chain state remain stable, while every actual direct or bounce hit reads the source Tower's current resolved BasicDamage. Explosive Shell keeps the package identity captured by its existing timing contract and its TowerScaled Effect uses its own stable DamageScale at every eligible impact.
 
 ---
 
@@ -268,6 +277,8 @@ Projectile authoring and release validation should report or reject at minimum:
 - Non-positive speed, lifetime, or required hit threshold
 - Missing required launch direction, target, or target-position presence
 - Incompatible flight identity and release data
+- Missing source Tower or non-positive DamageScale for Tower-owned damage
+- Non-finite DamageScale, resolved BasicDamage, or raw damage product
 - Invalid Piercing capacity
 - Invalid bounce count, radius, Arc height, or selector
 - Missing source context required by an authorized Elemental or package result

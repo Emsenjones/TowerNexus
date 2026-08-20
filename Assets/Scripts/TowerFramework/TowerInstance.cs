@@ -53,29 +53,59 @@ public class TowerInstance : MonoBehaviour
             : 0;
     }
 
-    public bool CanSetLevel(int level)
+    internal bool CanCommitLevelConfig(TowerLevelConfig levelConfig)
     {
         return towerDefinition != null &&
-               level > 0 &&
-               towerDefinition.GetLevelConfig(level) != null;
+               levelConfig != null &&
+               levelConfig.IsValid() &&
+               towerDefinition.GetLevelConfig(levelConfig.Level) == levelConfig;
     }
 
-    public bool TrySetLevel(int level)
+    internal bool TrySetPreviewLevel(int level)
     {
-        if (!CanSetLevel(level))
+        TowerLevelConfig levelConfig = towerDefinition != null
+            ? towerDefinition.GetLevelConfig(level)
+            : null;
+
+        if (!CanCommitLevelConfig(levelConfig))
         {
             return false;
         }
 
-        if (currentLevel == level)
+        currentLevel = level;
+        return true;
+    }
+
+    internal void CommitPreparedLevel(TowerLevelConfig levelConfig)
+    {
+        currentLevel = levelConfig.Level;
+    }
+
+    internal void PublishLevelChangedSafely(int previousLevel, int currentLevel)
+    {
+        Action<TowerInstance, int, int> handlers = OnLevelChanged;
+
+        if (handlers == null)
         {
-            return true;
+            return;
         }
 
-        int previousLevel = currentLevel;
-        currentLevel = level;
-        OnLevelChanged?.Invoke(this, previousLevel, currentLevel);
-        return true;
+        Delegate[] subscribers = handlers.GetInvocationList();
+
+        for (int i = 0; i < subscribers.Length; i++)
+        {
+            try
+            {
+                ((Action<TowerInstance, int, int>)subscribers[i]).Invoke(
+                    this,
+                    previousLevel,
+                    currentLevel);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
     }
 
     public IReadOnlyList<GridNodeBehaviour> GetOccupiedNodes()

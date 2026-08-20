@@ -339,7 +339,6 @@ public class MonsterBuffRuntime
                 targetMonster: buffOwner,
                 hasTriggerPosition: true,
                 triggerPosition: triggerPosition,
-                resolvedDamage: 0,
                 allowsElementalApplication: false,
                 allowsLifecycleOwnerTarget:
                     eventType == BuffEventType.Removed)

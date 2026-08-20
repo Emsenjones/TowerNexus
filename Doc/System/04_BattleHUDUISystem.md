@@ -89,7 +89,7 @@ Both roots use the same UI coordinate space. The drag-visual root has no layout 
 
 The Draft Item Interaction Area displays selected rewards that have not yet been consumed.
 
-Before a held item participates in an accepted gameplay transaction, the HUD can confirm that the exact item still belongs to the pending-item collection. Successful Tower placement consumes that same held item synchronously inside the placement gameplay commit, after Tower and Monster readiness has been established. Post-commit presentation failure does not restore the consumed item. Rejection, cancellation, or pre-commit failure preserves it.
+Before a held item participates in an accepted gameplay transaction, the HUD can confirm the exact item and its owned collection index. Successful Tower placement, Level Up, or Upgrade application removes that exact item from the pending-item collection and marks its view consumed synchronously inside the accepting gameplay commit. Marking consumed is deterministic state assignment: every pointer, drag, and return-to-container handler immediately rejects the view. Later destruction is presentation cleanup. Post-commit notification, destruction, or other presentation failure does not restore the consumed item or leave it interactive. Rejection, cancellation, or pre-commit failure preserves it.
 
 It supports:
 
@@ -147,7 +147,7 @@ The HUD reports intent or presentation completion; it does not report gameplay s
 Drag Tower Draft
     -> Placement Or Existing-Tower Intent
     -> Gameplay Validation
-    -> Accepted: Consume Item
+    -> Accepted: Remove Ownership And Mark View Consumed
     -> Rejected Or Cancelled: Keep Item
 ```
 
@@ -155,7 +155,7 @@ Drag Tower Draft
 Drag Tower Upgrade Draft
     -> Existing-Tower Intent
     -> Upgrade Validation
-    -> Accepted: Consume Item
+    -> Accepted: Remove Ownership And Mark View Consumed
     -> Rejected Or Cancelled: Keep Item
 ```
 
@@ -186,6 +186,7 @@ Battle UI authoring validation should report at minimum:
 - Camera pan competing with an active held-item drag
 - Draft presentation unable to remain interactive while battle simulation is paused
 - A partial or invalid held item registered in the pending-item collection
+- A semantically consumed Pending Draft view that can still begin, continue, or complete pointer/drag interaction
 
 Validation must not create gameplay state or silently replace authored UI.
 

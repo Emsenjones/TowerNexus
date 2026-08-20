@@ -34,4 +34,5 @@ This directory separates durable runtime contracts from iterative balance design
 - [System Documents](System/00_ProjectOverview.md)
 - [Stage Design Blueprint](Balance/00_StageDesignBlueprint.md)
 - [Tower Growth And Upgrade Identity](Balance/01_TowerGrowthAndUpgradeIdentity.md)
-- [Current Task Documents](Task/)
+- [Current CombatMathV2 Task Documents](Task/README.md)
+- [Archived CombatMathV1 Task Documents](Task/Archive/CombatMathV1_2026-08-21/)

@@ -1,9 +1,41 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
+
+public readonly struct FixedBuffDamageObservation
+{
+    internal FixedBuffDamageObservation(
+        EffectDefinition effectDefinition,
+        int actionOrdinal,
+        int fixedDamage,
+        TowerInstance sourceTower,
+        int resolvedTargetCount,
+        int successfulApplicationCount)
+    {
+        EffectDefinition = effectDefinition;
+        ActionOrdinal = actionOrdinal;
+        FixedDamage = fixedDamage;
+        SourceTower = sourceTower;
+        ResolvedTargetCount = resolvedTargetCount;
+        SuccessfulApplicationCount = successfulApplicationCount;
+    }
+
+    public EffectDefinition EffectDefinition { get; }
+    public int ActionOrdinal { get; }
+    public int FixedDamage { get; }
+    public TowerInstance SourceTower { get; }
+    public int ResolvedTargetCount { get; }
+    public int SuccessfulApplicationCount { get; }
+}
 
 public static class EffectExecutor
 {
     private static readonly List<MonsterBehaviour> ResolvedTargets = new List<MonsterBehaviour>();
+
+    public static event Action<FixedBuffDamageObservation>
+        OnFixedBuffDamageObserved;
 
     private struct EffectExecutionResult
     {
@@ -17,9 +49,14 @@ public static class EffectExecutor
         public bool ExecutedAnyAction { get; }
     }
 
-    public static void Execute(EffectDefinition effectDefinition, EffectTriggerContext triggerContext)
+    public static bool Execute(
+        EffectDefinition effectDefinition,
+        EffectTriggerContext triggerContext)
     {
-        ExecuteInternal(effectDefinition, triggerContext, ResolvedTargets);
+        return ExecuteInternal(
+            effectDefinition,
+            triggerContext,
+            ResolvedTargets).ExecutedAnyAction;
     }
 
     public static bool ExecuteWithResolvedTargets(
@@ -27,7 +64,10 @@ public static class EffectExecutor
         EffectTriggerContext triggerContext,
         List<MonsterBehaviour> resolvedTargets)
     {
-        return ExecuteInternal(effectDefinition, triggerContext, resolvedTargets).TargetsResolved;
+        return ExecuteInternal(
+            effectDefinition,
+            triggerContext,
+            resolvedTargets).ExecutedAnyAction;
     }
 
     private static EffectExecutionResult ExecuteInternal(
@@ -66,7 +106,12 @@ public static class EffectExecutor
         for (int i = 0; i < actions.Count; i++)
         {
             // Non-short-circuit aggregation preserves authored action order even after a successful action.
-            executedAnyAction |= ExecuteAction(actions[i], triggerContext, executionTargets);
+            executedAnyAction |= ExecuteAction(
+                effectDefinition,
+                i,
+                actions[i],
+                triggerContext,
+                executionTargets);
         }
 
         SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
@@ -75,6 +120,8 @@ public static class EffectExecutor
     }
 
     private static bool ExecuteAction(
+        EffectDefinition effectDefinition,
+        int actionOrdinal,
         EffectAction action,
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
@@ -87,7 +134,12 @@ public static class EffectExecutor
         switch (action.ActionType)
         {
             case EffectActionType.DealDamage:
-                return ExecuteDealDamage(action, triggerContext, targets);
+                return ExecuteDealDamage(
+                    effectDefinition,
+                    actionOrdinal,
+                    action,
+                    triggerContext,
+                    targets);
             case EffectActionType.ApplyBuff:
                 return ExecuteApplyBuff(action, triggerContext, targets);
             case EffectActionType.SetMoveSpeedMultiplier:
@@ -115,20 +167,45 @@ public static class EffectExecutor
     }
 
     private static bool ExecuteDealDamage(
+        EffectDefinition effectDefinition,
+        int actionOrdinal,
         EffectAction action,
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
     {
-        int damage = action != null && action.DamageAmount > 0
-            ? action.DamageAmount
-            : triggerContext.ResolvedDamage;
+        int damage;
+        TowerOwnedDamageResolution towerResolution = default;
+
+        switch (action.DamageMode)
+        {
+            case EffectDamageMode.TowerScaled:
+                if (!TowerRuntimeStatResolver.TryResolveTowerOwnedDamage(
+                        triggerContext.SourceTower,
+                        TowerDamageSourceIdentity.BehaviourEffect(
+                            effectDefinition,
+                            actionOrdinal),
+                        action.DamageScale,
+                        out towerResolution))
+                {
+                    return false;
+                }
+
+                damage = towerResolution.FinalDamage;
+                break;
+            case EffectDamageMode.FixedBuff:
+                damage = action.FixedDamage;
+                break;
+            case EffectDamageMode.None:
+            default:
+                return false;
+        }
 
         if (damage <= 0)
         {
             return false;
         }
 
-        bool dealtDamage = false;
+        int successfulApplicationCount = 0;
 
         for (int i = 0; i < targets.Count; i++)
         {
@@ -140,10 +217,55 @@ public static class EffectExecutor
             }
 
             target.TakeDamage(damage);
-            dealtDamage = true;
+            successfulApplicationCount++;
         }
 
-        return dealtDamage;
+        if (action.DamageMode == EffectDamageMode.TowerScaled)
+        {
+            TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+                towerResolution,
+                successfulApplicationCount);
+        }
+        else
+        {
+            PublishFixedBuffDamageObservation(
+                new FixedBuffDamageObservation(
+                    effectDefinition,
+                    actionOrdinal,
+                    action.FixedDamage,
+                    triggerContext.SourceTower,
+                    targets.Count,
+                    successfulApplicationCount));
+        }
+
+        return successfulApplicationCount > 0;
+    }
+
+    private static void PublishFixedBuffDamageObservation(
+        FixedBuffDamageObservation observation)
+    {
+        Action<FixedBuffDamageObservation> observers =
+            OnFixedBuffDamageObserved;
+
+        if (observers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = observers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<FixedBuffDamageObservation>)invocationList[i])(
+                    observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+        }
     }
 
     private static bool ExecuteApplyBuff(
@@ -316,7 +438,6 @@ public static class EffectExecutor
                     targetMonster: target,
                     hasTriggerPosition: true,
                     triggerPosition: GetMonsterHitPosition(target),
-                    resolvedDamage: triggerContext.ResolvedDamage,
                     allowsElementalApplication: false),
                 childResolvedTargets);
 

@@ -150,9 +150,9 @@ public class BuffDefinition : ScriptableObject
                 isValid = false;
             }
 
-            if (!eventBinding.IsValid())
+            if (!eventBinding.IsValidForBuffLifecycle())
             {
-                Debug.LogWarning($"Buff definition '{name}' is invalid: buff event binding '{eventBinding.EventType}' failed validation.", this);
+                Debug.LogWarning($"Buff definition '{name}' is invalid: buff event binding '{eventBinding.EventType}' must use FixedBuff for every nested DealDamage action.", this);
                 isValid = false;
             }
 

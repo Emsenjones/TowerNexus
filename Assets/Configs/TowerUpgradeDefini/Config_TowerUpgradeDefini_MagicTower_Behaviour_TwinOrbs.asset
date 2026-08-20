@@ -25,7 +25,7 @@ MonoBehaviour:
   additionalAttackEntities:
     prefab: {fileID: 5932105996875227893, guid: ddbc56afe56b5423287d527e7c7b5b88, type: 3}
     count: 1
-    basicDamage: 12
+    damageScale: 0.4
   explosiveShellEffect: {fileID: 0}
   bounceSearchRadius: 1
   maxBounceCount: 1

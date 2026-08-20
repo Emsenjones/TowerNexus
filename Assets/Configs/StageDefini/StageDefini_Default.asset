@@ -20,7 +20,11 @@ MonoBehaviour:
   towerDraftPool:
   - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
   - {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
-  towerUpgradeDraftPool: []
+  towerUpgradeDraftPool:
+  - {fileID: 11400000, guid: fced72daa7b7c42419e4cb626f897805, type: 2}
+  - {fileID: 11400000, guid: 43d1ce78aedd8460fb2773003312c23b, type: 2}
+  - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
+  - {fileID: 11400000, guid: 957a38297f6b9405ea399f0a4fc87b44, type: 2}
   showStageIntroduction: 0
   introducedTowers: []
   introducedTowerUpgrades: []

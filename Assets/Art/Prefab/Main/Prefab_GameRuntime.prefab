@@ -3708,6 +3708,23 @@ MonoBehaviour:
   towerPlacementController: {fileID: 5527772070008687998}
   battleHUDUI: {fileID: 4430054556091105857}
   draftChoiceCount: 3
+  useFixedDraftChoices: 0
+  fixedDraftChoiceSteps:
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: 76b13c72bfb594d89beecab5f1ce3520, type: 2}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}
 --- !u!1 &6369237998951487967
 GameObject:
   m_ObjectHideFlags: 0

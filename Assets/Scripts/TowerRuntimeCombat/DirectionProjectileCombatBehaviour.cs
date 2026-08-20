@@ -51,7 +51,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
     protected override TowerCombatBaseStats CreateBaseStats()
     {
         return new TowerCombatBaseStats(
-            BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration);
     }
@@ -256,19 +255,23 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             return false;
         }
 
-        int releaseDamage = isAdditional
-            ? Mathf.Max(0, pendingAdditionalAttackEntities.BasicDamage + resolvedStats.DamageBonus)
-            : resolvedStats.AttackDamage;
+        float damageScale = isAdditional
+            ? pendingAdditionalAttackEntities.DamageScale
+            : 1f;
+        TowerDamageSourceIdentity damageSourceIdentity = isAdditional
+            ? TowerDamageSourceIdentity.AdditionalDirect
+            : TowerDamageSourceIdentity.PrimaryDirect;
 
         return TryReleaseProjectile(
             releasePrefab,
             origin,
             origin.position + fallbackDirection.normalized,
             pendingProjectileTarget,
-            releaseDamage,
+            damageScale,
+            damageSourceIdentity,
             ProjectileFlightType.Direction,
             initialArcHeight: 0f,
-            runtimeOptions: CreateRuntimeOptions(isAdditional),
+            runtimeOptions: CreateRuntimeOptions(),
             archerReleaseIdentity: releaseIdentity);
     }
 
@@ -296,7 +299,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private ProjectileRuntimeOptions CreateRuntimeOptions(bool locksDirectDamage)
+    private ProjectileRuntimeOptions CreateRuntimeOptions()
     {
         bool canPierce = IsPiercingArrowActive();
         TowerUpgradeDefinition explosiveArrowSourceUpgrade = null;
@@ -314,7 +317,6 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         return new ProjectileRuntimeOptions(
             canPierce,
             canPierce ? cachedPiercingMaximum : 1,
-            locksDirectDamage: locksDirectDamage,
             explosiveArrowSourceUpgrade: explosiveArrowSourceUpgrade,
             explosiveArrowEffect: explosiveArrowEffect);
     }

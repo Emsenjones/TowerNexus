@@ -25,14 +25,14 @@ MonoBehaviour:
   additionalAttackEntities:
     prefab: {fileID: 8667284346000836136, guid: 1835c2457c5234c6b8c588eb9ebeaa9c, type: 3}
     count: 2
-    basicDamage: 5
+    damageScale: 0.25
   explosiveArrowEffect: {fileID: 0}
   explosiveShellEffect: {fileID: 0}
   bounceSearchRadius: 1
   maxBounceCount: 1
   bounceArcHeight: 1
   bounceTargetSelectionType: 0
-  bounceDamage: 3
+  bounceDamageScale: 1
   arcaneDetonationEffect: {fileID: 0}
   magicArcaneFieldPrefab: {fileID: 0}
   blastRoundsEffect: {fileID: 0}

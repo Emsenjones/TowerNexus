@@ -5,6 +5,20 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
+internal readonly struct PreparedPendingDraftConsumption
+{
+    internal PreparedPendingDraftConsumption(
+        PendingDraftUIItem item,
+        int ownedIndex)
+    {
+        Item = item;
+        OwnedIndex = ownedIndex;
+    }
+
+    internal PendingDraftUIItem Item { get; }
+    internal int OwnedIndex { get; }
+}
+
 public class BattleHUDUI : MonoBehaviour
 {
     [SerializeField] private PlayerSystem playerSystem;
@@ -255,13 +269,60 @@ public class BattleHUDUI : MonoBehaviour
     {
         return isBattleActive &&
                item != null &&
+               !item.IsConsumed &&
                pendingDraftItems.Contains(item);
+    }
+
+    internal bool TryPreparePendingDraftConsumption(
+        PendingDraftUIItem item,
+        out PreparedPendingDraftConsumption preparedConsumption)
+    {
+        preparedConsumption = default;
+
+        if (!isBattleActive || item == null || item.IsConsumed)
+        {
+            return false;
+        }
+
+        int ownedIndex = pendingDraftItems.IndexOf(item);
+
+        if (ownedIndex < 0)
+        {
+            return false;
+        }
+
+        preparedConsumption = new PreparedPendingDraftConsumption(
+            item,
+            ownedIndex);
+        return true;
+    }
+
+    internal void CommitPreparedPendingDraftConsumption(
+        PreparedPendingDraftConsumption preparedConsumption)
+    {
+        pendingDraftItems.RemoveAt(preparedConsumption.OwnedIndex);
+        preparedConsumption.Item.MarkConsumed();
+    }
+
+    internal void ReleaseConsumedPendingDraftView(PendingDraftUIItem item)
+    {
+        if (item != null)
+        {
+            Destroy(item.gameObject);
+        }
     }
 
     internal void ConsumePendingDraft(PendingDraftUIItem item)
     {
-        pendingDraftItems.Remove(item);
-        Destroy(item.gameObject);
+        if (!TryPreparePendingDraftConsumption(
+                item,
+                out PreparedPendingDraftConsumption preparedConsumption))
+        {
+            return;
+        }
+
+        CommitPreparedPendingDraftConsumption(preparedConsumption);
+        ReleaseConsumedPendingDraftView(item);
     }
 
     public bool IsScreenPositionInsideDraftItemInteractionArea(Vector2 screenPosition)

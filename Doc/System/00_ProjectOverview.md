@@ -145,9 +145,9 @@ Combat configuration follows this relationship:
 
 ```text
 TowerDefinition
-    + Per-Level Model Data
+    + Per-Level Model And BasicDamage Data
     + Tower Runtime Template
-        + Base Damage, Range, Cycle, And Targeting Authoring
+        + Range, Cycle, And Targeting Authoring
         + Attack Entity References
 
 TowerUpgradeDefinition
@@ -157,6 +157,8 @@ TowerUpgradeDefinition
 ```
 
 Definitions and runtime templates store reusable authored truth. Per-instance runtime state, consumed history, timers, pending actions, and active entity state must not be written back into reusable authored content.
+
+Tower-owned damage resolves from the source Tower's current Level-authored BasicDamage plus applied Basic Damage Bonus, multiplied by one stable attack-owned DamageScale at the actual damage boundary. Buff-lifecycle and Elemental-reaction damage uses independently authored FixedDamage. Already resolved damage is never replayed after a Level or Upgrade change.
 
 ---
 
@@ -218,7 +220,7 @@ It does not own Tower combat, Tower Upgrade eligibility, Map data, or pathfindin
 
 ## 4.10 Tower Framework System
 
-Owns shared Tower identity, authored base combat data, Tower level-model data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
+Owns shared Tower identity, per-level BasicDamage and model data, authored non-damage base combat data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
 
 It defines what a Tower is, not how a placed Tower executes combat.
 

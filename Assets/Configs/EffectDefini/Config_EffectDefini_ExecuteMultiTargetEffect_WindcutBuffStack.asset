@@ -17,7 +17,6 @@ MonoBehaviour:
   executionVfxPrefab: {fileID: 3321206211796593786, guid: b8374902869304382bc99082358c35ad, type: 3}
   actions:
   - actionType: 5
-    damageAmount: 1
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0

@@ -4,7 +4,6 @@ public readonly struct ProjectileRuntimeOptions
     public int MaxPierceHitCount { get; }
     public bool IsBounceChild { get; }
     public bool IsInitialRelease => !IsBounceChild;
-    public bool LocksDirectDamage { get; }
     public TowerUpgradeDefinition ExplosiveArrowSourceUpgrade { get; }
     public EffectDefinition ExplosiveArrowEffect { get; }
     public TowerUpgradeDefinition ExplosiveShellSourceUpgrade { get; }
@@ -13,7 +12,7 @@ public readonly struct ProjectileRuntimeOptions
     public int RemainingBounceCount { get; }
     public float BounceArcHeight { get; }
     public TargetSelectionType BounceTargetSelectionType { get; }
-    public int BounceDamage { get; }
+    public float BounceDamageScale { get; }
     public TowerUpgradeDefinition BlastRoundsSourceUpgrade { get; }
     public EffectDefinition BlastRoundsEffect { get; }
 
@@ -21,7 +20,6 @@ public readonly struct ProjectileRuntimeOptions
         bool canPierce,
         int maxPierceHitCount,
         bool isBounceChild = false,
-        bool locksDirectDamage = false,
         TowerUpgradeDefinition explosiveArrowSourceUpgrade = null,
         EffectDefinition explosiveArrowEffect = null,
         TowerUpgradeDefinition explosiveShellSourceUpgrade = null,
@@ -30,14 +28,13 @@ public readonly struct ProjectileRuntimeOptions
         int remainingBounceCount = 0,
         float bounceArcHeight = 0f,
         TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest,
-        int bounceDamage = 0,
+        float bounceDamageScale = 0f,
         TowerUpgradeDefinition blastRoundsSourceUpgrade = null,
         EffectDefinition blastRoundsEffect = null)
     {
         CanPierce = canPierce;
         MaxPierceHitCount = maxPierceHitCount;
         IsBounceChild = isBounceChild;
-        LocksDirectDamage = locksDirectDamage;
         ExplosiveArrowSourceUpgrade = explosiveArrowSourceUpgrade;
         ExplosiveArrowEffect = explosiveArrowEffect;
         ExplosiveShellSourceUpgrade = explosiveShellSourceUpgrade;
@@ -46,7 +43,7 @@ public readonly struct ProjectileRuntimeOptions
         RemainingBounceCount = remainingBounceCount;
         BounceArcHeight = bounceArcHeight;
         BounceTargetSelectionType = bounceTargetSelectionType;
-        BounceDamage = bounceDamage;
+        BounceDamageScale = bounceDamageScale;
         BlastRoundsSourceUpgrade = blastRoundsSourceUpgrade;
         BlastRoundsEffect = blastRoundsEffect;
     }

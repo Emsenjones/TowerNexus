@@ -9,16 +9,20 @@ public sealed class AdditionalAttackEntityAuthoring
     [SerializeField] private GameObject prefab;
     [Min(1)]
     [SerializeField] private int count = 1;
-    [Min(1)]
-    [SerializeField] private int basicDamage = 1;
+    [MinValue(0.01f)]
+    [SerializeField] private float damageScale = 1f;
 
     public GameObject Prefab => prefab;
     public int Count => Mathf.Max(1, count);
-    public int BasicDamage => Mathf.Max(1, basicDamage);
+    public float DamageScale => damageScale;
 
     public bool HasValidValues()
     {
-        return prefab != null && count > 0 && basicDamage > 0;
+        return prefab != null &&
+               count > 0 &&
+               !float.IsNaN(damageScale) &&
+               !float.IsInfinity(damageScale) &&
+               damageScale > 0f;
     }
 
     public bool HasRootComponent<T>() where T : Component
@@ -90,9 +94,9 @@ public class TowerUpgradeDefinition : ScriptableObject
     [SerializeField] private TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest;
     [TitleGroup("Behaviour Layer/Cannon Bouncing Shell")]
     [ShowIf(nameof(IsCannonBouncingShell))]
-    [LabelText("Bounce Damage")]
-    [MinValue(1)]
-    [SerializeField] private int bounceDamage = 3;
+    [LabelText("Bounce Damage Scale")]
+    [MinValue(0.01f)]
+    [SerializeField] private float bounceDamageScale = 1f;
     [TitleGroup("Behaviour Layer/Magic Arcane Detonation")]
     [ShowIf(nameof(IsMagicArcaneDetonation))]
     [SerializeField] private EffectDefinition arcaneDetonationEffect;
@@ -135,7 +139,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     public int MaxBounceCount => Mathf.Max(1, maxBounceCount);
     public float BounceArcHeight => Mathf.Max(0f, bounceArcHeight);
     public TargetSelectionType BounceTargetSelectionType => bounceTargetSelectionType;
-    public int BounceDamage => Mathf.Max(1, bounceDamage);
+    public float BounceDamageScale => bounceDamageScale;
     public EffectDefinition ArcaneDetonationEffect => arcaneDetonationEffect;
     public GameObject MagicArcaneFieldPrefab => magicArcaneFieldPrefab;
     public EffectDefinition BlastRoundsEffect => blastRoundsEffect;
@@ -241,6 +245,11 @@ public class TowerUpgradeDefinition : ScriptableObject
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental layer upgrades need a direct Elemental apply effect.");
                 isValid = false;
             }
+            else if (!elementalApplyEffect.IsValidWithoutDamage())
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental apply effects cannot contain DealDamage actions.");
+                isValid = false;
+            }
         }
 
         return isValid;
@@ -337,9 +346,12 @@ public class TowerUpgradeDefinition : ScriptableObject
             isValid = false;
         }
 
-        if (IsCannonBouncingShell() && bounceDamage <= 0)
+        if (IsCannonBouncingShell() &&
+            (float.IsNaN(bounceDamageScale) ||
+             float.IsInfinity(bounceDamageScale) ||
+             bounceDamageScale <= 0f))
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell damage must be greater than zero.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Bouncing Shell Damage Scale must be finite and greater than zero.");
             isValid = false;
         }
 
@@ -379,7 +391,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     {
         if (additionalAttackEntities == null || !additionalAttackEntities.HasValidValues())
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {behaviourPackageType} requires an additional Attack Entity prefab, positive count, and positive Basic Damage.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {behaviourPackageType} requires an additional Attack Entity prefab, positive count, and a positive finite Damage Scale.");
             return false;
         }
 
@@ -414,11 +426,18 @@ public class TowerUpgradeDefinition : ScriptableObject
             return false;
         }
 
-        bool isValid = effectDefinition.IsValid();
+        bool isValid = effectDefinition.IsValidForDamageMode(
+            EffectDamageMode.TowerScaled);
+
+        if (!effectDefinition.ContainsDealDamageAction())
+        {
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} EffectDefinition requires at least one DealDamage action.");
+            isValid = false;
+        }
 
         if (!isValid)
         {
-            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} EffectDefinition failed validation.");
+            Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: {packageDisplayName} EffectDefinition must use TowerScaled for every nested DealDamage action.");
         }
 
         if (effectDefinition.Radius <= 0f)

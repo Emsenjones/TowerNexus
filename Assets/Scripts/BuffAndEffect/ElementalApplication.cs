@@ -27,7 +27,6 @@ public static class ElementalApplication
                 targetMonster: targetMonster,
                 hasTriggerPosition: true,
                 triggerPosition: applicationPosition,
-                resolvedDamage: 0,
                 allowsElementalApplication: true));
     }
 }

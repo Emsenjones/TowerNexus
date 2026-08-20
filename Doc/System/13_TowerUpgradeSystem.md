@@ -30,7 +30,7 @@ It does not own Draft generation, placement intent detection, UI feedback, comba
 
 Tower growth has two separate surfaces:
 
-1. Tower Level: level-model change and Stage-authorized content unlocks.
+1. Tower Level: Level-authored BasicDamage growth, level-model change, and Stage-authorized content unlocks.
 2. Tower Upgrades: the main source of stat, Behaviour, and Elemental build identity.
 
 The intended progression is:
@@ -45,7 +45,7 @@ Stage-Authorized Tower Level
 
 The current maximum Tower level is three.
 
-Tower Level v0.1 does not directly change damage, Attack Range, Attack Cycle Duration, or another combat stat. Direct combat growth comes from applied Tower Upgrades.
+Tower Level v0.2 directly changes BasicDamage. Attack Range, Attack Cycle Duration, and other non-damage combat stats change only through their owning authoring or accepted Tower Upgrades.
 
 ---
 
@@ -65,23 +65,35 @@ The active Stage maximum for one TowerFamily is the highest Required Tower Level
 
 Stage composition supplies and validates this authoring. Tower Upgrade System binds the resulting Stage level rules and remains the authority queried by preview and final application.
 
-An accepted request:
+Before mutation, an accepted request prepares the exact held-Draft ownership,
+target and next configuration, runtime readiness, and complete next combat
+baseline. No gameplay state changes when preparation fails.
 
-1. Advances the Tower by exactly one level.
-2. Makes the new level's Stage-allowed Upgrade content eligible.
-3. Publishes one accepted level-change result.
-4. Allows the Tower visual owner to replace the level model.
-5. Consumes the Tower Draft item through the calling interaction flow.
+The non-failing semantic commit:
+
+1. Advances the Tower by exactly one level and replaces its Level-authored BasicDamage.
+2. Applies the prepared combat baseline through pure cache assignment.
+3. Removes the exact held Tower Draft from semantic ownership and marks its view consumed.
+
+After commit, the systems publish exception-isolated level-change and diagnostic
+notifications. Those notifications do not refresh gameplay state. The Tower
+visual owner then performs best-effort level-model replacement, Attack Origin
+handoff, VFX, and consumed-view cleanup. A subscriber or presentation failure
+cannot roll back the accepted Level, combat baseline, eligibility, or Draft
+consumption and cannot leave the consumed Draft interactive.
 
 A rejected request changes nothing and does not consume the item.
 
-Base damage resolves as:
+BasicDamage resolves as:
 
 ```text
-Resolved Damage
-    = Tower Runtime Template Base Attack Damage
+Current Resolved BasicDamage
+    = Current TowerLevelConfig.BasicDamage
     + Sum Of Applied Damage Bonus Deltas
 ```
+
+Damage Bonus remains whole-number authoring. Its accumulated value is not
+rounded independently before the final Tower-owned damage formula.
 
 Model replacement, Attack Origin resolution, pending presentation handoff, and Upgrade-driven combat refresh belong to their owning systems.
 
@@ -198,7 +210,7 @@ Arcane Recovery is the Magic Attack Cycle Duration Basic Upgrade. Magic Orb Maxi
 
 Expanded Patrol is the Drone Attack Range Basic Upgrade. Drone Battery Duration remains static entity authoring and is not resolved from Tower Upgrade state.
 
-High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. It increases Drone direct damage and does not increase independently authored package Effect damage.
+High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. Because Damage Bonus is part of Current Resolved BasicDamage, it increases Drone direct damage and Tower-owned Behaviour damage. It never increases Buff-lifecycle FixedDamage.
 
 Live propagation rules are owned by Tower Runtime Combat System. Basic Layer does not execute Effects or Buffs.
 
@@ -213,15 +225,15 @@ The first-version package set is:
 | TowerFamily | Package | Authored Contract |
 |---|---|---|
 | Archer | Piercing Arrow | Finite hit capacity |
-| Archer | Scatter Arrow | Side-Arrow angle plus additional entity template, count, and Basic Damage |
+| Archer | Scatter Arrow | Side-Arrow angle plus additional entity template, count, and DamageScale |
 | Archer | Explosive Arrow | Direct-hit area Effect that includes every surviving valid target in range |
 | Cannon | Explosive Shell | Position Impact area Effect |
-| Cannon | Multi Shells | Additional entity template, count, and Basic Damage |
-| Cannon | Bouncing Shell | Bounce count, local radius, bounce Arc height, local selector, and positive integer Bounce Damage |
-| Magic | Multi Orbs | Additional entity template, count, and Basic Damage |
+| Cannon | Multi Shells | Additional entity template, count, and DamageScale |
+| Cannon | Bouncing Shell | Bounce count, local radius, bounce Arc height, local selector, and positive Bounce DamageScale |
+| Magic | Multi Orbs | Additional entity template, count, and DamageScale |
 | Magic | Arcane Detonation | Normal-completion area Effect |
 | Magic | Arcane Field | Complete field runtime prefab and presentation; its root Behaviour owns radius, tick interval, and tick Effect |
-| Drone | Multi Drones | Additional entity template, count, and Basic Damage |
+| Drone | Multi Drones | Additional entity template, count, and DamageScale |
 | Drone | Blast Rounds | Projectile-hit area Effect |
 | Drone | Final Dive | Positive arrival threshold and impact Effect |
 
@@ -256,7 +268,7 @@ Different package types compose by default. The current reviewed combinations in
 - Piercing + Explosive: every new unique Monster Hit may produce one explosion.
 - Scatter + Explosive: every independently hitting Arrow may produce one explosion.
 - Multi Shells + Explosive: every initial Shell may explode.
-- Multi Shells + Bouncing: every initial Shell owns an independent chain; every bounce child uses the Bouncing Shell package's fixed Bounce Damage.
+- Multi Shells + Bouncing: every initial Shell owns an independent chain; every bounce child uses the Bouncing Shell package's stable DamageScale against current resolved BasicDamage.
 - Explosive + Bouncing: every landing completes explosion results before selecting the next bounce target.
 - Multi Orbs + Arcane Detonation: every active synchronized member detonates at normal group completion.
 - Multi Drones + Blast Rounds: every active Drone may fire Blast Rounds.
@@ -320,10 +332,11 @@ Tower Upgrade validation should report or reject at minimum:
 - Stage level progression with no newly eligible Upgrade at an intermediate level
 - Level-up request without bound Stage level rules
 - Missing or incompatible layer data
+- Damage Bonus delta that is non-finite or not a whole number
 - Package identity incompatible with TowerFamily
 - Missing required package Effect or parameter
 - Non-positive count, radius, interval, threshold, or capacity where invalid
-- Missing or incompatible additional Attack Entity root component, or non-positive additional count, Basic Damage, or Bounce Damage
+- Missing or incompatible additional Attack Entity root component, or non-positive additional count, DamageScale, or Bounce DamageScale
 - Duplicate package identity on one Tower
 - Second Elemental Layer on one Tower
 - Elemental definition without a valid Elemental apply Effect

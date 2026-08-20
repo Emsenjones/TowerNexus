@@ -50,6 +50,8 @@ public class TowerPlacementController : MonoBehaviour
     public MapGeneratorBehaviour ActiveMap => mapGenerator;
     public Camera PlacementCamera => placementCamera;
 
+    public event System.Action<TowerInstance> OnTowerDeploymentCommitted;
+
     private void Awake()
     {
         EnsureStableRuntimeDependencies();
@@ -438,32 +440,129 @@ public class TowerPlacementController : MonoBehaviour
     private void CompleteLevelUp()
     {
         if (towerUpgradeSystem == null ||
+            battleHUDUI == null ||
             currentLevelUpTarget == null ||
             currentLevelUpTarget.TowerInstance == null ||
-            currentTowerDefinition == null)
+            currentTowerDefinition == null ||
+            currentDraftEntry == null)
         {
             return;
         }
 
-        if (!towerUpgradeSystem.TryLevelUpTower(
+        if (!TryValidateHeldTowerDraft(out string draftFailureReason))
+        {
+            Debug.LogWarning(
+                $"Tower placement controller cannot prepare Level Up: {draftFailureReason}",
+                this);
+            return;
+        }
+
+        if (!battleHUDUI.TryPreparePendingDraftConsumption(
+                currentDraftEntry,
+                out PreparedPendingDraftConsumption preparedDraftConsumption))
+        {
+            Debug.LogWarning(
+                "Tower placement controller cannot prepare Level Up: the exact held Draft cannot be consumed.",
+                this);
+            return;
+        }
+
+        if (!towerUpgradeSystem.TryPrepareLevelUp(
                 currentLevelUpTarget.TowerInstance,
                 currentTowerDefinition,
-                out _))
+                out PreparedTowerLevelUp preparedLevelUp,
+                out string levelFailureReason))
         {
+            Debug.LogWarning(
+                $"Tower placement controller cannot prepare Level Up: {levelFailureReason}",
+                this);
             return;
         }
 
-        bool didRefreshVisual = currentLevelUpTarget.RefreshTowerVisual();
-
-        if (didRefreshVisual && currentLevelUpTarget.VisualController != null)
+        if (!currentLevelUpTarget.TryPrepareLevelVisualRefresh(
+                preparedLevelUp.NextLevelConfig,
+                out string visualFailureReason))
         {
-            currentLevelUpTarget.VisualController.PlayTowerSpawnRefreshFeedback();
+            Debug.LogWarning(
+                $"Tower placement controller cannot prepare Level Up: {visualFailureReason}",
+                this);
+            return;
         }
 
-        if (battleHUDUI != null && currentDraftEntry != null)
+        if (!currentLevelUpTarget.TryGetComponent(
+                out TowerCombatBehaviour targetCombat))
         {
-            battleHUDUI.RemovePendingDraft(currentDraftEntry);
-            currentDraftEntry = null;
+            Debug.LogWarning(
+                "Tower placement controller cannot prepare Level Up: the target Tower combat runtime is missing.",
+                this);
+            return;
+        }
+
+        if (!targetCombat.TryPrepareLevelDamageRevision(
+                preparedLevelUp.NextLevelConfig,
+                out PreparedTowerCombatLevelRevision preparedCombatRevision,
+                out string combatFailureReason))
+        {
+            Debug.LogWarning(
+                $"Tower placement controller cannot prepare Level Up: {combatFailureReason}",
+                this);
+            return;
+        }
+
+        PendingDraftUIItem consumedDraft = preparedDraftConsumption.Item;
+
+        towerUpgradeSystem.CommitPreparedLevelUp(preparedLevelUp);
+        targetCombat.ApplyPreparedLevelDamageRevision(preparedCombatRevision);
+        battleHUDUI.CommitPreparedPendingDraftConsumption(
+            preparedDraftConsumption);
+        currentDraftEntry = null;
+
+        towerUpgradeSystem.PublishPreparedLevelUp(preparedLevelUp);
+        RunLevelUpPresentation(currentLevelUpTarget, consumedDraft);
+    }
+
+    private void RunLevelUpPresentation(
+        TowerBehaviour levelledTower,
+        PendingDraftUIItem consumedDraft)
+    {
+        bool didRefreshVisual = false;
+
+        try
+        {
+            didRefreshVisual = levelledTower != null &&
+                               levelledTower.RefreshTowerVisual();
+
+            if (!didRefreshVisual)
+            {
+                Debug.LogWarning(
+                    "Tower Level Up committed with a model-refresh presentation warning.",
+                    this);
+            }
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception, this);
+        }
+
+        if (didRefreshVisual)
+        {
+            try
+            {
+                levelledTower.VisualController?.PlayTowerSpawnRefreshFeedback();
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
+
+        try
+        {
+            battleHUDUI.ReleaseConsumedPendingDraftView(consumedDraft);
+        }
+        catch (System.Exception exception)
+        {
+            Debug.LogException(exception, this);
         }
     }
 
@@ -777,6 +876,7 @@ public class TowerPlacementController : MonoBehaviour
             preparedCombat,
             consumedDraft);
         currentDraftEntry = null;
+        PublishTowerDeploymentCommitted(preparedTower.TowerInstance);
 
         bool hasPresentationWarning =
             !TryRunPlacementPresentation(preparedTower);
@@ -787,6 +887,31 @@ public class TowerPlacementController : MonoBehaviour
                 ? "AcceptedWithPresentationWarning"
                 : "Accepted");
         return true;
+    }
+
+    private void PublishTowerDeploymentCommitted(TowerInstance towerInstance)
+    {
+        System.Action<TowerInstance> handlers = OnTowerDeploymentCommitted;
+
+        if (handlers == null || towerInstance == null)
+        {
+            return;
+        }
+
+        System.Delegate[] subscribers = handlers.GetInvocationList();
+
+        for (int i = 0; i < subscribers.Length; i++)
+        {
+            try
+            {
+                ((System.Action<TowerInstance>)subscribers[i]).Invoke(
+                    towerInstance);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
     }
 
     private bool TryValidateHeldTowerDraft(out string failureReason)

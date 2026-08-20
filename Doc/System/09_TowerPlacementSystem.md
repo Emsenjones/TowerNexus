@@ -32,7 +32,7 @@ Tower Placement System receives one active held Draft item from Battle HUD UI Sy
 
 Only one drag operation and one active Tower placement preview may exist at a time.
 
-The held item is consumed only after the receiving gameplay system accepts the requested result. Rejection or cancellation preserves it.
+The held item is consumed only after the receiving gameplay system accepts the requested result. Semantic consumption removes the exact item from Battle HUD ownership and marks its view consumed in the same non-failing commit, so every pointer and drag handler rejects it immediately. Destruction of the consumed view is later presentation cleanup. Rejection or cancellation preserves the item.
 
 An accepted Draft-item drag owns its pointer gesture until release or cancellation. Camera System must not begin or continue a pan from that gesture, including after the pointer moves from the UI into the battlefield.
 
@@ -150,7 +150,11 @@ Current Candidate Grid Node
 
 A Tower Draft may target an existing Tower when the TowerFamily matches. Tower Upgrade System remains the final authority for level limits and level-up acceptance.
 
-An accepted result consumes the Tower Draft and requests the Tower-owned visual path to refresh its level model and success presentation.
+Before an accepted result, the interaction preflights the exact held Tower Draft and Battle HUD ownership together with the target, next valid TowerLevelConfig, combat-runtime readiness, and fully prepared next combat baseline.
+
+The non-failing semantic commit advances the Level, applies that prepared combat baseline through pure state assignment, removes the exact Draft from Battle HUD ownership, and marks its Pending view consumed. It does not call presentation, publish events, traverse active Attack Entities, or repeat validation. `OnLevelChanged` and diagnostics are exception-isolated post-commit notifications and are not combat-refresh authority.
+
+The Tower-owned visual path then performs best-effort level-model replacement, Attack Origin handoff, VFX, and consumed-view destruction. Presentation failure cannot roll back the accepted Level, damage baseline, or Draft consumption, and a failed cleanup cannot leave an interactive ghost Draft.
 
 ## 6.2 Tower Upgrade Draft Intent
 
@@ -256,6 +260,8 @@ Placement authoring and runtime validation should report or reject at minimum:
 - Prepared revision application that performs pathfinding or exposes an ordinary commit-time failure
 - A committed placement without its complete prepared Monster route revision
 - A committed Tower or Monster revision whose held Draft was not consumed
+- A committed Level Up whose exact Pending Draft remains owned or interactive
+- Level Up combat-baseline apply that validates, publishes, invokes callbacks, or traverses active entities during semantic commit
 - A living unresolved Monster projected directly onto Target
 - Reprojection that causes combat, resolution, registration, or progress side effects
 - Stale or unavailable target Tower

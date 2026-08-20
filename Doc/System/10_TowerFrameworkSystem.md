@@ -13,7 +13,7 @@ It owns:
 - TowerDefinition and TowerLevelConfig schemas
 - TowerFamily identity
 - Attack archetype identity
-- Shared base combat authoring
+- Per-level BasicDamage authoring and shared non-damage base combat authoring
 - Target-selection categories
 - Tower runtime-template hierarchy
 - Placement anchors and footprint structure
@@ -35,7 +35,7 @@ TowerDefinition is the reusable identity referenced by Draft, Placement, Upgrade
 | Description | Player-facing summary |
 | Icon | Player-facing Draft and UI presentation |
 | Tower Runtime Template | Reusable Tower base object |
-| Tower Level Configurations | Ordered per-level identity and model data |
+| Tower Level Configurations | Ordered per-level identity, model, and BasicDamage data |
 
 TowerDefinition does not contain per-instance state, current targets, cooldowns, applied upgrades, active Attack Entities, or placement occupancy.
 
@@ -47,9 +47,9 @@ Each supported Tower level provides:
 |---|---|
 | Level | Unique positive level represented by the entry |
 | Tower Level Model | Model/presentation template used at that level |
-| Display Icon | Optional level-specific presentation |
+| BasicDamage | Positive integer damage basis used by Tower-owned direct and Behaviour damage at this level |
 
-Tower level data defines progression identity and model replacement. A valid supported level has a positive unique Level and a usable Tower Level Model. It does not contain combat stats. TowerUpgradeDefinition defines separately acquired stat, Behaviour, and Elemental content.
+Tower level data defines progression identity, model replacement, and the Tower's current BasicDamage. A valid supported level has a positive unique Level, a usable Tower Level Model, and positive BasicDamage. TowerUpgradeDefinition defines separately acquired Basic stat, Behaviour, and Elemental content.
 
 ---
 
@@ -190,13 +190,12 @@ Projectile movement identity is separate from Tower attack archetype: Direction 
 
 # 8. Base Combat Authoring
 
-Base combat authoring lives with the Tower runtime template that consumes it, not in TowerDefinition and not in TowerUpgradeDefinition.
+Level-owned BasicDamage lives in TowerLevelConfig. Shared non-damage base combat authoring lives with the Tower runtime template that consumes it, not in TowerUpgradeDefinition.
 
 Common authored data:
 
 | Data | Contract |
 |---|---|
-| Base Attack Damage | Base damage before applied Basic Damage Bonus deltas |
 | Attack Range | Base acquisition and release range before Upgrade changes |
 | Attack Cycle Duration | Minimum duration from one successful Attack Entity release until the archetype may release again |
 | Target Selection | Selection category used by archetypes that select one Monster |
@@ -217,9 +216,23 @@ Magic Orb entity authoring owns base orbit, contact distance, lifetime, same-tar
 
 Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
 
-Behaviour packages that add Attack Entities author one shared data shape: the additional entity template, positive additional-member count, and positive integer Basic Damage. Scatter Arrow, Multi Shells, Multi Orbs, and Multi Drones consume that shape through their own runtime contracts; the shared authoring shape does not create a generic release runtime. The primary entity continues to use the Tower template and resolved Attack Damage. An additional entity uses its package-authored Basic Damage plus the same resolved Basic Damage Bonus.
+Behaviour packages that add Attack Entities author one shared data shape: the additional entity template, positive additional-member count, and positive DamageScale. Scatter Arrow, Multi Shells, Multi Orbs, and Multi Drones consume that shape through their own runtime contracts; the shared authoring shape does not create a generic release runtime. Primary direct attacks use DamageScale `1`. Additional entities use their package-authored scale against the same current resolved BasicDamage.
 
-At release, Tower Runtime Combat combines base combat authoring and applied Tower Upgrade state into only the runtime data relevant to the released entity. Tower level selects presentation and Upgrade eligibility but does not alter combat values in the v0.1 growth model. Runtime history is never stored in authored data.
+Current resolved BasicDamage is:
+
+```text
+CurrentResolvedBasicDamage
+    = Current TowerLevelConfig.BasicDamage
+    + Sum Of Applied Basic Damage Bonus Deltas
+```
+
+Basic Damage Bonus remains whole-number authoring. Its raw accumulated value is
+not independently rounded before damage calculation. CurrentResolvedBasicDamage,
+DamageScale, and their raw product must be finite; non-positive resolved
+BasicDamage is invalid Tower-owned damage state rather than a value to clamp to
+zero.
+
+At release, Tower Runtime Combat combines level data, non-damage base combat authoring, and applied Tower Upgrade state into only the typed runtime data relevant to the released entity. Damage-producing Tower-owned runtime state carries source Tower identity and a stable DamageScale; it does not capture one immutable final integer merely because release occurred. Runtime history is never stored in authored data.
 
 ---
 
@@ -320,7 +333,7 @@ Tower authoring validation should report at minimum:
 - Missing or mismatched TowerFamily archetype identity
 - Missing or duplicate Tower levels
 - Missing required level model
-- Invalid base combat damage
+- Missing or non-positive Level-authored BasicDamage
 - Missing Center Anchor or invalid Occupied Anchors
 - Missing required Attack Entity configuration
 - Non-positive or invalid base timing, range, lifetime, or capacity values
@@ -333,6 +346,6 @@ Validation reports the source content and does not silently replace the authored
 
 # 14. Approved Scope And Deferred Topics
 
-Current scope includes four TowerFamilies, four base archetypes, two projectile flight identities, runtime-template base combat data, level-model data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
+Current scope includes four TowerFamilies, four base archetypes, two projectile flight identities, per-level BasicDamage and model data, runtime-template non-damage combat data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
 
 Deferred Tower identities include support, trap, summon, resource, laser, boomerang, missile, and other archetypes that require reviewed behavior rather than expansion of one generic Tower type.

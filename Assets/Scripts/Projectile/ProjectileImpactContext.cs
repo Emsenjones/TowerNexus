@@ -6,20 +6,20 @@ public struct ProjectileImpactContext
         TowerInstance sourceTower,
         MonsterBehaviour targetMonster,
         Vector3 impactPosition,
-        int attackDamage,
+        TowerOwnedDamageResolution damageResolution,
         EffectDefinition impactEffectDefinition)
     {
         SourceTower = sourceTower;
         TargetMonster = targetMonster;
         ImpactPosition = impactPosition;
-        AttackDamage = attackDamage;
+        DamageResolution = damageResolution;
         ImpactEffectDefinition = impactEffectDefinition;
     }
 
     public TowerInstance SourceTower { get; }
     public MonsterBehaviour TargetMonster { get; }
     public Vector3 ImpactPosition { get; }
-    public int AttackDamage { get; }
+    public TowerOwnedDamageResolution DamageResolution { get; }
     public EffectDefinition ImpactEffectDefinition { get; }
 }
 

@@ -2,7 +2,7 @@
 
 Document Set: Balance
 
-Status: Growth strategy and Tower Level v0.1 baseline approved; detailed Upgrade calibration remains Task-owned
+Status: CombatMathV2 growth strategy approved for implementation review; exact Level, Upgrade, Effect, Buff, and Stage values remain Task-owned
 
 ---
 
@@ -14,7 +14,7 @@ It answers:
 
 - Which strategic investment a Tower or Tower Upgrade Draft represents
 - How current Monster pressure changes the value of that investment
-- Why Tower Level is worth buying even without direct combat-stat growth
+- Why Tower Level provides direct BasicDamage growth as well as content access
 - How Core and Support Towers divide limited Draft investment
 - How Basic, Behaviour, and Elemental value depends on battlefield conditions
 - How immediate and delayed growth paths remain competitive without becoming universally optimal
@@ -30,7 +30,7 @@ Every accepted Draft choice spends one limited growth opportunity on one of thre
 | Investment | Primary Value | Strategic Horizon |
 |---|---|---|
 | Horizontal Expansion | Deploy another Tower, reshape the Monster route, add coverage, and create another future Upgrade receiver | Current spatial pressure plus future build capacity |
-| Vertical Investment | Raise one Tower's level so higher Required Tower Level content becomes eligible | Future Draft and specialization potential |
+| Vertical Investment | Raise one Tower's level, increase its BasicDamage, and make higher Required Tower Level content eligible | Immediate concentrated damage plus future specialization potential |
 | Immediate Conversion | Apply one eligible Basic, Behaviour, or Elemental Upgrade to convert the held reward into combat capability | Current pressure plus Upgrade-specific synergy |
 
 These are player strategy types, not required Draft-window categories. One displayed Draft set may contain any valid combination produced by the current candidate pool.
@@ -43,7 +43,7 @@ A Tower Draft remains a flexible resource: it may deploy its TowerDefinition or 
 
 The intended recurring decision is whether to buy present safety or accept present risk for a stronger future build.
 
-When pressure is low, the route is already serviceable, and the player has identified a likely Core Tower, Level Up should be an attractive investment in future eligibility. A Basic Upgrade that strongly supports the intended final build may still be the better choice.
+When pressure is low, the route is already serviceable, and the player has identified a likely Core Tower, Level Up should be an attractive concentrated-damage and future-eligibility investment. A Basic Upgrade that strongly supports the intended final build may still be the better immediate specialization choice.
 
 When pressure is high, direct Upgrade application or spatial expansion may be necessary before further vertical investment is safe.
 
@@ -59,7 +59,7 @@ Kill rate compared with spawn rate is useful evidence, but it is not the complet
 
 The intended strategy is contextual. Low pressure should often favor Level investment, not make it automatically optimal.
 
-At equal Draft investment, higher-level progression should provide scenarios where its delayed investment is competitively rewarded. It does not need to outperform lower-level Upgrades universally, but it should not be strictly dominated by repeatedly taking immediately available lower-level Upgrades.
+At equal Tower-Draft investment and before spatial value is counted, increasing an existing Tower's level must provide more marginal damage capacity than deploying one additional Level 1 Tower of the same family. Deployment remains competitive through route shaping, coverage, parallel targeting, and the creation of another Upgrade receiver. Level Up does not need to outperform every Upgrade Draft universally.
 
 ---
 
@@ -77,24 +77,35 @@ Which Tower becomes a Core depends on position, route exposure, TowerFamily iden
 
 ---
 
-# 5. Tower Level v0.1 Experience
+# 5. Tower Level v0.2 Experience
 
-Tower Level v0.1 is a technology tier, not a direct combat-stat tier.
+Tower Level v0.2 is both a direct BasicDamage tier and a technology tier.
 
 An accepted Level Up:
 
 - Advances the Tower by one level
 - Changes the level-model presentation
+- Replaces the Tower's current Level-authored BasicDamage
 - Makes Stage-allowed Upgrades at the new Required Tower Level eligible
-- Does not directly change base damage, Attack Range, Attack Cycle Duration, or another combat stat
+- Does not directly change Attack Range, Attack Cycle Duration, or another non-damage combat stat
 
-The deterministic reward is access to new content. Rogue-like sampling does not guarantee that a newly eligible Upgrade appears in the next or any later Draft.
+The deterministic reward is immediate BasicDamage growth plus access to new content. Rogue-like sampling does not guarantee that a newly eligible Upgrade appears in the next or any later Draft.
 
 To prevent structurally empty investment, the active Stage Upgrade pool determines the maximum reachable level for each TowerFamily. Every transition from Level 1 to that maximum must make at least one Stage-allowed Upgrade newly eligible at the reached level.
 
 For example, a Stage that allows one TowerFamily to reach Level 3 must contain at least one Upgrade for that family at Required Tower Level 2 and at least one at Required Tower Level 3.
 
-This is the approved v0.1 baseline. A future direct Level combat bonus requires named balance evidence and a contract revision rather than silent value authoring.
+The accepted Level curve must satisfy the pure-damage investment guardrail before Stage geometry is considered:
+
+```text
+BasicDamage(Level 2) - BasicDamage(Level 1)
+    > BasicDamage(Level 1)
+
+BasicDamage(Level 3) - BasicDamage(Level 2)
+    > BasicDamage(Level 1)
+```
+
+Equivalent wording: each Tower Draft spent on Level Up adds more nominal same-family damage capacity than the same Draft spent on another undeveloped Level 1 Tower. Exact margins and integer values belong to Task003. This is not a guarantee that one higher-level Tower always outperforms multiple Towers in a real Map, because horizontal expansion owns legitimate spatial value.
 
 ---
 
@@ -119,9 +130,11 @@ Required Tower Level and Upgrade Layer remain separate. A Basic or Behaviour Upg
 Growth should remain readable and reasonably smooth across the limited Draft investments available during one battle.
 
 - Every accepted Upgrade should create meaningful value without being required to repair an unusable Base Tower.
-- Immediate lower-level Upgrades should offer dependable current power, while Level investment exchanges current power for access to future specialization and a higher conditional ceiling.
+- Immediate lower-level Upgrades should offer dependable current specialization, while Level investment provides concentrated BasicDamage growth plus access to future specialization.
 - Higher Required Tower Level content should create new strategic capability, synergy, or scenario strength rather than acting as an unconditional numerical tier above lower-level content.
 - No immediate or delayed investment path should become the universally correct choice across pressure states, Tower positions, and intended build roles.
 - Large power discontinuities should come from readable build completion or cooperation, not from an isolated unexplained parameter spike.
 
-Task003 and Task004 own candidate targets, fixed-condition evidence, accepted Upgrade values, and revision decisions. Unity assets remain the executable source for authored parameters. This document retains only the design intent used to judge those outputs.
+Tower-owned direct and Behaviour damage derives from the current Tower Level's BasicDamage. Buff-lifecycle and Elemental-reaction damage uses independently authored fixed values. This distinction lets Level growth strengthen the Tower's own attack package without making an already-active Buff retroactively inherit later Tower growth.
+
+CombatMathV2 Task003, Task004, and Task005 own candidate targets, fixed-condition evidence, accepted Level/Upgrade values, and revision decisions. Unity assets remain the executable source for authored parameters. This document retains only the design intent used to judge those outputs.

@@ -76,7 +76,7 @@ public class TowerPlacementPreview : MonoBehaviour
     {
         EnsurePreviewVisual();
 
-        if (towerInstance == null || !towerInstance.TrySetLevel(level))
+        if (towerInstance == null || !towerInstance.TrySetPreviewLevel(level))
         {
             Debug.LogWarning($"Tower placement preview cannot set preview level to {level}.", this);
             return false;

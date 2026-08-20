@@ -37,6 +37,9 @@ public class MonsterSpawner : MonoBehaviour
     public event Action OnAllSpawningCompleted;
     public event Action OnSpawningStarted;
     public event Action<string> OnSpawningFailed;
+    public event Action<int, MonsterWaveEntry> OnWaveSpawningStarted;
+    public event Action<int, MonsterWaveEntry> OnWaveSpawningCompleted;
+    public event Action<int, int, MonsterBehaviour> OnMonsterSpawnedFromWave;
 
     public bool TryGetExpectedMonsterCount(out int expectedMonsterCount)
     {
@@ -47,6 +50,14 @@ public class MonsterSpawner : MonoBehaviour
         }
 
         return waveConfig.TryGetExpectedMonsterCount(out expectedMonsterCount);
+    }
+
+    public bool TryGetExpectedWaveCount(out int expectedWaveCount)
+    {
+        expectedWaveCount = waveConfig != null && waveConfig.Waves != null
+            ? waveConfig.Waves.Count
+            : 0;
+        return expectedWaveCount > 0;
     }
 
     public bool BindStage(
@@ -243,6 +254,8 @@ public class MonsterSpawner : MonoBehaviour
                 yield break;
             }
 
+            OnWaveSpawningStarted?.Invoke(waveIndex, wave);
+
             for (int countIndex = 0; countIndex < wave.Count; countIndex++)
             {
                 if (!isBattleActive)
@@ -253,6 +266,7 @@ public class MonsterSpawner : MonoBehaviour
 
                 if (!TrySpawnMonster(
                         wave.MonsterRuntimeTemplate,
+                        out MonsterBehaviour spawnedMonster,
                         out string failureReason))
                 {
                     FailSpawnExecution(
@@ -260,6 +274,11 @@ public class MonsterSpawner : MonoBehaviour
                         failureReason);
                     yield break;
                 }
+
+                OnMonsterSpawnedFromWave?.Invoke(
+                    waveIndex,
+                    countIndex,
+                    spawnedMonster);
 
                 bool hasMoreMonstersInWave = countIndex < wave.Count - 1;
 
@@ -274,6 +293,8 @@ public class MonsterSpawner : MonoBehaviour
                     }
                 }
             }
+
+            OnWaveSpawningCompleted?.Invoke(waveIndex, wave);
         }
 
         CompleteSpawnExecution();
@@ -281,8 +302,11 @@ public class MonsterSpawner : MonoBehaviour
 
     private bool TrySpawnMonster(
         MonsterBehaviour monsterRuntimeTemplate,
+        out MonsterBehaviour spawnedMonster,
         out string failureReason)
     {
+        spawnedMonster = null;
+
         if (!isBattleActive)
         {
             failureReason = "the battle gate is closed.";
@@ -391,6 +415,7 @@ public class MonsterSpawner : MonoBehaviour
 
         CreateStatusUi(monsterBehaviour);
         monsterBehaviour.SetPath(initialPath);
+        spawnedMonster = monsterBehaviour;
         failureReason = string.Empty;
         return true;
     }

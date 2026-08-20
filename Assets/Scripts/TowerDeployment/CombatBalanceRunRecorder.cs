@@ -28,6 +28,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private DraftSystem draftSystem;
+    [SerializeField] private TowerPlacementController towerPlacementController;
 
     private readonly Dictionary<MonsterBehaviour, MonsterObservation>
         trackedMonsters =
@@ -40,6 +41,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly List<CombatBalanceProgressionEventJson>
         progressionEvents =
             new List<CombatBalanceProgressionEventJson>();
+    private readonly List<CombatBalanceWaveEventJson> waveEvents =
+        new List<CombatBalanceWaveEventJson>();
+    private readonly List<CombatBalanceDraftAttemptJson> draftAttempts =
+        new List<CombatBalanceDraftAttemptJson>();
+    private readonly List<CombatBalanceDraftItemJson> towerDraftPoolSnapshot =
+        new List<CombatBalanceDraftItemJson>();
+    private readonly List<CombatBalanceDraftItemJson>
+        towerUpgradeDraftPoolSnapshot =
+            new List<CombatBalanceDraftItemJson>();
     private readonly List<PendingLevelUpObservation> pendingLevelUps =
         new List<PendingLevelUpObservation>();
     private readonly ElementalBuffRunAccumulator buffAccumulator =
@@ -47,6 +57,18 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly Dictionary<int, ProjectileRuntimeAggregate>
         projectileRuntimeByTowerInstanceId =
             new Dictionary<int, ProjectileRuntimeAggregate>();
+    private readonly Dictionary<int, TowerDeploymentObservation>
+        towerDeploymentByInstanceId =
+            new Dictionary<int, TowerDeploymentObservation>();
+    private readonly Dictionary<string, TowerScaledDamageAggregate>
+        towerScaledDamageBySignature =
+            new Dictionary<string, TowerScaledDamageAggregate>();
+    private readonly Dictionary<string, TowerScaledRejectionAggregate>
+        towerScaledRejectionBySignature =
+            new Dictionary<string, TowerScaledRejectionAggregate>();
+    private readonly Dictionary<string, FixedBuffDamageAggregate>
+        fixedBuffDamageBySignature =
+            new Dictionary<string, FixedBuffDamageAggregate>();
 
     private bool isSubscribed;
     private bool isTrackingRun;
@@ -69,6 +91,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private int observedMaximumMonsterHealth;
     private int expectedMonsterCount;
     private bool hasExpectedMonsterCount;
+    private int expectedWaveCount;
+    private bool hasExpectedWaveCount;
     private string waveConfigName;
     private float observedMinimumMonsterSpeed;
     private float observedMaximumMonsterSpeed;
@@ -80,6 +104,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private int observedSpawnIntervalCount;
     private float runStartedAtTime;
     private int initialDraftCompletionCount;
+    private string configuredDraftGenerationMode;
+    private int configuredFixedDraftStepCount;
 
     private sealed class PendingLevelUpObservation
     {
@@ -87,6 +113,60 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public int CurrentProgress { get; set; }
         public int RequiredProgress { get; set; }
         public float ActiveTimeSeconds { get; set; }
+    }
+
+    private sealed class TowerDeploymentObservation
+    {
+        public int DeploymentOrdinal { get; set; }
+        public float DeployedAtSeconds { get; set; }
+        public Vector3 WorldPosition { get; set; }
+        public List<Vector2Int> GridPositions { get; } =
+            new List<Vector2Int>();
+    }
+
+    private sealed class TowerScaledDamageAggregate
+    {
+        public TowerScaledDamageAggregate(TowerOwnedDamageResolution resolution)
+        {
+            Resolution = resolution;
+        }
+
+        public TowerOwnedDamageResolution Resolution { get; }
+        public int ResolutionCount { get; set; }
+        public int SuccessfulApplicationCount { get; set; }
+        public int AppliedDamageTotal { get; set; }
+    }
+
+    private sealed class TowerScaledRejectionAggregate
+    {
+        public TowerScaledRejectionAggregate(
+            TowerOwnedDamageResolutionObservation observation)
+        {
+            Observation = observation;
+        }
+
+        public TowerOwnedDamageResolutionObservation Observation { get; }
+        public int RejectionCount { get; set; }
+    }
+
+    private sealed class FixedBuffDamageAggregate
+    {
+        public FixedBuffDamageAggregate(FixedBuffDamageObservation observation)
+        {
+            EffectDefinition = observation.EffectDefinition;
+            ActionOrdinal = observation.ActionOrdinal;
+            FixedDamage = observation.FixedDamage;
+        }
+
+        public EffectDefinition EffectDefinition { get; }
+        public int ActionOrdinal { get; }
+        public int FixedDamage { get; }
+        public int ResolvedTargetCount { get; set; }
+        public int ResolutionCount { get; set; }
+        public int SuccessfulApplicationCount { get; set; }
+        public int AppliedDamageTotal { get; set; }
+        public HashSet<int> SourceTowerInstanceIds { get; } =
+            new HashSet<int>();
     }
 
     private sealed class MonsterObservation
@@ -99,6 +179,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             int currentHealth,
             int spawnOrdinal,
             float spawnTime,
+            float spawnedAtSeconds,
             bool observedThroughRegistrationEvent)
         {
             RuntimeTemplateName = runtimeTemplateName;
@@ -108,6 +189,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             LastHealth = currentHealth;
             SpawnOrdinal = spawnOrdinal;
             SpawnTime = spawnTime;
+            SpawnedAtSeconds = spawnedAtSeconds;
             ObservedThroughRegistrationEvent =
                 observedThroughRegistrationEvent;
             HealthAtObservationStart = currentHealth;
@@ -120,17 +202,37 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public float MoveSpeedAtSpawn { get; }
         public int LastHealth { get; set; }
         public int SpawnOrdinal { get; }
+        public int SourceWaveNumber { get; set; }
+        public int SourceWaveSpawnOrdinal { get; set; }
         public float SpawnTime { get; }
+        public float SpawnedAtSeconds { get; }
         public bool ObservedThroughRegistrationEvent { get; }
         public int HealthAtObservationStart { get; }
         public int UnobservedDamageAtObservationStart =>
             Mathf.Max(0, MaximumHealth - HealthAtObservationStart);
         public float ResolutionTime { get; set; }
+        public float ResolvedAtSeconds { get; set; }
         public int FinalHealth { get; set; }
         public int SuccessfulDamageApplications { get; set; }
         public int EffectiveDamage { get; set; }
         public bool ReachedTarget { get; set; }
         public bool IsResolved { get; set; }
+    }
+
+    private sealed class WaveResolutionAggregate
+    {
+        public int WaveNumber { get; set; }
+        public string RuntimeTemplateName { get; set; }
+        public int ConfiguredCount { get; set; }
+        public int Spawned { get; set; }
+        public int Resolved { get; set; }
+        public int Killed { get; set; }
+        public int Leaked { get; set; }
+        public int SuccessfulDamageApplications { get; set; }
+        public int EffectiveDamage { get; set; }
+        public int LeakedRemainingHealth { get; set; }
+        public float FirstResolutionAtSeconds { get; set; }
+        public float LastResolutionAtSeconds { get; set; }
     }
 
     private sealed class MonsterTypeAggregate
@@ -345,6 +447,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             draftSystem = FindFirstObjectByType<DraftSystem>();
         }
+
+        if (towerPlacementController == null)
+        {
+            towerPlacementController =
+                FindFirstObjectByType<TowerPlacementController>();
+        }
     }
 
     private void SubscribeToRuntime()
@@ -365,6 +473,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             draftSystem.OnInitialDraftCompleted +=
                 HandleInitialDraftCompleted;
+            draftSystem.OnDraftChoicesOpened +=
+                HandleDraftChoicesOpened;
+            draftSystem.OnDraftChoiceCommitted +=
+                HandleDraftChoiceCommitted;
         }
 
         if (monsterSpawner != null)
@@ -372,11 +484,23 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             monsterSpawner.OnSpawningStarted += HandleSpawningStarted;
             monsterSpawner.OnAllSpawningCompleted +=
                 HandleAllSpawningCompleted;
+            monsterSpawner.OnWaveSpawningStarted +=
+                HandleWaveSpawningStarted;
+            monsterSpawner.OnWaveSpawningCompleted +=
+                HandleWaveSpawningCompleted;
+            monsterSpawner.OnMonsterSpawnedFromWave +=
+                HandleMonsterSpawnedFromWave;
         }
 
         if (monsterManager != null)
         {
             monsterManager.OnMonsterRegistered += HandleMonsterRegistered;
+        }
+
+        if (towerPlacementController != null)
+        {
+            towerPlacementController.OnTowerDeploymentCommitted +=
+                HandleTowerDeploymentCommitted;
         }
 
         if (battleRuntimeCoordinator != null)
@@ -389,6 +513,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         ProjectileBehaviour.OnRuntimeObserved +=
             HandleProjectileRuntimeObserved;
+        TowerRuntimeStatResolver.OnTowerOwnedDamageResolutionObserved +=
+            HandleTowerOwnedDamageResolutionObserved;
+        TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved +=
+            HandleTowerOwnedDamageApplicationObserved;
+        EffectExecutor.OnFixedBuffDamageObserved +=
+            HandleFixedBuffDamageObserved;
 
         isSubscribed = true;
     }
@@ -422,6 +552,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             missingReferences.Add(nameof(draftSystem));
         }
 
+        if (towerPlacementController == null)
+        {
+            missingReferences.Add(nameof(towerPlacementController));
+        }
+
         if (missingReferences.Count > 0)
         {
             Debug.LogWarning(
@@ -449,6 +584,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             draftSystem.OnInitialDraftCompleted -=
                 HandleInitialDraftCompleted;
+            draftSystem.OnDraftChoicesOpened -=
+                HandleDraftChoicesOpened;
+            draftSystem.OnDraftChoiceCommitted -=
+                HandleDraftChoiceCommitted;
         }
 
         if (monsterSpawner != null)
@@ -456,11 +595,23 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             monsterSpawner.OnSpawningStarted -= HandleSpawningStarted;
             monsterSpawner.OnAllSpawningCompleted -=
                 HandleAllSpawningCompleted;
+            monsterSpawner.OnWaveSpawningStarted -=
+                HandleWaveSpawningStarted;
+            monsterSpawner.OnWaveSpawningCompleted -=
+                HandleWaveSpawningCompleted;
+            monsterSpawner.OnMonsterSpawnedFromWave -=
+                HandleMonsterSpawnedFromWave;
         }
 
         if (monsterManager != null)
         {
             monsterManager.OnMonsterRegistered -= HandleMonsterRegistered;
+        }
+
+        if (towerPlacementController != null)
+        {
+            towerPlacementController.OnTowerDeploymentCommitted -=
+                HandleTowerDeploymentCommitted;
         }
 
         if (battleRuntimeCoordinator != null)
@@ -473,6 +624,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         ProjectileBehaviour.OnRuntimeObserved -=
             HandleProjectileRuntimeObserved;
+        TowerRuntimeStatResolver.OnTowerOwnedDamageResolutionObserved -=
+            HandleTowerOwnedDamageResolutionObserved;
+        TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved -=
+            HandleTowerOwnedDamageApplicationObserved;
+        EffectExecutor.OnFixedBuffDamageObserved -=
+            HandleFixedBuffDamageObserved;
 
         isSubscribed = false;
     }
@@ -490,22 +647,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         initialDraftCompletionCount++;
-        progressionEvents.Add(new CombatBalanceProgressionEventJson
-        {
-            ordinal = progressionEvents.Count + 1,
-            kind = "Initial",
-            resolvedMonsterCount = resolvedCount,
-            playerLevel = playerSystem != null
-                ? playerSystem.CurrentLevel
-                : 0,
-            currentProgress = playerSystem != null
-                ? playerSystem.CurrentProgress
-                : 0,
-            requiredProgress = playerSystem != null
-                ? playerSystem.RequiredProgress
-                : 0,
-            activeTimeSeconds = GetRunActiveTimeSeconds()
-        });
+        progressionEvents.Add(CreateProgressionEvent(
+            "Initial",
+            playerSystem != null ? playerSystem.CurrentLevel : 0,
+            playerSystem != null ? playerSystem.CurrentProgress : 0,
+            playerSystem != null ? playerSystem.RequiredProgress : 0,
+            GetRunActiveTimeSeconds()));
     }
 
     private void HandlePlayerLevelUp(int playerLevel)
@@ -534,19 +681,291 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             PendingLevelUpObservation observation = pendingLevelUps[i];
 
-            progressionEvents.Add(new CombatBalanceProgressionEventJson
-            {
-                ordinal = progressionEvents.Count + 1,
-                kind = "LevelUp",
-                resolvedMonsterCount = resolvedCount,
-                playerLevel = observation.PlayerLevel,
-                currentProgress = observation.CurrentProgress,
-                requiredProgress = observation.RequiredProgress,
-                activeTimeSeconds = observation.ActiveTimeSeconds
-            });
+            progressionEvents.Add(CreateProgressionEvent(
+                "LevelUp",
+                observation.PlayerLevel,
+                observation.CurrentProgress,
+                observation.RequiredProgress,
+                observation.ActiveTimeSeconds));
         }
 
         pendingLevelUps.Clear();
+    }
+
+    private void CaptureDraftFixture()
+    {
+        if (draftSystem == null)
+        {
+            return;
+        }
+
+        configuredDraftGenerationMode = draftSystem.UseFixedDraftChoices
+            ? DraftChoiceGenerationMode.Fixed.ToString()
+            : DraftChoiceGenerationMode.Natural.ToString();
+        configuredFixedDraftStepCount =
+            draftSystem.ConfiguredFixedDraftStepCount;
+
+        IReadOnlyList<TowerDefinition> towerDefinitions =
+            draftSystem.BoundTowerDefinitions;
+
+        if (towerDefinitions != null)
+        {
+            for (int i = 0; i < towerDefinitions.Count; i++)
+            {
+                TowerDefinition definition = towerDefinitions[i];
+
+                if (definition != null)
+                {
+                    towerDraftPoolSnapshot.Add(CreateDraftItemJson(
+                        DraftResult.CreateTowerDraft(definition),
+                        1));
+                }
+            }
+        }
+
+        IReadOnlyList<TowerUpgradeDefinition> upgradeDefinitions =
+            draftSystem.BoundUpgradeDefinitions;
+
+        if (upgradeDefinitions == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < upgradeDefinitions.Count; i++)
+        {
+            TowerUpgradeDefinition definition = upgradeDefinitions[i];
+
+            if (definition != null)
+            {
+                towerUpgradeDraftPoolSnapshot.Add(CreateDraftItemJson(
+                    DraftResult.CreateTowerUpgradeDraft(definition),
+                    1));
+            }
+        }
+    }
+
+    private void HandleDraftChoicesOpened(
+        DraftChoicesOpenedObservation observation)
+    {
+        if (!isTrackingRun || observation == null)
+        {
+            return;
+        }
+
+        if (towerDraftPoolSnapshot.Count == 0 &&
+            towerUpgradeDraftPoolSnapshot.Count == 0)
+        {
+            CaptureDraftFixture();
+        }
+
+        CombatBalanceDraftAttemptJson attempt =
+            new CombatBalanceDraftAttemptJson
+            {
+                attemptToken = observation.AttemptToken.ToString(),
+                ordinal = observation.DraftOrdinal,
+                sessionKind = observation.SessionKind.ToString(),
+                generationMode = observation.GenerationMode.ToString(),
+                resolvedMonsterCount = resolvedCount,
+                playerLevel = playerSystem != null
+                    ? playerSystem.CurrentLevel
+                    : 0,
+                currentProgress = playerSystem != null
+                    ? playerSystem.CurrentProgress
+                    : 0,
+                requiredProgress = playerSystem != null
+                    ? playerSystem.RequiredProgress
+                    : 0,
+                activeTimeSeconds = GetRunActiveTimeSeconds()
+            };
+
+        for (int i = 0; i < observation.NaturalCandidates.Count; i++)
+        {
+            DraftChoiceCandidateObservation candidate =
+                observation.NaturalCandidates[i];
+
+            if (candidate != null && candidate.DraftResult != null)
+            {
+                attempt.naturalCandidates.Add(CreateDraftItemJson(
+                    candidate.DraftResult,
+                    candidate.Multiplicity));
+            }
+        }
+
+        for (int i = 0; i < observation.DisplayedChoices.Count; i++)
+        {
+            DraftResult displayedChoice = observation.DisplayedChoices[i];
+
+            if (displayedChoice != null)
+            {
+                attempt.displayedChoices.Add(CreateDraftItemJson(
+                    displayedChoice,
+                    ResolveNaturalMultiplicity(
+                        observation.NaturalCandidates,
+                        displayedChoice.Identity)));
+            }
+        }
+
+        draftAttempts.Add(attempt);
+    }
+
+    private void HandleDraftChoiceCommitted(
+        DraftChoiceCommittedObservation observation)
+    {
+        if (!isTrackingRun ||
+            observation == null ||
+            observation.SelectedChoice == null)
+        {
+            return;
+        }
+
+        string attemptToken = observation.AttemptToken.ToString();
+
+        for (int i = draftAttempts.Count - 1; i >= 0; i--)
+        {
+            CombatBalanceDraftAttemptJson attempt = draftAttempts[i];
+
+            if (!string.Equals(
+                    attempt.attemptToken,
+                    attemptToken,
+                    StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            attempt.selectionCommitted = true;
+            attempt.selectedChoice = CreateDraftItemJson(
+                observation.SelectedChoice,
+                ResolveDisplayedMultiplicity(
+                    attempt.displayedChoices,
+                    observation.SelectedChoice));
+            return;
+        }
+    }
+
+    private static int ResolveNaturalMultiplicity(
+        IReadOnlyList<DraftChoiceCandidateObservation> candidates,
+        UnityEngine.Object identity)
+    {
+        if (candidates == null || identity == null)
+        {
+            return 0;
+        }
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            DraftChoiceCandidateObservation candidate = candidates[i];
+
+            if (candidate != null &&
+                candidate.DraftResult != null &&
+                candidate.DraftResult.Identity == identity)
+            {
+                return candidate.Multiplicity;
+            }
+        }
+
+        return 0;
+    }
+
+    private static int ResolveDisplayedMultiplicity(
+        IReadOnlyList<CombatBalanceDraftItemJson> displayedChoices,
+        DraftResult selectedChoice)
+    {
+        if (displayedChoices == null || selectedChoice == null)
+        {
+            return 0;
+        }
+
+        for (int i = 0; i < displayedChoices.Count; i++)
+        {
+            CombatBalanceDraftItemJson displayedChoice =
+                displayedChoices[i];
+
+            if (string.Equals(
+                    displayedChoice.assetName,
+                    selectedChoice.Identity.name,
+                    StringComparison.Ordinal) &&
+                string.Equals(
+                    displayedChoice.resultType,
+                    selectedChoice.ResultType.ToString(),
+                    StringComparison.Ordinal))
+            {
+                return displayedChoice.multiplicity;
+            }
+        }
+
+        return 0;
+    }
+
+    private static CombatBalanceDraftItemJson CreateDraftItemJson(
+        DraftResult draftResult,
+        int multiplicity)
+    {
+        CombatBalanceDraftItemJson item = new CombatBalanceDraftItemJson
+        {
+            multiplicity = Mathf.Max(0, multiplicity)
+        };
+
+        if (draftResult == null || !draftResult.IsValid)
+        {
+            return item;
+        }
+
+        item.resultType = draftResult.ResultType.ToString();
+        item.assetName = draftResult.Identity != null
+            ? draftResult.Identity.name
+            : string.Empty;
+        item.displayName = draftResult.DisplayName;
+
+        if (draftResult.ResultType == DraftResultType.TowerDraft)
+        {
+            TowerDefinition towerDefinition = draftResult.TowerDefinition;
+            item.towerFamily = towerDefinition != null
+                ? towerDefinition.TowerFamily.ToString()
+                : string.Empty;
+            return item;
+        }
+
+        TowerUpgradeDefinition upgradeDefinition =
+            draftResult.TowerUpgradeDefinition;
+
+        if (upgradeDefinition != null)
+        {
+            item.towerFamily = upgradeDefinition.TowerFamily.ToString();
+            item.upgradeLayer = upgradeDefinition.UpgradeLayer.ToString();
+            item.requiredTowerLevel =
+                upgradeDefinition.RequiredTowerLevel;
+        }
+
+        return item;
+    }
+
+    private CombatBalanceProgressionEventJson CreateProgressionEvent(
+        string kind,
+        int playerLevel,
+        int currentProgress,
+        int requiredProgress,
+        float activeTimeSeconds)
+    {
+        return new CombatBalanceProgressionEventJson
+        {
+            ordinal = progressionEvents.Count + 1,
+            kind = kind,
+            resolvedMonsterCount = resolvedCount,
+            playerLevel = playerLevel,
+            currentProgress = currentProgress,
+            requiredProgress = requiredProgress,
+            activeTimeSeconds = activeTimeSeconds,
+            spawned = spawnedCount,
+            resolved = resolvedCount,
+            killed = killedCount,
+            leaked = leakedCount,
+            alive = monsterManager != null
+                ? monsterManager.AliveMonsterCount
+                : Mathf.Max(0, spawnedCount - resolvedCount),
+            playerHealth = playerSystem != null
+                ? playerSystem.CurrentHealth
+                : 0
+        };
     }
 
     private void HandleSpawningStarted()
@@ -568,9 +987,17 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         seenMonsterInstanceIds.Clear();
         progressionRequirementsSnapshot.Clear();
         progressionEvents.Clear();
+        waveEvents.Clear();
+        draftAttempts.Clear();
+        towerDraftPoolSnapshot.Clear();
+        towerUpgradeDraftPoolSnapshot.Clear();
         pendingLevelUps.Clear();
         buffAccumulator.Reset();
         projectileRuntimeByTowerInstanceId.Clear();
+        towerDeploymentByInstanceId.Clear();
+        towerScaledDamageBySignature.Clear();
+        towerScaledRejectionBySignature.Clear();
+        fixedBuffDamageBySignature.Clear();
         ResetExpectedMonsterFixture();
         spawnedCount = 0;
         resolvedCount = 0;
@@ -595,6 +1022,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         observedSpawnIntervalCount = 0;
         runStartedAtTime = Time.time;
         initialDraftCompletionCount = 0;
+        configuredDraftGenerationMode = string.Empty;
+        configuredFixedDraftStepCount = 0;
         hasObservedFirstSpawn = false;
         hasObservedSpawningCompletion = false;
         hasLoggedFinalSummary = false;
@@ -602,6 +1031,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         pendingTerminalState = null;
         pendingFailureReason = null;
         isTrackingRun = true;
+
+        CaptureDraftFixture();
 
         if (playerSystem != null)
         {
@@ -628,6 +1059,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     {
         expectedMonsterCount = 0;
         hasExpectedMonsterCount = false;
+        expectedWaveCount = 0;
+        hasExpectedWaveCount = false;
         waveConfigName = monsterSpawner != null
             ? monsterSpawner.BoundWaveConfigName
             : string.Empty;
@@ -643,13 +1076,22 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             expectedMonsterCount = resolvedExpectedMonsterCount;
             hasExpectedMonsterCount = true;
-            return;
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Combat balance run recorder could not resolve Expected " +
+                "Monster Count from the Monster Spawner's bound Wave Config.",
+                this);
         }
 
-        Debug.LogWarning(
-            "Combat balance run recorder could not resolve Expected Monster " +
-            "Count from the Monster Spawner's bound Wave Config.",
-            this);
+        if (monsterSpawner != null &&
+            monsterSpawner.TryGetExpectedWaveCount(
+                out int resolvedExpectedWaveCount))
+        {
+            expectedWaveCount = resolvedExpectedWaveCount;
+            hasExpectedWaveCount = true;
+        }
     }
 
     private void TrackCurrentMonsters()
@@ -697,6 +1139,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 monster.CurrentHealth,
                 spawnedCount + 1,
                 observedTime,
+                GetRunActiveTimeSeconds(),
                 observedThroughRegistrationEvent);
         trackedMonsters.Add(monster, observation);
         monsterObservations.Add(observation);
@@ -773,6 +1216,57 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
     }
 
+    private void HandleTowerDeploymentCommitted(TowerInstance towerInstance)
+    {
+        if (!isTrackingRun || towerInstance == null)
+        {
+            return;
+        }
+
+        int instanceId = towerInstance.GetInstanceID();
+
+        if (towerDeploymentByInstanceId.ContainsKey(instanceId))
+        {
+            return;
+        }
+
+        TowerDeploymentObservation observation =
+            new TowerDeploymentObservation
+            {
+                DeploymentOrdinal = towerDeploymentByInstanceId.Count + 1,
+                DeployedAtSeconds = GetRunActiveTimeSeconds(),
+                WorldPosition = towerInstance.transform.position
+            };
+        IReadOnlyList<GridNodeBehaviour> occupiedNodes =
+            towerInstance.OccupiedNodes;
+
+        if (occupiedNodes != null)
+        {
+            for (int i = 0; i < occupiedNodes.Count; i++)
+            {
+                GridNodeBehaviour node = occupiedNodes[i];
+
+                if (node != null)
+                {
+                    observation.GridPositions.Add(node.GridPosition);
+                }
+            }
+        }
+
+        observation.GridPositions.Sort(CompareGridPositions);
+        towerDeploymentByInstanceId.Add(instanceId, observation);
+    }
+
+    private static int CompareGridPositions(
+        Vector2Int left,
+        Vector2Int right)
+    {
+        int xComparison = left.x.CompareTo(right.x);
+        return xComparison != 0
+            ? xComparison
+            : left.y.CompareTo(right.y);
+    }
+
     private void HandleBuffRuntimeObserved(
         MonsterBehaviour _,
         BuffRuntimeObservation observation)
@@ -781,6 +1275,165 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             buffAccumulator.Consume(observation);
         }
+    }
+
+    private void HandleTowerOwnedDamageResolutionObserved(
+        TowerOwnedDamageResolutionObservation observation)
+    {
+        if (!isTrackingRun)
+        {
+            return;
+        }
+
+        if (observation.IsResolved)
+        {
+            TowerOwnedDamageResolution resolution = observation.Resolution;
+            string signature = CreateTowerScaledDamageSignature(resolution);
+
+            if (!towerScaledDamageBySignature.TryGetValue(
+                    signature,
+                    out TowerScaledDamageAggregate aggregate))
+            {
+                aggregate = new TowerScaledDamageAggregate(resolution);
+                towerScaledDamageBySignature.Add(signature, aggregate);
+            }
+
+            aggregate.ResolutionCount++;
+            return;
+        }
+
+        string rejectionSignature =
+            CreateTowerScaledRejectionSignature(observation);
+
+        if (!towerScaledRejectionBySignature.TryGetValue(
+                rejectionSignature,
+                out TowerScaledRejectionAggregate rejectionAggregate))
+        {
+            rejectionAggregate =
+                new TowerScaledRejectionAggregate(observation);
+            towerScaledRejectionBySignature.Add(
+                rejectionSignature,
+                rejectionAggregate);
+        }
+
+        rejectionAggregate.RejectionCount++;
+    }
+
+    private void HandleTowerOwnedDamageApplicationObserved(
+        TowerOwnedDamageApplicationObservation observation)
+    {
+        if (!isTrackingRun || observation.SuccessfulApplicationCount <= 0)
+        {
+            return;
+        }
+
+        TowerOwnedDamageResolution resolution = observation.Resolution;
+        string signature = CreateTowerScaledDamageSignature(resolution);
+
+        if (!towerScaledDamageBySignature.TryGetValue(
+                signature,
+                out TowerScaledDamageAggregate aggregate))
+        {
+            aggregate = new TowerScaledDamageAggregate(resolution);
+            towerScaledDamageBySignature.Add(signature, aggregate);
+        }
+
+        aggregate.SuccessfulApplicationCount +=
+            observation.SuccessfulApplicationCount;
+        aggregate.AppliedDamageTotal +=
+            resolution.FinalDamage * observation.SuccessfulApplicationCount;
+    }
+
+    private void HandleFixedBuffDamageObserved(
+        FixedBuffDamageObservation observation)
+    {
+        if (!isTrackingRun)
+        {
+            return;
+        }
+
+        string signature = CreateFixedBuffDamageSignature(observation);
+
+        if (!fixedBuffDamageBySignature.TryGetValue(
+                signature,
+                out FixedBuffDamageAggregate aggregate))
+        {
+            aggregate = new FixedBuffDamageAggregate(observation);
+            fixedBuffDamageBySignature.Add(signature, aggregate);
+        }
+
+        aggregate.ResolutionCount++;
+        aggregate.ResolvedTargetCount += observation.ResolvedTargetCount;
+        aggregate.SuccessfulApplicationCount +=
+            observation.SuccessfulApplicationCount;
+        aggregate.AppliedDamageTotal +=
+            observation.FixedDamage * observation.SuccessfulApplicationCount;
+
+        if (observation.SourceTower != null)
+        {
+            aggregate.SourceTowerInstanceIds.Add(
+                observation.SourceTower.GetInstanceID());
+        }
+    }
+
+    private static string CreateTowerScaledDamageSignature(
+        TowerOwnedDamageResolution resolution)
+    {
+        TowerDamageSourceIdentity sourceIdentity =
+            resolution.DamageSourceIdentity;
+        return string.Join(
+            "|",
+            resolution.SourceTower != null
+                ? resolution.SourceTower.GetInstanceID().ToString(
+                    CultureInfo.InvariantCulture)
+                : "0",
+            resolution.TowerFamily.ToString(),
+            resolution.Level.ToString(CultureInfo.InvariantCulture),
+            resolution.LevelBasicDamage.ToString(CultureInfo.InvariantCulture),
+            resolution.RawDamageBonus.ToString("R", CultureInfo.InvariantCulture),
+            resolution.ResolvedBasicDamage.ToString("R", CultureInfo.InvariantCulture),
+            sourceIdentity.SourceType.ToString(),
+            GetEffectIdentity(sourceIdentity.EffectDefinition),
+            sourceIdentity.ActionOrdinal.ToString(CultureInfo.InvariantCulture),
+            resolution.DamageScale.ToString("R", CultureInfo.InvariantCulture),
+            resolution.RawProduct.ToString("R", CultureInfo.InvariantCulture),
+            resolution.FinalDamage.ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static string CreateTowerScaledRejectionSignature(
+        TowerOwnedDamageResolutionObservation observation)
+    {
+        TowerDamageSourceIdentity sourceIdentity =
+            observation.DamageSourceIdentity;
+        return string.Join(
+            "|",
+            observation.SourceTower != null
+                ? observation.SourceTower.GetInstanceID().ToString(
+                    CultureInfo.InvariantCulture)
+                : "0",
+            sourceIdentity.SourceType.ToString(),
+            GetEffectIdentity(sourceIdentity.EffectDefinition),
+            sourceIdentity.ActionOrdinal.ToString(CultureInfo.InvariantCulture),
+            observation.DamageScale.ToString("R", CultureInfo.InvariantCulture),
+            observation.FailureReason.ToString());
+    }
+
+    private static string CreateFixedBuffDamageSignature(
+        FixedBuffDamageObservation observation)
+    {
+        return string.Join(
+            "|",
+            GetEffectIdentity(observation.EffectDefinition),
+            observation.ActionOrdinal.ToString(CultureInfo.InvariantCulture),
+            observation.FixedDamage.ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static string GetEffectIdentity(EffectDefinition effectDefinition)
+    {
+        return effectDefinition != null
+            ? effectDefinition.GetInstanceID().ToString(
+                CultureInfo.InvariantCulture)
+            : "0";
     }
 
     private void HandleProjectileRuntimeObserved(
@@ -1147,26 +1800,109 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         observation.IsResolved = true;
         observation.ReachedTarget = reachedTarget;
         observation.ResolutionTime = Time.time;
+        observation.ResolvedAtSeconds = GetRunActiveTimeSeconds();
         observation.FinalHealth = monster.CurrentHealth;
         resolvedCount++;
-        // PlayerSystem publishes Level-up before this resolution callback.
-        // Flush now so later resolutions in the same frame cannot shift its node.
-        FlushPendingProgressionEvents();
         lastResolutionTime = observation.ResolutionTime;
 
         if (reachedTarget)
         {
             leakedCount++;
             leakedRemainingHealth += monster.CurrentHealth;
-            return;
+        }
+        else
+        {
+            killedCount++;
         }
 
-        killedCount++;
+        // PlayerSystem publishes Level-up before this resolution callback.
+        // Flush after classifying this resolution, but before another resolution
+        // can shift the Draft node or its pressure snapshot.
+        FlushPendingProgressionEvents();
     }
 
     private void HandleMonsterDestroyed(MonsterBehaviour monster)
     {
         UnsubscribeFromMonster(monster);
+    }
+
+    private void HandleWaveSpawningStarted(
+        int waveIndex,
+        MonsterWaveEntry wave)
+    {
+        CaptureWaveEvent("SpawnStarted", waveIndex, wave);
+    }
+
+    private void HandleWaveSpawningCompleted(
+        int waveIndex,
+        MonsterWaveEntry wave)
+    {
+        CaptureWaveEvent("SpawnCompleted", waveIndex, wave);
+    }
+
+    private void HandleMonsterSpawnedFromWave(
+        int waveIndex,
+        int spawnIndex,
+        MonsterBehaviour monster)
+    {
+        if (!isTrackingRun || monster == null)
+        {
+            return;
+        }
+
+        if (!trackedMonsters.TryGetValue(
+                monster,
+                out MonsterObservation observation))
+        {
+            TrackMonster(
+                monster,
+                observedThroughRegistrationEvent: false);
+            trackedMonsters.TryGetValue(monster, out observation);
+        }
+
+        if (observation == null)
+        {
+            return;
+        }
+
+        observation.SourceWaveNumber = waveIndex + 1;
+        observation.SourceWaveSpawnOrdinal = spawnIndex + 1;
+    }
+
+    private void CaptureWaveEvent(
+        string kind,
+        int waveIndex,
+        MonsterWaveEntry wave)
+    {
+        if (!isTrackingRun || wave == null)
+        {
+            return;
+        }
+
+        MonsterBehaviour runtimeTemplate = wave.MonsterRuntimeTemplate;
+        waveEvents.Add(new CombatBalanceWaveEventJson
+        {
+            ordinal = waveEvents.Count + 1,
+            kind = kind,
+            waveNumber = waveIndex + 1,
+            runtimeTemplateName = runtimeTemplate != null
+                ? ResolveRuntimeTemplateName(runtimeTemplate.name)
+                : string.Empty,
+            configuredCount = wave.Count,
+            configuredSpawnIntervalSeconds = wave.SpawnInterval,
+            configuredWaveDelaySeconds = wave.WaveDelay,
+            activeTimeSeconds = GetRunActiveTimeSeconds(),
+            spawned = spawnedCount,
+            resolved = resolvedCount,
+            killed = killedCount,
+            leaked = leakedCount,
+            alive = monsterManager != null
+                ? monsterManager.AliveMonsterCount
+                : Mathf.Max(0, spawnedCount - resolvedCount),
+            playerHealth = playerSystem != null
+                ? playerSystem.CurrentHealth
+                : 0
+        });
     }
 
     private void HandleAllSpawningCompleted()
@@ -1482,6 +2218,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         };
 
         report.fixture.waveConfigName = waveConfigName ?? string.Empty;
+        report.fixture.expectedWaveCountAvailable = hasExpectedWaveCount;
+        report.fixture.expectedWaveCount = expectedWaveCount;
         report.fixture.expectedMonsterCountAvailable =
             hasExpectedMonsterCount;
         report.fixture.expectedMonsterCount = expectedMonsterCount;
@@ -1512,6 +2250,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         report.combat.averageLeakedRemainingHealth = averageLeakedRemainingHealth;
         report.combat.peakAlive = peakAliveCount;
 
+        report.timing.runDurationSeconds = GetRunActiveTimeSeconds();
         report.timing.spawnSpanSeconds = spawnSpan;
         report.timing.spawningCompleted = hasObservedSpawningCompletion;
         report.timing.spawningCompletedAtSeconds = spawningCompletionOffset;
@@ -1526,8 +2265,16 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             : 0;
 
         report.progression = CreateProgressionJson();
+        report.timing.secondsAfterFinalDraft =
+            ResolveSecondsAfterFinalDraft(
+                report.progression,
+                report.timing.runDurationSeconds);
+        report.waveRuntime = CreateWaveRuntimeJson();
+        report.draftRuntime = CreateDraftRuntimeJson();
 
         report.monsterRuntime = CreateMonsterRuntimeJson();
+        report.damageDiagnostics = CreateDamageDiagnosticsJson();
+        report.towers = CreateTowerJsonRecords();
         report.integrity.resolutionCountsMatch =
             resolvedCount == killedCount + leakedCount;
         report.integrity.leakCountMatchesPlayerHealthLoss =
@@ -1552,9 +2299,411 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             report.progression.expectedLevelUpCount + 1;
         report.integrity.postFinalDraftCombatObserved =
             report.progression.resolutionsAfterFinalDraft > 0;
-        report.towers = CreateTowerJsonRecords();
+        report.integrity.waveEventCountsMatch =
+            !hasExpectedWaveCount ||
+            (report.waveRuntime.observedWaveStartCount == expectedWaveCount &&
+             report.waveRuntime.observedWaveCompletionCount ==
+             expectedWaveCount);
+        report.integrity.waveMonsterAttributionMatches =
+            WaveMonsterAttributionMatches(report.waveRuntime);
+        report.integrity.draftAttemptSelectionsMatch =
+            report.draftRuntime.observedAttemptCount ==
+            report.draftRuntime.committedSelectionCount;
+        report.integrity.draftAttemptCountMatchesProgression =
+            report.draftRuntime.observedAttemptCount ==
+            report.progression.observedTotalDraftCount;
+        report.integrity.towerDeploymentCoverageMatches =
+            TowerDeploymentCoverageMatches(report.towers);
+        report.integrity.damageDiagnosticsCountsMatch =
+            DamageDiagnosticsCountsMatch(report.damageDiagnostics);
         report.buffs = buffAccumulator.CreateJsonRecords();
         return report;
+    }
+
+    private CombatBalanceDamageDiagnosticsJson CreateDamageDiagnosticsJson()
+    {
+        CombatBalanceDamageDiagnosticsJson diagnostics =
+            new CombatBalanceDamageDiagnosticsJson();
+        List<string> towerScaledKeys =
+            new List<string>(towerScaledDamageBySignature.Keys);
+        towerScaledKeys.Sort(StringComparer.Ordinal);
+
+        for (int i = 0; i < towerScaledKeys.Count; i++)
+        {
+            TowerScaledDamageAggregate aggregate =
+                towerScaledDamageBySignature[towerScaledKeys[i]];
+            TowerOwnedDamageResolution resolution = aggregate.Resolution;
+            TowerDamageSourceIdentity sourceIdentity =
+                resolution.DamageSourceIdentity;
+            TowerInstance sourceTower = resolution.SourceTower;
+            TowerDefinition towerDefinition = sourceTower != null
+                ? sourceTower.TowerDefinition
+                : null;
+            float relativeRoundingError = resolution.RawProduct > 0f
+                ? Mathf.Abs(resolution.FinalDamage - resolution.RawProduct) /
+                  resolution.RawProduct
+                : 0f;
+
+            diagnostics.towerScaledSignatures.Add(
+                new CombatBalanceTowerScaledDamageJson
+                {
+                    towerInstanceId = sourceTower != null
+                        ? sourceTower.GetInstanceID()
+                        : 0,
+                    towerDisplayName = towerDefinition != null
+                        ? GetDisplayName(
+                            towerDefinition.DisplayName,
+                            towerDefinition.name)
+                        : string.Empty,
+                    towerFamily = resolution.TowerFamily.ToString(),
+                    level = resolution.Level,
+                    levelBasicDamage = resolution.LevelBasicDamage,
+                    rawDamageBonus = resolution.RawDamageBonus,
+                    resolvedBasicDamage = resolution.ResolvedBasicDamage,
+                    damageSourceType = sourceIdentity.SourceType.ToString(),
+                    effectDefinitionName =
+                        GetAssetName(sourceIdentity.EffectDefinition),
+                    actionOrdinal = sourceIdentity.ActionOrdinal,
+                    damageScale = resolution.DamageScale,
+                    rawProduct = resolution.RawProduct,
+                    finalDamage = resolution.FinalDamage,
+                    relativeRoundingError = relativeRoundingError,
+                    resolutionCount = aggregate.ResolutionCount,
+                    successfulApplicationCount =
+                        aggregate.SuccessfulApplicationCount,
+                    appliedDamageTotal = aggregate.AppliedDamageTotal
+                });
+            diagnostics.towerScaledResolutionCount +=
+                aggregate.ResolutionCount;
+            diagnostics.towerScaledSuccessfulApplicationCount +=
+                aggregate.SuccessfulApplicationCount;
+            diagnostics.towerScaledAppliedDamageTotal +=
+                aggregate.AppliedDamageTotal;
+            diagnostics.maximumTowerScaledRelativeRoundingError =
+                Mathf.Max(
+                    diagnostics.maximumTowerScaledRelativeRoundingError,
+                    relativeRoundingError);
+        }
+
+        List<string> rejectionKeys =
+            new List<string>(towerScaledRejectionBySignature.Keys);
+        rejectionKeys.Sort(StringComparer.Ordinal);
+
+        for (int i = 0; i < rejectionKeys.Count; i++)
+        {
+            TowerScaledRejectionAggregate aggregate =
+                towerScaledRejectionBySignature[rejectionKeys[i]];
+            TowerOwnedDamageResolutionObservation observation =
+                aggregate.Observation;
+            TowerDamageSourceIdentity sourceIdentity =
+                observation.DamageSourceIdentity;
+
+            diagnostics.towerScaledRejections.Add(
+                new CombatBalanceTowerScaledRejectionJson
+                {
+                    sourceTowerInstanceId = observation.SourceTower != null
+                        ? observation.SourceTower.GetInstanceID()
+                        : 0,
+                    sourceTowerName = observation.SourceTower != null
+                        ? observation.SourceTower.name
+                        : string.Empty,
+                    damageSourceType = sourceIdentity.SourceType.ToString(),
+                    effectDefinitionName =
+                        GetAssetName(sourceIdentity.EffectDefinition),
+                    actionOrdinal = sourceIdentity.ActionOrdinal,
+                    damageScale = observation.DamageScale,
+                    failureReason = observation.FailureReason.ToString(),
+                    rejectionCount = aggregate.RejectionCount
+                });
+            diagnostics.towerScaledRejectedCount +=
+                aggregate.RejectionCount;
+        }
+
+        List<string> fixedBuffKeys =
+            new List<string>(fixedBuffDamageBySignature.Keys);
+        fixedBuffKeys.Sort(StringComparer.Ordinal);
+
+        for (int i = 0; i < fixedBuffKeys.Count; i++)
+        {
+            FixedBuffDamageAggregate aggregate =
+                fixedBuffDamageBySignature[fixedBuffKeys[i]];
+
+            diagnostics.fixedBuffSignatures.Add(
+                new CombatBalanceFixedBuffDamageJson
+                {
+                    effectDefinitionName =
+                        GetAssetName(aggregate.EffectDefinition),
+                    actionOrdinal = aggregate.ActionOrdinal,
+                    fixedDamage = aggregate.FixedDamage,
+                    sourceTowerInstanceCount =
+                        aggregate.SourceTowerInstanceIds.Count,
+                    resolvedTargetCount = aggregate.ResolvedTargetCount,
+                    resolutionCount = aggregate.ResolutionCount,
+                    successfulApplicationCount =
+                        aggregate.SuccessfulApplicationCount,
+                    appliedDamageTotal = aggregate.AppliedDamageTotal
+                });
+            diagnostics.fixedBuffResolutionCount +=
+                aggregate.ResolutionCount;
+            diagnostics.fixedBuffSuccessfulApplicationCount +=
+                aggregate.SuccessfulApplicationCount;
+            diagnostics.fixedBuffAppliedDamageTotal +=
+                aggregate.AppliedDamageTotal;
+        }
+
+        return diagnostics;
+    }
+
+    private static bool DamageDiagnosticsCountsMatch(
+        CombatBalanceDamageDiagnosticsJson diagnostics)
+    {
+        if (diagnostics == null)
+        {
+            return false;
+        }
+
+        int towerResolutionCount = 0;
+        int towerApplicationCount = 0;
+        int towerAppliedDamage = 0;
+        int towerRejectionCount = 0;
+        int fixedResolutionCount = 0;
+        int fixedApplicationCount = 0;
+        int fixedAppliedDamage = 0;
+
+        for (int i = 0; i < diagnostics.towerScaledSignatures.Count; i++)
+        {
+            CombatBalanceTowerScaledDamageJson record =
+                diagnostics.towerScaledSignatures[i];
+            towerResolutionCount += record.resolutionCount;
+            towerApplicationCount += record.successfulApplicationCount;
+            towerAppliedDamage += record.appliedDamageTotal;
+        }
+
+        for (int i = 0; i < diagnostics.towerScaledRejections.Count; i++)
+        {
+            towerRejectionCount +=
+                diagnostics.towerScaledRejections[i].rejectionCount;
+        }
+
+        for (int i = 0; i < diagnostics.fixedBuffSignatures.Count; i++)
+        {
+            CombatBalanceFixedBuffDamageJson record =
+                diagnostics.fixedBuffSignatures[i];
+            fixedResolutionCount += record.resolutionCount;
+            fixedApplicationCount += record.successfulApplicationCount;
+            fixedAppliedDamage += record.appliedDamageTotal;
+        }
+
+        return towerResolutionCount == diagnostics.towerScaledResolutionCount &&
+               towerApplicationCount ==
+               diagnostics.towerScaledSuccessfulApplicationCount &&
+               towerAppliedDamage == diagnostics.towerScaledAppliedDamageTotal &&
+               towerRejectionCount == diagnostics.towerScaledRejectedCount &&
+               fixedResolutionCount == diagnostics.fixedBuffResolutionCount &&
+               fixedApplicationCount ==
+               diagnostics.fixedBuffSuccessfulApplicationCount &&
+               fixedAppliedDamage == diagnostics.fixedBuffAppliedDamageTotal;
+    }
+
+    private static string GetAssetName(UnityEngine.Object asset)
+    {
+        return asset != null ? asset.name : string.Empty;
+    }
+
+    private CombatBalanceDraftRuntimeJson CreateDraftRuntimeJson()
+    {
+        CombatBalanceDraftRuntimeJson runtime =
+            new CombatBalanceDraftRuntimeJson
+            {
+                configuredGenerationMode =
+                    configuredDraftGenerationMode ?? string.Empty,
+                configuredFixedStepCount = configuredFixedDraftStepCount,
+                towerDraftPool =
+                    new List<CombatBalanceDraftItemJson>(
+                        towerDraftPoolSnapshot),
+                towerUpgradeDraftPool =
+                    new List<CombatBalanceDraftItemJson>(
+                        towerUpgradeDraftPoolSnapshot),
+                attempts = new List<CombatBalanceDraftAttemptJson>(
+                    draftAttempts)
+            };
+        runtime.observedAttemptCount = runtime.attempts.Count;
+
+        for (int i = 0; i < runtime.attempts.Count; i++)
+        {
+            if (runtime.attempts[i].selectionCommitted)
+            {
+                runtime.committedSelectionCount++;
+            }
+        }
+
+        return runtime;
+    }
+
+    private CombatBalanceWaveRuntimeJson CreateWaveRuntimeJson()
+    {
+        CombatBalanceWaveRuntimeJson runtime =
+            new CombatBalanceWaveRuntimeJson
+            {
+                events = new List<CombatBalanceWaveEventJson>(waveEvents)
+            };
+        List<WaveResolutionAggregate> aggregates =
+            new List<WaveResolutionAggregate>();
+
+        for (int i = 0; i < runtime.events.Count; i++)
+        {
+            CombatBalanceWaveEventJson waveEvent = runtime.events[i];
+            WaveResolutionAggregate aggregate =
+                GetOrCreateWaveResolutionAggregate(
+                    aggregates,
+                    waveEvent.waveNumber);
+            aggregate.RuntimeTemplateName =
+                waveEvent.runtimeTemplateName ?? string.Empty;
+            aggregate.ConfiguredCount = waveEvent.configuredCount;
+
+            if (string.Equals(
+                    waveEvent.kind,
+                    "SpawnStarted",
+                    StringComparison.Ordinal))
+            {
+                runtime.observedWaveStartCount++;
+            }
+            else if (string.Equals(
+                         waveEvent.kind,
+                         "SpawnCompleted",
+                         StringComparison.Ordinal))
+            {
+                runtime.observedWaveCompletionCount++;
+            }
+        }
+
+        for (int i = 0; i < monsterObservations.Count; i++)
+        {
+            MonsterObservation observation = monsterObservations[i];
+
+            if (observation == null || observation.SourceWaveNumber <= 0)
+            {
+                continue;
+            }
+
+            WaveResolutionAggregate aggregate =
+                GetOrCreateWaveResolutionAggregate(
+                    aggregates,
+                    observation.SourceWaveNumber);
+
+            if (string.IsNullOrWhiteSpace(aggregate.RuntimeTemplateName))
+            {
+                aggregate.RuntimeTemplateName =
+                    observation.RuntimeTemplateName;
+            }
+
+            aggregate.Spawned++;
+            aggregate.SuccessfulDamageApplications +=
+                observation.SuccessfulDamageApplications;
+            aggregate.EffectiveDamage += observation.EffectiveDamage;
+
+            if (!observation.IsResolved)
+            {
+                continue;
+            }
+
+            if (aggregate.Resolved == 0)
+            {
+                aggregate.FirstResolutionAtSeconds =
+                    observation.ResolvedAtSeconds;
+            }
+            else
+            {
+                aggregate.FirstResolutionAtSeconds = Mathf.Min(
+                    aggregate.FirstResolutionAtSeconds,
+                    observation.ResolvedAtSeconds);
+            }
+
+            aggregate.Resolved++;
+            aggregate.LastResolutionAtSeconds = Mathf.Max(
+                aggregate.LastResolutionAtSeconds,
+                observation.ResolvedAtSeconds);
+
+            if (observation.ReachedTarget)
+            {
+                aggregate.Leaked++;
+                aggregate.LeakedRemainingHealth += observation.FinalHealth;
+            }
+            else
+            {
+                aggregate.Killed++;
+            }
+        }
+
+        aggregates.Sort(
+            (left, right) => left.WaveNumber.CompareTo(right.WaveNumber));
+
+        for (int i = 0; i < aggregates.Count; i++)
+        {
+            WaveResolutionAggregate aggregate = aggregates[i];
+            runtime.resolutionSummaries.Add(
+                new CombatBalanceWaveResolutionJson
+                {
+                    waveNumber = aggregate.WaveNumber,
+                    runtimeTemplateName =
+                        aggregate.RuntimeTemplateName ?? string.Empty,
+                    configuredCount = aggregate.ConfiguredCount,
+                    spawned = aggregate.Spawned,
+                    resolved = aggregate.Resolved,
+                    killed = aggregate.Killed,
+                    leaked = aggregate.Leaked,
+                    unresolvedAtReport = Mathf.Max(
+                        0,
+                        aggregate.Spawned - aggregate.Resolved),
+                    successfulDamageApplications =
+                        aggregate.SuccessfulDamageApplications,
+                    effectiveDamage = aggregate.EffectiveDamage,
+                    leakedRemainingHealth =
+                        aggregate.LeakedRemainingHealth,
+                    hasResolvedMonsters = aggregate.Resolved > 0,
+                    firstResolutionAtSeconds =
+                        aggregate.FirstResolutionAtSeconds,
+                    lastResolutionAtSeconds =
+                        aggregate.LastResolutionAtSeconds
+                });
+        }
+
+        return runtime;
+    }
+
+    private static WaveResolutionAggregate
+        GetOrCreateWaveResolutionAggregate(
+            List<WaveResolutionAggregate> aggregates,
+            int waveNumber)
+    {
+        for (int i = 0; i < aggregates.Count; i++)
+        {
+            if (aggregates[i].WaveNumber == waveNumber)
+            {
+                return aggregates[i];
+            }
+        }
+
+        WaveResolutionAggregate created = new WaveResolutionAggregate
+        {
+            WaveNumber = waveNumber
+        };
+        aggregates.Add(created);
+        return created;
+    }
+
+    private static float ResolveSecondsAfterFinalDraft(
+        CombatBalanceProgressionJson progression,
+        float runDurationSeconds)
+    {
+        if (progression == null || progression.events.Count == 0)
+        {
+            return 0f;
+        }
+
+        float finalDraftTime = progression.events[
+            progression.events.Count - 1].activeTimeSeconds;
+        return Mathf.Max(0f, runDurationSeconds - finalDraftTime);
     }
 
     private CombatBalanceProgressionJson CreateProgressionJson()
@@ -1747,10 +2896,17 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             runtime.instances.Add(new CombatBalanceMonsterInstanceJson
             {
                 spawnOrdinal = observation.SpawnOrdinal,
+                sourceWaveNumber = observation.SourceWaveNumber,
+                sourceWaveSpawnOrdinal =
+                    observation.SourceWaveSpawnOrdinal,
                 runtimeTemplateName = observation.RuntimeTemplateName,
                 displayName = observation.DisplayName,
                 maximumHealth = observation.MaximumHealth,
                 moveSpeedAtSpawn = observation.MoveSpeedAtSpawn,
+                spawnedAtSeconds = observation.SpawnedAtSeconds,
+                resolvedAtSeconds = observation.IsResolved
+                    ? observation.ResolvedAtSeconds
+                    : 0f,
                 observedThroughRegistrationEvent =
                     observation.ObservedThroughRegistrationEvent,
                 healthAtObservationStart =
@@ -1955,6 +3111,52 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                observedLeaked == leakedCount;
     }
 
+    private bool WaveMonsterAttributionMatches(
+        CombatBalanceWaveRuntimeJson runtime)
+    {
+        if (runtime == null || runtime.resolutionSummaries == null)
+        {
+            return false;
+        }
+
+        int attributedSpawned = 0;
+        int attributedResolved = 0;
+        int attributedKilled = 0;
+        int attributedLeaked = 0;
+        int attributedUnresolved = 0;
+        int attributedEffectiveDamage = 0;
+        int attributedLeakedRemainingHealth = 0;
+
+        for (int i = 0; i < runtime.resolutionSummaries.Count; i++)
+        {
+            CombatBalanceWaveResolutionJson summary =
+                runtime.resolutionSummaries[i];
+
+            if (summary == null || summary.waveNumber <= 0)
+            {
+                return false;
+            }
+
+            attributedSpawned += summary.spawned;
+            attributedResolved += summary.resolved;
+            attributedKilled += summary.killed;
+            attributedLeaked += summary.leaked;
+            attributedUnresolved += summary.unresolvedAtReport;
+            attributedEffectiveDamage += summary.effectiveDamage;
+            attributedLeakedRemainingHealth +=
+                summary.leakedRemainingHealth;
+        }
+
+        return attributedSpawned == spawnedCount &&
+               attributedResolved == resolvedCount &&
+               attributedKilled == killedCount &&
+               attributedLeaked == leakedCount &&
+               attributedUnresolved ==
+                   Mathf.Max(0, spawnedCount - resolvedCount) &&
+               attributedEffectiveDamage == effectiveDamage &&
+               attributedLeakedRemainingHealth == leakedRemainingHealth;
+    }
+
     private bool MonsterRuntimeDamageMatches(
         CombatBalanceMonsterRuntimeJson runtime)
     {
@@ -1992,6 +3194,46 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                runtime.unobservedDamageAtObservationStart == 0;
     }
 
+    private bool TowerDeploymentCoverageMatches(
+        IReadOnlyList<CombatBalanceTowerJson> towers)
+    {
+        if (towers == null ||
+            towers.Count == 0 ||
+            towerDeploymentByInstanceId.Count != towers.Count)
+        {
+            return false;
+        }
+
+        HashSet<int> observedOrdinals = new HashSet<int>();
+
+        for (int i = 0; i < towers.Count; i++)
+        {
+            CombatBalanceTowerJson tower = towers[i];
+
+            if (tower == null ||
+                !tower.deploymentObserved ||
+                tower.deploymentOrdinal <= 0 ||
+                tower.deploymentGridPositions == null ||
+                tower.deploymentGridPositions.Count == 0 ||
+                !observedOrdinals.Add(tower.deploymentOrdinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static CombatBalanceVector3Json CreateVector3Json(Vector3 value)
+    {
+        return new CombatBalanceVector3Json
+        {
+            x = value.x,
+            y = value.y,
+            z = value.z
+        };
+    }
+
     private List<CombatBalanceTowerJson> CreateTowerJsonRecords()
     {
         TowerInstance[] towerInstances = FindObjectsByType<TowerInstance>(
@@ -2018,9 +3260,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             TowerDefinition definition = towerInstance.TowerDefinition;
             TowerCombatBehaviour combatBehaviour =
                 towerInstance.GetComponent<TowerCombatBehaviour>();
+            int towerInstanceId = towerInstance.GetInstanceID();
             CombatBalanceTowerJson record = new CombatBalanceTowerJson
             {
-                instanceId = towerInstance.GetInstanceID(),
+                instanceId = towerInstanceId,
                 displayName = GetDisplayName(
                     definition.DisplayName,
                     definition.name),
@@ -2029,25 +3272,50 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 hasCombatRuntime = combatBehaviour != null
             };
 
+            if (towerDeploymentByInstanceId.TryGetValue(
+                    towerInstanceId,
+                    out TowerDeploymentObservation deployment))
+            {
+                record.deploymentObserved = true;
+                record.deploymentOrdinal = deployment.DeploymentOrdinal;
+                record.deployedAtSeconds = deployment.DeployedAtSeconds;
+                record.deploymentWorldPosition =
+                    CreateVector3Json(deployment.WorldPosition);
+
+                for (int gridIndex = 0;
+                     gridIndex < deployment.GridPositions.Count;
+                     gridIndex++)
+                {
+                    Vector2Int gridPosition =
+                        deployment.GridPositions[gridIndex];
+                    record.deploymentGridPositions.Add(
+                        new CombatBalanceGridPositionJson
+                        {
+                            x = gridPosition.x,
+                            z = gridPosition.y
+                        });
+                }
+            }
+
             if (combatBehaviour != null)
             {
                 TowerCombatBaseStats baseStats = new TowerCombatBaseStats(
-                    combatBehaviour.BaseAttackDamage,
                     combatBehaviour.BaseAttackRange,
                     combatBehaviour.BaseAttackCycleDuration);
                 ResolvedTowerCombatStats resolvedStats =
                     TowerRuntimeStatResolver.Resolve(towerInstance, baseStats);
-                record.baseDamage = combatBehaviour.BaseAttackDamage;
+                record.baseDamage = resolvedStats.LevelBasicDamage;
                 record.baseRange = combatBehaviour.BaseAttackRange;
                 record.baseCycleSeconds =
                     combatBehaviour.BaseAttackCycleDuration;
-                record.resolvedDamage = resolvedStats.AttackDamage;
+                record.resolvedDamage =
+                    Mathf.RoundToInt(resolvedStats.ResolvedBasicDamage);
                 record.resolvedRange = resolvedStats.AttackRange;
                 record.resolvedCycleSeconds = resolvedStats.AttackCycleDuration;
             }
 
             record.projectileRuntime = CreateProjectileRuntimeJson(
-                towerInstance.GetInstanceID());
+                towerInstanceId);
 
             IReadOnlyList<TowerUpgradeDefinition> upgrades =
                 towerInstance.AppliedUpgrades;
@@ -2351,14 +3619,13 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         if (combatBehaviour != null)
         {
             TowerCombatBaseStats baseStats = new TowerCombatBaseStats(
-                combatBehaviour.BaseAttackDamage,
                 combatBehaviour.BaseAttackRange,
                 combatBehaviour.BaseAttackCycleDuration);
             ResolvedTowerCombatStats resolvedStats =
                 TowerRuntimeStatResolver.Resolve(towerInstance, baseStats);
 
             builder.Append(", BaseStats=[Damage=")
-                .Append(combatBehaviour.BaseAttackDamage)
+                .Append(resolvedStats.LevelBasicDamage)
                 .Append(", Range=")
                 .Append(FormatFloat(combatBehaviour.BaseAttackRange))
                 .Append(", Cycle=")
@@ -2366,7 +3633,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                     combatBehaviour.BaseAttackCycleDuration))
                 .Append(']')
                 .Append(", ResolvedStats=[Damage=")
-                .Append(resolvedStats.AttackDamage)
+                .Append(Mathf.RoundToInt(resolvedStats.ResolvedBasicDamage))
                 .Append(", Range=")
                 .Append(FormatFloat(resolvedStats.AttackRange))
                 .Append(", Cycle=")

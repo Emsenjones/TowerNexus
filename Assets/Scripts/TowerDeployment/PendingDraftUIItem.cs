@@ -27,10 +27,12 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private bool hasStoredPendingPosition;
     private bool isDragVisualActive;
     private bool isBattleActive;
+    private bool isConsumed;
 
     public DraftResult DraftResult => draftResult;
     public TowerDefinition TowerDefinition => draftResult != null ? draftResult.TowerDefinition : null;
     public TowerUpgradeDefinition TowerUpgradeDefinition => draftResult != null ? draftResult.TowerUpgradeDefinition : null;
+    public bool IsConsumed => isConsumed;
 
     private void Awake()
     {
@@ -94,6 +96,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
         placementController = null;
         pendingItemContainer = null;
         dragVisualRoot = null;
+        isConsumed = false;
 
         if (!TryValidateReferences(out failureReason))
         {
@@ -148,7 +151,10 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void BeginBattle()
     {
-        isBattleActive = true;
+        if (!isConsumed)
+        {
+            isBattleActive = true;
+        }
     }
 
     public void StopBattle()
@@ -159,7 +165,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        if (!isBattleActive || eventData == null)
+        if (!CanInteract() || eventData == null)
         {
             return;
         }
@@ -196,7 +202,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!isBattleActive)
+        if (!CanInteract())
         {
             return;
         }
@@ -216,7 +222,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnDrag(PointerEventData eventData)
     {
-        if (!isBattleActive)
+        if (!CanInteract())
         {
             return;
         }
@@ -236,11 +242,21 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (!CanInteract())
+        {
+            return;
+        }
+
         RestorePendingPosition();
     }
 
     public void RestorePendingPosition()
     {
+        if (isConsumed)
+        {
+            return;
+        }
+
         if (!hasStoredPendingPosition ||
             originalParent == null ||
             rectTransform == null)
@@ -263,6 +279,17 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
         hasStoredPendingPosition = false;
         isDragVisualActive = false;
+    }
+
+    internal void MarkConsumed()
+    {
+        isConsumed = true;
+        isBattleActive = false;
+    }
+
+    private bool CanInteract()
+    {
+        return isBattleActive && !isConsumed;
     }
 
     private void UpdateIcon(Sprite icon)

@@ -17,4 +17,11 @@ public class BuffEventBinding
     {
         return effectDefinition != null && effectDefinition.IsValid();
     }
+
+    public bool IsValidForBuffLifecycle()
+    {
+        return effectDefinition != null &&
+               effectDefinition.IsValidForDamageMode(
+                   EffectDamageMode.FixedBuff);
+    }
 }

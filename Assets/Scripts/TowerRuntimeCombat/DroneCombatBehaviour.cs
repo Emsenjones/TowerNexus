@@ -29,7 +29,6 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         }
 
         return new TowerCombatBaseStats(
-            BaseAttackDamage,
             BaseAttackRange,
             BaseAttackCycleDuration,
             droneBurstCooldown: burstCooldown);
@@ -89,9 +88,6 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         ResolvedTowerCombatStats currentStats,
         TowerUpgradeDefinition sourceUpgrade)
     {
-        bool refreshDamage = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.DamageBonus);
         bool refreshAttackRange = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.AttackRange);
@@ -99,8 +95,6 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             sourceUpgrade,
             TowerUpgradeBasicStatType.DroneBurstCooldown);
         DroneStatRefresh refresh = new DroneStatRefresh(
-            refreshDamage,
-            currentStats.DamageBonus,
             refreshAttackRange,
             currentStats.AttackRange,
             refreshBurstCooldown,
@@ -262,9 +256,9 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         DroneRuntimeOptions runtimeOptions = CreateRuntimeOptions();
         DroneReleaseData releaseData = CreateReleaseData();
 
-        int releaseBasicDamage = releasesAdditionalEntity
-            ? additionalAttackEntities.BasicDamage
-            : BaseAttackDamage;
+        float releaseDamageScale = releasesAdditionalEntity
+            ? additionalAttackEntities.DamageScale
+            : 1f;
 
         if (!TryReleaseDrone(
                 releasePrefab,
@@ -272,7 +266,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
                 releaseRotation,
                 initialTarget,
                 resolvedStats,
-                releaseBasicDamage,
+                releaseDamageScale,
                 releasesAdditionalEntity,
                 releaseData,
                 runtimeOptions))
@@ -291,7 +285,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         Quaternion releaseRotation,
         MonsterBehaviour initialTarget,
         ResolvedTowerCombatStats resolvedStats,
-        int releaseBasicDamage,
+        float releaseDamageScale,
         bool isAdditionalAttackEntity,
         DroneReleaseData releaseData,
         DroneRuntimeOptions runtimeOptions)
@@ -313,7 +307,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
             releaseData,
             runtimeOptions,
             resolvedStats,
-            releaseBasicDamage,
+            releaseDamageScale,
             isAdditionalAttackEntity,
             releasePosition,
             releaseRotation,

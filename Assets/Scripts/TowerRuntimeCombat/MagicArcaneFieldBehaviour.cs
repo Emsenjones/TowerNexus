@@ -129,7 +129,9 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                tickInterval > 0f &&
                tickEffect != null &&
                tickEffect.Radius == 0f &&
-               tickEffect.IsValid();
+               tickEffect.IsValidForDamageMode(
+                   EffectDamageMode.TowerScaled) &&
+               tickEffect.ContainsDealDamageAction();
     }
 
     private bool HasValidSource()
@@ -163,7 +165,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                 continue;
             }
 
-            EffectExecutor.Execute(
+            bool executed = EffectExecutor.Execute(
                 tickEffect,
                 new EffectTriggerContext(
                     sourceTower: sourceTower,
@@ -171,10 +173,10 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                     targetMonster: target,
                     hasTriggerPosition: true,
                     triggerPosition: fieldCenter,
-                    resolvedDamage: 0,
                     allowsElementalApplication: false));
 
-            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+            if (!executed ||
+                !EffectTargetResolver.IsValidMonsterTarget(target))
             {
                 continue;
             }

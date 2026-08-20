@@ -135,8 +135,20 @@ public class WindVortexBehaviour : MonoBehaviour
             isValid = false;
         }
 
-        if (!onTickEffectDefinition.IsValid())
+        if (!onTickEffectDefinition.IsValidForDamageMode(
+                EffectDamageMode.FixedBuff))
         {
+            Debug.LogWarning(
+                $"Wind vortex prefab '{name}' is invalid: on-tick damage must use FixedBuff mode.",
+                this);
+            isValid = false;
+        }
+
+        if (!onTickEffectDefinition.ContainsDealDamageAction())
+        {
+            Debug.LogWarning(
+                $"Wind vortex prefab '{name}' is invalid: on-tick EffectDefinition requires DealDamage.",
+                this);
             isValid = false;
         }
 
@@ -275,7 +287,6 @@ public class WindVortexBehaviour : MonoBehaviour
                     targetMonster: target,
                     hasTriggerPosition: true,
                     triggerPosition: transform.position,
-                    resolvedDamage: 0,
                     allowsElementalApplication: false));
         }
     }

@@ -5,12 +5,20 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
+internal readonly struct PreparedTowerCombatLevelRevision
+{
+    internal PreparedTowerCombatLevelRevision(
+        ResolvedTowerCombatStats resolvedStats)
+    {
+        ResolvedStats = resolvedStats;
+    }
+
+    internal ResolvedTowerCombatStats ResolvedStats { get; }
+}
+
 [DisallowMultipleComponent]
 public abstract class TowerCombatBehaviour : MonoBehaviour
 {
-    [TitleGroup("Core")]
-    [MinValue(0)]
-    [SerializeField] private int baseAttackDamage = 1;
     [TitleGroup("Core")]
     [MinValue(0f)]
     [SerializeField] private float attackRange = 1f;
@@ -55,7 +63,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     public TowerAttackState AttackState => attackState;
     public bool IsAttacking => attackState != TowerAttackState.Idle;
     public bool IsBattleActive => isBattleActive;
-    public int BaseAttackDamage => baseAttackDamage;
     public float BaseAttackRange => attackRange;
     public float BaseAttackCycleDuration => attackCycleDuration;
     public float CurrentResolvedAttackRange => ResolveCombatStats().AttackRange;
@@ -165,6 +172,58 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     internal bool IsPreparedForBattleActivation =>
         isPreparedForBattleActivation;
 
+    internal bool TryPrepareLevelDamageRevision(
+        TowerLevelConfig nextLevelConfig,
+        out PreparedTowerCombatLevelRevision preparedRevision,
+        out string failureReason)
+    {
+        preparedRevision = default;
+
+        if (!isBattleActive ||
+            !isRuntimeSessionActive ||
+            !hasResolvedStatsCache ||
+            !TryValidateExplicitOwner())
+        {
+            failureReason =
+                "the Tower combat runtime is not ready for a Level revision.";
+            return false;
+        }
+
+        if (nextLevelConfig == null ||
+            !nextLevelConfig.IsValid() ||
+            nextLevelConfig.Level != towerInstance.CurrentLevel + 1)
+        {
+            failureReason = "the next Tower Level configuration is invalid.";
+            return false;
+        }
+
+        ResolvedTowerCombatStats resolvedStats = TowerRuntimeStatResolver.Resolve(
+            towerInstance,
+            CreateBaseStats(),
+            nextLevelConfig);
+
+        if (resolvedStats.LevelBasicDamage != nextLevelConfig.BasicDamage ||
+            float.IsNaN(resolvedStats.ResolvedBasicDamage) ||
+            float.IsInfinity(resolvedStats.ResolvedBasicDamage) ||
+            resolvedStats.ResolvedBasicDamage <= 0f)
+        {
+            failureReason =
+                "the prepared Tower combat baseline has invalid BasicDamage.";
+            return false;
+        }
+
+        preparedRevision = new PreparedTowerCombatLevelRevision(resolvedStats);
+        failureReason = string.Empty;
+        return true;
+    }
+
+    internal void ApplyPreparedLevelDamageRevision(
+        PreparedTowerCombatLevelRevision preparedRevision)
+    {
+        cachedResolvedStats = preparedRevision.ResolvedStats;
+        hasResolvedStatsCache = true;
+    }
+
     internal void ActivatePreparedBattleRuntime()
     {
         isBattleActive = true;
@@ -219,14 +278,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     public bool IsAuthoredConfigurationValid()
     {
-        if (baseAttackDamage < 0)
-        {
-            Debug.LogWarning(
-                $"{GetType().Name} on '{name}' is invalid: base attack damage cannot be negative.",
-                this);
-            return false;
-        }
-
         if (attackRange < 0f)
         {
             Debug.LogWarning($"{GetType().Name} on '{name}' is invalid: attack range cannot be negative.", this);
@@ -424,7 +475,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         Transform origin,
         Vector3 targetPosition,
         MonsterBehaviour target,
-        int attackDamage,
+        float damageScale,
+        TowerDamageSourceIdentity damageSourceIdentity,
         ProjectileFlightType flightType,
         float initialArcHeight,
         ProjectileRuntimeOptions runtimeOptions,
@@ -435,7 +487,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             origin,
             targetPosition,
             target,
-            attackDamage,
+            damageScale,
+            damageSourceIdentity,
             flightType,
             initialArcHeight,
             runtimeOptions,
@@ -448,7 +501,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         Transform origin,
         Vector3 targetPosition,
         MonsterBehaviour target,
-        int attackDamage,
+        float damageScale,
+        TowerDamageSourceIdentity damageSourceIdentity,
         ProjectileFlightType flightType,
         float initialArcHeight,
         ProjectileRuntimeOptions runtimeOptions,
@@ -473,7 +527,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             projectilePrefab,
             target,
             targetPosition,
-            attackDamage,
+            damageScale,
+            damageSourceIdentity,
             flightType,
             initialArcHeight,
             runtimeOptions,
@@ -937,7 +992,9 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
                towerInstance != null &&
                towerDefinition != null &&
                towerInstance.TowerDefinition == towerDefinition &&
-               towerDefinition.TowerFamily == SupportedTowerFamily;
+               towerDefinition.TowerFamily == SupportedTowerFamily &&
+               towerInstance.CurrentLevelConfig != null &&
+               towerInstance.CurrentLevelConfig.IsValid();
     }
 
     private bool TryResolveMonsterManager()
@@ -1063,36 +1120,12 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         bool refreshAttackCycleDuration = UpgradeIncludesBasicStat(
             sourceUpgrade,
             TowerUpgradeBasicStatType.AttackCycleDuration);
-        bool refreshDamage = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.DamageBonus);
 
         if (refreshAttackCycleDuration)
         {
             RefreshAttackCycleRatio(
                 previousStats.AttackCycleDuration,
                 currentStats.AttackCycleDuration);
-        }
-
-        if (refreshDamage)
-        {
-            List<ProjectileBehaviour> projectileSnapshot = GetOwnedProjectileSnapshot();
-
-            for (int i = 0; i < projectileSnapshot.Count; i++)
-            {
-                ProjectileBehaviour projectile = projectileSnapshot[i];
-
-                if (projectile == null)
-                {
-                    continue;
-                }
-
-                if (refreshDamage)
-                {
-                    projectile.TryRefreshDamage(currentStats.AttackDamage);
-                }
-
-            }
         }
 
         OnResolvedStatsChanged(

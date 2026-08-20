@@ -5,17 +5,23 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 9;
+    public int schemaVersion = 14;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
     public string failureReason;
     public CombatBalanceFixtureJson fixture = new CombatBalanceFixtureJson();
     public CombatBalanceCombatJson combat = new CombatBalanceCombatJson();
+    public CombatBalanceDamageDiagnosticsJson damageDiagnostics =
+        new CombatBalanceDamageDiagnosticsJson();
     public CombatBalanceTimingJson timing = new CombatBalanceTimingJson();
     public CombatBalancePlayerJson player = new CombatBalancePlayerJson();
     public CombatBalanceProgressionJson progression =
         new CombatBalanceProgressionJson();
+    public CombatBalanceWaveRuntimeJson waveRuntime =
+        new CombatBalanceWaveRuntimeJson();
+    public CombatBalanceDraftRuntimeJson draftRuntime =
+        new CombatBalanceDraftRuntimeJson();
     public CombatBalanceIntegrityJson integrity = new CombatBalanceIntegrityJson();
     public CombatBalanceMonsterRuntimeJson monsterRuntime =
         new CombatBalanceMonsterRuntimeJson();
@@ -27,6 +33,8 @@ internal sealed class CombatBalanceRunJsonReport
 internal sealed class CombatBalanceFixtureJson
 {
     public string waveConfigName;
+    public bool expectedWaveCountAvailable;
+    public int expectedWaveCount;
     public bool expectedMonsterCountAvailable;
     public int expectedMonsterCount;
     public int observedMinimumMonsterHealth;
@@ -55,12 +63,81 @@ internal sealed class CombatBalanceCombatJson
 }
 
 [Serializable]
+internal sealed class CombatBalanceDamageDiagnosticsJson
+{
+    public int towerScaledResolutionCount;
+    public int towerScaledRejectedCount;
+    public int towerScaledSuccessfulApplicationCount;
+    public int towerScaledAppliedDamageTotal;
+    public int fixedBuffResolutionCount;
+    public int fixedBuffSuccessfulApplicationCount;
+    public int fixedBuffAppliedDamageTotal;
+    public float maximumTowerScaledRelativeRoundingError;
+    public List<CombatBalanceTowerScaledDamageJson> towerScaledSignatures =
+        new List<CombatBalanceTowerScaledDamageJson>();
+    public List<CombatBalanceTowerScaledRejectionJson> towerScaledRejections =
+        new List<CombatBalanceTowerScaledRejectionJson>();
+    public List<CombatBalanceFixedBuffDamageJson> fixedBuffSignatures =
+        new List<CombatBalanceFixedBuffDamageJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceTowerScaledDamageJson
+{
+    public int towerInstanceId;
+    public string towerDisplayName;
+    public string towerFamily;
+    public int level;
+    public int levelBasicDamage;
+    public float rawDamageBonus;
+    public float resolvedBasicDamage;
+    public string damageSourceType;
+    public string effectDefinitionName;
+    public int actionOrdinal;
+    public float damageScale;
+    public float rawProduct;
+    public int finalDamage;
+    public float relativeRoundingError;
+    public int resolutionCount;
+    public int successfulApplicationCount;
+    public int appliedDamageTotal;
+}
+
+[Serializable]
+internal sealed class CombatBalanceTowerScaledRejectionJson
+{
+    public int sourceTowerInstanceId;
+    public string sourceTowerName;
+    public string damageSourceType;
+    public string effectDefinitionName;
+    public int actionOrdinal;
+    public float damageScale;
+    public string failureReason;
+    public int rejectionCount;
+}
+
+[Serializable]
+internal sealed class CombatBalanceFixedBuffDamageJson
+{
+    public string effectDefinitionName;
+    public int actionOrdinal;
+    public int fixedDamage;
+    public int sourceTowerInstanceCount;
+    public int resolvedTargetCount;
+    public int resolutionCount;
+    public int successfulApplicationCount;
+    public int appliedDamageTotal;
+}
+
+[Serializable]
 internal sealed class CombatBalanceTimingJson
 {
+    public float runDurationSeconds;
     public float spawnSpanSeconds;
     public bool spawningCompleted;
     public float spawningCompletedAtSeconds;
     public float battleDurationSeconds;
+    public float secondsAfterFinalDraft;
 }
 
 [Serializable]
@@ -112,10 +189,14 @@ internal sealed class CombatBalanceMonsterTypeJson
 internal sealed class CombatBalanceMonsterInstanceJson
 {
     public int spawnOrdinal;
+    public int sourceWaveNumber;
+    public int sourceWaveSpawnOrdinal;
     public string runtimeTemplateName;
     public string displayName;
     public int maximumHealth;
     public float moveSpeedAtSpawn;
+    public float spawnedAtSeconds;
+    public float resolvedAtSeconds;
     public bool observedThroughRegistrationEvent;
     public int healthAtObservationStart;
     public int unobservedDamageAtObservationStart;
@@ -163,6 +244,109 @@ internal sealed class CombatBalanceProgressionEventJson
     public int currentProgress;
     public int requiredProgress;
     public float activeTimeSeconds;
+    public int spawned;
+    public int resolved;
+    public int killed;
+    public int leaked;
+    public int alive;
+    public int playerHealth;
+}
+
+[Serializable]
+internal sealed class CombatBalanceWaveRuntimeJson
+{
+    public int observedWaveStartCount;
+    public int observedWaveCompletionCount;
+    public List<CombatBalanceWaveEventJson> events =
+        new List<CombatBalanceWaveEventJson>();
+    public List<CombatBalanceWaveResolutionJson> resolutionSummaries =
+        new List<CombatBalanceWaveResolutionJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceWaveResolutionJson
+{
+    public int waveNumber;
+    public string runtimeTemplateName;
+    public int configuredCount;
+    public int spawned;
+    public int resolved;
+    public int killed;
+    public int leaked;
+    public int unresolvedAtReport;
+    public int successfulDamageApplications;
+    public int effectiveDamage;
+    public int leakedRemainingHealth;
+    public bool hasResolvedMonsters;
+    public float firstResolutionAtSeconds;
+    public float lastResolutionAtSeconds;
+}
+
+[Serializable]
+internal sealed class CombatBalanceWaveEventJson
+{
+    public int ordinal;
+    public string kind;
+    public int waveNumber;
+    public string runtimeTemplateName;
+    public int configuredCount;
+    public float configuredSpawnIntervalSeconds;
+    public float configuredWaveDelaySeconds;
+    public float activeTimeSeconds;
+    public int spawned;
+    public int resolved;
+    public int killed;
+    public int leaked;
+    public int alive;
+    public int playerHealth;
+}
+
+[Serializable]
+internal sealed class CombatBalanceDraftRuntimeJson
+{
+    public string configuredGenerationMode;
+    public int configuredFixedStepCount;
+    public int observedAttemptCount;
+    public int committedSelectionCount;
+    public List<CombatBalanceDraftItemJson> towerDraftPool =
+        new List<CombatBalanceDraftItemJson>();
+    public List<CombatBalanceDraftItemJson> towerUpgradeDraftPool =
+        new List<CombatBalanceDraftItemJson>();
+    public List<CombatBalanceDraftAttemptJson> attempts =
+        new List<CombatBalanceDraftAttemptJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceDraftAttemptJson
+{
+    public string attemptToken;
+    public int ordinal;
+    public string sessionKind;
+    public string generationMode;
+    public int resolvedMonsterCount;
+    public int playerLevel;
+    public int currentProgress;
+    public int requiredProgress;
+    public float activeTimeSeconds;
+    public bool selectionCommitted;
+    public List<CombatBalanceDraftItemJson> naturalCandidates =
+        new List<CombatBalanceDraftItemJson>();
+    public List<CombatBalanceDraftItemJson> displayedChoices =
+        new List<CombatBalanceDraftItemJson>();
+    public CombatBalanceDraftItemJson selectedChoice =
+        new CombatBalanceDraftItemJson();
+}
+
+[Serializable]
+internal sealed class CombatBalanceDraftItemJson
+{
+    public string resultType;
+    public string assetName;
+    public string displayName;
+    public string towerFamily;
+    public string upgradeLayer;
+    public int requiredTowerLevel;
+    public int multiplicity;
 }
 
 [Serializable]
@@ -179,6 +363,12 @@ internal sealed class CombatBalanceIntegrityJson
     public bool levelUpResolutionNodesMatch;
     public bool finalPlayerLevelMatches;
     public bool postFinalDraftCombatObserved;
+    public bool waveEventCountsMatch;
+    public bool waveMonsterAttributionMatches;
+    public bool draftAttemptSelectionsMatch;
+    public bool draftAttemptCountMatchesProgression;
+    public bool towerDeploymentCoverageMatches;
+    public bool damageDiagnosticsCountsMatch;
 }
 
 [Serializable]
@@ -188,6 +378,13 @@ internal sealed class CombatBalanceTowerJson
     public string displayName;
     public string family;
     public int level;
+    public bool deploymentObserved;
+    public int deploymentOrdinal;
+    public float deployedAtSeconds;
+    public CombatBalanceVector3Json deploymentWorldPosition =
+        new CombatBalanceVector3Json();
+    public List<CombatBalanceGridPositionJson> deploymentGridPositions =
+        new List<CombatBalanceGridPositionJson>();
     public bool hasCombatRuntime;
     public int baseDamage;
     public float baseRange;
@@ -199,6 +396,21 @@ internal sealed class CombatBalanceTowerJson
         new CombatBalanceProjectileRuntimeJson();
     public List<CombatBalanceUpgradeJson> upgrades =
         new List<CombatBalanceUpgradeJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceVector3Json
+{
+    public float x;
+    public float y;
+    public float z;
+}
+
+[Serializable]
+internal sealed class CombatBalanceGridPositionJson
+{
+    public int x;
+    public int z;
 }
 
 [Serializable]
