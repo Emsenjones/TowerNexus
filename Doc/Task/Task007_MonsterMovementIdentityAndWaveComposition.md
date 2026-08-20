@@ -1,8 +1,8 @@
 # Task007 - Monster Movement Identity And Wave Composition
 
-Status: Completed baseline; the four movement Profiles, homogeneous campaign Waves, standard spatial-gap rule, Stage-local Wave Delay, and normalized-spacing combat regressions were accepted on 2026-08-18, but Task006 route/lane regression and the proposed Fodder/Scout extension remain pending before Stage calibration
+Status: In Progress; Task006 route/lane movement and the Fodder Profile are accepted; the four baseline Profiles, homogeneous campaign Waves, standard spatial-gap rule, Stage-local Wave Delay, and normalized-spacing combat regressions remain accepted; the focused post-Task006 Rush/Tough/Tank route-lane regression is pending
 
-Depends on: Task005 Monster Roster Baseline; Task006 Monster Route Reprojection And Lane Movement for the pending regression and extension
+Depends on: Task005 Monster Roster Baseline; Task006 Monster Route Reprojection And Lane Movement for the remaining Rush/Tough/Tank route-lane regression
 
 Blocks: Task008 Global Progression And Stage Skeleton regression and Task009-Task014 Stage calibration
 
@@ -23,12 +23,15 @@ Task007 owns Stage-independent Monster movement identity and standard formation 
 
 | Profile | Runtime Prefab | Maximum Health | Move Speed | Tactical Meaning |
 |---|---|---:|---:|---|
-| Normal | `Prefab_Monster_Slime1` | `120` | `0.25` | Stable ordinary Wave body and movement reference |
-| Rush | `Prefab_Monster_Bat1` | `120` | `0.35` | Short handling window that reduces realized Tower efficiency, especially for slow-cadence or slow-projectile attacks |
-| Tough | `Prefab_Monster_TurtuleShell1` | `240` | `0.25` | Normal-speed durability pressure |
-| Tank | `Prefab_Monster_Orc1` | `480` | `0.20` | High durability with a slower, longer exposure window |
+| Fodder | `Prefab_Monster_Slime_Fodder` | `60` | `0.25` | Low-pressure opening body that lets an Initial Tower secure early kills while the player forms the first route and Draft sequence |
+| Normal | `Prefab_Monster_MonsterPlant_Normal` | `120` | `0.25` | Stable ordinary Wave body and movement reference |
+| Rush | `Prefab_Monster_Bat_Rush` | `120` | `0.35` | Short handling window that reduces realized Tower efficiency, especially for slow-cadence or slow-projectile attacks |
+| Tough | `Prefab_Monster_TurtuleShell_Tough` | `240` | `0.25` | Normal-speed durability pressure |
+| Tank | `Prefab_Monster_Orc_Tank` | `480` | `0.20` | High durability with a slower, longer exposure window |
 
-These four mappings are the accepted baseline roster. Task007 does not require every future Health and Move Speed combination to receive a separate Prefab. The proposed Fodder/Scout identity remains a Task007 extension that must be specified and validated after Task006; it is not accepted by this renumbering edit.
+Normal, Rush, Tough, and Tank retain their accepted numeric identities under the renamed runtime Prefabs. Fodder is the accepted fifth identity. Its `60` Maximum Health is exactly half of Normal: Base Cannon damage `60` eliminates it in one successful hit, while Base Archer damage `20` requires three successful hits. The accepted Base-Tower screen confirmed that this produces a forgiving but non-trivial opening matchup rather than an all-leak progression dependency.
+
+Task007 accepts only the Stage-independent Fodder identity. Task008 consumes it when rechecking global early-Draft cadence and Wave Delay perception. Task009-Task014 decide how many opening Waves in each Stage consume Fodder and where that Stage transitions to Normal, Rush, Tough, or Tank.
 
 ## 4. Campaign Wave Authoring Contracts
 
@@ -51,14 +54,17 @@ Profile Spawn Interval
     = 0.625 / Profile Move Speed
 ```
 
-| Profile | Move Speed | Accepted Derived Spawn Interval | Resulting Gap |
+| Profile | Move Speed | Standard Derived Spawn Interval | Resulting Gap |
 |---|---:|---:|---:|
+| Fodder | `0.25` | `2.5s` | `0.625` |
 | Normal | `0.25` | `2.5s` | `0.625` |
-| Rush | `0.35` | `1.7857s` | approximately `0.625` |
+| Rush | `0.35` | `1.7857143s` | approximately `0.625` |
 | Tough | `0.25` | `2.5s` | `0.625` |
 | Tank | `0.20` | `3.125s` | `0.625` |
 
-The interval is written with sufficient precision into each Wave; runtime does not derive or mutate it from Prefab Move Speed.
+The interval is written with sufficient precision into each Wave; runtime does not derive or mutate it from Prefab Move Speed. Fodder uses Normal movement and spacing so its opening-period relief comes from lower durability rather than a hidden speed or formation-density advantage.
+
+Current asset synchronization preserves the renamed Prefab GUIDs. `Config_MonsterWave_Default` remains a mutable isolated-test fixture rather than campaign composition authority. The six current Stage skeletons reference the former Slime GUID, which now resolves to Fodder, and already author `2.5s`. This makes their present intervals valid for Fodder but does not accept an all-Fodder Stage composition; Task009-Task014 replace later opening/body/pressure Waves with an accepted Stage-local five-Profile sequence during calibration.
 
 This contract isolates formation density from movement identity. Rush pressure should primarily come from shorter route exposure and harder projectile interception, not from an incidental wider formation that further reduces area, piercing, or multi-target coverage. A deliberately dense or loose Wave requires a separately approved identity rather than silent Stage-local interval drift.
 
@@ -158,16 +164,36 @@ The final-spacing result supersedes the historical fixed-`2.5s` Rush Cannon resu
 
 Every final normalized-spacing report used schema v8, matched its Run identity and authored fixture, completed all expected Monster resolutions, and passed all six Recorder integrity flags.
 
+### 5.5 Fodder Health And Initial-Tower Screening
+
+The accepted Fodder fixture used Straight Route, Position 1, Count `3`, Maximum Health `60`, Move Speed `0.25`, and an authored `2.5s` Spawn Interval. Every run used one Level 1 Tower with no Upgrade. Normal controls preserved the same movement and formation values while using Maximum Health `120`.
+
+| Profile | Base Tower | Effective Damage | Damage Coverage | Killed / Leaked | Successful Damage Applications | Average Resolution Lifetime |
+|---|---|---:|---:|---:|---:|---:|
+| Fodder | Archer | `180` | `100%` | `3 / 0` | `9` | `13.95s` |
+| Normal control | Archer | `360` | `100%` | `3 / 0` | `18` | `20.24s` |
+| Fodder | Cannon | `180` | `100%` | `3 / 0` | `3` | `10.64s` |
+| Normal control | Cannon | `360` | `100%` | `3 / 0` | `6` | `21.58s` |
+| Fodder | Magic | `150` | `83.33%` | `2 / 1` | `5` | `25.27s` |
+| Fodder | Drone | `180` | `100%` | `3 / 0` | `18` | `9.83s` |
+
+Fodder produces the intended discrete thresholds: Archer requires three `20`-damage applications, Cannon requires one `60`-damage application, and Drone requires six `10`-damage applications per Monster. Magic is the weakest opening matchup but still kills two of three Monsters; the one leak retains `30` Health and costs one Player Health. It therefore supplies visible opening pressure without becoming an Initial Draft trap that can progress only through leaks.
+
+All six reports used schema v9, observed all Monsters at full Health, matched runtime counts and damage, matched leaks to Player Health loss, and completed with no unresolved or unspawned Monster. The combat-only fixture intentionally authored Player Progress Requirements `[999]` to prevent Level-up Drafts, so progression-completion flags are not acceptance evidence for this screen. Observed Spawn Intervals remained within `2.501s` to `2.512s`, confirming the authored `2.5s` Fodder/Normal interval under the accepted runtime.
+
+The named evidence is `Task007_FodderHP60_Move025_P1ArcherBase_01`, `Task007_FodderHP60_Move025_P1CannonBase_01`, `Task007_NormalHP120_Move025_P1ArcherBase_Control_01`, `Task007_NormalHP120_Move025_P1CannonBase_Control_01`, `Task007_FodderHP60_Move025_P1MagicBase_01`, and `Task007_FodderHP60_Move025_P1DroneBase_01` under `Doc/GamePlayRecord`.
+
 ## 6. Completion Decision
 
-The final normalized-spacing regressions preserve all four accepted Profile identities and validate the campaign spacing contract. No additional no-Tower spacing run, generic Tank-to-Rush catch-up experiment, full Profile matrix, or Cold rerun was required for the completed baseline. Task006 lane movement and the proposed Fodder/Scout extension require a focused Task007 regression before Task009-Task014 calibration. Actual cross-Wave overlap remains a Stage-local observation for Task009-Task014.
+The final normalized-spacing regressions preserve all four accepted baseline Profile identities and validate the campaign spacing contract. No additional no-Tower spacing run, generic Tank-to-Rush catch-up experiment, full Profile matrix, or Cold rerun was required for that baseline. The six Base-Tower screens accept Fodder Maximum Health `60`, Move Speed `0.25`, and standard Spawn Interval `2.5s`; the matched Normal controls also cover Normal under the accepted Task006 runtime. A focused Rush, Tough, and Tank post-Task006 route/lane regression remains before Task008 pacing handoff. Actual cross-Wave overlap remains a Stage-local observation for Task009-Task014.
 
-The original four-Profile Task007 baseline completed on 2026-08-18. Its post-Task006 regression and Fodder/Scout extension remain pending.
+The original four-Profile Task007 baseline completed on 2026-08-18. The Fodder extension and matched Normal controls were accepted on 2026-08-20; only the focused post-Task006 Rush/Tough/Tank route-lane regression remains pending.
 
 ## 7. In Scope
 
 - Accepted per-Profile Move Speed
 - First Profile-to-Prefab mapping
+- Accepted Fodder Maximum Health and opening-pressure evidence
 - Homogeneous campaign Wave convention
 - Reference spatial gap and Profile-derived Spawn Interval
 - Stage-local, non-resolution-gated Wave Delay contract
@@ -187,7 +213,7 @@ The original four-Profile Task007 baseline completed on 2026-08-18. Its post-Tas
 | Owner | Responsibility |
 |---|---|
 | Task005 | Historical HP120/HP240/HP480 health-only baseline |
-| Task007 | Four accepted movement Profiles, pending Fodder/Scout extension, homogeneous-Wave convention, and standard spatial-gap contract |
+| Task007 | Five accepted movement Profiles, homogeneous-Wave convention, and standard spatial-gap contract |
 | Monster runtime template | Accepted per-type Maximum Health and Move Speed |
 | MonsterWaveConfig | Explicit Wave template, Count, derived Spawn Interval, and Stage-local Wave Delay |
 | Task008 | Six structural Wave skeletons consuming accepted identities and the derived interval rule |
@@ -196,7 +222,9 @@ The original four-Profile Task007 baseline completed on 2026-08-18. Its post-Tas
 ## 10. Acceptance Criteria
 
 - Normal, Rush, Tough, and Tank have distinct and explainable tactical identities.
+- Fodder Maximum Health `60` produces a forgiving but non-trivial Initial-Tower matchup under Task006 lane movement.
 - The accepted Prefab mappings carry the intended Health and Move Speed values.
+- Fodder, Normal, Rush, Tough, and Tank standard intervals each preserve approximately the `0.625` Reference spatial gap.
 - Every campaign Wave contains one Monster runtime template.
 - Standard Profile intervals preserve approximately the `0.625` Reference spatial gap.
 - Faster movement does not silently gain additional initial formation spacing.
@@ -204,8 +232,8 @@ The original four-Profile Task007 baseline completed on 2026-08-18. Its post-Tas
 - Each Stage manually calibrates Wave Delay from its Map and Reference Build.
 - Cannon and Cannon plus Cold behavior remains explainable under accepted identities.
 - The normalized-spacing Radius or multi-target regression does not invalidate the accepted identities.
-- All formal Recorder runs pass their completeness and integrity checks.
+- Formal Recorder runs pass every completeness and integrity check applicable to their stated fixture; intentionally bypassed progression completion is documented rather than treated as combat failure.
 
 ## 11. Handoff
 
-Task006 first establishes route reprojection and lane movement. Task007 then regresses the four accepted Profiles, specifies and tests the proposed Fodder/Scout identity, and preserves the Profile-derived interval rule before Task008 rechecks the six structural Wave skeletons. Task009-Task014 may begin Stage-local calibration only after those handoffs are accepted.
+Task006 has established route reprojection and lane movement, and Task007 has accepted the Fodder identity plus the matched Normal controls. Task007 next closes the focused Rush, Tough, and Tank route-lane regression. Task008 then rechecks early-Draft cadence and Wave Delay perception without freezing final Stage composition. Task009-Task014 begin Stage-local Fodder allocation, Monster order, Count, timing, and difficulty calibration after those handoffs are accepted.

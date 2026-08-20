@@ -1,0 +1,300 @@
+{
+    "schemaVersion": 9,
+    "generatedAtLocal": "2026-08-20T13:24:04+08:00",
+    "runLabel": "Task007_FodderHP60_Move025_P1MagicBase_01",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "waveConfigName": "Config_MonsterWave_Default",
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 3,
+        "observedMinimumMonsterHealth": 60,
+        "observedMaximumMonsterHealth": 60,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.501275062561035
+    },
+    "combat": {
+        "spawned": 3,
+        "resolved": 3,
+        "killed": 2,
+        "leaked": 1,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.6666666865348816,
+        "effectiveDamage": 150,
+        "totalObservedHealth": 180,
+        "damageCoverage": 0.8333333134651184,
+        "leakedRemainingHealth": 30,
+        "averageLeakedRemainingHealth": 30.0,
+        "peakAlive": 3
+    },
+    "timing": {
+        "spawnSpanSeconds": 5.00255012512207,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 5.00255012512207,
+        "battleDurationSeconds": 34.311851501464847
+    },
+    "player": {
+        "initialHealth": 40,
+        "finalHealth": 39,
+        "maximumHealth": 40
+    },
+    "progression": {
+        "requirements": [
+            999
+        ],
+        "expectedLevelUpCount": 1,
+        "expectedTotalDraftCount": 2,
+        "expectedFinalDraftResolutionNode": 999,
+        "initialDraftCompleted": true,
+        "observedLevelUpCount": 0,
+        "observedTotalDraftCount": 1,
+        "finalLevel": 1,
+        "finalProgress": 3,
+        "finalRequiredProgress": 999,
+        "observedFinalDraftResolutionNode": 0,
+        "resolutionsAfterFinalDraft": 0,
+        "events": [
+            {
+                "ordinal": 1,
+                "kind": "Initial",
+                "resolvedMonsterCount": 0,
+                "playerLevel": 1,
+                "currentProgress": 0,
+                "requiredProgress": 999,
+                "activeTimeSeconds": 0.0
+            }
+        ]
+    },
+    "integrity": {
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true,
+        "monsterRuntimeCountsMatch": true,
+        "monsterRuntimeDamageMatches": true,
+        "monsterRuntimeRegistrationCoverageMatch": true,
+        "monsterRuntimeStartedAtFullHealth": true,
+        "initialDraftCountMatches": true,
+        "levelUpCountMatches": false,
+        "levelUpResolutionNodesMatch": false,
+        "finalPlayerLevelMatches": false,
+        "postFinalDraftCombatObserved": false
+    },
+    "monsterRuntime": {
+        "observedTypes": 1,
+        "instanceSamples": 3,
+        "registrationObservedInstances": 3,
+        "fallbackObservedInstances": 0,
+        "instancesObservedAtFullHealth": 3,
+        "instancesObservedAfterDamage": 0,
+        "unobservedDamageAtObservationStart": 0,
+        "successfulDamageApplications": 5,
+        "types": [
+            {
+                "runtimeTemplateName": "Prefab_Monster_Slime_Fodder",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 3,
+                "resolved": 3,
+                "killed": 2,
+                "leaked": 1,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 3,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 3,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 150,
+                "leakedRemainingHealth": 30,
+                "resolutionLifetimeSeconds": {
+                    "samples": 3,
+                    "minimum": 19.490131378173829,
+                    "average": 25.274789810180665,
+                    "maximum": 34.311851501464847
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 2,
+                    "minimum": 19.490131378173829,
+                    "average": 20.75625991821289,
+                    "maximum": 22.022388458251954
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 1,
+                    "minimum": 34.311851501464847,
+                    "average": 34.311851501464847,
+                    "maximum": 34.311851501464847
+                }
+            }
+        ],
+        "instances": [
+            {
+                "spawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Fodder",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 30,
+                "successfulDamageApplications": 1,
+                "effectiveDamage": 30,
+                "lifetimeSeconds": 34.311851501464847
+            },
+            {
+                "spawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Fodder",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 22.022388458251954
+            },
+            {
+                "spawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Fodder",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 19.490131378173829
+            }
+        ]
+    },
+    "towers": [
+        {
+            "instanceId": -69988,
+            "displayName": "Magic Tower",
+            "family": "Magic",
+            "level": 1,
+            "hasCombatRuntime": true,
+            "baseDamage": 30,
+            "baseRange": 1.5,
+            "baseCycleSeconds": 20.0,
+            "resolvedDamage": 30,
+            "resolvedRange": 1.5,
+            "resolvedCycleSeconds": 20.0,
+            "projectileRuntime": {
+                "projectilesReleased": 0,
+                "initialProjectilesReleased": 0,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 0,
+                "arcTargetResolvedImpacts": 0,
+                "arcIntendedTargetImpacts": 0,
+                "arcFallbackTargetImpacts": 0,
+                "arcPositionOnlyImpacts": 0,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 0,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 0.0,
+                "arcTargetRelation": {
+                    "sampledInitialImpacts": 0,
+                    "primaryIntendedTargetImpacts": 0,
+                    "primaryFallbackTargetImpacts": 0,
+                    "primaryPositionOnlyImpacts": 0,
+                    "additionalIntendedTargetImpacts": 0,
+                    "additionalFallbackTargetImpacts": 0,
+                    "additionalPositionOnlyImpacts": 0,
+                    "fallbackImmediateLaterSpawnImpacts": 0,
+                    "fallbackImmediateEarlierSpawnImpacts": 0,
+                    "fallbackNonAdjacentImpacts": 0,
+                    "fallbackUnknownRelationImpacts": 0,
+                    "positionOnlyNearestOtherAvailable": 0,
+                    "positionOnlyNearestOtherImmediateLaterSpawn": 0,
+                    "positionOnlyNearestOtherImmediateEarlierSpawn": 0,
+                    "positionOnlyNearestOtherNonAdjacent": 0,
+                    "positionOnlyNearestOtherUnknownRelation": 0,
+                    "positionOnlyWithoutNearestOther": 0,
+                    "observedMinimumHitDistanceThreshold": 0.0,
+                    "observedMaximumHitDistanceThreshold": 0.0,
+                    "confirmationToReleaseSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "releaseToImpactSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "plannedTravelTimeSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToFallbackDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "fallbackMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToPositionOnlyNearestOtherDistance": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "positionOnlyNearestOtherMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "samples": []
+                }
+            },
+            "upgrades": []
+        }
+    ],
+    "buffs": []
+}

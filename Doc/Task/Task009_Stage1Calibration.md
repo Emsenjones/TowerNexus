@@ -1,6 +1,6 @@
 # Task009 - Stage1 Calibration
 
-Status: Blocked; waits for Task006 route/lane implementation, Task007 roster/spacing revision, and Task008 pacing/Wave Delay regression
+Status: Blocked; Task006 route/lane implementation and Task007 Fodder/Normal evidence are accepted; waits for the focused Task007 Rush/Tough/Tank route-lane regression and Task008 pacing/Wave Delay handoff
 
 Depends on: Task008 Global Progression And Stage Skeleton regression
 

@@ -44,7 +44,7 @@ GameObject:
   - component: {fileID: 8672949094008729190}
   - component: {fileID: 863990077540133464}
   m_Layer: 0
-  m_Name: Prefab_Monster_Slime1
+  m_Name: Prefab_Monster_Slime_Fodder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -81,7 +81,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Slime
   moveSpeed: 0.25
-  maxHealth: 120
+  maxHealth: 60
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2

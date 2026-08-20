@@ -1,6 +1,6 @@
 # Task008 - Per-Stage Progression And Stage Skeleton
 
-Status: Completed structural baseline; Stage-owned progression and six Stage skeletons were accepted on 2026-08-19, while early-Draft pacing and Wave Delay regression wait for Task006 implementation and Task007 revision before Task009 calibration
+Status: Completed structural baseline; Stage-owned progression and six Stage skeletons were accepted on 2026-08-19, and Task007 accepted Fodder Health, movement identity, and matched Normal controls on 2026-08-20; the focused Task007 Rush/Tough/Tank route-lane regression plus Task008 early-Draft pacing and Wave Delay handoff remain before Task009 calibration
 
 Depends on: Task001-Task007
 
@@ -246,4 +246,4 @@ The cumulative pools and successful Stage runtime binding confirm an L2 cap with
 
 ## 15. Review Note
 
-Task008 first rechecks early-Draft cadence and Wave Delay perception after Task006 route/lane implementation and Task007 roster/spacing revision. Task009-Task014 then own final Stage experience. If one Stage cannot satisfy its Blueprint, revise that Stage's Progress Requirements, Wave budget, Draft structure, or accepted build envelope through the smallest owning contract change, then rerun affected regressions.
+Task008 first rechecks early-Draft cadence and Wave Delay perception after the focused Task007 route/lane regression. The pacing run records the category of every three-item Draft offer so later Stage evidence can reveal Tower-Draft dilution, but it does not change DraftSystem weighting from one short sample. The Wave Delay check compares the visible and practical boundary produced by the currently authored values without freezing one global delay. This handoff consumes the accepted Fodder identity but does not decide final per-Stage Fodder-Wave counts or transition points. Task009-Task014 own those Stage-local composition decisions and the final Stage experience. If one Stage cannot satisfy its Blueprint, revise that Stage's Progress Requirements, Wave budget, Draft structure, or accepted build envelope through the smallest owning contract change, then rerun affected regressions.

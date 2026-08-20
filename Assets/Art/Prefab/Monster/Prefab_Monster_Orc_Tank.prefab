@@ -76,7 +76,7 @@ GameObject:
   - component: {fileID: -1253240442752861245}
   - component: {fileID: 6689644273834634516}
   m_Layer: 0
-  m_Name: Prefab_Monster_Orc1
+  m_Name: Prefab_Monster_Orc_Tank
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

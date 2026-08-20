@@ -205,7 +205,7 @@ Phase A does not add speculative route-application APIs. Phase C introduces one 
 - Damage, stun, knockback, or Player-progress reward caused by reprojection
 - Final lane-offset values for every Monster visual size beyond the minimum safe first pass
 - Monster Health, Move Speed, role, Wave Count, Spawn Interval, Wave Delay, Draft probability, or Stage difficulty tuning
-- The proposed Fodder/Scout Profile; owned by Task007 after Task006
+- The Fodder Profile; owned and now accepted by Task007 after Task006
 
 ## 7. Ownership
 
@@ -217,7 +217,7 @@ Phase A does not add speculative route-application APIs. Phase C introduces one 
 | Monster Manager | Stable snapshot of living Monsters and batch route/reprojection application |
 | Monster Behaviour | Active-segment state, per-instance lane identity, physical movement, and prepared-route application |
 | Tower/Projectile/Effect runtimes | Continue using the Monster's real gameplay position and preserve valid target/source relationships |
-| Task007 | Regress movement Profiles and spacing, then specify and test the proposed Fodder/Scout identity |
+| Task007 | Regress movement Profiles and spacing, then own Fodder identity acceptance |
 | Task008 | Recheck early-Draft cadence and Wave Delay perception after movement changes |
 | Task009-Task014 | Stage-local numeric calibration after upstream acceptance |
 
@@ -317,7 +317,7 @@ Diagnostics begin with topology planning in Task006-B and expand with revision p
 
 After Task006 acceptance:
 
-1. Task007 regresses Normal, Rush, Tough, and Tank under lane movement, confirms the `0.625` standard spatial-gap rule still produces comparable formation spacing, and separately specifies and tests the proposed Fodder/Scout Profile.
+1. Task007 accepted Fodder Maximum Health `60`, Move Speed `0.25`, Spawn Interval `2.5s`, and matched Normal controls; its remaining focused handoff regresses Rush, Tough, and Tank under lane movement and confirms that the `0.625` standard spatial-gap rule still produces comparable formation spacing.
 2. Task008 reruns early-Stage Draft cadence and Wave Delay perception using the accepted movement/roster result. It records Draft candidate categories before deciding whether DraftSystem weighting needs an independent change.
 3. Task009-Task014 begin Stage-local Wave order, Count, Spawn Interval, Wave Delay, Progress, and difficulty calibration only after the Task007 and Task008 handoffs are accepted.
 
