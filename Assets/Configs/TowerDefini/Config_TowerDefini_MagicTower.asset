@@ -20,7 +20,7 @@ MonoBehaviour:
   towerLevelConfigs:
   - level: 1
     towerModelPrefab: {fileID: 3513434460468036460, guid: 753246c27c99b435581f79cb081c9587, type: 3}
-    basicDamage: 30
+    basicDamage: 25
   - level: 2
     towerModelPrefab: {fileID: 3362401227038391471, guid: 83d4ace43ec3645e4affd0a355e20efa, type: 3}
     basicDamage: 66

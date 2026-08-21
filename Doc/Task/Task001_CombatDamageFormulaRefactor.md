@@ -1,6 +1,6 @@
 # Task001 - Combat Damage Formula Refactor
 
-Status: Implementation Complete; Phases A-C accepted in Unity; Phases D-E statically complete and awaiting final Unity acceptance
+Status: Completed; all phases accepted through Unity runtime, schema-v14 Recorder evidence, and Combat Damage Authoring validation
 
 Depends on: Accepted current Tower, Upgrade, Projectile, Effect, Buff, Recorder, and Tower placement runtimes; archived CombatMathV1 evidence
 

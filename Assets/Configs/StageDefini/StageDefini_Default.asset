@@ -15,16 +15,13 @@ MonoBehaviour:
   displayName: Default Definition
   playerMaxHealth: 40
   playerProgressRequirements: e7030000
-  mapTemplate: {fileID: 3273336904907436118, guid: e7fdfa2ba65a04429b089a81b6e0af74, type: 3}
+  mapTemplate: {fileID: 3273336904907436118, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
   monsterWaveConfig: {fileID: 11400000, guid: fbd0a6e24c68c449a91d06afd66c2efc, type: 2}
   towerDraftPool:
   - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
   - {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
-  towerUpgradeDraftPool:
-  - {fileID: 11400000, guid: fced72daa7b7c42419e4cb626f897805, type: 2}
-  - {fileID: 11400000, guid: 43d1ce78aedd8460fb2773003312c23b, type: 2}
-  - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
-  - {fileID: 11400000, guid: 957a38297f6b9405ea399f0a4fc87b44, type: 2}
+  - {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+  towerUpgradeDraftPool: []
   showStageIntroduction: 0
   introducedTowers: []
   introducedTowerUpgrades: []
