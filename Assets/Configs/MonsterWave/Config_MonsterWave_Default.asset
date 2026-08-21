@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Config_MonsterWave_Default
   m_EditorClassIdentifier: Assembly-CSharp::MonsterWaveConfig
   waves:
-  - waveDelay: 4
+  - waveDelay: 5
     monsterRuntimeTemplate: {fileID: 5918628833992865121, guid: 013fd63c6df284007a43fae2a2ab273e, type: 3}
+    count: 4
+    spawnInterval: 2.5
+  - waveDelay: 90
+    monsterRuntimeTemplate: {fileID: 5918628833992865121, guid: 23ee389ca1731497d91b2390db4e1745, type: 3}
     count: 40
     spawnInterval: 2.5

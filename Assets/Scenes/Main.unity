@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c69b96e78e584f878d4068749e0ab2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatBalanceRunRecorder
-  runName: Task002_StraightRoute_Archer_L1_NoUpgrade_02
+  runName: Task003_StraightRoute_HP480_Magic_3Draft_L3P1_NoUpgrade_03
   battleRuntimeCoordinator: {fileID: 7811906250627789308}
   monsterSpawner: {fileID: 7811906250627789307}
   monsterManager: {fileID: 7811906250627789306}
@@ -537,6 +537,50 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: useFixedDraftChoices
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[0].choices.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[1].choices.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[2].choices.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[3].choices.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[0].choices.Array.data[0].towerDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[0].choices.Array.data[1].towerDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[1].choices.Array.data[0].towerDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[2].choices.Array.data[0].towerDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+    - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: fixedDraftChoiceSteps.Array.data[3].choices.Array.data[0].towerDefinition
+      value: 
+      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
     - target: {fileID: 2771918990049005319, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -625,6 +669,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: demoStages.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
+      propertyPath: 'demoStages.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 9f2aaa0ae562f4d00aeba91658bf4009, type: 2}
     - target: {fileID: 5203726262106017746, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: m_SizeDelta.x
       value: 0
