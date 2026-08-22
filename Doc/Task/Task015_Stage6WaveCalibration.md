@@ -1,10 +1,10 @@
-# Task013 - Stage6 Wave Calibration
+# Task015 - Stage6 Wave Calibration
 
 Status: Planned
 
-Depends on: Accepted Task012 Stage5 Wave Calibration
+Depends on: Accepted Task014 Stage5 Wave Calibration
 
-Blocks: Task014
+Blocks: Task016
 
 ## 1. Goal
 
@@ -23,7 +23,7 @@ and Overload result.
 
 ## 3. Calibration Contract
 
-Task007 must prove a legal matching path and provide a controlled sequence. This
+Task009 must prove a legal matching path and provide a controlled sequence. This
 Task adjusts fixed-speed HP Profile order, Count, WaveDelay, Player Health, and
 the selected overlapping Reference placement. It must not weaken Waves to hide
 an impossible Draft or placement path.

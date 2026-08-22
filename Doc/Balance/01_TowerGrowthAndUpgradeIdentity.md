@@ -135,6 +135,6 @@ Growth should remain readable and reasonably smooth across the limited Draft inv
 - No immediate or delayed investment path should become the universally correct choice across pressure states, Tower positions, and intended build roles.
 - Large power discontinuities should come from readable build completion or cooperation, not from an isolated unexplained parameter spike.
 
-Tower-owned direct and Behaviour damage derives from the current Tower Level's BasicDamage. Buff-lifecycle and Elemental-reaction damage uses independently authored fixed values. This distinction lets Level growth strengthen the Tower's own attack package without making an already-active Buff retroactively inherit later Tower growth.
+Tower-owned direct, Behaviour, and approved immediate `StackApplied` contribution damage derives from the contributing Tower's current Level `BasicDamage`. Periodic, Overload, Protection, persistent-area, and other shared-state Buff/Elemental-reaction damage uses independently authored fixed values. This distinction lets Level growth strengthen the Tower's own contribution package without making an already-active shared Buff retroactively inherit later Tower growth.
 
-CombatMathV2 Task003, Task004, and Task005 own candidate targets, fixed-condition evidence, accepted Level/Upgrade values, and revision decisions. Unity assets remain the executable source for authored parameters. This document retains only the design intent used to judge those outputs.
+CombatMathV2 Task003, Task004, Task005, and Task007 own candidate targets, fixed-condition evidence, accepted Level/Upgrade values, and revision decisions. Unity assets remain the executable source for authored parameters. This document retains only the design intent used to judge those outputs.

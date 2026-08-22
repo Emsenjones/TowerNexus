@@ -1,10 +1,10 @@
-# Task007 - Campaign Progression And Calibration Fixtures
+# Task009 - Campaign Progression And Calibration Fixtures
 
 Status: Planned
 
-Depends on: Accepted Task006 Fixed-Speed Monster Health Roster; accepted Map and Draft runtimes
+Depends on: Accepted Task008 Fixed-Speed Monster Health Roster; accepted Map and Draft runtimes
 
-Blocks: Task008-Task014
+Blocks: Task010-Task016
 
 ## 1. Goal
 
@@ -60,6 +60,6 @@ and are not interpreted as controlled-run probability evidence.
 - Later Draft frequency may slow while leaving meaningful post-final-Draft
   combat.
 - Retry and next-Stage reset sequence ownership correctly.
-- Task008-Task013 receive stable inputs and change only Stage-local pressure
+- Task010-Task015 receive stable inputs and change only Stage-local pressure
   variables.
 

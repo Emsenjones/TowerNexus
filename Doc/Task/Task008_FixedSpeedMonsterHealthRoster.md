@@ -1,10 +1,10 @@
-# Task006 - Fixed-Speed Monster Health Roster
+# Task008 - Fixed-Speed Monster Health Roster
 
 Status: Planned
 
-Depends on: Accepted Task002-Task005 combat baselines
+Depends on: Accepted Task002-Task007 combat baselines
 
-Blocks: Task007-Task014
+Blocks: Task009-Task016
 
 ## 1. Goal
 
@@ -33,7 +33,7 @@ contracts remain unchanged.
 | Tank | Prefab_Monster_Orc_Tank | 480 | Late concentrated-build check |
 
 Names identify roles; HP candidates must be reaccepted against CombatMathV2.
-The Bat fast identity is explicitly deferred to Task014.
+The Bat fast identity is explicitly deferred to Task016.
 
 ## 4. Tests
 

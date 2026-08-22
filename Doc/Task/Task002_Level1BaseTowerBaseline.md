@@ -5,7 +5,7 @@ with the Magic Attack Cycle revision accepted on 2026-08-22
 
 Depends on: Completed Task001 Combat Damage Formula Refactor
 
-Unblocks: Task003-Task014
+Unblocks: Task003-Task016
 
 ## 1. Goal
 
@@ -197,6 +197,6 @@ combat-resolution evidence.
   BasicDamage curve remains unchanged.
 - Task003 keeps this fixture, the route roles, and naked L1 controls fixed unless
   a named Task002 revision is explicitly approved.
-- Task006 uses the accepted fixture and L1 outputs as reference pressure input.
+- Task008 uses the accepted fixture and L1 outputs as reference pressure input.
 - Any later Base Tower, Magic Orb contact, or Reference Monster change requires
   a named baseline revision and the smallest affected Straight/L/U regression.

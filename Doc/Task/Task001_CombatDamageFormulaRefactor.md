@@ -4,7 +4,7 @@ Status: Completed; all phases accepted through Unity runtime, schema-v14 Recorde
 
 Depends on: Accepted current Tower, Upgrade, Projectile, Effect, Buff, Recorder, and Tower placement runtimes; archived CombatMathV1 evidence
 
-Blocks: Task002-Task014
+Blocks: Task002-Task016
 
 ## 1. Goal
 
@@ -375,7 +375,7 @@ differences and Task004 owns their numeric acceptance.
   lifecycle, Elemental opportunities, and placement reprojection regressions
   remain correct.
 - Recorder schema v14 distinguishes TowerScaled and FixedBuff signatures and
-  identifies the formula inputs needed for Task002-Task005 without per-hit JSON
+  identifies the formula inputs needed for Task002-Task007 without per-hit JSON
   expansion.
 - Static source, asset, and Play Mode gates pass.
 
@@ -384,3 +384,9 @@ differences and Task004 owns their numeric acceptance.
 Task002 starts only after Task001 implementation and focused Unity validation are
 accepted. Task002 may revise L1 values but must not reopen damage ownership or
 package timing without returning to Task001.
+
+Task005 is the approved downstream revision point for one narrow exception to
+this completed baseline: immediate Electric and Wind StackApplied damage becomes
+TowerScaled from the exact Tower that contributed the current stack. It does not
+reopen shared-state Periodic, Overload, Protection, persistent reaction, or
+WindVortex FixedBuff ownership.

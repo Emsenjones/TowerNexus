@@ -339,7 +339,7 @@ Launching does not consume battery. Battery begins during active combat flight.
 
 If a normal Drone target becomes invalid, it may select another valid Monster inside the current refreshed range. If none exists, it ends through aerial despawn without ordinary impact gameplay.
 
-Normal retargeting preserves the current Burst phase, remaining shot count, and timer. It never reloads a Burst or bypasses Inter-Burst Cooldown.
+Normal retargeting preserves the current Burst phase, remaining shot count, timer, and already assigned Elemental-opener state. It never reloads a Burst, bypasses Inter-Burst Cooldown, or grants another Elemental contribution.
 
 Burst cadence has three semantic phases:
 
@@ -349,9 +349,16 @@ Burst cadence has three semantic phases:
 | Between Shots | Remaining shots use the current burst's authored spacing |
 | Inter-Burst Cooldown | Timer before a future burst; approved cooldown refresh preserves its ratio |
 
+Each Drone instance grants ordinary Elemental eligibility only to the opening
+Projectile of a genuinely new Burst. Successful release freezes the eligibility
+onto that Projectile. Later shots in the same Burst remain ineligible; an opener
+miss or technical cleanup does not transfer eligibility, and retargeting does
+not re-arm it. Primary and additional Drones own independent Burst state but
+remain one Buff contribution source through their owning Tower instance.
+
 Battery Duration is static Drone entity authoring for the battle. Applying a Tower Upgrade does not refresh remaining battery or rewrite the battery-end boundary.
 
-High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates current resolved BasicDamage and therefore affects future unresolved Drone direct, Blast Rounds, and Final Dive Tower-owned damage. It does not alter fixed Buff-lifecycle or Elemental-reaction damage.
+High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates current resolved BasicDamage and therefore affects future unresolved Drone direct, Blast Rounds, Final Dive, and approved contributor-owned StackApplied TowerScaled damage. It does not alter shared-state FixedBuff lifecycle or Elemental-reaction damage.
 
 Final Dive, when active at battery end, locks one target and becomes one-way:
 
@@ -377,6 +384,12 @@ Eligibility is not inferred from being a Projectile, Effect, positive-damage res
 Every Elemental application opportunity carries the owning source Tower identity. Primary attacks, additional Attack Entities, area results, bounce children, contacts, and persistent attack entities produced by one Tower remain one contribution source for Source Apply Cooldown. Attack Entity identity never becomes an independent Buff cooldown source. Different Tower instances remain independent sources even when they share TowerFamily and ElementType.
 
 Effect System and Buff System own the application, cooldown, stacking, Protection, overload, and lifecycle result after an eligible opportunity is emitted.
+
+For Drone-fired Projectiles, the Burst-opener eligibility is part of the
+released Projectile's immutable attack context. An eligible opener may grant a
+direct opportunity and passes the same eligibility to its Blast Rounds resolved
+targets. Later Projectiles grant neither direct nor Blast Rounds opportunities.
+Final Dive remains a separate reviewed direct-and-explosion boundary.
 
 ---
 

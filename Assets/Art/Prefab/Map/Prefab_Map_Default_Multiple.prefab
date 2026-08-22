@@ -40274,7 +40274,7 @@ GameObject:
   - component: {fileID: 7152336949188375003}
   - component: {fileID: 274921356860905782}
   m_Layer: 0
-  m_Name: Prefab_Map_Default_Elemental
+  m_Name: Prefab_Map_Default_Multiple
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

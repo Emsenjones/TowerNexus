@@ -2,7 +2,7 @@
 
 Active Series: `CombatMathV2`
 
-This directory contains the active Task001-Task014 execution sequence for the
+This directory contains the active Task001-Task016 execution sequence for the
 Tower Level and damage-formula refactor followed by a complete combat and Stage
 recalibration.
 
@@ -23,17 +23,18 @@ failure case.
 | Task002 | Level 1 Base Tower baseline |
 | Task003 | Tower Level BasicDamage curve |
 | Task004 | Non-Elemental Upgrade baseline |
-| Task005 | Elemental and Buff baseline |
-| Task006 | Fixed-speed Monster Health roster |
-| Task007 | Campaign progression and controlled calibration fixtures |
-| Task008 | Stage1 Wave calibration |
-| Task009 | Stage2 Wave calibration |
-| Task010 | Stage3 Wave calibration |
-| Task011 | Stage4 Wave calibration |
-| Task012 | Stage5 Wave calibration |
-| Task013 | Stage6 Wave calibration |
-| Task014 | Fast-Monster identity and reviewed Wave substitutions |
+| Task005 | Elemental StackApplied contribution damage authority |
+| Task006 | Drone Burst Elemental opportunity boundary |
+| Task007 | Elemental and Buff baseline |
+| Task008 | Fixed-speed Monster Health roster |
+| Task009 | Campaign progression and controlled calibration fixtures |
+| Task010 | Stage1 Wave calibration |
+| Task011 | Stage2 Wave calibration |
+| Task012 | Stage3 Wave calibration |
+| Task013 | Stage4 Wave calibration |
+| Task014 | Stage5 Wave calibration |
+| Task015 | Stage6 Wave calibration |
+| Task016 | Fast-Monster identity and reviewed Wave substitutions |
 
 Task order is an acceptance dependency, not only a filename order. A later Task
 must not compensate for a failed earlier contract through unrelated Stage values.
-

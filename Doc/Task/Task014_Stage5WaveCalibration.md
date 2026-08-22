@@ -1,10 +1,10 @@
-# Task012 - Stage5 Wave Calibration
+# Task014 - Stage5 Wave Calibration
 
 Status: Planned
 
-Depends on: Accepted Task011 Stage4 Wave Calibration
+Depends on: Accepted Task013 Stage4 Wave Calibration
 
-Blocks: Task013 and Task014
+Blocks: Task015 and Task016
 
 ## 1. Goal
 
@@ -21,7 +21,7 @@ without requiring two-source Elemental cooperation.
 
 ## 3. Calibration Contract
 
-Task007 selects one reproducible Core family, ElementType, legal alternative,
+Task009 selects one reproducible Core family, ElementType, legal alternative,
 and Fixed sequence. Stage-local calibration adjusts fixed-speed HP Profile order,
 Count, WaveDelay, Player Health, and only the smallest upstream progression input
 when constructibility evidence requires it.

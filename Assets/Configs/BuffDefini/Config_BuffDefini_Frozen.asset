@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Frozen
   description: Prevents the monster from moving for a short duration
   activeDuration: 6
-  periodicTickInterval: 0.4
+  periodicTickInterval: 0
   usesStacks: 0
   maximumStacks: 10
   sourceApplyCooldown: 0.4

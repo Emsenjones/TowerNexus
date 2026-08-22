@@ -1,10 +1,10 @@
-# Task011 - Stage4 Wave Calibration
+# Task013 - Stage4 Wave Calibration
 
 Status: Planned
 
-Depends on: Accepted Task010 Stage3 Wave Calibration
+Depends on: Accepted Task012 Stage3 Wave Calibration
 
-Blocks: Task012 and Task014
+Blocks: Task014 and Task016
 
 ## 1. Goal
 
@@ -23,7 +23,7 @@ the expanded route more reliably than only local fixed firepower.
 
 ## 3. Calibration Contract
 
-Use fixed-speed Task006 profiles. Adjust Profile order, Count, WaveDelay, Player
+Use fixed-speed Task008 profiles. Adjust Profile order, Count, WaveDelay, Player
 Health, and exact legal packages. Drone pursuit value must be measured through
 active time, damage, and route coverage rather than inferred from visual motion.
 

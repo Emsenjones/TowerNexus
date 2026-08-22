@@ -77,7 +77,7 @@ The root faces its current movement direction. Imported model differences are co
 
 # 4. Runtime Data Categories
 
-A projectile receives only data relevant to its own execution, such as source Tower context, stable damage-source identity, flight identity, launch direction or target snapshot, stable direct DamageScale, Elemental context, and approved package options. Archer and Cannon projectiles, Drone-fired projectiles, and bounce children are direct-damage carriers under this same contract; none stores an already resolved integer damage or a damage-refresh snapshot.
+A projectile receives only data relevant to its own execution, such as source Tower context, stable damage-source identity, flight identity, launch direction or target snapshot, stable direct DamageScale, explicit Elemental eligibility, and approved package options. Archer and Cannon projectiles, Drone-fired projectiles, and bounce children are direct-damage carriers under this same contract; none stores an already resolved integer damage or a damage-refresh snapshot.
 
 Immutable Entity State includes:
 
@@ -202,7 +202,7 @@ Resolve Optional Direct Monster Hit
 
 Impact presentation is requested in the same impact-resolution step. Its ordering relative to synchronous gameplay results within that frame is not a gameplay contract. Presentation cannot change result ordering, target eligibility, or completion.
 
-Explosive Arrow, Explosive Shell, and Blast Rounds are additive to their baseline direct result. Their surviving direct target may also be included in the area Effect and may therefore receive two independent damage results and two explicitly authorized Elemental opportunities.
+Explosive Arrow and Explosive Shell are additive to their baseline direct result. Their surviving direct target may also be included in the area Effect and may therefore receive two independent damage results and two explicitly authorized Elemental opportunities. Blast Rounds follows the same direct-plus-area result order but grants those Elemental opportunities only when its owning Drone Projectile carries Burst-opener eligibility.
 
 Positive damage or successful damage application is not a universal gate for Elemental opportunity. However, a Monster removed by the preceding damage is no longer a valid target at the following boundary.
 
@@ -250,7 +250,18 @@ A Drone may release projectile-style Attack Entities from its own Fire Anchor.
 
 Drone runtime owns target choice, burst timing, and creation request. Projectile System owns the projectile after release.
 
+Only the opening Projectile of a genuinely new Burst may receive ordinary
+Elemental eligibility. The flag is frozen at successful release. Projectile
+System consumes it at the actual Monster Hit, does not transfer it after a miss
+or technical cleanup, and does not infer a new opportunity when the Drone
+retargets.
+
 Blast Rounds may be refreshed for already airborne unresolved Drone projectiles. A resolved hit is never replayed after refresh.
+
+Blast Rounds inherits the owning Projectile's frozen Elemental eligibility. An
+eligible opener grants one application opportunity to each valid resolved area
+target; an ineligible later Projectile grants none. Final Dive eligibility is a
+separate Drone completion contract rather than Projectile state.
 
 Drone movement, battery, orbit, and Final Dive do not belong to Projectile System.
 

@@ -1,10 +1,10 @@
-# Task009 - Stage2 Wave Calibration
+# Task011 - Stage2 Wave Calibration
 
 Status: Planned
 
-Depends on: Accepted Task008 Stage1 Wave Calibration
+Depends on: Accepted Task010 Stage1 Wave Calibration
 
-Blocks: Task010 and Task014
+Blocks: Task012 and Task016
 
 ## 1. Goal
 
@@ -23,9 +23,9 @@ than uniform undeveloped expansion or one over-concentrated local answer.
 
 ## 3. Calibration Contract
 
-Use only accepted Task006 fixed-speed HP Profiles. Adjust Stage-local Profile
+Use only accepted Task008 fixed-speed HP Profiles. Adjust Stage-local Profile
 order, Count, WaveDelay, Player Health, and—only through an explicit return to
-Task007—Progress Requirements. Preserve the standard `0.625` spacing unless a
+Task009—Progress Requirements. Preserve the standard `0.625` spacing unless a
 formation is intentionally authored and recorded.
 
 ## 4. Acceptance

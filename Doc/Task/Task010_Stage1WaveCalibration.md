@@ -1,10 +1,10 @@
-# Task008 - Stage1 Wave Calibration
+# Task010 - Stage1 Wave Calibration
 
 Status: Planned
 
-Depends on: Accepted Task007 Campaign Progression And Calibration Fixtures
+Depends on: Accepted Task009 Campaign Progression And Calibration Fixtures
 
-Blocks: Task009 and Task014
+Blocks: Task011 and Task016
 
 ## 1. Goal
 
@@ -27,7 +27,7 @@ required while one undeveloped Support coverage point remains useful.
 - Wave Count, per-Wave Monster Count, WaveDelay, and SpawnInterval where a
   deliberately nonstandard formation is explicitly justified;
 - Player Health;
-- Progress Requirements only when Task007's candidate cannot realize the Stage
+- Progress Requirements only when Task009's candidate cannot realize the Stage
   intent;
 - Reference and reasonable alternative Tower placement.
 

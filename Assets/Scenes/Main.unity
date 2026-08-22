@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c69b96e78e584f878d4068749e0ab2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatBalanceRunRecorder
-  runName: Task004_PhaseD_BasicBehaviour_LRoute_HP480_Drone_L2_OptimizedBurstModule_BlastRounds_Delay25_01
+  runName: Task005_PhaseA_LRoute_HP480_Archer_L3_GaleArrows_01
   battleRuntimeCoordinator: {fileID: 7811906250627789308}
   monsterSpawner: {fileID: 7811906250627789307}
   monsterManager: {fileID: 7811906250627789306}
@@ -604,15 +604,15 @@ PrefabInstance:
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[0].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}
+      objectReference: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[1].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}
+      objectReference: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[2].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[3].choices.Array.data[0].towerDefinition
       value: 
@@ -620,7 +620,7 @@ PrefabInstance:
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[4].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}
+      objectReference: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[5].choices.Array.data[0].towerDefinition
       value: 
@@ -632,11 +632,11 @@ PrefabInstance:
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[2].choices.Array.data[0].towerUpgradeDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: 9e74b0160f9d04f668443ecd79712ae8, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[3].choices.Array.data[0].towerUpgradeDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: a753e2e9c195d4e7d958cb32144b4db5, type: 2}
+      objectReference: {fileID: 11400000, guid: 0aac8d8871e0e48d7b26592f44dc6df0, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[4].choices.Array.data[0].towerUpgradeDefinition
       value: 

@@ -1,8 +1,8 @@
-# Task014 - Fast Monster And Wave Substitution
+# Task016 - Fast Monster And Wave Substitution
 
 Status: Planned
 
-Depends on: Accepted Task008-Task013 fixed-speed Stage calibrations
+Depends on: Accepted Task010-Task015 fixed-speed Stage calibrations
 
 ## 1. Goal
 

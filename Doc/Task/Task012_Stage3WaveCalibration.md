@@ -1,10 +1,10 @@
-# Task010 - Stage3 Wave Calibration
+# Task012 - Stage3 Wave Calibration
 
 Status: Planned
 
-Depends on: Accepted Task009 Stage2 Wave Calibration
+Depends on: Accepted Task011 Stage2 Wave Calibration
 
-Blocks: Task011 and Task014
+Blocks: Task013 and Task016
 
 ## 1. Goal
 
@@ -33,6 +33,6 @@ distributes damage rather than converting the same kill count as another family.
 - multiple route zones require useful Support placement;
 - Reference and a coherent alternative clear within the reviewed margin;
 - single-zone concentration fails from an explainable coverage gap;
-- no Wave relies on speed differentiation before Task014;
+- no Wave relies on speed differentiation before Task016;
 - Recorder separates delivered damage from kill conversion.
 

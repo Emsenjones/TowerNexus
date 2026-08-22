@@ -210,7 +210,7 @@ Arcane Recovery is the Magic Attack Cycle Duration Basic Upgrade. Magic Orb Maxi
 
 Expanded Patrol is the Drone Attack Range Basic Upgrade. Drone Battery Duration remains static entity authoring and is not resolved from Tower Upgrade state.
 
-High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. Because Damage Bonus is part of Current Resolved BasicDamage, it increases Drone direct damage and Tower-owned Behaviour damage. It never increases Buff-lifecycle FixedDamage.
+High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. Because Damage Bonus is part of Current Resolved BasicDamage, it increases Drone direct damage, Tower-owned Behaviour damage, and approved contributor-owned StackApplied TowerScaled damage. It never increases shared-state Buff-lifecycle FixedDamage.
 
 Live propagation rules are owned by Tower Runtime Combat System. Basic Layer does not execute Effects or Buffs.
 
@@ -298,7 +298,7 @@ An Elemental opportunity:
 - Is independent from damage amount or damage-operation success while the Monster remains valid.
 - Does not automatically propagate through reaction damage, Buff ticks, WindVortex ticks, or overload damage.
 
-Tower-specific Elemental Upgrade definitions may share one Elemental BuffDefinition. After application, Buff duration, stacking, cooldown, Protection, overload, UI, and persistent presentation no longer vary by source Tower.
+Tower-specific Elemental Upgrade definitions may share one Elemental BuffDefinition. After application, Buff duration, stacking, cooldown, Protection, overload, UI, and persistent presentation no longer vary by source Tower. Approved immediate StackApplied damage remains contributor-owned and may read the exact successful source Tower through TowerScaled resolution without creating source-specific Buff state.
 
 The first complete content pass contains four Elemental types for each of four TowerFamilies, producing sixteen Elemental TowerUpgradeDefinitions.
 
@@ -315,8 +315,8 @@ The first complete content pass contains four Elemental types for each of four T
 | Multi Orbs | Each Orb contact |
 | Arcane Detonation | Every Monster resolved by each normal-completion detonation |
 | Arcane Field | Every valid Monster on each field tick at full first-version eligibility |
-| Multi Drones | Each Drone projectile's reviewed attack results |
-| Blast Rounds | Direct target and every explosion target independently |
+| Multi Drones | Each Drone instance's Burst-opening Projectile independently; later shots in that Burst are ineligible |
+| Blast Rounds | Only an eligible Burst opener's direct target and every explosion target independently |
 | Final Dive | Optional direct target and every explosion target independently |
 
 Buff System remains the authority for whether each attempt applies, refreshes, stacks, overloads, or is blocked.

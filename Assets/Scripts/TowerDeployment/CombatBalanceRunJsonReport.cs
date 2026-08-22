@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 14;
+    public int schemaVersion = 15;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -580,7 +580,9 @@ internal sealed class CombatBalanceBuffParametersJson
 [Serializable]
 internal sealed class CombatBalanceBuffSourceJson
 {
+    public int sourceTowerInstanceId;
     public string towerFamily;
+    public string elementalUpgradeName;
     public int applicationAttempts;
     public int successfulApplications;
     public int applied;

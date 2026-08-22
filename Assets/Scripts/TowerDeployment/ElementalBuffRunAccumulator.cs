@@ -9,12 +9,19 @@ internal sealed class ElementalBuffRunAccumulator
 {
     private sealed class SourceAggregate
     {
-        public SourceAggregate(string towerFamily)
+        public SourceAggregate(
+            int sourceTowerInstanceId,
+            string towerFamily,
+            string elementalUpgradeName)
         {
+            SourceTowerInstanceId = sourceTowerInstanceId;
             TowerFamily = towerFamily;
+            ElementalUpgradeName = elementalUpgradeName;
         }
 
+        public int SourceTowerInstanceId { get; }
         public string TowerFamily { get; }
+        public string ElementalUpgradeName { get; private set; }
         public int ApplicationAttempts { get; set; }
         public int SuccessfulApplications { get; set; }
         public int Applied { get; set; }
@@ -29,6 +36,15 @@ internal sealed class ElementalBuffRunAccumulator
         public int NaturalExpiriesBeforeOverload { get; set; }
         public float FirstApplicationToOverloadTotal { get; set; }
         public int TimedOverloadCount { get; set; }
+
+        public void RefreshElementalUpgradeName(string elementalUpgradeName)
+        {
+            if (string.IsNullOrEmpty(ElementalUpgradeName) &&
+                !string.IsNullOrEmpty(elementalUpgradeName))
+            {
+                ElementalUpgradeName = elementalUpgradeName;
+            }
+        }
     }
 
     private sealed class BuffAggregate
@@ -44,8 +60,8 @@ internal sealed class ElementalBuffRunAccumulator
         public HashSet<int> DistinctMonsterIds { get; } = new HashSet<int>();
         public HashSet<int> DistinctSourceTowerIds { get; } = new HashSet<int>();
         public HashSet<string> SourceElements { get; } = new HashSet<string>();
-        public Dictionary<string, SourceAggregate> Sources { get; } =
-            new Dictionary<string, SourceAggregate>();
+        public Dictionary<int, SourceAggregate> Sources { get; } =
+            new Dictionary<int, SourceAggregate>();
         public Dictionary<int, float> FirstApplicationTimesByMonster { get; } =
             new Dictionary<int, float>();
         public int ApplicationAttempts { get; set; }
@@ -163,6 +179,12 @@ internal sealed class ElementalBuffRunAccumulator
                 SourceAggregate source = sortedSources[sourceIndex];
                 builder.Append("  - ")
                     .Append(source.TowerFamily)
+                    .Append('#')
+                    .Append(source.SourceTowerInstanceId)
+                    .Append(" / ElementalUpgrade=")
+                    .Append(string.IsNullOrEmpty(source.ElementalUpgradeName)
+                        ? "None"
+                        : source.ElementalUpgradeName)
                     .Append(": Attempts=")
                     .Append(source.ApplicationAttempts)
                     .Append(", Successful=")
@@ -247,7 +269,9 @@ internal sealed class ElementalBuffRunAccumulator
                 SourceAggregate source = sortedSources[sourceIndex];
                 record.sources.Add(new CombatBalanceBuffSourceJson
                 {
+                    sourceTowerInstanceId = source.SourceTowerInstanceId,
                     towerFamily = source.TowerFamily,
+                    elementalUpgradeName = source.ElementalUpgradeName,
                     applicationAttempts = source.ApplicationAttempts,
                     successfulApplications = source.SuccessfulApplications,
                     applied = source.Applied,
@@ -277,7 +301,10 @@ internal sealed class ElementalBuffRunAccumulator
         BuffRuntimeObservation observation)
     {
         aggregate.ApplicationAttempts++;
-        SourceAggregate source = GetOrCreateSource(aggregate, observation.SourceTower);
+        SourceAggregate source = GetOrCreateSource(
+            aggregate,
+            observation.SourceTower,
+            observation.SourceUpgrade);
         source.ApplicationAttempts++;
 
         switch (observation.ApplyResult)
@@ -323,7 +350,8 @@ internal sealed class ElementalBuffRunAccumulator
     {
         SourceAggregate source = GetOrCreateSource(
             aggregate,
-            observation.SourceTower);
+            observation.SourceTower,
+            observation.SourceUpgrade);
 
         switch (observation.LifecycleEvent)
         {
@@ -359,14 +387,26 @@ internal sealed class ElementalBuffRunAccumulator
 
     private static SourceAggregate GetOrCreateSource(
         BuffAggregate aggregate,
-        TowerInstance sourceTower)
+        TowerInstance sourceTower,
+        TowerUpgradeDefinition sourceUpgrade)
     {
+        int sourceTowerInstanceId = GetSourceTowerInstanceId(sourceTower);
         string towerFamily = GetTowerFamily(sourceTower);
+        string elementalUpgradeName = GetElementalUpgradeName(sourceUpgrade);
 
-        if (!aggregate.Sources.TryGetValue(towerFamily, out SourceAggregate source))
+        if (!aggregate.Sources.TryGetValue(
+                sourceTowerInstanceId,
+                out SourceAggregate source))
         {
-            source = new SourceAggregate(towerFamily);
-            aggregate.Sources.Add(towerFamily, source);
+            source = new SourceAggregate(
+                sourceTowerInstanceId,
+                towerFamily,
+                elementalUpgradeName);
+            aggregate.Sources.Add(sourceTowerInstanceId, source);
+        }
+        else
+        {
+            source.RefreshElementalUpgradeName(elementalUpgradeName);
         }
 
         return source;
@@ -500,10 +540,23 @@ internal sealed class ElementalBuffRunAccumulator
     {
         List<SourceAggregate> result =
             new List<SourceAggregate>(aggregate.Sources.Values);
-        result.Sort((left, right) => string.CompareOrdinal(
-            left.TowerFamily,
-            right.TowerFamily));
+        result.Sort((left, right) =>
+        {
+            int familyComparison = string.CompareOrdinal(
+                left.TowerFamily,
+                right.TowerFamily);
+
+            return familyComparison != 0
+                ? familyComparison
+                : left.SourceTowerInstanceId.CompareTo(
+                    right.SourceTowerInstanceId);
+        });
         return result;
+    }
+
+    private static int GetSourceTowerInstanceId(TowerInstance sourceTower)
+    {
+        return sourceTower != null ? sourceTower.GetInstanceID() : 0;
     }
 
     private static string GetTowerFamily(TowerInstance sourceTower)
@@ -511,6 +564,15 @@ internal sealed class ElementalBuffRunAccumulator
         return sourceTower != null && sourceTower.TowerDefinition != null
             ? sourceTower.TowerDefinition.TowerFamily.ToString()
             : "Unattributed";
+    }
+
+    private static string GetElementalUpgradeName(
+        TowerUpgradeDefinition sourceUpgrade)
+    {
+        return sourceUpgrade != null &&
+               sourceUpgrade.UpgradeLayer == TowerUpgradeLayer.Elemental
+            ? sourceUpgrade.name
+            : string.Empty;
     }
 
     private static string GetBuffDisplayName(BuffDefinition definition)

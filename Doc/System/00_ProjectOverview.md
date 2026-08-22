@@ -158,7 +158,7 @@ TowerUpgradeDefinition
 
 Definitions and runtime templates store reusable authored truth. Per-instance runtime state, consumed history, timers, pending actions, and active entity state must not be written back into reusable authored content.
 
-Tower-owned damage resolves from the source Tower's current Level-authored BasicDamage plus applied Basic Damage Bonus, multiplied by one stable attack-owned DamageScale at the actual damage boundary. Buff-lifecycle and Elemental-reaction damage uses independently authored FixedDamage. Already resolved damage is never replayed after a Level or Upgrade change.
+Tower-owned damage resolves from the source Tower's current Level-authored BasicDamage plus applied Basic Damage Bonus, multiplied by one stable DamageScale at the actual damage boundary. This includes the approved immediate StackApplied damage owned by the Tower that successfully contributed that stack. Periodic, Overload, Protection, persistent, and other shared Buff-state or Elemental-reaction damage uses independently authored FixedDamage. Already resolved damage is never replayed after a Level or Upgrade change.
 
 ---
 
@@ -226,7 +226,7 @@ It defines what a Tower is, not how a placed Tower executes combat.
 
 ## 4.11 Tower Runtime Combat System
 
-Owns combat orchestration for placed Towers: target acquisition, attack timing, confirmation and release boundaries, Attack Entity release, active entity ownership, technical cleanup, and approved runtime refresh coordination.
+Owns combat orchestration for placed Towers: target acquisition, attack timing, confirmation and release boundaries, Attack Entity release, active entity ownership, explicit Elemental opportunity boundaries, technical cleanup, and approved runtime refresh coordination.
 
 It decides when attacks are released. Released Attack Entities own their domain behavior.
 
