@@ -18,7 +18,7 @@ MonoBehaviour:
   actions:
   - actionType: 0
     damageMode: 1
-    damageScale: 0.4
+    damageScale: 0.25
     fixedDamage: 0
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5

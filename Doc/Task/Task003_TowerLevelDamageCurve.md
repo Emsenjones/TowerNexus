@@ -1,6 +1,8 @@
 # Task003 - Tower Level Damage Curve
 
-Status: Completed; accepted on 2026-08-21 with Straight-route HP480 Play Mode evidence for all four TowerFamilies
+Status: Completed; accepted on 2026-08-21 with Straight-route HP480 Play Mode
+evidence for all four TowerFamilies; Magic BaseCycle22 regression accepted on
+2026-08-22
 
 Depends on: Accepted Task002 Level 1 Base Tower Baseline
 
@@ -124,6 +126,24 @@ balance authority.
 The variance is a reviewed mechanism result rather than evidence for a global
 Magic efficiency change. Task003 does not require every random real-map sample
 to outperform every horizontal-deployment sample.
+
+After Task004 revised the shared Magic Attack Cycle from `20s` to `22s`, the
+affected Level curve was rerun without changing `25 / 66 / 102` BasicDamage:
+
+| Comparison | BaseCycle22 observations | Mean | Difference |
+|---|---:|---:|---:|
+| Two L1 | `2675 / 2650 / 2750` | `2692` | - |
+| One L2 | `2904 / 2838 / 2838` | `2860` | `+168` (`+6.2%`) |
+| Three L1 | `3925 / 4025 / 3800` | `3917` | - |
+| L2 + L1 | `4165 / 4504 / 4511` | `4393` | `+476` (`+12.2%`) vs three L1 |
+| One L3 | `4692 / 4590 / 4284` | `4522` | `+129` (`+2.9%`) vs L2 + L1 |
+
+The corrected L2-plus-L1 set excludes the `(2,12)` placement observation and
+uses only P2 `(2,11)` records. These Task004-scoped regressions used a common
+`60s` measurement-Wave delay and remain diagnostic rather than replacements
+for the original clean `90s` acceptance records. They nevertheless preserve
+both monotonic empirical steps and the nominal marginal guardrail, so Magic
+L2/L3 BasicDamage remains `66 / 102`.
 
 ### 6.4 Drone
 

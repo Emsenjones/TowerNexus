@@ -1,6 +1,7 @@
 # Task002 - Level 1 Base Tower Baseline
 
-Status: Completed; CombatMathV2 Level 1 baseline accepted on 2026-08-21
+Status: Completed; CombatMathV2 Level 1 baseline accepted on 2026-08-21,
+with the Magic Attack Cycle revision accepted on 2026-08-22
 
 Depends on: Completed Task001 Combat Damage Formula Refactor
 
@@ -39,11 +40,14 @@ identity are the primary cross-family comparison.
 |---|---:|---:|---:|---|
 | Archer | `20` | `2` | `0.85s` | Lowest Health |
 | Cannon | `60` | `3` | `3.5s` | Lowest Health |
-| Magic | `25` | `1.5` | `20s` | Orbit contact; no release target required |
+| Magic | `25` | `1.5` | `22s` | Orbit contact; no release target required |
 | Drone | `10` | `4` | `10s` | Random |
 
 Magic Orb retains Rotation Speed `90`, Orbit Radius `1`, Same Target Hit
-Cooldown `0.5s`, and Max Lifetime `18s`. Contact Distance is accepted at `0.3`:
+Cooldown `0.5s`, and Max Lifetime `18s`. The accepted `22s` Attack Cycle leaves
+a readable `4s` base release gate after normal Orb expiry; Task004's Arcane
+Recovery reduces that cycle to `19s` and therefore reduces the post-expiry gate
+to `1s`. Contact Distance is accepted at `0.3`:
 `0.25` produced visually unsatisfying apparent misses, while `0.4` produced an
 unacceptable L-route `4590` Effective Damage and `33 / 40` kills. The accepted
 `0.3` distance preserves readable contact while BasicDamage `25` returns L-route
@@ -127,6 +131,26 @@ one normal timing-dependent hit.
 
 ## 5. Route And Identity Acceptance
 
+The Section 4 table records the original CombatMathV2 acceptance at the former
+`20s` Magic Attack Cycle. After Task004 identified that `20s` combined with the
+`18s` Orb lifetime left too little scheduler space for Arcane Recovery to read
+clearly, the base cycle changed to `22s` without changing BasicDamage, Range,
+contact, rotation, or Orb lifetime.
+
+The smallest affected naked-Magic regression used Task004's HP480 measurement
+fixture and the current `22s` cycle:
+
+| Route | Effective Damage observations | Accepted mean |
+|---|---:|---:|
+| Straight | `1250 / 1100 / 1125` | `1158` |
+| L | `2425 / 2150 / 2275` | `2283` |
+| U | `3425 / 3375 / 3400 / 3225` | `3356` |
+
+Every run retained Damage `25`, Range `1.5`, Rotation Speed `90`, no Upgrade,
+complete Wave attribution, and the route ordering `Straight < L < U`. These
+results accept the scheduler revision while preserving the original family
+identity; they do not retroactively replace the Section 4 HP120 measurements.
+
 | Tower | Straight ED | L ED | U ED |
 |---|---:|---:|---:|
 | Archer | `2160` | `2320` | `2560` |
@@ -169,6 +193,8 @@ combat-resolution evidence.
 
 - Task003 uses `20 / 60 / 25 / 10` for Archer, Cannon, Magic, and Drone as the
   accepted `B1` units when calibrating each TowerFamily's L2/L3 BasicDamage.
+- Current Magic Level controls use the accepted `22s` Attack Cycle; the
+  BasicDamage curve remains unchanged.
 - Task003 keeps this fixture, the route roles, and naked L1 controls fixed unless
   a named Task002 revision is explicitly approved.
 - Task006 uses the accepted fixture and L1 outputs as reference pressure input.
