@@ -315,8 +315,9 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         return new ProjectileRuntimeOptions(
-            canPierce,
-            canPierce ? cachedPiercingMaximum : 1,
+            allowsElementalApplication: true,
+            canPierce: canPierce,
+            maxPierceHitCount: canPierce ? cachedPiercingMaximum : 1,
             explosiveArrowSourceUpgrade: explosiveArrowSourceUpgrade,
             explosiveArrowEffect: explosiveArrowEffect);
     }

@@ -65,13 +65,25 @@ baselines.
 
 ### Phase B - Shared Runtime And Matching-Source Cooperation
 
-- Compare two identical Level 3 Towers with the same placements and direct
-  TowerScaled output.
+- Compare a fixed pair of Level 3 Towers with unchanged families, placements,
+  and direct TowerScaled output between runs. The pair may use different
+  TowerFamilies because matching cooperation is defined by ElementType and the
+  shared BuffDefinition, not by one TowerUpgradeDefinition identity.
 - In the control, only one Tower owns the tested Element. In the treatment,
-  both Towers own that Element.
+  both Towers own matching Elemental Upgrades for that ElementType.
 - Verify independent source cooldown entries, two successful source Tower
   identities, faster or more reliable overload, Protection, expiry, and
   re-entry.
+- Use the authored `MaximumStacks 10`, `ActiveDuration 5s`, and Protection
+  duration as the first candidate. Review first-application-to-overload timing,
+  successful-application gaps, natural-expiry stack distribution, distinct
+  overloaded Monsters, and Protection re-entry before changing those values.
+- Use one representative three-source screen to confirm that additional
+  matching sources accelerate the first Overload but remain bounded by
+  Protection.
+- Multiple-stack contribution per successful application is deferred. Reopen
+  it only if schema-17 evidence shows that realistic matching-source coverage
+  cannot reach Overload reliably with one stack unit per application.
 
 ### Phase C - Element-Specific Reactions
 
@@ -98,8 +110,26 @@ baselines.
 
 ## 6. Recorder Preparation
 
-Task007 uses Recorder schema `16`, including the Task006 Drone Burst diagnostic
-export, before Phase A resumes.
+Task007 Phase A uses Recorder schema `16`, including the Task006 Drone Burst
+diagnostic export. Phase B and later fresh reports use schema `17`.
+
+Schema `17` preserves schema-16 combat, damage, source, and Drone diagnostics
+and adds Buff calibration evidence for:
+
+- stacking cycles started, overloaded, and naturally expired;
+- distinct Monsters overloaded and Protection-to-stacking re-entry;
+- first application to Overload timing range and sample count;
+- successful application gap timing range and sample count;
+- Protection expiry to reapplication timing range and sample count;
+- stack count distribution at natural expiry;
+- distinct source count distribution at Overload;
+- stack units added separately from stacked application count;
+- per-source-Wave Buff summaries and Buff diagnostic integrity flags.
+
+The stack-unit fields make one-stack applications explicit without authorizing
+multiple-stack contribution. A future gameplay change must separately define
+requested, applied, and discarded stack units and the one-Overload-per-
+application boundary.
 
 Each Buff source record includes:
 

@@ -152,7 +152,7 @@ public class BuffDefinition : ScriptableObject
 
             if (!eventBinding.IsValidForBuffLifecycle())
             {
-                Debug.LogWarning($"Buff definition '{name}' is invalid: buff event binding '{eventBinding.EventType}' must use FixedBuff for every nested DealDamage action.", this);
+                Debug.LogWarning($"Buff definition '{name}' is invalid: buff event binding '{eventBinding.EventType}' must use {eventBinding.RequiredDamageMode} for every nested DealDamage action.", this);
                 isValid = false;
             }
 

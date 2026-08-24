@@ -2,21 +2,21 @@ using UnityEngine;
 
 public static class ElementalApplication
 {
-    public static void TryApplyFromTowerAttack(
+    public static bool TryApplyFromTowerAttack(
         TowerInstance sourceTower,
         MonsterBehaviour targetMonster,
         Vector3 applicationPosition)
     {
         if (sourceTower == null || !EffectTargetResolver.IsValidMonsterTarget(targetMonster))
         {
-            return;
+            return false;
         }
 
         if (!sourceTower.TryGetElementalUpgrade(out TowerUpgradeDefinition elementalUpgradeDefinition) ||
             elementalUpgradeDefinition == null ||
             elementalUpgradeDefinition.ElementalApplyEffect == null)
         {
-            return;
+            return false;
         }
 
         EffectExecutor.Execute(
@@ -28,5 +28,6 @@ public static class ElementalApplication
                 hasTriggerPosition: true,
                 triggerPosition: applicationPosition,
                 allowsElementalApplication: true));
+        return true;
     }
 }

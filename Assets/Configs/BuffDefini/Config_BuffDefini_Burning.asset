@@ -16,10 +16,10 @@ MonoBehaviour:
   description: Deals periodic Fire damage and explodes at maximum stacks to damage
     nearby enemies
   activeDuration: 5
-  periodicTickInterval: 2
+  periodicTickInterval: 1
   usesStacks: 1
   maximumStacks: 10
-  sourceApplyCooldown: 2
+  sourceApplyCooldown: 0.5
   eventBindings:
   - eventType: 0
     effectDefinition: {fileID: 11400000, guid: ca535fb633964c0596aaed545a9a3ba3, type: 2}

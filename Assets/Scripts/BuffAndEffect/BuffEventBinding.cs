@@ -12,6 +12,10 @@ public class BuffEventBinding
 
     public BuffEventType EventType => eventType;
     public EffectDefinition EffectDefinition => effectDefinition;
+    public EffectDamageMode RequiredDamageMode =>
+        eventType == BuffEventType.StackApplied
+            ? EffectDamageMode.TowerScaled
+            : EffectDamageMode.FixedBuff;
 
     public bool IsValid()
     {
@@ -22,6 +26,6 @@ public class BuffEventBinding
     {
         return effectDefinition != null &&
                effectDefinition.IsValidForDamageMode(
-                   EffectDamageMode.FixedBuff);
+                   RequiredDamageMode);
     }
 }

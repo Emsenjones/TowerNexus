@@ -103,6 +103,9 @@
 20. players can remove Tower pending items;
 21. Camera focuses on the tower which the player taped and pop up TowerInfoWindow;
 22. Develop Monster & Projectile object pool;
+23. Differet damage should has its own damage color;
+24. Tower projectile spawn point is not in the right position;
+25. Design Monsters appearing performance;
 
 
 1. Players should be level up faster at the beigin;

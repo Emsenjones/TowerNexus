@@ -17,12 +17,13 @@ MonoBehaviour:
   executionVfxPrefab: {fileID: 8377611048391574826, guid: a6eee2eb3b90641f09ae71ee485f849a, type: 3}
   actions:
   - actionType: 0
-    damageMode: 2
-    damageScale: 0
-    fixedDamage: 10
+    damageMode: 1
+    damageScale: 0.2
+    fixedDamage: 0
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
-    sequentialEffectDefinition: {fileID: 0}
+    multiTargetEffectDefinition: {fileID: 0}
     targetCount: 1
-    executionInterval: 0
+    excludeTriggerTarget: 0
+    windVortexPrefab: {fileID: 0}

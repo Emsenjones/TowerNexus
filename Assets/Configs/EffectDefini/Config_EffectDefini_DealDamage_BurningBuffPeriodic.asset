@@ -19,7 +19,11 @@ MonoBehaviour:
   - actionType: 0
     damageMode: 2
     damageScale: 0
-    fixedDamage: 10
+    fixedDamage: 4
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0
+    multiTargetEffectDefinition: {fileID: 0}
+    targetCount: 1
+    excludeTriggerTarget: 0
+    windVortexPrefab: {fileID: 0}

@@ -1,6 +1,6 @@
 # Task006 - Drone Burst Elemental Opportunity Refactor
 
-Status: Planned
+Status: Implementation complete; Unity Play Mode validation pending
 
 Depends on: Completed Task005 Elemental Stack Contribution Damage Authority
 
@@ -135,3 +135,22 @@ path-scoped `git diff --check`.
 - per-Tower BuffDefinition copies;
 - changing Archer, Cannon, or Magic Elemental opportunities;
 - Task007 final Elemental calibration.
+
+## 9. Implementation Checkpoint
+
+- Each Drone assigns a local Burst identity only when a genuinely new Burst
+  starts. Retargeting preserves that identity, phase, remaining shots, and
+  timer.
+- Only the opening shot slot may create an Elemental-eligible Projectile.
+  Successful creation freezes the eligibility and Drone/Burst identity onto
+  that Projectile; failed creation, miss, and cleanup do not transfer it.
+- Projectile direct and Blast Rounds Elemental opportunities use the same
+  immutable eligibility gate. Archer and Cannon producers retain their
+  explicitly approved eligibility, and Final Dive remains separate.
+- Recorder schema `16` records Tower, Drone, and Burst identity; opener and
+  later-shot releases/hits; direct and Blast opportunities; miss/cleanup; and
+  Final Dive opportunities. Its internal consistency gate is
+  `droneBurstDiagnosticsConsistent`.
+- Runtime and Editor builds pass with zero warnings and zero errors. Task007 may
+  reopen this Task if broader Elemental fixtures expose a topology, attribution,
+  or diagnostic defect.

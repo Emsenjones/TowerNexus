@@ -57,6 +57,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly Dictionary<int, ProjectileRuntimeAggregate>
         projectileRuntimeByTowerInstanceId =
             new Dictionary<int, ProjectileRuntimeAggregate>();
+    private readonly Dictionary<int, Dictionary<int, DroneRuntimeAggregate>>
+        droneRuntimeByTowerInstanceId =
+            new Dictionary<int, Dictionary<int, DroneRuntimeAggregate>>();
     private readonly Dictionary<int, TowerDeploymentObservation>
         towerDeploymentByInstanceId =
             new Dictionary<int, TowerDeploymentObservation>();
@@ -356,6 +359,43 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             new ArcTargetRelationAggregate();
     }
 
+    private sealed class DroneBurstAggregate
+    {
+        public DroneBurstAggregate(long burstId)
+        {
+            BurstId = burstId;
+        }
+
+        public long BurstId { get; }
+        public int Started { get; set; }
+        public int EligibleOpeningProjectilesReleased { get; set; }
+        public int EligibleOpeningProjectileDirectHits { get; set; }
+        public int EligibleOpeningProjectilesEndedWithoutImpact { get; set; }
+        public int LaterProjectilesReleased { get; set; }
+        public int LaterProjectileDirectHits { get; set; }
+        public int DirectElementalOpportunities { get; set; }
+        public int BlastTargetElementalOpportunities { get; set; }
+    }
+
+    private sealed class DroneRuntimeAggregate
+    {
+        public DroneRuntimeAggregate(
+            int sourceDroneInstanceId,
+            bool isAdditionalAttackEntity)
+        {
+            SourceDroneInstanceId = sourceDroneInstanceId;
+            IsAdditionalAttackEntity = isAdditionalAttackEntity;
+        }
+
+        public int SourceDroneInstanceId { get; }
+        public bool IsAdditionalAttackEntity { get; }
+        public bool DiagnosticsConsistent { get; set; } = true;
+        public int FinalDiveDirectElementalOpportunities { get; set; }
+        public int FinalDiveBlastTargetElementalOpportunities { get; set; }
+        public Dictionary<long, DroneBurstAggregate> Bursts { get; } =
+            new Dictionary<long, DroneBurstAggregate>();
+    }
+
     private void OnEnable()
     {
         ResolveReferences();
@@ -513,6 +553,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         ProjectileBehaviour.OnRuntimeObserved +=
             HandleProjectileRuntimeObserved;
+        DroneBurstRuntimeDiagnostics.OnObserved +=
+            HandleDroneBurstRuntimeObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageResolutionObserved +=
             HandleTowerOwnedDamageResolutionObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved +=
@@ -624,6 +666,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         ProjectileBehaviour.OnRuntimeObserved -=
             HandleProjectileRuntimeObserved;
+        DroneBurstRuntimeDiagnostics.OnObserved -=
+            HandleDroneBurstRuntimeObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageResolutionObserved -=
             HandleTowerOwnedDamageResolutionObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved -=
@@ -994,6 +1038,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         pendingLevelUps.Clear();
         buffAccumulator.Reset();
         projectileRuntimeByTowerInstanceId.Clear();
+        droneRuntimeByTowerInstanceId.Clear();
         towerDeploymentByInstanceId.Clear();
         towerScaledDamageBySignature.Clear();
         towerScaledRejectionBySignature.Clear();
@@ -1268,13 +1313,24 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     }
 
     private void HandleBuffRuntimeObserved(
-        MonsterBehaviour _,
+        MonsterBehaviour monster,
         BuffRuntimeObservation observation)
     {
-        if (isTrackingRun)
+        if (!isTrackingRun)
         {
-            buffAccumulator.Consume(observation);
+            return;
         }
+
+        MonsterBehaviour ownerMonster = observation.OwnerMonster != null
+            ? observation.OwnerMonster
+            : monster;
+        int sourceWaveNumber = ownerMonster != null &&
+            trackedMonsters.TryGetValue(
+                ownerMonster,
+                out MonsterObservation monsterObservation)
+                ? monsterObservation.SourceWaveNumber
+                : 0;
+        buffAccumulator.Consume(observation, sourceWaveNumber);
     }
 
     private void HandleTowerOwnedDamageResolutionObserved(
@@ -1521,6 +1577,133 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                     aggregate.ArcEndedWithoutImpact++;
                 }
 
+                break;
+        }
+    }
+
+    private void HandleDroneBurstRuntimeObserved(
+        DroneBurstRuntimeObservation observation)
+    {
+        if (!isTrackingRun ||
+            observation.SourceTower == null ||
+            observation.SourceDroneInstanceId == 0 ||
+            observation.Count <= 0)
+        {
+            return;
+        }
+
+        int towerInstanceId = observation.SourceTower.GetInstanceID();
+
+        if (!droneRuntimeByTowerInstanceId.TryGetValue(
+                towerInstanceId,
+                out Dictionary<int, DroneRuntimeAggregate> drones))
+        {
+            drones = new Dictionary<int, DroneRuntimeAggregate>();
+            droneRuntimeByTowerInstanceId.Add(towerInstanceId, drones);
+        }
+
+        if (!drones.TryGetValue(
+                observation.SourceDroneInstanceId,
+                out DroneRuntimeAggregate drone))
+        {
+            drone = new DroneRuntimeAggregate(
+                observation.SourceDroneInstanceId,
+                observation.IsAdditionalDrone);
+            drones.Add(observation.SourceDroneInstanceId, drone);
+        }
+        else if (drone.IsAdditionalAttackEntity != observation.IsAdditionalDrone)
+        {
+            drone.DiagnosticsConsistent = false;
+        }
+
+        switch (observation.ObservationType)
+        {
+            case DroneBurstRuntimeObservationType.FinalDiveDirectElementalOpportunity:
+                if (observation.BurstId != 0)
+                {
+                    drone.DiagnosticsConsistent = false;
+                }
+
+                drone.FinalDiveDirectElementalOpportunities +=
+                    observation.Count;
+                return;
+            case DroneBurstRuntimeObservationType.FinalDiveBlastTargetElementalOpportunity:
+                if (observation.BurstId != 0)
+                {
+                    drone.DiagnosticsConsistent = false;
+                }
+
+                drone.FinalDiveBlastTargetElementalOpportunities +=
+                    observation.Count;
+                return;
+        }
+
+        if (observation.BurstId <= 0)
+        {
+            drone.DiagnosticsConsistent = false;
+            return;
+        }
+
+        if (!drone.Bursts.TryGetValue(
+                observation.BurstId,
+                out DroneBurstAggregate burst))
+        {
+            burst = new DroneBurstAggregate(observation.BurstId);
+            drone.Bursts.Add(observation.BurstId, burst);
+        }
+
+        switch (observation.ObservationType)
+        {
+            case DroneBurstRuntimeObservationType.BurstStarted:
+                burst.Started += observation.Count;
+                break;
+            case DroneBurstRuntimeObservationType.ProjectileReleased:
+                if (observation.IsBurstOpenerEligible)
+                {
+                    burst.EligibleOpeningProjectilesReleased +=
+                        observation.Count;
+                }
+                else
+                {
+                    burst.LaterProjectilesReleased += observation.Count;
+                }
+
+                break;
+            case DroneBurstRuntimeObservationType.ProjectileDirectHit:
+                if (observation.IsBurstOpenerEligible)
+                {
+                    burst.EligibleOpeningProjectileDirectHits +=
+                        observation.Count;
+                }
+                else
+                {
+                    burst.LaterProjectileDirectHits += observation.Count;
+                }
+
+                break;
+            case DroneBurstRuntimeObservationType.ProjectileEndedWithoutImpact:
+                if (observation.IsBurstOpenerEligible)
+                {
+                    burst.EligibleOpeningProjectilesEndedWithoutImpact +=
+                        observation.Count;
+                }
+
+                break;
+            case DroneBurstRuntimeObservationType.DirectElementalOpportunity:
+                if (!observation.IsBurstOpenerEligible)
+                {
+                    drone.DiagnosticsConsistent = false;
+                }
+
+                burst.DirectElementalOpportunities += observation.Count;
+                break;
+            case DroneBurstRuntimeObservationType.BlastTargetElementalOpportunity:
+                if (!observation.IsBurstOpenerEligible)
+                {
+                    drone.DiagnosticsConsistent = false;
+                }
+
+                burst.BlastTargetElementalOpportunities += observation.Count;
                 break;
         }
     }
@@ -2316,7 +2499,13 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             TowerDeploymentCoverageMatches(report.towers);
         report.integrity.damageDiagnosticsCountsMatch =
             DamageDiagnosticsCountsMatch(report.damageDiagnostics);
+        report.integrity.droneBurstDiagnosticsConsistent =
+            DroneBurstDiagnosticsAreConsistent();
         report.buffs = buffAccumulator.CreateJsonRecords();
+        report.integrity.buffDiagnosticsConsistent =
+            buffAccumulator.DiagnosticsConsistent;
+        report.integrity.buffWaveAttributionMatches =
+            buffAccumulator.WaveAttributionMatches;
         return report;
     }
 
@@ -3316,6 +3505,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
             record.projectileRuntime = CreateProjectileRuntimeJson(
                 towerInstanceId);
+            record.droneBurstRuntime = CreateDroneBurstRuntimeJson(
+                towerInstanceId);
 
             IReadOnlyList<TowerUpgradeDefinition> upgrades =
                 towerInstance.AppliedUpgrades;
@@ -3404,6 +3595,138 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             arcTargetRelation = CreateArcTargetRelationJson(
                 aggregate.ArcTargetRelation)
         };
+    }
+
+    private CombatBalanceDroneBurstRuntimeJson CreateDroneBurstRuntimeJson(
+        int towerInstanceId)
+    {
+        CombatBalanceDroneBurstRuntimeJson result =
+            new CombatBalanceDroneBurstRuntimeJson();
+
+        if (!droneRuntimeByTowerInstanceId.TryGetValue(
+                towerInstanceId,
+                out Dictionary<int, DroneRuntimeAggregate> drones))
+        {
+            return result;
+        }
+
+        List<int> droneIds = new List<int>(drones.Keys);
+        droneIds.Sort();
+
+        for (int i = 0; i < droneIds.Count; i++)
+        {
+            DroneRuntimeAggregate drone = drones[droneIds[i]];
+            CombatBalanceDroneRuntimeJson droneJson =
+                new CombatBalanceDroneRuntimeJson
+                {
+                    sourceDroneInstanceId = drone.SourceDroneInstanceId,
+                    isAdditionalAttackEntity =
+                        drone.IsAdditionalAttackEntity,
+                    finalDiveDirectElementalOpportunities =
+                        drone.FinalDiveDirectElementalOpportunities,
+                    finalDiveBlastTargetElementalOpportunities =
+                        drone.FinalDiveBlastTargetElementalOpportunities
+                };
+            List<long> burstIds = new List<long>(drone.Bursts.Keys);
+            burstIds.Sort();
+
+            for (int burstIndex = 0;
+                 burstIndex < burstIds.Count;
+                 burstIndex++)
+            {
+                DroneBurstAggregate burst =
+                    drone.Bursts[burstIds[burstIndex]];
+                droneJson.burstsStarted += burst.Started;
+                droneJson.eligibleOpeningProjectilesReleased +=
+                    burst.EligibleOpeningProjectilesReleased;
+                droneJson.eligibleOpeningProjectileDirectHits +=
+                    burst.EligibleOpeningProjectileDirectHits;
+                droneJson.eligibleOpeningProjectilesEndedWithoutImpact +=
+                    burst.EligibleOpeningProjectilesEndedWithoutImpact;
+                droneJson.laterProjectilesReleased +=
+                    burst.LaterProjectilesReleased;
+                droneJson.laterProjectileDirectHits +=
+                    burst.LaterProjectileDirectHits;
+                droneJson.directElementalOpportunities +=
+                    burst.DirectElementalOpportunities;
+                droneJson.blastTargetElementalOpportunities +=
+                    burst.BlastTargetElementalOpportunities;
+                droneJson.bursts.Add(new CombatBalanceDroneBurstJson
+                {
+                    burstId = burst.BurstId,
+                    started = burst.Started,
+                    eligibleOpeningProjectilesReleased =
+                        burst.EligibleOpeningProjectilesReleased,
+                    eligibleOpeningProjectileDirectHits =
+                        burst.EligibleOpeningProjectileDirectHits,
+                    eligibleOpeningProjectilesEndedWithoutImpact =
+                        burst.EligibleOpeningProjectilesEndedWithoutImpact,
+                    laterProjectilesReleased =
+                        burst.LaterProjectilesReleased,
+                    laterProjectileDirectHits =
+                        burst.LaterProjectileDirectHits,
+                    directElementalOpportunities =
+                        burst.DirectElementalOpportunities,
+                    blastTargetElementalOpportunities =
+                        burst.BlastTargetElementalOpportunities
+                });
+            }
+
+            result.diagnosticsConsistent &=
+                DroneRuntimeDiagnosticsAreConsistent(drone);
+            result.drones.Add(droneJson);
+        }
+
+        return result;
+    }
+
+    private bool DroneBurstDiagnosticsAreConsistent()
+    {
+        foreach (KeyValuePair<int, Dictionary<int, DroneRuntimeAggregate>>
+                     towerEntry in droneRuntimeByTowerInstanceId)
+        {
+            foreach (KeyValuePair<int, DroneRuntimeAggregate> droneEntry in
+                     towerEntry.Value)
+            {
+                if (!DroneRuntimeDiagnosticsAreConsistent(droneEntry.Value))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool DroneRuntimeDiagnosticsAreConsistent(
+        DroneRuntimeAggregate drone)
+    {
+        if (drone == null || !drone.DiagnosticsConsistent)
+        {
+            return false;
+        }
+
+        foreach (KeyValuePair<long, DroneBurstAggregate> entry in drone.Bursts)
+        {
+            DroneBurstAggregate burst = entry.Value;
+
+            if (burst == null ||
+                burst.BurstId <= 0 ||
+                burst.Started != 1 ||
+                burst.EligibleOpeningProjectilesReleased > 1 ||
+                burst.EligibleOpeningProjectileDirectHits +
+                burst.EligibleOpeningProjectilesEndedWithoutImpact >
+                burst.EligibleOpeningProjectilesReleased ||
+                burst.DirectElementalOpportunities >
+                burst.EligibleOpeningProjectileDirectHits ||
+                (burst.BlastTargetElementalOpportunities > 0 &&
+                 burst.EligibleOpeningProjectileDirectHits <= 0))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static CombatBalanceArcTargetRelationJson

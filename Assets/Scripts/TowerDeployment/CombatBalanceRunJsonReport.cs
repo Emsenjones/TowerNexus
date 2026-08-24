@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 15;
+    public int schemaVersion = 17;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -369,6 +369,9 @@ internal sealed class CombatBalanceIntegrityJson
     public bool draftAttemptCountMatchesProgression;
     public bool towerDeploymentCoverageMatches;
     public bool damageDiagnosticsCountsMatch;
+    public bool droneBurstDiagnosticsConsistent;
+    public bool buffDiagnosticsConsistent;
+    public bool buffWaveAttributionMatches;
 }
 
 [Serializable]
@@ -394,8 +397,51 @@ internal sealed class CombatBalanceTowerJson
     public float resolvedCycleSeconds;
     public CombatBalanceProjectileRuntimeJson projectileRuntime =
         new CombatBalanceProjectileRuntimeJson();
+    public CombatBalanceDroneBurstRuntimeJson droneBurstRuntime =
+        new CombatBalanceDroneBurstRuntimeJson();
     public List<CombatBalanceUpgradeJson> upgrades =
         new List<CombatBalanceUpgradeJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceDroneBurstRuntimeJson
+{
+    public bool diagnosticsConsistent = true;
+    public List<CombatBalanceDroneRuntimeJson> drones =
+        new List<CombatBalanceDroneRuntimeJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceDroneRuntimeJson
+{
+    public int sourceDroneInstanceId;
+    public bool isAdditionalAttackEntity;
+    public int burstsStarted;
+    public int eligibleOpeningProjectilesReleased;
+    public int eligibleOpeningProjectileDirectHits;
+    public int eligibleOpeningProjectilesEndedWithoutImpact;
+    public int laterProjectilesReleased;
+    public int laterProjectileDirectHits;
+    public int directElementalOpportunities;
+    public int blastTargetElementalOpportunities;
+    public int finalDiveDirectElementalOpportunities;
+    public int finalDiveBlastTargetElementalOpportunities;
+    public List<CombatBalanceDroneBurstJson> bursts =
+        new List<CombatBalanceDroneBurstJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceDroneBurstJson
+{
+    public long burstId;
+    public int started;
+    public int eligibleOpeningProjectilesReleased;
+    public int eligibleOpeningProjectileDirectHits;
+    public int eligibleOpeningProjectilesEndedWithoutImpact;
+    public int laterProjectilesReleased;
+    public int laterProjectileDirectHits;
+    public int directElementalOpportunities;
+    public int blastTargetElementalOpportunities;
 }
 
 [Serializable]
@@ -548,6 +594,13 @@ internal sealed class CombatBalanceBuffJson
     public int distinctMonsters;
     public int distinctSourceTowers;
     public int maximumObservedStacks;
+    public int stackUnitsAdded;
+    public int maximumStackUnitsAddedBySingleApplication;
+    public int stackingCyclesStarted;
+    public int stackingCyclesOverloaded;
+    public int stackingCyclesNaturallyExpired;
+    public int distinctMonstersOverloaded;
+    public int reentriesAfterProtection;
     public int overloads;
     public int enteredProtection;
     public int periodicTicks;
@@ -560,8 +613,80 @@ internal sealed class CombatBalanceBuffJson
     public int runtimeResetRemovals;
     public int overloadWithoutProtectionRemovals;
     public float averageFirstApplicationToOverloadSeconds;
+    public CombatBalanceMetricJson firstApplicationToOverloadSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson successfulApplicationGapSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson protectionExpiryToReapplicationSeconds =
+        new CombatBalanceMetricJson();
+    public List<CombatBalanceStackCountOccurrenceJson>
+        naturalExpiryStackCounts =
+            new List<CombatBalanceStackCountOccurrenceJson>();
+    public List<CombatBalanceSourceCountOccurrenceJson>
+        overloadSourceCounts =
+            new List<CombatBalanceSourceCountOccurrenceJson>();
     public List<CombatBalanceBuffSourceJson> sources =
         new List<CombatBalanceBuffSourceJson>();
+    public List<CombatBalanceBuffWaveJson> waveSummaries =
+        new List<CombatBalanceBuffWaveJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceBuffWaveJson
+{
+    public int waveNumber;
+    public int applicationAttempts;
+    public int applied;
+    public int refreshed;
+    public int stacked;
+    public int invalid;
+    public int blockedBySourceCooldown;
+    public int blockedByProtection;
+    public int distinctMonsters;
+    public int distinctSourceTowers;
+    public int maximumObservedStacks;
+    public int stackUnitsAdded;
+    public int maximumStackUnitsAddedBySingleApplication;
+    public int stackingCyclesStarted;
+    public int stackingCyclesOverloaded;
+    public int stackingCyclesNaturallyExpired;
+    public int distinctMonstersOverloaded;
+    public int reentriesAfterProtection;
+    public int overloads;
+    public int enteredProtection;
+    public int periodicTicks;
+    public int naturalExpiriesBeforeOverload;
+    public int protectionExpiries;
+    public int monsterKilledRemovals;
+    public int monsterLeakedRemovals;
+    public CombatBalanceMetricJson firstApplicationToOverloadSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson successfulApplicationGapSeconds =
+        new CombatBalanceMetricJson();
+    public CombatBalanceMetricJson protectionExpiryToReapplicationSeconds =
+        new CombatBalanceMetricJson();
+    public List<CombatBalanceStackCountOccurrenceJson>
+        naturalExpiryStackCounts =
+            new List<CombatBalanceStackCountOccurrenceJson>();
+    public List<CombatBalanceSourceCountOccurrenceJson>
+        overloadSourceCounts =
+            new List<CombatBalanceSourceCountOccurrenceJson>();
+    public List<CombatBalanceBuffSourceJson> sources =
+        new List<CombatBalanceBuffSourceJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceStackCountOccurrenceJson
+{
+    public int stackCount;
+    public int occurrences;
+}
+
+[Serializable]
+internal sealed class CombatBalanceSourceCountOccurrenceJson
+{
+    public int sourceCount;
+    public int occurrences;
 }
 
 [Serializable]
@@ -588,6 +713,8 @@ internal sealed class CombatBalanceBuffSourceJson
     public int applied;
     public int refreshed;
     public int stacked;
+    public int stackUnitsAdded;
+    public int maximumStackUnitsAddedBySingleApplication;
     public int invalid;
     public int blockedBySourceCooldown;
     public int blockedByProtection;

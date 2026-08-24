@@ -1,6 +1,7 @@
 # Task005 - Elemental Stack Contribution Damage Authority
 
-Status: Planned
+Status: Completed; implementation accepted on 2026-08-24 with static validation
+and user-confirmed Unity Play Mode evidence
 
 Depends on: Completed Task001 Combat Damage Formula Refactor; accepted Task004 Non-Elemental Upgrade Baseline
 
@@ -119,3 +120,22 @@ Damage Authoring validation, and path-scoped `git diff --check`.
 - changing Tower attack cadence or Elemental application opportunities;
 - Drone Burst opportunity timing, which belongs to Task006;
 - Task007 fixture execution or final Elemental acceptance.
+
+## 8. Completion Record
+
+- StackApplied bindings recursively require TowerScaled DealDamage; other Buff
+  lifecycle bindings continue to require FixedBuff DealDamage.
+- Electrified StackApplied uses provisional DamageScale `0.15`, and Windcut
+  StackApplied secondary damage uses provisional DamageScale `0.30`. Task007
+  continues to own final Elemental balance.
+- The existing successful-reapplication transaction supplies the exact
+  contributor Tower and Elemental Upgrade before StackApplied executes; no new
+  contributor or damage-payload abstraction was required.
+- Runtime and Editor builds completed with zero warnings and zero errors, and
+  path-scoped diff validation passed.
+- In user-confirmed Play Mode evidence, a naked Level 3 Cannon resolved Basic
+  Damage `204`, and its Electrified StackApplied result resolved
+  `RoundToInt(204 * 0.15) = 31` damage.
+- Recorder remains schema `15`. Task007 may reopen this Task if its broader
+  Elemental fixtures expose a contributor-attribution, shared-state, or
+  regression defect.

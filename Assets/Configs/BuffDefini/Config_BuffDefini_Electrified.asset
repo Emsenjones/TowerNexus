@@ -19,7 +19,7 @@ MonoBehaviour:
   periodicTickInterval: 0
   usesStacks: 1
   maximumStacks: 10
-  sourceApplyCooldown: 2
+  sourceApplyCooldown: 0.5
   eventBindings:
   - eventType: 1
     effectDefinition: {fileID: 11400000, guid: 011df70d1141a430996c7d1a3d6f172c, type: 2}

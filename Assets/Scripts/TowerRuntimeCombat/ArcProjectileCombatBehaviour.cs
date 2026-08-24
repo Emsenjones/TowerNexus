@@ -332,6 +332,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         return new ProjectileRuntimeOptions(
+            allowsElementalApplication: true,
             canPierce: false,
             maxPierceHitCount: 1,
             explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,

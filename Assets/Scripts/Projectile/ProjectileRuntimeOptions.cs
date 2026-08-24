@@ -1,5 +1,6 @@
 public readonly struct ProjectileRuntimeOptions
 {
+    public bool AllowsElementalApplication { get; }
     public bool CanPierce { get; }
     public int MaxPierceHitCount { get; }
     public bool IsBounceChild { get; }
@@ -15,8 +16,12 @@ public readonly struct ProjectileRuntimeOptions
     public float BounceDamageScale { get; }
     public TowerUpgradeDefinition BlastRoundsSourceUpgrade { get; }
     public EffectDefinition BlastRoundsEffect { get; }
+    public int SourceDroneInstanceId { get; }
+    public long DroneBurstId { get; }
+    public bool IsAdditionalDrone { get; }
 
     public ProjectileRuntimeOptions(
+        bool allowsElementalApplication,
         bool canPierce,
         int maxPierceHitCount,
         bool isBounceChild = false,
@@ -30,8 +35,12 @@ public readonly struct ProjectileRuntimeOptions
         TargetSelectionType bounceTargetSelectionType = TargetSelectionType.Nearest,
         float bounceDamageScale = 0f,
         TowerUpgradeDefinition blastRoundsSourceUpgrade = null,
-        EffectDefinition blastRoundsEffect = null)
+        EffectDefinition blastRoundsEffect = null,
+        int sourceDroneInstanceId = 0,
+        long droneBurstId = 0,
+        bool isAdditionalDrone = false)
     {
+        AllowsElementalApplication = allowsElementalApplication;
         CanPierce = canPierce;
         MaxPierceHitCount = maxPierceHitCount;
         IsBounceChild = isBounceChild;
@@ -46,5 +55,8 @@ public readonly struct ProjectileRuntimeOptions
         BounceDamageScale = bounceDamageScale;
         BlastRoundsSourceUpgrade = blastRoundsSourceUpgrade;
         BlastRoundsEffect = blastRoundsEffect;
+        SourceDroneInstanceId = sourceDroneInstanceId;
+        DroneBurstId = droneBurstId;
+        IsAdditionalDrone = isAdditionalDrone;
     }
 }
