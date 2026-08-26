@@ -342,6 +342,16 @@ If a normal Drone target becomes invalid, it may select another valid Monster in
 
 Normal retargeting preserves the current Burst phase, remaining shot count, timer, and already assigned Elemental-opener state. It never reloads a Burst, bypasses Inter-Burst Cooldown, or grants another Elemental contribution.
 
+While its assigned target remains valid, the Drone does not voluntarily rotate
+targets between shots of one Burst. Existing invalid-target retargeting may
+preserve and finish the remaining shots against a replacement target. After
+Inter-Burst Cooldown completes and immediately before the next Burst begins,
+the Drone reevaluates the currently valid candidates through its authored
+target-selection category. Reevaluation may select the previous target again;
+it is not a forced rotation rule. This Burst-boundary selection does not reset
+Burst state, alter Battery lifetime, bypass cooldown, or create Elemental
+eligibility beyond the opening Projectile of the genuinely new Burst.
+
 Burst cadence has three semantic phases:
 
 | Phase | Contract |

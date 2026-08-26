@@ -2,7 +2,8 @@
 
 Document Set: Balance
 
-Status: CombatMathV2 growth strategy approved for implementation review; exact Level, Upgrade, Effect, Buff, and Stage values remain Task-owned
+Status: CombatMathV2 Tower growth and Upgrade value hierarchy accepted; exact
+Level, Upgrade, Effect, Buff, and Stage values remain Task- and asset-owned
 
 ---
 
@@ -18,6 +19,7 @@ It answers:
 - How Core and Support Towers divide limited Draft investment
 - How Basic, Behaviour, and Elemental value depends on battlefield conditions
 - How immediate and delayed growth paths remain competitive without becoming universally optimal
+- Which durable value hierarchy distinguishes Level, Basic, Behaviour, one-source Elemental, and matching Elemental investment
 
 It does not own runtime eligibility, candidate sampling, numerical power targets, accepted Upgrade values, test fixtures, route matrices, exact Stage pools, Player Progress Requirements, Monster Wave values, or raw Play Mode evidence. Those rules, values, and evidence belong to their owning System documents, Task contracts, and authored game content. This document remains the qualitative cross-Stage growth contract.
 
@@ -147,7 +149,81 @@ Required Tower Level and Upgrade Layer remain separate. A Basic or Behaviour Upg
 
 ---
 
-# 7. Growth Curve Principles
+# 7. Accepted CombatMathV2 Value Hierarchy
+
+The current calibration establishes a player-facing hierarchy without forcing
+all investments into one universal multiplier.
+
+| Investment | Durable value expectation |
+|---|---|
+| New Tower | Coverage, parallel targeting, route shaping, and one additional future Upgrade receiver |
+| Tower Level | Modest positive concentrated-output advantage plus access to newly eligible content |
+| Basic Upgrade | Dependable incremental specialization, approximately `1.2x` in ordinary controlled conditions |
+| Behaviour Upgrade | Visible condition-dependent attack-topology gain, approximately `1.5x` in its reviewed condition |
+| First Elemental Upgrade | Useful source-independent normal package value, usually stronger than a Basic absolute gain but not guaranteed to exceed Behaviour |
+| Second matching Elemental Upgrade | Highest conditional cooperation reward through reliable Overload in overlapping effective coverage |
+
+The accepted naked Level 1 roster remains in one broad output band while route
+diagnostics preserve family identity. Equal-Draft Level comparisons give the
+concentrated Tower a positive but deliberately modest immediate advantage:
+deployment remains competitive because the extra Tower owns spatial value and
+future build capacity. The strongest reason to Level is therefore the
+combination of immediate BasicDamage growth and later Upgrade access, not an
+attempt to make horizontal deployment numerically obsolete.
+
+Basic and Behaviour percentages are same-Tower controlled comparisons.
+Elemental uses absolute package value instead. Task007 defines one Elemental
+Reference Unit as the rounded median absolute gain of an accepted Behaviour
+Upgrade in its controlled fixture. That unit is a design comparison aid, not a
+runtime stat or global conversion formula.
+
+One Elemental source must provide normal value without requiring Overload.
+Single-source Overload may occur occasionally but is not part of the guaranteed
+base return. A second matching source in overlapping coverage earns the premium
+ceiling: the accepted cooperation dividend is approximately `1.4-1.6` Behaviour
+reference units and is primarily attributable to Overload for directly
+damaging Elements. A high-frequency or area-damage companion may amplify
+Electric/Wind normal reactions, but it does not replace the stack contribution
+and Overload reward of the second matching Elemental Upgrade.
+
+This hierarchy intentionally does not mean:
+
+- every higher Required Tower Level item must beat every lower-level item in
+  every geometry;
+- every single Elemental Upgrade must individually outperform Behaviour;
+- every TowerFamily must convert one shared Element into identical total damage;
+- Overload must be frequent from one source;
+- one late-Stage matching Build must become the only globally viable strategy.
+
+It means that present safety, horizontal coverage, vertical investment,
+immediate specialization, and delayed cooperation remain distinct strategic
+reasons to spend a Draft. Stage pressure decides which reason matters now; it
+does not redefine the value authority of the underlying Tower package.
+
+## 7.1 Comparison Discipline
+
+Use the smallest comparison that answers the design question:
+
+- compare naked families under one shared fixture to review base identity;
+- compare equal Draft counts to review deployment versus Level investment;
+- compare one Upgrade with the same-family, same-Level naked control for Basic
+  and Behaviour;
+- compare shared FixedBuff or control value in one fixed window for Elemental
+  normal value;
+- compare one-source overlap, two-source overlap, and two-source isolated
+  layouts to separate matching-Upgrade and coverage dividends;
+- use Stage completion only after the package itself has passed its owning
+  calibration contract.
+
+Task002 owns the naked Level 1 baseline, Task003 the Level curve, Task004 Basic
+and Behaviour evidence, and Task007 Elemental normal and cooperation evidence.
+Those Task documents and authored assets own exact accepted numbers. This
+Balance document owns the durable interpretation used when later Stage work
+decides whether to deploy, Level, specialize, or complete a matching Build.
+
+---
+
+# 8. Growth Curve Principles
 
 Growth should remain readable and reasonably smooth across the limited Draft investments available during one battle.
 

@@ -47,6 +47,12 @@ The current maximum Tower level is three.
 
 Tower Level v0.2 directly changes BasicDamage. Attack Range, Attack Cycle Duration, and other non-damage combat stats change only through their owning authoring or accepted Tower Upgrades.
 
+`Doc/Balance/01_TowerGrowthAndUpgradeIdentity.md` owns the durable player-facing
+interpretation of horizontal deployment, Level investment, Basic, Behaviour,
+one-source Elemental value, and matching Elemental cooperation. This System
+document owns eligibility, authoring, and application mechanics. Task contracts
+and authored assets own exact accepted numerical values and fixture evidence.
+
 ---
 
 # 3. Tower Level-Up

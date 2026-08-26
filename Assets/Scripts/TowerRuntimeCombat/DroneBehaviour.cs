@@ -732,6 +732,7 @@ public class DroneBehaviour : MonoBehaviour
                     return;
                 }
 
+                ReselectTargetForNextBurst();
                 burstPhase = DroneBurstPhase.ReadyToStartBurst;
                 StartBurst();
                 return;
@@ -739,6 +740,16 @@ public class DroneBehaviour : MonoBehaviour
             default:
                 StartBurst();
                 return;
+        }
+    }
+
+    private void ReselectTargetForNextBurst()
+    {
+        MonsterBehaviour selectedTarget = SelectTarget();
+
+        if (IsValidTargetInRange(selectedTarget))
+        {
+            currentTarget = selectedTarget;
         }
     }
 

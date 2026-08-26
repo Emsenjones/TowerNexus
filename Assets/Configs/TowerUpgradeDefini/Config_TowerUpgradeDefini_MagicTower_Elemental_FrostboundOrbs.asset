@@ -22,7 +22,22 @@ MonoBehaviour:
   behaviourPackageType: 0
   piercingMaxHitCount: 3
   scatterAngleOffset: 15
+  additionalAttackEntities:
+    prefab: {fileID: 0}
+    count: 1
+    damageScale: 1
+  explosiveArrowEffect: {fileID: 0}
+  explosiveShellEffect: {fileID: 0}
+  bounceSearchRadius: 1
+  maxBounceCount: 1
+  bounceArcHeight: 1
+  bounceTargetSelectionType: 0
+  bounceDamageScale: 1
+  arcaneDetonationEffect: {fileID: 0}
+  magicArcaneFieldPrefab: {fileID: 0}
+  blastRoundsEffect: {fileID: 0}
+  finalDiveHitThreshold: 1
+  finalDiveExplosionEffect: {fileID: 0}
   elementType: 2
   elementalApplyEffect: {fileID: 11400000, guid: 392488a5b3b7344808c90274d1334061, type: 2}
-  elementalStackContribution: 3
-  effectBindings: []
+  elementalStackContribution: 2

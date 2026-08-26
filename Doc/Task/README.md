@@ -25,7 +25,7 @@ failure case.
 | Task004 | Non-Elemental Upgrade baseline |
 | Task005 | Elemental StackApplied contribution damage authority |
 | Task006 | Drone Burst Elemental opportunity boundary |
-| Task007 | Absolute Elemental package baseline and matching-source cooperation |
+| Task007 | Completed absolute Elemental package baseline and matching-source cooperation |
 | Task007A | Configurable Elemental stack contribution implementation checkpoint |
 | Task007B | Primary-only Elemental opportunity boundary implementation checkpoint |
 | Task007C | Shared Electric/Wind Tower-hit reaction implementation checkpoint |
@@ -46,5 +46,7 @@ Task007A, Task007B, and Task007C are implementation checkpoints created while
 Task007 exposed stack-contribution, application-topology, and shared-hit-
 reaction boundaries. Task007C ordinary schema-20 gameplay smoke is accepted for
 Task007 continuation; its remaining edge-transaction fixtures are explicitly
-deferred rather than reported as passed. Task007 now owns the final numerical
-acceptance before Stage calibration begins.
+deferred rather than reported as passed. Task007 completed the Phase F normal-
+value, Phase G matching-cooperation, and Phase H Core-regression acceptance on
+2026-08-27. Task008 and later Stage calibration now consume those locked Tower
+and Elemental package values.
