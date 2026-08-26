@@ -26,6 +26,9 @@ failure case.
 | Task005 | Elemental StackApplied contribution damage authority |
 | Task006 | Drone Burst Elemental opportunity boundary |
 | Task007 | Elemental and Buff baseline |
+| Task007A | Configurable Elemental stack contribution implementation checkpoint |
+| Task007B | Primary-only Elemental opportunity boundary implementation checkpoint |
+| Task007C | Shared Electric/Wind Tower-hit reaction implementation checkpoint |
 | Task008 | Fixed-speed Monster Health roster |
 | Task009 | Campaign progression and controlled calibration fixtures |
 | Task010 | Stage1 Wave calibration |
