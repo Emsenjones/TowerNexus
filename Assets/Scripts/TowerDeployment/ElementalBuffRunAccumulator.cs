@@ -27,8 +27,11 @@ internal sealed class ElementalBuffRunAccumulator
         public int Applied { get; set; }
         public int Refreshed { get; set; }
         public int Stacked { get; set; }
-        public int StackUnitsAdded { get; set; }
-        public int MaximumStackUnitsAddedBySingleApplication { get; set; }
+        public int RequestedStackUnits { get; set; }
+        public int AppliedStackUnits { get; set; }
+        public int DiscardedStackUnits { get; set; }
+        public int MaximumRequestedStackUnitsBySingleApplication { get; set; }
+        public int MaximumAppliedStackUnitsBySingleApplication { get; set; }
         public int Invalid { get; set; }
         public int BlockedBySourceCooldown { get; set; }
         public int BlockedByProtection { get; set; }
@@ -117,8 +120,11 @@ internal sealed class ElementalBuffRunAccumulator
         public int Applied { get; set; }
         public int Refreshed { get; set; }
         public int Stacked { get; set; }
-        public int StackUnitsAdded { get; set; }
-        public int MaximumStackUnitsAddedBySingleApplication { get; set; }
+        public int RequestedStackUnits { get; set; }
+        public int AppliedStackUnits { get; set; }
+        public int DiscardedStackUnits { get; set; }
+        public int MaximumRequestedStackUnitsBySingleApplication { get; set; }
+        public int MaximumAppliedStackUnitsBySingleApplication { get; set; }
         public int Invalid { get; set; }
         public int BlockedBySourceCooldown { get; set; }
         public int BlockedByProtection { get; set; }
@@ -171,6 +177,8 @@ internal sealed class ElementalBuffRunAccumulator
     private bool waveAttributionMatches = true;
 
     public bool DiagnosticsConsistent => ValidateAllAggregates();
+    public bool StackUnitAccountingConsistent =>
+        ValidateAllStackUnitAccounting();
     public bool WaveAttributionMatches => waveAttributionMatches;
 
     public void Reset()
@@ -244,8 +252,13 @@ internal sealed class ElementalBuffRunAccumulator
                 .Append(aggregate.DistinctSourceTowerIds.Count)
                 .Append(", MaxObservedStacks=")
                 .Append(aggregate.MaximumObservedStacks)
-                .Append(", StackUnitsAdded=")
-                .Append(aggregate.StackUnitsAdded)
+                .Append(", StackUnits=[Requested=")
+                .Append(aggregate.RequestedStackUnits)
+                .Append(", Applied=")
+                .Append(aggregate.AppliedStackUnits)
+                .Append(", Discarded=")
+                .Append(aggregate.DiscardedStackUnits)
+                .Append(']')
                 .Append(", Cycles=[Started=")
                 .Append(aggregate.StackingCyclesStarted)
                 .Append(", Overloaded=")
@@ -294,8 +307,13 @@ internal sealed class ElementalBuffRunAccumulator
                     .Append(source.Refreshed)
                     .Append(", Stacked=")
                     .Append(source.Stacked)
-                    .Append(", StackUnitsAdded=")
-                    .Append(source.StackUnitsAdded)
+                    .Append(", StackUnits=[Requested=")
+                    .Append(source.RequestedStackUnits)
+                    .Append(", Applied=")
+                    .Append(source.AppliedStackUnits)
+                    .Append(", Discarded=")
+                    .Append(source.DiscardedStackUnits)
+                    .Append(']')
                     .Append(", Blocked=[SourceCooldown=")
                     .Append(source.BlockedBySourceCooldown)
                     .Append(", Protection=")
@@ -343,9 +361,13 @@ internal sealed class ElementalBuffRunAccumulator
                 distinctMonsters = aggregate.DistinctMonsterIds.Count,
                 distinctSourceTowers = aggregate.DistinctSourceTowerIds.Count,
                 maximumObservedStacks = aggregate.MaximumObservedStacks,
-                stackUnitsAdded = aggregate.StackUnitsAdded,
-                maximumStackUnitsAddedBySingleApplication =
-                    aggregate.MaximumStackUnitsAddedBySingleApplication,
+                requestedStackUnits = aggregate.RequestedStackUnits,
+                appliedStackUnits = aggregate.AppliedStackUnits,
+                discardedStackUnits = aggregate.DiscardedStackUnits,
+                maximumRequestedStackUnitsBySingleApplication =
+                    aggregate.MaximumRequestedStackUnitsBySingleApplication,
+                maximumAppliedStackUnitsBySingleApplication =
+                    aggregate.MaximumAppliedStackUnitsBySingleApplication,
                 stackingCyclesStarted = aggregate.StackingCyclesStarted,
                 stackingCyclesOverloaded = aggregate.StackingCyclesOverloaded,
                 stackingCyclesNaturallyExpired =
@@ -439,6 +461,7 @@ internal sealed class ElementalBuffRunAccumulator
             observation.SourceTower,
             observation.SourceUpgrade);
         source.ApplicationAttempts++;
+        RecordStackUnitOutcome(aggregate, source, observation);
 
         switch (observation.ApplyResult)
         {
@@ -451,7 +474,6 @@ internal sealed class ElementalBuffRunAccumulator
                 RecordCycleSource(aggregate, observation);
                 RecordProtectionReentry(aggregate, observation);
                 aggregate.StackingCyclesStarted += definition.UsesStacks ? 1 : 0;
-                RecordStackUnitsAdded(aggregate, source, definition, observation);
                 break;
             case BuffApplyResult.Refreshed:
                 aggregate.Refreshed++;
@@ -460,7 +482,6 @@ internal sealed class ElementalBuffRunAccumulator
                 RecordSuccessfulSource(aggregate, observation);
                 RecordSuccessfulApplicationGap(aggregate, observation);
                 RecordCycleSource(aggregate, observation);
-                RecordStackUnitsAdded(aggregate, source, definition, observation);
                 break;
             case BuffApplyResult.Stacked:
                 aggregate.Stacked++;
@@ -469,7 +490,6 @@ internal sealed class ElementalBuffRunAccumulator
                 RecordSuccessfulSource(aggregate, observation);
                 RecordSuccessfulApplicationGap(aggregate, observation);
                 RecordCycleSource(aggregate, observation);
-                RecordStackUnitsAdded(aggregate, source, definition, observation);
                 break;
             case BuffApplyResult.BlockedBySourceApplyCooldown:
                 aggregate.BlockedBySourceCooldown++;
@@ -777,31 +797,38 @@ internal sealed class ElementalBuffRunAccumulator
         aggregate.ProtectionExpiryTimesByMonster.Remove(monsterId);
     }
 
-    private static void RecordStackUnitsAdded(
+    private static void RecordStackUnitOutcome(
         BuffScopeAggregate aggregate,
         SourceAggregate source,
-        BuffDefinition definition,
         BuffRuntimeObservation observation)
     {
-        if (definition == null || !definition.UsesStacks)
-        {
-            return;
-        }
+        int requestedStackUnits = Mathf.Max(
+            0,
+            observation.EligibleRequestedStackUnits);
+        int appliedStackUnits = Mathf.Max(0, observation.AppliedStackUnits);
+        int discardedStackUnits = Mathf.Max(
+            0,
+            observation.DiscardedStackUnits);
 
-        int stackUnitsAdded = observation.ApplyResult == BuffApplyResult.Applied
-            ? Mathf.Max(0, observation.StackCountAfter)
-            : Mathf.Max(
-                0,
-                observation.StackCountAfter - observation.StackCountBefore);
+        aggregate.RequestedStackUnits += requestedStackUnits;
+        aggregate.AppliedStackUnits += appliedStackUnits;
+        aggregate.DiscardedStackUnits += discardedStackUnits;
+        aggregate.MaximumRequestedStackUnitsBySingleApplication = Mathf.Max(
+            aggregate.MaximumRequestedStackUnitsBySingleApplication,
+            requestedStackUnits);
+        aggregate.MaximumAppliedStackUnitsBySingleApplication = Mathf.Max(
+            aggregate.MaximumAppliedStackUnitsBySingleApplication,
+            appliedStackUnits);
 
-        aggregate.StackUnitsAdded += stackUnitsAdded;
-        aggregate.MaximumStackUnitsAddedBySingleApplication = Mathf.Max(
-            aggregate.MaximumStackUnitsAddedBySingleApplication,
-            stackUnitsAdded);
-        source.StackUnitsAdded += stackUnitsAdded;
-        source.MaximumStackUnitsAddedBySingleApplication = Mathf.Max(
-            source.MaximumStackUnitsAddedBySingleApplication,
-            stackUnitsAdded);
+        source.RequestedStackUnits += requestedStackUnits;
+        source.AppliedStackUnits += appliedStackUnits;
+        source.DiscardedStackUnits += discardedStackUnits;
+        source.MaximumRequestedStackUnitsBySingleApplication = Mathf.Max(
+            source.MaximumRequestedStackUnitsBySingleApplication,
+            requestedStackUnits);
+        source.MaximumAppliedStackUnitsBySingleApplication = Mathf.Max(
+            source.MaximumAppliedStackUnitsBySingleApplication,
+            appliedStackUnits);
     }
 
     private static void RecordOverloadedMonster(
@@ -871,9 +898,13 @@ internal sealed class ElementalBuffRunAccumulator
             distinctMonsters = aggregate.DistinctMonsterIds.Count,
             distinctSourceTowers = aggregate.DistinctSourceTowerIds.Count,
             maximumObservedStacks = aggregate.MaximumObservedStacks,
-            stackUnitsAdded = aggregate.StackUnitsAdded,
-            maximumStackUnitsAddedBySingleApplication =
-                aggregate.MaximumStackUnitsAddedBySingleApplication,
+            requestedStackUnits = aggregate.RequestedStackUnits,
+            appliedStackUnits = aggregate.AppliedStackUnits,
+            discardedStackUnits = aggregate.DiscardedStackUnits,
+            maximumRequestedStackUnitsBySingleApplication =
+                aggregate.MaximumRequestedStackUnitsBySingleApplication,
+            maximumAppliedStackUnitsBySingleApplication =
+                aggregate.MaximumAppliedStackUnitsBySingleApplication,
             stackingCyclesStarted = aggregate.StackingCyclesStarted,
             stackingCyclesOverloaded = aggregate.StackingCyclesOverloaded,
             stackingCyclesNaturallyExpired =
@@ -927,9 +958,13 @@ internal sealed class ElementalBuffRunAccumulator
             applied = source.Applied,
             refreshed = source.Refreshed,
             stacked = source.Stacked,
-            stackUnitsAdded = source.StackUnitsAdded,
-            maximumStackUnitsAddedBySingleApplication =
-                source.MaximumStackUnitsAddedBySingleApplication,
+            requestedStackUnits = source.RequestedStackUnits,
+            appliedStackUnits = source.AppliedStackUnits,
+            discardedStackUnits = source.DiscardedStackUnits,
+            maximumRequestedStackUnitsBySingleApplication =
+                source.MaximumRequestedStackUnitsBySingleApplication,
+            maximumAppliedStackUnitsBySingleApplication =
+                source.MaximumAppliedStackUnitsBySingleApplication,
             invalid = source.Invalid,
             blockedBySourceCooldown = source.BlockedBySourceCooldown,
             blockedByProtection = source.BlockedByProtection,
@@ -1000,6 +1035,27 @@ internal sealed class ElementalBuffRunAccumulator
         return true;
     }
 
+    private bool ValidateAllStackUnitAccounting()
+    {
+        foreach (BuffAggregate aggregate in aggregates.Values)
+        {
+            if (!ValidateStackUnitAccounting(aggregate))
+            {
+                return false;
+            }
+
+            foreach (BuffWaveAggregate waveAggregate in aggregate.Waves.Values)
+            {
+                if (!ValidateStackUnitAccounting(waveAggregate))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
     private static bool ValidateScopeAggregate(BuffScopeAggregate aggregate)
     {
         int applicationAttempts = 0;
@@ -1007,7 +1063,6 @@ internal sealed class ElementalBuffRunAccumulator
         int applied = 0;
         int refreshed = 0;
         int stacked = 0;
-        int stackUnitsAdded = 0;
         int invalid = 0;
         int blockedBySourceCooldown = 0;
         int blockedByProtection = 0;
@@ -1029,7 +1084,6 @@ internal sealed class ElementalBuffRunAccumulator
             applied += source.Applied;
             refreshed += source.Refreshed;
             stacked += source.Stacked;
-            stackUnitsAdded += source.StackUnitsAdded;
             invalid += source.Invalid;
             blockedBySourceCooldown += source.BlockedBySourceCooldown;
             blockedByProtection += source.BlockedByProtection;
@@ -1052,7 +1106,6 @@ internal sealed class ElementalBuffRunAccumulator
                applied == aggregate.Applied &&
                refreshed == aggregate.Refreshed &&
                stacked == aggregate.Stacked &&
-               stackUnitsAdded == aggregate.StackUnitsAdded &&
                invalid == aggregate.Invalid &&
                blockedBySourceCooldown ==
                aggregate.BlockedBySourceCooldown &&
@@ -1073,6 +1126,49 @@ internal sealed class ElementalBuffRunAccumulator
                aggregate.TimedOverloadCount &&
                aggregate.ReentriesAfterProtection <=
                aggregate.ProtectionExpiries;
+    }
+
+    private static bool ValidateStackUnitAccounting(
+        BuffScopeAggregate aggregate)
+    {
+        if (aggregate.RequestedStackUnits !=
+            aggregate.AppliedStackUnits + aggregate.DiscardedStackUnits)
+        {
+            return false;
+        }
+
+        int requestedStackUnits = 0;
+        int appliedStackUnits = 0;
+        int discardedStackUnits = 0;
+        int maximumRequestedStackUnits = 0;
+        int maximumAppliedStackUnits = 0;
+
+        foreach (SourceAggregate source in aggregate.Sources.Values)
+        {
+            if (source.RequestedStackUnits !=
+                source.AppliedStackUnits + source.DiscardedStackUnits)
+            {
+                return false;
+            }
+
+            requestedStackUnits += source.RequestedStackUnits;
+            appliedStackUnits += source.AppliedStackUnits;
+            discardedStackUnits += source.DiscardedStackUnits;
+            maximumRequestedStackUnits = Mathf.Max(
+                maximumRequestedStackUnits,
+                source.MaximumRequestedStackUnitsBySingleApplication);
+            maximumAppliedStackUnits = Mathf.Max(
+                maximumAppliedStackUnits,
+                source.MaximumAppliedStackUnitsBySingleApplication);
+        }
+
+        return requestedStackUnits == aggregate.RequestedStackUnits &&
+               appliedStackUnits == aggregate.AppliedStackUnits &&
+               discardedStackUnits == aggregate.DiscardedStackUnits &&
+               maximumRequestedStackUnits ==
+               aggregate.MaximumRequestedStackUnitsBySingleApplication &&
+               maximumAppliedStackUnits ==
+               aggregate.MaximumAppliedStackUnitsBySingleApplication;
     }
 
     private static int SumCounts(Dictionary<int, int> counts)
@@ -1159,6 +1255,8 @@ internal sealed class ElementalBuffRunAccumulator
             periodicTickIntervalSeconds = definition.PeriodicTickInterval,
             maximumStacks = definition.MaximumStacks,
             sourceApplyCooldownSeconds = definition.SourceApplyCooldown,
+            towerHitReactionCooldownSeconds =
+                definition.TowerHitReactionCooldown,
             overloadProtectionDurationSeconds =
                 definition.OverloadProtectionDuration
         };
@@ -1227,6 +1325,619 @@ internal sealed class ElementalBuffRunAccumulator
     private static string FormatSeconds(float value)
     {
         return value.ToString("0.###", CultureInfo.InvariantCulture) + "s";
+    }
+}
+
+internal readonly struct ElementalHitReactionDamageExpectation
+{
+    public ElementalHitReactionDamageExpectation(
+        EffectDefinition effectDefinition,
+        int actionOrdinal,
+        int fixedDamage,
+        int resolutionCount,
+        int successfulApplicationCount,
+        int appliedDamageTotal)
+    {
+        EffectDefinition = effectDefinition;
+        ActionOrdinal = actionOrdinal;
+        FixedDamage = fixedDamage;
+        ResolutionCount = resolutionCount;
+        SuccessfulApplicationCount = successfulApplicationCount;
+        AppliedDamageTotal = appliedDamageTotal;
+    }
+
+    public EffectDefinition EffectDefinition { get; }
+    public int ActionOrdinal { get; }
+    public int FixedDamage { get; }
+    public int ResolutionCount { get; }
+    public int SuccessfulApplicationCount { get; }
+    public int AppliedDamageTotal { get; }
+}
+
+internal sealed class ElementalHitReactionRunAccumulator
+{
+    private sealed class MetricAggregate
+    {
+        public int Samples { get; private set; }
+        public float Total { get; private set; }
+        public float Minimum { get; private set; }
+        public float Maximum { get; private set; }
+
+        public void Record(float value)
+        {
+            float safeValue = Mathf.Max(0f, value);
+
+            if (Samples == 0)
+            {
+                Minimum = safeValue;
+                Maximum = safeValue;
+            }
+            else
+            {
+                Minimum = Mathf.Min(Minimum, safeValue);
+                Maximum = Mathf.Max(Maximum, safeValue);
+            }
+
+            Samples++;
+            Total += safeValue;
+        }
+
+        public CombatBalanceMetricJson CreateJson()
+        {
+            return new CombatBalanceMetricJson
+            {
+                samples = Samples,
+                minimum = Samples > 0 ? Minimum : 0f,
+                average = Samples > 0 ? Total / Samples : 0f,
+                maximum = Samples > 0 ? Maximum : 0f
+            };
+        }
+    }
+
+    private class ScopeAggregate
+    {
+        private readonly Dictionary<string, float>
+            lastSuccessfulReactionTimesByCycle =
+                new Dictionary<string, float>();
+
+        public int Observed { get; private set; }
+        public int Evaluated { get; private set; }
+        public int Triggered { get; private set; }
+        public int CooldownBlocked { get; private set; }
+        public int NoValidTarget { get; private set; }
+        public int Invalidated { get; private set; }
+        public int OwnerResolvedByEarlierReaction { get; private set; }
+        public int BuffInstanceOrCycleChanged { get; private set; }
+        public int ReactionTargetInvalidBeforeCommit { get; private set; }
+        public int ReactionCommitRejected { get; private set; }
+        public int SuccessfulDamageTargets { get; private set; }
+        public int TotalFixedDamage { get; private set; }
+        public bool ClosedOutcomeSet { get; private set; } = true;
+        public MetricAggregate ReactionGap { get; } = new MetricAggregate();
+
+        public void Consume(ElementalHitReactionObservation observation)
+        {
+            Observed++;
+            Evaluated++;
+
+            switch (observation.Result)
+            {
+                case ElementalHitReactionResult.Triggered:
+                    Triggered++;
+                    SuccessfulDamageTargets +=
+                        observation.SuccessfulDamageTargetCount;
+                    TotalFixedDamage += observation.CommittedFixedDamage;
+                    RecordSuccessfulGap(observation);
+                    break;
+                case ElementalHitReactionResult.CooldownBlocked:
+                    CooldownBlocked++;
+                    break;
+                case ElementalHitReactionResult.NoValidTarget:
+                    NoValidTarget++;
+                    break;
+                case ElementalHitReactionResult.Invalidated:
+                    Invalidated++;
+                    CountInvalidation(observation.InvalidationReason);
+                    break;
+                default:
+                    ClosedOutcomeSet = false;
+                    break;
+            }
+        }
+
+        public bool IsConsistent()
+        {
+            return ClosedOutcomeSet &&
+                   Observed == Evaluated &&
+                   Evaluated == Triggered + CooldownBlocked +
+                       NoValidTarget + Invalidated &&
+                   Invalidated == OwnerResolvedByEarlierReaction +
+                       BuffInstanceOrCycleChanged +
+                       ReactionTargetInvalidBeforeCommit +
+                       ReactionCommitRejected &&
+                   SuccessfulDamageTargets == Triggered &&
+                   TotalFixedDamage >= 0;
+        }
+
+        public CombatBalanceElementalHitReactionCountsJson CreateJson()
+        {
+            return new CombatBalanceElementalHitReactionCountsJson
+            {
+                observedReactionOpportunities = Observed,
+                evaluatedReactionOpportunities = Evaluated,
+                triggeredReactions = Triggered,
+                blockedByReactionCooldown = CooldownBlocked,
+                noValidReactionTarget = NoValidTarget,
+                invalidatedReactionOpportunities = Invalidated,
+                ownerResolvedByEarlierElementalReaction =
+                    OwnerResolvedByEarlierReaction,
+                buffInstanceOrCycleChanged = BuffInstanceOrCycleChanged,
+                reactionTargetInvalidBeforeCommit =
+                    ReactionTargetInvalidBeforeCommit,
+                reactionCommitRejected = ReactionCommitRejected,
+                successfulReactionDamageTargets = SuccessfulDamageTargets,
+                totalReactionFixedDamage = TotalFixedDamage,
+                reactionGapSampleCount = ReactionGap.Samples,
+                reactionGapSeconds = ReactionGap.CreateJson()
+            };
+        }
+
+        private void CountInvalidation(
+            ElementalHitReactionInvalidationReason reason)
+        {
+            switch (reason)
+            {
+                case ElementalHitReactionInvalidationReason
+                    .OwnerResolvedByEarlierElementalReaction:
+                    OwnerResolvedByEarlierReaction++;
+                    break;
+                case ElementalHitReactionInvalidationReason
+                    .BuffInstanceOrCycleChanged:
+                    BuffInstanceOrCycleChanged++;
+                    break;
+                case ElementalHitReactionInvalidationReason
+                    .ReactionTargetInvalidBeforeCommit:
+                    ReactionTargetInvalidBeforeCommit++;
+                    break;
+                case ElementalHitReactionInvalidationReason
+                    .ReactionCommitRejected:
+                    ReactionCommitRejected++;
+                    break;
+                case ElementalHitReactionInvalidationReason.None:
+                default:
+                    ClosedOutcomeSet = false;
+                    break;
+            }
+        }
+
+        private void RecordSuccessfulGap(
+            ElementalHitReactionObservation observation)
+        {
+            int ownerId = observation.OwnerMonster != null
+                ? observation.OwnerMonster.GetInstanceID()
+                : 0;
+            int buffId = observation.BuffDefinition != null
+                ? observation.BuffDefinition.GetInstanceID()
+                : 0;
+            string cycleKey = ownerId.ToString(CultureInfo.InvariantCulture) +
+                              ":" +
+                              buffId.ToString(CultureInfo.InvariantCulture) +
+                              ":" +
+                              observation.StackingCycleIdentity.ToString(
+                                  CultureInfo.InvariantCulture);
+
+            if (lastSuccessfulReactionTimesByCycle.TryGetValue(
+                    cycleKey,
+                    out float previousTime))
+            {
+                ReactionGap.Record(observation.ObservationTime - previousTime);
+            }
+
+            lastSuccessfulReactionTimesByCycle[cycleKey] =
+                observation.ObservationTime;
+        }
+    }
+
+    private sealed class SourceAggregate : ScopeAggregate
+    {
+        public SourceAggregate(ElementalHitReactionObservation observation)
+        {
+            SourceTower = observation.TriggeringTower;
+            TriggeringElementalUpgrade =
+                observation.TriggeringElementalUpgrade;
+            DamageSourceIdentity = observation.DamageSourceIdentity;
+            Diagnostics = observation.Diagnostics;
+            SourceElementRelation = ResolveSourceElementRelation(observation);
+            MinimumResultOrdinal = observation.Diagnostics.ResultOrdinal;
+            MaximumResultOrdinal = observation.Diagnostics.ResultOrdinal;
+        }
+
+        public TowerInstance SourceTower { get; }
+        public TowerUpgradeDefinition TriggeringElementalUpgrade { get; }
+        public TowerDamageSourceIdentity DamageSourceIdentity { get; }
+        public ElementalOpportunityDiagnosticContext Diagnostics { get; }
+        public string SourceElementRelation { get; }
+        public int MinimumResultOrdinal { get; set; }
+        public int MaximumResultOrdinal { get; set; }
+    }
+
+    private sealed class WaveAggregate : ScopeAggregate
+    {
+        public WaveAggregate(int waveNumber)
+        {
+            WaveNumber = waveNumber;
+        }
+
+        public int WaveNumber { get; }
+        public Dictionary<string, SourceAggregate> Sources { get; } =
+            new Dictionary<string, SourceAggregate>();
+    }
+
+    private sealed class BuffAggregate : ScopeAggregate
+    {
+        public BuffAggregate(BuffDefinition definition)
+        {
+            Definition = definition;
+        }
+
+        public BuffDefinition Definition { get; }
+        public Dictionary<string, SourceAggregate> Sources { get; } =
+            new Dictionary<string, SourceAggregate>();
+        public Dictionary<int, WaveAggregate> Waves { get; } =
+            new Dictionary<int, WaveAggregate>();
+    }
+
+    private ScopeAggregate totals = new ScopeAggregate();
+    private readonly Dictionary<BuffDefinition, BuffAggregate> aggregates =
+        new Dictionary<BuffDefinition, BuffAggregate>();
+    private bool waveAttributionMatches = true;
+    private bool observationIdentityValid = true;
+
+    public bool DiagnosticsConsistent => ValidateAllScopes();
+
+    public void Reset()
+    {
+        totals = new ScopeAggregate();
+        aggregates.Clear();
+        waveAttributionMatches = true;
+        observationIdentityValid = true;
+    }
+
+    public void Consume(
+        ElementalHitReactionObservation observation,
+        int sourceWaveNumber)
+    {
+        if (observation.BuffDefinition == null)
+        {
+            observationIdentityValid = false;
+            return;
+        }
+
+        if (observation.TriggeringTower == null ||
+            !observation.Diagnostics.IsValid ||
+            !observation.DamageSourceIdentity.IsValid)
+        {
+            observationIdentityValid = false;
+        }
+
+        totals.Consume(observation);
+        BuffAggregate aggregate = GetOrCreateAggregate(
+            observation.BuffDefinition);
+        aggregate.Consume(observation);
+        GetOrCreateSource(aggregate.Sources, observation).Consume(observation);
+
+        if (sourceWaveNumber <= 0)
+        {
+            waveAttributionMatches = false;
+            return;
+        }
+
+        if (!aggregate.Waves.TryGetValue(
+                sourceWaveNumber,
+                out WaveAggregate wave))
+        {
+            wave = new WaveAggregate(sourceWaveNumber);
+            aggregate.Waves.Add(sourceWaveNumber, wave);
+        }
+
+        wave.Consume(observation);
+        GetOrCreateSource(wave.Sources, observation).Consume(observation);
+    }
+
+    public CombatBalanceElementalHitReactionDiagnosticsJson CreateJson()
+    {
+        CombatBalanceElementalHitReactionDiagnosticsJson result =
+            new CombatBalanceElementalHitReactionDiagnosticsJson
+            {
+                totals = totals.CreateJson(),
+                diagnosticsConsistent = DiagnosticsConsistent
+            };
+        List<BuffAggregate> sortedBuffs =
+            new List<BuffAggregate>(aggregates.Values);
+        sortedBuffs.Sort((left, right) => string.CompareOrdinal(
+            GetBuffSortKey(left.Definition),
+            GetBuffSortKey(right.Definition)));
+
+        for (int i = 0; i < sortedBuffs.Count; i++)
+        {
+            BuffAggregate aggregate = sortedBuffs[i];
+            EffectDefinition reactionEffect = aggregate.Definition
+                .GetEffectDefinition(BuffEventType.TowerHitReceived);
+            EffectDefinition damageEffect = null;
+            int actionOrdinal = -1;
+            int fixedDamage = 0;
+
+            if (reactionEffect != null)
+            {
+                reactionEffect.TryGetElementalHitReactionDamageSignature(
+                    aggregate.Definition.ElementType,
+                    out damageEffect,
+                    out actionOrdinal,
+                    out fixedDamage);
+            }
+            CombatBalanceElementalHitReactionBuffJson buffJson =
+                new CombatBalanceElementalHitReactionBuffJson
+                {
+                    definitionName = aggregate.Definition.name,
+                    displayName = aggregate.Definition.DisplayName,
+                    element = aggregate.Definition.ElementType.ToString(),
+                    cooldownSeconds =
+                        aggregate.Definition.TowerHitReactionCooldown,
+                    damageEffectDefinitionName = damageEffect != null
+                        ? damageEffect.name
+                        : string.Empty,
+                    damageActionOrdinal = actionOrdinal,
+                    fixedDamage = fixedDamage,
+                    counts = aggregate.CreateJson(),
+                    sources = CreateSourceJson(aggregate.Sources)
+                };
+            List<int> waveNumbers =
+                new List<int>(aggregate.Waves.Keys);
+            waveNumbers.Sort();
+
+            for (int waveIndex = 0; waveIndex < waveNumbers.Count; waveIndex++)
+            {
+                WaveAggregate wave = aggregate.Waves[waveNumbers[waveIndex]];
+                buffJson.waves.Add(
+                    new CombatBalanceElementalHitReactionWaveJson
+                    {
+                        waveNumber = wave.WaveNumber,
+                        counts = wave.CreateJson(),
+                        sources = CreateSourceJson(wave.Sources)
+                    });
+            }
+
+            result.buffs.Add(buffJson);
+        }
+
+        return result;
+    }
+
+    public List<ElementalHitReactionDamageExpectation>
+        CreateDamageExpectations()
+    {
+        List<ElementalHitReactionDamageExpectation> expectations =
+            new List<ElementalHitReactionDamageExpectation>();
+
+        foreach (KeyValuePair<BuffDefinition, BuffAggregate> entry in aggregates)
+        {
+            BuffDefinition definition = entry.Key;
+            BuffAggregate aggregate = entry.Value;
+            EffectDefinition reactionEffect = definition != null
+                ? definition.GetEffectDefinition(
+                    BuffEventType.TowerHitReceived)
+                : null;
+
+            if (reactionEffect == null ||
+                !reactionEffect.TryGetElementalHitReactionDamageSignature(
+                    definition.ElementType,
+                    out EffectDefinition damageEffect,
+                    out int actionOrdinal,
+                    out int fixedDamage))
+            {
+                continue;
+            }
+
+            expectations.Add(
+                new ElementalHitReactionDamageExpectation(
+                    damageEffect,
+                    actionOrdinal,
+                    fixedDamage,
+                    aggregate.Triggered,
+                    aggregate.SuccessfulDamageTargets,
+                    aggregate.TotalFixedDamage));
+        }
+
+        return expectations;
+    }
+
+    private bool ValidateAllScopes()
+    {
+        if (!waveAttributionMatches ||
+            !observationIdentityValid ||
+            !totals.IsConsistent())
+        {
+            return false;
+        }
+
+        foreach (KeyValuePair<BuffDefinition, BuffAggregate> entry in aggregates)
+        {
+            BuffDefinition definition = entry.Key;
+            BuffAggregate aggregate = entry.Value;
+
+            if (definition == null ||
+                (definition.ElementType != ElementType.Electric &&
+                 definition.ElementType != ElementType.Wind) ||
+                !aggregate.IsConsistent() ||
+                !ValidateSources(aggregate.Sources))
+            {
+                return false;
+            }
+
+            foreach (KeyValuePair<int, WaveAggregate> waveEntry in aggregate.Waves)
+            {
+                if (waveEntry.Key <= 0 ||
+                    !waveEntry.Value.IsConsistent() ||
+                    !ValidateSources(waveEntry.Value.Sources))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool ValidateSources(
+        Dictionary<string, SourceAggregate> sources)
+    {
+        foreach (KeyValuePair<string, SourceAggregate> entry in sources)
+        {
+            SourceAggregate source = entry.Value;
+
+            if (source == null ||
+                source.SourceTower == null ||
+                !source.Diagnostics.IsValid ||
+                !source.DamageSourceIdentity.IsValid ||
+                !source.IsConsistent())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private BuffAggregate GetOrCreateAggregate(BuffDefinition definition)
+    {
+        if (!aggregates.TryGetValue(
+                definition,
+                out BuffAggregate aggregate))
+        {
+            aggregate = new BuffAggregate(definition);
+            aggregates.Add(definition, aggregate);
+        }
+
+        return aggregate;
+    }
+
+    private static SourceAggregate GetOrCreateSource(
+        Dictionary<string, SourceAggregate> sources,
+        ElementalHitReactionObservation observation)
+    {
+        string key = CreateSourceKey(observation);
+
+        if (!sources.TryGetValue(key, out SourceAggregate source))
+        {
+            source = new SourceAggregate(observation);
+            sources.Add(key, source);
+        }
+
+        source.MinimumResultOrdinal = Mathf.Min(
+            source.MinimumResultOrdinal,
+            observation.Diagnostics.ResultOrdinal);
+        source.MaximumResultOrdinal = Mathf.Max(
+            source.MaximumResultOrdinal,
+            observation.Diagnostics.ResultOrdinal);
+        return source;
+    }
+
+    private static string CreateSourceKey(
+        ElementalHitReactionObservation observation)
+    {
+        TowerDamageSourceIdentity damageSource =
+            observation.DamageSourceIdentity;
+        return string.Join(
+            "|",
+            observation.TriggeringTower != null
+                ? observation.TriggeringTower.GetInstanceID().ToString(
+                    CultureInfo.InvariantCulture)
+                : "0",
+            observation.TriggeringElementalUpgrade != null
+                ? observation.TriggeringElementalUpgrade.GetInstanceID()
+                    .ToString(CultureInfo.InvariantCulture)
+                : "0",
+            damageSource.SourceType.ToString(),
+            damageSource.EffectDefinition != null
+                ? damageSource.EffectDefinition.GetInstanceID().ToString(
+                    CultureInfo.InvariantCulture)
+                : "0",
+            damageSource.ActionOrdinal.ToString(CultureInfo.InvariantCulture),
+            observation.Diagnostics.Provenance.ToString(),
+            observation.Diagnostics.MemberIdentity.ToString(),
+            observation.Diagnostics.ResultRole.ToString());
+    }
+
+    private static string ResolveSourceElementRelation(
+        ElementalHitReactionObservation observation)
+    {
+        TowerUpgradeDefinition upgrade =
+            observation.TriggeringElementalUpgrade;
+
+        if (upgrade == null)
+        {
+            return "NoElementalUpgrade";
+        }
+
+        return observation.BuffDefinition != null &&
+               upgrade.ElementType == observation.BuffDefinition.ElementType
+            ? "MatchingElement"
+            : "OtherElement";
+    }
+
+    private static List<CombatBalanceElementalHitReactionSourceJson>
+        CreateSourceJson(Dictionary<string, SourceAggregate> sources)
+    {
+        List<string> keys = new List<string>(sources.Keys);
+        keys.Sort(StringComparer.Ordinal);
+        List<CombatBalanceElementalHitReactionSourceJson> records =
+            new List<CombatBalanceElementalHitReactionSourceJson>();
+
+        for (int i = 0; i < keys.Count; i++)
+        {
+            SourceAggregate source = sources[keys[i]];
+            TowerDefinition towerDefinition = source.SourceTower != null
+                ? source.SourceTower.TowerDefinition
+                : null;
+            TowerDamageSourceIdentity damageSource =
+                source.DamageSourceIdentity;
+            records.Add(
+                new CombatBalanceElementalHitReactionSourceJson
+                {
+                    sourceTowerInstanceId = source.SourceTower != null
+                        ? source.SourceTower.GetInstanceID()
+                        : 0,
+                    towerFamily = towerDefinition != null
+                        ? towerDefinition.TowerFamily.ToString()
+                        : string.Empty,
+                    triggeringElementalUpgradeName =
+                        source.TriggeringElementalUpgrade != null
+                            ? source.TriggeringElementalUpgrade.name
+                            : string.Empty,
+                    sourceElementRelation = source.SourceElementRelation,
+                    damageSourceType = damageSource.SourceType.ToString(),
+                    effectDefinitionName = damageSource.EffectDefinition != null
+                        ? damageSource.EffectDefinition.name
+                        : string.Empty,
+                    actionOrdinal = damageSource.ActionOrdinal,
+                    provenance = source.Diagnostics.Provenance.ToString(),
+                    memberIdentity =
+                        source.Diagnostics.MemberIdentity.ToString(),
+                    resultRole = source.Diagnostics.ResultRole.ToString(),
+                    minimumResultOrdinal = source.MinimumResultOrdinal,
+                    maximumResultOrdinal = source.MaximumResultOrdinal,
+                    counts = source.CreateJson()
+                });
+        }
+
+        return records;
+    }
+
+    private static string GetBuffSortKey(BuffDefinition definition)
+    {
+        return definition == null
+            ? string.Empty
+            : definition.ElementType + ":" + definition.name;
     }
 }
 #endif

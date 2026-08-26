@@ -1,10 +1,26 @@
 # Task006 - Drone Burst Elemental Opportunity Refactor
 
-Status: Implementation complete; Unity Play Mode validation pending
+Status: Completed on 2026-08-25; implementation accepted with one schema-16
+Play Mode smoke and an explicit waiver of the remaining standalone regression
+matrix, which is deferred to Task007 combined gameplay calibration
 
 Depends on: Completed Task005 Elemental Stack Contribution Damage Authority
 
 Blocks: Task007-Task016
+
+## Downstream Replacement Status
+
+Current effective downstream contract: Task007B Primary Elemental Opportunity
+Boundary Refactor.
+
+This document preserves the Task006 implementation and evidence that were true
+at its checkpoint. Completed Task007B supersedes only the permissions for Blast
+Rounds area targets, additional-Drone openers, and Final Dive direct/explosion
+results. The primary Drone Burst opener identity remains effective. Task007C's
+accepted implementation checkpoint does not alter this application topology:
+broader Tower-owned results may trigger an existing Electric/Wind Buff, but
+they still cannot create or stack Elemental state. Its remaining edge-
+transaction smoke is deferred to a later focused regression if needed.
 
 ## 1. Goal
 
@@ -154,3 +170,18 @@ path-scoped `git diff --check`.
 - Runtime and Editor builds pass with zero warnings and zero errors. Task007 may
   reopen this Task if broader Elemental fixtures expose a topology, attribution,
   or diagnostic defect.
+
+## 10. Completion And Regression Waiver
+
+- `Task006_ElectrifiedDrone_Lv3_BurstOpportunity_Schema16_01` confirmed the
+  Level 3 Electrified Drone Burst-opener opportunity boundary and schema-16
+  diagnostic shape in Unity Play Mode.
+- The remaining retarget, opener-miss, Blast Rounds, multiple-Drone, Final Dive,
+  and four-Element regression coverage was not represented as independently
+  completed Task006 evidence.
+- The user explicitly waived that remaining matrix as a standalone Task006
+  completion gate because Task007 immediately exercises and records the same
+  Elemental opportunity paths during balance calibration.
+- This waiver is not runtime proof. Task007 must reopen Task006 if its gameplay
+  or Recorder evidence exposes a Burst identity, eligibility, attribution,
+  recursion, or diagnostic-integrity defect.

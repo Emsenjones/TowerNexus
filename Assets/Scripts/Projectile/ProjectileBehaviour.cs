@@ -45,6 +45,12 @@ public class ProjectileBehaviour : MonoBehaviour
     private int sourceDroneInstanceId;
     private long droneBurstId;
     private bool isAdditionalDrone;
+    private bool isOpeningShotSlot;
+    private ElementalOpportunityProvenance elementalOpportunityProvenance;
+    private ElementalOpportunityMemberIdentity
+        elementalOpportunityMemberIdentity;
+    private int elementalResultOrdinal;
+    private bool hasConsumedElementalApplicationAuthorization;
     private float damageScale;
     private TowerDamageSourceIdentity damageSourceIdentity;
     private int remainingPiercingHitCount;
@@ -180,6 +186,13 @@ public class ProjectileBehaviour : MonoBehaviour
         sourceDroneInstanceId = runtimeOptions.SourceDroneInstanceId;
         droneBurstId = runtimeOptions.DroneBurstId;
         isAdditionalDrone = runtimeOptions.IsAdditionalDrone;
+        isOpeningShotSlot = runtimeOptions.IsOpeningShotSlot;
+        elementalOpportunityProvenance =
+            runtimeOptions.ElementalOpportunityProvenance;
+        elementalOpportunityMemberIdentity =
+            runtimeOptions.ElementalOpportunityMemberIdentity;
+        elementalResultOrdinal = runtimeOptions.ElementalResultOrdinal;
+        hasConsumedElementalApplicationAuthorization = false;
 
         startPosition = transform.position;
         piercedMonsters.Clear();
@@ -620,47 +633,53 @@ public class ProjectileBehaviour : MonoBehaviour
     private void ApplyDirectionProjectileImpact(MonsterBehaviour hitMonster)
     {
         Vector3 impactPosition = transform.position;
+        ElementalOpportunityDiagnosticContext directDiagnostics =
+            CreateDirectElementalOpportunityDiagnostics();
+        ElementalApplication.ObserveCandidate(
+            sourceTower,
+            hitMonster,
+            directDiagnostics);
+
+        if (directDiagnostics.TopologyAuthorized)
+        {
+            hasConsumedElementalApplicationAuthorization = true;
+        }
 
         if (!TryResolveDirectDamage(out TowerOwnedDamageResolution damageResolution))
         {
             return;
         }
 
-        hitMonster.TakeDamage(damageResolution.FinalDamage);
-        TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+        TowerOwnedHitTransaction.ApplyDamage(
+            hitMonster,
             damageResolution,
-            1);
-        bool directElementalOpportunity =
-            TryApplyElementalOpportunity(hitMonster, impactPosition);
+            impactPosition,
+            directDiagnostics,
+            directDiagnostics.TopologyAuthorized);
 #if UNITY_EDITOR
         PublishDroneBurstObservation(
             DroneBurstRuntimeObservationType.ProjectileDirectHit,
             count: 1);
-
-        if (directElementalOpportunity)
-        {
-            PublishDroneBurstObservation(
-                DroneBurstRuntimeObservationType.DirectElementalOpportunity,
-                count: 1);
-        }
 #endif
         RaiseImpact(hitMonster, impactPosition, damageResolution);
         ExecuteExplosiveArrowImpact(
             hitMonster,
-            impactPosition);
+            impactPosition,
+            directDiagnostics);
         ExecuteBlastRoundsImpact(impactPosition);
     }
 
     private void ExecuteExplosiveArrowImpact(
         MonsterBehaviour directTarget,
-        Vector3 impactPosition)
+        Vector3 impactPosition,
+        ElementalOpportunityDiagnosticContext directDiagnostics)
     {
         if (explosiveArrowEffect == null)
         {
             return;
         }
 
-        bool executed = EffectExecutor.ExecuteWithResolvedTargets(
+        EffectExecutor.ExecuteWithResolvedTargets(
             explosiveArrowEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -668,20 +687,16 @@ public class ProjectileBehaviour : MonoBehaviour
                 targetMonster: directTarget,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                allowsElementalApplication: false),
+                allowsElementalApplication: false,
+                elementalOpportunityDiagnostics:
+                    new ElementalOpportunityDiagnosticContext(
+                        ElementalOpportunityProvenance.ArcherExplosiveArrow,
+                        elementalOpportunityMemberIdentity,
+                        ElementalOpportunityResultRole.AreaResult,
+                        directDiagnostics.ResultOrdinal,
+                        topologyAuthorized: false,
+                        observeResolvedTargetsAsCandidates: true)),
             resolvedExplosiveArrowTargets);
-
-        if (!executed)
-        {
-            return;
-        }
-
-        for (int i = 0; i < resolvedExplosiveArrowTargets.Count; i++)
-        {
-            TryApplyElementalOpportunity(
-                resolvedExplosiveArrowTargets[i],
-                impactPosition);
-        }
     }
 
     private void ExecuteBlastRoundsImpact(Vector3 impactPosition)
@@ -691,7 +706,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        bool executed = EffectExecutor.ExecuteWithResolvedTargets(
+        EffectExecutor.ExecuteWithResolvedTargets(
             blastRoundsEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -699,32 +714,16 @@ public class ProjectileBehaviour : MonoBehaviour
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                // Elemental Buff actions stay gated here; Blast Rounds grants explicit opportunities below.
-                allowsElementalApplication: false),
+                allowsElementalApplication: false,
+                elementalOpportunityDiagnostics:
+                    new ElementalOpportunityDiagnosticContext(
+                        ElementalOpportunityProvenance.DroneBlastRounds,
+                        elementalOpportunityMemberIdentity,
+                        ElementalOpportunityResultRole.BlastArea,
+                        elementalResultOrdinal,
+                        topologyAuthorized: false,
+                        observeResolvedTargetsAsCandidates: true)),
             resolvedBlastRoundsTargets);
-
-        if (!executed)
-        {
-            return;
-        }
-
-        int elementalOpportunityCount = 0;
-
-        for (int i = 0; i < resolvedBlastRoundsTargets.Count; i++)
-        {
-            if (TryApplyElementalOpportunity(
-                    resolvedBlastRoundsTargets[i],
-                    impactPosition))
-            {
-                elementalOpportunityCount++;
-            }
-        }
-
-#if UNITY_EDITOR
-        PublishDroneBurstObservation(
-            DroneBurstRuntimeObservationType.BlastTargetElementalOpportunity,
-            elementalOpportunityCount);
-#endif
     }
 
     private void FinishDirectionProjectileAfterImpact()
@@ -752,6 +751,22 @@ public class ProjectileBehaviour : MonoBehaviour
             hitMonster = resolvedMonster;
         }
 
+        ElementalOpportunityDiagnosticContext directDiagnostics = default;
+
+        if (hasResolvedMonster)
+        {
+            directDiagnostics = CreateDirectElementalOpportunityDiagnostics();
+            ElementalApplication.ObserveCandidate(
+                sourceTower,
+                hitMonster,
+                directDiagnostics);
+
+            if (directDiagnostics.TopologyAuthorized)
+            {
+                hasConsumedElementalApplicationAuthorization = true;
+            }
+        }
+
         if (!TryResolveDirectDamage(out TowerOwnedDamageResolution damageResolution))
         {
             DestroyProjectile();
@@ -766,11 +781,12 @@ public class ProjectileBehaviour : MonoBehaviour
         if (hasResolvedMonster)
         {
             bounceHitHistory.Add(hitMonster);
-            hitMonster.TakeDamage(damageResolution.FinalDamage);
-            TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+            TowerOwnedHitTransaction.ApplyDamage(
+                hitMonster,
                 damageResolution,
-                1);
-            TryApplyElementalOpportunity(hitMonster, impactPosition);
+                impactPosition,
+                directDiagnostics,
+                directDiagnostics.TopologyAuthorized);
         }
 
         RaiseImpact(hitMonster, impactPosition, damageResolution);
@@ -804,7 +820,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return;
         }
 
-        bool executed = EffectExecutor.ExecuteWithResolvedTargets(
+        EffectExecutor.ExecuteWithResolvedTargets(
             explosiveShellEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -812,21 +828,16 @@ public class ProjectileBehaviour : MonoBehaviour
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                // Elemental Buff actions stay gated here; non-elemental authored Buff actions may still execute.
-                allowsElementalApplication: false),
+                allowsElementalApplication: false,
+                elementalOpportunityDiagnostics:
+                    new ElementalOpportunityDiagnosticContext(
+                        ElementalOpportunityProvenance.CannonExplosiveShell,
+                        elementalOpportunityMemberIdentity,
+                        ElementalOpportunityResultRole.AreaResult,
+                        elementalResultOrdinal,
+                        topologyAuthorized: false,
+                        observeResolvedTargetsAsCandidates: true)),
             resolvedExplosiveShellTargets);
-
-        if (!executed)
-        {
-            return;
-        }
-
-        for (int i = 0; i < resolvedExplosiveShellTargets.Count; i++)
-        {
-            TryApplyElementalOpportunity(
-                resolvedExplosiveShellTargets[i],
-                impactPosition);
-        }
     }
 
     private bool TryReleaseBounceChild(Vector3 impactPosition)
@@ -985,7 +996,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private ProjectileRuntimeOptions CreateBounceChildRuntimeOptions()
     {
         return new ProjectileRuntimeOptions(
-            allowsElementalApplication: allowsElementalApplication,
+            allowsElementalApplication: false,
             canPierce: false,
             maxPierceHitCount: 1,
             isBounceChild: true,
@@ -995,23 +1006,36 @@ public class ProjectileBehaviour : MonoBehaviour
             remainingBounceCount: remainingBounceCount - 1,
             bounceArcHeight: bounceArcHeight,
             bounceTargetSelectionType: bounceTargetSelectionType,
-            bounceDamageScale: bounceDamageScale);
+            bounceDamageScale: bounceDamageScale,
+            elementalOpportunityProvenance:
+                ElementalOpportunityProvenance.CannonShell,
+            elementalOpportunityMemberIdentity:
+                elementalOpportunityMemberIdentity,
+            elementalResultOrdinal: elementalResultOrdinal + 1);
     }
 
-    private bool TryApplyElementalOpportunity(
-        MonsterBehaviour target,
-        Vector3 applicationPosition)
+    private ElementalOpportunityDiagnosticContext
+        CreateDirectElementalOpportunityDiagnostics()
     {
-        if (!allowsElementalApplication ||
-            !EffectTargetResolver.IsValidMonsterTarget(target))
-        {
-            return false;
-        }
+        bool isDirectionContinuation =
+            flightType == ProjectileFlightType.Direction &&
+            piercedMonsters.Count > 1;
+        ElementalOpportunityResultRole resultRole = isBounceChild
+            ? ElementalOpportunityResultRole.BounceChild
+            : isDirectionContinuation
+                ? ElementalOpportunityResultRole.PiercingContinuation
+                : ElementalOpportunityResultRole.InitialDirect;
+        bool topologyAuthorized = allowsElementalApplication &&
+                                  !hasConsumedElementalApplicationAuthorization &&
+                                  !isBounceChild &&
+                                  !isDirectionContinuation;
 
-        return ElementalApplication.TryApplyFromTowerAttack(
-            sourceTower,
-            target,
-            applicationPosition);
+        return new ElementalOpportunityDiagnosticContext(
+            elementalOpportunityProvenance,
+            elementalOpportunityMemberIdentity,
+            resultRole,
+            elementalResultOrdinal + Mathf.Max(0, piercedMonsters.Count - 1),
+            topologyAuthorized);
     }
 
 #if UNITY_EDITOR
@@ -1031,6 +1055,7 @@ public class ProjectileBehaviour : MonoBehaviour
                 sourceDroneInstanceId,
                 isAdditionalDrone,
                 droneBurstId,
+                isOpeningShotSlot,
                 allowsElementalApplication,
                 count));
     }

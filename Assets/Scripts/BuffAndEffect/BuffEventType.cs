@@ -5,5 +5,6 @@ public enum BuffEventType
     Overload = 2,
     Applied = 3,
     EnteredProtection = 4,
-    Removed = 5
+    Removed = 5,
+    TowerHitReceived = 6
 }

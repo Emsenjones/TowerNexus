@@ -46,6 +46,7 @@ public class MagicOrbBehaviour : MonoBehaviour
     private float angleOffset;
     private float damageScale;
     private TowerDamageSourceIdentity damageSourceIdentity;
+    private int contactResultOrdinal;
     private bool isInitialized;
     private bool hasEnded;
 
@@ -84,6 +85,7 @@ public class MagicOrbBehaviour : MonoBehaviour
         damageScale = initializedDamageScale;
         damageSourceIdentity = initializedDamageSourceIdentity;
         monsterHitCooldownEnds.Clear();
+        contactResultOrdinal = 0;
         hasEnded = false;
         isInitialized = ownerGroup != null && memberSlot >= 0;
 
@@ -117,6 +119,7 @@ public class MagicOrbBehaviour : MonoBehaviour
         damageScale = initializedDamageScale;
         damageSourceIdentity = initializedDamageSourceIdentity;
         monsterHitCooldownEnds.Clear();
+        contactResultOrdinal = 0;
         hasEnded = false;
         isInitialized = ownerGroup != null && memberSlot >= 0;
     }
@@ -151,6 +154,11 @@ public class MagicOrbBehaviour : MonoBehaviour
     internal void RecordContact(MonsterBehaviour monster, float cooldownEndTime)
     {
         monsterHitCooldownEnds[monster] = cooldownEndTime;
+    }
+
+    internal int ConsumeContactResultOrdinal()
+    {
+        return contactResultOrdinal++;
     }
 
     internal void SetGroupPosition(Vector3 worldPosition)
@@ -516,17 +524,33 @@ internal sealed class MagicOrbGroupRuntime
             return false;
         }
 
+        bool isPrimaryMember = member.MemberSlot == 0;
+        ElementalOpportunityDiagnosticContext contactDiagnostics =
+            new ElementalOpportunityDiagnosticContext(
+                ElementalOpportunityProvenance.MagicOrb,
+                isPrimaryMember
+                    ? ElementalOpportunityMemberIdentity.Primary
+                    : ElementalOpportunityMemberIdentity.Additional,
+                ElementalOpportunityResultRole.InitialDirect,
+                member.ConsumeContactResultOrdinal(),
+                topologyAuthorized: isPrimaryMember);
+        ElementalApplication.ObserveCandidate(
+            sourceTower,
+            monster,
+            contactDiagnostics);
+
         if (!member.TryResolveDamage(
                 out TowerOwnedDamageResolution damageResolution))
         {
             return false;
         }
 
-        monster.TakeDamage(damageResolution.FinalDamage);
-        TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+        TowerOwnedHitTransaction.ApplyDamage(
+            monster,
             damageResolution,
-            1);
-        ElementalApplication.TryApplyFromTowerAttack(sourceTower, monster, hitPosition);
+            hitPosition,
+            contactDiagnostics,
+            allowsElementalApplication: isPrimaryMember);
         member.RecordContact(monster, Time.time + sameTargetHitCooldown);
 
         return true;
@@ -575,7 +599,7 @@ internal sealed class MagicOrbGroupRuntime
                 continue;
             }
 
-            bool executed = EffectExecutor.ExecuteWithResolvedTargets(
+            EffectExecutor.ExecuteWithResolvedTargets(
                 arcaneDetonationEffect,
                 new EffectTriggerContext(
                     sourceTower: sourceTower,
@@ -583,28 +607,18 @@ internal sealed class MagicOrbGroupRuntime
                     targetMonster: null,
                     hasTriggerPosition: true,
                     triggerPosition: detonationPosition,
-                    allowsElementalApplication: false),
+                    allowsElementalApplication: false,
+                    elementalOpportunityDiagnostics:
+                        new ElementalOpportunityDiagnosticContext(
+                            ElementalOpportunityProvenance.MagicArcaneDetonation,
+                            i == 0
+                                ? ElementalOpportunityMemberIdentity.Primary
+                                : ElementalOpportunityMemberIdentity.Additional,
+                            ElementalOpportunityResultRole.CompletionResult,
+                            i,
+                            topologyAuthorized: false,
+                            observeResolvedTargetsAsCandidates: true)),
                 resolvedArcaneDetonationTargets);
-
-            if (!executed)
-            {
-                continue;
-            }
-
-            for (int targetIndex = 0;
-                 targetIndex < resolvedArcaneDetonationTargets.Count;
-                 targetIndex++)
-            {
-                MonsterBehaviour target = resolvedArcaneDetonationTargets[targetIndex];
-
-                if (EffectTargetResolver.IsValidMonsterTarget(target))
-                {
-                    ElementalApplication.TryApplyFromTowerAttack(
-                        sourceTower,
-                        target,
-                        detonationPosition);
-                }
-            }
         }
     }
 

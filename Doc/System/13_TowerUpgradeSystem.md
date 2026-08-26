@@ -210,7 +210,7 @@ Arcane Recovery is the Magic Attack Cycle Duration Basic Upgrade. Magic Orb Maxi
 
 Expanded Patrol is the Drone Attack Range Basic Upgrade. Drone Battery Duration remains static entity authoring and is not resolved from Tower Upgrade state.
 
-High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. Because Damage Bonus is part of Current Resolved BasicDamage, it increases Drone direct damage, Tower-owned Behaviour damage, and approved contributor-owned StackApplied TowerScaled damage. It never increases shared-state Buff-lifecycle FixedDamage.
+High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. Because Damage Bonus is part of Current Resolved BasicDamage, it increases Drone direct and Tower-owned Behaviour damage. It never increases shared-state Buff-lifecycle, Overload, or Elemental hit-reaction FixedDamage.
 
 Live propagation rules are owned by Tower Runtime Combat System. Basic Layer does not execute Effects or Buffs.
 
@@ -286,6 +286,7 @@ Each Elemental TowerUpgradeDefinition declares:
 - Required Tower Level
 - Elemental type
 - One Elemental apply Effect
+- One positive authored stack contribution, shown only for Elemental content
 
 One Tower may own at most one Elemental Layer.
 
@@ -293,33 +294,38 @@ Elemental state is read at each explicitly authorized unresolved attack boundary
 
 An Elemental opportunity:
 
-- Requires an explicitly reviewed primary attack or Behaviour boundary.
+- Requires the baseline primary attack boundary authorized by Tower Runtime
+  Combat.
 - Is not inferred from generic Projectile, Effect, or positive-damage identity.
 - Is independent from damage amount or damage-operation success while the Monster remains valid.
 - Does not automatically propagate through reaction damage, Buff ticks, WindVortex ticks, or overload damage.
+- Is never granted by a Behaviour-added or Behaviour-extended result.
 
-Tower-specific Elemental Upgrade definitions may share one Elemental BuffDefinition. After application, Buff duration, stacking, cooldown, Protection, overload, UI, and persistent presentation no longer vary by source Tower. Approved immediate StackApplied damage remains contributor-owned and may read the exact successful source Tower through TowerScaled resolution without creating source-specific Buff state.
+Tower-specific Elemental Upgrade definitions may share one Elemental BuffDefinition. The concrete Upgrade supplies the positive stack-unit request for each explicitly authorized application; this value is authored content and is not inferred from TowerFamily, attack speed, BasicDamage, source count, placement, or Buff state. Basic and Behaviour Upgrades do not participate in this authoring surface.
+
+After application, Buff duration, Maximum Stacks, source cooldown, Protection, overload, UI, persistent presentation, and Electric/Wind normal hit-reaction values no longer vary by source Tower. `ElementalStackContribution` controls only the explicit stack units requested by an authorized baseline-primary application and therefore the opportunity to reach Overload. It never scales or repeats normal Elemental hit reactions.
+
+Normal Elemental value is authored once by the shared Buff and Effect content,
+not as a Tower-family output multiplier. Cross-family calibration may revise an
+Elemental Upgrade's positive stack contribution when one family's reviewed
+application cadence produces an Overload-frequency outlier, but contribution
+must not be used to scale periodic, control, or hit-reaction potency. Matching
+coverage is expected to increase Overload reliability while isolated matching
+sources retain their ordinary shared-Buff value.
 
 The first complete content pass contains four Elemental types for each of four TowerFamilies, producing sixteen Elemental TowerUpgradeDefinitions.
 
-## 11.1 Behaviour Elemental Opportunities
+## 11.1 Behaviour And Elemental Separation
 
-| Package | Opportunity Boundary |
-|---|---|
-| Piercing Arrow | Each new Arrow Monster Hit |
-| Scatter Arrow | Each independent Arrow Monster Hit |
-| Explosive Arrow | Direct result and every separately resolved explosion target independently; a surviving direct target may receive both |
-| Explosive Shell | Direct target and every explosion target independently |
-| Multi Shells | Each initial Shell independently |
-| Bouncing Shell | Each bounce child's direct and inherited explosion results |
-| Multi Orbs | Each Orb contact |
-| Arcane Detonation | Every Monster resolved by each normal-completion detonation |
-| Arcane Field | Every valid Monster on each field tick at full first-version eligibility |
-| Multi Drones | Each Drone instance's Burst-opening Projectile independently; later shots in that Burst are ineligible |
-| Blast Rounds | Only an eligible Burst opener's direct target and every explosion target independently |
-| Final Dive | Optional direct target and every explosion target independently |
+Behaviour packages may add members, continuation, area results, persistent ticks,
+or completion results, but those additions do not multiply ordinary Elemental
+applications. The authoritative per-family primary boundary belongs to Tower
+Runtime Combat System. This System owns only the Elemental Upgrade's apply Effect
+and positive contribution authoring; it does not derive opportunity eligibility
+from Behaviour package presence.
 
-Buff System remains the authority for whether each attempt applies, refreshes, stacks, overloads, or is blocked.
+Buff System remains the authority for whether a dispatched request applies,
+refreshes, stacks, overloads, or is blocked.
 
 ---
 

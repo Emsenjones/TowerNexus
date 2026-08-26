@@ -66,6 +66,93 @@ public class EffectDefinition : ScriptableObject
             new HashSet<EffectDefinition>());
     }
 
+    public bool IsValidElementalHitReaction(ElementType elementType)
+    {
+        if (!IsValidForDamageMode(EffectDamageMode.FixedBuff))
+        {
+            return false;
+        }
+
+        switch (elementType)
+        {
+            case ElementType.Electric:
+                return IsApprovedElectricHitReaction();
+            case ElementType.Wind:
+                return IsApprovedWindHitReaction();
+            default:
+                return false;
+        }
+    }
+
+    public bool TryGetElementalHitReactionFixedDamage(
+        ElementType elementType,
+        out int fixedDamage)
+    {
+        return TryGetElementalHitReactionDamageSignature(
+            elementType,
+            out _,
+            out _,
+            out fixedDamage);
+    }
+
+    public bool TryGetElementalHitReactionDamageSignature(
+        ElementType elementType,
+        out EffectDefinition damageEffectDefinition,
+        out int actionOrdinal,
+        out int fixedDamage)
+    {
+        damageEffectDefinition = null;
+        actionOrdinal = -1;
+        fixedDamage = 0;
+
+        if (!IsValidElementalHitReaction(elementType))
+        {
+            return false;
+        }
+
+        damageEffectDefinition = elementType == ElementType.Electric
+            ? this
+            : actions[0].MultiTargetEffectDefinition;
+        EffectAction damageAction = damageEffectDefinition.Actions[0];
+        actionOrdinal = 0;
+        fixedDamage = damageAction.FixedDamage;
+        return fixedDamage > 0;
+    }
+
+    private bool IsApprovedElectricHitReaction()
+    {
+        return radius <= 0f &&
+               actions != null &&
+               actions.Count == 1 &&
+               actions[0] != null &&
+               actions[0].ActionType == EffectActionType.DealDamage &&
+               actions[0].DamageMode == EffectDamageMode.FixedBuff;
+    }
+
+    private bool IsApprovedWindHitReaction()
+    {
+        if (radius <= 0f ||
+            actions == null ||
+            actions.Count != 1 ||
+            actions[0] == null ||
+            actions[0].ActionType != EffectActionType.ExecuteMultiTargetEffect ||
+            actions[0].AuthoredTargetCount != 1 ||
+            !actions[0].ExcludeTriggerContextTarget)
+        {
+            return false;
+        }
+
+        EffectDefinition child = actions[0].MultiTargetEffectDefinition;
+
+        return child != null &&
+               child.Radius <= 0f &&
+               child.Actions != null &&
+               child.Actions.Count == 1 &&
+               child.Actions[0] != null &&
+               child.Actions[0].ActionType == EffectActionType.DealDamage &&
+               child.Actions[0].DamageMode == EffectDamageMode.FixedBuff;
+    }
+
     private bool ContainsDealDamageAction(
         HashSet<EffectDefinition> visitedDefinitions)
     {

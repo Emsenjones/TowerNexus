@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_ElectrifiedBuffApplyStack
+  m_Name: Config_EffectDefini_TowerHitReceived_ElectrifiedBuffOnApply
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Deal damage on Stacks
+  displayName: Electrified Tower Hit Reaction
   radius: 0
   executionVfxPrefab: {fileID: 8377611048391574826, guid: a6eee2eb3b90641f09ae71ee485f849a, type: 3}
   actions:
   - actionType: 0
-    damageMode: 1
-    damageScale: 0.2
-    fixedDamage: 0
+    damageMode: 2
+    damageScale: 0
+    fixedDamage: 14
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0

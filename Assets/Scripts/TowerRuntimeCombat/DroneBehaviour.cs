@@ -25,11 +25,7 @@ public enum DroneBurstRuntimeObservationType
     BurstStarted = 0,
     ProjectileReleased = 1,
     ProjectileDirectHit = 2,
-    ProjectileEndedWithoutImpact = 3,
-    DirectElementalOpportunity = 4,
-    BlastTargetElementalOpportunity = 5,
-    FinalDiveDirectElementalOpportunity = 6,
-    FinalDiveBlastTargetElementalOpportunity = 7
+    ProjectileEndedWithoutImpact = 3
 }
 
 public readonly struct DroneBurstRuntimeObservation
@@ -40,7 +36,8 @@ public readonly struct DroneBurstRuntimeObservation
         int sourceDroneInstanceId,
         bool isAdditionalDrone,
         long burstId,
-        bool isBurstOpenerEligible,
+        bool isOpeningShotSlot,
+        bool allowsElementalApplication,
         int count = 1)
     {
         ObservationType = observationType;
@@ -48,7 +45,8 @@ public readonly struct DroneBurstRuntimeObservation
         SourceDroneInstanceId = sourceDroneInstanceId;
         IsAdditionalDrone = isAdditionalDrone;
         BurstId = burstId;
-        IsBurstOpenerEligible = isBurstOpenerEligible;
+        IsOpeningShotSlot = isOpeningShotSlot;
+        AllowsElementalApplication = allowsElementalApplication;
         Count = Mathf.Max(0, count);
     }
 
@@ -57,7 +55,8 @@ public readonly struct DroneBurstRuntimeObservation
     public int SourceDroneInstanceId { get; }
     public bool IsAdditionalDrone { get; }
     public long BurstId { get; }
-    public bool IsBurstOpenerEligible { get; }
+    public bool IsOpeningShotSlot { get; }
+    public bool AllowsElementalApplication { get; }
     public int Count { get; }
 }
 
@@ -602,31 +601,33 @@ public class DroneBehaviour : MonoBehaviour
 
         if (TryResolveFinalDiveDirectTarget(impactPosition, out MonsterBehaviour directTarget))
         {
-            directTarget.TakeDamage(damageResolution.FinalDamage);
-            TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+            ElementalApplication.ObserveCandidate(
+                sourceTower,
+                directTarget,
+                new ElementalOpportunityDiagnosticContext(
+                    ElementalOpportunityProvenance.DroneFinalDive,
+                    IsAdditionalAttackEntity
+                        ? ElementalOpportunityMemberIdentity.Additional
+                        : ElementalOpportunityMemberIdentity.Primary,
+                    ElementalOpportunityResultRole.FinalDiveDirect,
+                    0,
+                    topologyAuthorized: false));
+            TowerOwnedHitTransaction.ApplyDamage(
+                directTarget,
                 damageResolution,
-                1);
-
-            if (EffectTargetResolver.IsValidMonsterTarget(directTarget))
-            {
-                bool submittedElementalApplication =
-                    ElementalApplication.TryApplyFromTowerAttack(
-                        sourceTower,
-                        directTarget,
-                        impactPosition);
-#if UNITY_EDITOR
-                if (submittedElementalApplication)
-                {
-                    PublishBurstObservation(
-                        DroneBurstRuntimeObservationType.FinalDiveDirectElementalOpportunity,
-                        burstId: 0,
-                        isBurstOpenerEligible: false);
-                }
-#endif
-            }
+                impactPosition,
+                new ElementalOpportunityDiagnosticContext(
+                    ElementalOpportunityProvenance.DroneFinalDive,
+                    IsAdditionalAttackEntity
+                        ? ElementalOpportunityMemberIdentity.Additional
+                        : ElementalOpportunityMemberIdentity.Primary,
+                    ElementalOpportunityResultRole.FinalDiveDirect,
+                    0,
+                    topologyAuthorized: false),
+                allowsElementalApplication: false);
         }
 
-        bool executedExplosion = EffectExecutor.ExecuteWithResolvedTargets(
+        EffectExecutor.ExecuteWithResolvedTargets(
             finalDiveExplosionEffect,
             new EffectTriggerContext(
                 sourceTower: sourceTower,
@@ -634,36 +635,18 @@ public class DroneBehaviour : MonoBehaviour
                 targetMonster: null,
                 hasTriggerPosition: true,
                 triggerPosition: impactPosition,
-                allowsElementalApplication: false),
+                allowsElementalApplication: false,
+                elementalOpportunityDiagnostics:
+                    new ElementalOpportunityDiagnosticContext(
+                        ElementalOpportunityProvenance.DroneFinalDive,
+                        IsAdditionalAttackEntity
+                            ? ElementalOpportunityMemberIdentity.Additional
+                            : ElementalOpportunityMemberIdentity.Primary,
+                        ElementalOpportunityResultRole.FinalDiveExplosion,
+                        0,
+                        topologyAuthorized: false,
+                        observeResolvedTargetsAsCandidates: true)),
             resolvedFinalDiveExplosionTargets);
-
-        for (int i = 0;
-             executedExplosion && i < resolvedFinalDiveExplosionTargets.Count;
-             i++)
-        {
-            MonsterBehaviour explosionTarget =
-                resolvedFinalDiveExplosionTargets[i];
-
-            if (!EffectTargetResolver.IsValidMonsterTarget(explosionTarget))
-            {
-                continue;
-            }
-
-            bool submittedElementalApplication =
-                ElementalApplication.TryApplyFromTowerAttack(
-                    sourceTower,
-                    explosionTarget,
-                    impactPosition);
-#if UNITY_EDITOR
-            if (submittedElementalApplication)
-            {
-                PublishBurstObservation(
-                    DroneBurstRuntimeObservationType.FinalDiveBlastTargetElementalOpportunity,
-                    burstId: 0,
-                    isBurstOpenerEligible: false);
-            }
-#endif
-        }
 
         Despawn();
     }
@@ -769,7 +752,8 @@ public class DroneBehaviour : MonoBehaviour
             PublishBurstObservation(
                 DroneBurstRuntimeObservationType.BurstStarted,
                 currentBurstId,
-                isBurstOpenerEligible: false);
+                isOpeningShotSlot: false,
+                allowsElementalApplication: false);
 #endif
         }
 
@@ -780,7 +764,14 @@ public class DroneBehaviour : MonoBehaviour
     {
         bool isBurstOpener = currentBurstId > 0 &&
                              burstShotsRemaining == Mathf.Max(1, burstCount);
-        FireProjectile(currentTarget, currentBurstId, isBurstOpener);
+        int shotOrdinal = Mathf.Max(
+            0,
+            Mathf.Max(1, burstCount) - burstShotsRemaining);
+        FireProjectile(
+            currentTarget,
+            currentBurstId,
+            isBurstOpener,
+            shotOrdinal);
         burstShotsRemaining--;
 
         if (burstShotsRemaining > 0)
@@ -805,7 +796,8 @@ public class DroneBehaviour : MonoBehaviour
     private void FireProjectile(
         MonsterBehaviour target,
         long burstId,
-        bool isBurstOpener)
+        bool isBurstOpener,
+        int shotOrdinal)
     {
         if (!IsValidTargetInRange(target))
         {
@@ -818,6 +810,8 @@ public class DroneBehaviour : MonoBehaviour
             projectilePrefab,
             spawnAnchor.position,
             Quaternion.identity);
+        bool allowsElementalApplication =
+            isBurstOpener && !IsAdditionalAttackEntity;
         projectileBehaviour.Initialize(
             sourceTower,
             monsterManager,
@@ -828,14 +822,23 @@ public class DroneBehaviour : MonoBehaviour
             damageSourceIdentity,
             flightType: ProjectileFlightType.Direction,
             runtimeOptions: new ProjectileRuntimeOptions(
-                allowsElementalApplication: isBurstOpener,
+                allowsElementalApplication: allowsElementalApplication,
                 canPierce: false,
                 maxPierceHitCount: 1,
                 blastRoundsSourceUpgrade: blastRoundsSourceUpgrade,
                 blastRoundsEffect: blastRoundsEffect,
                 sourceDroneInstanceId: GetInstanceID(),
                 droneBurstId: burstId,
-                isAdditionalDrone: IsAdditionalAttackEntity)
+                isAdditionalDrone: IsAdditionalAttackEntity,
+                isOpeningShotSlot: isBurstOpener,
+                elementalOpportunityProvenance:
+                    isBurstOpener
+                        ? ElementalOpportunityProvenance.DroneOpeningProjectile
+                        : ElementalOpportunityProvenance.DroneLaterProjectile,
+                elementalOpportunityMemberIdentity: IsAdditionalAttackEntity
+                    ? ElementalOpportunityMemberIdentity.Additional
+                    : ElementalOpportunityMemberIdentity.Primary,
+                elementalResultOrdinal: shotOrdinal)
         );
 
         if (!projectileBehaviour.IsInitialized)
@@ -847,7 +850,8 @@ public class DroneBehaviour : MonoBehaviour
         PublishBurstObservation(
             DroneBurstRuntimeObservationType.ProjectileReleased,
             burstId,
-            isBurstOpener);
+            isBurstOpener,
+            allowsElementalApplication);
 #endif
         OnProjectileReleased?.Invoke(projectileBehaviour);
         PlayAttackReleaseVfx(spawnAnchor, targetPosition);
@@ -857,7 +861,8 @@ public class DroneBehaviour : MonoBehaviour
     private void PublishBurstObservation(
         DroneBurstRuntimeObservationType observationType,
         long burstId,
-        bool isBurstOpenerEligible,
+        bool isOpeningShotSlot,
+        bool allowsElementalApplication,
         int count = 1)
     {
         DroneBurstRuntimeDiagnostics.Publish(
@@ -867,7 +872,8 @@ public class DroneBehaviour : MonoBehaviour
                 GetInstanceID(),
                 IsAdditionalAttackEntity,
                 burstId,
-                isBurstOpenerEligible,
+                isOpeningShotSlot,
+                allowsElementalApplication,
                 count));
     }
 #endif

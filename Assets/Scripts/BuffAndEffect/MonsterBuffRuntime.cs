@@ -10,10 +10,14 @@ public class MonsterBuffRuntime
     private readonly HashSet<MonsterBuffInstance> removalInProgress = new HashSet<MonsterBuffInstance>();
     private readonly List<BuffRuntimeObservation> pendingObservations =
         new List<BuffRuntimeObservation>();
+    private readonly List<ElementalHitReactionObservation>
+        pendingElementalHitReactionObservations =
+            new List<ElementalHitReactionObservation>();
 
     private int stateMutationDepth;
     private bool stateRefreshPending;
     private bool isPublishingObservations;
+    private int nextStackingCycleIdentity = 1;
 
     public MonsterBuffRuntime(MonsterBehaviour owner)
     {
@@ -22,6 +26,8 @@ public class MonsterBuffRuntime
 
     public event Action OnStateChanged;
     public event Action<BuffRuntimeObservation> OnRuntimeObserved;
+    public event Action<ElementalHitReactionObservation>
+        OnElementalHitReactionObserved;
 
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveSnapshots => activeSnapshots;
 
@@ -32,9 +38,19 @@ public class MonsterBuffRuntime
 
     public BuffApplyOutcome ApplyBuffWithOutcome(BuffApplyRequest request)
     {
+        return ApplyBuffWithOutcome(request, deferOverload: false);
+    }
+
+    internal BuffApplyOutcome ApplyBuffWithOutcome(
+        BuffApplyRequest request,
+        bool deferOverload)
+    {
         BuffDefinition buffDefinition = request.BuffDefinition;
 
-        if (owner == null || buffDefinition == null || !buffDefinition.IsValid())
+        if (owner == null ||
+            buffDefinition == null ||
+            !buffDefinition.IsValid() ||
+            (buffDefinition.UsesStacks && request.RequestedStackUnits <= 0))
         {
             QueueObservation(BuffRuntimeObservation.CreateApplicationAttempt(
                 request,
@@ -46,12 +62,22 @@ public class MonsterBuffRuntime
                 false,
                 0,
                 BuffRuntimePhase.Stacking,
-                false));
+                false,
+                0,
+                0,
+                0));
             if (stateMutationDepth == 0)
             {
                 PublishPendingObservations();
             }
-            return new BuffApplyOutcome(BuffApplyResult.Invalid, null, false, false);
+            return new BuffApplyOutcome(
+                BuffApplyResult.Invalid,
+                null,
+                false,
+                false,
+                0,
+                0,
+                0);
         }
 
         BeginStateMutation();
@@ -62,9 +88,22 @@ public class MonsterBuffRuntime
 
             if (existingInstance == null)
             {
-                MonsterBuffInstance buffInstance = new MonsterBuffInstance(request, owner);
+                MonsterBuffInstance buffInstance = new MonsterBuffInstance(
+                    request,
+                    owner,
+                    nextStackingCycleIdentity++);
                 buffInstances.Add(buffInstance);
                 QueueStateRefresh();
+                int initialEligibleRequestedStackUnits = buffDefinition.UsesStacks
+                    ? request.RequestedStackUnits
+                    : 0;
+                int initialAppliedStackUnits = buffDefinition.UsesStacks
+                    ? buffInstance.StackCount
+                    : 0;
+                int initialDiscardedStackUnits =
+                    initialEligibleRequestedStackUnits - initialAppliedStackUnits;
+                bool initiallyReachedMaxStacks = buffDefinition.UsesStacks &&
+                    buffInstance.StackCount >= buffDefinition.MaximumStacks;
                 QueueObservation(BuffRuntimeObservation.CreateApplicationAttempt(
                     request,
                     owner,
@@ -75,9 +114,33 @@ public class MonsterBuffRuntime
                     true,
                     buffInstance.StackCount,
                     buffInstance.Phase,
-                    false));
+                    initiallyReachedMaxStacks,
+                    initialEligibleRequestedStackUnits,
+                    initialAppliedStackUnits,
+                    initialDiscardedStackUnits));
                 ExecuteLifecycleEffect(buffInstance, BuffEventType.Applied);
-                return new BuffApplyOutcome(BuffApplyResult.Applied, buffInstance, false, false);
+
+                PendingBuffOverload initialPendingOverload = initiallyReachedMaxStacks
+                    ? CreatePendingOverload(
+                        request,
+                        buffInstance,
+                        wasExistingBuff: false)
+                    : null;
+
+                if (!deferOverload && initialPendingOverload != null)
+                {
+                    FinalizePendingOverload(initialPendingOverload);
+                }
+
+                return new BuffApplyOutcome(
+                    BuffApplyResult.Applied,
+                    buffInstance,
+                    false,
+                    initiallyReachedMaxStacks,
+                    initialEligibleRequestedStackUnits,
+                    initialAppliedStackUnits,
+                    initialDiscardedStackUnits,
+                    initialPendingOverload);
             }
 
             if (removalInProgress.Contains(existingInstance))
@@ -88,13 +151,27 @@ public class MonsterBuffRuntime
                     BuffApplyResult.Invalid,
                     existingInstance.StackCount,
                     existingInstance.Phase,
-                    false);
-                return new BuffApplyOutcome(BuffApplyResult.Invalid, existingInstance, true, false);
+                    false,
+                    0,
+                    0,
+                    0);
+                return new BuffApplyOutcome(
+                    BuffApplyResult.Invalid,
+                    existingInstance,
+                    true,
+                    false,
+                    0,
+                    0,
+                    0);
             }
 
             int previousStackCount = existingInstance.StackCount;
             BuffRuntimePhase previousPhase = existingInstance.Phase;
-            BuffApplyResult result = existingInstance.TryReapply(request);
+            BuffApplyResult result = existingInstance.TryReapply(
+                request,
+                out int eligibleRequestedStackUnits,
+                out int appliedStackUnits,
+                out int discardedStackUnits);
 
             if (!IsSuccessfulApplyResult(result))
             {
@@ -104,8 +181,18 @@ public class MonsterBuffRuntime
                     result,
                     previousStackCount,
                     previousPhase,
-                    false);
-                return new BuffApplyOutcome(result, existingInstance, true, false);
+                    false,
+                    0,
+                    0,
+                    0);
+                return new BuffApplyOutcome(
+                    result,
+                    existingInstance,
+                    true,
+                    false,
+                    0,
+                    0,
+                    0);
             }
 
             QueueStateRefresh();
@@ -120,31 +207,37 @@ public class MonsterBuffRuntime
                 result,
                 previousStackCount,
                 previousPhase,
-                reachedMaxStacks);
+                reachedMaxStacks,
+                eligibleRequestedStackUnits,
+                appliedStackUnits,
+                discardedStackUnits);
 
-            if (result == BuffApplyResult.Stacked)
+            if (result == BuffApplyResult.Stacked && appliedStackUnits > 0)
             {
                 ExecuteLifecycleEffect(existingInstance, BuffEventType.StackApplied);
             }
 
-            if (reachedMaxStacks && IsActive(existingInstance))
-            {
-                ExecuteLifecycleEffect(existingInstance, BuffEventType.Overload);
+            PendingBuffOverload reapplyPendingOverload = reachedMaxStacks
+                ? CreatePendingOverload(
+                    request,
+                    existingInstance,
+                    wasExistingBuff: true)
+                : null;
 
-                if (IsActive(existingInstance) && existingInstance.TryEnterProtectionPhase())
-                {
-                    QueueStateRefresh();
-                    ExecuteLifecycleEffect(existingInstance, BuffEventType.EnteredProtection);
-                }
-                else if (IsActive(existingInstance))
-                {
-                    RemoveBuffInstance(
-                        existingInstance,
-                        BuffRemovalReason.OverloadWithoutProtection);
-                }
+            if (!deferOverload && reapplyPendingOverload != null)
+            {
+                FinalizePendingOverload(reapplyPendingOverload);
             }
 
-            return new BuffApplyOutcome(result, existingInstance, true, reachedMaxStacks);
+            return new BuffApplyOutcome(
+                result,
+                existingInstance,
+                true,
+                reachedMaxStacks,
+                eligibleRequestedStackUnits,
+                appliedStackUnits,
+                discardedStackUnits,
+                reapplyPendingOverload);
         }
         finally
         {
@@ -171,6 +264,160 @@ public class MonsterBuffRuntime
     public bool HasBuff(BuffDefinition buffDefinition)
     {
         return FindBuffInstance(buffDefinition) != null;
+    }
+
+    internal void BeginExternalMutation()
+    {
+        BeginStateMutation();
+    }
+
+    internal void EndExternalMutation()
+    {
+        EndStateMutation();
+    }
+
+    internal void ResolveElementalHitReactions(
+        TowerInstance triggeringTower,
+        TowerDamageSourceIdentity damageSourceIdentity,
+        ElementalOpportunityDiagnosticContext diagnostics)
+    {
+        BeginStateMutation();
+
+        try
+        {
+            List<MonsterBuffInstance> reactionInstances =
+                new List<MonsterBuffInstance>();
+
+            for (int i = 0; i < buffInstances.Count; i++)
+            {
+                MonsterBuffInstance buffInstance = buffInstances[i];
+                BuffDefinition definition =
+                    buffInstance != null ? buffInstance.Definition : null;
+
+                if (definition == null ||
+                    definition.GetEffectDefinition(
+                        BuffEventType.TowerHitReceived) == null)
+                {
+                    continue;
+                }
+
+                reactionInstances.Add(buffInstance);
+            }
+
+            reactionInstances.Sort(CompareElementalReactionOrder);
+            bool earlierReactionResolvedOwner = false;
+
+            for (int i = 0; i < reactionInstances.Count; i++)
+            {
+                MonsterBuffInstance buffInstance = reactionInstances[i];
+
+                if (owner == null || owner.CurrentHealth <= 0)
+                {
+                    QueueElementalHitReactionObservation(
+                        buffInstance,
+                        triggeringTower,
+                        damageSourceIdentity,
+                        diagnostics,
+                        ElementalHitReactionResult.Invalidated,
+                        earlierReactionResolvedOwner
+                            ? ElementalHitReactionInvalidationReason
+                                .OwnerResolvedByEarlierElementalReaction
+                            : ElementalHitReactionInvalidationReason
+                                .ReactionTargetInvalidBeforeCommit,
+                        successfulDamageTargetCount: 0,
+                        committedFixedDamage: 0);
+                    continue;
+                }
+
+                if (!IsActive(buffInstance) ||
+                    buffInstance.Phase != BuffRuntimePhase.Stacking)
+                {
+                    QueueElementalHitReactionObservation(
+                        buffInstance,
+                        triggeringTower,
+                        damageSourceIdentity,
+                        diagnostics,
+                        ElementalHitReactionResult.Invalidated,
+                        ElementalHitReactionInvalidationReason
+                            .BuffInstanceOrCycleChanged,
+                        successfulDamageTargetCount: 0,
+                        committedFixedDamage: 0);
+                    continue;
+                }
+
+                if (buffInstance.IsElementalHitReactionCooldownActive)
+                {
+                    QueueElementalHitReactionObservation(
+                        buffInstance,
+                        triggeringTower,
+                        damageSourceIdentity,
+                        diagnostics,
+                        ElementalHitReactionResult.CooldownBlocked,
+                        ElementalHitReactionInvalidationReason.None,
+                        successfulDamageTargetCount: 0,
+                        committedFixedDamage: 0);
+                    continue;
+                }
+
+                BuffDefinition definition = buffInstance.Definition;
+                EffectDefinition reactionEffect = definition.GetEffectDefinition(
+                    BuffEventType.TowerHitReceived);
+                bool reactionCommitted = ExecuteLifecycleEffect(
+                    buffInstance,
+                    BuffEventType.TowerHitReceived,
+                    sourceTowerOverride: triggeringTower,
+                    sourceUpgradeOverride:
+                        ResolveTriggeringElementalUpgrade(triggeringTower),
+                    hasSourceContextOverride: true,
+                    triggerPositionOverride:
+                        EffectTargetResolver.GetMonsterHitPosition(owner),
+                    requiresCommittedActionForExecutionVfx: true,
+                    queueObservationOnCommittedActionOnly: true);
+
+                if (!reactionCommitted)
+                {
+                    QueueElementalHitReactionObservation(
+                        buffInstance,
+                        triggeringTower,
+                        damageSourceIdentity,
+                        diagnostics,
+                        definition.ElementType == ElementType.Wind
+                            ? ElementalHitReactionResult.NoValidTarget
+                            : ElementalHitReactionResult.Invalidated,
+                        definition.ElementType == ElementType.Wind
+                            ? ElementalHitReactionInvalidationReason.None
+                            : ElementalHitReactionInvalidationReason
+                                .ReactionCommitRejected,
+                        successfulDamageTargetCount: 0,
+                        committedFixedDamage: 0);
+                    continue;
+                }
+
+                buffInstance.RecordElementalHitReactionCooldown();
+                int fixedDamage = 0;
+                reactionEffect?.TryGetElementalHitReactionFixedDamage(
+                    definition.ElementType,
+                    out fixedDamage);
+                QueueElementalHitReactionObservation(
+                    buffInstance,
+                    triggeringTower,
+                    damageSourceIdentity,
+                    diagnostics,
+                    ElementalHitReactionResult.Triggered,
+                    ElementalHitReactionInvalidationReason.None,
+                    successfulDamageTargetCount: 1,
+                    committedFixedDamage: fixedDamage);
+
+                if (owner.CurrentHealth <= 0)
+                {
+                    earlierReactionResolvedOwner = true;
+                }
+            }
+        }
+        finally
+        {
+            EndStateMutation();
+        }
     }
 
     public void Tick(float deltaTime)
@@ -307,42 +554,76 @@ public class MonsterBuffRuntime
         return null;
     }
 
-    private void ExecuteLifecycleEffect(
+    private bool ExecuteLifecycleEffect(
         MonsterBuffInstance buffInstance,
         BuffEventType eventType,
         BuffRemovalReason removalReason = BuffRemovalReason.None,
-        bool hasStateAfter = true)
+        bool hasStateAfter = true,
+        TowerInstance sourceTowerOverride = null,
+        TowerUpgradeDefinition sourceUpgradeOverride = null,
+        bool hasSourceContextOverride = false,
+        Vector3? triggerPositionOverride = null,
+        bool requiresCommittedActionForExecutionVfx = false,
+        EffectDefinition effectDefinitionOverride = null,
+        bool queueObservationOnCommittedActionOnly = false)
     {
-        QueueObservation(BuffRuntimeObservation.CreateLifecycleEvent(
-            buffInstance,
-            eventType,
-            removalReason,
-            hasStateAfter));
+        if (!queueObservationOnCommittedActionOnly)
+        {
+            QueueObservation(BuffRuntimeObservation.CreateLifecycleEvent(
+                buffInstance,
+                eventType,
+                removalReason,
+                hasStateAfter));
+        }
 
         BuffDefinition buffDefinition = buffInstance != null ? buffInstance.Definition : null;
         MonsterBehaviour buffOwner = buffInstance != null ? buffInstance.Owner : null;
-        EffectDefinition effectDefinition = buffDefinition != null ? buffDefinition.GetEffectDefinition(eventType) : null;
+        EffectDefinition effectDefinition = effectDefinitionOverride != null
+            ? effectDefinitionOverride
+            : buffDefinition != null
+                ? buffDefinition.GetEffectDefinition(eventType)
+                : null;
 
         if (effectDefinition == null || buffOwner == null)
         {
-            return;
+            return false;
         }
 
         Transform hitAnchor = buffOwner.HitAnchor;
-        Vector3 triggerPosition = hitAnchor != null ? hitAnchor.position : buffOwner.transform.position;
+        Vector3 triggerPosition = triggerPositionOverride ??
+            (hitAnchor != null ? hitAnchor.position : buffOwner.transform.position);
 
-        EffectExecutor.Execute(
+        bool effectCommitted = EffectExecutor.Execute(
             effectDefinition,
             new EffectTriggerContext(
-                sourceTower: buffInstance.SourceTower,
-                sourceUpgrade: buffInstance.SourceUpgrade,
+                sourceTower: hasSourceContextOverride
+                    ? sourceTowerOverride
+                    : buffInstance.SourceTower,
+                sourceUpgrade: hasSourceContextOverride
+                    ? sourceUpgradeOverride
+                    : buffInstance.SourceUpgrade,
                 targetMonster: buffOwner,
                 hasTriggerPosition: true,
                 triggerPosition: triggerPosition,
                 allowsElementalApplication: false,
                 allowsLifecycleOwnerTarget:
-                    eventType == BuffEventType.Removed)
+                    eventType == BuffEventType.Removed ||
+                    (eventType == BuffEventType.Overload &&
+                     buffOwner.CurrentHealth <= 0),
+                requiresCommittedActionForExecutionVfx:
+                    requiresCommittedActionForExecutionVfx)
         );
+
+        if (queueObservationOnCommittedActionOnly && effectCommitted)
+        {
+            QueueObservation(BuffRuntimeObservation.CreateLifecycleEvent(
+                buffInstance,
+                eventType,
+                removalReason,
+                hasStateAfter));
+        }
+
+        return effectCommitted;
     }
 
     private static bool IsSuccessfulApplyResult(BuffApplyResult result)
@@ -381,7 +662,10 @@ public class MonsterBuffRuntime
         BuffApplyResult result,
         int stackCountBefore,
         BuffRuntimePhase phaseBefore,
-        bool reachedMaximumStacks)
+        bool reachedMaximumStacks,
+        int eligibleRequestedStackUnits,
+        int appliedStackUnits,
+        int discardedStackUnits)
     {
         QueueObservation(BuffRuntimeObservation.CreateApplicationAttempt(
             request,
@@ -393,7 +677,155 @@ public class MonsterBuffRuntime
             buffInstance != null && IsActive(buffInstance),
             buffInstance != null ? buffInstance.StackCount : 0,
             buffInstance != null ? buffInstance.Phase : phaseBefore,
-            reachedMaximumStacks));
+            reachedMaximumStacks,
+            eligibleRequestedStackUnits,
+            appliedStackUnits,
+            discardedStackUnits));
+    }
+
+    private PendingBuffOverload CreatePendingOverload(
+        BuffApplyRequest request,
+        MonsterBuffInstance buffInstance,
+        bool wasExistingBuff)
+    {
+        Vector3 triggerPosition = request.HasTriggerPosition
+            ? request.TriggerPosition
+            : EffectTargetResolver.GetMonsterHitPosition(owner);
+
+        return new PendingBuffOverload(
+            this,
+            buffInstance,
+            request.SourceTower,
+            request.SourceUpgrade,
+            triggerPosition,
+            wasExistingBuff);
+    }
+
+    internal bool FinalizePendingOverload(
+        PendingBuffOverload pendingOverload)
+    {
+        if (pendingOverload == null ||
+            pendingOverload.Runtime != this ||
+            !pendingOverload.TryConsume())
+        {
+            return false;
+        }
+
+        BeginStateMutation();
+
+        try
+        {
+            MonsterBuffInstance buffInstance = pendingOverload.BuffInstance;
+
+            if (!IsActive(buffInstance) ||
+                buffInstance.Definition != pendingOverload.BuffDefinition ||
+                buffInstance.StackingCycleIdentity !=
+                    pendingOverload.StackingCycleIdentity)
+            {
+                return false;
+            }
+
+            try
+            {
+                ExecuteLifecycleEffect(
+                    buffInstance,
+                    BuffEventType.Overload,
+                    sourceTowerOverride: pendingOverload.SourceTower,
+                    sourceUpgradeOverride: pendingOverload.SourceUpgrade,
+                    hasSourceContextOverride: true,
+                    triggerPositionOverride: pendingOverload.TriggerPosition,
+                    effectDefinitionOverride: pendingOverload.OverloadEffect);
+            }
+            finally
+            {
+                if (IsActive(buffInstance))
+                {
+                    if (owner == null || owner.CurrentHealth <= 0)
+                    {
+                        RemoveBuffInstance(
+                            buffInstance,
+                            BuffRemovalReason.MonsterKilled);
+                    }
+                    else if (buffInstance.TryEnterProtectionPhase())
+                    {
+                        QueueStateRefresh();
+                        ExecuteLifecycleEffect(
+                            buffInstance,
+                            BuffEventType.EnteredProtection);
+                    }
+                    else
+                    {
+                        RemoveBuffInstance(
+                            buffInstance,
+                            BuffRemovalReason.OverloadWithoutProtection);
+                    }
+                }
+            }
+
+            return true;
+        }
+        finally
+        {
+            EndStateMutation();
+        }
+    }
+
+    private void QueueElementalHitReactionObservation(
+        MonsterBuffInstance buffInstance,
+        TowerInstance triggeringTower,
+        TowerDamageSourceIdentity damageSourceIdentity,
+        ElementalOpportunityDiagnosticContext diagnostics,
+        ElementalHitReactionResult result,
+        ElementalHitReactionInvalidationReason invalidationReason,
+        int successfulDamageTargetCount,
+        int committedFixedDamage)
+    {
+        BuffDefinition definition =
+            buffInstance != null ? buffInstance.Definition : null;
+        pendingElementalHitReactionObservations.Add(
+            new ElementalHitReactionObservation(
+                Time.time,
+                owner,
+                definition,
+                buffInstance,
+                buffInstance != null
+                    ? buffInstance.StackingCycleIdentity
+                    : 0,
+                triggeringTower,
+                ResolveTriggeringElementalUpgrade(triggeringTower),
+                damageSourceIdentity,
+                diagnostics,
+                result,
+                invalidationReason,
+                definition != null
+                    ? definition.GetEffectDefinition(
+                        BuffEventType.TowerHitReceived)
+                    : null,
+                successfulDamageTargetCount,
+                committedFixedDamage));
+    }
+
+    private static int CompareElementalReactionOrder(
+        MonsterBuffInstance left,
+        MonsterBuffInstance right)
+    {
+        ElementType leftElement = left != null && left.Definition != null
+            ? left.Definition.ElementType
+            : ElementType.None;
+        ElementType rightElement = right != null && right.Definition != null
+            ? right.Definition.ElementType
+            : ElementType.None;
+        return leftElement.CompareTo(rightElement);
+    }
+
+    private static TowerUpgradeDefinition ResolveTriggeringElementalUpgrade(
+        TowerInstance triggeringTower)
+    {
+        return triggeringTower != null &&
+               triggeringTower.TryGetElementalUpgrade(
+                   out TowerUpgradeDefinition elementalUpgrade)
+            ? elementalUpgrade
+            : null;
     }
 
     private void QueueObservation(BuffRuntimeObservation observation)
@@ -403,7 +835,9 @@ public class MonsterBuffRuntime
 
     private void PublishPendingObservations()
     {
-        if (isPublishingObservations || pendingObservations.Count == 0)
+        if (isPublishingObservations ||
+            (pendingObservations.Count == 0 &&
+             pendingElementalHitReactionObservations.Count == 0))
         {
             return;
         }
@@ -412,14 +846,24 @@ public class MonsterBuffRuntime
 
         try
         {
-            while (pendingObservations.Count > 0)
+            while (pendingObservations.Count > 0 ||
+                   pendingElementalHitReactionObservations.Count > 0)
             {
                 BuffRuntimeObservation[] observations = pendingObservations.ToArray();
+                ElementalHitReactionObservation[] reactionObservations =
+                    pendingElementalHitReactionObservations.ToArray();
                 pendingObservations.Clear();
+                pendingElementalHitReactionObservations.Clear();
 
                 for (int i = 0; i < observations.Length; i++)
                 {
                     PublishObservationSafely(observations[i]);
+                }
+
+                for (int i = 0; i < reactionObservations.Length; i++)
+                {
+                    PublishElementalHitReactionObservationSafely(
+                        reactionObservations[i]);
                 }
             }
         }
@@ -445,6 +889,33 @@ public class MonsterBuffRuntime
             try
             {
                 ((Action<BuffRuntimeObservation>)invocationList[i]).Invoke(observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, owner);
+            }
+        }
+    }
+
+    private void PublishElementalHitReactionObservationSafely(
+        ElementalHitReactionObservation observation)
+    {
+        Action<ElementalHitReactionObservation> handlers =
+            OnElementalHitReactionObserved;
+
+        if (handlers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = handlers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<ElementalHitReactionObservation>)invocationList[i])
+                    .Invoke(observation);
             }
             catch (Exception exception)
             {

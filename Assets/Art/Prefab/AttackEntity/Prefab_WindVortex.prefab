@@ -9858,10 +9858,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06d7b2f59e9d41f68aa42b466443e44b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WindVortexBehaviour
-  lifetime: 10
+  lifetime: 15
   movementSpeed: 0.1
   targetSearchRadius: 3
   arrivalThreshold: 0.2
   damageRadius: 1
-  tickInterval: 0.8
+  tickInterval: 0.6
   onTickEffectDefinition: {fileID: 11400000, guid: 49a23bd4d64f34d9fa0d995ae3fc33a6, type: 2}

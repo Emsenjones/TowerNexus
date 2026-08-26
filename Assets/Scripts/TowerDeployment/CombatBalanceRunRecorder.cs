@@ -54,6 +54,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         new List<PendingLevelUpObservation>();
     private readonly ElementalBuffRunAccumulator buffAccumulator =
         new ElementalBuffRunAccumulator();
+    private readonly ElementalHitReactionRunAccumulator
+        elementalHitReactionAccumulator =
+            new ElementalHitReactionRunAccumulator();
     private readonly Dictionary<int, ProjectileRuntimeAggregate>
         projectileRuntimeByTowerInstanceId =
             new Dictionary<int, ProjectileRuntimeAggregate>();
@@ -72,6 +75,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly Dictionary<string, FixedBuffDamageAggregate>
         fixedBuffDamageBySignature =
             new Dictionary<string, FixedBuffDamageAggregate>();
+    private readonly Dictionary<string, ElementalOpportunityAggregate>
+        elementalOpportunityByScope =
+            new Dictionary<string, ElementalOpportunityAggregate>();
+    private readonly Dictionary<string, int>
+        elementalBuffApplicationAttemptsBySourceWave =
+            new Dictionary<string, int>();
 
     private bool isSubscribed;
     private bool isTrackingRun;
@@ -170,6 +179,31 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public int AppliedDamageTotal { get; set; }
         public HashSet<int> SourceTowerInstanceIds { get; } =
             new HashSet<int>();
+    }
+
+    private sealed class ElementalOpportunityAggregate
+    {
+        public ElementalOpportunityAggregate(
+            ElementalOpportunityObservation observation,
+            int waveNumber)
+        {
+            SourceTower = observation.SourceTower;
+            ElementalUpgrade = observation.ElementalUpgrade;
+            WaveNumber = waveNumber;
+            Diagnostics = observation.Diagnostics;
+            MinimumResultOrdinal = observation.Diagnostics.ResultOrdinal;
+            MaximumResultOrdinal = observation.Diagnostics.ResultOrdinal;
+        }
+
+        public TowerInstance SourceTower { get; }
+        public TowerUpgradeDefinition ElementalUpgrade { get; }
+        public int WaveNumber { get; }
+        public ElementalOpportunityDiagnosticContext Diagnostics { get; }
+        public int MinimumResultOrdinal { get; set; }
+        public int MaximumResultOrdinal { get; set; }
+        public int CandidateResults { get; set; }
+        public int EligibleResults { get; set; }
+        public int DispatchedRequests { get; set; }
     }
 
     private sealed class MonsterObservation
@@ -368,13 +402,14 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         public long BurstId { get; }
         public int Started { get; set; }
-        public int EligibleOpeningProjectilesReleased { get; set; }
-        public int EligibleOpeningProjectileDirectHits { get; set; }
-        public int EligibleOpeningProjectilesEndedWithoutImpact { get; set; }
+        public int OpeningProjectilesReleased { get; set; }
+        public int ElementalEligibleOpeningProjectilesReleased { get; set; }
+        public int OpeningProjectileDirectHits { get; set; }
+        public int ElementalEligibleOpeningProjectileDirectHits { get; set; }
+        public int OpeningProjectilesEndedWithoutImpact { get; set; }
         public int LaterProjectilesReleased { get; set; }
         public int LaterProjectileDirectHits { get; set; }
-        public int DirectElementalOpportunities { get; set; }
-        public int BlastTargetElementalOpportunities { get; set; }
+        public int LaterProjectilesEndedWithoutImpact { get; set; }
     }
 
     private sealed class DroneRuntimeAggregate
@@ -390,8 +425,6 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public int SourceDroneInstanceId { get; }
         public bool IsAdditionalAttackEntity { get; }
         public bool DiagnosticsConsistent { get; set; } = true;
-        public int FinalDiveDirectElementalOpportunities { get; set; }
-        public int FinalDiveBlastTargetElementalOpportunities { get; set; }
         public Dictionary<long, DroneBurstAggregate> Bursts { get; } =
             new Dictionary<long, DroneBurstAggregate>();
     }
@@ -561,6 +594,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             HandleTowerOwnedDamageApplicationObserved;
         EffectExecutor.OnFixedBuffDamageObserved +=
             HandleFixedBuffDamageObserved;
+        ElementalApplication.OnOpportunityObserved +=
+            HandleElementalOpportunityObserved;
 
         isSubscribed = true;
     }
@@ -674,6 +709,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             HandleTowerOwnedDamageApplicationObserved;
         EffectExecutor.OnFixedBuffDamageObserved -=
             HandleFixedBuffDamageObserved;
+        ElementalApplication.OnOpportunityObserved -=
+            HandleElementalOpportunityObserved;
 
         isSubscribed = false;
     }
@@ -1037,12 +1074,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         towerUpgradeDraftPoolSnapshot.Clear();
         pendingLevelUps.Clear();
         buffAccumulator.Reset();
+        elementalHitReactionAccumulator.Reset();
         projectileRuntimeByTowerInstanceId.Clear();
         droneRuntimeByTowerInstanceId.Clear();
         towerDeploymentByInstanceId.Clear();
         towerScaledDamageBySignature.Clear();
         towerScaledRejectionBySignature.Clear();
         fixedBuffDamageBySignature.Clear();
+        elementalOpportunityByScope.Clear();
+        elementalBuffApplicationAttemptsBySourceWave.Clear();
         ResetExpectedMonsterFixture();
         spawnedCount = 0;
         resolvedCount = 0;
@@ -1195,6 +1235,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         monster.OnResolved += HandleMonsterResolved;
         monster.OnDestroyed += HandleMonsterDestroyed;
         monster.OnBuffRuntimeObserved += HandleBuffRuntimeObserved;
+        monster.OnElementalHitReactionObserved +=
+            HandleElementalHitReactionObserved;
 
         if (hasObservedFirstSpawn)
         {
@@ -1331,6 +1373,102 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 ? monsterObservation.SourceWaveNumber
                 : 0;
         buffAccumulator.Consume(observation, sourceWaveNumber);
+
+        if (observation.ObservationType ==
+                BuffRuntimeObservationType.ApplicationAttempt &&
+            observation.BuffDefinition != null &&
+            observation.BuffDefinition.ElementType != ElementType.None &&
+            observation.SourceTower != null &&
+            observation.SourceUpgrade != null)
+        {
+            string sourceWaveKey = CreateElementalSourceWaveKey(
+                observation.SourceTower,
+                observation.SourceUpgrade,
+                sourceWaveNumber);
+            elementalBuffApplicationAttemptsBySourceWave.TryGetValue(
+                sourceWaveKey,
+                out int currentCount);
+            elementalBuffApplicationAttemptsBySourceWave[sourceWaveKey] =
+                currentCount + 1;
+        }
+    }
+
+    private void HandleElementalOpportunityObserved(
+        ElementalOpportunityObservation observation)
+    {
+        if (!isTrackingRun ||
+            observation.SourceTower == null ||
+            observation.ElementalUpgrade == null ||
+            observation.TargetMonster == null ||
+            !observation.Diagnostics.IsValid)
+        {
+            return;
+        }
+
+        int waveNumber = trackedMonsters.TryGetValue(
+                observation.TargetMonster,
+                out MonsterObservation monsterObservation)
+            ? monsterObservation.SourceWaveNumber
+            : 0;
+        string scopeKey = CreateElementalOpportunityScopeKey(
+            observation,
+            waveNumber);
+
+        if (!elementalOpportunityByScope.TryGetValue(
+                scopeKey,
+                out ElementalOpportunityAggregate aggregate))
+        {
+            aggregate = new ElementalOpportunityAggregate(
+                observation,
+                waveNumber);
+            elementalOpportunityByScope.Add(scopeKey, aggregate);
+        }
+
+        aggregate.MinimumResultOrdinal = Mathf.Min(
+            aggregate.MinimumResultOrdinal,
+            observation.Diagnostics.ResultOrdinal);
+        aggregate.MaximumResultOrdinal = Mathf.Max(
+            aggregate.MaximumResultOrdinal,
+            observation.Diagnostics.ResultOrdinal);
+
+        switch (observation.ObservationType)
+        {
+            case ElementalOpportunityObservationType.Candidate:
+                aggregate.CandidateResults++;
+
+                if (observation.Diagnostics.TopologyAuthorized)
+                {
+                    aggregate.EligibleResults++;
+                }
+
+                break;
+            case ElementalOpportunityObservationType.Dispatched:
+                aggregate.DispatchedRequests++;
+                break;
+        }
+    }
+
+    private void HandleElementalHitReactionObserved(
+        MonsterBehaviour monster,
+        ElementalHitReactionObservation observation)
+    {
+        if (!isTrackingRun)
+        {
+            return;
+        }
+
+        MonsterBehaviour ownerMonster = observation.OwnerMonster != null
+            ? observation.OwnerMonster
+            : monster;
+        int sourceWaveNumber = ownerMonster != null &&
+            trackedMonsters.TryGetValue(
+                ownerMonster,
+                out MonsterObservation monsterObservation)
+                ? monsterObservation.SourceWaveNumber
+                : 0;
+        elementalHitReactionAccumulator.Consume(
+            observation,
+            sourceWaveNumber);
     }
 
     private void HandleTowerOwnedDamageResolutionObserved(
@@ -1477,11 +1615,53 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private static string CreateFixedBuffDamageSignature(
         FixedBuffDamageObservation observation)
     {
+        return CreateFixedBuffDamageSignature(
+            observation.EffectDefinition,
+            observation.ActionOrdinal,
+            observation.FixedDamage);
+    }
+
+    private static string CreateFixedBuffDamageSignature(
+        EffectDefinition effectDefinition,
+        int actionOrdinal,
+        int fixedDamage)
+    {
         return string.Join(
             "|",
-            GetEffectIdentity(observation.EffectDefinition),
-            observation.ActionOrdinal.ToString(CultureInfo.InvariantCulture),
-            observation.FixedDamage.ToString(CultureInfo.InvariantCulture));
+            GetEffectIdentity(effectDefinition),
+            actionOrdinal.ToString(CultureInfo.InvariantCulture),
+            fixedDamage.ToString(CultureInfo.InvariantCulture));
+    }
+
+    private static string CreateElementalOpportunityScopeKey(
+        ElementalOpportunityObservation observation,
+        int waveNumber)
+    {
+        ElementalOpportunityDiagnosticContext diagnostics =
+            observation.Diagnostics;
+        return string.Join(
+            "|",
+            observation.SourceTower.GetInstanceID().ToString(
+                CultureInfo.InvariantCulture),
+            observation.ElementalUpgrade.GetInstanceID().ToString(
+                CultureInfo.InvariantCulture),
+            waveNumber.ToString(CultureInfo.InvariantCulture),
+            diagnostics.Provenance.ToString(),
+            diagnostics.MemberIdentity.ToString(),
+            diagnostics.ResultRole.ToString());
+    }
+
+    private static string CreateElementalSourceWaveKey(
+        TowerInstance sourceTower,
+        TowerUpgradeDefinition elementalUpgrade,
+        int waveNumber)
+    {
+        return string.Join(
+            "|",
+            sourceTower.GetInstanceID().ToString(CultureInfo.InvariantCulture),
+            elementalUpgrade.GetInstanceID().ToString(
+                CultureInfo.InvariantCulture),
+            waveNumber.ToString(CultureInfo.InvariantCulture));
     }
 
     private static string GetEffectIdentity(EffectDefinition effectDefinition)
@@ -1616,26 +1796,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             drone.DiagnosticsConsistent = false;
         }
 
-        switch (observation.ObservationType)
+        if ((observation.IsAdditionalDrone ||
+             !observation.IsOpeningShotSlot) &&
+            observation.AllowsElementalApplication)
         {
-            case DroneBurstRuntimeObservationType.FinalDiveDirectElementalOpportunity:
-                if (observation.BurstId != 0)
-                {
-                    drone.DiagnosticsConsistent = false;
-                }
-
-                drone.FinalDiveDirectElementalOpportunities +=
-                    observation.Count;
-                return;
-            case DroneBurstRuntimeObservationType.FinalDiveBlastTargetElementalOpportunity:
-                if (observation.BurstId != 0)
-                {
-                    drone.DiagnosticsConsistent = false;
-                }
-
-                drone.FinalDiveBlastTargetElementalOpportunities +=
-                    observation.Count;
-                return;
+            drone.DiagnosticsConsistent = false;
         }
 
         if (observation.BurstId <= 0)
@@ -1658,22 +1823,37 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 burst.Started += observation.Count;
                 break;
             case DroneBurstRuntimeObservationType.ProjectileReleased:
-                if (observation.IsBurstOpenerEligible)
+                if (observation.IsOpeningShotSlot)
                 {
-                    burst.EligibleOpeningProjectilesReleased +=
-                        observation.Count;
+                    burst.OpeningProjectilesReleased += observation.Count;
+
+                    if (observation.AllowsElementalApplication)
+                    {
+                        burst.ElementalEligibleOpeningProjectilesReleased +=
+                            observation.Count;
+                    }
                 }
                 else
                 {
                     burst.LaterProjectilesReleased += observation.Count;
+
+                    if (observation.AllowsElementalApplication)
+                    {
+                        drone.DiagnosticsConsistent = false;
+                    }
                 }
 
                 break;
             case DroneBurstRuntimeObservationType.ProjectileDirectHit:
-                if (observation.IsBurstOpenerEligible)
+                if (observation.IsOpeningShotSlot)
                 {
-                    burst.EligibleOpeningProjectileDirectHits +=
-                        observation.Count;
+                    burst.OpeningProjectileDirectHits += observation.Count;
+
+                    if (observation.AllowsElementalApplication)
+                    {
+                        burst.ElementalEligibleOpeningProjectileDirectHits +=
+                            observation.Count;
+                    }
                 }
                 else
                 {
@@ -1682,28 +1862,17 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
                 break;
             case DroneBurstRuntimeObservationType.ProjectileEndedWithoutImpact:
-                if (observation.IsBurstOpenerEligible)
+                if (observation.IsOpeningShotSlot)
                 {
-                    burst.EligibleOpeningProjectilesEndedWithoutImpact +=
+                    burst.OpeningProjectilesEndedWithoutImpact +=
+                        observation.Count;
+                }
+                else
+                {
+                    burst.LaterProjectilesEndedWithoutImpact +=
                         observation.Count;
                 }
 
-                break;
-            case DroneBurstRuntimeObservationType.DirectElementalOpportunity:
-                if (!observation.IsBurstOpenerEligible)
-                {
-                    drone.DiagnosticsConsistent = false;
-                }
-
-                burst.DirectElementalOpportunities += observation.Count;
-                break;
-            case DroneBurstRuntimeObservationType.BlastTargetElementalOpportunity:
-                if (!observation.IsBurstOpenerEligible)
-                {
-                    drone.DiagnosticsConsistent = false;
-                }
-
-                burst.BlastTargetElementalOpportunities += observation.Count;
                 break;
         }
     }
@@ -2501,9 +2670,20 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             DamageDiagnosticsCountsMatch(report.damageDiagnostics);
         report.integrity.droneBurstDiagnosticsConsistent =
             DroneBurstDiagnosticsAreConsistent();
+        report.elementalOpportunityDiagnostics =
+            CreateElementalOpportunityDiagnosticsJson();
+        report.integrity.elementalOpportunityDiagnosticsConsistent =
+            report.elementalOpportunityDiagnostics.diagnosticsConsistent;
+        report.elementalHitReactionDiagnostics =
+            elementalHitReactionAccumulator.CreateJson();
+        report.integrity.elementalHitReactionDiagnosticsConsistent =
+            report.elementalHitReactionDiagnostics.diagnosticsConsistent &&
+            ElementalHitReactionDamageReconciliationMatches();
         report.buffs = buffAccumulator.CreateJsonRecords();
         report.integrity.buffDiagnosticsConsistent =
             buffAccumulator.DiagnosticsConsistent;
+        report.integrity.buffStackUnitAccountingConsistent =
+            buffAccumulator.StackUnitAccountingConsistent;
         report.integrity.buffWaveAttributionMatches =
             buffAccumulator.WaveAttributionMatches;
         return report;
@@ -2692,6 +2872,35 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                fixedApplicationCount ==
                diagnostics.fixedBuffSuccessfulApplicationCount &&
                fixedAppliedDamage == diagnostics.fixedBuffAppliedDamageTotal;
+    }
+
+    private bool ElementalHitReactionDamageReconciliationMatches()
+    {
+        List<ElementalHitReactionDamageExpectation> expectations =
+            elementalHitReactionAccumulator.CreateDamageExpectations();
+
+        for (int i = 0; i < expectations.Count; i++)
+        {
+            ElementalHitReactionDamageExpectation expectation =
+                expectations[i];
+            string signature = CreateFixedBuffDamageSignature(
+                expectation.EffectDefinition,
+                expectation.ActionOrdinal,
+                expectation.FixedDamage);
+
+            if (!fixedBuffDamageBySignature.TryGetValue(
+                    signature,
+                    out FixedBuffDamageAggregate aggregate) ||
+                aggregate.ResolutionCount != expectation.ResolutionCount ||
+                aggregate.SuccessfulApplicationCount !=
+                    expectation.SuccessfulApplicationCount ||
+                aggregate.AppliedDamageTotal != expectation.AppliedDamageTotal)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static string GetAssetName(UnityEngine.Object asset)
@@ -3538,7 +3747,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                         element =
                             upgrade.UpgradeLayer == TowerUpgradeLayer.Elemental
                                 ? upgrade.ElementType.ToString()
-                                : string.Empty
+                                : string.Empty,
+                        elementalStackContribution =
+                            upgrade.UpgradeLayer == TowerUpgradeLayer.Elemental
+                                ? upgrade.ElementalStackContribution
+                                : 0
                     });
                 }
             }
@@ -3621,11 +3834,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 {
                     sourceDroneInstanceId = drone.SourceDroneInstanceId,
                     isAdditionalAttackEntity =
-                        drone.IsAdditionalAttackEntity,
-                    finalDiveDirectElementalOpportunities =
-                        drone.FinalDiveDirectElementalOpportunities,
-                    finalDiveBlastTargetElementalOpportunities =
-                        drone.FinalDiveBlastTargetElementalOpportunities
+                        drone.IsAdditionalAttackEntity
                 };
             List<long> burstIds = new List<long>(drone.Bursts.Keys);
             burstIds.Sort();
@@ -3637,38 +3846,42 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 DroneBurstAggregate burst =
                     drone.Bursts[burstIds[burstIndex]];
                 droneJson.burstsStarted += burst.Started;
-                droneJson.eligibleOpeningProjectilesReleased +=
-                    burst.EligibleOpeningProjectilesReleased;
-                droneJson.eligibleOpeningProjectileDirectHits +=
-                    burst.EligibleOpeningProjectileDirectHits;
-                droneJson.eligibleOpeningProjectilesEndedWithoutImpact +=
-                    burst.EligibleOpeningProjectilesEndedWithoutImpact;
+                droneJson.openingProjectilesReleased +=
+                    burst.OpeningProjectilesReleased;
+                droneJson.elementalEligibleOpeningProjectilesReleased +=
+                    burst.ElementalEligibleOpeningProjectilesReleased;
+                droneJson.openingProjectileDirectHits +=
+                    burst.OpeningProjectileDirectHits;
+                droneJson.elementalEligibleOpeningProjectileDirectHits +=
+                    burst.ElementalEligibleOpeningProjectileDirectHits;
+                droneJson.openingProjectilesEndedWithoutImpact +=
+                    burst.OpeningProjectilesEndedWithoutImpact;
                 droneJson.laterProjectilesReleased +=
                     burst.LaterProjectilesReleased;
                 droneJson.laterProjectileDirectHits +=
                     burst.LaterProjectileDirectHits;
-                droneJson.directElementalOpportunities +=
-                    burst.DirectElementalOpportunities;
-                droneJson.blastTargetElementalOpportunities +=
-                    burst.BlastTargetElementalOpportunities;
+                droneJson.laterProjectilesEndedWithoutImpact +=
+                    burst.LaterProjectilesEndedWithoutImpact;
                 droneJson.bursts.Add(new CombatBalanceDroneBurstJson
                 {
                     burstId = burst.BurstId,
                     started = burst.Started,
-                    eligibleOpeningProjectilesReleased =
-                        burst.EligibleOpeningProjectilesReleased,
-                    eligibleOpeningProjectileDirectHits =
-                        burst.EligibleOpeningProjectileDirectHits,
-                    eligibleOpeningProjectilesEndedWithoutImpact =
-                        burst.EligibleOpeningProjectilesEndedWithoutImpact,
+                    openingProjectilesReleased =
+                        burst.OpeningProjectilesReleased,
+                    elementalEligibleOpeningProjectilesReleased =
+                        burst.ElementalEligibleOpeningProjectilesReleased,
+                    openingProjectileDirectHits =
+                        burst.OpeningProjectileDirectHits,
+                    elementalEligibleOpeningProjectileDirectHits =
+                        burst.ElementalEligibleOpeningProjectileDirectHits,
+                    openingProjectilesEndedWithoutImpact =
+                        burst.OpeningProjectilesEndedWithoutImpact,
                     laterProjectilesReleased =
                         burst.LaterProjectilesReleased,
                     laterProjectileDirectHits =
                         burst.LaterProjectileDirectHits,
-                    directElementalOpportunities =
-                        burst.DirectElementalOpportunities,
-                    blastTargetElementalOpportunities =
-                        burst.BlastTargetElementalOpportunities
+                    laterProjectilesEndedWithoutImpact =
+                        burst.LaterProjectilesEndedWithoutImpact
                 });
             }
 
@@ -3678,6 +3891,147 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         return result;
+    }
+
+    private CombatBalanceElementalOpportunityDiagnosticsJson
+        CreateElementalOpportunityDiagnosticsJson()
+    {
+        CombatBalanceElementalOpportunityDiagnosticsJson result =
+            new CombatBalanceElementalOpportunityDiagnosticsJson();
+        List<string> keys =
+            new List<string>(elementalOpportunityByScope.Keys);
+        keys.Sort(StringComparer.Ordinal);
+
+        for (int i = 0; i < keys.Count; i++)
+        {
+            ElementalOpportunityAggregate aggregate =
+                elementalOpportunityByScope[keys[i]];
+            TowerDefinition towerDefinition = aggregate.SourceTower != null
+                ? aggregate.SourceTower.TowerDefinition
+                : null;
+            result.candidateResults += aggregate.CandidateResults;
+            result.eligibleResults += aggregate.EligibleResults;
+            result.dispatchedRequests += aggregate.DispatchedRequests;
+            result.scopes.Add(new CombatBalanceElementalOpportunityScopeJson
+            {
+                sourceTowerInstanceId = aggregate.SourceTower != null
+                    ? aggregate.SourceTower.GetInstanceID()
+                    : 0,
+                towerFamily = towerDefinition != null
+                    ? towerDefinition.TowerFamily.ToString()
+                    : string.Empty,
+                elementalUpgradeName = aggregate.ElementalUpgrade != null
+                    ? aggregate.ElementalUpgrade.name
+                    : string.Empty,
+                waveNumber = aggregate.WaveNumber,
+                provenance = aggregate.Diagnostics.Provenance.ToString(),
+                memberIdentity =
+                    aggregate.Diagnostics.MemberIdentity.ToString(),
+                resultRole = aggregate.Diagnostics.ResultRole.ToString(),
+                minimumResultOrdinal = aggregate.MinimumResultOrdinal,
+                maximumResultOrdinal = aggregate.MaximumResultOrdinal,
+                candidateResults = aggregate.CandidateResults,
+                eligibleResults = aggregate.EligibleResults,
+                dispatchedRequests = aggregate.DispatchedRequests
+            });
+        }
+
+        result.diagnosticsConsistent =
+            ElementalOpportunityDiagnosticsAreConsistent();
+        return result;
+    }
+
+    private bool ElementalOpportunityDiagnosticsAreConsistent()
+    {
+        Dictionary<string, int> dispatchedBySourceWave =
+            new Dictionary<string, int>();
+
+        foreach (KeyValuePair<string, ElementalOpportunityAggregate> entry in
+                 elementalOpportunityByScope)
+        {
+            ElementalOpportunityAggregate aggregate = entry.Value;
+
+            if (aggregate == null ||
+                aggregate.SourceTower == null ||
+                aggregate.ElementalUpgrade == null ||
+                aggregate.WaveNumber <= 0 ||
+                aggregate.DispatchedRequests > aggregate.EligibleResults ||
+                aggregate.EligibleResults > aggregate.CandidateResults)
+            {
+                return false;
+            }
+
+            bool isApprovedPrimary = IsApprovedPrimaryOpportunityScope(
+                aggregate.Diagnostics);
+
+            if (aggregate.Diagnostics.TopologyAuthorized != isApprovedPrimary ||
+                (!isApprovedPrimary &&
+                 (aggregate.EligibleResults != 0 ||
+                  aggregate.DispatchedRequests != 0)))
+            {
+                return false;
+            }
+
+            string sourceWaveKey = CreateElementalSourceWaveKey(
+                aggregate.SourceTower,
+                aggregate.ElementalUpgrade,
+                aggregate.WaveNumber);
+            dispatchedBySourceWave.TryGetValue(
+                sourceWaveKey,
+                out int dispatchedCount);
+            dispatchedBySourceWave[sourceWaveKey] =
+                dispatchedCount + aggregate.DispatchedRequests;
+        }
+
+        foreach (KeyValuePair<string, int> entry in dispatchedBySourceWave)
+        {
+            elementalBuffApplicationAttemptsBySourceWave.TryGetValue(
+                entry.Key,
+                out int applicationAttempts);
+
+            if (entry.Value != applicationAttempts)
+            {
+                return false;
+            }
+        }
+
+        foreach (KeyValuePair<string, int> entry in
+                 elementalBuffApplicationAttemptsBySourceWave)
+        {
+            dispatchedBySourceWave.TryGetValue(
+                entry.Key,
+                out int dispatchedCount);
+
+            if (entry.Value != dispatchedCount)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool IsApprovedPrimaryOpportunityScope(
+        ElementalOpportunityDiagnosticContext diagnostics)
+    {
+        if (diagnostics.MemberIdentity !=
+                ElementalOpportunityMemberIdentity.Primary ||
+            diagnostics.ResultRole !=
+                ElementalOpportunityResultRole.InitialDirect)
+        {
+            return false;
+        }
+
+        switch (diagnostics.Provenance)
+        {
+            case ElementalOpportunityProvenance.ArcherArrow:
+            case ElementalOpportunityProvenance.CannonShell:
+            case ElementalOpportunityProvenance.MagicOrb:
+            case ElementalOpportunityProvenance.DroneOpeningProjectile:
+                return true;
+            default:
+                return false;
+        }
     }
 
     private bool DroneBurstDiagnosticsAreConsistent()
@@ -3713,14 +4067,22 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             if (burst == null ||
                 burst.BurstId <= 0 ||
                 burst.Started != 1 ||
-                burst.EligibleOpeningProjectilesReleased > 1 ||
-                burst.EligibleOpeningProjectileDirectHits +
-                burst.EligibleOpeningProjectilesEndedWithoutImpact >
-                burst.EligibleOpeningProjectilesReleased ||
-                burst.DirectElementalOpportunities >
-                burst.EligibleOpeningProjectileDirectHits ||
-                (burst.BlastTargetElementalOpportunities > 0 &&
-                 burst.EligibleOpeningProjectileDirectHits <= 0))
+                burst.OpeningProjectilesReleased > 1 ||
+                burst.OpeningProjectileDirectHits +
+                burst.OpeningProjectilesEndedWithoutImpact >
+                burst.OpeningProjectilesReleased ||
+                burst.ElementalEligibleOpeningProjectilesReleased >
+                burst.OpeningProjectilesReleased ||
+                burst.ElementalEligibleOpeningProjectileDirectHits >
+                burst.OpeningProjectileDirectHits ||
+                burst.ElementalEligibleOpeningProjectileDirectHits >
+                burst.ElementalEligibleOpeningProjectilesReleased ||
+                burst.LaterProjectileDirectHits +
+                burst.LaterProjectilesEndedWithoutImpact >
+                burst.LaterProjectilesReleased ||
+                (drone.IsAdditionalAttackEntity &&
+                 (burst.ElementalEligibleOpeningProjectilesReleased > 0 ||
+                  burst.ElementalEligibleOpeningProjectileDirectHits > 0)))
             {
                 return false;
             }
@@ -4075,6 +4437,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             monster.OnResolved -= HandleMonsterResolved;
             monster.OnDestroyed -= HandleMonsterDestroyed;
             monster.OnBuffRuntimeObserved -= HandleBuffRuntimeObserved;
+            monster.OnElementalHitReactionObserved -=
+                HandleElementalHitReactionObserved;
         }
 
         trackedMonsters.Remove(monster);

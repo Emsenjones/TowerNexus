@@ -4764,7 +4764,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2468853380763650665}
   m_Layer: 0
-  m_Name: Prefab_Fx_ElectrifiedBuff_ApplyStack
+  m_Name: Prefab_Fx_ElectrifiedBuff_TowerHitReceived
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

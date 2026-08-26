@@ -103,6 +103,7 @@ public class MonsterBehaviour : MonoBehaviour
     private readonly List<GridNodeBehaviour> currentPath = new List<GridNodeBehaviour>();
     private MonsterBuffRuntime buffRuntime;
     private int pathIndex;
+    private int towerOwnedHitTransactionDepth;
 
     private static readonly IReadOnlyList<MonsterBuffStateSnapshot> EmptyBuffSnapshots = Array.Empty<MonsterBuffStateSnapshot>();
 
@@ -129,7 +130,10 @@ public class MonsterBehaviour : MonoBehaviour
     public int LaneIdentity => laneIdentity;
     public Vector2 MaximumLaneOffset => maximumLaneOffset;
     public bool IsGameplayTargetable =>
-        isActiveAndEnabled && !isResolved && !isCleaningUp;
+        isActiveAndEnabled &&
+        !isResolved &&
+        !isCleaningUp &&
+        currentHealth > 0;
     [TitleGroup("Buff Runtime")]
     [ShowInInspector, ReadOnly]
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveBuffSnapshots => buffRuntime != null ? buffRuntime.ActiveSnapshots : EmptyBuffSnapshots;
@@ -141,6 +145,8 @@ public class MonsterBehaviour : MonoBehaviour
     public event Action<MonsterBehaviour, int, int> OnHealthChanged;
     public event Action<MonsterBehaviour> OnBuffStateChanged;
     public event Action<MonsterBehaviour, BuffRuntimeObservation> OnBuffRuntimeObserved;
+    public event Action<MonsterBehaviour, ElementalHitReactionObservation>
+        OnElementalHitReactionObserved;
 
     public bool TryInitializeRuntime(out string failureReason)
     {
@@ -406,7 +412,7 @@ public class MonsterBehaviour : MonoBehaviour
         hitFeedback?.PlayHitFeedback();
         ShowDamageNumber(damage);
 
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && towerOwnedHitTransactionDepth == 0)
         {
             Die();
         }
@@ -429,13 +435,66 @@ public class MonsterBehaviour : MonoBehaviour
 
     public BuffApplyOutcome ApplyBuffWithOutcome(BuffApplyRequest request)
     {
+        return ApplyBuffWithOutcome(request, deferOverload: false);
+    }
+
+    internal BuffApplyOutcome ApplyBuffWithOutcome(
+        BuffApplyRequest request,
+        bool deferOverload)
+    {
         if (isResolved || isCleaningUp)
         {
-            return new BuffApplyOutcome(BuffApplyResult.Invalid, null, false, false);
+            return new BuffApplyOutcome(
+                BuffApplyResult.Invalid,
+                null,
+                false,
+                false,
+                0,
+                0,
+                0);
         }
 
         EnsureBuffRuntime();
-        return buffRuntime.ApplyBuffWithOutcome(request);
+        return buffRuntime.ApplyBuffWithOutcome(request, deferOverload);
+    }
+
+    internal void BeginTowerOwnedHitTransaction()
+    {
+        EnsureBuffRuntime();
+        towerOwnedHitTransactionDepth++;
+        buffRuntime.BeginExternalMutation();
+    }
+
+    internal void ResolveElementalHitReactions(
+        TowerInstance triggeringTower,
+        TowerDamageSourceIdentity damageSourceIdentity,
+        ElementalOpportunityDiagnosticContext diagnostics)
+    {
+        EnsureBuffRuntime();
+        buffRuntime.ResolveElementalHitReactions(
+            triggeringTower,
+            damageSourceIdentity,
+            diagnostics);
+    }
+
+    internal void EndTowerOwnedHitTransaction()
+    {
+        if (towerOwnedHitTransactionDepth <= 0)
+        {
+            return;
+        }
+
+        towerOwnedHitTransactionDepth--;
+
+        if (towerOwnedHitTransactionDepth == 0 &&
+            currentHealth <= 0 &&
+            !isResolved &&
+            !isCleaningUp)
+        {
+            Die();
+        }
+
+        buffRuntime.EndExternalMutation();
     }
 
     public bool RemoveBuff(BuffDefinition buffDefinition)
@@ -481,6 +540,8 @@ public class MonsterBehaviour : MonoBehaviour
         {
             buffRuntime.OnStateChanged -= HandleBuffStateChanged;
             buffRuntime.OnRuntimeObserved -= HandleBuffRuntimeObserved;
+            buffRuntime.OnElementalHitReactionObserved -=
+                HandleElementalHitReactionObserved;
         }
         OnDestroyed?.Invoke(this);
     }
@@ -492,6 +553,8 @@ public class MonsterBehaviour : MonoBehaviour
             buffRuntime = new MonsterBuffRuntime(this);
             buffRuntime.OnStateChanged += HandleBuffStateChanged;
             buffRuntime.OnRuntimeObserved += HandleBuffRuntimeObserved;
+            buffRuntime.OnElementalHitReactionObserved +=
+                HandleElementalHitReactionObserved;
         }
     }
 
@@ -533,6 +596,33 @@ public class MonsterBehaviour : MonoBehaviour
             {
                 ((Action<MonsterBehaviour, BuffRuntimeObservation>)invocationList[i])
                     .Invoke(this, observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
+    }
+
+    private void HandleElementalHitReactionObserved(
+        ElementalHitReactionObservation observation)
+    {
+        Action<MonsterBehaviour, ElementalHitReactionObservation> handlers =
+            OnElementalHitReactionObserved;
+
+        if (handlers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = handlers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<MonsterBehaviour, ElementalHitReactionObservation>)
+                    invocationList[i]).Invoke(this, observation);
             }
             catch (Exception exception)
             {

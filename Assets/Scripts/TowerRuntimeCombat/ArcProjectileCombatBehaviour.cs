@@ -214,7 +214,8 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             TowerDamageSourceIdentity damageSourceIdentity = isAdditional
                 ? TowerDamageSourceIdentity.AdditionalDirect
                 : TowerDamageSourceIdentity.PrimaryDirect;
-            ProjectileRuntimeOptions runtimeOptions = CreateRuntimeOptions();
+            ProjectileRuntimeOptions runtimeOptions =
+                CreateRuntimeOptions(isAdditional);
 
             if (TryReleaseProjectile(
                     releasePrefab,
@@ -292,7 +293,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private ProjectileRuntimeOptions CreateRuntimeOptions()
+    private ProjectileRuntimeOptions CreateRuntimeOptions(bool isAdditional)
     {
         TowerUpgradeDefinition explosiveShellSourceUpgrade = null;
         EffectDefinition explosiveShellEffect = null;
@@ -332,7 +333,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         return new ProjectileRuntimeOptions(
-            allowsElementalApplication: true,
+            allowsElementalApplication: !isAdditional,
             canPierce: false,
             maxPierceHitCount: 1,
             explosiveShellSourceUpgrade: explosiveShellSourceUpgrade,
@@ -341,7 +342,12 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
             remainingBounceCount: remainingBounceCount,
             bounceArcHeight: bounceArcHeight,
             bounceTargetSelectionType: bounceTargetSelectionType,
-            bounceDamageScale: bounceDamageScale);
+            bounceDamageScale: bounceDamageScale,
+            elementalOpportunityProvenance:
+                ElementalOpportunityProvenance.CannonShell,
+            elementalOpportunityMemberIdentity: isAdditional
+                ? ElementalOpportunityMemberIdentity.Additional
+                : ElementalOpportunityMemberIdentity.Primary);
     }
 
     private AdditionalAttackEntityAuthoring GetMultiShellsAdditionalAttackEntities()

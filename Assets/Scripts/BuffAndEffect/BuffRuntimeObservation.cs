@@ -24,7 +24,10 @@ public readonly struct BuffRuntimeObservation
         bool hasStateAfter,
         int stackCountAfter,
         BuffRuntimePhase phaseAfter,
-        bool reachedMaximumStacks)
+        bool reachedMaximumStacks,
+        int eligibleRequestedStackUnits,
+        int appliedStackUnits,
+        int discardedStackUnits)
     {
         ObservationType = observationType;
         ObservationTime = observationTime;
@@ -42,6 +45,9 @@ public readonly struct BuffRuntimeObservation
         StackCountAfter = stackCountAfter;
         PhaseAfter = phaseAfter;
         ReachedMaximumStacks = reachedMaximumStacks;
+        EligibleRequestedStackUnits = eligibleRequestedStackUnits;
+        AppliedStackUnits = appliedStackUnits;
+        DiscardedStackUnits = discardedStackUnits;
     }
 
     public BuffRuntimeObservationType ObservationType { get; }
@@ -60,6 +66,9 @@ public readonly struct BuffRuntimeObservation
     public int StackCountAfter { get; }
     public BuffRuntimePhase PhaseAfter { get; }
     public bool ReachedMaximumStacks { get; }
+    public int EligibleRequestedStackUnits { get; }
+    public int AppliedStackUnits { get; }
+    public int DiscardedStackUnits { get; }
 
     public static BuffRuntimeObservation CreateApplicationAttempt(
         BuffApplyRequest request,
@@ -71,7 +80,10 @@ public readonly struct BuffRuntimeObservation
         bool hasStateAfter,
         int stackCountAfter,
         BuffRuntimePhase phaseAfter,
-        bool reachedMaximumStacks)
+        bool reachedMaximumStacks,
+        int eligibleRequestedStackUnits,
+        int appliedStackUnits,
+        int discardedStackUnits)
     {
         return new BuffRuntimeObservation(
             BuffRuntimeObservationType.ApplicationAttempt,
@@ -89,7 +101,10 @@ public readonly struct BuffRuntimeObservation
             hasStateAfter,
             stackCountAfter,
             phaseAfter,
-            reachedMaximumStacks);
+            reachedMaximumStacks,
+            eligibleRequestedStackUnits,
+            appliedStackUnits,
+            discardedStackUnits);
     }
 
     public static BuffRuntimeObservation CreateLifecycleEvent(
@@ -119,6 +134,9 @@ public readonly struct BuffRuntimeObservation
             hasStateAfter && buffInstance != null,
             hasStateAfter ? stackCount : 0,
             phase,
-            lifecycleEvent == BuffEventType.Overload);
+            lifecycleEvent == BuffEventType.Overload,
+            0,
+            0,
+            0);
     }
 }

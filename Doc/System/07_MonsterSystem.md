@@ -333,7 +333,7 @@ The current presentation contract includes:
 
 - Idle and walking state presentation
 - Death presentation
-- Non-blocking hit reaction
+- Non-blocking presentation hit reaction
 - Repeatable hit flash
 - Status display for health and active Buffs
 - Transient damage-number display
@@ -346,7 +346,7 @@ Presentation failure must not block movement, damage, death, arrival, resolution
 - Walking presentation reflects whether the Monster is currently allowed and able to move.
 - A movement lock pauses walking presentation without discarding the current path or node state.
 - Death presentation begins after the Dead transition.
-- Hit reaction and hit flash may play when damage is received without becoming a separate gameplay state.
+- Presentation hit reaction and hit flash may play when damage is received without becoming a separate gameplay state. This visual response is distinct from Buff System's gameplay-producing **Elemental hit reaction**.
 - Repeated hits safely replace or compose presentation without altering shared authored visual resources.
 
 Concrete animation controllers, shader techniques, tween libraries, and renderer APIs are implementation choices.

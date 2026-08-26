@@ -311,7 +311,8 @@ Arcane Field is one Tower-owned persistent field created when its Upgrade become
 - It follows the owning Tower.
 - It does not duplicate on unrelated changes.
 - Its complete runtime prefab comes from the Upgrade definition and owns its presentation. The prefab root's MagicArcaneFieldBehaviour owns its authored radius, interval, and tick Effect.
-- Each tick resolves valid Monsters inside its radius and grants the reviewed Elemental opportunity.
+- Each tick resolves valid Monsters inside its radius and deals its authored
+  Behaviour damage without granting an ordinary Elemental opportunity.
 - Each tick's Behaviour damage is Tower-owned and uses the current resolved BasicDamage with the field Effect's stable DamageScale.
 - It ends when the owning combat session or Tower ends.
 
@@ -358,7 +359,7 @@ remain one Buff contribution source through their owning Tower instance.
 
 Battery Duration is static Drone entity authoring for the battle. Applying a Tower Upgrade does not refresh remaining battery or rewrite the battery-end boundary.
 
-High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates current resolved BasicDamage and therefore affects future unresolved Drone direct, Blast Rounds, Final Dive, and approved contributor-owned StackApplied TowerScaled damage. It does not alter shared-state FixedBuff lifecycle or Elemental-reaction damage.
+High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates current resolved BasicDamage and therefore affects future unresolved Drone direct, Blast Rounds, and Final Dive damage. It does not alter shared-state FixedBuff lifecycle, Overload, or Elemental hit-reaction damage.
 
 Final Dive, when active at battery end, locks one target and becomes one-way:
 
@@ -377,19 +378,61 @@ Detailed Drone-fired projectile behavior belongs to Projectile System.
 
 # 13. Elemental Opportunity Boundary
 
-Runtime Combat and Attack Entities grant Elemental application only at explicitly reviewed attack boundaries.
+Runtime Combat and Attack Entities grant ordinary Elemental application only
+through the baseline primary attack path. Behaviour-added or Behaviour-extended
+results may preserve their authored damage, targets, state, and completion, but
+they have no ordinary Elemental authorization.
 
-Eligibility is not inferred from being a Projectile, Effect, positive-damage result, or Attack Entity. Damage resolves first; if that result removes the Monster, the following Elemental attempt has no valid target.
+| TowerFamily | Authorized baseline primary boundary | Unauthorized Behaviour results |
+|---|---|---|
+| Archer | Center primary Arrow's first valid Monster Hit | Side Arrows, later Piercing hits, Explosive Arrow area targets |
+| Cannon | Primary initial Shell's baseline direct Monster result | Additional initial Shells, bounce children, Explosive Shell area targets |
+| Magic | Each valid primary Orb contact | Additional Orb contacts, Arcane Detonation targets, Arcane Field tick targets |
+| Drone | Primary Drone's Burst-opening Projectile direct hit | Later shots, every additional-Drone Projectile, Blast Rounds targets, Final Dive direct and explosion targets |
 
-Every Elemental application opportunity carries the owning source Tower identity. Primary attacks, additional Attack Entities, area results, bounce children, contacts, and persistent attack entities produced by one Tower remain one contribution source for Source Apply Cooldown. Attack Entity identity never becomes an independent Buff cooldown source. Different Tower instances remain independent sources even when they share TowerFamily and ElementType.
+Eligibility is explicit topology authorization. It is not inferred from being a
+Projectile, Effect, positive-damage result, Attack Entity, or from the equipped
+Elemental Upgrade. A target-specific candidate is classified before its damage
+result. If that damage removes the Monster, the candidate remains historically
+eligible but no application request is dispatched. Miss, invalidation, and
+technical cleanup never transfer authorization to a later result.
 
-Effect System and Buff System own the application, cooldown, stacking, Protection, overload, and lifecycle result after an eligible opportunity is emitted.
+Archer primary authorization is immutable release identity plus one-way consumed
+state. The first valid center-Arrow impact consumes it before damage, even when
+that damage prevents application; later Piercing hits cannot regain it. Cannon
+bounce children are always unauthorized. Magic primary Orb authorization may be
+used at every valid contact. Drone opening-slot identity is separate from
+Elemental authorization: an additional Drone's opener is still an opener, but it
+is unauthorized.
 
-For Drone-fired Projectiles, the Burst-opener eligibility is part of the
-released Projectile's immutable attack context. An eligible opener may grant a
-direct opportunity and passes the same eligibility to its Blast Rounds resolved
-targets. Later Projectiles grant neither direct nor Blast Rounds opportunities.
-Final Dive remains a separate reviewed direct-and-explosion boundary.
+Every dispatched Elemental application carries the owning source Tower identity
+and the current Elemental Upgrade's positive contribution. Attack Entity identity
+does not become a Buff cooldown source. Different Tower instances remain
+independent sources even when they share TowerFamily and ElementType.
+
+Effect System owns authorization forwarding and request dispatch. Buff System
+owns cooldown, stacking, Protection, overload, and lifecycle after receiving the
+request; it never infers attack-result provenance.
+
+## 13.1 Tower-Owned Elemental Hit Fact
+
+Every successfully committed positive Tower-owned damage result produces one
+target-specific hit fact after damage and before presentation publication. That
+fact is available to an already-active ElectricShock or Windcut Buff even when
+the result came from an additional member, continuation, bounce, area,
+persistent tick, completion result, Blast area, or Final Dive result.
+
+The hit fact does not authorize Elemental application. Baseline-primary
+application remains governed by the matrix above. Behaviour results therefore
+may trigger normal shared Electric/Wind value on a Buff applied by another hit,
+but they never create, refresh, stack, or overload that Buff. FixedBuff damage,
+Buff lifecycle damage, Overload results, WindVortex ticks, and Elemental hit-
+reaction damage never produce a Tower-owned hit fact.
+
+When the same hit applies ElectricShock or Windcut, the committed new Buff joins
+that hit's reaction set. Electric is evaluated before Wind when both coexist.
+Runtime gameplay owns eligibility, ordering, and target-specific committed
+outcomes; Recorder observations are read-only.
 
 ---
 

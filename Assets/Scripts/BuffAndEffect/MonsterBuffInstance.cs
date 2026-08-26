@@ -13,9 +13,14 @@ public class MonsterBuffInstance
     private float periodicTickTimer;
     private int stackCount;
     private float nextAllowedUnattributedApplyTime;
+    private float nextAllowedElementalHitReactionTime;
     private BuffRuntimePhase phase;
+    private readonly int stackingCycleIdentity;
 
-    public MonsterBuffInstance(BuffApplyRequest request, MonsterBehaviour owner)
+    public MonsterBuffInstance(
+        BuffApplyRequest request,
+        MonsterBehaviour owner,
+        int stackingCycleIdentity)
     {
         definition = request.BuffDefinition;
         this.owner = owner;
@@ -23,8 +28,11 @@ public class MonsterBuffInstance
         sourceUpgrade = request.SourceUpgrade;
         remainingPhaseDuration = definition.ActiveDuration;
         periodicTickTimer = 0f;
-        stackCount = 1;
+        stackCount = definition.UsesStacks
+            ? Mathf.Min(request.RequestedStackUnits, definition.MaximumStacks)
+            : 1;
         phase = BuffRuntimePhase.Stacking;
+        this.stackingCycleIdentity = stackingCycleIdentity;
         RecordSourceApplyCooldown(request.SourceTower);
     }
 
@@ -37,10 +45,39 @@ public class MonsterBuffInstance
     public int StackCount => stackCount;
     public BuffRuntimePhase Phase => phase;
     public bool IsInProtectionPhase => phase == BuffRuntimePhase.Protection;
+    public int StackingCycleIdentity => stackingCycleIdentity;
+    public bool IsElementalHitReactionCooldownActive =>
+        definition != null &&
+        definition.TowerHitReactionCooldown > 0f &&
+        Time.time < nextAllowedElementalHitReactionTime;
 
-    public BuffApplyResult TryReapply(BuffApplyRequest request)
+    public void RecordElementalHitReactionCooldown()
     {
+        if (definition == null || definition.TowerHitReactionCooldown <= 0f)
+        {
+            return;
+        }
+
+        nextAllowedElementalHitReactionTime =
+            Time.time + definition.TowerHitReactionCooldown;
+    }
+
+    public BuffApplyResult TryReapply(
+        BuffApplyRequest request,
+        out int eligibleRequestedStackUnits,
+        out int appliedStackUnits,
+        out int discardedStackUnits)
+    {
+        eligibleRequestedStackUnits = 0;
+        appliedStackUnits = 0;
+        discardedStackUnits = 0;
+
         if (definition == null || !definition.IsValid())
+        {
+            return BuffApplyResult.Invalid;
+        }
+
+        if (definition.UsesStacks && request.RequestedStackUnits <= 0)
         {
             return BuffApplyResult.Invalid;
         }
@@ -65,9 +102,18 @@ public class MonsterBuffInstance
             return BuffApplyResult.Refreshed;
         }
 
-        if (stackCount < definition.MaximumStacks)
+        eligibleRequestedStackUnits = request.RequestedStackUnits;
+        int remainingCapacity = Mathf.Max(
+            0,
+            definition.MaximumStacks - stackCount);
+        appliedStackUnits = Mathf.Min(
+            eligibleRequestedStackUnits,
+            remainingCapacity);
+        discardedStackUnits = eligibleRequestedStackUnits - appliedStackUnits;
+
+        if (appliedStackUnits > 0)
         {
-            stackCount++;
+            stackCount += appliedStackUnits;
             return BuffApplyResult.Stacked;
         }
 
@@ -87,6 +133,7 @@ public class MonsterBuffInstance
         stackCount = 0;
         nextAllowedApplyTimesBySourceTower.Clear();
         nextAllowedUnattributedApplyTime = 0f;
+        nextAllowedElementalHitReactionTime = 0f;
         return true;
     }
 

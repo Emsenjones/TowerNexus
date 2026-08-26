@@ -77,7 +77,7 @@ The root faces its current movement direction. Imported model differences are co
 
 # 4. Runtime Data Categories
 
-A projectile receives only data relevant to its own execution, such as source Tower context, stable damage-source identity, flight identity, launch direction or target snapshot, stable direct DamageScale, explicit Elemental eligibility, and approved package options. Archer and Cannon projectiles, Drone-fired projectiles, and bounce children are direct-damage carriers under this same contract; none stores an already resolved integer damage or a damage-refresh snapshot.
+A projectile receives only data relevant to its own execution, such as source Tower context, stable damage-source identity, flight identity, launch direction or target snapshot, stable direct DamageScale, explicit Elemental-application eligibility, and approved package options. Archer and Cannon projectiles, Drone-fired projectiles, and bounce children are direct-damage carriers under this same contract; none stores an already resolved integer damage or a damage-refresh snapshot.
 
 Immutable Entity State includes:
 
@@ -125,14 +125,22 @@ Each new Monster Hit:
 1. Records that Monster.
 2. Consumes one remaining hit.
 3. Dispatches unresolved direct damage.
-4. Emits the reviewed Elemental opportunity.
-5. Completes the Arrow when remaining capacity reaches zero.
+4. Emits an ordinary Elemental application opportunity only when this is the Center primary
+   Arrow's first valid impact and its immutable authorization was not consumed.
+5. After any successful positive Tower-owned damage result, forwards one
+   target-specific hit fact that may trigger an existing Electric/Wind Buff.
+6. Completes the Arrow when remaining capacity reaches zero.
+
+Primary authorization and consumption are separate state. The first valid
+Center impact consumes authorization before damage; target death or invalidation
+after damage cannot transfer it to a later Piercing hit. Side Arrows and every
+Piercing continuation are unauthorized.
 
 Applying or increasing Piercing on an active eligible Arrow changes remaining capacity by the resolved maximum delta. It does not clear hit history or restore consumed hits.
 
 ## 5.2 Scatter Arrow
 
-Scatter members are independent projectiles inside one stable release group. Each owns its own movement, hit history, remaining Piercing capacity, lifetime, stable DamageScale, and Elemental results.
+Scatter members are independent projectiles inside one stable release group. Each owns its own movement, hit history, remaining Piercing capacity, lifetime, and stable DamageScale. Only the Center member carries primary Elemental authorization; side members are Behaviour damage entities.
 
 The Center member uses the Tower-authored Arrow template and DamageScale `1`. Side members use Scatter Arrow's additional-entity template and package-authored DamageScale. Each Monster Hit calculates its integer direct damage from the source Tower's current resolved BasicDamage and that member's stable scale.
 
@@ -145,7 +153,8 @@ Scatter topology is fixed when the Archer enters Windup and never adds projectil
 Explosive Arrow is a direct-hit Archer Behaviour package, not a flight identity.
 
 - Arrow flight remains Direction flight.
-- Each new Arrow Monster Hit first resolves its baseline direct damage and reviewed direct Elemental opportunity.
+- Each new Arrow Monster Hit first resolves its baseline direct damage. Only the
+  Center primary Arrow's first valid impact may dispatch Elemental application.
 - When Explosive Arrow is active for that released Arrow, the same hit then executes one package-authored area Effect centered on the hit Monster's current Hit Reference.
 - The directly hit Monster remains eligible for the area target set when it is still gameplay-targetable after baseline direct damage.
 - A miss, lifetime expiry, or technical cleanup produces no Explosive Arrow Effect.
@@ -202,9 +211,19 @@ Resolve Optional Direct Monster Hit
 
 Impact presentation is requested in the same impact-resolution step. Its ordering relative to synchronous gameplay results within that frame is not a gameplay contract. Presentation cannot change result ordering, target eligibility, or completion.
 
-Explosive Arrow and Explosive Shell are additive to their baseline direct result. Their surviving direct target may also be included in the area Effect and may therefore receive two independent damage results and two explicitly authorized Elemental opportunities. Blast Rounds follows the same direct-plus-area result order but grants those Elemental opportunities only when its owning Drone Projectile carries Burst-opener eligibility.
+Explosive Arrow and Explosive Shell are additive to their baseline direct result.
+Their surviving direct target may also be included in the area Effect and may
+therefore receive two independent damage results, but the area result never
+creates an ordinary Elemental opportunity. Blast Rounds follows the same direct-
+plus-area damage order and its area result is likewise Elemental-ineligible.
 
 Positive damage or successful damage application is not a universal gate for Elemental opportunity. However, a Monster removed by the preceding damage is no longer a valid target at the following boundary.
+
+This statement concerns ordinary Elemental application. Every successful
+Tower-owned direct or package Effect damage result separately forwards one
+Elemental hit fact for an already-active Electric/Wind Buff. That reaction fact
+contains no application authorization, stack units, or projectile-owned Buff
+authority.
 
 Projectile System emits trigger context; Effect System owns reusable Effect execution and Buff System owns persistent outcomes.
 
@@ -250,18 +269,20 @@ A Drone may release projectile-style Attack Entities from its own Fire Anchor.
 
 Drone runtime owns target choice, burst timing, and creation request. Projectile System owns the projectile after release.
 
-Only the opening Projectile of a genuinely new Burst may receive ordinary
-Elemental eligibility. The flag is frozen at successful release. Projectile
-System consumes it at the actual Monster Hit, does not transfer it after a miss
-or technical cleanup, and does not infer a new opportunity when the Drone
+Opening-slot identity and Elemental authorization are separate immutable facts.
+Only the primary Drone's opening Projectile of a genuinely new Burst may receive
+ordinary Elemental authorization. An additional Drone's opening Projectile is
+still an opener but is unauthorized. Projectile System consumes authorized
+primary-opener application at the actual Monster Hit, does not transfer it after
+a miss or technical cleanup, and does not infer a new opportunity when the Drone
 retargets.
 
 Blast Rounds may be refreshed for already airborne unresolved Drone projectiles. A resolved hit is never replayed after refresh.
 
-Blast Rounds inherits the owning Projectile's frozen Elemental eligibility. An
-eligible opener grants one application opportunity to each valid resolved area
-target; an ineligible later Projectile grants none. Final Dive eligibility is a
-separate Drone completion contract rather than Projectile state.
+Blast Rounds retains its owning Projectile and opening-slot identity for damage
+and diagnostics, but its resolved area targets are always Elemental-ineligible.
+Final Dive remains a Drone completion contract and neither its direct nor
+explosion result has ordinary Elemental authorization.
 
 Drone movement, battery, orbit, and Final Dive do not belong to Projectile System.
 

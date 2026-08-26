@@ -156,9 +156,27 @@ TowerUpgradeDefinition
     + Optional Elemental Identity
 ```
 
+The three Upgrade layers remain separate balance authorities. Basic changes
+deterministic Tower stats. Behaviour changes attack topology, coverage, and
+package gameplay but its added or extended results do not create ordinary
+Elemental applications. Elemental authoring supplies the application Effect and
+positive stack contribution used only by the baseline primary attack path.
+Once ElectricShock or Windcut exists on a Monster, every successful Tower-owned
+damage result may offer that shared Buff one Elemental hit-reaction opportunity;
+this broader reaction permission never grants Buff application or stack
+contribution.
+
 Definitions and runtime templates store reusable authored truth. Per-instance runtime state, consumed history, timers, pending actions, and active entity state must not be written back into reusable authored content.
 
-Tower-owned damage resolves from the source Tower's current Level-authored BasicDamage plus applied Basic Damage Bonus, multiplied by one stable DamageScale at the actual damage boundary. This includes the approved immediate StackApplied damage owned by the Tower that successfully contributed that stack. Periodic, Overload, Protection, persistent, and other shared Buff-state or Elemental-reaction damage uses independently authored FixedDamage. Already resolved damage is never replayed after a Level or Upgrade change.
+Tower-owned damage resolves from the source Tower's current Level-authored BasicDamage plus applied Basic Damage Bonus, multiplied by one stable DamageScale at the actual damage boundary. Periodic, Overload, Protection, persistent, and shared Electric/Wind Elemental hit-reaction damage uses independently authored FixedDamage. The Tower that produced a hit is diagnostic context for a shared reaction and never supplies its BasicDamage to that reaction. Already resolved damage is never replayed after a Level or Upgrade change.
+
+Elemental balance therefore treats one Element's shared normal Buff behavior as
+an absolute fixed-value package rather than a percentage multiplier on its
+carrying Tower. Tower-family stack contribution adjusts only the opportunity to
+reach Overload. Matching sources with overlapping effective coverage create the
+conditional cooperation ceiling through more reliable Overload; Stage pressure
+later tests the value of that build without becoming Elemental runtime
+authority.
 
 ---
 
@@ -226,7 +244,7 @@ It defines what a Tower is, not how a placed Tower executes combat.
 
 ## 4.11 Tower Runtime Combat System
 
-Owns combat orchestration for placed Towers: target acquisition, attack timing, confirmation and release boundaries, Attack Entity release, active entity ownership, explicit Elemental opportunity boundaries, technical cleanup, and approved runtime refresh coordination.
+Owns combat orchestration for placed Towers: target acquisition, attack timing, confirmation and release boundaries, Attack Entity release, active entity ownership, the baseline-primary-only Elemental opportunity boundary, technical cleanup, and approved runtime refresh coordination.
 
 It decides when attacks are released. Released Attack Entities own their domain behavior.
 

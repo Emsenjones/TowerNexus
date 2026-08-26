@@ -271,7 +271,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
             damageSourceIdentity,
             ProjectileFlightType.Direction,
             initialArcHeight: 0f,
-            runtimeOptions: CreateRuntimeOptions(),
+            runtimeOptions: CreateRuntimeOptions(isAdditional),
             archerReleaseIdentity: releaseIdentity);
     }
 
@@ -299,7 +299,7 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    private ProjectileRuntimeOptions CreateRuntimeOptions()
+    private ProjectileRuntimeOptions CreateRuntimeOptions(bool isAdditional)
     {
         bool canPierce = IsPiercingArrowActive();
         TowerUpgradeDefinition explosiveArrowSourceUpgrade = null;
@@ -315,11 +315,16 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         }
 
         return new ProjectileRuntimeOptions(
-            allowsElementalApplication: true,
+            allowsElementalApplication: !isAdditional,
             canPierce: canPierce,
             maxPierceHitCount: canPierce ? cachedPiercingMaximum : 1,
             explosiveArrowSourceUpgrade: explosiveArrowSourceUpgrade,
-            explosiveArrowEffect: explosiveArrowEffect);
+            explosiveArrowEffect: explosiveArrowEffect,
+            elementalOpportunityProvenance:
+                ElementalOpportunityProvenance.ArcherArrow,
+            elementalOpportunityMemberIdentity: isAdditional
+                ? ElementalOpportunityMemberIdentity.Additional
+                : ElementalOpportunityMemberIdentity.Primary);
     }
 
     private bool IsPiercingArrowActive()

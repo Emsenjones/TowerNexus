@@ -94,11 +94,30 @@ public static class EffectExecutor
 
         if (!EffectTargetResolver.TryResolveTargets(effectDefinition, triggerContext, resolvedTargets))
         {
-            SpawnExecutionVfx(effectDefinition, triggerContext, resolvedTargets);
+            if (!triggerContext.RequiresCommittedActionForExecutionVfx)
+            {
+                SpawnExecutionVfx(effectDefinition, triggerContext, resolvedTargets);
+            }
             return default;
         }
 
         List<MonsterBehaviour> executionTargets = new List<MonsterBehaviour>(resolvedTargets);
+
+        ElementalOpportunityDiagnosticContext opportunityDiagnostics =
+            triggerContext.ElementalOpportunityDiagnostics;
+
+        if (opportunityDiagnostics.IsValid &&
+            opportunityDiagnostics.ObserveResolvedTargetsAsCandidates)
+        {
+            for (int i = 0; i < executionTargets.Count; i++)
+            {
+                ElementalApplication.ObserveCandidate(
+                    triggerContext.SourceTower,
+                    executionTargets[i],
+                    opportunityDiagnostics.WithResultOrdinal(
+                        opportunityDiagnostics.ResultOrdinal + i));
+            }
+        }
 
         IReadOnlyList<EffectAction> actions = effectDefinition.Actions;
         bool executedAnyAction = false;
@@ -114,7 +133,11 @@ public static class EffectExecutor
                 executionTargets);
         }
 
-        SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
+        if (!triggerContext.RequiresCommittedActionForExecutionVfx ||
+            executedAnyAction)
+        {
+            SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
+        }
 
         return new EffectExecutionResult(true, executedAnyAction);
     }
@@ -216,7 +239,24 @@ public static class EffectExecutor
                 continue;
             }
 
-            target.TakeDamage(damage);
+            if (action.DamageMode == EffectDamageMode.TowerScaled)
+            {
+                if (!TowerOwnedHitTransaction.ApplyDamage(
+                        target,
+                        towerResolution,
+                        GetMonsterHitPosition(target),
+                        triggerContext.ElementalOpportunityDiagnostics,
+                        allowsElementalApplication: false,
+                        publishDamageApplication: false))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                target.TakeDamage(damage);
+            }
+
             successfulApplicationCount++;
         }
 
@@ -281,7 +321,8 @@ public static class EffectExecutor
         }
 
         if (buffDefinition.ElementType != ElementType.None &&
-            !triggerContext.AllowsElementalApplication)
+            (!triggerContext.AllowsElementalApplication ||
+             triggerContext.RequestedStackUnits <= 0))
         {
             return false;
         }
@@ -297,14 +338,34 @@ public static class EffectExecutor
                 continue;
             }
 
-            BuffApplyOutcome outcome = target.ApplyBuffWithOutcome(
-                new BuffApplyRequest(
+            if (buffDefinition.ElementType != ElementType.None)
+            {
+                ElementalApplication.ObserveDispatched(
+                    triggerContext,
+                    target);
+            }
+
+            BuffApplyRequest request = buffDefinition.ElementType != ElementType.None
+                ? new BuffApplyRequest(
                     buffDefinition,
                     triggerContext.SourceTower,
                     triggerContext.SourceUpgrade,
                     triggerContext.HasTriggerPosition,
-                    triggerContext.TriggerPosition)
-            );
+                    triggerContext.TriggerPosition,
+                    triggerContext.RequestedStackUnits)
+                : new BuffApplyRequest(
+                    buffDefinition,
+                    triggerContext.SourceTower,
+                    triggerContext.SourceUpgrade,
+                    triggerContext.HasTriggerPosition,
+                    triggerContext.TriggerPosition);
+            bool deferOverload =
+                triggerContext.ElementalApplicationTransaction != null;
+            BuffApplyOutcome outcome = target.ApplyBuffWithOutcome(
+                request,
+                deferOverload);
+            triggerContext.ElementalApplicationTransaction?.RecordOutcome(
+                outcome);
 
             if (!IsSuccessfulBuffApply(outcome.Result))
             {
@@ -438,7 +499,9 @@ public static class EffectExecutor
                     targetMonster: target,
                     hasTriggerPosition: true,
                     triggerPosition: GetMonsterHitPosition(target),
-                    allowsElementalApplication: false),
+                    allowsElementalApplication: false,
+                    requiresCommittedActionForExecutionVfx:
+                        triggerContext.RequiresCommittedActionForExecutionVfx),
                 childResolvedTargets);
 
             executedAnyEffect |= childExecution.ExecutedAnyAction;

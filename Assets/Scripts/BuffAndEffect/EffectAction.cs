@@ -65,6 +65,7 @@ public class EffectAction
     public bool IsMovementLocked => isMovementLocked;
     public EffectDefinition MultiTargetEffectDefinition => multiTargetEffectDefinition;
     public int TargetCount => Mathf.Max(1, targetCount);
+    public int AuthoredTargetCount => targetCount;
     public bool ExcludeTriggerContextTarget => excludeTriggerTarget;
     public GameObject WindVortexPrefab => windVortexPrefab;
 

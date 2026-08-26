@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_ExecuteMultiTargetEffect_WindcutBuffStack
+  m_Name: Config_EffectDefini_TowerHitReceived_WindcutBuffOnApply
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Deal multiple effects on Stacks
+  displayName: Windcut Tower Hit Reaction
   radius: 1
   executionVfxPrefab: {fileID: 3321206211796593786, guid: b8374902869304382bc99082358c35ad, type: 3}
   actions:

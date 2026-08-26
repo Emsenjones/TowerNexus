@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Frozen
   description: Prevents the monster from moving for a short duration
-  activeDuration: 6
+  activeDuration: 5
   periodicTickInterval: 0
   usesStacks: 0
   maximumStacks: 10

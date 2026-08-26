@@ -22,6 +22,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     private MonsterManager monsterManager;
     private TowerUpgradeDefinition sourceUpgrade;
     private float tickTimer;
+    private int tickOrdinal;
     private bool isInitialized;
     private bool isCleaningUp;
 
@@ -148,6 +149,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     private void ExecuteTick()
     {
         Vector3 fieldCenter = transform.position;
+        int currentTickOrdinal = tickOrdinal++;
 
         EffectTargetResolver.CollectValidTargetsInRadius(
             monsterManager.GetAliveMonsters(),
@@ -165,7 +167,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                 continue;
             }
 
-            bool executed = EffectExecutor.Execute(
+            EffectExecutor.Execute(
                 tickEffect,
                 new EffectTriggerContext(
                     sourceTower: sourceTower,
@@ -173,18 +175,15 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                     targetMonster: target,
                     hasTriggerPosition: true,
                     triggerPosition: fieldCenter,
-                    allowsElementalApplication: false));
-
-            if (!executed ||
-                !EffectTargetResolver.IsValidMonsterTarget(target))
-            {
-                continue;
-            }
-
-            ElementalApplication.TryApplyFromTowerAttack(
-                sourceTower,
-                target,
-                fieldCenter);
+                    allowsElementalApplication: false,
+                    elementalOpportunityDiagnostics:
+                        new ElementalOpportunityDiagnosticContext(
+                            ElementalOpportunityProvenance.MagicArcaneField,
+                            ElementalOpportunityMemberIdentity.NotApplicable,
+                            ElementalOpportunityResultRole.PersistentTick,
+                            currentTickOrdinal,
+                            topologyAuthorized: false,
+                            observeResolvedTargetsAsCandidates: true)));
         }
     }
 
@@ -200,6 +199,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     {
         isInitialized = false;
         tickTimer = 0f;
+        tickOrdinal = 0;
         tickTargets.Clear();
         sourceTower = null;
         monsterManager = null;

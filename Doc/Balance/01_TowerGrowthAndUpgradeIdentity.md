@@ -121,6 +121,28 @@ Upgrade Layer names do not establish an unconditional strength order.
 
 A Behaviour Upgrade may outperform a Basic Upgrade in its intended multi-target or persistent-contact condition and underperform it elsewhere. An Elemental Upgrade must provide value before Overload, while matching Elemental sources and overlapping effective coverage raise its reliable ceiling.
 
+Basic and Behaviour value is normally reviewed as a multiplier on the owning
+Tower's controlled output because those layers change that Tower's stats or
+attack topology. Elemental value uses a different balance model. Its normal
+Buff behavior and Overload content are shared fixed-value packages, so their
+primary calibration is absolute Elemental damage or control value in a fixed
+combat window, not percentage uplift over the carrying Tower's output.
+
+The same Element must remain within a bounded normal-value range when carried
+by different TowerFamilies. Natural cadence, contact, target-density, and route
+differences may create variation, but no unexplained family-and-Element pairing
+should become a dominant spike or a negligible choice. Tower-family stack
+contribution exists to normalize progress toward Overload; it does not turn
+normal Elemental value back into a Tower damage multiplier.
+
+Matching Elemental cooperation is a separate conditional reward. Two matching
+sources with overlapping effective coverage should share stacks and reach
+Overload more reliably than the same sources spread across isolated coverage.
+That readable cooperation dividend is the intended high Elemental ceiling.
+Later Stage balance may demand or reward the completed build through Monster,
+Wave, route, and pressure authoring, but Stage values do not redefine the
+Elemental package itself.
+
 Required Tower Level and Upgrade Layer remain separate. A Basic or Behaviour Upgrade may require Level 3 when that placement in the growth path supports the Stage lesson.
 
 ---
@@ -135,6 +157,6 @@ Growth should remain readable and reasonably smooth across the limited Draft inv
 - No immediate or delayed investment path should become the universally correct choice across pressure states, Tower positions, and intended build roles.
 - Large power discontinuities should come from readable build completion or cooperation, not from an isolated unexplained parameter spike.
 
-Tower-owned direct, Behaviour, and approved immediate `StackApplied` contribution damage derives from the contributing Tower's current Level `BasicDamage`. Periodic, Overload, Protection, persistent-area, and other shared-state Buff/Elemental-reaction damage uses independently authored fixed values. This distinction lets Level growth strengthen the Tower's own contribution package without making an already-active shared Buff retroactively inherit later Tower growth.
+Tower-owned direct and Behaviour damage derives from the producing Tower's current Level `BasicDamage`. Periodic, Overload, Protection, persistent-area, and shared Electric/Wind Elemental hit-reaction damage uses independently authored fixed values. Elemental stack contribution changes only progress toward Overload. This distinction lets Level growth strengthen the Tower's own damage package without making an already-active shared Buff inherit source-family damage or later Tower growth.
 
 CombatMathV2 Task003, Task004, Task005, and Task007 own candidate targets, fixed-condition evidence, accepted Level/Upgrade values, and revision decisions. Unity assets remain the executable source for authored parameters. This document retains only the design intent used to judge those outputs.

@@ -19,6 +19,10 @@ public readonly struct ProjectileRuntimeOptions
     public int SourceDroneInstanceId { get; }
     public long DroneBurstId { get; }
     public bool IsAdditionalDrone { get; }
+    public bool IsOpeningShotSlot { get; }
+    public ElementalOpportunityProvenance ElementalOpportunityProvenance { get; }
+    public ElementalOpportunityMemberIdentity ElementalOpportunityMemberIdentity { get; }
+    public int ElementalResultOrdinal { get; }
 
     public ProjectileRuntimeOptions(
         bool allowsElementalApplication,
@@ -38,7 +42,13 @@ public readonly struct ProjectileRuntimeOptions
         EffectDefinition blastRoundsEffect = null,
         int sourceDroneInstanceId = 0,
         long droneBurstId = 0,
-        bool isAdditionalDrone = false)
+        bool isAdditionalDrone = false,
+        bool isOpeningShotSlot = false,
+        ElementalOpportunityProvenance elementalOpportunityProvenance =
+            ElementalOpportunityProvenance.None,
+        ElementalOpportunityMemberIdentity elementalOpportunityMemberIdentity =
+            ElementalOpportunityMemberIdentity.NotApplicable,
+        int elementalResultOrdinal = 0)
     {
         AllowsElementalApplication = allowsElementalApplication;
         CanPierce = canPierce;
@@ -58,5 +68,10 @@ public readonly struct ProjectileRuntimeOptions
         SourceDroneInstanceId = sourceDroneInstanceId;
         DroneBurstId = droneBurstId;
         IsAdditionalDrone = isAdditionalDrone;
+        IsOpeningShotSlot = isOpeningShotSlot;
+        ElementalOpportunityProvenance = elementalOpportunityProvenance;
+        ElementalOpportunityMemberIdentity =
+            elementalOpportunityMemberIdentity;
+        ElementalResultOrdinal = elementalResultOrdinal;
     }
 }

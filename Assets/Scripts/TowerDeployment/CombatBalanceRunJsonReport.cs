@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 17;
+    public int schemaVersion = 20;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -27,6 +27,12 @@ internal sealed class CombatBalanceRunJsonReport
         new CombatBalanceMonsterRuntimeJson();
     public List<CombatBalanceTowerJson> towers = new List<CombatBalanceTowerJson>();
     public List<CombatBalanceBuffJson> buffs = new List<CombatBalanceBuffJson>();
+    public CombatBalanceElementalOpportunityDiagnosticsJson
+        elementalOpportunityDiagnostics =
+            new CombatBalanceElementalOpportunityDiagnosticsJson();
+    public CombatBalanceElementalHitReactionDiagnosticsJson
+        elementalHitReactionDiagnostics =
+            new CombatBalanceElementalHitReactionDiagnosticsJson();
 }
 
 [Serializable]
@@ -370,7 +376,10 @@ internal sealed class CombatBalanceIntegrityJson
     public bool towerDeploymentCoverageMatches;
     public bool damageDiagnosticsCountsMatch;
     public bool droneBurstDiagnosticsConsistent;
+    public bool elementalOpportunityDiagnosticsConsistent;
+    public bool elementalHitReactionDiagnosticsConsistent;
     public bool buffDiagnosticsConsistent;
+    public bool buffStackUnitAccountingConsistent;
     public bool buffWaveAttributionMatches;
 }
 
@@ -417,15 +426,14 @@ internal sealed class CombatBalanceDroneRuntimeJson
     public int sourceDroneInstanceId;
     public bool isAdditionalAttackEntity;
     public int burstsStarted;
-    public int eligibleOpeningProjectilesReleased;
-    public int eligibleOpeningProjectileDirectHits;
-    public int eligibleOpeningProjectilesEndedWithoutImpact;
+    public int openingProjectilesReleased;
+    public int elementalEligibleOpeningProjectilesReleased;
+    public int openingProjectileDirectHits;
+    public int elementalEligibleOpeningProjectileDirectHits;
+    public int openingProjectilesEndedWithoutImpact;
     public int laterProjectilesReleased;
     public int laterProjectileDirectHits;
-    public int directElementalOpportunities;
-    public int blastTargetElementalOpportunities;
-    public int finalDiveDirectElementalOpportunities;
-    public int finalDiveBlastTargetElementalOpportunities;
+    public int laterProjectilesEndedWithoutImpact;
     public List<CombatBalanceDroneBurstJson> bursts =
         new List<CombatBalanceDroneBurstJson>();
 }
@@ -435,13 +443,119 @@ internal sealed class CombatBalanceDroneBurstJson
 {
     public long burstId;
     public int started;
-    public int eligibleOpeningProjectilesReleased;
-    public int eligibleOpeningProjectileDirectHits;
-    public int eligibleOpeningProjectilesEndedWithoutImpact;
+    public int openingProjectilesReleased;
+    public int elementalEligibleOpeningProjectilesReleased;
+    public int openingProjectileDirectHits;
+    public int elementalEligibleOpeningProjectileDirectHits;
+    public int openingProjectilesEndedWithoutImpact;
     public int laterProjectilesReleased;
     public int laterProjectileDirectHits;
-    public int directElementalOpportunities;
-    public int blastTargetElementalOpportunities;
+    public int laterProjectilesEndedWithoutImpact;
+}
+
+[Serializable]
+internal sealed class CombatBalanceElementalOpportunityDiagnosticsJson
+{
+    public int candidateResults;
+    public int eligibleResults;
+    public int dispatchedRequests;
+    public bool diagnosticsConsistent;
+    public List<CombatBalanceElementalOpportunityScopeJson> scopes =
+        new List<CombatBalanceElementalOpportunityScopeJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceElementalOpportunityScopeJson
+{
+    public int sourceTowerInstanceId;
+    public string towerFamily;
+    public string elementalUpgradeName;
+    public int waveNumber;
+    public string provenance;
+    public string memberIdentity;
+    public string resultRole;
+    public int minimumResultOrdinal;
+    public int maximumResultOrdinal;
+    public int candidateResults;
+    public int eligibleResults;
+    public int dispatchedRequests;
+}
+
+[Serializable]
+internal sealed class CombatBalanceElementalHitReactionDiagnosticsJson
+{
+    public CombatBalanceElementalHitReactionCountsJson totals =
+        new CombatBalanceElementalHitReactionCountsJson();
+    public bool diagnosticsConsistent;
+    public List<CombatBalanceElementalHitReactionBuffJson> buffs =
+        new List<CombatBalanceElementalHitReactionBuffJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceElementalHitReactionBuffJson
+{
+    public string definitionName;
+    public string displayName;
+    public string element;
+    public float cooldownSeconds;
+    public string damageEffectDefinitionName;
+    public int damageActionOrdinal;
+    public int fixedDamage;
+    public CombatBalanceElementalHitReactionCountsJson counts =
+        new CombatBalanceElementalHitReactionCountsJson();
+    public List<CombatBalanceElementalHitReactionSourceJson> sources =
+        new List<CombatBalanceElementalHitReactionSourceJson>();
+    public List<CombatBalanceElementalHitReactionWaveJson> waves =
+        new List<CombatBalanceElementalHitReactionWaveJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceElementalHitReactionWaveJson
+{
+    public int waveNumber;
+    public CombatBalanceElementalHitReactionCountsJson counts =
+        new CombatBalanceElementalHitReactionCountsJson();
+    public List<CombatBalanceElementalHitReactionSourceJson> sources =
+        new List<CombatBalanceElementalHitReactionSourceJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceElementalHitReactionSourceJson
+{
+    public int sourceTowerInstanceId;
+    public string towerFamily;
+    public string triggeringElementalUpgradeName;
+    public string sourceElementRelation;
+    public string damageSourceType;
+    public string effectDefinitionName;
+    public int actionOrdinal;
+    public string provenance;
+    public string memberIdentity;
+    public string resultRole;
+    public int minimumResultOrdinal;
+    public int maximumResultOrdinal;
+    public CombatBalanceElementalHitReactionCountsJson counts =
+        new CombatBalanceElementalHitReactionCountsJson();
+}
+
+[Serializable]
+internal sealed class CombatBalanceElementalHitReactionCountsJson
+{
+    public int observedReactionOpportunities;
+    public int evaluatedReactionOpportunities;
+    public int triggeredReactions;
+    public int blockedByReactionCooldown;
+    public int noValidReactionTarget;
+    public int invalidatedReactionOpportunities;
+    public int ownerResolvedByEarlierElementalReaction;
+    public int buffInstanceOrCycleChanged;
+    public int reactionTargetInvalidBeforeCommit;
+    public int reactionCommitRejected;
+    public int successfulReactionDamageTargets;
+    public int totalReactionFixedDamage;
+    public int reactionGapSampleCount;
+    public CombatBalanceMetricJson reactionGapSeconds =
+        new CombatBalanceMetricJson();
 }
 
 [Serializable]
@@ -573,6 +687,7 @@ internal sealed class CombatBalanceUpgradeJson
     public int requiredLevel;
     public string behaviourPackage;
     public string element;
+    public int elementalStackContribution;
 }
 
 [Serializable]
@@ -594,8 +709,11 @@ internal sealed class CombatBalanceBuffJson
     public int distinctMonsters;
     public int distinctSourceTowers;
     public int maximumObservedStacks;
-    public int stackUnitsAdded;
-    public int maximumStackUnitsAddedBySingleApplication;
+    public int requestedStackUnits;
+    public int appliedStackUnits;
+    public int discardedStackUnits;
+    public int maximumRequestedStackUnitsBySingleApplication;
+    public int maximumAppliedStackUnitsBySingleApplication;
     public int stackingCyclesStarted;
     public int stackingCyclesOverloaded;
     public int stackingCyclesNaturallyExpired;
@@ -645,8 +763,11 @@ internal sealed class CombatBalanceBuffWaveJson
     public int distinctMonsters;
     public int distinctSourceTowers;
     public int maximumObservedStacks;
-    public int stackUnitsAdded;
-    public int maximumStackUnitsAddedBySingleApplication;
+    public int requestedStackUnits;
+    public int appliedStackUnits;
+    public int discardedStackUnits;
+    public int maximumRequestedStackUnitsBySingleApplication;
+    public int maximumAppliedStackUnitsBySingleApplication;
     public int stackingCyclesStarted;
     public int stackingCyclesOverloaded;
     public int stackingCyclesNaturallyExpired;
@@ -697,6 +818,7 @@ internal sealed class CombatBalanceBuffParametersJson
     public float periodicTickIntervalSeconds;
     public int maximumStacks;
     public float sourceApplyCooldownSeconds;
+    public float towerHitReactionCooldownSeconds;
     public float overloadProtectionDurationSeconds;
     public bool moveSpeedMultiplierAvailable;
     public float moveSpeedMultiplier;
@@ -713,8 +835,11 @@ internal sealed class CombatBalanceBuffSourceJson
     public int applied;
     public int refreshed;
     public int stacked;
-    public int stackUnitsAdded;
-    public int maximumStackUnitsAddedBySingleApplication;
+    public int requestedStackUnits;
+    public int appliedStackUnits;
+    public int discardedStackUnits;
+    public int maximumRequestedStackUnitsBySingleApplication;
+    public int maximumAppliedStackUnitsBySingleApplication;
     public int invalid;
     public int blockedBySourceCooldown;
     public int blockedByProtection;

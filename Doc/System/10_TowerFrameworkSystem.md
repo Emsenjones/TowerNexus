@@ -320,7 +320,15 @@ Projectile orientation is defined by Projectile System.
 - Reusable one-shot area or package results use Effect System.
 - Persistent unit-attached state uses Buff System.
 - Position Impact and Monster Hit remain separate facts.
-- Elemental application is granted only by an explicitly reviewed attack boundary.
+- Basic content changes deterministic stats, Behaviour content changes attack
+  topology and package gameplay, and Elemental content supplies the application
+  and contribution used by the baseline primary attack path.
+- Behaviour-added or Behaviour-extended results may deal damage but do not grant
+  ordinary Elemental application.
+- Every successful Tower-owned damage result may notify an already-active
+  ElectricShock or Windcut Buff of one Elemental hit-reaction opportunity. This
+  notification is separate from application and carries no stack units or
+  Tower damage-scaling authority.
 - Presentation never decides hit, damage, Effect, Buff, or Elemental eligibility.
 
 ---

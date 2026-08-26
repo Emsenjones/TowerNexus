@@ -7,6 +7,17 @@ Depends on: Completed Task001 Combat Damage Formula Refactor; accepted Task004 N
 
 Blocks: Task006-Task016
 
+## Downstream Supersession
+
+This document preserves the Task005 implementation and evidence that were true
+at its checkpoint. Completed Task007B later restricted ordinary Elemental
+application to baseline-primary opportunities. Task007C's accepted
+implementation checkpoint now supersedes Electric/Wind normal value: active
+ElectricShock and Windcut content no longer uses contributor-owned
+`StackApplied` TowerScaled damage and instead uses shared FixedBuff Elemental
+hit reactions. Task007C's remaining edge-transaction smoke is explicitly
+deferred; this does not restore the historical Task005 execution path.
+
 ## 1. Goal
 
 Refine CombatMathV2 damage ownership so shared Buff state remains independent

@@ -121,6 +121,10 @@ public class TowerUpgradeDefinition : ScriptableObject
     [TitleGroup("Elemental Layer")]
     [ShowIf(nameof(IsElementalLayerUpgrade))]
     [SerializeField] private EffectDefinition elementalApplyEffect;
+    [TitleGroup("Elemental Layer")]
+    [ShowIf(nameof(IsElementalLayerUpgrade))]
+    [MinValue(1)]
+    [SerializeField] private int elementalStackContribution = 1;
 
     public string DisplayName => displayName;
     public string Description => description;
@@ -147,6 +151,7 @@ public class TowerUpgradeDefinition : ScriptableObject
     public EffectDefinition FinalDiveExplosionEffect => finalDiveExplosionEffect;
     public ElementType ElementType => elementType;
     public EffectDefinition ElementalApplyEffect => elementalApplyEffect;
+    public int ElementalStackContribution => elementalStackContribution;
 
     public bool IsValid()
     {
@@ -248,6 +253,12 @@ public class TowerUpgradeDefinition : ScriptableObject
             else if (!elementalApplyEffect.IsValidWithoutDamage())
             {
                 Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental apply effects cannot contain DealDamage actions.");
+                isValid = false;
+            }
+
+            if (elementalStackContribution <= 0)
+            {
+                Warn(logWarnings, $"Tower upgrade definition '{GetDebugName()}' is invalid: Elemental stack contribution must be greater than zero.");
                 isValid = false;
             }
         }

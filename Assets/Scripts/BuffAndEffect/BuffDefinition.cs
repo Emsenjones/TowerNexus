@@ -45,6 +45,11 @@ public class BuffDefinition : ScriptableObject
     [LabelText("Post-Overload Protection Duration")]
     [MinValue(0f)]
     [SerializeField] private float overloadProtectionDuration;
+    [TitleGroup("Elemental")]
+    [ShowIf(nameof(HasTowerHitReactionBinding))]
+    [LabelText("Tower Hit Reaction Cooldown")]
+    [MinValue(0.01f)]
+    [SerializeField] private float towerHitReactionCooldown;
 
     [TitleGroup("Visual Feedback")]
     [SerializeField] private Sprite statusIcon;
@@ -61,6 +66,7 @@ public class BuffDefinition : ScriptableObject
     public IReadOnlyList<BuffEventBinding> EventBindings => eventBindings;
     public ElementType ElementType => elementType;
     public float OverloadProtectionDuration => usesStacks ? Mathf.Max(0f, overloadProtectionDuration) : 0f;
+    public float TowerHitReactionCooldown => towerHitReactionCooldown;
     public Sprite StatusIcon => statusIcon;
     public GameObject PersistentBuffVfxPrefab => persistentBuffVfxPrefab;
 
@@ -115,6 +121,48 @@ public class BuffDefinition : ScriptableObject
         if (usesStacks && overloadProtectionDuration < 0f)
         {
             Debug.LogWarning($"Buff definition '{name}' is invalid: overload protection duration cannot be negative.", this);
+            isValid = false;
+        }
+
+        EffectDefinition towerHitReaction =
+            GetEffectDefinition(BuffEventType.TowerHitReceived);
+        bool hasTowerHitReaction = towerHitReaction != null;
+
+        if (hasTowerHitReaction)
+        {
+            if (!usesStacks ||
+                (elementType != ElementType.Electric &&
+                 elementType != ElementType.Wind))
+            {
+                Debug.LogWarning(
+                    $"Buff definition '{name}' is invalid: TowerHitReceived is supported only by stackable Electric or Wind content.",
+                    this);
+                isValid = false;
+            }
+
+            if (float.IsNaN(towerHitReactionCooldown) ||
+                float.IsInfinity(towerHitReactionCooldown) ||
+                towerHitReactionCooldown <= 0f)
+            {
+                Debug.LogWarning(
+                    $"Buff definition '{name}' is invalid: TowerHitReceived requires a positive finite cooldown.",
+                    this);
+                isValid = false;
+            }
+
+            if (!towerHitReaction.IsValidElementalHitReaction(elementType))
+            {
+                Debug.LogWarning(
+                    $"Buff definition '{name}' is invalid: TowerHitReceived does not match the approved {elementType} reaction shape.",
+                    this);
+                isValid = false;
+            }
+        }
+        else if (towerHitReactionCooldown != 0f)
+        {
+            Debug.LogWarning(
+                $"Buff definition '{name}' is invalid: a reaction cooldown requires a TowerHitReceived binding.",
+                this);
             isValid = false;
         }
 
@@ -176,6 +224,12 @@ public class BuffDefinition : ScriptableObject
     {
         return eventType == BuffEventType.StackApplied ||
                eventType == BuffEventType.Overload ||
-               eventType == BuffEventType.EnteredProtection;
+               eventType == BuffEventType.EnteredProtection ||
+               eventType == BuffEventType.TowerHitReceived;
+    }
+
+    private bool HasTowerHitReactionBinding()
+    {
+        return GetEffectDefinition(BuffEventType.TowerHitReceived) != null;
     }
 }

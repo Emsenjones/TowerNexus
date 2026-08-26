@@ -1,7 +1,9 @@
 # Task007C - Shared Elemental Hit Reaction Refactor
 
-Status: Planned; design contract approved on 2026-08-26; no runtime
-implementation or schema-20 evidence has been accepted
+Status: Implementation checkpoint accepted for Task007 continuation on
+2026-08-26; Unity Editor authoring validation and Phase 7A schema-20 gameplay
+smoke passed, while the remaining edge-transaction smoke is explicitly
+deferred and may be resumed later
 
 Depends on: Task007A Elemental Stack Contribution Refactor implementation
 checkpoint; Task007B Primary Elemental Opportunity Boundary Refactor static
@@ -643,7 +645,11 @@ Task007C implementation acceptance does not itself accept final balance values.
 - distinguish all-integrity-true Records from Records accepted with the exact
   requirement-99 progression waiver;
 - compare the complete worktree with the Phase 0 baseline;
-- mark Task007C complete only after the focused runtime gate passes;
+- permit Task007 calibration to continue after the implemented contract passes
+  ordinary gameplay smoke, while keeping unrun edge-transaction fixtures
+  explicitly deferred rather than describing them as passed;
+- mark Task007C fully Completed only after the deferred focused edge gate is
+  either executed or separately accepted as a permanent waiver;
 - update Task007's continuation gate and active Task README.
 
 ## 14. Acceptance Criteria
@@ -702,7 +708,82 @@ Task007C is accepted only when:
 
 ## 16. Completion Record
 
-Task007C remains `Planned` until implementation begins. Completion must record:
+Implementation began on 2026-08-26. The current checkpoint records:
+
+- Phase 0 external baseline:
+  `/private/tmp/towernexus-task007c-baseline.JCKcDL`, containing porcelain
+  status, binary-safe tracked worktree/index patches, HEAD identity, and SHA-256
+  inventory for all `125` modified or untracked baseline files;
+- baseline Runtime and Editor builds: passed with `0` warnings and `0` errors;
+- Task007B evidence synchronization: thirteen schema-19 Records retained;
+  combat, damage, Elemental-opportunity, Buff, and stack-unit diagnostics pass,
+  while `levelUpCountMatches`, `levelUpResolutionNodesMatch`, and
+  `finalPlayerLevelMatches` remain the explicit requirement-99 fixture waiver;
+- prior Unity Editor evidence: user-confirmed `Combat damage authoring validation
+  passed: 75 assets checked`; the execution date is unavailable and this is not
+  reused as Task007C post-implementation Editor evidence;
+- post-implementation Unity Editor authoring validation: user-confirmed on
+  2026-08-26, `Combat damage authoring validation passed: 75 assets checked`;
+- provisional implementation anchors: Electric reaction `FixedDamage 14`, Wind
+  secondary reaction `FixedDamage 20`, and shared per-instance reaction cooldown
+  `0.5s` for each Buff; Task007 owns final numeric acceptance;
+- Electric and Wind now author `TowerHitReceived` FixedBuff reactions; old
+  StackApplied damage execution is removed while logical StackApplied lifecycle
+  accounting remains;
+- Tower-owned direct and Behaviour damage uses one target-specific hit
+  transaction; Elemental application remains Task007B primary-only, reaction
+  damage cannot recurse, and earned threshold Overload completion is deferred
+  until Electric-then-Wind reaction evaluation finishes;
+- Recorder schema advanced to `20` with overall Buff, overall source, per-Wave,
+  and per-Wave nested-source reaction accounting, closed invalidation outcomes,
+  cycle-scoped reaction gaps, FixedBuff reconciliation, and
+  `elementalHitReactionDiagnosticsConsistent`;
+- final static Runtime and Editor builds: passed with `0` warnings and `0`
+  errors; scoped `git diff --check` passed;
+- Phase 0 protected `Main.unity`, active StageDefinition, `Doc/.DS_Store`, and
+  all pre-existing gameplay Records remain hash-identical to the captured
+  baseline. Approved overlapping runtime and documentation paths were reviewed
+  against that baseline.
+
+Phase 7A gameplay evidence accepted on 2026-08-26 consists of these seven
+schema-20 Records:
+
+- `Task007C_Phase7A_StraightMultiple_HP4800_Archer_L3_ExplosiveArrow_ChargedArrows_SharedHitReaction_Schema20_01`;
+- `Task007C_Phase7A_StraightMultiple_HP4800_Cannon_L3_BouncingShell_ChargedShells_SharedHitReaction_Schema20_01`;
+- `Task007C_Phase7A_StraightMultiple_HP4800_Drone_L3_FinalDive_ChargedDrones_SharedHitReaction_Schema20_01`;
+- `Task007C_Phase7A_StraightMultiple_HP4800_Magic_L3_ArcaneField_ChargedOrbs_SharedHitReaction_Schema20_01`;
+- `Task007C_Phase7A_StraightMultiple_HP4800_Magic_L3_ArcaneField_GaleOrbs_WindNoTargetRecovery_Schema20_01`;
+- `Task007C_Phase7A_StraightMultiple_HP4800_Magic_L3x2_ChargedOrbs_ArcaneField_1Element_P1P2_NoElementReactionSource_Schema20_01`;
+- `Task007C_Phase7A_StraightMultiple_HP4800_Magic_L3x2_ChargedOrbs_GaleOrbs_P1P2_ElectricWindCoexistence_Schema20_01`.
+
+All seven reached `Victory` and passed combat damage, Elemental opportunity,
+Elemental hit-reaction, Buff lifecycle, stack-unit, and Wave-attribution
+integrity. Their three progression fields remain the exact requirement-99
+fixture waiver already named above. They provide ordinary gameplay evidence for
+shared Electric/Wind reactions, Behaviour-owned hit sources, cooldown blocking,
+non-matching Towers using an existing Buff, coexistence ordering, FixedBuff
+damage signatures, and non-recursive application.
+
+On 2026-08-26 the user explicitly deferred the remaining Phase 7B edge-
+transaction smoke so Task007 value calibration can proceed. The following are
+unrun or not yet deterministically proven and must not be described as passed:
+
+- first-application MaximumStacks crossing and exactly-once pending Overload
+  completion when the normal reaction resolves the owner;
+- reapplication overflow ordering, Protection expiry, and same-target re-entry;
+- deterministic Wind no-valid-target followed by same-cycle recovery without
+  cooldown consumption or misleading VFX;
+- Electric resolving an Electric-and-Wind owner before Wind, with the exact
+  `OwnerResolvedByEarlierElementalReaction` invalidation outcome;
+- an equal-hit/equal-reaction controlled comparison across different
+  BasicDamage values.
+
+These fixtures may be resumed if time permits or if Task007 gameplay exposes a
+related defect. Their deferral does not claim full Task007C completion, does not
+accept final reaction balance, and does not block Task007 calibration under the
+implemented shared-hit-reaction contract.
+
+Final completion must additionally record:
 
 - the external baseline location and inventory counts;
 - synchronized Task007B runtime evidence and status;

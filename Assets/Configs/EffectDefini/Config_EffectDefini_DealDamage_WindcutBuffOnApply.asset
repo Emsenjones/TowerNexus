@@ -10,16 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
-  m_Name: Config_EffectDefini_DealDamage_WindcutBuffApplyStack
+  m_Name: Config_EffectDefini_DealDamage_WindcutBuffOnApply
   m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
-  displayName: Deal damage on Stacks
+  displayName: Windcut Tower Hit Reaction Damage
   radius: 0
   executionVfxPrefab: {fileID: 0}
   actions:
   - actionType: 0
-    damageMode: 1
-    damageScale: 0.3
-    fixedDamage: 0
+    damageMode: 2
+    damageScale: 0
+    fixedDamage: 20
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0

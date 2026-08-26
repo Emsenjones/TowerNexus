@@ -24,4 +24,5 @@ MonoBehaviour:
   scatterAngleOffset: 15
   elementType: 3
   elementalApplyEffect: {fileID: 11400000, guid: a156885fc755141b2b038b196bc2e12e, type: 2}
+  elementalStackContribution: 2
   effectBindings: []
