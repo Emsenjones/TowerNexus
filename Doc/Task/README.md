@@ -31,8 +31,8 @@ failure case.
 | Task007C | Shared Electric/Wind Tower-hit reaction implementation checkpoint |
 | Task010 | Completed Stage1 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task010A | Monster placement-route continuity implementation checkpoint |
-| Task011 | Stage2 Progress, fixed-speed Monster Profile, and Wave calibration |
-| Task012 | Stage3 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task011 | Completed Stage2 Progress, fixed-speed Monster Profile, Wave, Player Health, and Build-envelope calibration |
+| Task012 | Ready Stage3 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task013 | Stage4 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task014 | Stage5 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task015 | Stage6 Progress, fixed-speed Monster Profile, and Wave calibration |
@@ -71,9 +71,16 @@ clears at zero leaks, three coherent alternatives clear at one leak, and the
 primary one-Core missing-coverage Anti-pattern fails. Two five-L1 Horizontal
 stress runs clear with two leaks; this repeatable but materially worse result is
 accepted as a rare edge Build rather than forced to fail through Player Health.
-Task011 was therefore initially unblocked. Its first Stage2 Reference attempt
-then exposed placement-time closest-Grid mass reprojection. Task010A now owns the
-shared movement-contract revision, schema-22 evidence, and Stage1 Reference
-movement regression. Task011 remains Pending with its Reference and Wave
-candidate frozen until Task010A is accepted. Task017 will later determine how
-accessible any such fixed Build is under natural offers.
+Task011 completed Stage2 V3 calibration on 2026-08-28. Its accepted Stage uses
+Player Health `6`, Progress Requirements `[3,3,4,4,4]`, `32` Monsters, and `14`
+resolutions after the final Draft node. The Reference and coherent alternatives
+clear within the reviewed Build-maturation margin; the primary Horizontal
+Sprawl and Fragmented Investment Anti-patterns fail on the sixth leak. Upgrade
+order remains meaningful, so the Reference is a positive control rather than a
+perfect or unique answer. Task012 is ready to begin Stage3 calibration.
+
+Task010A separately owns the dedicated ten-fixture movement acceptance and
+Stage1 Reference movement regression. Stage2 schema-22 records validate the
+movement cases encountered in Task011 but do not replace that focused evidence.
+Task017 will later determine how accessible accepted fixed Builds are under
+natural offers.

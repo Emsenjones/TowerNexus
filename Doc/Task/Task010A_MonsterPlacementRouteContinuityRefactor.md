@@ -7,8 +7,11 @@ Depends on: Completed Task010 Stage1 Wave Calibration; current Map,
 Pathfinding, Monster Movement, Tower Placement, Draft transaction, Projectile,
 and CombatBalanceRunRecorder contracts
 
-Blocks: Task011-Task017. Task011 resumes only after this Task's implementation,
-schema-22 evidence, and Stage1 Reference movement regression are accepted.
+Downstream handoff: Task011 completed calibration using schema-22 per-run
+integrity, and Task012-Task015 may proceed under the same guardrail. This Task's
+dedicated ten-fixture evidence and Stage1 Reference movement regression remain
+required before Task016-Task017 final acceptance; downstream Stage records do
+not substitute for that focused movement acceptance.
 
 ## 1. Goal
 
@@ -397,7 +400,10 @@ preview, existing-Tower targeting, and footprint-anchor lookup.
   hidden by Stage2 values.
 - Focused evidence is reviewed first, then Stage1 regression is accepted, then
   Task010A becomes Completed. Recorder file generation alone is not acceptance.
-- Task011's first Stage2 attempt remains excluded from balance evidence.
-- After acceptance, Task011 returns to `In Progress`, keeps its frozen Reference
-  Build and Stage2 V1 Wave candidate, updates its RunName to schema 22, and
-  restarts Phase A placement/pressure measurement from a fresh run.
+- Task011's first interrupted Stage2 attempt remains excluded from balance
+  evidence. Later schema-22 Stage2 records are valid Task011 calibration
+  evidence for the movement cases they encountered, without becoming the
+  dedicated Task010A acceptance suite.
+- Task011 completed on 2026-08-28. Task012-Task015 may continue with schema-22
+  per-run integrity as a guardrail while this Task's focused fixtures and Stage1
+  Reference movement regression remain explicit debt.

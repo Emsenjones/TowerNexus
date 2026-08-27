@@ -2,8 +2,8 @@
 
 Document Set: Balance
 
-Status: Campaign learning arc approved; Stage1 calibration accepted by Task010;
-Stage2-Stage6 Reference Build v0.2 shapes remain approved baselines whose exact
+Status: Campaign learning arc approved; Stage1 and Stage2 calibration accepted
+by Task010 and Task011; Stage3-Stage6 Reference Build v0.2 shapes remain approved baselines whose exact
 repeated support families, Reference-run UpgradeDefinitions, ElementTypes, and
 Stage-local calibration values remain downstream decisions
 
@@ -54,7 +54,7 @@ Each Draft asks the player to allocate limited growth between:
 
 Tower Level is a concentrated BasicDamage and future-eligibility investment under the approved v0.2 growth contract. A Stage may require a Core to reach a level only when its Tower Upgrade pool provides a continuous newly eligible Upgrade path through that level.
 
-The Reference Build is the stable standard solution used to derive implementation budgets and perform controlled Stage calibration. It is not intended to be the only legal solution.
+The Reference Build is the stable positive control used to derive implementation budgets and perform controlled Stage calibration. It is not intended to be the only legal solution, the globally strongest Build, or the only successful Upgrade order.
 
 The primary Expected Anti-pattern is a build that rejects the Stage lesson and
 should fail because it lacks the required capability. Secondary stress fixtures
@@ -96,6 +96,11 @@ lesson, and is not manufactured or rejected solely through Player Health.
 Fixed-sequence results establish conditional Build efficacy; Task017 separately
 measures whether natural Draft offers make that Build realistically accessible.
 
+Player Health is calibrated after the Build envelope is visible. It provides a
+reviewed Build-maturation and execution margin for coherent Builds; it must not
+be used by itself to manufacture a power gap that the Monster Wave and Build
+packages do not otherwise express.
+
 ---
 
 # 3. Campaign Learning Arc
@@ -136,22 +141,22 @@ Reference Build:
 
 ## 4.2 Stage2
 
-Status: Reference Build Baseline v0.2
+Status: Accepted Stage2 Calibration v1 (Task011, 2026-08-28)
 
 | Field | Design Target |
 |---|---|
 | Primary Experience | Combine Archer and Cannon range and cadence roles |
 | New Content | Cannon |
-| Required Capability | At least one coherent Archer and Cannon role-complement relationship |
-| Expected Anti-pattern | Spread growth across undeveloped Towers, or over-concentrate into one Tower, without creating an Archer/Cannon role-complement relationship |
-| Notes | Three Towers use Archer and Cannon; exact repeated support family remains TBD |
+| Required Capability | Develop a Cannon damage package while maintaining complementary Archer route coverage against the HP400 late-wave body |
+| Expected Anti-pattern | Primary: spend all Drafts on undeveloped horizontal spread, or split Levels into incomplete range-only packages; secondary edge: reject Cannon and rely on a coherent Archer-only package |
+| Notes | Task011 accepts Player Health `6`, Progress `[3,3,4,4,4]`, `32` fixed-speed Monsters, final Draft node `18`, and `14` later resolutions. Reference and coherent alternatives clear; Horizontal Sprawl and Fragmented Investment fail on the sixth leak. Archer-only clears with one Health and remains a narrow edge rather than the primary Anti-pattern. Exact results remain in Task011; Task017 owns natural offer probability. |
 
 Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
 | Core | 1 | Cannon | L2, one Basic, one Behaviour, no Elemental |
-| Support | 2 | Archer is required; the second support is Archer or Cannon, TBD | L1, no Upgrades |
+| Support | 2 | Archer | L1, no Upgrades |
 
 ## 4.3 Stage3
 

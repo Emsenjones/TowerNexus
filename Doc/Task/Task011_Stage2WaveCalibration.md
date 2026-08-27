@@ -1,182 +1,189 @@
 # Task011 - Stage2 Wave Calibration
 
-Status: Pending; Reference Build v1 and Stage2 V1 Wave candidate are frozen, but
-Phase A is blocked by Task010A Monster Placement Route Continuity Refactor
+Status: Completed on 2026-08-28; Stage2 V3 Progress, fixed-speed Wave,
+Player Health, Build envelope, and Fixed Draft evidence are accepted
 
-Depends on: Accepted Task010 Stage1 Wave Calibration; completed and accepted
-Task010A Monster Placement Route Continuity Refactor
+Depends on: Accepted Task010 Stage1 Wave Calibration; implemented Task010A
+Monster Placement Route Continuity Refactor with schema-22 fixture integrity
+reviewed per accepted Stage2 run
 
-Blocks: Task012, Task016, and Task017
+Unblocks: Task012 Stage3 Wave Calibration
 
-The first Phase A attempt exposed visible closest-Grid mass reprojection during
-Tower placement and is not balance evidence. Preserve the frozen Stage2
-Reference, Wave candidate, and placement intent without further calibration.
-After Task010A accepts schema 22 and the Stage1 movement regression, return this
-Task to `In Progress`, update the Phase A RunName, and execute a fresh run.
+Task010A's dedicated ten-fixture movement acceptance remains separately pending.
+Task011's schema-22 records prove the movement cases encountered during Stage2
+calibration; they do not claim that the complete Task010A fixture suite passed.
 
-## 1. Goal
+## 1. Goal And Accepted Interpretation
 
-Calibrate Stage2 to require a coherent Archer/Cannon role-complement build rather
-than uniform undeveloped expansion or one over-concentrated local answer.
+Calibrate Stage2 around a developed Cannon Core and useful Archer support while
+rejecting Builds that spend all six Drafts without creating effective vertical
+growth or a coherent combat package.
 
-## 2. Fixed Design Intent
+The Reference Build is a reproducible positive control, not a perfect or unique
+answer. Final leak count also depends on Upgrade order and normal placement
+timing. Stage2 therefore accepts a coherent Build envelope rather than requiring
+the Reference sequence to produce zero leaks.
 
-- Archer and Cannon pools;
-- six-Draft candidate budget;
-- one L2 Cannon Core with one Basic and one Behaviour Upgrade;
-- two L1 Supports, including Archer;
-- legal alternative may exchange the repeated Support family or Core package;
-- Anti-patterns omit role complement through undeveloped spread or excessive
-  concentration.
+Player Health provides Build-maturation tolerance. It permits coherent Builds
+with different formation timing to absorb a reviewed leak margin, but it must
+not let structurally incoherent Builds clear merely because the measurement
+ceiling is generous.
 
-## 3. Stage Composition And Fixed Build Fixtures
+## 2. Accepted Stage2 V3 Configuration
 
-- Derive exactly six Drafts from three Tower placements, one Core Level Up, and
-  two Core Upgrade applications.
-- Author the exact cumulative Archer/Cannon Tower and Upgrade pools and prove
-  continuous Level 2 reachability for every family permitted to reach it.
-- Select the repeated Support family, exact Reference Core package, coherent
-  alternative, undeveloped-spread Anti-pattern, over-concentration Anti-pattern,
-  and their legal placement assumptions.
-- Author one six-step naturally eligible Fixed Draft sequence for every required
-  Build. The first step is Tower-only; later steps preserve the normal candidate,
-  Pending, placement, Level Up, Upgrade, and consumption boundaries.
+| Field | Accepted value |
+|---|---|
+| Player Max Health | `6` |
+| Progress Requirements | `[3, 3, 4, 4, 4]` |
+| Post-initial Draft nodes | `3 / 6 / 10 / 14 / 18` |
+| Total Draft opportunities | `6` |
+| Total Monsters | `32` |
+| Resolutions after final Draft node | `14` |
+| Standard Spawn Interval | `2.5s` |
+| Wave Delays | `[4s, 6s, 5s, 4s, 4s, 4s]` |
+| New Monster Profiles | None |
 
-Fixed sequences prove Build efficacy and constructibility, not natural Draft
-probability or player preference. Task017 owns natural offer accessibility.
+The authored Stage pools remain cumulative Archer/Cannon pools. Both families
+retain continuous Level 2 eligibility and every unlocked Archer/Cannon Basic
+and Behaviour Upgrade remains available. Fixed sequences prove Build efficacy;
+Task017 owns natural offer accessibility and probability.
 
-### 3.1 Implementation Kickoff Snapshot
+## 3. Accepted Monster Wave
 
-The live Stage2 skeleton already provides the cumulative Archer/Cannon Tower
-pool, all six Archer and all six Cannon Basic/Behaviour UpgradeDefinitions, and
-continuous Level 2 eligibility for both families. Its remaining values are
-provisional inputs rather than accepted calibration:
+Task011 reuses three Task010-accepted fixed-speed Profiles without changing HP
+or Move Speed:
 
-- Player Max Health: `16`;
-- Progress Requirements: `[3, 3, 4, 4, 8]`, producing Draft nodes
-  `3 / 6 / 10 / 14 / 22`;
-- Wave table: three same-Profile Waves with counts `11 / 11 / 10`, Delay `5s`,
-  and Spawn Interval `2.5s`;
-- total Monsters: `32`, leaving ten resolutions after the final Draft node.
+| Wave | Profile | HP | Move Speed | Count | Spawn Interval | Wave Delay | Cumulative count |
+|---:|---|---:|---:|---:|---:|---:|---:|
+| 1 | Slime Lv1 | `60` | `0.25` | `3` | `2.5s` | `4s` | `3` |
+| 2 | Slime Lv1 | `60` | `0.25` | `3` | `2.5s` | `6s` | `6` |
+| 3 | Monster Plant Lv3 | `180` | `0.25` | `4` | `2.5s` | `5s` | `10` |
+| 4 | Monster Plant Lv3 | `180` | `0.25` | `4` | `2.5s` | `4s` | `14` |
+| 5 | Turtule Shell Lv4 | `400` | `0.25` | `8` | `2.5s` | `4s` | `22` |
+| 6 | Turtule Shell Lv4 | `400` | `0.25` | `10` | `2.5s` | `4s` | `32` |
 
-Task011 will replace the provisional Wave composition with Stage1-accepted
-fixed-speed Profiles before judging Stage2 pressure. The existing Progress
-sequence and Player Health are candidates only; neither is accepted from the
-skeleton.
+Waves 1-4 provide readable Cannon Level and support-formation feedback. The 18
+HP400 Monsters in Waves 5-6 provide the vertical-growth and package-efficiency
+boundary. Task011 adds no new HP tier; Bat Lv2 and Orc Lv5 remain outside this
+fixed-speed Wave and retain their Task016 movement-identity ownership.
 
-### 3.2 Frozen Reference Build v1
+## 4. Accepted Reference And Placement Fixture
 
-The accepted first Reference preserves the two Archer coverage points learned
-in Stage1 and adds Cannon as the new developed Core:
+Reference final Build:
 
 | Role | Count | TowerFamily | Final state |
 |---|---:|---|---|
 | Core | `1` | Cannon | L2, Faster Reload, Explosive Shell |
 | Support | `2` | Archer | L1, no Upgrades |
 
-`Faster Reload + Explosive Shell` is the Task004 fixed-condition Cannon package
-with an accepted `2.108x` measurement-Wave gain over its same-level control. It
-combines Cannon cadence improvement with bounded area conversion while leaving
-Archer responsible for the faster coverage role. Two Archer Supports make the
-campaign transition legible: retain the Stage1 coverage structure, then add and
-develop the newly introduced Cannon rather than changing every role at once.
+Reference Fixed Draft sequence:
 
-Six-step Fixed Draft sequence:
+| Draft | Resolution node | Fixed result | Commit target |
+|---:|---:|---|---|
+| 1 | `0` | Cannon Tower | Deploy Core |
+| 2 | `3` | Cannon Tower | Level Core to L2 |
+| 3 | `6` | Archer Tower | Deploy Support A |
+| 4 | `10` | Archer Tower | Deploy Support B |
+| 5 | `14` | Faster Reload | Apply to Cannon Core |
+| 6 | `18` | Explosive Shell | Apply to Cannon Core |
 
-| Draft | Resolution node | Fixed result | Commit target | Resulting Build state |
-|---:|---:|---|---|---|
-| 1 | `0` | Cannon Tower | Deploy Core | Cannon Core L1 |
-| 2 | `3` | Cannon Tower | Level Core | Cannon Core L2 |
-| 3 | `6` | Archer Tower | Deploy Support A | Core L2 + one Archer L1 |
-| 4 | `10` | Archer Tower | Deploy Support B | Core L2 + two Archer L1 |
-| 5 | `14` | Faster Reload | Apply to Core | Core with Basic + two Supports |
-| 6 | `22` | Explosive Shell | Apply to Core | Complete Reference Build |
+Accepted comparison placement cells:
 
-The first placement-sanity run selects three deliberate route-covering
-footprints and freezes their Recorder-observed cells for Reference repeats. The
-first coherent Alternative should then exchange either the Cannon package or
-the repeated Support family, but not both in the same comparison.
+| Tower | Footprint cells |
+|---|---|
+| Cannon Core | `(2,6) / (3,5) / (3,6)` |
+| Archer Support A | `(2,1) / (2,2)` |
+| Archer Support B | `(4,1) / (4,2)` |
 
-### 3.3 Stage2 V1 Fixed-Speed Wave Candidate
+`(2,1) / (2,2)` is the strongest reviewed Archer footprint and must not be
+replaced with a weaker position merely to force zero placement-route recovery.
+If a normal Stage-calibration deployment covers a live Monster, the legal,
+diagnosed Task010A relocation remains gameplay behavior rather than a balance
+penalty. Dedicated Task010A fixtures, not ordinary balance fixtures, own strict
+`RequireZero` or `RequireDiagnosed` expectations.
 
-Task010's accepted Stage1 Wave used three formal fixed-speed Profiles, all of
-which are reused here without changing HP or Move Speed:
+## 5. Build And Sequence Envelope
 
-| Profile | HP | Move Speed | Stage1 status | Stage2 V1 role |
-|---|---:|---:|---|---|
-| Slime Lv1 | `60` | `0.25` | Used and accepted | Opening Cannon one-hit feedback |
-| Monster Plant Lv3 | `180` | `0.25` | Used and accepted | Mid-stage developed-Cannon pressure |
-| Turtule Shell Lv4 | `400` | `0.25` | Used and accepted | Late Core/Support role-complement pressure |
+The accepted evidence separates final Build structure from Upgrade order:
 
-Bat Lv2 (`HP120`, Move Speed `0.35`) and Orc Lv5 (`HP480`, Move Speed `0.2`)
-exist in the formal roster but were not used by the accepted Stage1 Wave. Their
-movement identities belong to Task016 and are excluded from Task011's initial
-fixed-speed calibration. Stage2 V1 therefore introduces zero new Monster
-Profiles.
+- Reference control: Cannon L2, two Archer L1 Supports, Faster Reload, then
+  Explosive Shell.
+- Early-Explosive sequence control: the same final Build, but Explosive Shell is
+  applied at node `6`, the two Supports at nodes `10 / 14`, and Faster Reload at
+  node `18`.
+- Reinforced-Explosive coherent floor: replace Faster Reload with Reinforced
+  Shells.
+- Reload-Bouncing coherent alternative: replace Explosive Shell with Bouncing
+  Shell.
+- Support-concentration coherent alternative: replace two Archer L1 Supports
+  with one Archer L2 Support while retaining the Reference Cannon package.
 
-The first Wave candidate keeps the skeleton's accepted structural budget of 32
-Monsters and maps its cumulative counts directly to the five Progress nodes:
+The early-Explosive sequence confirms that Upgrade order can change immediate
+damage efficiency without making the final Reference composition the unique or
+perfect Build. Coherent alternatives consume `0-4` Health under the measurement
+ceiling and remain inside the accepted positive envelope.
 
-| Wave | Profile | HP | Count | Spawn Interval | Wave Delay | Cumulative Monsters | Intended Draft milestone |
-|---:|---|---:|---:|---:|---:|---:|---|
-| 1 | Slime Lv1 | `60` | `3` | `2.5s` | `4s` | `3` | Level Cannon Core to L2 |
-| 2 | Slime Lv1 | `60` | `3` | `2.5s` | `6s` | `6` | Deploy Archer Support A |
-| 3 | Monster Plant Lv3 | `180` | `4` | `2.5s` | `5s` | `10` | Deploy Archer Support B |
-| 4 | Monster Plant Lv3 | `180` | `4` | `2.5s` | `4s` | `14` | Apply Faster Reload |
-| 5 | Turtule Shell Lv4 | `400` | `8` | `2.5s` | `4s` | `22` | Apply Explosive Shell |
-| 6 | Turtule Shell Lv4 | `400` | `10` | `2.5s` | `4s` | `32` | Ten-Monster post-Build measurement |
+## 6. Anti-pattern And Edge Fixtures
 
-Phase A retains the skeleton Player Health `16` as a measurement ceiling so a
-weak placement or first-pass Wave mismatch does not truncate the per-Monster
-record. It is not an acceptance value. After the Reference placement and
-pressure shape are readable, Player Health is reduced to the reviewed leak
-allowance rather than used to create the role-complement gap.
+| Fixture | Final allocation | Purpose |
+|---|---|---|
+| Horizontal Sprawl | Cannon L1 x3 + Archer L1 x3; no Levels or Upgrades | Spend every Draft without vertical growth |
+| Fragmented Investment | Cannon L2 + Extended Barrel; Archer L2 + Eagle Sight; no Behaviour | Split investment into two incomplete, range-only packages |
+| Archer-only Edge | Archer L2 + Quick Draw + Scatter Arrow; second Archer L2; no Cannon | Measure a coherent single-family role-rejection edge |
 
-Phase A Run Name:
+Range-only Upgrades can be useful when coverage is missing, but Extended Barrel
+and Eagle Sight do not improve damage or attack cycle. At already strong
+placements, their opportunity value does not replace a coherent damage or
+multi-target package.
 
-```text
-Task011_PhaseA_Stage2V1_ReferencePlacementAndPressure_CannonL2_FasterReload_ExplosiveShell_ArcherL1x2_Lv1HP60_Lv3HP180_Lv4HP400_PlacementCandidate_Schema21_01
-```
+Archer-only is retained as an edge Build rather than treated as the primary
+Anti-pattern. Quick Draw and Scatter Arrow form a real package, but rejecting
+Cannon leaves only the exact Player-Health margin.
 
-Deploy the Cannon Core at one deliberate high-value Stage2 footprint, apply the
-second Cannon Draft to that same Tower, and place both Archer Supports at two
-other deliberate route-covering footprints. Normal interaction speed is
-required. This first run discovers placement; its Recorder-observed cells are
-included in the repeat RunName after review.
+## 7. Final Stage2 V3 Evidence
 
-## 4. Stage Calibration And Monster Authoring
+All listed runs used schema 22, Player Health `6`, Progress Requirements
+`[3,3,4,4,4]`, and the accepted Wave table.
 
-1. Author five positive Player Progress Requirements.
-2. Use their sum as the final-Draft resolution node, then provide a meaningful
-   post-final-Draft Monster budget.
-3. Test the fixed-speed Profiles accepted by Task010 before adding anything.
-   Reuse them when they can express Stage2's opening, role-complement, and late
-   pressure. Add a new HP Profile only when those accepted Profiles cannot.
-4. Any new Profile uses `MoveSpeed = 0.25`. Standard Waves use
-   `SpawnInterval = 2.5s` and the `0.625` spatial gap.
-5. Record the exact `MonsterWaveConfig` table and jointly calibrate Progress
-   requirements, Profile order and Count, HP for any newly introduced Profile,
-   `WaveDelay`, Player Health, and legal placement.
+| Fixture | Result | Killed | Leaked | Unresolved | Final Health | Damage coverage | Decision |
+|---|---|---:|---:|---:|---:|---:|---|
+| Reference Control | Victory | `31` | `1` | `0` | `5 / 6` | `96.29%` | Accepted positive control |
+| Early Explosive Sequence | Victory | `31` | `1` | `0` | `5 / 6` | `98.62%` | Accepted sequencing alternative |
+| Reinforced-Explosive Coherent Floor | Victory | `28` | `4` | `0` | `2 / 6` | `90.49%` | Accepted weakest coherent sample |
+| Archer-only Edge | Victory | `27` | `5` | `0` | `1 / 6` | `91.59%` | Accepted narrow edge |
+| Horizontal Sprawl | Defeat | `24` | `6` | `2` | `0 / 6` | `69.78%` at terminal | Accepted primary Anti-pattern failure |
+| Fragmented Investment | Defeat | `25` | `6` | `1` | `0 / 6` | `72.04%` at terminal | Accepted primary Anti-pattern failure |
 
-An accepted upstream Profile is immutable here. Changing it explicitly reopens
-its introducing Stage and every accepted dependent Stage. A Profile first
-accepted here becomes available to Task012-Task015.
+The two expected-Defeat runs spawned all `32` Monsters, committed all six Draft
+investments, and observed post-final-Build combat before Player Health reached
+zero. Their unresolved Monsters at terminal Defeat are expected execution state,
+not missing combat evidence.
 
-## 5. Acceptance
+Reference, Early Explosive, Coherent Floor, Archer-only, and Horizontal Sprawl
+passed all schema-22 integrity checks. Fragmented Investment recorded one legal
+`CoveredByNewFootprint` forced relocation while its fixture expectation remained
+`RequireZero`; every other topology, gameplay-state, combat-ownership, lifecycle,
+and accounting check passed. Its combat result is accepted together with the
+earlier full measurement-ceiling run, while the false expectation mismatch is
+retained explicitly rather than reported as a clean Task010A fixture pass.
 
-- opening permits the three-Tower route structure to form;
-- mid/late pressure gives both Archer and Cannon meaningful work;
-- Cannon development matters against higher-HP bodies;
-- Reference and coherent alternative clear within the accepted leak margin;
-- builds that reject role complement do not reliably clear;
-- all six Drafts occur at reviewed pressure nodes with meaningful combat after
-  the final Draft;
-- the exact Stage pools, Level reachability, legal Builds, placements, and Fixed
-  sequences are accepted inside this Task;
-- every Profile is recorded as reused or first accepted here, and every Profile
-  remains fixed at `0.25` MoveSpeed;
-- the accepted Wave table matches the authored `MonsterWaveConfig`;
-- per-Wave and per-Tower Recorder attribution supports the decision.
+## 8. Acceptance And Downstream Handoff
 
-All Build comparisons use Fixed Draft sequences. Natural Tower-versus-Upgrade
-offer ratios and player-choice interpretation remain Task017 work.
+- The accepted Stage assets match Player Health `6`, Progress Requirements
+  `[3,3,4,4,4]`, and the six-Wave table in this document.
+- The Reference and multiple coherent alternatives clear without requiring one
+  exact Upgrade package or Upgrade order.
+- Player Health provides reviewed Build-maturation tolerance: coherent and edge
+  Builds with `1-5` leaks clear, while the primary incoherent Builds fail on the
+  sixth leak.
+- Cannon development produces meaningful late-wave value against HP400 bodies;
+  pure undeveloped spread cannot compensate through coverage alone.
+- Every accepted positive fixture completes all `32` Monster resolutions.
+- Expected Defeat is separated from Recorder integrity failure.
+- Natural Draft offer frequency and accessibility remain Task017 work.
+- Task012 may begin Stage3 calibration using the accepted Task010-Task011
+  fixed-speed Profiles and Stage-calibration workflow.
+
+Task011 is complete. Any later revision to Stage2 Player Health, Progress,
+Monster counts, Wave delays, or accepted upstream Tower/Profile power explicitly
+reopens this Task and its dependent Stage calibration evidence.

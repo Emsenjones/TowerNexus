@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: StageDefini_Lv2
   m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
   displayName: Level2
-  playerMaxHealth: 16
-  playerProgressRequirements: 0300000003000000040000000400000008000000
+  playerMaxHealth: 6
+  playerProgressRequirements: 0300000003000000040000000400000004000000
   mapTemplate: {fileID: 3273336904907436118, guid: 592880c1fc9e54e4d80cacc7a858264b, type: 3}
   monsterWaveConfig: {fileID: 11400000, guid: 68e21234e80794dc48f30dd4acec963f, type: 2}
   towerDraftPool:

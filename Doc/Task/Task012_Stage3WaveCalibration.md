@@ -1,10 +1,15 @@
 # Task012 - Stage3 Wave Calibration
 
-Status: Planned
+Status: Ready; Task011 Stage2 calibration accepted on 2026-08-28
 
 Depends on: Accepted Task011 Stage2 Wave Calibration
 
 Blocks: Task013, Task016, and Task017
+
+Task010A's dedicated ten-fixture movement acceptance and Stage1 Reference
+movement regression remain separate technical debt. Task012 may proceed with
+schema-22 per-run integrity as a calibration guardrail; its Stage records do not
+substitute for Task010A's focused acceptance suite.
 
 ## 1. Goal
 
