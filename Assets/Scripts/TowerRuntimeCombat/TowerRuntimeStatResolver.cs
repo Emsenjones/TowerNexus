@@ -11,6 +11,8 @@ public static class TowerRuntimeStatResolver
         OnTowerOwnedDamageResolutionObserved;
     public static event Action<TowerOwnedDamageApplicationObservation>
         OnTowerOwnedDamageApplicationObserved;
+    public static event Action<TowerOwnedTargetDamageObservation>
+        OnTowerOwnedTargetDamageObserved;
 
     public static ResolvedTowerCombatStats Resolve(
         TowerInstance towerInstance,
@@ -207,6 +209,47 @@ public static class TowerRuntimeStatResolver
             try
             {
                 ((Action<TowerOwnedDamageApplicationObservation>)invocationList[i])(
+                    observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception);
+            }
+        }
+    }
+
+    public static void PublishTowerOwnedTargetDamage(
+        TowerOwnedDamageResolution resolution,
+        MonsterBehaviour target,
+        int appliedDamage,
+        bool killingBlow)
+    {
+        if (target == null || appliedDamage <= 0)
+        {
+            return;
+        }
+
+        Action<TowerOwnedTargetDamageObservation> observers =
+            OnTowerOwnedTargetDamageObserved;
+
+        if (observers == null)
+        {
+            return;
+        }
+
+        TowerOwnedTargetDamageObservation observation =
+            new TowerOwnedTargetDamageObservation(
+                resolution,
+                target,
+                appliedDamage,
+                killingBlow);
+        Delegate[] invocationList = observers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<TowerOwnedTargetDamageObservation>)invocationList[i])(
                     observation);
             }
             catch (Exception exception)

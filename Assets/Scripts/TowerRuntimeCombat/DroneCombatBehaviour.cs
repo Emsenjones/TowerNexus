@@ -456,6 +456,30 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         return new List<DroneBehaviour>(activeDrones);
     }
 
+    internal override string CapturePlacementOwnershipFingerprint()
+    {
+        List<DroneBehaviour> drones = GetActiveDroneSnapshot();
+        drones.Sort((left, right) =>
+            GetRuntimeInstanceId(left).CompareTo(GetRuntimeInstanceId(right)));
+        System.Text.StringBuilder builder = new System.Text.StringBuilder(
+            base.CapturePlacementOwnershipFingerprint());
+
+        for (int i = 0; i < drones.Count; i++)
+        {
+            DroneBehaviour drone = drones[i];
+            builder.Append(";drone=")
+                .Append(GetRuntimeInstanceId(drone))
+                .Append(':')
+                .Append(drone != null
+                    ? GetRuntimeInstanceId(drone.CurrentTarget)
+                    : 0)
+                .Append(':')
+                .Append(drone != null ? drone.State.ToString() : "Missing");
+        }
+
+        return builder.ToString();
+    }
+
     private void HandleDroneEnded(DroneBehaviour droneBehaviour)
     {
         if (droneBehaviour == null)

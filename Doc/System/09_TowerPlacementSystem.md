@@ -76,14 +76,14 @@ Begin Tower Draft Drag
 An accepted placement performs one transaction:
 
 1. Complete final Tower and held-Draft preflight, including Tower definition, Level 1 configuration and model, runtime visual and combat requirements, required runtime owners, and Pending Draft ownership.
-2. Revalidate the final footprint and obtain one authoritative projection route from the simulated post-placement topology.
-3. Capture living Monster movement state, preserve unaffected Monsters, and prepare every affected-Monster reprojection without runtime mutation.
+2. Revalidate the final footprint and obtain one authoritative new Spawn-to-Target Route from the simulated post-placement topology.
+3. Capture every living Monster's physical current Grid and prepare its new-Route continuation, reachable Grid rejoin, or nearest-eligible forced relocation without runtime mutation.
 4. Create and initialize the Tower to a ready but inactive state without committing occupancy or consuming the Draft. Its required level model and visual state exist, its combat ownership is valid, and combat has not begun.
 5. Commit Runtime Occupied state, apply the complete prepared Monster revision batch, register the deployed Tower, activate its battle runtime, and consume the held Tower Draft as one gameplay change.
 6. Request Tile topology refresh without regenerating static Map features.
 7. Request Tower-local placement success presentation.
 
-If any required step before commit fails, any temporary Tower is removed and no occupancy, Monster state, Tower registration, combat activation, or held-item state is consumed. After readiness succeeds, gameplay-commit steps are synchronous prevalidated state writes without ordinary failure results. Prepared Monster application performs no pathfinding, projection, classification, or new validation during commit.
+If any required step before commit fails, any temporary Tower is removed and no occupancy, Monster state, Tower registration, combat activation, or held-item state is consumed. After readiness succeeds, gameplay-commit steps are synchronous prevalidated state writes without ordinary failure results. Prepared Monster application performs no pathfinding, join selection, relocation search, classification, or new validation during commit.
 
 Tile refresh and success feedback are post-commit presentation. Their failure is diagnosed as an accepted result with a presentation warning; it does not roll back an otherwise accepted Tower, occupancy state, Monster revision, registration, combat activation, or Draft consumption.
 
@@ -108,30 +108,73 @@ Route validation uses the same topology rules as Monster pathfinding:
 
 ```text
 Simulate Candidate Nodes As Occupied
-    -> Query One Authoritative Spawn-To-Target Projection Route
+    -> Query One Authoritative New Spawn-To-Target Route
     -> No Route: Reject Candidate
     -> Route Exists: Candidate May Continue
 ```
 
 Simulation does not change authored Base Walkable state, active Runtime Occupied state, or active Monster paths.
 
-Live Monster instances do not participate in placement legality. A candidate is not rejected because a Monster occupies or approaches its footprint, or because the placement disconnects the old branch that Monster entered. After topology acceptance, Monster System preserves every unaffected Monster unchanged and prepares affected-Monster reprojections before commit.
+Live Monster instances do not participate in placement legality. A candidate is
+not rejected because a Monster occupies or approaches its footprint, because
+the placement disconnects the old branch that Monster entered, or because the
+Monster cannot reach the new Route from its current Grid. After topology
+acceptance, Monster System prepares a complete continuation, rejoin, or forced-
+relocation result for every living targetable Monster before commit.
 
 The current one-Spawn/one-Target Map requires one surviving route. Multiple Spawn Routes will require an explicit route-validation contract before expanding this rule.
 
 ## 5.2 Monster Route Revision
 
-All living Monster movement state is captured after final topology validation and before Runtime Occupied changes. The accepted authoritative Spawn-to-Target projection route is shared by every affected Monster in that placement transaction.
+All living targetable Monster movement state is captured after final topology
+validation and before Runtime Occupied changes. The accepted authoritative new
+Spawn-to-Target Route is shared by every prepared Monster result in that
+placement transaction.
 
-Current placement only adds blockers. A Monster is affected when its reached node, active next node, or remaining route intersects the candidate footprint, or its captured movement state is invalid. A Monster whose remaining movement state does not intersect the footprint is unaffected: it preserves its world position, active segment, route position, and complete remaining route without another path query or prepared movement revision.
+Monster System uses the gameplay movement root's physical current Grid:
 
-An affected Monster is mapped to the spatially closest eligible Grid on that route. Remaining-route continuity, avoidance of free forward progress, and stable route order break ties. Target is not eligible for a living unresolved Monster; Spawn remains eligible. Multiple Monsters may share the same projection Grid.
+- A non-finite Transform, a finite position without a Map Grid, or a Grid
+  covered by the new footprint receives forced relocation before other
+  classification.
+- If that Grid belongs to the new Route and is not covered, preserve the exact
+  world position and install the applicable Route continuation.
+- Otherwise, if the Grid remains effectively walkable and can reach the new
+  Route, preserve the exact world position and prepare an orthogonal connector
+  to the nearest reachable non-Target Route Grid.
+- If the Grid is covered, disconnected from every eligible new-Route Grid, or
+  cannot be resolved from valid state, prepare relocation to the nearest
+  eligible non-Target recovery Grid that can reach the new Route.
 
-Reprojection is movement correction only. It preserves Monster gameplay state and does not cause damage, healing, death, Target arrival, progress, registration, or deregistration. Already released Projectiles keep their release-time direction or landing position and may hit or miss under their existing rules.
+Reachability is evaluated before distance when selecting a join. A recovery
+Grid may be outside the authoritative Route, but it must be effectively
+walkable under the simulated topology, outside the complete new footprint, and
+connected to an eligible new-Route Grid. Forced relocation is the only result
+allowed to change a finite Monster position during commit. Target is never a
+join or relocation destination for a living unresolved Monster; Spawn remains
+eligible.
 
-Monster route preparation cannot create a second placement-legality gate. Once the global route and ordinary placement constraints pass, live Monster positions cannot delay or reject deployment. Prepared affected-Monster revisions apply through one non-failing state-write boundary and do not pathfind during gameplay commit.
+One shared connectivity and distance query against the simulated topology
+identifies the Route-connected component and stable minimum-path recovery joins.
+Reachable Monsters select the spatially nearest eligible Route Grid in Map-local
+XZ and require only the final connector path. Recovery candidates first
+minimize Map-local relocation distance and then connector path cost.
 
-An invalid Monster movement snapshot, unavailable spatial comparison, proximity to Target, or inability to continue an old route uses deterministic projection fallback. Only transaction-wide technical preconditions such as an invalid topology plan, missing required runtime owner, or authoritative route without an eligible non-Target Grid may fail preparation.
+Route revision preserves Monster gameplay state and does not cause damage,
+healing, death, Target arrival, progress, registration, or deregistration.
+Already released Projectiles keep their release-time direction, landing
+position, target identity, lifetime, and hit rules and may hit or miss under
+those existing rules.
+
+Monster route preparation cannot create a second placement-legality gate. Once
+the global Route and ordinary placement constraints pass, live Monster state
+cannot delay or reject deployment. Prepared revisions apply through one non-
+failing state-write boundary and perform no pathfinding or candidate selection
+during gameplay commit.
+
+A Monster following an earlier placement connector is captured as current live
+state. Failed preflight preserves that connector unchanged. A later accepted
+placement atomically supersedes it; old and new connector state never
+accumulate.
 
 ---
 
@@ -234,8 +277,9 @@ When occupancy changes:
 - Effective walkability changes.
 - Tile connection presentation refreshes from current effective walkability.
 - Static Obstacle, Spawn, and Target presentation remains unchanged.
-- Unaffected Monsters retain their complete valid routes without another path query.
-- The prepared batch reprojects affected Monsters before gameplay advances to another frame.
+- Every living targetable Monster receives the prepared continuation, rejoin,
+  or relocation result for the authoritative new Route.
+- The prepared batch becomes active before gameplay advances to another frame.
 
 Tower Placement System never rewrites Base Walkable or converts a placed Tower into an authored Map obstacle.
 
@@ -256,14 +300,16 @@ Placement authoring and runtime validation should report or reject at minimum:
 - Candidate occupancy that blocks a required route
 - Placement preflight that mutates occupancy or Monster state
 - Incomplete Tower definition, Level 1 model, visual, combat, runtime-owner, or Pending Draft ownership preflight
-- An additional path query or prepared revision for an unaffected Monster
 - Prepared revision application that performs pathfinding or exposes an ordinary commit-time failure
 - A committed placement without its complete prepared Monster route revision
 - A committed Tower or Monster revision whose held Draft was not consumed
 - A committed Level Up whose exact Pending Draft remains owned or interactive
 - Level Up combat-baseline apply that validates, publishes, invokes callbacks, or traverses active entities during semantic commit
-- A living unresolved Monster projected directly onto Target
-- Reprojection that causes combat, resolution, registration, or progress side effects
+- A living unresolved Monster joined or relocated directly onto Target
+- A continuation or reachable rejoin that changes a finite Monster's position during commit
+- A forced relocation to an ineligible or non-nearest recovery Grid
+- Route revision that causes combat, resolution, registration, or progress side effects
+- Repeated placement that accumulates more than one active connector for a Monster
 - Stale or unavailable target Tower
 - A second drag or confirmation competing with the active operation
 - Camera pan competing for an active Draft-item drag gesture
@@ -283,7 +329,7 @@ Current scope includes:
 - Occupied-node Tower target detection
 - Route-preserving placement validation
 - Placement legality independent of live Monster positions
-- Atomic occupancy, affected-Monster reprojection, and held-Draft consumption commit
+- Atomic occupancy, all-living-Monster route revision, and held-Draft consumption commit
 - Runtime occupancy and Tile-only topology refresh
 - New-Tower, level-up, attack-range, and eligible-target feedback
 - General return-to-area drag cancellation

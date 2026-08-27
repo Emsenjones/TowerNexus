@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using UnityEngine;
 
 public class MonsterBuffInstance
@@ -49,7 +51,54 @@ public class MonsterBuffInstance
     public bool IsElementalHitReactionCooldownActive =>
         definition != null &&
         definition.TowerHitReactionCooldown > 0f &&
-        Time.time < nextAllowedElementalHitReactionTime;
+               Time.time < nextAllowedElementalHitReactionTime;
+
+    internal string CapturePlacementFingerprint()
+    {
+        StringBuilder builder = new StringBuilder();
+        builder.Append(definition != null ? definition.GetInstanceID() : 0)
+            .Append('|')
+            .Append(sourceTower != null ? sourceTower.GetInstanceID() : 0)
+            .Append('|')
+            .Append(sourceUpgrade != null ? sourceUpgrade.GetInstanceID() : 0)
+            .Append('|')
+            .Append(stackCount)
+            .Append('|')
+            .Append((int)phase)
+            .Append('|')
+            .Append(remainingPhaseDuration.ToString("R", CultureInfo.InvariantCulture))
+            .Append('|')
+            .Append(periodicTickTimer.ToString("R", CultureInfo.InvariantCulture))
+            .Append('|')
+            .Append(stackingCycleIdentity)
+            .Append('|')
+            .Append(Mathf.Max(0f, nextAllowedUnattributedApplyTime - Time.time)
+                .ToString("R", CultureInfo.InvariantCulture))
+            .Append('|')
+            .Append(Mathf.Max(0f, nextAllowedElementalHitReactionTime - Time.time)
+                .ToString("R", CultureInfo.InvariantCulture));
+
+        List<KeyValuePair<TowerInstance, float>> sourceCooldowns =
+            new List<KeyValuePair<TowerInstance, float>>(
+                nextAllowedApplyTimesBySourceTower);
+        sourceCooldowns.Sort((left, right) =>
+            (left.Key != null ? left.Key.GetInstanceID() : 0).CompareTo(
+                right.Key != null ? right.Key.GetInstanceID() : 0));
+
+        for (int i = 0; i < sourceCooldowns.Count; i++)
+        {
+            KeyValuePair<TowerInstance, float> cooldown = sourceCooldowns[i];
+            builder.Append(';')
+                .Append(cooldown.Key != null
+                    ? cooldown.Key.GetInstanceID()
+                    : 0)
+                .Append(':')
+                .Append(Mathf.Max(0f, cooldown.Value - Time.time)
+                    .ToString("R", CultureInfo.InvariantCulture));
+        }
+
+        return builder.ToString();
+    }
 
     public void RecordElementalHitReactionCooldown()
     {

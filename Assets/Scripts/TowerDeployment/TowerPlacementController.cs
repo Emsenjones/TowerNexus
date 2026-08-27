@@ -2,6 +2,39 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
+public enum TowerInvestmentCommitKind
+{
+    Deployment = 0,
+    LevelUp = 1,
+    Upgrade = 2
+}
+
+public readonly struct TowerInvestmentCommitObservation
+{
+    public TowerInvestmentCommitObservation(
+        TowerInvestmentCommitKind kind,
+        DraftAttemptToken draftAttemptToken,
+        DraftResult draftResult,
+        TowerInstance towerInstance,
+        int previousLevel,
+        int currentLevel)
+    {
+        Kind = kind;
+        DraftAttemptToken = draftAttemptToken;
+        DraftResult = draftResult;
+        TowerInstance = towerInstance;
+        PreviousLevel = previousLevel;
+        CurrentLevel = currentLevel;
+    }
+
+    public TowerInvestmentCommitKind Kind { get; }
+    public DraftAttemptToken DraftAttemptToken { get; }
+    public DraftResult DraftResult { get; }
+    public TowerInstance TowerInstance { get; }
+    public int PreviousLevel { get; }
+    public int CurrentLevel { get; }
+}
+
 public class TowerPlacementController : MonoBehaviour
 {
     [SerializeField] private Camera placementCamera;
@@ -51,6 +84,12 @@ public class TowerPlacementController : MonoBehaviour
     public Camera PlacementCamera => placementCamera;
 
     public event System.Action<TowerInstance> OnTowerDeploymentCommitted;
+    internal event System.Action<
+        TowerInstance,
+        TowerPlacementTopologyPlan,
+        MonsterRouteRevisionBatch> OnPlacementRouteRevisionCommitted;
+    public event System.Action<TowerInvestmentCommitObservation>
+        OnTowerInvestmentCommitted;
 
     private void Awake()
     {
@@ -518,6 +557,12 @@ public class TowerPlacementController : MonoBehaviour
         currentDraftEntry = null;
 
         towerUpgradeSystem.PublishPreparedLevelUp(preparedLevelUp);
+        PublishTowerInvestmentCommitted(
+            TowerInvestmentCommitKind.LevelUp,
+            consumedDraft,
+            preparedLevelUp.TargetTower,
+            preparedLevelUp.PreviousLevel,
+            preparedLevelUp.NextLevel);
         RunLevelUpPresentation(currentLevelUpTarget, consumedDraft);
     }
 
@@ -576,8 +621,11 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
+        PendingDraftUIItem consumedDraft = currentDraftEntry;
+        TowerInstance targetTower = currentUpgradeTarget.TowerInstance;
+
         if (!towerUpgradeSystem.TryApplyUpgrade(
-                currentUpgradeTarget.TowerInstance,
+                targetTower,
                 currentTowerUpgradeDefinition,
                 out string failureReason))
         {
@@ -597,6 +645,13 @@ public class TowerPlacementController : MonoBehaviour
             battleHUDUI.RemovePendingDraft(currentDraftEntry);
             currentDraftEntry = null;
         }
+
+        PublishTowerInvestmentCommitted(
+            TowerInvestmentCommitKind.Upgrade,
+            consumedDraft,
+            targetTower,
+            targetTower.CurrentLevel,
+            targetTower.CurrentLevel);
     }
 
     private void UpdatePreviewPosition(Vector3 screenPosition)
@@ -869,14 +924,23 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         PendingDraftUIItem consumedDraft = currentDraftEntry;
+        revisionBatch.CombatOwnershipFingerprintBefore =
+            CaptureExistingCombatOwnershipFingerprint();
         CommitPreparedPlacement(
             topologyPlan,
             revisionBatch,
             preparedTower,
             preparedCombat,
             consumedDraft);
+        revisionBatch.CombatOwnershipFingerprintAfter =
+            CaptureExistingCombatOwnershipFingerprint(
+                preparedTower.TowerInstance);
         currentDraftEntry = null;
-        PublishTowerDeploymentCommitted(preparedTower.TowerInstance);
+        PublishTowerDeploymentCommitted(
+            preparedTower.TowerInstance,
+            consumedDraft,
+            topologyPlan,
+            revisionBatch);
 
         bool hasPresentationWarning =
             !TryRunPlacementPresentation(preparedTower);
@@ -889,11 +953,63 @@ public class TowerPlacementController : MonoBehaviour
         return true;
     }
 
-    private void PublishTowerDeploymentCommitted(TowerInstance towerInstance)
+    private void PublishTowerDeploymentCommitted(
+        TowerInstance towerInstance,
+        PendingDraftUIItem consumedDraft,
+        TowerPlacementTopologyPlan topologyPlan,
+        MonsterRouteRevisionBatch revisionBatch)
     {
         System.Action<TowerInstance> handlers = OnTowerDeploymentCommitted;
 
-        if (handlers == null || towerInstance == null)
+        if (towerInstance == null)
+        {
+            return;
+        }
+
+        if (handlers != null)
+        {
+            System.Delegate[] subscribers = handlers.GetInvocationList();
+
+            for (int i = 0; i < subscribers.Length; i++)
+            {
+                try
+                {
+                    ((System.Action<TowerInstance>)subscribers[i]).Invoke(
+                        towerInstance);
+                }
+                catch (System.Exception exception)
+                {
+                    Debug.LogException(exception, this);
+                }
+            }
+        }
+
+        PublishPlacementRouteRevisionCommitted(
+            towerInstance,
+            topologyPlan,
+            revisionBatch);
+        monsterManager.PublishCommittedPlacementRouteLifecycle(revisionBatch);
+
+        PublishTowerInvestmentCommitted(
+            TowerInvestmentCommitKind.Deployment,
+            consumedDraft,
+            towerInstance,
+            0,
+            towerInstance.CurrentLevel);
+    }
+
+    private void PublishPlacementRouteRevisionCommitted(
+        TowerInstance towerInstance,
+        TowerPlacementTopologyPlan topologyPlan,
+        MonsterRouteRevisionBatch revisionBatch)
+    {
+        System.Action<
+            TowerInstance,
+            TowerPlacementTopologyPlan,
+            MonsterRouteRevisionBatch> handlers =
+                OnPlacementRouteRevisionCommitted;
+
+        if (handlers == null)
         {
             return;
         }
@@ -904,8 +1020,94 @@ public class TowerPlacementController : MonoBehaviour
         {
             try
             {
-                ((System.Action<TowerInstance>)subscribers[i]).Invoke(
-                    towerInstance);
+                ((System.Action<
+                    TowerInstance,
+                    TowerPlacementTopologyPlan,
+                    MonsterRouteRevisionBatch>)subscribers[i]).Invoke(
+                        towerInstance,
+                        topologyPlan,
+                        revisionBatch);
+            }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
+    }
+
+    private string CaptureExistingCombatOwnershipFingerprint(
+        TowerInstance excludedTower = null)
+    {
+        List<TowerCombatBehaviour> combatRuntimes =
+            new List<TowerCombatBehaviour>();
+
+        for (int i = 0; i < deployedTowers.Count; i++)
+        {
+            TowerBehaviour tower = deployedTowers[i];
+
+            if (tower == null ||
+                tower.TowerInstance == excludedTower ||
+                !tower.TryGetComponent(out TowerCombatBehaviour combat))
+            {
+                continue;
+            }
+
+            combatRuntimes.Add(combat);
+        }
+
+        combatRuntimes.Sort((left, right) =>
+            left.GetInstanceID().CompareTo(right.GetInstanceID()));
+        StringBuilder builder = new StringBuilder();
+
+        for (int i = 0; i < combatRuntimes.Count; i++)
+        {
+            if (i > 0)
+            {
+                builder.Append('|');
+            }
+
+            builder.Append(
+                combatRuntimes[i].CapturePlacementOwnershipFingerprint());
+        }
+
+        return builder.ToString();
+    }
+
+    private void PublishTowerInvestmentCommitted(
+        TowerInvestmentCommitKind kind,
+        PendingDraftUIItem consumedDraft,
+        TowerInstance towerInstance,
+        int previousLevel,
+        int currentLevel)
+    {
+        System.Action<TowerInvestmentCommitObservation> handlers =
+            OnTowerInvestmentCommitted;
+
+        if (handlers == null ||
+            consumedDraft == null ||
+            !consumedDraft.DraftAttemptToken.IsValid ||
+            consumedDraft.DraftResult == null ||
+            towerInstance == null)
+        {
+            return;
+        }
+
+        TowerInvestmentCommitObservation observation =
+            new TowerInvestmentCommitObservation(
+                kind,
+                consumedDraft.DraftAttemptToken,
+                consumedDraft.DraftResult,
+                towerInstance,
+                previousLevel,
+                currentLevel);
+        System.Delegate[] subscribers = handlers.GetInvocationList();
+
+        for (int i = 0; i < subscribers.Length; i++)
+        {
+            try
+            {
+                ((System.Action<TowerInvestmentCommitObservation>)subscribers[i])
+                    .Invoke(observation);
             }
             catch (System.Exception exception)
             {
@@ -1075,31 +1277,32 @@ public class TowerPlacementController : MonoBehaviour
             $"{FormatGridPositions(topologyPlan.Footprint)}; " +
             $"RouteExists=True; " +
             $"AuthoritativeRouteNodes={topologyPlan.AuthoritativeRoute.Count}; " +
-            $"AffectedMonsters={revisionBatch.AffectedMonsterCount}",
+            $"LivingMonsters={revisionBatch.LivingMonsterCount}; " +
+            $"AlreadyOnNewRoute={revisionBatch.AlreadyOnNewRouteCount}; " +
+            $"ReachableRouteRejoin={revisionBatch.ReachableRouteRejoinCount}; " +
+            $"ForcedRelocation={revisionBatch.ForcedRelocationCount}",
             this);
 
         for (int i = 0; i < revisionBatch.Entries.Count; i++)
         {
             MonsterRouteRevisionEntry entry = revisionBatch.Entries[i];
-            string progressDirection =
-                !entry.HasComparableRemainingDistance
-                    ? "Uncompared"
-                    : entry.RemainingCenterlineDistanceDelta < 0f
-                        ? "Forward"
-                        : entry.RemainingCenterlineDistanceDelta > 0f
-                            ? "Backward"
-                            : "Unchanged";
-
             Debug.Log(
                 $"Tower placement Monster revision: " +
                 $"Monster={entry.Monster.name}; " +
-                $"PrePosition={entry.PrePlacementWorldPosition}; " +
-                $"ProjectionGrid={entry.ReachedNode.GridPosition}; " +
-                $"Displacement={entry.WorldDisplacementDistance}; " +
-                $"RemainingDistanceDelta=" +
-                $"{entry.RemainingCenterlineDistanceDelta}; " +
-                $"ProgressDirection={progressDirection}; " +
-                $"UsedFallback={entry.UsedDeterministicFallback}",
+                $"RevisionId={entry.RevisionId}; " +
+                $"Mode={entry.Mode}; " +
+                $"RelocationReason={entry.RelocationReason}; " +
+                $"PrePosition={entry.CapturedWorldPosition}; " +
+                $"PhysicalGrid=" +
+                $"{entry.PhysicalCurrentGrid?.GridPosition.ToString() ?? "Unresolved"}; " +
+                $"JoinGrid=" +
+                $"{entry.JoinGrid?.GridPosition.ToString() ?? "None"}; " +
+                $"RecoveryGrid=" +
+                $"{entry.RecoveryGrid?.GridPosition.ToString() ?? "None"}; " +
+                $"RelocationDistance=" +
+                $"{(entry.HasComparableRelocationDistance ? entry.RelocationDistance.ToString() : "Uncompared")}; " +
+                $"RequiresExactTargetApproach=" +
+                $"{entry.RequiresExactTargetApproach}",
                 entry.Monster);
         }
     }

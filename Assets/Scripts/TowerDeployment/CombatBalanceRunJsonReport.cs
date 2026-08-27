@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 20;
+    public int schemaVersion = 22;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -22,10 +22,18 @@ internal sealed class CombatBalanceRunJsonReport
         new CombatBalanceWaveRuntimeJson();
     public CombatBalanceDraftRuntimeJson draftRuntime =
         new CombatBalanceDraftRuntimeJson();
+    public CombatBalanceInvestmentRuntimeJson investmentRuntime =
+        new CombatBalanceInvestmentRuntimeJson();
+    public CombatBalanceExecutionJson execution =
+        new CombatBalanceExecutionJson();
     public CombatBalanceIntegrityJson integrity = new CombatBalanceIntegrityJson();
     public CombatBalanceMonsterRuntimeJson monsterRuntime =
         new CombatBalanceMonsterRuntimeJson();
+    public CombatBalancePlacementRouteRuntimeJson placementRouteRuntime =
+        new CombatBalancePlacementRouteRuntimeJson();
     public List<CombatBalanceTowerJson> towers = new List<CombatBalanceTowerJson>();
+    public List<CombatBalanceTowerWaveJson> towerWaveSummaries =
+        new List<CombatBalanceTowerWaveJson>();
     public List<CombatBalanceBuffJson> buffs = new List<CombatBalanceBuffJson>();
     public CombatBalanceElementalOpportunityDiagnosticsJson
         elementalOpportunityDiagnostics =
@@ -38,6 +46,16 @@ internal sealed class CombatBalanceRunJsonReport
 [Serializable]
 internal sealed class CombatBalanceFixtureJson
 {
+    public string stageDefinitionName;
+    public string stageDisplayName;
+    public int configuredPlayerMaxHealth;
+    public string mapTemplateName;
+    public string runtimeMapName;
+    public int mapWidth;
+    public int mapLength;
+    public float mapNodeSize;
+    public List<CombatBalanceMapNodeFixtureJson> mapNodes =
+        new List<CombatBalanceMapNodeFixtureJson>();
     public string waveConfigName;
     public bool expectedWaveCountAvailable;
     public int expectedWaveCount;
@@ -48,6 +66,125 @@ internal sealed class CombatBalanceFixtureJson
     public float observedMinimumMonsterSpeed;
     public float observedMaximumMonsterSpeed;
     public float observedAverageSpawnIntervalSeconds;
+    public List<CombatBalanceWaveFixtureJson> waves =
+        new List<CombatBalanceWaveFixtureJson>();
+    public string placementRouteForcedRelocationExpectation;
+}
+
+[Serializable]
+internal sealed class CombatBalancePlacementRouteRuntimeJson
+{
+    public string forcedRelocationExpectation;
+    public int committedPlacementCount;
+    public int observedMonsterRevisionCount;
+    public int alreadyOnNewRouteCount;
+    public int reachableRouteRejoinCount;
+    public int forcedRelocationCount;
+    public int lifecycleObservationCount;
+    public List<CombatBalancePlacementRouteCommitJson> commits =
+        new List<CombatBalancePlacementRouteCommitJson>();
+    public List<CombatBalancePlacementRouteLifecycleJson> lifecycle =
+        new List<CombatBalancePlacementRouteLifecycleJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalancePlacementRouteCommitJson
+{
+    public int ordinal;
+    public int towerInstanceId;
+    public float activeTimeSeconds;
+    public List<CombatBalanceGridPositionJson> footprint =
+        new List<CombatBalanceGridPositionJson>();
+    public List<CombatBalanceGridPositionJson> authoritativeRoute =
+        new List<CombatBalanceGridPositionJson>();
+    public int playerHealthBefore;
+    public int playerHealthAfter;
+    public int playerProgressBefore;
+    public int playerProgressAfter;
+    public int aliveMonsterCountBefore;
+    public int aliveMonsterCountAfter;
+    public int resolvedMonsterCountBefore;
+    public int resolvedMonsterCountAfter;
+    public int alreadyOnNewRouteCount;
+    public int reachableRouteRejoinCount;
+    public int forcedRelocationCount;
+    public string combatOwnershipFingerprintBefore;
+    public string combatOwnershipFingerprintAfter;
+    public List<CombatBalancePlacementRouteMonsterJson> monsters =
+        new List<CombatBalancePlacementRouteMonsterJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalancePlacementRouteMonsterJson
+{
+    public long revisionId;
+    public int monsterInstanceId;
+    public int spawnOrdinal;
+    public int sourceWaveNumber;
+    public int sourceWaveSpawnOrdinal;
+    public string mode;
+    public string forcedRelocationReason;
+    public CombatBalanceVector3Json capturedWorldPosition =
+        new CombatBalanceVector3Json();
+    public CombatBalanceVector3Json immediatePostCommitPosition =
+        new CombatBalanceVector3Json();
+    public CombatBalanceVector3Json preparedWorldPosition =
+        new CombatBalanceVector3Json();
+    public bool hasComparableCapturedPosition;
+    public bool hasComparableImmediateDisplacement;
+    public float immediateDisplacement;
+    public bool hasComparableRelocationDistance;
+    public float plannedRelocationDistance;
+    public float plannedConnectorDistance;
+    public bool requiresExactTargetApproach;
+    public bool requiresConnector;
+    public bool joinedAtCommit;
+    public CombatBalanceGridPositionJson physicalGrid;
+    public CombatBalanceGridPositionJson joinGrid;
+    public CombatBalanceGridPositionJson recoveryGrid;
+    public List<CombatBalanceGridPositionJson> connectorPath =
+        new List<CombatBalanceGridPositionJson>();
+    public List<CombatBalanceGridPositionJson> preparedContinuation =
+        new List<CombatBalanceGridPositionJson>();
+    public List<CombatBalanceGridPositionJson> routeSuffix =
+        new List<CombatBalanceGridPositionJson>();
+    public string preGameplayStateFingerprint;
+    public string postGameplayStateFingerprint;
+}
+
+[Serializable]
+internal sealed class CombatBalancePlacementRouteLifecycleJson
+{
+    public long revisionId;
+    public long replacementRevisionId;
+    public int monsterInstanceId;
+    public int spawnOrdinal;
+    public string kind;
+    public string resolutionReason;
+    public bool joinedAtCommit;
+    public float activeTimeSeconds;
+}
+
+[Serializable]
+internal sealed class CombatBalanceMapNodeFixtureJson
+{
+    public int x;
+    public int z;
+    public string nodeType;
+    public bool baseWalkable;
+}
+
+[Serializable]
+internal sealed class CombatBalanceWaveFixtureJson
+{
+    public int waveNumber;
+    public string runtimeTemplateName;
+    public string monsterDisplayName;
+    public int maximumHealth;
+    public float moveSpeed;
+    public int count;
+    public float spawnIntervalSeconds;
+    public float waveDelaySeconds;
 }
 
 [Serializable]
@@ -144,6 +281,9 @@ internal sealed class CombatBalanceTimingJson
     public float spawningCompletedAtSeconds;
     public float battleDurationSeconds;
     public float secondsAfterFinalDraft;
+    public bool finalBuildCommitObserved;
+    public float finalBuildCommittedAtSeconds;
+    public float secondsAfterFinalBuildCommit;
 }
 
 [Serializable]
@@ -335,12 +475,63 @@ internal sealed class CombatBalanceDraftAttemptJson
     public int requiredProgress;
     public float activeTimeSeconds;
     public bool selectionCommitted;
+    public float selectionCommittedAtSeconds;
     public List<CombatBalanceDraftItemJson> naturalCandidates =
         new List<CombatBalanceDraftItemJson>();
     public List<CombatBalanceDraftItemJson> displayedChoices =
         new List<CombatBalanceDraftItemJson>();
     public CombatBalanceDraftItemJson selectedChoice =
         new CombatBalanceDraftItemJson();
+}
+
+[Serializable]
+internal sealed class CombatBalanceInvestmentRuntimeJson
+{
+    public int committedInvestmentCount;
+    public bool finalBuildCommitObserved;
+    public int finalBuildCommitResolutionNode;
+    public int resolutionsAfterFinalBuildCommit;
+    public List<CombatBalanceInvestmentCommitJson> commits =
+        new List<CombatBalanceInvestmentCommitJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceInvestmentCommitJson
+{
+    public int ordinal;
+    public string kind;
+    public string authoritySource;
+    public string draftAttemptToken;
+    public int draftOrdinal;
+    public string draftResultType;
+    public string draftAssetName;
+    public int towerInstanceId;
+    public string towerDisplayName;
+    public string towerFamily;
+    public int previousLevel;
+    public int currentLevel;
+    public string upgradeLayer;
+    public float activeTimeSeconds;
+    public int resolvedMonsterCount;
+    public int spawned;
+    public int resolved;
+    public int killed;
+    public int leaked;
+    public int alive;
+    public int playerHealth;
+}
+
+[Serializable]
+internal sealed class CombatBalanceExecutionJson
+{
+    public bool initialDraftCompleted;
+    public bool allExpectedLevelUpsObserved;
+    public bool expectedFinalPlayerLevelReached;
+    public bool allConfiguredWavesStarted;
+    public bool allConfiguredWavesCompleted;
+    public bool allConfiguredMonstersSpawned;
+    public bool finalBuildCommitted;
+    public bool postFinalBuildCombatObserved;
 }
 
 [Serializable]
@@ -358,22 +549,20 @@ internal sealed class CombatBalanceDraftItemJson
 [Serializable]
 internal sealed class CombatBalanceIntegrityJson
 {
+    public bool fixtureSnapshotComplete;
     public bool resolutionCountsMatch;
     public bool leakCountMatchesPlayerHealthLoss;
     public bool monsterRuntimeCountsMatch;
     public bool monsterRuntimeDamageMatches;
     public bool monsterRuntimeRegistrationCoverageMatch;
     public bool monsterRuntimeStartedAtFullHealth;
-    public bool initialDraftCountMatches;
-    public bool levelUpCountMatches;
     public bool levelUpResolutionNodesMatch;
-    public bool finalPlayerLevelMatches;
-    public bool postFinalDraftCombatObserved;
-    public bool waveEventCountsMatch;
     public bool waveMonsterAttributionMatches;
     public bool draftAttemptSelectionsMatch;
     public bool draftAttemptCountMatchesProgression;
     public bool towerDeploymentCoverageMatches;
+    public bool investmentCommitsMatchDraftSelections;
+    public bool towerWaveAttributionMatches;
     public bool damageDiagnosticsCountsMatch;
     public bool droneBurstDiagnosticsConsistent;
     public bool elementalOpportunityDiagnosticsConsistent;
@@ -381,6 +570,25 @@ internal sealed class CombatBalanceIntegrityJson
     public bool buffDiagnosticsConsistent;
     public bool buffStackUnitAccountingConsistent;
     public bool buffWaveAttributionMatches;
+    public bool placementRouteBatchCountsMatch;
+    public bool placementRouteCommitStatePreserved;
+    public bool placementRouteTopologyValid;
+    public bool placementRouteGameplayStatePreserved;
+    public bool placementRouteCombatOwnershipPreserved;
+    public bool placementRouteLifecycleConsistent;
+    public bool placementRouteForcedRelocationUsageValid;
+}
+
+[Serializable]
+internal sealed class CombatBalanceTowerWaveJson
+{
+    public int towerInstanceId;
+    public string towerDisplayName;
+    public string towerFamily;
+    public int waveNumber;
+    public int successfulDamageApplications;
+    public int effectiveTowerScaledDamage;
+    public int killingBlows;
 }
 
 [Serializable]

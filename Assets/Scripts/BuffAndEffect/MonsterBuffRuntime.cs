@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 public class MonsterBuffRuntime
@@ -30,6 +31,38 @@ public class MonsterBuffRuntime
         OnElementalHitReactionObserved;
 
     public IReadOnlyList<MonsterBuffStateSnapshot> ActiveSnapshots => activeSnapshots;
+
+    internal string CapturePlacementFingerprint()
+    {
+        List<string> instanceFingerprints = new List<string>(buffInstances.Count);
+
+        for (int i = 0; i < buffInstances.Count; i++)
+        {
+            MonsterBuffInstance instance = buffInstances[i];
+
+            if (instance != null)
+            {
+                instanceFingerprints.Add(instance.CapturePlacementFingerprint());
+            }
+        }
+
+        instanceFingerprints.Sort(StringComparer.Ordinal);
+        StringBuilder builder = new StringBuilder();
+        builder.Append(nextStackingCycleIdentity)
+            .Append('|')
+            .Append(stateMutationDepth)
+            .Append('|')
+            .Append(stateRefreshPending ? 1 : 0)
+            .Append('|')
+            .Append(removalInProgress.Count);
+
+        for (int i = 0; i < instanceFingerprints.Count; i++)
+        {
+            builder.Append("||").Append(instanceFingerprints[i]);
+        }
+
+        return builder.ToString();
+    }
 
     public BuffApplyResult ApplyBuff(BuffApplyRequest request)
     {

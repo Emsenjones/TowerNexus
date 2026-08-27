@@ -2,7 +2,10 @@
 
 Document Set: Balance
 
-Status: Campaign learning arc and Stage1-Stage6 Reference Build v0.2 shapes approved; exact repeated support families, Reference-run UpgradeDefinitions, ElementTypes, and Stage-local calibration values remain downstream decisions
+Status: Campaign learning arc approved; Stage1 calibration accepted by Task010;
+Stage2-Stage6 Reference Build v0.2 shapes remain approved baselines whose exact
+repeated support families, Reference-run UpgradeDefinitions, ElementTypes, and
+Stage-local calibration values remain downstream decisions
 
 ---
 
@@ -53,9 +56,13 @@ Tower Level is a concentrated BasicDamage and future-eligibility investment unde
 
 The Reference Build is the stable standard solution used to derive implementation budgets and perform controlled Stage calibration. It is not intended to be the only legal solution.
 
-The Expected Anti-pattern is a build that rejects the Stage lesson and should fail because it lacks the required capability. The game does not apply hidden penalties for deviating from the Reference Build.
+The primary Expected Anti-pattern is a build that rejects the Stage lesson and
+should fail because it lacks the required capability. Secondary stress fixtures
+measure the surrounding Build envelope; they are not automatically required to
+fail. The game does not apply hidden penalties for deviating from the Reference
+Build.
 
-Concentrated investment is not intrinsically an Anti-pattern. A highly developed Core should fail only when the Stage also requires coverage, role complement, or a second matching Elemental source that the concentrated build does not provide. Conversely, horizontal expansion should fail only when it leaves the required Core capability undeveloped.
+Concentrated investment is not intrinsically an Anti-pattern. A highly developed Core should fail only when the Stage also requires coverage, role complement, or a second matching Elemental source that the concentrated build does not provide. Conversely, horizontal expansion is a primary Anti-pattern only when additional coverage cannot itself supply the Stage's required capability; otherwise it remains a stress fixture whose margin is measured from evidence.
 
 New Content describes the first campaign introduction of a mechanic or TowerFamily. Tower and Upgrade access is cumulative unless a Stage Note explicitly says otherwise. Each Stage Tower Draft pool contains every TowerFamily introduced by that Stage, and its Tower Upgrade Draft pool contains all currently unlocked UpgradeDefinitions for those represented families. Stage1-Stage4 unlock Basic and Behaviour content; Stage5-Stage6 additionally unlock Elemental content. CombatMathV2 Task010-Task015 each materialize those rules as their exact Stage asset lists and reproducible Fixed calibration fixtures.
 
@@ -73,7 +80,21 @@ The listed one-Basic and one-Behaviour Core is the Reference Build used to deriv
 
 The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Task010-Task015 use legal Fixed Draft sequences to isolate Build efficacy; natural candidate availability and any justified first-Draft weighting or guarantee remain Task017 design work.
 
-The early campaign teaches the player to establish useful route coverage and then concentrate enough Draft investment to unlock and apply higher-level content. A player following that lesson should not need one uniquely named Upgrade combination to clear. Pure horizontal expansion into many undeveloped Towers remains an intentional Anti-pattern when it rejects the Stage's required Core capability.
+The early campaign teaches the player to establish useful route coverage and
+then concentrate enough Draft investment to unlock and apply higher-level
+content. A player following that lesson should not need one uniquely named
+Upgrade combination to clear. Pure horizontal expansion into many undeveloped
+Towers remains a required stress fixture, but evidence may reclassify it as a
+low-margin edge Build when coverage itself supplies real compensating value and
+the Stage still rejects its primary strategically incoherent Build.
+
+Stage calibration should pursue the ideal ordering of stable Reference clear,
+coherent-alternative clear with an accepted margin, and Anti-pattern Defeat. A
+Stage may accept a documented secondary exception when it is reproducible,
+materially worse than the coherent envelope, does not erase the primary Stage
+lesson, and is not manufactured or rejected solely through Player Health.
+Fixed-sequence results establish conditional Build efficacy; Task017 separately
+measures whether natural Draft offers make that Build realistically accessible.
 
 ---
 
@@ -96,15 +117,15 @@ Campaign spatial scale should generally increase from Stage1 through Stage4. Sta
 
 ## 4.1 Stage1
 
-Status: Reference Build Baseline v0.2
+Status: Accepted Stage1 Calibration v1 (Task010, 2026-08-27)
 
 | Field | Design Target |
 |---|---|
-| Primary Experience | Learn that concentrated growth is required; pure horizontal expansion is insufficient |
+| Primary Experience | Learn that a developed Core plus a second coverage point provides the reliable low-leak path |
 | New Content | Archer |
-| Required Capability | One developed L2 Archer core plus a second coverage point |
-| Expected Anti-pattern | Either over-expand with undeveloped L1 Archers, or concentrate every legal investment into one Archer while omitting the required second coverage point |
-| Notes | All unlocked Archer Basic and Behaviour definitions enter the Stage pool; the exact pair recorded by a Reference Run remains a downstream calibration choice rather than a mandatory player answer |
+| Required Capability | Reliable completion uses one developed L2 Archer Core plus a second coverage point |
+| Expected Anti-pattern | Primary: concentrate every legal investment into one Archer while omitting the required second coverage point; secondary stress: over-expand into five undeveloped L1 Archers |
+| Notes | Task010 accepted stable zero-leak Reference clears, coherent alternatives with a small leak margin, a decisive one-Core Defeat, and repeatable five-L1 completion as a rare low-margin edge. Exact results remain in Task010. All unlocked Archer Basic and Behaviour definitions enter the Stage pool; the Reference pair is not a mandatory player answer, and Task017 owns natural offer probability. |
 
 Reference Build:
 

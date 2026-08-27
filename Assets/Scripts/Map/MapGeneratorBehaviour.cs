@@ -197,17 +197,74 @@ public class MapGeneratorBehaviour : MonoBehaviour
         node = null;
         EnsureNodeDictionaryValid();
 
-        if (nodesRoot == null || nodeSize <= 0f)
+        if (nodesRoot == null || nodeSize <= 0f || !IsFinite(worldPosition))
         {
             return false;
         }
 
         Vector3 localPosition = nodesRoot.InverseTransformPoint(worldPosition);
-        Vector2Int gridPosition = new Vector2Int(
-            Mathf.RoundToInt(localPosition.x / nodeSize),
-            Mathf.RoundToInt(localPosition.z / nodeSize));
+
+        if (!IsFinite(localPosition) ||
+            !TryResolvePhysicalGridCoordinate(
+                localPosition.x,
+                nodeSize,
+                width,
+                out int gridX) ||
+            !TryResolvePhysicalGridCoordinate(
+                localPosition.z,
+                nodeSize,
+                lengh,
+                out int gridY))
+        {
+            return false;
+        }
+
+        Vector2Int gridPosition = new Vector2Int(gridX, gridY);
 
         return nodeDictionary.TryGetValue(gridPosition, out node) && node != null;
+    }
+
+    private static bool TryResolvePhysicalGridCoordinate(
+        float localCoordinate,
+        float spacing,
+        int nodeCount,
+        out int gridCoordinate)
+    {
+        gridCoordinate = 0;
+
+        if (float.IsNaN(localCoordinate) ||
+            float.IsInfinity(localCoordinate) ||
+            spacing <= 0f ||
+            nodeCount <= 0)
+        {
+            return false;
+        }
+
+        float normalized = localCoordinate / spacing + 0.5f;
+
+        if (normalized < 0f || normalized > nodeCount)
+        {
+            return false;
+        }
+
+        if (normalized == nodeCount)
+        {
+            gridCoordinate = nodeCount - 1;
+            return true;
+        }
+
+        gridCoordinate = Mathf.FloorToInt(normalized);
+        return gridCoordinate >= 0 && gridCoordinate < nodeCount;
+    }
+
+    private static bool IsFinite(Vector3 value)
+    {
+        return !float.IsNaN(value.x) &&
+               !float.IsInfinity(value.x) &&
+               !float.IsNaN(value.y) &&
+               !float.IsInfinity(value.y) &&
+               !float.IsNaN(value.z) &&
+               !float.IsInfinity(value.z);
     }
 
     public bool HasNode(Vector2Int gridPosition)

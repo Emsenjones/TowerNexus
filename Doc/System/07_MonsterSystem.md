@@ -236,9 +236,10 @@ The first version uses A* over an orthogonal grid:
 - Each Monster tracks the reached node, active next node, one complete ordered route, current route position, physical position along the active segment, and stable battle-local lane identity. While a segment is active, the route position identifies the active next node, the immediately preceding route node is the reached node, and the final route node is the active Target.
 - A bounded per-instance lane target may vary the physical destination inside a non-terminal route Grid without changing the Grid route or topology.
 
-Route assignment preserves the Monster's physical position and active segment when that segment remains valid. It must not reinterpret a Monster between nodes as physically located at its previously reached node or make it turn back toward that stale position.
-
-When route-reprojection fairness compares remaining distance, Monster System uses a centerline measurement in the active Map's local XZ frame: the logical remainder of the current centerline segment plus Grid-center-to-Grid-center distance for later segments. It records separately whether that measurement is comparable. Lane-offset path length, a zero numeric result, snapshot validity, and Target proximity do not substitute for that comparability fact.
+Ordinary route assignment preserves the Monster's physical position and active
+segment when that segment remains valid. Placement-driven route revision uses
+the Monster gameplay root's physical current Grid rather than reinterpreting a
+Monster between nodes as physically located at its previously reached node.
 
 Movement modifiers and movement locks are owned by Monster runtime state. Effects and Buffs request changes through Monster System rather than directly moving the Monster, changing its current node, or bypassing pathfinding.
 
@@ -260,33 +261,82 @@ Lane variation must not create obvious left-right zigzag on straight routes or u
 
 ## 6.2 Placement Route Revision
 
-Tower Placement System owns placement acceptance. It simulates candidate occupancy and accepts the topology when all ordinary placement constraints pass and at least one Spawn-to-Target route remains. A living Monster's position, reached node, next node, or old branch never vetoes an otherwise legal placement.
+Tower Placement System owns placement acceptance. It simulates candidate
+occupancy and accepts the topology when all ordinary placement constraints pass
+and at least one Spawn-to-Target Route remains. A living Monster's position,
+old route, or reachability from its current Grid never vetoes an otherwise legal
+placement.
 
 ```text
 Simulate Candidate Occupancy
-    -> Query One Authoritative Spawn-To-Target Projection Route
+    -> Query One Authoritative New Spawn-To-Target Route
     -> No Route: Reject Without Mutation
-    -> Route Exists: Capture Living Monster Movement State
-    -> Preserve Every Unaffected Monster Without Another Path Query
-    -> Prepare Every Affected Monster Reprojection
+    -> Route Exists: Capture Every Living Monster's Physical Current Grid
+    -> Prepare Route Continuation, Reachable Rejoin, Or Forced Relocation
     -> Commit Tower Occupancy, Prepared Monster Revisions, And Held-Draft Consumption
 ```
 
-Current placement only adds blockers. An affected Monster is therefore one whose reached node, active next node, or remaining route intersects the new footprint, or whose captured movement state is invalid and cannot continue safely. An existing remaining route that does not intersect the footprint remains valid.
+The authoritative new Route is the shared post-placement Route that every
+living targetable Monster continues on or rejoins. Target is not an eligible
+join or relocation destination for a living unresolved Monster; it remains the
+exact final movement destination. Spawn remains eligible.
 
-Unaffected Monsters preserve their world positions, active segments, route positions, and complete remaining routes. They receive no additional A* query and no prepared movement revision.
+Monster System classifies each living targetable Monster exactly once:
 
-Every affected Monster is mapped against the same authoritative post-placement route. The primary selection is the route Grid center closest to its captured pre-placement world position. Equal-distance candidates first minimize remaining-route-distance change, then avoid free forward progress when practical, and finally use stable route and Grid order. Multiple Monsters may select the same Grid because Monster Grid occupancy is not exclusive.
+- A non-finite Transform, a finite position outside the Map, or a physical Grid
+  covered by the new footprint receives forced relocation before any on-Route
+  or connectivity classification.
+- A Monster whose physical current Grid belongs to the authoritative new Route
+  keeps its world position and continues the applicable Route suffix without
+  extra rejoin movement.
+- A Monster on another effectively walkable Grid keeps its world position when
+  that Grid can reach the new Route. It follows an orthogonal Grid connector to
+  the reachable non-Target Route Grid whose lane-resolved position is nearest
+  to its captured physical position, then follows the authoritative suffix.
+- A Monster whose physical Grid is covered by the new footprint, cannot reach
+  any eligible new-Route Grid, or has invalid spatial or movement state is
+  relocated during commit to the nearest eligible recovery Grid. That recovery
+  Grid is effectively walkable under the simulated topology, lies outside the
+  new footprint, is not Target, and can reach an eligible Grid on the new Route.
+  It need not itself belong to the new Route. An invalid old logical route does
+  not force relocation when valid physical state can establish a new
+  continuation or rejoin.
 
-The Target Grid is excluded from reprojection candidates for living unresolved Monsters. Even when Target is spatially closest, the Monster projects to an earlier route Grid and must reach the exact Target center through ordinary movement. Spawn remains a valid candidate.
+Reachable join selection evaluates reachability before spatial closeness; an
+unreachable closer Route Grid is not selected. Forced relocation is the only
+classification that may change a finite Monster position during placement
+commit. Stable Route and Grid ordering supplies deterministic ties or degraded
+fallback when spatial comparison is unavailable. Multiple Monsters may share a
+movement, join, or recovery Grid because Monster occupancy is non-exclusive.
 
-Route revision preserves Health, Buffs, Effects, movement controls, registration, resolution state, and valid target/source relationships. It does not deal damage, heal, kill, leak, resolve, grant progress, register, or deregister a Monster.
+One deterministic connectivity and distance query over the simulated topology
+identifies every Grid connected to the authoritative Route and supplies the
+minimum path cost and stable Route join used by recovery selection. A reachable
+off-Route Monster selects the spatially nearest non-Target Route movement
+position and requires no repeated reachability search across Route candidates.
+All spatial distance comparisons use Map-local XZ.
 
-All affected-Monster route revisions are prepared before placement commit and become active in the same logical gameplay transaction as Runtime Occupied state and held-Draft consumption. Prepared revisions use one prevalidated state-write boundary that performs no pathfinding or new validation during commit. No committed footprint may remain visible to gameplay while affected Monsters continue along an invalid old route for another frame. Because the accepted topology already supplies a valid authoritative route, a Monster-specific condition cannot convert that placement into an ordinary rejection.
+Route revision preserves Health, Buff and Effect state, movement controls,
+lane identity, registration, resolution state, and valid target/source
+relationships. It does not deal damage, heal, kill, leak, resolve, grant
+progress, register, or deregister a Monster. Physical membership in the Target
+cell never substitutes for reaching the exact Target movement position. A
+living Monster inside that cell uses an explicit exact-Target approach state;
+Target becomes its reached node only after physical arrival.
 
-Preparation may reject an invalid topology plan, missing required owner, or authoritative route without an eligible non-Target projection Grid. It does not reject an affected Monster because its snapshot is invalid, it is near Target, it occupies the footprint, or its old route cannot continue. Invalid movement state uses deterministic fallback. If spatial comparison is unavailable, stable authoritative-route order selects the first eligible non-Target Grid and records the degraded comparison rather than rejecting placement.
+All living-Monster revisions are prepared before placement commit and become
+active in the same logical gameplay transaction as Runtime Occupied state and
+held-Draft consumption. Prepared revisions use one prevalidated state-write
+boundary that performs no pathfinding or new validation during commit. A
+Monster following an earlier placement connector is captured normally; failed
+preflight preserves it, while a later successful commit atomically supersedes
+it with exactly one new movement state.
 
-Released Projectiles retain their existing direction, landing-position snapshot, lifetime, and hit rules. Route reprojection does not destroy, recreate, redirect, or guarantee a hit for an in-flight Projectile; later Monster displacement may cause it to miss.
+Released Projectiles retain their existing direction, landing-position
+snapshot, target identity, lifetime, and hit rules. Placement-driven route
+continuation, rejoin movement, or forced relocation does not destroy, recreate,
+redirect, or guarantee a hit for an in-flight Projectile; later Monster
+movement or relocation may cause it to hit or miss under its existing rules.
 
 ---
 
@@ -396,10 +446,12 @@ Monster and Wave authoring validation should report at minimum:
 - Negative or unsafe Lane Offset Range
 - A lane target outside its owning walkable Grid corridor
 - A placement route revision that mutates Monster or Map state during preflight
-- An additional path query or prepared movement revision for an unaffected Monster
 - A prepared revision that performs pathfinding or can ordinarily fail during gameplay commit
-- A living unresolved Monster reprojected directly onto Target
-- A placement reprojection that produces damage, resolution, registration, or progress side effects
+- A living unresolved Monster joined or relocated directly onto Target
+- A route continuation or reachable rejoin that changes a finite Monster's position during placement commit
+- A forced relocation whose destination is occupied, belongs to the new footprint, cannot reach the new Route, or is not the nearest eligible recovery Grid
+- A placement route revision that produces damage, resolution, registration, or progress side effects
+- A successful repeated placement that accumulates old and new connector state instead of atomically superseding it
 - Presentation references that are configured but unusable
 
 Validation reports authored errors without silently rewriting content.
@@ -417,7 +469,7 @@ Current scope includes:
 - Normal spawning-completion and post-resolution alive-Monster facts
 - A* pathfinding and dynamic recalculation
 - Active-segment movement state and deterministic per-instance lane targets
-- Placement-time authoritative projection route and affected-only Monster reprojection
+- Placement-time authoritative new Route, reachable Grid rejoin, and nearest-eligible forced relocation
 - Health, death, arrival, and exactly-once resolution
 - One-point Player progress and one-damage Target-arrival reporting
 - Hit Reference

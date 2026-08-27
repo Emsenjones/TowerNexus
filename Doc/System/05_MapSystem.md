@@ -47,6 +47,17 @@ The complete gameplay footprint extends one half Node Size beyond the outermost 
 
 World-position queries convert through NodesRoot local space before resolving the coordinate. Map Root or NodesRoot may be translated or rotated without changing grid identity or neighbor semantics.
 
+Every finite position inside the complete gameplay footprint belongs to exactly
+one physical Grid cell for every Map world-position lookup. In each Map-
+local grid axis, an internal cell owns the half-open interval from one half Node
+Size below its center up to, but not including, one half Node Size above its
+center. An exact internal boundary therefore belongs to the cell on its higher-
+coordinate side; the Map's maximum outer boundary remains included in the last
+cell. Local Y does not affect this membership, and a position outside the
+complete gameplay footprint or containing a non-finite component resolves to no
+physical Grid cell. Tower preview, existing-Tower targeting, footprint-anchor
+lookup, and Monster placement-route classification share this rule.
+
 Equivalent engines must preserve the grid-local coordinate frame, spacing, and neighbor semantics even when their world axes differ. Multi-layer, irregular, and procedural Map rules are outside the current contract.
 
 ---
@@ -201,12 +212,20 @@ Approved runtime blockers such as placed Towers change Runtime Occupied.
 
 Candidate occupancy simulation is read-only. It may query the ordered Spawn-to-Target route that would exist after the proposed blockers, but it does not change authored Base Walkable state, active Runtime Occupied state, Tile presentation, or Monster route state.
 
-For accepted Tower placement, affected-Monster revisions are prepared against the same simulated topology before Runtime Occupied changes. Monsters whose existing routes do not intersect the candidate footprint remain unaffected and require no new path query. Tower Placement System coordinates the commit; Map System supplies topology and occupancy state but does not select, move, or reproject Monsters.
+For accepted Tower placement, one authoritative new Spawn-to-Target Route and
+all living-Monster route revisions are prepared against the same simulated
+topology before Runtime Occupied changes. Monster System determines whether
+each Monster can continue that Route from its physical current Grid, must reach
+it through a walkable Grid connector, or requires relocation to the nearest
+eligible recovery Grid. Tower Placement System coordinates the commit; Map
+System supplies topology, cell membership, and occupancy state but does not
+classify, move, or relocate Monsters.
 
 After one committed occupancy change:
 
 1. Effective Is Walkable changes.
-2. The prepared Monster route revision becomes active before gameplay advances to another frame.
+2. The prepared Monster route-continuation, rejoin, or relocation revision
+   becomes active before gameplay advances to another frame.
 3. Pathfinding and placement consume the new state.
 4. Tile connection presentation refreshes using neighboring effective Is Walkable states.
 5. Feature presentation remains unchanged.
@@ -257,6 +276,7 @@ The current runtime loads the authored Map template. It does not regenerate Map 
 Map System provides:
 
 - Coordinate-to-node and position-to-node lookup
+- Unique physical-cell membership for finite Map-local XZ positions
 - Orthogonal neighbor lookup
 - Effective walkability queries
 - Spawn and Target queries

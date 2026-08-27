@@ -1,6 +1,74 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+internal sealed class PreparedRouteConnectivityMap
+{
+    private readonly Dictionary<GridNodeBehaviour, int> distanceByNode;
+    private readonly Dictionary<GridNodeBehaviour, GridNodeBehaviour> joinByNode;
+    private readonly Dictionary<GridNodeBehaviour, GridNodeBehaviour> nextByNode;
+
+    internal PreparedRouteConnectivityMap(
+        Dictionary<GridNodeBehaviour, int> distanceByNode,
+        Dictionary<GridNodeBehaviour, GridNodeBehaviour> joinByNode,
+        Dictionary<GridNodeBehaviour, GridNodeBehaviour> nextByNode)
+    {
+        this.distanceByNode = distanceByNode;
+        this.joinByNode = joinByNode;
+        this.nextByNode = nextByNode;
+    }
+
+    internal bool Contains(GridNodeBehaviour node)
+    {
+        return node != null && distanceByNode.ContainsKey(node);
+    }
+
+    internal bool TryGetConnection(
+        GridNodeBehaviour node,
+        out int distance,
+        out GridNodeBehaviour joinNode)
+    {
+        joinNode = null;
+
+        if (node == null ||
+            !distanceByNode.TryGetValue(node, out distance) ||
+            !joinByNode.TryGetValue(node, out joinNode))
+        {
+            distance = 0;
+            return false;
+        }
+
+        return joinNode != null;
+    }
+
+    internal List<GridNodeBehaviour> BuildPathToJoin(GridNodeBehaviour startNode)
+    {
+        List<GridNodeBehaviour> path = new List<GridNodeBehaviour>();
+
+        if (!Contains(startNode))
+        {
+            return path;
+        }
+
+        GridNodeBehaviour current = startNode;
+        path.Add(current);
+        int remainingGuard = distanceByNode.Count + 1;
+
+        while (remainingGuard-- > 0 &&
+               nextByNode.TryGetValue(current, out GridNodeBehaviour next) &&
+               next != null)
+        {
+            current = next;
+            path.Add(current);
+        }
+
+        return remainingGuard >= 0 &&
+               joinByNode.TryGetValue(startNode, out GridNodeBehaviour join) &&
+               current == join
+            ? path
+            : new List<GridNodeBehaviour>();
+    }
+}
+
 public class AStarPathfindingService : MonoBehaviour
 {
     private MapGeneratorBehaviour mapGenerator;
@@ -125,6 +193,122 @@ public class AStarPathfindingService : MonoBehaviour
         }
 
         return new List<GridNodeBehaviour>();
+    }
+
+    internal bool TryBuildRouteConnectivityMap(
+        IReadOnlyList<GridNodeBehaviour> authoritativeRoute,
+        IReadOnlyCollection<GridNodeBehaviour> temporaryBlockedNodes,
+        out PreparedRouteConnectivityMap connectivityMap)
+    {
+        connectivityMap = null;
+
+        if (mapGenerator == null ||
+            authoritativeRoute == null ||
+            authoritativeRoute.Count < 2)
+        {
+            return false;
+        }
+
+        HashSet<GridNodeBehaviour> blockedNodes = temporaryBlockedNodes != null
+            ? new HashSet<GridNodeBehaviour>(temporaryBlockedNodes)
+            : new HashSet<GridNodeBehaviour>();
+        Dictionary<GridNodeBehaviour, int> routeIndexByNode =
+            new Dictionary<GridNodeBehaviour, int>();
+        Dictionary<GridNodeBehaviour, int> distanceByNode =
+            new Dictionary<GridNodeBehaviour, int>();
+        Dictionary<GridNodeBehaviour, GridNodeBehaviour> joinByNode =
+            new Dictionary<GridNodeBehaviour, GridNodeBehaviour>();
+        Dictionary<GridNodeBehaviour, GridNodeBehaviour> nextByNode =
+            new Dictionary<GridNodeBehaviour, GridNodeBehaviour>();
+        Queue<GridNodeBehaviour> open = new Queue<GridNodeBehaviour>();
+
+        for (int i = 0; i < authoritativeRoute.Count - 1; i++)
+        {
+            GridNodeBehaviour routeNode = authoritativeRoute[i];
+
+            if (!IsNodePathable(routeNode, blockedNodes))
+            {
+                return false;
+            }
+
+            routeIndexByNode[routeNode] = i;
+            distanceByNode[routeNode] = 0;
+            joinByNode[routeNode] = routeNode;
+            nextByNode[routeNode] = null;
+            open.Enqueue(routeNode);
+        }
+
+        while (open.Count > 0)
+        {
+            GridNodeBehaviour current = open.Dequeue();
+            int candidateDistance = distanceByNode[current] + 1;
+            GridNodeBehaviour candidateJoin = joinByNode[current];
+            List<GridNodeBehaviour> neighbors =
+                mapGenerator.GetNeighborNodes(current.GridPosition);
+
+            for (int i = 0; i < neighbors.Count; i++)
+            {
+                GridNodeBehaviour neighbor = neighbors[i];
+
+                if (!IsNodePathable(neighbor, blockedNodes))
+                {
+                    continue;
+                }
+
+                bool shouldReplace =
+                    !distanceByNode.TryGetValue(neighbor, out int currentDistance) ||
+                    candidateDistance < currentDistance;
+
+                if (!shouldReplace && candidateDistance == currentDistance)
+                {
+                    GridNodeBehaviour currentJoin = joinByNode[neighbor];
+                    shouldReplace = IsEarlierRouteJoin(
+                        candidateJoin,
+                        currentJoin,
+                        routeIndexByNode);
+                }
+
+                if (!shouldReplace)
+                {
+                    continue;
+                }
+
+                distanceByNode[neighbor] = candidateDistance;
+                joinByNode[neighbor] = candidateJoin;
+                nextByNode[neighbor] = current;
+                open.Enqueue(neighbor);
+            }
+        }
+
+        connectivityMap = new PreparedRouteConnectivityMap(
+            distanceByNode,
+            joinByNode,
+            nextByNode);
+        return true;
+    }
+
+    private static bool IsEarlierRouteJoin(
+        GridNodeBehaviour candidate,
+        GridNodeBehaviour current,
+        IReadOnlyDictionary<GridNodeBehaviour, int> routeIndexByNode)
+    {
+        int candidateIndex = routeIndexByNode.TryGetValue(candidate, out int left)
+            ? left
+            : int.MaxValue;
+        int currentIndex = routeIndexByNode.TryGetValue(current, out int right)
+            ? right
+            : int.MaxValue;
+
+        if (candidateIndex != currentIndex)
+        {
+            return candidateIndex < currentIndex;
+        }
+
+        Vector2Int candidateGrid = candidate.GridPosition;
+        Vector2Int currentGrid = current.GridPosition;
+        return candidateGrid.x != currentGrid.x
+            ? candidateGrid.x < currentGrid.x
+            : candidateGrid.y < currentGrid.y;
     }
 
     private bool IsNodePathable(

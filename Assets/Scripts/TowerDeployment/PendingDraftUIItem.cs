@@ -15,6 +15,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     [SerializeField] private TMP_Text nameText;
 
     private DraftResult draftResult;
+    private DraftAttemptToken draftAttemptToken;
     private TowerPlacementController placementController;
     private RectTransform rectTransform;
     private RectTransform pendingItemContainer;
@@ -30,6 +31,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private bool isConsumed;
 
     public DraftResult DraftResult => draftResult;
+    public DraftAttemptToken DraftAttemptToken => draftAttemptToken;
     public TowerDefinition TowerDefinition => draftResult != null ? draftResult.TowerDefinition : null;
     public TowerUpgradeDefinition TowerUpgradeDefinition => draftResult != null ? draftResult.TowerUpgradeDefinition : null;
     public bool IsConsumed => isConsumed;
@@ -87,12 +89,14 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public bool TryInitialize(
         DraftResult selectedDraftResult,
+        DraftAttemptToken selectedDraftAttemptToken,
         TowerPlacementController selectedPlacementController,
         RectTransform selectedPendingItemContainer,
         RectTransform selectedDragVisualRoot,
         out string failureReason)
     {
         draftResult = null;
+        draftAttemptToken = default;
         placementController = null;
         pendingItemContainer = null;
         dragVisualRoot = null;
@@ -106,6 +110,12 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
         if (selectedDraftResult == null || !selectedDraftResult.IsValid)
         {
             failureReason = "the Draft result is invalid.";
+            return false;
+        }
+
+        if (!selectedDraftAttemptToken.IsValid)
+        {
+            failureReason = "the Draft attempt token is invalid.";
             return false;
         }
 
@@ -139,6 +149,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
         }
 
         draftResult = selectedDraftResult;
+        draftAttemptToken = selectedDraftAttemptToken;
         placementController = selectedPlacementController;
         pendingItemContainer = selectedPendingItemContainer;
         dragVisualRoot = selectedDragVisualRoot;

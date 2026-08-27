@@ -161,12 +161,15 @@ public static class TowerOwnedHitTransaction
 
         ElementalApplicationTransaction applicationTransaction = null;
         bool damageApplied = false;
+        int healthBeforeDamage = target.CurrentHealth;
+        int healthAfterDirectDamage = healthBeforeDamage;
         target.BeginTowerOwnedHitTransaction();
 
         try
         {
             target.TakeDamage(damageResolution.FinalDamage);
             damageApplied = true;
+            healthAfterDirectDamage = target.CurrentHealth;
 
             if (target.CurrentHealth > 0 &&
                 target.IsGameplayTargetable &&
@@ -202,6 +205,15 @@ public static class TowerOwnedHitTransaction
                 damageResolution,
                 1);
         }
+
+        int appliedDamage = Mathf.Max(
+            0,
+            healthBeforeDamage - healthAfterDirectDamage);
+        TowerRuntimeStatResolver.PublishTowerOwnedTargetDamage(
+            damageResolution,
+            target,
+            appliedDamage,
+            healthBeforeDamage > 0 && healthAfterDirectDamage <= 0);
 
         return damageApplied;
     }

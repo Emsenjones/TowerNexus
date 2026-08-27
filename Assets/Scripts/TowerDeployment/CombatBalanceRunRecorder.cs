@@ -7,6 +7,13 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Serialization;
 
+public enum PlacementRouteForcedRelocationExpectation
+{
+    RequireZero = 0,
+    RequireDiagnosed = 1,
+    Ignore = 2
+}
+
 [DisallowMultipleComponent]
 public sealed class CombatBalanceRunRecorder : MonoBehaviour
 {
@@ -22,8 +29,14 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     [FormerlySerializedAs("runLabel")]
     [SerializeField] private string runName;
 
+    [Header("Placement Route Fixture")]
+    [SerializeField] private PlacementRouteForcedRelocationExpectation
+        placementRouteForcedRelocationExpectation =
+            PlacementRouteForcedRelocationExpectation.RequireZero;
+
     [Header("Runtime References")]
     [SerializeField] private BattleRuntimeCoordinator battleRuntimeCoordinator;
+    [SerializeField] private StageCompositionController stageCompositionController;
     [SerializeField] private MonsterSpawner monsterSpawner;
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
@@ -45,6 +58,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         new List<CombatBalanceWaveEventJson>();
     private readonly List<CombatBalanceDraftAttemptJson> draftAttempts =
         new List<CombatBalanceDraftAttemptJson>();
+    private readonly List<CombatBalanceInvestmentCommitJson> investmentCommits =
+        new List<CombatBalanceInvestmentCommitJson>();
     private readonly List<CombatBalanceDraftItemJson> towerDraftPoolSnapshot =
         new List<CombatBalanceDraftItemJson>();
     private readonly List<CombatBalanceDraftItemJson>
@@ -75,12 +90,21 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly Dictionary<string, FixedBuffDamageAggregate>
         fixedBuffDamageBySignature =
             new Dictionary<string, FixedBuffDamageAggregate>();
+    private readonly Dictionary<string, TowerWaveDamageAggregate>
+        towerWaveDamageByScope =
+            new Dictionary<string, TowerWaveDamageAggregate>();
     private readonly Dictionary<string, ElementalOpportunityAggregate>
         elementalOpportunityByScope =
             new Dictionary<string, ElementalOpportunityAggregate>();
     private readonly Dictionary<string, int>
         elementalBuffApplicationAttemptsBySourceWave =
             new Dictionary<string, int>();
+    private readonly List<CombatBalancePlacementRouteCommitJson>
+        placementRouteCommits =
+            new List<CombatBalancePlacementRouteCommitJson>();
+    private readonly List<CombatBalancePlacementRouteLifecycleJson>
+        placementRouteLifecycle =
+            new List<CombatBalancePlacementRouteLifecycleJson>();
 
     private bool isSubscribed;
     private bool isTrackingRun;
@@ -118,6 +142,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private int initialDraftCompletionCount;
     private string configuredDraftGenerationMode;
     private int configuredFixedDraftStepCount;
+    private CombatBalanceFixtureJson fixtureSnapshot =
+        new CombatBalanceFixtureJson();
 
     private sealed class PendingLevelUpObservation
     {
@@ -125,6 +151,18 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public int CurrentProgress { get; set; }
         public int RequiredProgress { get; set; }
         public float ActiveTimeSeconds { get; set; }
+        public int TriggerResolutionNode { get; set; }
+    }
+
+    private sealed class TowerWaveDamageAggregate
+    {
+        public int TowerInstanceId { get; set; }
+        public string TowerDisplayName { get; set; }
+        public string TowerFamily { get; set; }
+        public int WaveNumber { get; set; }
+        public int SuccessfulDamageApplications { get; set; }
+        public int EffectiveTowerScaledDamage { get; set; }
+        public int KillingBlows { get; set; }
     }
 
     private sealed class TowerDeploymentObservation
@@ -501,6 +539,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 FindFirstObjectByType<BattleRuntimeCoordinator>();
         }
 
+        if (stageCompositionController == null)
+        {
+            stageCompositionController =
+                FindFirstObjectByType<StageCompositionController>();
+        }
+
         if (monsterSpawner == null)
         {
             monsterSpawner = FindFirstObjectByType<MonsterSpawner>();
@@ -568,12 +612,18 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         if (monsterManager != null)
         {
             monsterManager.OnMonsterRegistered += HandleMonsterRegistered;
+            monsterManager.OnPlacementRouteLifecycleObserved +=
+                HandlePlacementRouteLifecycleObserved;
         }
 
         if (towerPlacementController != null)
         {
             towerPlacementController.OnTowerDeploymentCommitted +=
                 HandleTowerDeploymentCommitted;
+            towerPlacementController.OnTowerInvestmentCommitted +=
+                HandleTowerInvestmentCommitted;
+            towerPlacementController.OnPlacementRouteRevisionCommitted +=
+                HandlePlacementRouteRevisionCommitted;
         }
 
         if (battleRuntimeCoordinator != null)
@@ -592,6 +642,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             HandleTowerOwnedDamageResolutionObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved +=
             HandleTowerOwnedDamageApplicationObserved;
+        TowerRuntimeStatResolver.OnTowerOwnedTargetDamageObserved +=
+            HandleTowerOwnedTargetDamageObserved;
         EffectExecutor.OnFixedBuffDamageObserved +=
             HandleFixedBuffDamageObserved;
         ElementalApplication.OnOpportunityObserved +=
@@ -607,6 +659,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         if (battleRuntimeCoordinator == null)
         {
             missingReferences.Add(nameof(battleRuntimeCoordinator));
+        }
+
+        if (stageCompositionController == null)
+        {
+            missingReferences.Add(nameof(stageCompositionController));
         }
 
         if (monsterSpawner == null)
@@ -683,12 +740,18 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         if (monsterManager != null)
         {
             monsterManager.OnMonsterRegistered -= HandleMonsterRegistered;
+            monsterManager.OnPlacementRouteLifecycleObserved -=
+                HandlePlacementRouteLifecycleObserved;
         }
 
         if (towerPlacementController != null)
         {
             towerPlacementController.OnTowerDeploymentCommitted -=
                 HandleTowerDeploymentCommitted;
+            towerPlacementController.OnTowerInvestmentCommitted -=
+                HandleTowerInvestmentCommitted;
+            towerPlacementController.OnPlacementRouteRevisionCommitted -=
+                HandlePlacementRouteRevisionCommitted;
         }
 
         if (battleRuntimeCoordinator != null)
@@ -707,6 +770,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             HandleTowerOwnedDamageResolutionObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved -=
             HandleTowerOwnedDamageApplicationObserved;
+        TowerRuntimeStatResolver.OnTowerOwnedTargetDamageObserved -=
+            HandleTowerOwnedTargetDamageObserved;
         EffectExecutor.OnFixedBuffDamageObserved -=
             HandleFixedBuffDamageObserved;
         ElementalApplication.OnOpportunityObserved -=
@@ -752,7 +817,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             RequiredProgress = playerSystem != null
                 ? playerSystem.RequiredProgress
                 : 0,
-            ActiveTimeSeconds = GetRunActiveTimeSeconds()
+            ActiveTimeSeconds = GetRunActiveTimeSeconds(),
+            TriggerResolutionNode = resolvedCount + 1
         });
     }
 
@@ -767,7 +833,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 observation.PlayerLevel,
                 observation.CurrentProgress,
                 observation.RequiredProgress,
-                observation.ActiveTimeSeconds));
+                observation.ActiveTimeSeconds,
+                observation.TriggerResolutionNode));
         }
 
         pendingLevelUps.Clear();
@@ -846,7 +913,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 ordinal = observation.DraftOrdinal,
                 sessionKind = observation.SessionKind.ToString(),
                 generationMode = observation.GenerationMode.ToString(),
-                resolvedMonsterCount = resolvedCount,
+                resolvedMonsterCount = ResolveDraftResolutionNode(
+                    observation),
                 playerLevel = playerSystem != null
                     ? playerSystem.CurrentLevel
                     : 0,
@@ -914,6 +982,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             }
 
             attempt.selectionCommitted = true;
+            attempt.selectionCommittedAtSeconds =
+                GetRunActiveTimeSeconds();
             attempt.selectedChoice = CreateDraftItemJson(
                 observation.SelectedChoice,
                 ResolveDisplayedMultiplicity(
@@ -921,6 +991,28 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                     observation.SelectedChoice));
             return;
         }
+    }
+
+    private int ResolveDraftResolutionNode(
+        DraftChoicesOpenedObservation observation)
+    {
+        if (observation.SessionKind != DraftChoiceSessionKind.LevelUp)
+        {
+            return resolvedCount;
+        }
+
+        for (int i = pendingLevelUps.Count - 1; i >= 0; i--)
+        {
+            PendingLevelUpObservation pending = pendingLevelUps[i];
+
+            if (playerSystem == null ||
+                pending.PlayerLevel == playerSystem.CurrentLevel)
+            {
+                return pending.TriggerResolutionNode;
+            }
+        }
+
+        return resolvedCount;
     }
 
     private static int ResolveNaturalMultiplicity(
@@ -1025,19 +1117,23 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         int playerLevel,
         int currentProgress,
         int requiredProgress,
-        float activeTimeSeconds)
+        float activeTimeSeconds,
+        int resolvedMonsterCountOverride = -1)
     {
+        int eventResolvedMonsterCount = resolvedMonsterCountOverride >= 0
+            ? resolvedMonsterCountOverride
+            : resolvedCount;
         return new CombatBalanceProgressionEventJson
         {
             ordinal = progressionEvents.Count + 1,
             kind = kind,
-            resolvedMonsterCount = resolvedCount,
+            resolvedMonsterCount = eventResolvedMonsterCount,
             playerLevel = playerLevel,
             currentProgress = currentProgress,
             requiredProgress = requiredProgress,
             activeTimeSeconds = activeTimeSeconds,
             spawned = spawnedCount,
-            resolved = resolvedCount,
+            resolved = eventResolvedMonsterCount,
             killed = killedCount,
             leaked = leakedCount,
             alive = monsterManager != null
@@ -1057,6 +1153,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             return;
         }
 
+        CaptureStageFixture();
         CaptureExpectedMonsterFixture();
     }
 
@@ -1070,6 +1167,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         progressionEvents.Clear();
         waveEvents.Clear();
         draftAttempts.Clear();
+        investmentCommits.Clear();
         towerDraftPoolSnapshot.Clear();
         towerUpgradeDraftPoolSnapshot.Clear();
         pendingLevelUps.Clear();
@@ -1081,8 +1179,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         towerScaledDamageBySignature.Clear();
         towerScaledRejectionBySignature.Clear();
         fixedBuffDamageBySignature.Clear();
+        towerWaveDamageByScope.Clear();
         elementalOpportunityByScope.Clear();
         elementalBuffApplicationAttemptsBySourceWave.Clear();
+        placementRouteCommits.Clear();
+        placementRouteLifecycle.Clear();
         ResetExpectedMonsterFixture();
         spawnedCount = 0;
         resolvedCount = 0;
@@ -1117,6 +1218,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         pendingFailureReason = null;
         isTrackingRun = true;
 
+        CaptureStageFixture();
         CaptureDraftFixture();
 
         if (playerSystem != null)
@@ -1149,6 +1251,100 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         waveConfigName = monsterSpawner != null
             ? monsterSpawner.BoundWaveConfigName
             : string.Empty;
+    }
+
+    private void CaptureStageFixture()
+    {
+        fixtureSnapshot = new CombatBalanceFixtureJson();
+        StageDefinition stage = stageCompositionController != null
+            ? stageCompositionController.ActiveStage
+            : null;
+        MapGeneratorBehaviour map = stageCompositionController != null
+            ? stageCompositionController.ActiveMap
+            : null;
+
+        if (stage == null)
+        {
+            return;
+        }
+
+        fixtureSnapshot.stageDefinitionName = stage.name;
+        fixtureSnapshot.stageDisplayName = stage.DisplayName ?? string.Empty;
+        fixtureSnapshot.configuredPlayerMaxHealth = stage.PlayerMaxHealth;
+        fixtureSnapshot.mapTemplateName = stage.MapTemplate != null
+            ? stage.MapTemplate.name
+            : string.Empty;
+        fixtureSnapshot.runtimeMapName = map != null
+            ? map.name
+            : string.Empty;
+        fixtureSnapshot.mapWidth = map != null ? map.Width : 0;
+        fixtureSnapshot.mapLength = map != null ? map.Lengh : 0;
+        fixtureSnapshot.mapNodeSize = map != null ? map.NodeSize : 0f;
+
+        if (map != null)
+        {
+            for (int x = 0; x < map.Width; x++)
+            {
+                for (int z = 0; z < map.Lengh; z++)
+                {
+                    GridNodeBehaviour node = map.GetNode(x, z);
+
+                    if (node == null)
+                    {
+                        continue;
+                    }
+
+                    fixtureSnapshot.mapNodes.Add(
+                        new CombatBalanceMapNodeFixtureJson
+                        {
+                            x = node.GridPosition.x,
+                            z = node.GridPosition.y,
+                            nodeType = node.NodeType.ToString(),
+                            baseWalkable = node.BaseWalkable
+                        });
+                }
+            }
+        }
+
+        MonsterWaveConfig waveConfig = stage.MonsterWaveConfig;
+        fixtureSnapshot.waveConfigName = waveConfig != null
+            ? waveConfig.name
+            : string.Empty;
+        IReadOnlyList<MonsterWaveEntry> waves = waveConfig != null
+            ? waveConfig.Waves
+            : null;
+
+        if (waves == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < waves.Count; i++)
+        {
+            MonsterWaveEntry wave = waves[i];
+
+            if (wave == null)
+            {
+                continue;
+            }
+
+            MonsterBehaviour template = wave.MonsterRuntimeTemplate;
+            fixtureSnapshot.waves.Add(new CombatBalanceWaveFixtureJson
+            {
+                waveNumber = i + 1,
+                runtimeTemplateName = template != null
+                    ? template.name
+                    : string.Empty,
+                monsterDisplayName = template != null
+                    ? template.DisplayName
+                    : string.Empty,
+                maximumHealth = template != null ? template.MaxHealth : 0,
+                moveSpeed = template != null ? template.BaseMoveSpeed : 0f,
+                count = wave.Count,
+                spawnIntervalSeconds = wave.SpawnInterval,
+                waveDelaySeconds = wave.WaveDelay
+            });
+        }
     }
 
     private void CaptureExpectedMonsterFixture()
@@ -1344,6 +1540,220 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         towerDeploymentByInstanceId.Add(instanceId, observation);
     }
 
+    private void HandlePlacementRouteRevisionCommitted(
+        TowerInstance towerInstance,
+        TowerPlacementTopologyPlan topologyPlan,
+        MonsterRouteRevisionBatch revisionBatch)
+    {
+        if (!isTrackingRun || topologyPlan == null || revisionBatch == null)
+        {
+            return;
+        }
+
+        CombatBalancePlacementRouteCommitJson commit =
+            new CombatBalancePlacementRouteCommitJson
+            {
+                ordinal = placementRouteCommits.Count + 1,
+                towerInstanceId = towerInstance != null
+                    ? towerInstance.GetInstanceID()
+                    : 0,
+                activeTimeSeconds = GetRunActiveTimeSeconds(),
+                playerHealthBefore = revisionBatch.PlayerHealthBefore,
+                playerHealthAfter = revisionBatch.PlayerHealthAfter,
+                playerProgressBefore = revisionBatch.PlayerProgressBefore,
+                playerProgressAfter = revisionBatch.PlayerProgressAfter,
+                aliveMonsterCountBefore =
+                    revisionBatch.AliveMonsterCountBefore,
+                aliveMonsterCountAfter = revisionBatch.AliveMonsterCountAfter,
+                resolvedMonsterCountBefore =
+                    revisionBatch.ResolvedMonsterCountBefore,
+                resolvedMonsterCountAfter =
+                    revisionBatch.ResolvedMonsterCountAfter,
+                alreadyOnNewRouteCount =
+                    revisionBatch.AlreadyOnNewRouteCount,
+                reachableRouteRejoinCount =
+                    revisionBatch.ReachableRouteRejoinCount,
+                forcedRelocationCount =
+                    revisionBatch.ForcedRelocationCount,
+                combatOwnershipFingerprintBefore =
+                    revisionBatch.CombatOwnershipFingerprintBefore,
+                combatOwnershipFingerprintAfter =
+                    revisionBatch.CombatOwnershipFingerprintAfter
+            };
+        AppendGridPositions(commit.footprint, topologyPlan.Footprint);
+        AppendGridPositions(
+            commit.authoritativeRoute,
+            topologyPlan.AuthoritativeRoute);
+
+        for (int i = 0; i < revisionBatch.Entries.Count; i++)
+        {
+            MonsterRouteRevisionEntry entry = revisionBatch.Entries[i];
+            trackedMonsters.TryGetValue(
+                entry.Monster,
+                out MonsterObservation runtimeObservation);
+            bool hasComparableImmediateDisplacement =
+                entry.HasComparableCapturedPosition &&
+                IsFinite(entry.ImmediatePostCommitPosition);
+            CombatBalancePlacementRouteMonsterJson monster =
+                new CombatBalancePlacementRouteMonsterJson
+                {
+                    revisionId = entry.RevisionId,
+                    monsterInstanceId = entry.Monster != null
+                        ? entry.Monster.GetInstanceID()
+                        : 0,
+                    spawnOrdinal = GetSpawnOrdinal(entry.Monster),
+                    sourceWaveNumber = runtimeObservation != null
+                        ? runtimeObservation.SourceWaveNumber
+                        : 0,
+                    sourceWaveSpawnOrdinal = runtimeObservation != null
+                        ? runtimeObservation.SourceWaveSpawnOrdinal
+                        : 0,
+                    mode = entry.Mode.ToString(),
+                    forcedRelocationReason =
+                        entry.RelocationReason.ToString(),
+                    capturedWorldPosition =
+                        CreateVector3Json(entry.CapturedWorldPosition),
+                    immediatePostCommitPosition = CreateVector3Json(
+                        entry.ImmediatePostCommitPosition),
+                    preparedWorldPosition =
+                        CreateVector3Json(entry.PreparedWorldPosition),
+                    hasComparableCapturedPosition =
+                        entry.HasComparableCapturedPosition,
+                    hasComparableImmediateDisplacement =
+                        hasComparableImmediateDisplacement,
+                    immediateDisplacement =
+                        hasComparableImmediateDisplacement
+                            ? Vector3.Distance(
+                                entry.CapturedWorldPosition,
+                                entry.ImmediatePostCommitPosition)
+                            : 0f,
+                    hasComparableRelocationDistance =
+                        entry.HasComparableRelocationDistance,
+                    plannedRelocationDistance = entry.RelocationDistance,
+                    plannedConnectorDistance =
+                        entry.PlannedConnectorDistance,
+                    requiresExactTargetApproach =
+                        entry.RequiresExactTargetApproach,
+                    requiresConnector = entry.RequiresConnector,
+                    joinedAtCommit = entry.JoinedAtCommit,
+                    physicalGrid = CreateGridPositionJson(
+                        entry.PhysicalCurrentGrid),
+                    joinGrid = CreateGridPositionJson(entry.JoinGrid),
+                    recoveryGrid = CreateGridPositionJson(entry.RecoveryGrid),
+                    preGameplayStateFingerprint =
+                        CreatePlacementGameplayStateFingerprint(entry.PreState),
+                    postGameplayStateFingerprint =
+                        CreatePlacementGameplayStateFingerprint(entry.PostState)
+                };
+            AppendGridPositions(monster.connectorPath, entry.ConnectorPath);
+            AppendGridPositions(
+                monster.preparedContinuation,
+                entry.PreparedRoute);
+            AppendGridPositions(monster.routeSuffix, entry.RouteSuffix);
+            commit.monsters.Add(monster);
+        }
+
+        placementRouteCommits.Add(commit);
+    }
+
+    private void HandlePlacementRouteLifecycleObserved(
+        MonsterPlacementRouteLifecycleObservation observation)
+    {
+        if (!isTrackingRun)
+        {
+            return;
+        }
+
+        placementRouteLifecycle.Add(
+            new CombatBalancePlacementRouteLifecycleJson
+            {
+                revisionId = observation.RevisionId,
+                replacementRevisionId = observation.ReplacementRevisionId,
+                monsterInstanceId = observation.Monster != null
+                    ? observation.Monster.GetInstanceID()
+                    : 0,
+                spawnOrdinal = GetSpawnOrdinal(observation.Monster),
+                kind = observation.Kind.ToString(),
+                resolutionReason = observation.ResolutionReason.ToString(),
+                joinedAtCommit = observation.JoinedAtCommit,
+                activeTimeSeconds = GetRunActiveTimeSeconds()
+            });
+    }
+
+    private void HandleTowerInvestmentCommitted(
+        TowerInvestmentCommitObservation observation)
+    {
+        if (!isTrackingRun ||
+            !observation.DraftAttemptToken.IsValid ||
+            observation.DraftResult == null ||
+            observation.TowerInstance == null)
+        {
+            return;
+        }
+
+        TowerInstance tower = observation.TowerInstance;
+        TowerDefinition towerDefinition = tower.TowerDefinition;
+        TowerUpgradeDefinition upgradeDefinition =
+            observation.DraftResult.TowerUpgradeDefinition;
+        int draftOrdinal = ResolveDraftOrdinal(
+            observation.DraftAttemptToken);
+        investmentCommits.Add(new CombatBalanceInvestmentCommitJson
+        {
+            ordinal = investmentCommits.Count + 1,
+            kind = observation.Kind.ToString(),
+            authoritySource = draftOrdinal > 0
+                ? "Draft"
+                : "EditorDebug",
+            draftAttemptToken = observation.DraftAttemptToken.ToString(),
+            draftOrdinal = draftOrdinal,
+            draftResultType = observation.DraftResult.ResultType.ToString(),
+            draftAssetName = GetAssetName(
+                observation.DraftResult.Identity),
+            towerInstanceId = tower.GetInstanceID(),
+            towerDisplayName = towerDefinition != null
+                ? towerDefinition.DisplayName
+                : tower.name,
+            towerFamily = towerDefinition != null
+                ? towerDefinition.TowerFamily.ToString()
+                : string.Empty,
+            previousLevel = observation.PreviousLevel,
+            currentLevel = observation.CurrentLevel,
+            upgradeLayer = upgradeDefinition != null
+                ? upgradeDefinition.UpgradeLayer.ToString()
+                : string.Empty,
+            activeTimeSeconds = GetRunActiveTimeSeconds(),
+            resolvedMonsterCount = resolvedCount,
+            spawned = spawnedCount,
+            resolved = resolvedCount,
+            killed = killedCount,
+            leaked = leakedCount,
+            alive = monsterManager != null
+                ? monsterManager.AliveMonsterCount
+                : Mathf.Max(0, spawnedCount - resolvedCount),
+            playerHealth = playerSystem != null
+                ? playerSystem.CurrentHealth
+                : 0
+        });
+    }
+
+    private int ResolveDraftOrdinal(DraftAttemptToken attemptToken)
+    {
+        string token = attemptToken.ToString();
+
+        for (int i = draftAttempts.Count - 1; i >= 0; i--)
+        {
+            if (string.Equals(
+                    draftAttempts[i].attemptToken,
+                    token,
+                    StringComparison.Ordinal))
+            {
+                return draftAttempts[i].ordinal;
+            }
+        }
+
+        return 0;
+    }
+
     private static int CompareGridPositions(
         Vector2Int left,
         Vector2Int right)
@@ -1536,6 +1946,64 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             observation.SuccessfulApplicationCount;
         aggregate.AppliedDamageTotal +=
             resolution.FinalDamage * observation.SuccessfulApplicationCount;
+    }
+
+    private void HandleTowerOwnedTargetDamageObserved(
+        TowerOwnedTargetDamageObservation observation)
+    {
+        if (!isTrackingRun ||
+            observation.Target == null ||
+            observation.AppliedDamage <= 0 ||
+            observation.Resolution.SourceTower == null)
+        {
+            return;
+        }
+
+        if (!trackedMonsters.TryGetValue(
+                observation.Target,
+                out MonsterObservation monsterObservation))
+        {
+            TrackMonster(
+                observation.Target,
+                observedThroughRegistrationEvent: false);
+            trackedMonsters.TryGetValue(
+                observation.Target,
+                out monsterObservation);
+        }
+
+        int waveNumber = monsterObservation != null
+            ? monsterObservation.SourceWaveNumber
+            : 0;
+        TowerInstance tower = observation.Resolution.SourceTower;
+        string scopeKey = tower.GetInstanceID().ToString(
+            CultureInfo.InvariantCulture) + ":" +
+            waveNumber.ToString(CultureInfo.InvariantCulture);
+
+        if (!towerWaveDamageByScope.TryGetValue(
+                scopeKey,
+                out TowerWaveDamageAggregate aggregate))
+        {
+            aggregate = new TowerWaveDamageAggregate
+            {
+                TowerInstanceId = tower.GetInstanceID(),
+                TowerDisplayName = tower.TowerDefinition != null
+                    ? tower.TowerDefinition.DisplayName
+                    : tower.name,
+                TowerFamily = tower.TowerDefinition != null
+                    ? tower.TowerDefinition.TowerFamily.ToString()
+                    : string.Empty,
+                WaveNumber = waveNumber
+            };
+            towerWaveDamageByScope.Add(scopeKey, aggregate);
+        }
+
+        aggregate.SuccessfulDamageApplications++;
+        aggregate.EffectiveTowerScaledDamage += observation.AppliedDamage;
+
+        if (observation.KillingBlow)
+        {
+            aggregate.KillingBlows++;
+        }
     }
 
     private void HandleFixedBuffDamageObserved(
@@ -2569,12 +3037,18 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             failureReason = failureReason ?? string.Empty
         };
 
-        report.fixture.waveConfigName = waveConfigName ?? string.Empty;
+        report.fixture = fixtureSnapshot ?? new CombatBalanceFixtureJson();
+        report.fixture.waveConfigName = string.IsNullOrWhiteSpace(
+            report.fixture.waveConfigName)
+                ? waveConfigName ?? string.Empty
+                : report.fixture.waveConfigName;
         report.fixture.expectedWaveCountAvailable = hasExpectedWaveCount;
         report.fixture.expectedWaveCount = expectedWaveCount;
         report.fixture.expectedMonsterCountAvailable =
             hasExpectedMonsterCount;
         report.fixture.expectedMonsterCount = expectedMonsterCount;
+        report.fixture.placementRouteForcedRelocationExpectation =
+            placementRouteForcedRelocationExpectation.ToString();
         report.fixture.observedMinimumMonsterHealth =
             observedMinimumMonsterHealth == int.MaxValue
                 ? 0
@@ -2623,10 +3097,47 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 report.timing.runDurationSeconds);
         report.waveRuntime = CreateWaveRuntimeJson();
         report.draftRuntime = CreateDraftRuntimeJson();
+        report.investmentRuntime = CreateInvestmentRuntimeJson();
+        report.timing.finalBuildCommitObserved =
+            report.investmentRuntime.finalBuildCommitObserved;
+        report.timing.finalBuildCommittedAtSeconds =
+            ResolveFinalBuildCommitTime();
+        report.timing.secondsAfterFinalBuildCommit =
+            report.timing.finalBuildCommitObserved
+                ? Mathf.Max(
+                    0f,
+                    report.timing.runDurationSeconds -
+                    report.timing.finalBuildCommittedAtSeconds)
+                : 0f;
 
         report.monsterRuntime = CreateMonsterRuntimeJson();
+        report.placementRouteRuntime = CreatePlacementRouteRuntimeJson();
         report.damageDiagnostics = CreateDamageDiagnosticsJson();
         report.towers = CreateTowerJsonRecords();
+        report.towerWaveSummaries = CreateTowerWaveSummaries();
+        report.execution.initialDraftCompleted =
+            initialDraftCompletionCount > 0;
+        report.execution.allExpectedLevelUpsObserved =
+            report.progression.observedLevelUpCount ==
+            report.progression.expectedLevelUpCount;
+        report.execution.expectedFinalPlayerLevelReached =
+            report.progression.finalLevel ==
+            report.progression.expectedLevelUpCount + 1;
+        report.execution.allConfiguredWavesStarted =
+            !hasExpectedWaveCount ||
+            report.waveRuntime.observedWaveStartCount == expectedWaveCount;
+        report.execution.allConfiguredWavesCompleted =
+            !hasExpectedWaveCount ||
+            report.waveRuntime.observedWaveCompletionCount == expectedWaveCount;
+        report.execution.allConfiguredMonstersSpawned =
+            !hasExpectedMonsterCount || spawnedCount == expectedMonsterCount;
+        report.execution.finalBuildCommitted =
+            report.investmentRuntime.committedInvestmentCount ==
+            report.progression.expectedTotalDraftCount;
+        report.execution.postFinalBuildCombatObserved =
+            report.investmentRuntime.resolutionsAfterFinalBuildCommit > 0;
+        report.integrity.fixtureSnapshotComplete =
+            FixtureSnapshotIsComplete(report.fixture);
         report.integrity.resolutionCountsMatch =
             resolvedCount == killedCount + leakedCount;
         report.integrity.leakCountMatchesPlayerHealthLoss =
@@ -2639,23 +3150,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             MonsterRuntimeRegistrationCoverageMatches(report.monsterRuntime);
         report.integrity.monsterRuntimeStartedAtFullHealth =
             MonsterRuntimeStartedAtFullHealth(report.monsterRuntime);
-        report.integrity.initialDraftCountMatches =
-            initialDraftCompletionCount == 1;
-        report.integrity.levelUpCountMatches =
-            report.progression.observedLevelUpCount ==
-            report.progression.expectedLevelUpCount;
         report.integrity.levelUpResolutionNodesMatch =
             LevelUpResolutionNodesMatch(report.progression);
-        report.integrity.finalPlayerLevelMatches =
-            report.progression.finalLevel ==
-            report.progression.expectedLevelUpCount + 1;
-        report.integrity.postFinalDraftCombatObserved =
-            report.progression.resolutionsAfterFinalDraft > 0;
-        report.integrity.waveEventCountsMatch =
-            !hasExpectedWaveCount ||
-            (report.waveRuntime.observedWaveStartCount == expectedWaveCount &&
-             report.waveRuntime.observedWaveCompletionCount ==
-             expectedWaveCount);
         report.integrity.waveMonsterAttributionMatches =
             WaveMonsterAttributionMatches(report.waveRuntime);
         report.integrity.draftAttemptSelectionsMatch =
@@ -2666,6 +3162,14 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             report.progression.observedTotalDraftCount;
         report.integrity.towerDeploymentCoverageMatches =
             TowerDeploymentCoverageMatches(report.towers);
+        report.integrity.investmentCommitsMatchDraftSelections =
+            InvestmentCommitsMatchDraftSelections(
+                report.investmentRuntime,
+                report.draftRuntime);
+        report.integrity.towerWaveAttributionMatches =
+            TowerWaveAttributionMatches(
+                report.towerWaveSummaries,
+                report.damageDiagnostics);
         report.integrity.damageDiagnosticsCountsMatch =
             DamageDiagnosticsCountsMatch(report.damageDiagnostics);
         report.integrity.droneBurstDiagnosticsConsistent =
@@ -2686,7 +3190,116 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             buffAccumulator.StackUnitAccountingConsistent;
         report.integrity.buffWaveAttributionMatches =
             buffAccumulator.WaveAttributionMatches;
+        report.integrity.placementRouteBatchCountsMatch =
+            PlacementRouteBatchCountsMatch(report.placementRouteRuntime);
+        report.integrity.placementRouteCommitStatePreserved =
+            PlacementRouteCommitStatePreserved(
+                report.placementRouteRuntime);
+        report.integrity.placementRouteTopologyValid =
+            PlacementRouteTopologyValid(report.placementRouteRuntime);
+        report.integrity.placementRouteGameplayStatePreserved =
+            PlacementRouteGameplayStatePreserved(
+                report.placementRouteRuntime);
+        report.integrity.placementRouteCombatOwnershipPreserved =
+            PlacementRouteCombatOwnershipPreserved(
+                report.placementRouteRuntime);
+        report.integrity.placementRouteLifecycleConsistent =
+            PlacementRouteLifecycleConsistent(
+                report.placementRouteRuntime);
+        report.integrity.placementRouteForcedRelocationUsageValid =
+            PlacementRouteForcedRelocationUsageValid(
+                report.placementRouteRuntime);
         return report;
+    }
+
+    private CombatBalancePlacementRouteRuntimeJson
+        CreatePlacementRouteRuntimeJson()
+    {
+        CombatBalancePlacementRouteRuntimeJson runtime =
+            new CombatBalancePlacementRouteRuntimeJson
+            {
+                forcedRelocationExpectation =
+                    placementRouteForcedRelocationExpectation.ToString(),
+                committedPlacementCount = placementRouteCommits.Count
+            };
+        HashSet<long> started = new HashSet<long>();
+        HashSet<long> terminated = new HashSet<long>();
+
+        for (int i = 0; i < placementRouteCommits.Count; i++)
+        {
+            CombatBalancePlacementRouteCommitJson commit =
+                placementRouteCommits[i];
+            runtime.commits.Add(commit);
+            runtime.observedMonsterRevisionCount += commit.monsters.Count;
+
+            for (int monsterIndex = 0;
+                 monsterIndex < commit.monsters.Count;
+                 monsterIndex++)
+            {
+                switch (commit.monsters[monsterIndex].mode)
+                {
+                    case nameof(
+                        MonsterPlacementRouteRevisionMode.AlreadyOnNewRoute):
+                        runtime.alreadyOnNewRouteCount++;
+                        break;
+                    case nameof(
+                        MonsterPlacementRouteRevisionMode.ReachableRouteRejoin):
+                        runtime.reachableRouteRejoinCount++;
+                        break;
+                    case nameof(
+                        MonsterPlacementRouteRevisionMode.ForcedRelocation):
+                        runtime.forcedRelocationCount++;
+                        break;
+                }
+            }
+        }
+
+        for (int i = 0; i < placementRouteLifecycle.Count; i++)
+        {
+            CombatBalancePlacementRouteLifecycleJson observation =
+                placementRouteLifecycle[i];
+            runtime.lifecycle.Add(observation);
+
+            if (observation.kind ==
+                nameof(MonsterPlacementRouteLifecycleKind.Started))
+            {
+                started.Add(observation.revisionId);
+            }
+            else if (IsPlacementConnectorTerminal(observation.kind))
+            {
+                terminated.Add(observation.revisionId);
+            }
+        }
+
+        foreach (long revisionId in started)
+        {
+            if (terminated.Contains(revisionId))
+            {
+                continue;
+            }
+
+            CombatBalancePlacementRouteMonsterJson revision =
+                FindPlacementRouteMonster(runtime, revisionId);
+            runtime.lifecycle.Add(
+                new CombatBalancePlacementRouteLifecycleJson
+                {
+                    revisionId = revisionId,
+                    monsterInstanceId = revision != null
+                        ? revision.monsterInstanceId
+                        : 0,
+                    spawnOrdinal = revision != null
+                        ? revision.spawnOrdinal
+                        : 0,
+                    kind = nameof(
+                        MonsterPlacementRouteLifecycleKind.ActiveAtRunEnd),
+                    resolutionReason = nameof(
+                        MonsterPlacementRouteResolutionReason.None),
+                    activeTimeSeconds = GetRunActiveTimeSeconds()
+                });
+        }
+
+        runtime.lifecycleObservationCount = runtime.lifecycle.Count;
+        return runtime;
     }
 
     private CombatBalanceDamageDiagnosticsJson CreateDamageDiagnosticsJson()
@@ -2823,6 +3436,561 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         return diagnostics;
     }
 
+    private static bool PlacementRouteBatchCountsMatch(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        int revisions = 0;
+
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            CombatBalancePlacementRouteCommitJson commit = runtime.commits[i];
+
+            if (commit == null ||
+                commit.monsters.Count != commit.aliveMonsterCountBefore ||
+                commit.aliveMonsterCountBefore !=
+                    commit.aliveMonsterCountAfter ||
+                commit.resolvedMonsterCountBefore !=
+                    commit.resolvedMonsterCountAfter)
+            {
+                return false;
+            }
+
+            int alreadyOnRoute = 0;
+            int reachableRejoin = 0;
+            int forcedRelocation = 0;
+
+            for (int monsterIndex = 0;
+                 monsterIndex < commit.monsters.Count;
+                 monsterIndex++)
+            {
+                switch (commit.monsters[monsterIndex].mode)
+                {
+                    case nameof(
+                        MonsterPlacementRouteRevisionMode.AlreadyOnNewRoute):
+                        alreadyOnRoute++;
+                        break;
+                    case nameof(
+                        MonsterPlacementRouteRevisionMode.ReachableRouteRejoin):
+                        reachableRejoin++;
+                        break;
+                    case nameof(
+                        MonsterPlacementRouteRevisionMode.ForcedRelocation):
+                        forcedRelocation++;
+                        break;
+                }
+            }
+
+            if (alreadyOnRoute != commit.alreadyOnNewRouteCount ||
+                reachableRejoin != commit.reachableRouteRejoinCount ||
+                forcedRelocation != commit.forcedRelocationCount)
+            {
+                return false;
+            }
+
+            revisions += commit.monsters.Count;
+        }
+
+        return revisions == runtime.observedMonsterRevisionCount &&
+               revisions ==
+                   runtime.alreadyOnNewRouteCount +
+                   runtime.reachableRouteRejoinCount +
+                   runtime.forcedRelocationCount;
+    }
+
+    private static bool PlacementRouteCommitStatePreserved(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        const float epsilon = 0.0001f;
+
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            CombatBalancePlacementRouteCommitJson commit = runtime.commits[i];
+
+            if (commit.playerHealthBefore != commit.playerHealthAfter ||
+                commit.playerProgressBefore != commit.playerProgressAfter)
+            {
+                return false;
+            }
+
+            for (int monsterIndex = 0;
+                 monsterIndex < commit.monsters.Count;
+                 monsterIndex++)
+            {
+                CombatBalancePlacementRouteMonsterJson monster =
+                    commit.monsters[monsterIndex];
+                bool forced = monster.mode == nameof(
+                    MonsterPlacementRouteRevisionMode.ForcedRelocation);
+                CombatBalanceVector3Json expected = forced
+                    ? monster.preparedWorldPosition
+                    : monster.capturedWorldPosition;
+
+                if ((!forced && !monster.hasComparableCapturedPosition) ||
+                    !PositionsApproximatelyEqual(
+                        expected,
+                        monster.immediatePostCommitPosition,
+                        epsilon))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool PlacementRouteGameplayStatePreserved(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            List<CombatBalancePlacementRouteMonsterJson> monsters =
+                runtime.commits[i].monsters;
+
+            for (int monsterIndex = 0;
+                 monsterIndex < monsters.Count;
+                 monsterIndex++)
+            {
+                if (!string.Equals(
+                        monsters[monsterIndex].preGameplayStateFingerprint,
+                        monsters[monsterIndex].postGameplayStateFingerprint,
+                        StringComparison.Ordinal))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool PlacementRouteTopologyValid(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            CombatBalancePlacementRouteCommitJson commit = runtime.commits[i];
+
+            if (commit.authoritativeRoute.Count < 2 ||
+                !IsOrthogonalGridPath(commit.authoritativeRoute))
+            {
+                return false;
+            }
+
+            for (int routeIndex = 0;
+                 routeIndex < commit.authoritativeRoute.Count;
+                 routeIndex++)
+            {
+                if (ContainsGridPosition(
+                        commit.footprint,
+                        commit.authoritativeRoute[routeIndex]))
+                {
+                    return false;
+                }
+            }
+
+            CombatBalanceGridPositionJson target =
+                commit.authoritativeRoute[
+                    commit.authoritativeRoute.Count - 1];
+
+            for (int monsterIndex = 0;
+                 monsterIndex < commit.monsters.Count;
+                 monsterIndex++)
+            {
+                CombatBalancePlacementRouteMonsterJson monster =
+                    commit.monsters[monsterIndex];
+
+                if (monster.requiresExactTargetApproach)
+                {
+                    if (monster.preparedContinuation.Count != 0 ||
+                        monster.joinGrid == null ||
+                        !GridPositionsEqual(monster.joinGrid, target))
+                    {
+                        return false;
+                    }
+
+                    continue;
+                }
+
+                if (monster.preparedContinuation.Count == 0 ||
+                    !GridPositionsEqual(
+                        monster.preparedContinuation[
+                            monster.preparedContinuation.Count - 1],
+                        target) ||
+                    !IsOrthogonalGridPath(monster.preparedContinuation))
+                {
+                    return false;
+                }
+
+                if (monster.routeSuffix.Count == 0 ||
+                    monster.joinGrid == null ||
+                    !GridPositionsEqual(
+                        monster.routeSuffix[0],
+                        monster.joinGrid) ||
+                    !GridPositionsEqual(
+                        monster.routeSuffix[
+                            monster.routeSuffix.Count - 1],
+                        target) ||
+                    !IsOrthogonalGridPath(monster.routeSuffix))
+                {
+                    return false;
+                }
+
+                if (monster.connectorPath.Count > 0)
+                {
+                    if (!IsOrthogonalGridPath(monster.connectorPath) ||
+                        monster.joinGrid == null ||
+                        !GridPositionsEqual(
+                            monster.connectorPath[
+                                monster.connectorPath.Count - 1],
+                            monster.joinGrid))
+                    {
+                        return false;
+                    }
+
+                    for (int connectorIndex = 0;
+                         connectorIndex < monster.connectorPath.Count;
+                         connectorIndex++)
+                    {
+                        if (ContainsGridPosition(
+                                commit.footprint,
+                                monster.connectorPath[connectorIndex]))
+                        {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool PlacementRouteCombatOwnershipPreserved(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            CombatBalancePlacementRouteCommitJson commit = runtime.commits[i];
+
+            if (!string.Equals(
+                    commit.combatOwnershipFingerprintBefore,
+                    commit.combatOwnershipFingerprintAfter,
+                    StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool PlacementRouteLifecycleConsistent(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        if (runtime == null)
+        {
+            return false;
+        }
+
+        Dictionary<int, long> activeRevisionByMonster =
+            new Dictionary<int, long>();
+
+        for (int i = 0; i < runtime.lifecycle.Count; i++)
+        {
+            CombatBalancePlacementRouteLifecycleJson lifecycle =
+                runtime.lifecycle[i];
+
+            if (lifecycle.kind == nameof(
+                    MonsterPlacementRouteLifecycleKind.Started))
+            {
+                if (activeRevisionByMonster.ContainsKey(
+                        lifecycle.monsterInstanceId))
+                {
+                    return false;
+                }
+
+                activeRevisionByMonster[lifecycle.monsterInstanceId] =
+                    lifecycle.revisionId;
+            }
+            else if (IsPlacementConnectorTerminal(lifecycle.kind) &&
+                     lifecycle.kind != nameof(
+                         MonsterPlacementRouteLifecycleKind.ActiveAtRunEnd))
+            {
+                if (activeRevisionByMonster.TryGetValue(
+                        lifecycle.monsterInstanceId,
+                        out long activeRevision) &&
+                    activeRevision == lifecycle.revisionId)
+                {
+                    activeRevisionByMonster.Remove(
+                        lifecycle.monsterInstanceId);
+                }
+            }
+        }
+
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            List<CombatBalancePlacementRouteMonsterJson> monsters =
+                runtime.commits[i].monsters;
+
+            for (int monsterIndex = 0;
+                 monsterIndex < monsters.Count;
+                 monsterIndex++)
+            {
+                CombatBalancePlacementRouteMonsterJson monster =
+                    monsters[monsterIndex];
+                int startedCount = 0;
+                int terminalCount = 0;
+                int relocationCount = 0;
+
+                for (int lifecycleIndex = 0;
+                     lifecycleIndex < runtime.lifecycle.Count;
+                     lifecycleIndex++)
+                {
+                    CombatBalancePlacementRouteLifecycleJson lifecycle =
+                        runtime.lifecycle[lifecycleIndex];
+
+                    if (lifecycle.revisionId != monster.revisionId)
+                    {
+                        continue;
+                    }
+
+                    if (lifecycle.kind == nameof(
+                        MonsterPlacementRouteLifecycleKind.Started))
+                    {
+                        startedCount++;
+                    }
+                    else if (lifecycle.kind == nameof(
+                        MonsterPlacementRouteLifecycleKind.RelocationApplied))
+                    {
+                        relocationCount++;
+                    }
+                    else if (IsPlacementConnectorTerminal(lifecycle.kind))
+                    {
+                        terminalCount++;
+                    }
+                }
+
+                if (monster.requiresConnector)
+                {
+                    if (startedCount != 1 || terminalCount != 1)
+                    {
+                        return false;
+                    }
+                }
+                else if (monster.joinedAtCommit)
+                {
+                    if (startedCount != 0 || terminalCount != 1)
+                    {
+                        return false;
+                    }
+                }
+                else if (startedCount != 0 || terminalCount != 0)
+                {
+                    return false;
+                }
+
+                bool forced = monster.mode == nameof(
+                    MonsterPlacementRouteRevisionMode.ForcedRelocation);
+
+                if ((forced && relocationCount != 1) ||
+                    (!forced && relocationCount != 0))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool PlacementRouteForcedRelocationUsageValid(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        if (runtime == null ||
+            !Enum.TryParse(
+                runtime.forcedRelocationExpectation,
+                out PlacementRouteForcedRelocationExpectation expectation))
+        {
+            return false;
+        }
+
+        switch (expectation)
+        {
+            case PlacementRouteForcedRelocationExpectation.RequireZero:
+                return runtime.forcedRelocationCount == 0;
+            case PlacementRouteForcedRelocationExpectation.RequireDiagnosed:
+                return runtime.forcedRelocationCount > 0 &&
+                       AllForcedRelocationsDiagnosed(runtime);
+            case PlacementRouteForcedRelocationExpectation.Ignore:
+                return AllForcedRelocationsDiagnosed(runtime);
+            default:
+                return false;
+        }
+    }
+
+    private static bool AllForcedRelocationsDiagnosed(
+        CombatBalancePlacementRouteRuntimeJson runtime)
+    {
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            List<CombatBalancePlacementRouteMonsterJson> monsters =
+                runtime.commits[i].monsters;
+
+            for (int monsterIndex = 0;
+                 monsterIndex < monsters.Count;
+                 monsterIndex++)
+            {
+                CombatBalancePlacementRouteMonsterJson monster =
+                    monsters[monsterIndex];
+
+                if (monster.mode == nameof(
+                        MonsterPlacementRouteRevisionMode.ForcedRelocation) &&
+                    (monster.forcedRelocationReason == nameof(
+                         MonsterForcedRelocationReason.None) ||
+                     monster.recoveryGrid == null))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static CombatBalancePlacementRouteMonsterJson
+        FindPlacementRouteMonster(
+            CombatBalancePlacementRouteRuntimeJson runtime,
+            long revisionId)
+    {
+        for (int i = 0; i < runtime.commits.Count; i++)
+        {
+            List<CombatBalancePlacementRouteMonsterJson> monsters =
+                runtime.commits[i].monsters;
+
+            for (int monsterIndex = 0;
+                 monsterIndex < monsters.Count;
+                 monsterIndex++)
+            {
+                if (monsters[monsterIndex].revisionId == revisionId)
+                {
+                    return monsters[monsterIndex];
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static bool IsPlacementConnectorTerminal(string kind)
+    {
+        return kind == nameof(MonsterPlacementRouteLifecycleKind.Joined) ||
+               kind == nameof(
+                   MonsterPlacementRouteLifecycleKind.Superseded) ||
+               kind == nameof(
+                   MonsterPlacementRouteLifecycleKind.MonsterResolvedBeforeJoin) ||
+               kind == nameof(
+                   MonsterPlacementRouteLifecycleKind.ActiveAtRunEnd);
+    }
+
+    private static bool PositionsApproximatelyEqual(
+        CombatBalanceVector3Json left,
+        CombatBalanceVector3Json right,
+        float epsilon)
+    {
+        return left != null &&
+               right != null &&
+               Mathf.Abs(left.x - right.x) <= epsilon &&
+               Mathf.Abs(left.y - right.y) <= epsilon &&
+               Mathf.Abs(left.z - right.z) <= epsilon;
+    }
+
+    private static bool IsFinite(Vector3 value)
+    {
+        return !float.IsNaN(value.x) &&
+               !float.IsInfinity(value.x) &&
+               !float.IsNaN(value.y) &&
+               !float.IsInfinity(value.y) &&
+               !float.IsNaN(value.z) &&
+               !float.IsInfinity(value.z);
+    }
+
+    private static bool IsOrthogonalGridPath(
+        IReadOnlyList<CombatBalanceGridPositionJson> path)
+    {
+        if (path == null || path.Count == 0)
+        {
+            return false;
+        }
+
+        for (int i = 1; i < path.Count; i++)
+        {
+            if (path[i - 1] == null ||
+                path[i] == null ||
+                Mathf.Abs(path[i].x - path[i - 1].x) +
+                Mathf.Abs(path[i].z - path[i - 1].z) != 1)
+            {
+                return false;
+            }
+        }
+
+        return path[0] != null;
+    }
+
+    private static bool ContainsGridPosition(
+        IReadOnlyList<CombatBalanceGridPositionJson> positions,
+        CombatBalanceGridPositionJson candidate)
+    {
+        if (positions == null || candidate == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < positions.Count; i++)
+        {
+            if (GridPositionsEqual(positions[i], candidate))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool GridPositionsEqual(
+        CombatBalanceGridPositionJson left,
+        CombatBalanceGridPositionJson right)
+    {
+        return left != null &&
+               right != null &&
+               left.x == right.x &&
+               left.z == right.z;
+    }
+
     private static bool DamageDiagnosticsCountsMatch(
         CombatBalanceDamageDiagnosticsJson diagnostics)
     {
@@ -2936,6 +4104,215 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         return runtime;
+    }
+
+    private CombatBalanceInvestmentRuntimeJson CreateInvestmentRuntimeJson()
+    {
+        CombatBalanceInvestmentRuntimeJson runtime =
+            new CombatBalanceInvestmentRuntimeJson
+            {
+                commits = new List<CombatBalanceInvestmentCommitJson>(
+                    investmentCommits)
+            };
+        runtime.committedInvestmentCount = runtime.commits.Count;
+
+        if (runtime.commits.Count > 0)
+        {
+            CombatBalanceInvestmentCommitJson finalCommit =
+                runtime.commits[runtime.commits.Count - 1];
+            runtime.finalBuildCommitObserved = true;
+            runtime.finalBuildCommitResolutionNode =
+                finalCommit.resolvedMonsterCount;
+            runtime.resolutionsAfterFinalBuildCommit = Mathf.Max(
+                0,
+                resolvedCount - finalCommit.resolvedMonsterCount);
+        }
+
+        return runtime;
+    }
+
+    private float ResolveFinalBuildCommitTime()
+    {
+        return investmentCommits.Count > 0
+            ? investmentCommits[investmentCommits.Count - 1]
+                .activeTimeSeconds
+            : 0f;
+    }
+
+    private List<CombatBalanceTowerWaveJson> CreateTowerWaveSummaries()
+    {
+        List<TowerWaveDamageAggregate> aggregates =
+            new List<TowerWaveDamageAggregate>(
+                towerWaveDamageByScope.Values);
+        aggregates.Sort((left, right) =>
+        {
+            int towerComparison = left.TowerInstanceId.CompareTo(
+                right.TowerInstanceId);
+            return towerComparison != 0
+                ? towerComparison
+                : left.WaveNumber.CompareTo(right.WaveNumber);
+        });
+        List<CombatBalanceTowerWaveJson> summaries =
+            new List<CombatBalanceTowerWaveJson>(aggregates.Count);
+
+        for (int i = 0; i < aggregates.Count; i++)
+        {
+            TowerWaveDamageAggregate aggregate = aggregates[i];
+            summaries.Add(new CombatBalanceTowerWaveJson
+            {
+                towerInstanceId = aggregate.TowerInstanceId,
+                towerDisplayName = aggregate.TowerDisplayName ?? string.Empty,
+                towerFamily = aggregate.TowerFamily ?? string.Empty,
+                waveNumber = aggregate.WaveNumber,
+                successfulDamageApplications =
+                    aggregate.SuccessfulDamageApplications,
+                effectiveTowerScaledDamage =
+                    aggregate.EffectiveTowerScaledDamage,
+                killingBlows = aggregate.KillingBlows
+            });
+        }
+
+        return summaries;
+    }
+
+    private bool FixtureSnapshotIsComplete(
+        CombatBalanceFixtureJson fixture)
+    {
+        if (fixture == null ||
+            string.IsNullOrWhiteSpace(fixture.stageDefinitionName) ||
+            string.IsNullOrWhiteSpace(fixture.mapTemplateName) ||
+            string.IsNullOrWhiteSpace(fixture.runtimeMapName) ||
+            fixture.mapWidth <= 0 ||
+            fixture.mapLength <= 0 ||
+            fixture.mapNodeSize <= 0f ||
+            fixture.mapNodes == null ||
+            fixture.mapNodes.Count != fixture.mapWidth * fixture.mapLength ||
+            string.IsNullOrWhiteSpace(fixture.waveConfigName) ||
+            fixture.waves == null ||
+            fixture.waves.Count == 0 ||
+            (hasExpectedWaveCount &&
+             fixture.waves.Count != expectedWaveCount))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < fixture.waves.Count; i++)
+        {
+            CombatBalanceWaveFixtureJson wave = fixture.waves[i];
+
+            if (wave == null ||
+                wave.waveNumber != i + 1 ||
+                string.IsNullOrWhiteSpace(wave.runtimeTemplateName) ||
+                wave.maximumHealth <= 0 ||
+                wave.moveSpeed <= 0f ||
+                wave.count <= 0 ||
+                wave.spawnIntervalSeconds < 0f ||
+                wave.waveDelaySeconds < 0f)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool InvestmentCommitsMatchDraftSelections(
+        CombatBalanceInvestmentRuntimeJson investmentRuntime,
+        CombatBalanceDraftRuntimeJson draftRuntime)
+    {
+        if (investmentRuntime == null || draftRuntime == null)
+        {
+            return false;
+        }
+
+        HashSet<string> committedTokens = new HashSet<string>(
+            StringComparer.Ordinal);
+
+        for (int i = 0; i < investmentRuntime.commits.Count; i++)
+        {
+            CombatBalanceInvestmentCommitJson commit =
+                investmentRuntime.commits[i];
+            CombatBalanceDraftAttemptJson matchingAttempt = null;
+
+            if (string.Equals(
+                    commit.authoritySource,
+                    "EditorDebug",
+                    StringComparison.Ordinal))
+            {
+                if (commit.draftOrdinal != 0 ||
+                    !committedTokens.Add(commit.draftAttemptToken))
+                {
+                    return false;
+                }
+
+                continue;
+            }
+
+            for (int j = 0; j < draftRuntime.attempts.Count; j++)
+            {
+                CombatBalanceDraftAttemptJson attempt =
+                    draftRuntime.attempts[j];
+
+                if (string.Equals(
+                        attempt.attemptToken,
+                        commit.draftAttemptToken,
+                        StringComparison.Ordinal))
+                {
+                    matchingAttempt = attempt;
+                    break;
+                }
+            }
+
+            if (matchingAttempt == null ||
+                !matchingAttempt.selectionCommitted ||
+                matchingAttempt.selectedChoice == null ||
+                matchingAttempt.ordinal != commit.draftOrdinal ||
+                !string.Equals(
+                    matchingAttempt.selectedChoice.resultType,
+                    commit.draftResultType,
+                    StringComparison.Ordinal) ||
+                !string.Equals(
+                    matchingAttempt.selectedChoice.assetName,
+                    commit.draftAssetName,
+                    StringComparison.Ordinal) ||
+                !committedTokens.Add(commit.draftAttemptToken))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TowerWaveAttributionMatches(
+        IReadOnlyList<CombatBalanceTowerWaveJson> summaries,
+        CombatBalanceDamageDiagnosticsJson diagnostics)
+    {
+        if (summaries == null || diagnostics == null)
+        {
+            return false;
+        }
+
+        int attributedApplications = 0;
+
+        for (int i = 0; i < summaries.Count; i++)
+        {
+            CombatBalanceTowerWaveJson summary = summaries[i];
+
+            if (summary == null ||
+                summary.towerInstanceId == 0 ||
+                summary.waveNumber <= 0 ||
+                summary.successfulDamageApplications <= 0 ||
+                summary.effectiveTowerScaledDamage <= 0)
+            {
+                return false;
+            }
+
+            attributedApplications += summary.successfulDamageApplications;
+        }
+
+        return attributedApplications ==
+            diagnostics.towerScaledSuccessfulApplicationCount;
     }
 
     private CombatBalanceWaveRuntimeJson CreateWaveRuntimeJson()
@@ -3170,8 +4547,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         CombatBalanceProgressionJson progression)
     {
         if (progression == null ||
-            progression.observedLevelUpCount !=
-            progression.expectedLevelUpCount)
+            progression.observedLevelUpCount >
+            progression.requirements.Count)
         {
             return false;
         }
@@ -3192,6 +4569,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 continue;
             }
 
+            if (levelUpIndex >= progression.requirements.Count)
+            {
+                return false;
+            }
+
             expectedResolutionNode += progression.requirements[levelUpIndex];
 
             if (progressionEvent.resolvedMonsterCount !=
@@ -3203,7 +4585,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             levelUpIndex++;
         }
 
-        return levelUpIndex == progression.expectedLevelUpCount;
+        return levelUpIndex == progression.observedLevelUpCount;
     }
 
     private float GetRunActiveTimeSeconds()
@@ -3626,10 +5008,71 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     {
         return new CombatBalanceVector3Json
         {
-            x = value.x,
-            y = value.y,
-            z = value.z
+            x = SanitizeFinite(value.x),
+            y = SanitizeFinite(value.y),
+            z = SanitizeFinite(value.z)
         };
+    }
+
+    private static float SanitizeFinite(float value)
+    {
+        return float.IsNaN(value) || float.IsInfinity(value) ? 0f : value;
+    }
+
+    private static CombatBalanceGridPositionJson CreateGridPositionJson(
+        GridNodeBehaviour node)
+    {
+        if (node == null)
+        {
+            return null;
+        }
+
+        return new CombatBalanceGridPositionJson
+        {
+            x = node.GridPosition.x,
+            z = node.GridPosition.y
+        };
+    }
+
+    private static void AppendGridPositions(
+        List<CombatBalanceGridPositionJson> destination,
+        IReadOnlyList<GridNodeBehaviour> source)
+    {
+        if (destination == null || source == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < source.Count; i++)
+        {
+            CombatBalanceGridPositionJson position =
+                CreateGridPositionJson(source[i]);
+
+            if (position != null)
+            {
+                destination.Add(position);
+            }
+        }
+    }
+
+    private static string CreatePlacementGameplayStateFingerprint(
+        MonsterPlacementGameplayStateSnapshot state)
+    {
+        if (state == null)
+        {
+            return "Missing";
+        }
+
+        return string.Format(
+            CultureInfo.InvariantCulture,
+            "health={0}/{1};speed={2:R};locked={3};lane={4};targetable={5};buff={6}",
+            state.CurrentHealth,
+            state.MaximumHealth,
+            state.MoveSpeedMultiplier,
+            state.IsMovementLocked,
+            state.LaneIdentity,
+            state.IsGameplayTargetable,
+            state.BuffFingerprint ?? string.Empty);
     }
 
     private List<CombatBalanceTowerJson> CreateTowerJsonRecords()

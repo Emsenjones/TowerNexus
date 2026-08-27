@@ -32,7 +32,7 @@ One active combat session is explicitly bound to one placed Tower instance, its 
 
 A combat session becomes valid only after required gameplay references and the initial resolved-value baseline exist. A runtime must not observe Tower state-change notifications while only partially initialized.
 
-New-Tower deployment may prepare a valid combat session before the Tower is committed to the battlefield. This ready state is combat-inactive: it performs no detection, windup, release, or Attack Entity work. After placement commits occupancy and affected-Monster movement revisions, the same transaction registers the deployed Tower and activates its prepared combat session before consuming the held Draft. Readiness and activation use the existing Tower runtime rather than a second combat validator or parallel service.
+New-Tower deployment may prepare a valid combat session before the Tower is committed to the battlefield. This ready state is combat-inactive: it performs no detection, windup, release, or Attack Entity work. After placement commits occupancy and the complete prepared living-Monster route-revision batch, the same transaction registers the deployed Tower and activates its prepared combat session before consuming the held Draft. Readiness and activation use the existing Tower runtime rather than a second combat validator or parallel service.
 
 The following invalidate the session:
 

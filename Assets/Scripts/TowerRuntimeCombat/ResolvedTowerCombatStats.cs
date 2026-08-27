@@ -178,3 +178,23 @@ public readonly struct TowerOwnedDamageApplicationObservation
     public TowerOwnedDamageResolution Resolution { get; }
     public int SuccessfulApplicationCount { get; }
 }
+
+public readonly struct TowerOwnedTargetDamageObservation
+{
+    internal TowerOwnedTargetDamageObservation(
+        TowerOwnedDamageResolution resolution,
+        MonsterBehaviour target,
+        int appliedDamage,
+        bool killingBlow)
+    {
+        Resolution = resolution;
+        Target = target;
+        AppliedDamage = appliedDamage;
+        KillingBlow = killingBlow;
+    }
+
+    public TowerOwnedDamageResolution Resolution { get; }
+    public MonsterBehaviour Target { get; }
+    public int AppliedDamage { get; }
+    public bool KillingBlow { get; }
+}

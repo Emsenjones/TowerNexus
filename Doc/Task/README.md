@@ -29,7 +29,8 @@ failure case.
 | Task007A | Configurable Elemental stack contribution implementation checkpoint |
 | Task007B | Primary-only Elemental opportunity boundary implementation checkpoint |
 | Task007C | Shared Electric/Wind Tower-hit reaction implementation checkpoint |
-| Task010 | Stage1 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task010 | Completed Stage1 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task010A | Monster placement-route continuity implementation checkpoint |
 | Task011 | Stage2 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task012 | Stage3 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task013 | Stage4 Progress, fixed-speed Monster Profile, and Wave calibration |
@@ -64,3 +65,15 @@ value, Phase G matching-cooperation, and Phase H Core-regression acceptance on
 values. Task010-Task015 use Fixed Draft sequences to accept Build efficacy and
 Stage pressure; Task017 later owns natural offer accessibility and must not
 reinterpret a fixed-run outcome as probability evidence.
+
+Task010 completed Stage1 V4 calibration on 2026-08-27. Its Reference Build
+clears at zero leaks, three coherent alternatives clear at one leak, and the
+primary one-Core missing-coverage Anti-pattern fails. Two five-L1 Horizontal
+stress runs clear with two leaks; this repeatable but materially worse result is
+accepted as a rare edge Build rather than forced to fail through Player Health.
+Task011 was therefore initially unblocked. Its first Stage2 Reference attempt
+then exposed placement-time closest-Grid mass reprojection. Task010A now owns the
+shared movement-contract revision, schema-22 evidence, and Stage1 Reference
+movement regression. Task011 remains Pending with its Reference and Wave
+candidate frozen until Task010A is accepted. Task017 will later determine how
+accessible any such fixed Build is under natural offers.

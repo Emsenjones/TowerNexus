@@ -111,7 +111,9 @@ Direction flight moves along one launch direction and may resolve Monsters encou
 
 - The selected target may define the initial direction.
 - The projectile is not locked to that target after release.
-- Later Monster movement, including placement-driven route reprojection, does not redirect, recreate, destroy, or guarantee a hit for the released projectile.
+- Later Monster movement, including placement-driven route continuation,
+  rejoin movement, or forced relocation, does not redirect, recreate, destroy,
+  or guarantee a hit for the released projectile.
 - If multiple valid Monsters are simultaneously in threshold, the nearest valid Monster is resolved first using stable source order for ties.
 - A Monster already recorded by the same projectile cannot be hit again when the active behavior requires unique-hit history.
 - The projectile completes when its hit capacity is exhausted or lifetime ends.
@@ -171,7 +173,8 @@ Explosive Arrow is intentionally a small, frequent direct-hit splash. Cannon Exp
 Arc flight consumes an explicitly present release-time immutable target-position snapshot and initial Arc height.
 
 - Any world position, including the origin, may be valid; absence must be represented explicitly rather than through a sentinel coordinate.
-- Source Monster movement, placement-driven route reprojection, or invalidation after release does not cancel or redirect the Shell.
+- Source Monster movement, placement-driven route revision or relocation, or
+  invalidation after release does not cancel or redirect the Shell.
 - Arc travel completes at normalized progress one and resolves exactly at the captured position.
 - Arrival always produces Position Impact.
 - Initial Shell and bounce-child Arc heights come from their respective authoring owners.

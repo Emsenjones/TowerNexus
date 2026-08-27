@@ -563,6 +563,36 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         return new List<ProjectileBehaviour>(activeProjectiles);
     }
 
+    internal virtual string CapturePlacementOwnershipFingerprint()
+    {
+        List<ProjectileBehaviour> projectiles = GetOwnedProjectileSnapshot();
+        projectiles.Sort((left, right) =>
+            GetRuntimeInstanceId(left).CompareTo(GetRuntimeInstanceId(right)));
+        System.Text.StringBuilder builder = new System.Text.StringBuilder();
+        builder.Append("tower=").Append(GetInstanceID());
+        builder.Append(";target=").Append(GetRuntimeInstanceId(currentTarget));
+
+        for (int i = 0; i < projectiles.Count; i++)
+        {
+            ProjectileBehaviour projectile = projectiles[i];
+            builder.Append(";projectile=")
+                .Append(GetRuntimeInstanceId(projectile))
+                .Append(':')
+                .Append(projectile != null && projectile.IsInitialized ? 1 : 0)
+                .Append(':')
+                .Append(projectile != null
+                    ? GetRuntimeInstanceId(projectile.TargetMonster)
+                    : 0);
+        }
+
+        return builder.ToString();
+    }
+
+    protected static int GetRuntimeInstanceId(UnityEngine.Object instance)
+    {
+        return instance != null ? instance.GetInstanceID() : 0;
+    }
+
     protected void CollectTargetCandidates(
         List<MonsterBehaviour> results,
         Vector3 rangeOrigin,

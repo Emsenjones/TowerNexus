@@ -54,6 +54,9 @@ internal sealed class MonsterMovementSnapshot
     internal float RemainingCenterlineDistance { get; }
     internal bool HasComparableRemainingDistance { get; }
     internal bool HasComparableWorldPosition { get; }
+    internal bool HasFiniteWorldPosition => HasComparableWorldPosition;
+    internal bool HasFiniteWorldY =>
+        !float.IsNaN(WorldPosition.y) && !float.IsInfinity(WorldPosition.y);
     internal bool IsValid { get; }
 }
 
@@ -104,6 +107,10 @@ public class MonsterBehaviour : MonoBehaviour
     private MonsterBuffRuntime buffRuntime;
     private int pathIndex;
     private int towerOwnedHitTransactionDepth;
+    private bool requiresExactTargetApproach;
+    private bool hasActivePlacementConnector;
+    private long activePlacementRevisionId;
+    private GridNodeBehaviour activePlacementJoinGrid;
 
     private static readonly IReadOnlyList<MonsterBuffStateSnapshot> EmptyBuffSnapshots = Array.Empty<MonsterBuffStateSnapshot>();
 
@@ -111,6 +118,7 @@ public class MonsterBehaviour : MonoBehaviour
         string.IsNullOrWhiteSpace(displayName) ? name : displayName;
     public int CurrentHealth => currentHealth;
     public int MaxHealth => maxHealth;
+    public float BaseMoveSpeed => moveSpeed;
     public float CurrentMoveSpeed => currentMoveSpeed;
     public Vector3 StatusUiOffset => statusUiOffset;
     public Vector3 DamageNumberOffset => damageNumberOffset;
@@ -147,6 +155,8 @@ public class MonsterBehaviour : MonoBehaviour
     public event Action<MonsterBehaviour, BuffRuntimeObservation> OnBuffRuntimeObserved;
     public event Action<MonsterBehaviour, ElementalHitReactionObservation>
         OnElementalHitReactionObserved;
+    public event Action<MonsterPlacementRouteLifecycleObservation>
+        OnPlacementRouteLifecycleObserved;
 
     public bool TryInitializeRuntime(out string failureReason)
     {
@@ -164,6 +174,10 @@ public class MonsterBehaviour : MonoBehaviour
         isDead = false;
         isResolved = false;
         isCleaningUp = false;
+        requiresExactTargetApproach = false;
+        hasActivePlacementConnector = false;
+        activePlacementRevisionId = 0;
+        activePlacementJoinGrid = null;
         CacheAnimator();
         RefreshEffectiveMoveSpeed();
         CacheHitFeedback();
@@ -353,19 +367,93 @@ public class MonsterBehaviour : MonoBehaviour
     internal void ApplyPreparedMovementRevision(
         MonsterRouteRevisionEntry revisionEntry)
     {
-        transform.position = revisionEntry.ProjectedWorldPosition;
-        currentNode = revisionEntry.ReachedNode;
+        if (hasActivePlacementConnector)
+        {
+            PublishPlacementRouteLifecycle(
+                MonsterPlacementRouteLifecycleKind.Superseded,
+                MonsterPlacementRouteResolutionReason.None,
+                joinedAtCommit: false,
+                replacementRevisionId: revisionEntry.RevisionId);
+        }
+
+        ClearPlacementRouteState();
+
+        if (revisionEntry.Mode ==
+            MonsterPlacementRouteRevisionMode.ForcedRelocation)
+        {
+            transform.position = revisionEntry.PreparedWorldPosition;
+            PublishPlacementRouteLifecycle(
+                revisionEntry.RevisionId,
+                MonsterPlacementRouteLifecycleKind.RelocationApplied,
+                MonsterPlacementRouteResolutionReason.None,
+                joinedAtCommit: revisionEntry.JoinedAtCommit,
+                replacementRevisionId: 0);
+        }
+
         targetNode = revisionEntry.TargetNode;
         currentPath.Clear();
 
-        for (int i = 0; i < revisionEntry.CurrentRoute.Count; i++)
+        if (revisionEntry.RequiresExactTargetApproach)
         {
-            currentPath.Add(revisionEntry.CurrentRoute[i]);
+            if (currentNode == targetNode)
+            {
+                currentNode = null;
+            }
+
+            requiresExactTargetApproach = true;
+            isMoving = true;
+            pathIndex = 0;
+            RefreshMovementAnimation();
+            return;
         }
 
-        pathIndex = revisionEntry.RouteIndex;
+        for (int i = 0; i < revisionEntry.PreparedRoute.Count; i++)
+        {
+            currentPath.Add(revisionEntry.PreparedRoute[i]);
+        }
+
+        currentNode = currentPath[0];
+        pathIndex = 1;
         isMoving = true;
+
+        if (revisionEntry.RequiresConnector)
+        {
+            hasActivePlacementConnector = true;
+            activePlacementRevisionId = revisionEntry.RevisionId;
+            activePlacementJoinGrid = revisionEntry.JoinGrid;
+            PublishPlacementRouteLifecycle(
+                MonsterPlacementRouteLifecycleKind.Started,
+                MonsterPlacementRouteResolutionReason.None,
+                joinedAtCommit: false,
+                replacementRevisionId: 0);
+        }
+        else if (revisionEntry.JoinedAtCommit)
+        {
+            PublishPlacementRouteLifecycle(
+                revisionEntry.RevisionId,
+                MonsterPlacementRouteLifecycleKind.Joined,
+                MonsterPlacementRouteResolutionReason.None,
+                joinedAtCommit: true,
+                replacementRevisionId: 0);
+        }
+
         RefreshMovementAnimation();
+    }
+
+    internal MonsterPlacementGameplayStateSnapshot
+        CapturePlacementGameplayState()
+    {
+        EnsureBuffRuntime();
+        return new MonsterPlacementGameplayStateSnapshot
+        {
+            CurrentHealth = currentHealth,
+            MaximumHealth = maxHealth,
+            MoveSpeedMultiplier = moveSpeedMultiplier,
+            IsMovementLocked = isMovementLocked,
+            LaneIdentity = laneIdentity,
+            IsGameplayTargetable = IsGameplayTargetable,
+            BuffFingerprint = buffRuntime.CapturePlacementFingerprint()
+        };
     }
 
     public void StopMovement()
@@ -527,7 +615,14 @@ public class MonsterBehaviour : MonoBehaviour
 
         if (isMoving)
         {
-            MoveAlongPath();
+            if (requiresExactTargetApproach)
+            {
+                MoveToExactTarget();
+            }
+            else
+            {
+                MoveAlongPath();
+            }
         }
     }
 
@@ -707,7 +802,54 @@ public class MonsterBehaviour : MonoBehaviour
         currentNode = nextNode;
         pathIndex++;
 
+        if (hasActivePlacementConnector &&
+            currentNode == activePlacementJoinGrid)
+        {
+            PublishPlacementRouteLifecycle(
+                MonsterPlacementRouteLifecycleKind.Joined,
+                MonsterPlacementRouteResolutionReason.None,
+                joinedAtCommit: false,
+                replacementRevisionId: 0);
+            ClearPlacementRouteState();
+        }
+
         if (currentNode == targetNode || pathIndex >= currentPath.Count) HandleTargetReached();
+    }
+
+    private void MoveToExactTarget()
+    {
+        if (targetNode == null)
+        {
+            StopMovement();
+            return;
+        }
+
+        Vector3 targetPosition = ResolveMovementTargetPosition(targetNode);
+        Vector3 moveDirection = targetPosition - transform.position;
+        moveDirection.y = 0f;
+
+        if (moveDirection.sqrMagnitude > 0.0001f)
+        {
+            transform.rotation = Quaternion.LookRotation(
+                moveDirection.normalized,
+                Vector3.up);
+        }
+
+        transform.position = Vector3.MoveTowards(
+            transform.position,
+            targetPosition,
+            currentMoveSpeed * Time.deltaTime);
+
+        if (Vector3.Distance(transform.position, targetPosition) >
+            arriveDistanceThreshold)
+        {
+            return;
+        }
+
+        transform.position = targetPosition;
+        currentNode = targetNode;
+        requiresExactTargetApproach = false;
+        HandleTargetReached();
     }
 
     private bool TryBuildCompleteRoute(
@@ -873,8 +1015,17 @@ public class MonsterBehaviour : MonoBehaviour
     internal Vector3 ResolveMovementTargetPosition(
         GridNodeBehaviour destinationNode)
     {
+        return ResolveMovementTargetPosition(
+            destinationNode,
+            transform.position.y);
+    }
+
+    internal Vector3 ResolveMovementTargetPosition(
+        GridNodeBehaviour destinationNode,
+        float worldY)
+    {
         Vector3 targetPosition = destinationNode.WorldPosition;
-        targetPosition.y = transform.position.y;
+        targetPosition.y = worldY;
 
         if (destinationNode == targetNode ||
             destinationNode.NodeType == GridNodeType.Spawn ||
@@ -909,7 +1060,7 @@ public class MonsterBehaviour : MonoBehaviour
         destinationLocalPosition.z += laneOffset.y;
         targetPosition =
             activeMap.NodesRoot.TransformPoint(destinationLocalPosition);
-        targetPosition.y = transform.position.y;
+        targetPosition.y = worldY;
         return targetPosition;
     }
 
@@ -942,7 +1093,16 @@ public class MonsterBehaviour : MonoBehaviour
     private void ClearRouteAndStopMovement()
     {
         currentPath.Clear();
+        ClearPlacementRouteState();
+        requiresExactTargetApproach = false;
         StopMovement();
+    }
+
+    private void ClearPlacementRouteState()
+    {
+        hasActivePlacementConnector = false;
+        activePlacementRevisionId = 0;
+        activePlacementJoinGrid = null;
     }
 
     private static bool IsFinite(Vector3 value)
@@ -997,6 +1157,8 @@ public class MonsterBehaviour : MonoBehaviour
 
         isCleaningUp = true;
         isResolved = true;
+        PublishPlacementResolutionBeforeJoin(
+            MonsterPlacementRouteResolutionReason.TechnicalCleanup);
         StopGameplayState(BuffRemovalReason.TechnicalCleanup);
         monsterManager?.UnregisterMonster(this);
         Destroy(gameObject);
@@ -1011,6 +1173,10 @@ public class MonsterBehaviour : MonoBehaviour
 
         isResolved = true;
         isDead = !reachedTarget;
+        PublishPlacementResolutionBeforeJoin(
+            reachedTarget
+                ? MonsterPlacementRouteResolutionReason.Leaked
+                : MonsterPlacementRouteResolutionReason.Killed);
         StopGameplayState(
             reachedTarget
                 ? BuffRemovalReason.MonsterLeaked
@@ -1036,7 +1202,78 @@ public class MonsterBehaviour : MonoBehaviour
         StopMovement();
         ClearMovementControls();
         currentPath.Clear();
+        requiresExactTargetApproach = false;
+        ClearPlacementRouteState();
         hitFeedback?.StopFeedback();
+    }
+
+    private void PublishPlacementResolutionBeforeJoin(
+        MonsterPlacementRouteResolutionReason resolutionReason)
+    {
+        if (!hasActivePlacementConnector)
+        {
+            return;
+        }
+
+        PublishPlacementRouteLifecycle(
+            MonsterPlacementRouteLifecycleKind.MonsterResolvedBeforeJoin,
+            resolutionReason,
+            joinedAtCommit: false,
+            replacementRevisionId: 0);
+        ClearPlacementRouteState();
+    }
+
+    private void PublishPlacementRouteLifecycle(
+        MonsterPlacementRouteLifecycleKind kind,
+        MonsterPlacementRouteResolutionReason resolutionReason,
+        bool joinedAtCommit,
+        long replacementRevisionId)
+    {
+        PublishPlacementRouteLifecycle(
+            activePlacementRevisionId,
+            kind,
+            resolutionReason,
+            joinedAtCommit,
+            replacementRevisionId);
+    }
+
+    private void PublishPlacementRouteLifecycle(
+        long revisionId,
+        MonsterPlacementRouteLifecycleKind kind,
+        MonsterPlacementRouteResolutionReason resolutionReason,
+        bool joinedAtCommit,
+        long replacementRevisionId)
+    {
+        Action<MonsterPlacementRouteLifecycleObservation> handlers =
+            OnPlacementRouteLifecycleObserved;
+
+        if (handlers == null || revisionId <= 0)
+        {
+            return;
+        }
+
+        MonsterPlacementRouteLifecycleObservation observation =
+            new MonsterPlacementRouteLifecycleObservation(
+                revisionId,
+                this,
+                kind,
+                resolutionReason,
+                joinedAtCommit,
+                replacementRevisionId);
+        Delegate[] invocationList = handlers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<MonsterPlacementRouteLifecycleObservation>)
+                    invocationList[i]).Invoke(observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogException(exception, this);
+            }
+        }
     }
 
     private float GetDeathDelay()

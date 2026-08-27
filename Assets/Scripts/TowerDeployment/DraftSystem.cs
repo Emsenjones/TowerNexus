@@ -765,6 +765,7 @@ public class DraftSystem : MonoBehaviour
 
         if (!battleHUDUI.TryAddPendingDraft(
                 selectedResult,
+                callbackToken,
                 out PendingDraftUIItem committedItem,
                 out string failureReason))
         {

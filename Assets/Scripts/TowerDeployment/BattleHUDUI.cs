@@ -169,6 +169,7 @@ public class BattleHUDUI : MonoBehaviour
 
     public bool TryAddPendingDraft(
         DraftResult draftResult,
+        DraftAttemptToken draftAttemptToken,
         out PendingDraftUIItem committedItem,
         out string failureReason)
     {
@@ -223,6 +224,7 @@ public class BattleHUDUI : MonoBehaviour
 
             if (!item.TryInitialize(
                     draftResult,
+                    draftAttemptToken,
                     towerPlacementController,
                     pendingDraftContainer,
                     pendingDraftDragVisualRoot,

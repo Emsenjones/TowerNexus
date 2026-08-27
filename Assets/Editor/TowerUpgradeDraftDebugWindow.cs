@@ -6,6 +6,7 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 {
     private const string WindowMenuPath =
         "Tools/Tower Nexus/Tower Upgrade Draft Debug";
+    private static ulong debugDraftAttemptIdentity;
 
     private readonly List<TowerInstance> runtimeTowers =
         new List<TowerInstance>();
@@ -456,6 +457,7 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 
             if (battleHud.TryAddPendingDraft(
                     draftResult,
+                    CreateDebugDraftAttemptToken(),
                     out PendingDraftUIItem committedItem,
                     out string failureReason))
             {
@@ -540,6 +542,7 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 
         if (!battleHud.TryAddPendingDraft(
                 draftResult,
+                CreateDebugDraftAttemptToken(),
                 out _,
                 out string failureReason))
         {
@@ -879,6 +882,14 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         return string.CompareOrdinal(
             GetTowerLabel(left),
             GetTowerLabel(right));
+    }
+
+    private static DraftAttemptToken CreateDebugDraftAttemptToken()
+    {
+        debugDraftAttemptIdentity++;
+        return new DraftAttemptToken(
+            ulong.MaxValue,
+            debugDraftAttemptIdentity);
     }
 
     private static string GetTowerLabel(TowerInstance tower)
