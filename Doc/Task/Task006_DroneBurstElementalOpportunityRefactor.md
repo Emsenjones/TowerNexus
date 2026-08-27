@@ -6,7 +6,7 @@ matrix, which is deferred to Task007 combined gameplay calibration
 
 Depends on: Completed Task005 Elemental Stack Contribution Damage Authority
 
-Blocks: Task007-Task016
+Blocks: Task007 and Task010-Task017
 
 ## Downstream Replacement Status
 

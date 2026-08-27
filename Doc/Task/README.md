@@ -2,9 +2,9 @@
 
 Active Series: `CombatMathV2`
 
-This directory contains the active Task001-Task016 execution sequence for the
-Tower Level and damage-formula refactor followed by a complete combat and Stage
-recalibration.
+This directory contains the active CombatMathV2 execution sequence through
+Task017 for the Tower Level and damage-formula refactor followed by complete
+combat, Stage, Fast-Monster, and natural Draft-offer calibration.
 
 The previous Task series is preserved unchanged in:
 
@@ -29,15 +29,27 @@ failure case.
 | Task007A | Configurable Elemental stack contribution implementation checkpoint |
 | Task007B | Primary-only Elemental opportunity boundary implementation checkpoint |
 | Task007C | Shared Electric/Wind Tower-hit reaction implementation checkpoint |
-| Task008 | Fixed-speed Monster Health roster |
-| Task009 | Campaign progression and controlled calibration fixtures |
-| Task010 | Stage1 Wave calibration |
-| Task011 | Stage2 Wave calibration |
-| Task012 | Stage3 Wave calibration |
-| Task013 | Stage4 Wave calibration |
-| Task014 | Stage5 Wave calibration |
-| Task015 | Stage6 Wave calibration |
+| Task010 | Stage1 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task011 | Stage2 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task012 | Stage3 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task013 | Stage4 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task014 | Stage5 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task015 | Stage6 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task016 | Fast-Monster identity and reviewed Wave substitutions |
+| Task017 | Natural Tower-versus-Upgrade Draft offer probability calibration |
+
+Task008 and Task009 were removed before implementation. A Stage-independent
+fixed-speed HP roster could not accept tactical Monster roles without complete
+Stage context, while a campaign-wide fixture Task would prematurely separate
+Draft cost, exact pools, Fixed Build sequences, and provisional Progress from
+the Stage that calibrates them. Their numbers remain intentionally vacant so the
+accepted Task010-Task016 names and historical references do not need another
+renumbering.
+
+Task010-Task015 now each own their exact Stage pools, continuous Required-Level
+reachability, legal Reference/Alternative/Anti-pattern fixtures, Fixed Draft
+sequences, Progress Requirements, Monster Profile reuse or introduction,
+`MonsterWaveConfig`, Player Health, and complete acceptance evidence.
 
 Task order is an acceptance dependency, not only a filename order. A later Task
 must not compensate for a failed earlier contract through unrelated Stage values.
@@ -48,5 +60,7 @@ reaction boundaries. Task007C ordinary schema-20 gameplay smoke is accepted for
 Task007 continuation; its remaining edge-transaction fixtures are explicitly
 deferred rather than reported as passed. Task007 completed the Phase F normal-
 value, Phase G matching-cooperation, and Phase H Core-regression acceptance on
-2026-08-27. Task008 and later Stage calibration now consume those locked Tower
-and Elemental package values.
+2026-08-27. Task010-Task017 now consume those locked Tower and Elemental package
+values. Task010-Task015 use Fixed Draft sequences to accept Build efficacy and
+Stage pressure; Task017 later owns natural offer accessibility and must not
+reinterpret a fixed-run outcome as probability evidence.

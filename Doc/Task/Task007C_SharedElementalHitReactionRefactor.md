@@ -10,7 +10,7 @@ checkpoint; Task007B Primary Elemental Opportunity Boundary Refactor static
 implementation and thirteen schema-19 evidence Records; Task007 Phase C and
 Phase E evidence
 
-Blocks: Task007 final Elemental and Buff value acceptance and Task008-Task016
+Blocks: Task007 final Elemental and Buff value acceptance and Task010-Task017
 
 ## 1. Goal
 

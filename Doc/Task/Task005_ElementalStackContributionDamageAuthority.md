@@ -5,7 +5,7 @@ and user-confirmed Unity Play Mode evidence
 
 Depends on: Completed Task001 Combat Damage Formula Refactor; accepted Task004 Non-Elemental Upgrade Baseline
 
-Blocks: Task006-Task016
+Blocks: Task006-Task007 and Task010-Task017
 
 ## Downstream Supersession
 

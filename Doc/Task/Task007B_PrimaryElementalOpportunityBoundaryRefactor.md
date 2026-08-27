@@ -9,7 +9,7 @@ Depends on: Completed Task006 Drone Burst Elemental Opportunity Refactor;
 Task007A Elemental Stack Contribution Refactor implementation checkpoint;
 Task007 Phase D schema-18 Behaviour plus Elemental evidence
 
-Blocks: Task007 Phase D reacceptance and Task008-Task016
+Blocks: Task007 Phase D reacceptance and Task010-Task017
 
 ## 1. Goal
 
@@ -541,7 +541,7 @@ The completion record must separately list:
 - final whole-worktree comparison with the Phase 0 baseline.
 
 The active Task README dependency order is updated during closeout so Task007B
-is the accepted gate before Task007 resumes and before Task008-Task016.
+is the accepted gate before Task007 resumes and before Task010-Task017.
 
 Static implementation evidence recorded on 2026-08-25:
 

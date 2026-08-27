@@ -9,7 +9,7 @@ Elemental Stack Contribution implementation checkpoint; completed Task007B
 Primary Elemental Opportunity Boundary Refactor; accepted Task007C Shared
 Elemental Hit Reaction implementation checkpoint
 
-Unblocks: Task008-Task016
+Unblocks: Task010-Task017
 
 ## 1. Goal
 
@@ -688,7 +688,7 @@ integrity checks passed.
   is not reported as passed and does not block the accepted Task007 numerical
   baseline.
 
-Task008 and later Stage Tasks may tune Monster, Wave, route, Draft opportunity,
+Task010 and later Stage Tasks may tune Monster, Wave, route, Draft opportunity,
 and pressure values against this package. They may not repair a Stage result by
 silently changing the accepted Tower Level, Basic, Behaviour, Elemental normal,
 or matching-source cooperation contracts. Reopening Task007 requires a named

@@ -4,11 +4,13 @@ Status: Planned
 
 Depends on: Accepted Task010-Task015 fixed-speed Stage calibrations
 
+Blocks: Task017
+
 ## 1. Goal
 
 Add the first low-HP, high-MoveSpeed Monster identity and replace a small number
 of already accepted fixed-speed Waves to create urgency, Target pressure, and
-coverage checks without reopening the entire HP roster.
+coverage checks without reopening accepted fixed-speed Profiles.
 
 ## 2. Initial Identity
 
@@ -61,7 +63,7 @@ Any deliberate formation exception is separately authored and named.
 
 ## 7. Downstream
 
-Natural Draft probability calibration remains a separate later Task. Controlled
-Stage reports may inform it, but Fixed-mode displayed choices are not natural
+Task017 calibrates natural Draft offer probability only after these substitutions
+and their affected Stage regressions are accepted. Controlled Stage reports may
+inform its Build targets, but Fixed-mode displayed choices are not natural
 frequency evidence.
-

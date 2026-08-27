@@ -5,7 +5,7 @@ and a reviewed Phase E manual-test waiver
 
 Depends on: Accepted Task003 Tower Level Damage Curve
 
-Blocks: Task005-Task016
+Blocks: Task005-Task007 and Task010-Task017
 
 ## 1. Goal
 

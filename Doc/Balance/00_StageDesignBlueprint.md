@@ -57,7 +57,7 @@ The Expected Anti-pattern is a build that rejects the Stage lesson and should fa
 
 Concentrated investment is not intrinsically an Anti-pattern. A highly developed Core should fail only when the Stage also requires coverage, role complement, or a second matching Elemental source that the concentrated build does not provide. Conversely, horizontal expansion should fail only when it leaves the required Core capability undeveloped.
 
-New Content describes the first campaign introduction of a mechanic or TowerFamily. Tower and Upgrade access is cumulative unless a Stage Note explicitly says otherwise. Each Stage Tower Draft pool contains every TowerFamily introduced by that Stage, and its Tower Upgrade Draft pool contains all currently unlocked UpgradeDefinitions for those represented families. Stage1-Stage4 unlock Basic and Behaviour content; Stage5-Stage6 additionally unlock Elemental content. CombatMathV2 Task009 materializes those rules as exact Stage asset lists and reproducible calibration fixtures.
+New Content describes the first campaign introduction of a mechanic or TowerFamily. Tower and Upgrade access is cumulative unless a Stage Note explicitly says otherwise. Each Stage Tower Draft pool contains every TowerFamily introduced by that Stage, and its Tower Upgrade Draft pool contains all currently unlocked UpgradeDefinitions for those represented families. Stage1-Stage4 unlock Basic and Behaviour content; Stage5-Stage6 additionally unlock Elemental content. CombatMathV2 Task010-Task015 each materialize those rules as their exact Stage asset lists and reproducible Fixed calibration fixtures.
 
 Reference Build v0.2 uses these shared rules:
 
@@ -71,7 +71,7 @@ Reference Build v0.2 uses these shared rules:
 
 The listed one-Basic and one-Behaviour Core is the Reference Build used to derive Stage budgets. It is not the maximum legal Upgrade stack on one Tower. Cross-Stage qualitative growth principles belong to `01_TowerGrowthAndUpgradeIdentity.md`; realized-power targets, cumulative single-Tower guardrails, exact Upgrade values, and Stage pressure remain Task outputs.
 
-The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Candidate availability and any first-Draft guarantee remain CombatMathV2 Task009 design work.
+The intended Core TowerFamily sequence for Stage1-Stage4 is Archer, Cannon, Magic, and Drone. Reference Build intent does not itself force the player's Draft choice. Task010-Task015 use legal Fixed Draft sequences to isolate Build efficacy; natural candidate availability and any justified first-Draft weighting or guarantee remain Task017 design work.
 
 The early campaign teaches the player to establish useful route coverage and then concentrate enough Draft investment to unlock and apply higher-level content. A player following that lesson should not need one uniquely named Upgrade combination to clear. Pure horizontal expansion into many undeveloped Towers remains an intentional Anti-pattern when it rejects the Stage's required Core capability.
 
@@ -223,8 +223,10 @@ Stage Design Blueprint
     -> Reference Build cost and placement demand
     -> Map implementation size and capacity
     -> Stage Draft opportunities and Draft pools
-    -> Shared Progress curve and Monster-resolution budgets
-    -> MonsterWaveConfig calibration
+    -> Stage Progress requirements and Monster-resolution budget
+    -> Fixed-speed Monster Profile and MonsterWaveConfig calibration
+    -> Fast-Monster Wave substitutions
+    -> Natural Draft offer-probability calibration
 ```
 
 Task ownership:
@@ -234,11 +236,15 @@ Task ownership:
 | CombatMathV2 Task001 | Damage formula, Tower Level BasicDamage authority, DamageScale/FixedDamage migration, and diagnostics |
 | CombatMathV2 Task002-Task004 | Level 1 Tower, Tower Level, and non-Elemental Upgrade baselines |
 | CombatMathV2 Task005-Task007 | Elemental contribution-damage authority, Drone Burst elemental opportunity, and Elemental/Buff baselines |
-| CombatMathV2 Task008 | Fixed-speed Monster HP roster baseline |
-| CombatMathV2 Task009 | Draft totals, exact Draft pools, candidate availability, Progress requirements, and reproducible calibration fixtures |
-| CombatMathV2 Task010-Task015 | Stage-specific Wave tables, Player Health, measurable Reference Runs, Anti-pattern checks, and accepted local calibration |
+| CombatMathV2 Task010-Task015 | Stage-specific Draft totals, exact pools, continuous Level reachability, legal Fixed Build fixtures, Progress requirements, fixed-speed Monster Profile reuse or introduction, Wave tables, Player Health, measurable Reference Runs, Anti-pattern checks, and accepted local calibration |
 | CombatMathV2 Task016 | Fast-Monster identity plus reviewed substitutions into accepted Stage Waves |
+| CombatMathV2 Task017 | Natural Tower-versus-Upgrade Draft offer ratios, Build accessibility, and availability-versus-choice evidence |
 
 Task calculations are reviewable implementation inputs, not new Stage intent. Accepted executable values live in their owning Unity assets. If a derived result cannot realize an approved Stage design, the Task proposes a Blueprint revision explicitly rather than silently changing the intended experience.
 
-CombatMathV2 Task009 must confirm that every planned Anti-pattern run is constructible under the authored pools and remaining Draft opportunities. Task010-Task015 test only legal builds; they must not manufacture an impossible build or add a hidden penalty in order to demonstrate the Stage lesson.
+Each CombatMathV2 Task010-Task015 must prove that its Reference, alternative, and Anti-pattern runs are constructible under that Stage's authored pools and Draft opportunities. A Stage Task must not manufacture an impossible Build or add a hidden penalty in order to demonstrate its lesson.
+
+Task010-Task015 use Fixed Draft sequences to isolate Build efficacy from natural
+offer probability. They do not infer whether a different final Build resulted
+from player preference or from unavailable offers. Task017 asks that question
+only after the six Stage configurations and Task016 substitutions are accepted.

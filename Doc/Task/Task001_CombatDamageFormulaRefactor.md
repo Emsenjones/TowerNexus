@@ -4,7 +4,7 @@ Status: Completed; all phases accepted through Unity runtime, schema-v14 Recorde
 
 Depends on: Accepted current Tower, Upgrade, Projectile, Effect, Buff, Recorder, and Tower placement runtimes; archived CombatMathV1 evidence
 
-Blocks: Task002-Task016
+Blocks: Task002-Task007 and Task010-Task017
 
 ## 1. Goal
 

@@ -8,7 +8,7 @@ Task006 Drone Burst Elemental Opportunity Refactor completion or explicit
 regression waiver; Task007 Phase B schema-17 one-source, overlapping-source,
 and isolated-source evidence
 
-Blocks: Task008-Task016. Task007 Phase B may resume after this static
+Blocks: Task010-Task017. Task007 Phase B may resume after this static
 implementation checkpoint and owns the deferred gameplay acceptance.
 
 ## Downstream Replacement Status
