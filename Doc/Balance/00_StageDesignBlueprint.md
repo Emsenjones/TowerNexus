@@ -2,10 +2,11 @@
 
 Document Set: Balance
 
-Status: Campaign learning arc approved; Stage1 and Stage2 calibration accepted
-by Task010 and Task011; Stage3-Stage6 Reference Build v0.2 shapes remain approved baselines whose exact
-repeated support families, Reference-run UpgradeDefinitions, ElementTypes, and
-Stage-local calibration values remain downstream decisions
+Status: Campaign learning arc approved; Stage1-Stage4 calibration accepted by
+Task010-Task013; Stage5-Stage6 Reference Build v0.2 shapes remain approved
+baselines whose exact repeated support families, Reference-run
+UpgradeDefinitions, ElementTypes, and Stage-local calibration values remain
+downstream decisions
 
 ---
 
@@ -160,7 +161,7 @@ Reference Build:
 
 ## 4.3 Stage3
 
-Status: Reference Build Baseline v0.2
+Status: Accepted Stage3 Calibration v1 (Task012, 2026-08-28)
 
 | Field | Design Target |
 |---|---|
@@ -168,33 +169,33 @@ Status: Reference Build Baseline v0.2
 | New Content | Magic |
 | Required Capability | Persistent route-adjacent contact plus sufficient wider coverage |
 | Expected Anti-pattern | Concentrate all power in one local area while leaving the route under-covered |
-| Notes | Four Towers use Archer, Cannon, and Magic; exact repeated support family remains TBD |
+| Notes | Player Health 6; 40 Monsters; Progress `[3,3,4,4,4,4]`; coherent Builds with sensible multi-zone placement are accepted at `0-3` leaks |
 
 Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
-| Core | 1 | Magic | L2, one Basic, one Behaviour, no Elemental |
-| Support | 3 | Archer and Cannon are required; the third support family is TBD | L1, no Upgrades |
+| Core | 1 | Magic | L2, Faster Orbit, Arcane Field, no Elemental |
+| Support | 3 | Archer ×2 and Cannon ×1 | L1, no Upgrades |
 
 ## 4.4 Stage4
 
-Status: Reference Build Baseline v0.2
+Status: Accepted Stage4 Calibration v1 (Task013, 2026-08-29)
 
 | Field | Design Target |
 |---|---|
 | Primary Experience | Use Drone pursuit to answer expanded spatial pressure |
 | New Content | Drone |
-| Required Capability | Coverage that remains useful across an expanded route |
-| Expected Anti-pattern | Rely only on local fixed firepower that cannot cover the expanded route |
-| Notes | Five Towers use all four TowerFamilies; exact repeated support family remains TBD |
+| Required Capability | Close the early map shortcut with Support coverage, then retain useful coverage across the expanded route |
+| Expected Anti-pattern | Horizontal L1 expansion or a local fixed core that lacks late cross-zone pursuit |
+| Notes | Player Health 6; 56 Monsters; Progress `[3,3,4,4,4,8,8]`; Orc HP520 elite capstone; accepted Builds clear at `0-4` leaks |
 
 Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
-| Core | 1 | Drone | L2, one Basic, one Behaviour, no Elemental |
-| Support | 4 | Archer, Cannon, and Magic are required; the fourth support family is TBD | L1, no Upgrades |
+| Core | 1 | Drone | L2, Expanded Patrol, Double Drones, no Elemental |
+| Support | 4 | Archer ×2, Cannon ×1, Magic ×1 | L1, no Upgrades |
 
 ## 4.5 Stage5
 

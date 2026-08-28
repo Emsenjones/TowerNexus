@@ -112,8 +112,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Orc
-  moveSpeed: 0.2
-  maxHealth: 480
+  moveSpeed: 0.25
+  maxHealth: 520
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2
