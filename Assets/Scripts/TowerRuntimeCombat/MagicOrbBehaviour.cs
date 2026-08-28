@@ -500,9 +500,11 @@ internal sealed class MagicOrbGroupRuntime
             return false;
         }
 
-        float contactDistanceSqr = contactDistance * contactDistance;
         Vector3 monsterPosition = EffectTargetResolver.GetMonsterHitPosition(monster);
-        return (monsterPosition - member.transform.position).sqrMagnitude <= contactDistanceSqr;
+        return IsWithinPlanarContactDistance(
+            member.transform.position,
+            monsterPosition,
+            contactDistance);
     }
 
     private bool TryResolveMemberContact(MagicOrbBehaviour member, MonsterBehaviour monster)
@@ -518,8 +520,10 @@ internal sealed class MagicOrbGroupRuntime
 
         Vector3 hitPosition = EffectTargetResolver.GetMonsterHitPosition(monster);
 
-        if ((hitPosition - member.transform.position).sqrMagnitude >
-            contactDistance * contactDistance)
+        if (!IsWithinPlanarContactDistance(
+                member.transform.position,
+                hitPosition,
+                contactDistance))
         {
             return false;
         }
@@ -554,6 +558,17 @@ internal sealed class MagicOrbGroupRuntime
         member.RecordContact(monster, Time.time + sameTargetHitCooldown);
 
         return true;
+    }
+
+    private static bool IsWithinPlanarContactDistance(
+        Vector3 orbPosition,
+        Vector3 monsterHitPosition,
+        float maximumDistance)
+    {
+        float deltaX = monsterHitPosition.x - orbPosition.x;
+        float deltaZ = monsterHitPosition.z - orbPosition.z;
+        return deltaX * deltaX + deltaZ * deltaZ <=
+               maximumDistance * maximumDistance;
     }
 
     private void CompleteNormally()

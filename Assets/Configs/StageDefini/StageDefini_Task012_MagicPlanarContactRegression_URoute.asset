@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f1fd7e4d8684ac4870eaec94bee5846, type: 3}
+  m_Name: StageDefini_Task012_MagicPlanarContactRegression_URoute
+  m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
+  displayName: Task012 Magic Planar Contact Regression - U Route
+  playerMaxHealth: 100
+  playerProgressRequirements: 02000000e7030000
+  mapTemplate: {fileID: 3273336904907436118, guid: a53fa999acaa84ea6baba99ebd192647, type: 3}
+  monsterWaveConfig: {fileID: 11400000, guid: 1f6e89d6b7524df0b6a20d43e55f2c91, type: 2}
+  towerDraftPool:
+  - {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+  towerUpgradeDraftPool: []
+  showStageIntroduction: 0
+  introducedTowers: []
+  introducedTowerUpgrades: []

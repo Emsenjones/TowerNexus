@@ -32,8 +32,8 @@ failure case.
 | Task010 | Completed Stage1 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task010A | Monster placement-route continuity implementation checkpoint |
 | Task011 | Completed Stage2 Progress, fixed-speed Monster Profile, Wave, Player Health, and Build-envelope calibration |
-| Task012 | Ready Stage3 Progress, fixed-speed Monster Profile, and Wave calibration |
-| Task013 | Stage4 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task012 | Completed Stage3 Progress, fixed-speed Wave, Player Health, Magic contact, placement, and Build-envelope calibration |
+| Task013 | Ready Stage4 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task014 | Stage5 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task015 | Stage6 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task016 | Fast-Monster identity and reviewed Wave substitutions |
@@ -77,7 +77,17 @@ resolutions after the final Draft node. The Reference and coherent alternatives
 clear within the reviewed Build-maturation margin; the primary Horizontal
 Sprawl and Fragmented Investment Anti-patterns fail on the sixth leak. Upgrade
 order remains meaningful, so the Reference is a positive control rather than a
-perfect or unique answer. Task012 is ready to begin Stage3 calibration.
+perfect or unique answer.
+
+Task012 completed Stage3 V4 calibration on 2026-08-28. Its accepted Stage uses
+Player Health `6`, Progress Requirements `[3,3,4,4,4,4]`, `40` Monsters, and
+`18` resolutions after the final Draft node. Reference, Behaviour-alternative,
+and Basic-only Builds clear inside the Stage3-specific `0-3` leak margin when
+placed across useful route zones. Frozen single-zone concentration fails from
+measured local overlap and missing coverage, while two pure seven-L1 horizontal
+expansion candidates fail from absent vertical growth. The Magic planar-contact
+correction also passes focused Straight/L/U geometry regression. Task013 is
+ready to begin Stage4 calibration.
 
 Task010A separately owns the dedicated ten-fixture movement acceptance and
 Stage1 Reference movement regression. Stage2 schema-22 records validate the

@@ -1,0 +1,2612 @@
+{
+    "schemaVersion": 23,
+    "generatedAtLocal": "2026-08-28T19:46:28+08:00",
+    "runLabel": "Task012_PhaseF_MagicPlanarContactRegression_LRoute_HP480_MagicL1_BaseCycle22_Damage25_Contact030_PlanarXZ_NoUpgrade_Schema23_01",
+    "terminalState": "Victory",
+    "failureReason": "",
+    "fixture": {
+        "stageDefinitionName": "StageDefini_Task012_MagicPlanarContactRegression",
+        "stageDisplayName": "Task012 Magic Planar Contact Regression",
+        "configuredPlayerMaxHealth": 100,
+        "mapTemplateName": "Prefab_Map_Default_LRoute",
+        "runtimeMapName": "Prefab_Map_Default_LRoute_Runtime",
+        "mapWidth": 10,
+        "mapLength": 10,
+        "mapNodeSize": 1.0,
+        "mapNodes": [
+            {
+                "x": 0,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 0,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 1,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 1,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 1,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 8,
+                "nodeType": "Spawn",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 2,
+                "nodeType": "Target",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            }
+        ],
+        "waveConfigName": "Config_MonsterWave_Task012_MagicPlanarContactRegression",
+        "expectedWaveCountAvailable": true,
+        "expectedWaveCount": 2,
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 42,
+        "observedMinimumMonsterHealth": 60,
+        "observedMaximumMonsterHealth": 4800,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 4.645785331726074,
+        "waves": [
+            {
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_Dragon",
+                "monsterDisplayName": "Dragon",
+                "maximumHealth": 60,
+                "moveSpeed": 0.25,
+                "count": 2,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 5.0
+            },
+            {
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "monsterDisplayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeed": 0.25,
+                "count": 40,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 90.0
+            }
+        ],
+        "placementRouteForcedRelocationExpectation": "Ignore"
+    },
+    "combat": {
+        "spawned": 42,
+        "resolved": 42,
+        "killed": 1,
+        "leaked": 41,
+        "unresolved": 0,
+        "notSpawned": 0,
+        "killRate": 0.02380952425301075,
+        "effectiveDamage": 2510,
+        "totalObservedHealth": 192120,
+        "damageCoverage": 0.013064751401543618,
+        "leakedRemainingHealth": 189610,
+        "averageLeakedRemainingHealth": 4624.63427734375,
+        "peakAlive": 21
+    },
+    "damageDiagnostics": {
+        "towerScaledResolutionCount": 101,
+        "towerScaledRejectedCount": 0,
+        "towerScaledSuccessfulApplicationCount": 101,
+        "towerScaledAppliedDamageTotal": 2525,
+        "fixedBuffResolutionCount": 0,
+        "fixedBuffSuccessfulApplicationCount": 0,
+        "fixedBuffAppliedDamageTotal": 0,
+        "maximumTowerScaledRelativeRoundingError": 0.0,
+        "towerScaledSignatures": [
+            {
+                "towerInstanceId": -1143618,
+                "towerDisplayName": "Magic Tower",
+                "towerFamily": "Magic",
+                "level": 1,
+                "levelBasicDamage": 25,
+                "rawDamageBonus": 0.0,
+                "resolvedBasicDamage": 25.0,
+                "damageSourceType": "PrimaryDirect",
+                "effectDefinitionName": "",
+                "actionOrdinal": -1,
+                "damageScale": 1.0,
+                "rawProduct": 25.0,
+                "finalDamage": 25,
+                "relativeRoundingError": 0.0,
+                "resolutionCount": 101,
+                "successfulApplicationCount": 101,
+                "appliedDamageTotal": 2525
+            }
+        ],
+        "towerScaledRejections": [],
+        "fixedBuffSignatures": []
+    },
+    "timing": {
+        "runDurationSeconds": 244.93255615234376,
+        "spawnSpanSeconds": 190.47720336914063,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 190.47720336914063,
+        "battleDurationSeconds": 239.92837524414063,
+        "secondsAfterFinalDraft": 190.48741149902345,
+        "finalBuildCommitObserved": true,
+        "finalBuildCommittedAtSeconds": 7.967635154724121,
+        "secondsAfterFinalBuildCommit": 236.9649200439453
+    },
+    "player": {
+        "initialHealth": 100,
+        "finalHealth": 59,
+        "maximumHealth": 100
+    },
+    "progression": {
+        "requirements": [
+            2,
+            999
+        ],
+        "expectedLevelUpCount": 2,
+        "expectedTotalDraftCount": 3,
+        "expectedFinalDraftResolutionNode": 1001,
+        "initialDraftCompleted": true,
+        "observedLevelUpCount": 1,
+        "observedTotalDraftCount": 2,
+        "finalLevel": 2,
+        "finalProgress": 40,
+        "finalRequiredProgress": 999,
+        "observedFinalDraftResolutionNode": 2,
+        "resolutionsAfterFinalDraft": 40,
+        "events": [
+            {
+                "ordinal": 1,
+                "kind": "Initial",
+                "resolvedMonsterCount": 0,
+                "playerLevel": 1,
+                "currentProgress": 0,
+                "requiredProgress": 2,
+                "activeTimeSeconds": 0.0,
+                "spawned": 0,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 0,
+                "playerHealth": 100
+            },
+            {
+                "ordinal": 2,
+                "kind": "LevelUp",
+                "resolvedMonsterCount": 2,
+                "playerLevel": 2,
+                "currentProgress": 0,
+                "requiredProgress": 999,
+                "activeTimeSeconds": 54.44514083862305,
+                "spawned": 2,
+                "resolved": 2,
+                "killed": 1,
+                "leaked": 1,
+                "alive": 0,
+                "playerHealth": 99
+            }
+        ]
+    },
+    "waveRuntime": {
+        "observedWaveStartCount": 2,
+        "observedWaveCompletionCount": 2,
+        "events": [
+            {
+                "ordinal": 1,
+                "kind": "SpawnStarted",
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_Dragon",
+                "configuredCount": 2,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 5.0,
+                "activeTimeSeconds": 5.004171371459961,
+                "spawned": 0,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 0,
+                "playerHealth": 100
+            },
+            {
+                "ordinal": 2,
+                "kind": "SpawnCompleted",
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_Dragon",
+                "configuredCount": 2,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 5.0,
+                "activeTimeSeconds": 7.518449783325195,
+                "spawned": 2,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 2,
+                "playerHealth": 100
+            },
+            {
+                "ordinal": 3,
+                "kind": "SpawnStarted",
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "configuredCount": 40,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 90.0,
+                "activeTimeSeconds": 97.51873016357422,
+                "spawned": 2,
+                "resolved": 2,
+                "killed": 1,
+                "leaked": 1,
+                "alive": 0,
+                "playerHealth": 99
+            },
+            {
+                "ordinal": 4,
+                "kind": "SpawnCompleted",
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "configuredCount": 40,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 90.0,
+                "activeTimeSeconds": 195.48138427734376,
+                "spawned": 42,
+                "resolved": 22,
+                "killed": 1,
+                "leaked": 21,
+                "alive": 20,
+                "playerHealth": 79
+            }
+        ],
+        "resolutionSummaries": [
+            {
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_Dragon",
+                "configuredCount": 2,
+                "spawned": 2,
+                "resolved": 2,
+                "killed": 1,
+                "leaked": 1,
+                "unresolvedAtReport": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 110,
+                "leakedRemainingHealth": 10,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 36.55062484741211,
+                "lastResolutionAtSeconds": 54.44514083862305
+            },
+            {
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "configuredCount": 40,
+                "spawned": 40,
+                "resolved": 40,
+                "killed": 0,
+                "leaked": 40,
+                "unresolvedAtReport": 0,
+                "successfulDamageApplications": 96,
+                "effectiveDamage": 2400,
+                "leakedRemainingHealth": 189600,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 146.90345764160157,
+                "lastResolutionAtSeconds": 244.93255615234376
+            }
+        ]
+    },
+    "draftRuntime": {
+        "configuredGenerationMode": "Fixed",
+        "configuredFixedStepCount": 3,
+        "observedAttemptCount": 2,
+        "committedSelectionCount": 2,
+        "towerDraftPool": [
+            {
+                "resultType": "TowerDraft",
+                "assetName": "Config_TowerDefini_MagicTower",
+                "displayName": "Magic Tower",
+                "towerFamily": "Magic",
+                "upgradeLayer": "",
+                "requiredTowerLevel": 0,
+                "multiplicity": 1
+            }
+        ],
+        "towerUpgradeDraftPool": [],
+        "attempts": [
+            {
+                "attemptToken": "1:1",
+                "ordinal": 1,
+                "sessionKind": "Initial",
+                "generationMode": "Fixed",
+                "resolvedMonsterCount": 0,
+                "playerLevel": 1,
+                "currentProgress": 0,
+                "requiredProgress": 2,
+                "activeTimeSeconds": 0.0,
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 0.0,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_MagicTower",
+                        "displayName": "Magic Tower",
+                        "towerFamily": "Magic",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_MagicTower",
+                        "displayName": "Magic Tower",
+                        "towerFamily": "Magic",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerDraft",
+                    "assetName": "Config_TowerDefini_MagicTower",
+                    "displayName": "Magic Tower",
+                    "towerFamily": "Magic",
+                    "upgradeLayer": "",
+                    "requiredTowerLevel": 0,
+                    "multiplicity": 1
+                }
+            },
+            {
+                "attemptToken": "1:2",
+                "ordinal": 2,
+                "sessionKind": "LevelUp",
+                "generationMode": "Fixed",
+                "resolvedMonsterCount": 2,
+                "playerLevel": 2,
+                "currentProgress": 0,
+                "requiredProgress": 999,
+                "activeTimeSeconds": 54.44514083862305,
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 54.44514083862305,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_MagicTower",
+                        "displayName": "Magic Tower",
+                        "towerFamily": "Magic",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_MagicTower",
+                        "displayName": "Magic Tower",
+                        "towerFamily": "Magic",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerDraft",
+                    "assetName": "Config_TowerDefini_MagicTower",
+                    "displayName": "Magic Tower",
+                    "towerFamily": "Magic",
+                    "upgradeLayer": "",
+                    "requiredTowerLevel": 0,
+                    "multiplicity": 1
+                }
+            }
+        ]
+    },
+    "investmentRuntime": {
+        "committedInvestmentCount": 1,
+        "finalBuildCommitObserved": true,
+        "finalBuildCommitResolutionNode": 0,
+        "resolutionsAfterFinalBuildCommit": 42,
+        "commits": [
+            {
+                "ordinal": 1,
+                "kind": "Deployment",
+                "authoritySource": "Draft",
+                "draftAttemptToken": "1:1",
+                "draftOrdinal": 1,
+                "draftResultType": "TowerDraft",
+                "draftAssetName": "Config_TowerDefini_MagicTower",
+                "towerInstanceId": -1143618,
+                "towerDisplayName": "Magic Tower",
+                "towerFamily": "Magic",
+                "previousLevel": 0,
+                "currentLevel": 1,
+                "upgradeLayer": "",
+                "activeTimeSeconds": 7.967635154724121,
+                "resolvedMonsterCount": 0,
+                "spawned": 2,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 2,
+                "playerHealth": 100
+            }
+        ]
+    },
+    "execution": {
+        "initialDraftCompleted": true,
+        "allExpectedLevelUpsObserved": false,
+        "expectedFinalPlayerLevelReached": false,
+        "allConfiguredWavesStarted": true,
+        "allConfiguredWavesCompleted": true,
+        "allConfiguredMonstersSpawned": true,
+        "finalBuildCommitted": false,
+        "postFinalBuildCombatObserved": true
+    },
+    "integrity": {
+        "fixtureSnapshotComplete": true,
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true,
+        "monsterRuntimeCountsMatch": true,
+        "monsterRuntimeDamageMatches": true,
+        "monsterRuntimeRegistrationCoverageMatch": true,
+        "monsterRuntimeStartedAtFullHealth": true,
+        "levelUpResolutionNodesMatch": true,
+        "waveMonsterAttributionMatches": true,
+        "draftAttemptSelectionsMatch": true,
+        "draftAttemptCountMatchesProgression": true,
+        "towerDeploymentCoverageMatches": true,
+        "investmentCommitsMatchDraftSelections": true,
+        "towerWaveAttributionMatches": true,
+        "towerRouteDamageCoverageMatches": true,
+        "damageDiagnosticsCountsMatch": true,
+        "droneBurstDiagnosticsConsistent": true,
+        "elementalOpportunityDiagnosticsConsistent": true,
+        "elementalHitReactionDiagnosticsConsistent": true,
+        "buffDiagnosticsConsistent": true,
+        "buffStackUnitAccountingConsistent": true,
+        "buffWaveAttributionMatches": true,
+        "placementRouteBatchCountsMatch": true,
+        "placementRouteCommitStatePreserved": true,
+        "placementRouteTopologyValid": true,
+        "placementRouteGameplayStatePreserved": true,
+        "placementRouteCombatOwnershipPreserved": true,
+        "placementRouteLifecycleConsistent": true,
+        "placementRouteForcedRelocationUsageValid": true
+    },
+    "monsterRuntime": {
+        "observedTypes": 2,
+        "instanceSamples": 42,
+        "registrationObservedInstances": 42,
+        "fallbackObservedInstances": 0,
+        "instancesObservedAtFullHealth": 42,
+        "instancesObservedAfterDamage": 0,
+        "unobservedDamageAtObservationStart": 0,
+        "successfulDamageApplications": 101,
+        "types": [
+            {
+                "runtimeTemplateName": "Prefab_MonsterCandidate_Dragon",
+                "displayName": "Dragon",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 2,
+                "resolved": 2,
+                "killed": 1,
+                "leaked": 1,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 2,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 2,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 110,
+                "leakedRemainingHealth": 10,
+                "resolutionLifetimeSeconds": {
+                    "samples": 2,
+                    "minimum": 29.032176971435548,
+                    "average": 39.236572265625,
+                    "maximum": 49.44097137451172
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 1,
+                    "minimum": 29.032176971435548,
+                    "average": 29.032176971435548,
+                    "maximum": 29.032176971435548
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 1,
+                    "minimum": 49.44097137451172,
+                    "average": 49.44097137451172,
+                    "maximum": 49.44097137451172
+                }
+            },
+            {
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 40,
+                "resolved": 40,
+                "killed": 0,
+                "leaked": 40,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 40,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 40,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 96,
+                "effectiveDamage": 2400,
+                "leakedRemainingHealth": 189600,
+                "resolutionLifetimeSeconds": {
+                    "samples": 40,
+                    "minimum": 49.02345275878906,
+                    "average": 49.679656982421878,
+                    "maximum": 50.568878173828128
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 0,
+                    "minimum": 0.0,
+                    "average": 0.0,
+                    "maximum": 0.0
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 40,
+                    "minimum": 49.02345275878906,
+                    "average": 49.679656982421878,
+                    "maximum": 50.568878173828128
+                }
+            }
+        ],
+        "instances": [
+            {
+                "spawnOrdinal": 1,
+                "sourceWaveNumber": 1,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_Dragon",
+                "displayName": "Dragon",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 5.004171371459961,
+                "resolvedAtSeconds": 54.44514083862305,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 10,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.44097137451172
+            },
+            {
+                "spawnOrdinal": 2,
+                "sourceWaveNumber": 1,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_Dragon",
+                "displayName": "Dragon",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 7.518449783325195,
+                "resolvedAtSeconds": 36.55062484741211,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 29.032176971435548
+            },
+            {
+                "spawnOrdinal": 3,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 97.51873016357422,
+                "resolvedAtSeconds": 146.90345764160157,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.384727478027347
+            },
+            {
+                "spawnOrdinal": 4,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 100.02422332763672,
+                "resolvedAtSeconds": 149.20773315429688,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.183509826660159
+            },
+            {
+                "spawnOrdinal": 5,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 102.52719116210938,
+                "resolvedAtSeconds": 152.37384033203126,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.846649169921878
+            },
+            {
+                "spawnOrdinal": 6,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 4,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 105.02825927734375,
+                "resolvedAtSeconds": 154.348388671875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.32012939453125
+            },
+            {
+                "spawnOrdinal": 7,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 5,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 107.53675079345703,
+                "resolvedAtSeconds": 157.84011840820313,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 50.303367614746097
+            },
+            {
+                "spawnOrdinal": 8,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 6,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 110.04642486572266,
+                "resolvedAtSeconds": 159.52395629882813,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.47753143310547
+            },
+            {
+                "spawnOrdinal": 9,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 7,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 112.54757690429688,
+                "resolvedAtSeconds": 162.5999755859375,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 50.052398681640628
+            },
+            {
+                "spawnOrdinal": 10,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 8,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 115.067138671875,
+                "resolvedAtSeconds": 164.88661193847657,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.81947326660156
+            },
+            {
+                "spawnOrdinal": 11,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 9,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 117.5794677734375,
+                "resolvedAtSeconds": 167.24252319335938,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.663055419921878
+            },
+            {
+                "spawnOrdinal": 12,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 10,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 120.20353698730469,
+                "resolvedAtSeconds": 169.73260498046876,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.52906799316406
+            },
+            {
+                "spawnOrdinal": 13,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 11,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 122.70892333984375,
+                "resolvedAtSeconds": 172.97152709960938,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4700,
+                "successfulDamageApplications": 4,
+                "effectiveDamage": 100,
+                "lifetimeSeconds": 50.262603759765628
+            },
+            {
+                "spawnOrdinal": 14,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 12,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 125.22955322265625,
+                "resolvedAtSeconds": 175.2176055908203,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.98805236816406
+            },
+            {
+                "spawnOrdinal": 15,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 13,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 127.7327880859375,
+                "resolvedAtSeconds": 177.1845245361328,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.45173645019531
+            },
+            {
+                "spawnOrdinal": 16,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 14,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 130.24429321289063,
+                "resolvedAtSeconds": 180.64028930664063,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 50.39599609375
+            },
+            {
+                "spawnOrdinal": 17,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 15,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 132.74644470214845,
+                "resolvedAtSeconds": 182.48370361328126,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.73725891113281
+            },
+            {
+                "spawnOrdinal": 18,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 16,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 135.25250244140626,
+                "resolvedAtSeconds": 184.46905517578126,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.216552734375
+            },
+            {
+                "spawnOrdinal": 19,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 17,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 137.7574920654297,
+                "resolvedAtSeconds": 186.93798828125,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.18049621582031
+            },
+            {
+                "spawnOrdinal": 20,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 18,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 140.2585906982422,
+                "resolvedAtSeconds": 189.7801513671875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.52156066894531
+            },
+            {
+                "spawnOrdinal": 21,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 19,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 142.76107788085938,
+                "resolvedAtSeconds": 192.65713500976563,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4700,
+                "successfulDamageApplications": 4,
+                "effectiveDamage": 100,
+                "lifetimeSeconds": 49.89605712890625
+            },
+            {
+                "spawnOrdinal": 22,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 20,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 145.26356506347657,
+                "resolvedAtSeconds": 194.5247344970703,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.26116943359375
+            },
+            {
+                "spawnOrdinal": 23,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 21,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 147.764404296875,
+                "resolvedAtSeconds": 197.97792053222657,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 50.21351623535156
+            },
+            {
+                "spawnOrdinal": 24,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 22,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 150.26588439941407,
+                "resolvedAtSeconds": 199.4000244140625,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.13414001464844
+            },
+            {
+                "spawnOrdinal": 25,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 23,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 152.76699829101563,
+                "resolvedAtSeconds": 202.5397491455078,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.77275085449219
+            },
+            {
+                "spawnOrdinal": 26,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 24,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 155.27682495117188,
+                "resolvedAtSeconds": 205.0546875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.777862548828128
+            },
+            {
+                "spawnOrdinal": 27,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 25,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 157.84011840820313,
+                "resolvedAtSeconds": 207.8817138671875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 50.041595458984378
+            },
+            {
+                "spawnOrdinal": 28,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 26,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 160.35086059570313,
+                "resolvedAtSeconds": 210.0113983154297,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.66053771972656
+            },
+            {
+                "spawnOrdinal": 29,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 27,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 162.85462951660157,
+                "resolvedAtSeconds": 212.7168426513672,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.862213134765628
+            },
+            {
+                "spawnOrdinal": 30,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 28,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 165.36514282226563,
+                "resolvedAtSeconds": 215.41966247558595,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 50.05451965332031
+            },
+            {
+                "spawnOrdinal": 31,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 29,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 167.8684844970703,
+                "resolvedAtSeconds": 217.4322967529297,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.563812255859378
+            },
+            {
+                "spawnOrdinal": 32,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 30,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 170.37779235839845,
+                "resolvedAtSeconds": 220.1012725830078,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.723480224609378
+            },
+            {
+                "spawnOrdinal": 33,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 31,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 172.89089965820313,
+                "resolvedAtSeconds": 223.45977783203126,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 50.568878173828128
+            },
+            {
+                "spawnOrdinal": 34,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 32,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 175.39300537109376,
+                "resolvedAtSeconds": 224.4164581298828,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.02345275878906
+            },
+            {
+                "spawnOrdinal": 35,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 33,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 177.89697265625,
+                "resolvedAtSeconds": 227.70758056640626,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.81060791015625
+            },
+            {
+                "spawnOrdinal": 36,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 34,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 180.40464782714845,
+                "resolvedAtSeconds": 229.88238525390626,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4775,
+                "successfulDamageApplications": 1,
+                "effectiveDamage": 25,
+                "lifetimeSeconds": 49.47773742675781
+            },
+            {
+                "spawnOrdinal": 37,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 35,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 182.90467834472657,
+                "resolvedAtSeconds": 232.19956970214845,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.294891357421878
+            },
+            {
+                "spawnOrdinal": 38,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 36,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 185.41525268554688,
+                "resolvedAtSeconds": 235.20033264160157,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.78507995605469
+            },
+            {
+                "spawnOrdinal": 39,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 37,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 187.92247009277345,
+                "resolvedAtSeconds": 237.1947479248047,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.27227783203125
+            },
+            {
+                "spawnOrdinal": 40,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 38,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 190.42852783203126,
+                "resolvedAtSeconds": 239.7997283935547,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4725,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 75,
+                "lifetimeSeconds": 49.37120056152344
+            },
+            {
+                "spawnOrdinal": 41,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 39,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 192.93663024902345,
+                "resolvedAtSeconds": 242.7717742919922,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.83514404296875
+            },
+            {
+                "spawnOrdinal": 42,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 40,
+                "runtimeTemplateName": "Prefab_MonsterCandidate_EvilMage",
+                "displayName": "Evil Mage",
+                "maximumHealth": 4800,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 195.48138427734376,
+                "resolvedAtSeconds": 244.93255615234376,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 4800,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 4750,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 50,
+                "lifetimeSeconds": 49.451171875
+            }
+        ]
+    },
+    "placementRouteRuntime": {
+        "forcedRelocationExpectation": "Ignore",
+        "committedPlacementCount": 1,
+        "observedMonsterRevisionCount": 2,
+        "alreadyOnNewRouteCount": 2,
+        "reachableRouteRejoinCount": 0,
+        "forcedRelocationCount": 0,
+        "lifecycleObservationCount": 0,
+        "commits": [
+            {
+                "ordinal": 1,
+                "towerInstanceId": -1143618,
+                "activeTimeSeconds": 7.967635154724121,
+                "footprint": [
+                    {
+                        "x": 2,
+                        "z": 3
+                    }
+                ],
+                "authoritativeRoute": [
+                    {
+                        "x": 1,
+                        "z": 8
+                    },
+                    {
+                        "x": 1,
+                        "z": 7
+                    },
+                    {
+                        "x": 1,
+                        "z": 6
+                    },
+                    {
+                        "x": 1,
+                        "z": 5
+                    },
+                    {
+                        "x": 1,
+                        "z": 4
+                    },
+                    {
+                        "x": 1,
+                        "z": 3
+                    },
+                    {
+                        "x": 1,
+                        "z": 2
+                    },
+                    {
+                        "x": 2,
+                        "z": 2
+                    },
+                    {
+                        "x": 3,
+                        "z": 2
+                    },
+                    {
+                        "x": 4,
+                        "z": 2
+                    },
+                    {
+                        "x": 5,
+                        "z": 2
+                    },
+                    {
+                        "x": 6,
+                        "z": 2
+                    },
+                    {
+                        "x": 7,
+                        "z": 2
+                    },
+                    {
+                        "x": 8,
+                        "z": 2
+                    }
+                ],
+                "playerHealthBefore": 100,
+                "playerHealthAfter": 100,
+                "playerProgressBefore": 0,
+                "playerProgressAfter": 0,
+                "aliveMonsterCountBefore": 2,
+                "aliveMonsterCountAfter": 2,
+                "resolvedMonsterCountBefore": 0,
+                "resolvedMonsterCountAfter": 0,
+                "alreadyOnNewRouteCount": 2,
+                "reachableRouteRejoinCount": 0,
+                "forcedRelocationCount": 0,
+                "combatOwnershipFingerprintBefore": "",
+                "combatOwnershipFingerprintAfter": "",
+                "monsters": [
+                    {
+                        "revisionId": 1,
+                        "monsterInstanceId": -1143010,
+                        "spawnOrdinal": 1,
+                        "sourceWaveNumber": 1,
+                        "sourceWaveSpawnOrdinal": 1,
+                        "mode": "AlreadyOnNewRoute",
+                        "forcedRelocationReason": "None",
+                        "capturedWorldPosition": {
+                            "x": -3.4675748348236086,
+                            "y": 0.0,
+                            "z": 2.764970541000366
+                        },
+                        "immediatePostCommitPosition": {
+                            "x": -3.4675748348236086,
+                            "y": 0.0,
+                            "z": 2.764970541000366
+                        },
+                        "preparedWorldPosition": {
+                            "x": -3.4675748348236086,
+                            "y": 0.0,
+                            "z": 2.764970541000366
+                        },
+                        "hasComparableCapturedPosition": true,
+                        "hasComparableImmediateDisplacement": true,
+                        "immediateDisplacement": 0.0,
+                        "hasComparableRelocationDistance": false,
+                        "plannedRelocationDistance": 0.0,
+                        "plannedConnectorDistance": 0.0,
+                        "requiresExactTargetApproach": false,
+                        "requiresConnector": false,
+                        "joinedAtCommit": false,
+                        "physicalGrid": {
+                            "x": 1,
+                            "z": 7
+                        },
+                        "joinGrid": {
+                            "x": 1,
+                            "z": 7
+                        },
+                        "recoveryGrid": {
+                            "x": 0,
+                            "z": 0
+                        },
+                        "connectorPath": [],
+                        "preparedContinuation": [
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 2,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 4,
+                                "z": 2
+                            },
+                            {
+                                "x": 5,
+                                "z": 2
+                            },
+                            {
+                                "x": 6,
+                                "z": 2
+                            },
+                            {
+                                "x": 7,
+                                "z": 2
+                            },
+                            {
+                                "x": 8,
+                                "z": 2
+                            }
+                        ],
+                        "routeSuffix": [
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 2,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 4,
+                                "z": 2
+                            },
+                            {
+                                "x": 5,
+                                "z": 2
+                            },
+                            {
+                                "x": 6,
+                                "z": 2
+                            },
+                            {
+                                "x": 7,
+                                "z": 2
+                            },
+                            {
+                                "x": 8,
+                                "z": 2
+                            }
+                        ],
+                        "preGameplayStateFingerprint": "health=60/60;speed=1;locked=False;lane=-1143010;targetable=True;buff=1|0|0|0",
+                        "postGameplayStateFingerprint": "health=60/60;speed=1;locked=False;lane=-1143010;targetable=True;buff=1|0|0|0"
+                    },
+                    {
+                        "revisionId": 2,
+                        "monsterInstanceId": -1143370,
+                        "spawnOrdinal": 2,
+                        "sourceWaveNumber": 1,
+                        "sourceWaveSpawnOrdinal": 2,
+                        "mode": "AlreadyOnNewRoute",
+                        "forcedRelocationReason": "None",
+                        "capturedWorldPosition": {
+                            "x": -3.500591516494751,
+                            "y": 0.0,
+                            "z": 3.3928284645080568
+                        },
+                        "immediatePostCommitPosition": {
+                            "x": -3.500591516494751,
+                            "y": 0.0,
+                            "z": 3.3928284645080568
+                        },
+                        "preparedWorldPosition": {
+                            "x": -3.500591516494751,
+                            "y": 0.0,
+                            "z": 3.3928284645080568
+                        },
+                        "hasComparableCapturedPosition": true,
+                        "hasComparableImmediateDisplacement": true,
+                        "immediateDisplacement": 0.0,
+                        "hasComparableRelocationDistance": false,
+                        "plannedRelocationDistance": 0.0,
+                        "plannedConnectorDistance": 0.0,
+                        "requiresExactTargetApproach": false,
+                        "requiresConnector": false,
+                        "joinedAtCommit": false,
+                        "physicalGrid": {
+                            "x": 1,
+                            "z": 8
+                        },
+                        "joinGrid": {
+                            "x": 1,
+                            "z": 8
+                        },
+                        "recoveryGrid": {
+                            "x": 0,
+                            "z": 0
+                        },
+                        "connectorPath": [],
+                        "preparedContinuation": [
+                            {
+                                "x": 1,
+                                "z": 8
+                            },
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 2,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 4,
+                                "z": 2
+                            },
+                            {
+                                "x": 5,
+                                "z": 2
+                            },
+                            {
+                                "x": 6,
+                                "z": 2
+                            },
+                            {
+                                "x": 7,
+                                "z": 2
+                            },
+                            {
+                                "x": 8,
+                                "z": 2
+                            }
+                        ],
+                        "routeSuffix": [
+                            {
+                                "x": 1,
+                                "z": 8
+                            },
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 2,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 4,
+                                "z": 2
+                            },
+                            {
+                                "x": 5,
+                                "z": 2
+                            },
+                            {
+                                "x": 6,
+                                "z": 2
+                            },
+                            {
+                                "x": 7,
+                                "z": 2
+                            },
+                            {
+                                "x": 8,
+                                "z": 2
+                            }
+                        ],
+                        "preGameplayStateFingerprint": "health=60/60;speed=1;locked=False;lane=-1143370;targetable=True;buff=1|0|0|0",
+                        "postGameplayStateFingerprint": "health=60/60;speed=1;locked=False;lane=-1143370;targetable=True;buff=1|0|0|0"
+                    }
+                ]
+            }
+        ],
+        "lifecycle": []
+    },
+    "towers": [
+        {
+            "instanceId": -1143618,
+            "displayName": "Magic Tower",
+            "family": "Magic",
+            "level": 1,
+            "deploymentObserved": true,
+            "deploymentOrdinal": 1,
+            "deployedAtSeconds": 7.967635154724121,
+            "deploymentWorldPosition": {
+                "x": -2.5,
+                "y": 0.0,
+                "z": -1.5
+            },
+            "deploymentGridPositions": [
+                {
+                    "x": 2,
+                    "z": 3
+                }
+            ],
+            "hasCombatRuntime": true,
+            "baseDamage": 25,
+            "baseRange": 1.5,
+            "baseCycleSeconds": 22.0,
+            "resolvedDamage": 25,
+            "resolvedRange": 1.5,
+            "resolvedCycleSeconds": 22.0,
+            "projectileRuntime": {
+                "projectilesReleased": 0,
+                "initialProjectilesReleased": 0,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 0,
+                "arcTargetResolvedImpacts": 0,
+                "arcIntendedTargetImpacts": 0,
+                "arcFallbackTargetImpacts": 0,
+                "arcPositionOnlyImpacts": 0,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 0,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 0.0,
+                "arcTargetRelation": {
+                    "sampledInitialImpacts": 0,
+                    "primaryIntendedTargetImpacts": 0,
+                    "primaryFallbackTargetImpacts": 0,
+                    "primaryPositionOnlyImpacts": 0,
+                    "additionalIntendedTargetImpacts": 0,
+                    "additionalFallbackTargetImpacts": 0,
+                    "additionalPositionOnlyImpacts": 0,
+                    "fallbackImmediateLaterSpawnImpacts": 0,
+                    "fallbackImmediateEarlierSpawnImpacts": 0,
+                    "fallbackNonAdjacentImpacts": 0,
+                    "fallbackUnknownRelationImpacts": 0,
+                    "positionOnlyNearestOtherAvailable": 0,
+                    "positionOnlyNearestOtherImmediateLaterSpawn": 0,
+                    "positionOnlyNearestOtherImmediateEarlierSpawn": 0,
+                    "positionOnlyNearestOtherNonAdjacent": 0,
+                    "positionOnlyNearestOtherUnknownRelation": 0,
+                    "positionOnlyWithoutNearestOther": 0,
+                    "observedMinimumHitDistanceThreshold": 0.0,
+                    "observedMaximumHitDistanceThreshold": 0.0,
+                    "confirmationToReleaseSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "releaseToImpactSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "plannedTravelTimeSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToFallbackDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "fallbackMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToPositionOnlyNearestOtherDistance": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "positionOnlyNearestOtherMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "samples": []
+                }
+            },
+            "droneBurstRuntime": {
+                "diagnosticsConsistent": true,
+                "drones": []
+            },
+            "upgrades": []
+        }
+    ],
+    "towerWaveSummaries": [
+        {
+            "towerInstanceId": -1143618,
+            "towerDisplayName": "Magic Tower",
+            "towerFamily": "Magic",
+            "waveNumber": 1,
+            "successfulDamageApplications": 5,
+            "effectiveTowerScaledDamage": 110,
+            "killingBlows": 1
+        },
+        {
+            "towerInstanceId": -1143618,
+            "towerDisplayName": "Magic Tower",
+            "towerFamily": "Magic",
+            "waveNumber": 2,
+            "successfulDamageApplications": 96,
+            "effectiveTowerScaledDamage": 2400,
+            "killingBlows": 0
+        }
+    ],
+    "towerRouteDamageCoverage": {
+        "observedTowerCount": 1,
+        "successfulDamageApplications": 101,
+        "locatedDamageApplications": 101,
+        "unresolvedRouteCellApplicationCount": 0,
+        "effectiveDamage": 2510,
+        "locatedEffectiveDamage": 2510,
+        "unresolvedRouteCellEffectiveDamage": 0,
+        "killingBlows": 1,
+        "locatedKillingBlows": 1,
+        "unresolvedRouteCellKillingBlows": 0,
+        "towers": [
+            {
+                "towerInstanceId": -1143618,
+                "towerDeploymentOrdinal": 1,
+                "towerDisplayName": "Magic Tower",
+                "towerFamily": "Magic",
+                "successfulDamageApplications": 101,
+                "locatedDamageApplications": 101,
+                "unresolvedRouteCellApplicationCount": 0,
+                "effectiveDamage": 2510,
+                "locatedEffectiveDamage": 2510,
+                "unresolvedRouteCellEffectiveDamage": 0,
+                "killingBlows": 1,
+                "locatedKillingBlows": 1,
+                "unresolvedRouteCellKillingBlows": 0,
+                "distinctDamagedMonsterCount": 42,
+                "distinctDamageRouteCellCount": 4,
+                "routeCells": [
+                    {
+                        "placementCommitOrdinal": 1,
+                        "x": 1,
+                        "z": 2,
+                        "successfulDamageApplications": 24,
+                        "effectiveDamage": 600,
+                        "killingBlows": 0,
+                        "distinctDamagedMonsterCount": 24
+                    },
+                    {
+                        "placementCommitOrdinal": 1,
+                        "x": 1,
+                        "z": 3,
+                        "successfulDamageApplications": 22,
+                        "effectiveDamage": 550,
+                        "killingBlows": 0,
+                        "distinctDamagedMonsterCount": 22
+                    },
+                    {
+                        "placementCommitOrdinal": 1,
+                        "x": 1,
+                        "z": 4,
+                        "successfulDamageApplications": 30,
+                        "effectiveDamage": 750,
+                        "killingBlows": 0,
+                        "distinctDamagedMonsterCount": 30
+                    },
+                    {
+                        "placementCommitOrdinal": 1,
+                        "x": 2,
+                        "z": 2,
+                        "successfulDamageApplications": 25,
+                        "effectiveDamage": 610,
+                        "killingBlows": 1,
+                        "distinctDamagedMonsterCount": 25
+                    }
+                ]
+            }
+        ],
+        "overlaps": []
+    },
+    "buffs": [],
+    "elementalOpportunityDiagnostics": {
+        "candidateResults": 0,
+        "eligibleResults": 0,
+        "dispatchedRequests": 0,
+        "diagnosticsConsistent": true,
+        "scopes": []
+    },
+    "elementalHitReactionDiagnostics": {
+        "totals": {
+            "observedReactionOpportunities": 0,
+            "evaluatedReactionOpportunities": 0,
+            "triggeredReactions": 0,
+            "blockedByReactionCooldown": 0,
+            "noValidReactionTarget": 0,
+            "invalidatedReactionOpportunities": 0,
+            "ownerResolvedByEarlierElementalReaction": 0,
+            "buffInstanceOrCycleChanged": 0,
+            "reactionTargetInvalidBeforeCommit": 0,
+            "reactionCommitRejected": 0,
+            "successfulReactionDamageTargets": 0,
+            "totalReactionFixedDamage": 0,
+            "reactionGapSampleCount": 0,
+            "reactionGapSeconds": {
+                "samples": 0,
+                "minimum": 0.0,
+                "average": 0.0,
+                "maximum": 0.0
+            }
+        },
+        "diagnosticsConsistent": true,
+        "buffs": []
+    }
+}

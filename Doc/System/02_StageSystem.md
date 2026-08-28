@@ -62,6 +62,32 @@ Every level from 2 through the Stage-authored maximum must make at least one Upg
 
 Introduction content explicitly authors presentation for this Stage. Introduced Towers must be members of the same Stage's Tower Draft Pool, and introduced Tower Upgrades must be members of the same Stage's Tower Upgrade Draft Pool. Stage System does not calculate introduction content by comparing adjacent Stages.
 
+## 2.1 Stage Calibration Interpretation
+
+A Stage calibration Reference Build is a reproducible positive control, not a
+unique solution or a runtime rule. Each Stage calibration task authors its own
+reviewed success margin together with its Wave, Player Health, Progress, Draft
+budget, legal Build fixtures, and placement assumptions.
+
+A coherent alternative is legal, internally purposeful, spends its available
+Draft decisions without an obvious dead allocation, and uses strategically
+reasonable placement. If it clears inside that Stage's reviewed margin, it is
+an accepted solution even when its composition, Upgrade package, damage
+distribution, or leak count differs from the Reference. Accepted combat values
+must not be weakened merely to make a non-Reference coherent solution fail.
+
+Negative fixtures remain intentional and explainable. A Stage may reject local
+coverage concentration, incomplete package investment, extreme horizontal
+expansion without vertical growth, or another named Anti-pattern when Recorder
+evidence ties the failure to the tested decision rather than a hidden family
+penalty or invalid runtime state.
+
+These are authoring and acceptance rules, not runtime classification logic.
+Stage System does not decide whether a live player Build is coherent, compare it
+with the Reference, or enforce a leak margin. Fixed Draft fixtures prove combat
+efficacy under controlled choices; natural offer probability and player-choice
+interpretation remain separately owned calibration work.
+
 ---
 
 # 3. Composition Flow

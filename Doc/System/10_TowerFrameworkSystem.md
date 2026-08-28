@@ -212,7 +212,7 @@ Archetype-specific authored data:
 
 Projectile entity authoring owns base movement speed, hit distance threshold, safety lifetime, optional impact Effect, optional impact presentation, and entity presentation.
 
-Magic Orb entity authoring owns base orbit, contact distance, lifetime, same-target contact cooldown, and entity presentation. Normal gameplay authoring contains no maximum-hit capacity; Orb-group lifetime is the normal completion boundary.
+Magic Orb entity authoring owns base orbit, contact distance, lifetime, same-target contact cooldown, and entity presentation. Contact distance is evaluated on the Monster movement plane; presentation-only vertical differences between an Orb and a Monster hit anchor do not reduce the authored horizontal contact allowance. The Monster hit anchor remains the damage and feedback position after contact succeeds. Normal gameplay authoring contains no maximum-hit capacity; Orb-group lifetime is the normal completion boundary.
 
 Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
 

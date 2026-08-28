@@ -1,8 +1,8 @@
 # Task013 - Stage4 Wave Calibration
 
-Status: Planned
+Status: Ready; Task012 Stage3 Wave Calibration accepted on 2026-08-28
 
-Depends on: Accepted Task012 Stage3 Wave Calibration
+Depends on: Completed Task012 Stage3 Wave Calibration
 
 Blocks: Task014, Task016, and Task017
 

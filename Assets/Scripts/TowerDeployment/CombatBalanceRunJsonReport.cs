@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 22;
+    public int schemaVersion = 23;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -34,6 +34,9 @@ internal sealed class CombatBalanceRunJsonReport
     public List<CombatBalanceTowerJson> towers = new List<CombatBalanceTowerJson>();
     public List<CombatBalanceTowerWaveJson> towerWaveSummaries =
         new List<CombatBalanceTowerWaveJson>();
+    public CombatBalanceTowerRouteDamageCoverageRuntimeJson
+        towerRouteDamageCoverage =
+            new CombatBalanceTowerRouteDamageCoverageRuntimeJson();
     public List<CombatBalanceBuffJson> buffs = new List<CombatBalanceBuffJson>();
     public CombatBalanceElementalOpportunityDiagnosticsJson
         elementalOpportunityDiagnostics =
@@ -563,6 +566,7 @@ internal sealed class CombatBalanceIntegrityJson
     public bool towerDeploymentCoverageMatches;
     public bool investmentCommitsMatchDraftSelections;
     public bool towerWaveAttributionMatches;
+    public bool towerRouteDamageCoverageMatches;
     public bool damageDiagnosticsCountsMatch;
     public bool droneBurstDiagnosticsConsistent;
     public bool elementalOpportunityDiagnosticsConsistent;
@@ -589,6 +593,75 @@ internal sealed class CombatBalanceTowerWaveJson
     public int successfulDamageApplications;
     public int effectiveTowerScaledDamage;
     public int killingBlows;
+}
+
+[Serializable]
+internal sealed class CombatBalanceTowerRouteDamageCoverageRuntimeJson
+{
+    public int observedTowerCount;
+    public int successfulDamageApplications;
+    public int locatedDamageApplications;
+    public int unresolvedRouteCellApplicationCount;
+    public int effectiveDamage;
+    public int locatedEffectiveDamage;
+    public int unresolvedRouteCellEffectiveDamage;
+    public int killingBlows;
+    public int locatedKillingBlows;
+    public int unresolvedRouteCellKillingBlows;
+    public List<CombatBalanceTowerRouteDamageCoverageJson> towers =
+        new List<CombatBalanceTowerRouteDamageCoverageJson>();
+    public List<CombatBalanceTowerRouteDamageOverlapJson> overlaps =
+        new List<CombatBalanceTowerRouteDamageOverlapJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceTowerRouteDamageCoverageJson
+{
+    public int towerInstanceId;
+    public int towerDeploymentOrdinal;
+    public string towerDisplayName;
+    public string towerFamily;
+    public int successfulDamageApplications;
+    public int locatedDamageApplications;
+    public int unresolvedRouteCellApplicationCount;
+    public int effectiveDamage;
+    public int locatedEffectiveDamage;
+    public int unresolvedRouteCellEffectiveDamage;
+    public int killingBlows;
+    public int locatedKillingBlows;
+    public int unresolvedRouteCellKillingBlows;
+    public int distinctDamagedMonsterCount;
+    public int distinctDamageRouteCellCount;
+    public List<CombatBalanceTowerRouteDamageCellJson> routeCells =
+        new List<CombatBalanceTowerRouteDamageCellJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceTowerRouteDamageCellJson
+{
+    public int placementCommitOrdinal;
+    public int x;
+    public int z;
+    public int successfulDamageApplications;
+    public int effectiveDamage;
+    public int killingBlows;
+    public int distinctDamagedMonsterCount;
+}
+
+[Serializable]
+internal sealed class CombatBalanceTowerRouteDamageOverlapJson
+{
+    public int towerAInstanceId;
+    public int towerADeploymentOrdinal;
+    public string towerADisplayName;
+    public string towerAFamily;
+    public int towerBInstanceId;
+    public int towerBDeploymentOrdinal;
+    public string towerBDisplayName;
+    public string towerBFamily;
+    public int sharedDamageRouteCellCount;
+    public int sharedRoutePhaseCellCount;
+    public int sharedDamagedMonsterCount;
 }
 
 [Serializable]

@@ -93,6 +93,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private readonly Dictionary<string, TowerWaveDamageAggregate>
         towerWaveDamageByScope =
             new Dictionary<string, TowerWaveDamageAggregate>();
+    private readonly Dictionary<int, TowerRouteDamageCoverageAggregate>
+        towerRouteDamageCoverageByTowerInstanceId =
+            new Dictionary<int, TowerRouteDamageCoverageAggregate>();
     private readonly Dictionary<string, ElementalOpportunityAggregate>
         elementalOpportunityByScope =
             new Dictionary<string, ElementalOpportunityAggregate>();
@@ -163,6 +166,38 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public int SuccessfulDamageApplications { get; set; }
         public int EffectiveTowerScaledDamage { get; set; }
         public int KillingBlows { get; set; }
+    }
+
+    private sealed class TowerRouteDamageCoverageAggregate
+    {
+        public int TowerInstanceId { get; set; }
+        public string TowerDisplayName { get; set; }
+        public string TowerFamily { get; set; }
+        public int SuccessfulDamageApplications { get; set; }
+        public int LocatedDamageApplications { get; set; }
+        public int UnresolvedRouteCellApplicationCount { get; set; }
+        public int EffectiveDamage { get; set; }
+        public int LocatedEffectiveDamage { get; set; }
+        public int UnresolvedRouteCellEffectiveDamage { get; set; }
+        public int KillingBlows { get; set; }
+        public int LocatedKillingBlows { get; set; }
+        public int UnresolvedRouteCellKillingBlows { get; set; }
+        public HashSet<int> DamagedMonsterInstanceIds { get; } =
+            new HashSet<int>();
+        public Dictionary<string, TowerRouteDamageCellAggregate> Cells { get; } =
+            new Dictionary<string, TowerRouteDamageCellAggregate>();
+    }
+
+    private sealed class TowerRouteDamageCellAggregate
+    {
+        public int PlacementCommitOrdinal { get; set; }
+        public int X { get; set; }
+        public int Z { get; set; }
+        public int SuccessfulDamageApplications { get; set; }
+        public int EffectiveDamage { get; set; }
+        public int KillingBlows { get; set; }
+        public HashSet<int> DamagedMonsterInstanceIds { get; } =
+            new HashSet<int>();
     }
 
     private sealed class TowerDeploymentObservation
@@ -1180,6 +1215,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         towerScaledRejectionBySignature.Clear();
         fixedBuffDamageBySignature.Clear();
         towerWaveDamageByScope.Clear();
+        towerRouteDamageCoverageByTowerInstanceId.Clear();
         elementalOpportunityByScope.Clear();
         elementalBuffApplicationAttemptsBySourceWave.Clear();
         placementRouteCommits.Clear();
@@ -2003,6 +2039,97 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         if (observation.KillingBlow)
         {
             aggregate.KillingBlows++;
+        }
+
+        RecordTowerRouteDamageCoverage(observation, tower);
+    }
+
+    private void RecordTowerRouteDamageCoverage(
+        TowerOwnedTargetDamageObservation observation,
+        TowerInstance tower)
+    {
+        int towerInstanceId = tower.GetInstanceID();
+
+        if (!towerRouteDamageCoverageByTowerInstanceId.TryGetValue(
+                towerInstanceId,
+                out TowerRouteDamageCoverageAggregate aggregate))
+        {
+            aggregate = new TowerRouteDamageCoverageAggregate
+            {
+                TowerInstanceId = towerInstanceId,
+                TowerDisplayName = tower.TowerDefinition != null
+                    ? tower.TowerDefinition.DisplayName
+                    : tower.name,
+                TowerFamily = tower.TowerDefinition != null
+                    ? tower.TowerDefinition.TowerFamily.ToString()
+                    : string.Empty
+            };
+            towerRouteDamageCoverageByTowerInstanceId.Add(
+                towerInstanceId,
+                aggregate);
+        }
+
+        int targetInstanceId = observation.Target.GetInstanceID();
+        aggregate.SuccessfulDamageApplications++;
+        aggregate.EffectiveDamage += observation.AppliedDamage;
+        aggregate.DamagedMonsterInstanceIds.Add(targetInstanceId);
+
+        if (observation.KillingBlow)
+        {
+            aggregate.KillingBlows++;
+        }
+
+        GridNodeBehaviour routeStateNode = observation.Target.CurrentNode;
+
+        if (routeStateNode == null)
+        {
+            aggregate.UnresolvedRouteCellApplicationCount++;
+            aggregate.UnresolvedRouteCellEffectiveDamage +=
+                observation.AppliedDamage;
+
+            if (observation.KillingBlow)
+            {
+                aggregate.UnresolvedRouteCellKillingBlows++;
+            }
+
+            return;
+        }
+
+        aggregate.LocatedDamageApplications++;
+        aggregate.LocatedEffectiveDamage += observation.AppliedDamage;
+
+        if (observation.KillingBlow)
+        {
+            aggregate.LocatedKillingBlows++;
+        }
+
+        Vector2Int gridPosition = routeStateNode.GridPosition;
+        int placementCommitOrdinal = placementRouteCommits.Count;
+        string cellKey = placementCommitOrdinal.ToString(
+            CultureInfo.InvariantCulture) + ":" +
+            gridPosition.x.ToString(CultureInfo.InvariantCulture) + ":" +
+            gridPosition.y.ToString(CultureInfo.InvariantCulture);
+
+        if (!aggregate.Cells.TryGetValue(
+                cellKey,
+                out TowerRouteDamageCellAggregate cell))
+        {
+            cell = new TowerRouteDamageCellAggregate
+            {
+                PlacementCommitOrdinal = placementCommitOrdinal,
+                X = gridPosition.x,
+                Z = gridPosition.y
+            };
+            aggregate.Cells.Add(cellKey, cell);
+        }
+
+        cell.SuccessfulDamageApplications++;
+        cell.EffectiveDamage += observation.AppliedDamage;
+        cell.DamagedMonsterInstanceIds.Add(targetInstanceId);
+
+        if (observation.KillingBlow)
+        {
+            cell.KillingBlows++;
         }
     }
 
@@ -3115,6 +3242,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         report.damageDiagnostics = CreateDamageDiagnosticsJson();
         report.towers = CreateTowerJsonRecords();
         report.towerWaveSummaries = CreateTowerWaveSummaries();
+        report.towerRouteDamageCoverage =
+            CreateTowerRouteDamageCoverageRuntimeJson(report.towers);
         report.execution.initialDraftCompleted =
             initialDraftCompletionCount > 0;
         report.execution.allExpectedLevelUpsObserved =
@@ -3170,6 +3299,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             TowerWaveAttributionMatches(
                 report.towerWaveSummaries,
                 report.damageDiagnostics);
+        report.integrity.towerRouteDamageCoverageMatches =
+            TowerRouteDamageCoverageMatches(
+                report.towerRouteDamageCoverage,
+                report.towers,
+                report.towerWaveSummaries);
         report.integrity.damageDiagnosticsCountsMatch =
             DamageDiagnosticsCountsMatch(report.damageDiagnostics);
         report.integrity.droneBurstDiagnosticsConsistent =
@@ -4175,6 +4309,280 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         return summaries;
     }
 
+    private CombatBalanceTowerRouteDamageCoverageRuntimeJson
+        CreateTowerRouteDamageCoverageRuntimeJson(
+            IReadOnlyList<CombatBalanceTowerJson> towers)
+    {
+        CombatBalanceTowerRouteDamageCoverageRuntimeJson runtime =
+            new CombatBalanceTowerRouteDamageCoverageRuntimeJson();
+
+        if (towers == null)
+        {
+            return runtime;
+        }
+
+        for (int i = 0; i < towers.Count; i++)
+        {
+            CombatBalanceTowerJson tower = towers[i];
+
+            if (tower == null)
+            {
+                continue;
+            }
+
+            towerRouteDamageCoverageByTowerInstanceId.TryGetValue(
+                tower.instanceId,
+                out TowerRouteDamageCoverageAggregate aggregate);
+            CombatBalanceTowerRouteDamageCoverageJson coverage =
+                CreateTowerRouteDamageCoverageJson(tower, aggregate);
+            runtime.towers.Add(coverage);
+            runtime.successfulDamageApplications +=
+                coverage.successfulDamageApplications;
+            runtime.locatedDamageApplications +=
+                coverage.locatedDamageApplications;
+            runtime.unresolvedRouteCellApplicationCount +=
+                coverage.unresolvedRouteCellApplicationCount;
+            runtime.effectiveDamage += coverage.effectiveDamage;
+            runtime.locatedEffectiveDamage += coverage.locatedEffectiveDamage;
+            runtime.unresolvedRouteCellEffectiveDamage +=
+                coverage.unresolvedRouteCellEffectiveDamage;
+            runtime.killingBlows += coverage.killingBlows;
+            runtime.locatedKillingBlows += coverage.locatedKillingBlows;
+            runtime.unresolvedRouteCellKillingBlows +=
+                coverage.unresolvedRouteCellKillingBlows;
+        }
+
+        runtime.observedTowerCount = runtime.towers.Count;
+
+        for (int leftIndex = 0;
+             leftIndex < runtime.towers.Count;
+             leftIndex++)
+        {
+            CombatBalanceTowerRouteDamageCoverageJson left =
+                runtime.towers[leftIndex];
+
+            for (int rightIndex = leftIndex + 1;
+                 rightIndex < runtime.towers.Count;
+                 rightIndex++)
+            {
+                CombatBalanceTowerRouteDamageCoverageJson right =
+                    runtime.towers[rightIndex];
+                runtime.overlaps.Add(
+                    CreateTowerRouteDamageOverlapJson(left, right));
+            }
+        }
+
+        return runtime;
+    }
+
+    private static CombatBalanceTowerRouteDamageCoverageJson
+        CreateTowerRouteDamageCoverageJson(
+            CombatBalanceTowerJson tower,
+            TowerRouteDamageCoverageAggregate aggregate)
+    {
+        CombatBalanceTowerRouteDamageCoverageJson coverage =
+            new CombatBalanceTowerRouteDamageCoverageJson
+            {
+                towerInstanceId = tower.instanceId,
+                towerDeploymentOrdinal = tower.deploymentOrdinal,
+                towerDisplayName = tower.displayName ?? string.Empty,
+                towerFamily = tower.family ?? string.Empty
+            };
+
+        if (aggregate == null)
+        {
+            return coverage;
+        }
+
+        coverage.successfulDamageApplications =
+            aggregate.SuccessfulDamageApplications;
+        coverage.locatedDamageApplications =
+            aggregate.LocatedDamageApplications;
+        coverage.unresolvedRouteCellApplicationCount =
+            aggregate.UnresolvedRouteCellApplicationCount;
+        coverage.effectiveDamage = aggregate.EffectiveDamage;
+        coverage.locatedEffectiveDamage = aggregate.LocatedEffectiveDamage;
+        coverage.unresolvedRouteCellEffectiveDamage =
+            aggregate.UnresolvedRouteCellEffectiveDamage;
+        coverage.killingBlows = aggregate.KillingBlows;
+        coverage.locatedKillingBlows = aggregate.LocatedKillingBlows;
+        coverage.unresolvedRouteCellKillingBlows =
+            aggregate.UnresolvedRouteCellKillingBlows;
+        coverage.distinctDamagedMonsterCount =
+            aggregate.DamagedMonsterInstanceIds.Count;
+
+        List<TowerRouteDamageCellAggregate> cells =
+            new List<TowerRouteDamageCellAggregate>(aggregate.Cells.Values);
+        cells.Sort(CompareTowerRouteDamageCells);
+        HashSet<string> distinctGridCells = new HashSet<string>();
+
+        for (int i = 0; i < cells.Count; i++)
+        {
+            TowerRouteDamageCellAggregate cell = cells[i];
+            distinctGridCells.Add(CreateRouteGridCellKey(cell.X, cell.Z));
+            coverage.routeCells.Add(
+                new CombatBalanceTowerRouteDamageCellJson
+                {
+                    placementCommitOrdinal = cell.PlacementCommitOrdinal,
+                    x = cell.X,
+                    z = cell.Z,
+                    successfulDamageApplications =
+                        cell.SuccessfulDamageApplications,
+                    effectiveDamage = cell.EffectiveDamage,
+                    killingBlows = cell.KillingBlows,
+                    distinctDamagedMonsterCount =
+                        cell.DamagedMonsterInstanceIds.Count
+                });
+        }
+
+        coverage.distinctDamageRouteCellCount = distinctGridCells.Count;
+        return coverage;
+    }
+
+    private CombatBalanceTowerRouteDamageOverlapJson
+        CreateTowerRouteDamageOverlapJson(
+            CombatBalanceTowerRouteDamageCoverageJson left,
+            CombatBalanceTowerRouteDamageCoverageJson right)
+    {
+        towerRouteDamageCoverageByTowerInstanceId.TryGetValue(
+            left.towerInstanceId,
+            out TowerRouteDamageCoverageAggregate leftAggregate);
+        towerRouteDamageCoverageByTowerInstanceId.TryGetValue(
+            right.towerInstanceId,
+            out TowerRouteDamageCoverageAggregate rightAggregate);
+
+        return new CombatBalanceTowerRouteDamageOverlapJson
+        {
+            towerAInstanceId = left.towerInstanceId,
+            towerADeploymentOrdinal = left.towerDeploymentOrdinal,
+            towerADisplayName = left.towerDisplayName ?? string.Empty,
+            towerAFamily = left.towerFamily ?? string.Empty,
+            towerBInstanceId = right.towerInstanceId,
+            towerBDeploymentOrdinal = right.towerDeploymentOrdinal,
+            towerBDisplayName = right.towerDisplayName ?? string.Empty,
+            towerBFamily = right.towerFamily ?? string.Empty,
+            sharedDamageRouteCellCount = CountSharedRouteGridCells(
+                leftAggregate,
+                rightAggregate),
+            sharedRoutePhaseCellCount = CountSharedRoutePhaseCells(
+                leftAggregate,
+                rightAggregate),
+            sharedDamagedMonsterCount = CountSharedMonsterInstances(
+                leftAggregate,
+                rightAggregate)
+        };
+    }
+
+    private static int CompareTowerRouteDamageCells(
+        TowerRouteDamageCellAggregate left,
+        TowerRouteDamageCellAggregate right)
+    {
+        int phaseComparison = left.PlacementCommitOrdinal.CompareTo(
+            right.PlacementCommitOrdinal);
+
+        if (phaseComparison != 0)
+        {
+            return phaseComparison;
+        }
+
+        int xComparison = left.X.CompareTo(right.X);
+        return xComparison != 0 ? xComparison : left.Z.CompareTo(right.Z);
+    }
+
+    private static int CountSharedRouteGridCells(
+        TowerRouteDamageCoverageAggregate left,
+        TowerRouteDamageCoverageAggregate right)
+    {
+        return CountSharedStrings(
+            CreateRouteGridCellKeys(left),
+            CreateRouteGridCellKeys(right));
+    }
+
+    private static int CountSharedRoutePhaseCells(
+        TowerRouteDamageCoverageAggregate left,
+        TowerRouteDamageCoverageAggregate right)
+    {
+        HashSet<string> leftKeys = left != null
+            ? new HashSet<string>(left.Cells.Keys)
+            : new HashSet<string>();
+        HashSet<string> rightKeys = right != null
+            ? new HashSet<string>(right.Cells.Keys)
+            : new HashSet<string>();
+        return CountSharedStrings(leftKeys, rightKeys);
+    }
+
+    private static int CountSharedMonsterInstances(
+        TowerRouteDamageCoverageAggregate left,
+        TowerRouteDamageCoverageAggregate right)
+    {
+        HashSet<int> leftIds = left != null
+            ? left.DamagedMonsterInstanceIds
+            : new HashSet<int>();
+        HashSet<int> rightIds = right != null
+            ? right.DamagedMonsterInstanceIds
+            : new HashSet<int>();
+        HashSet<int> smaller = leftIds.Count <= rightIds.Count
+            ? leftIds
+            : rightIds;
+        HashSet<int> larger = ReferenceEquals(smaller, leftIds)
+            ? rightIds
+            : leftIds;
+        int sharedCount = 0;
+
+        foreach (int value in smaller)
+        {
+            if (larger.Contains(value))
+            {
+                sharedCount++;
+            }
+        }
+
+        return sharedCount;
+    }
+
+    private static HashSet<string> CreateRouteGridCellKeys(
+        TowerRouteDamageCoverageAggregate aggregate)
+    {
+        HashSet<string> keys = new HashSet<string>();
+
+        if (aggregate == null)
+        {
+            return keys;
+        }
+
+        foreach (TowerRouteDamageCellAggregate cell in aggregate.Cells.Values)
+        {
+            keys.Add(CreateRouteGridCellKey(cell.X, cell.Z));
+        }
+
+        return keys;
+    }
+
+    private static string CreateRouteGridCellKey(int x, int z)
+    {
+        return x.ToString(CultureInfo.InvariantCulture) + ":" +
+               z.ToString(CultureInfo.InvariantCulture);
+    }
+
+    private static int CountSharedStrings(
+        HashSet<string> left,
+        HashSet<string> right)
+    {
+        HashSet<string> smaller = left.Count <= right.Count ? left : right;
+        HashSet<string> larger = ReferenceEquals(smaller, left) ? right : left;
+        int sharedCount = 0;
+
+        foreach (string value in smaller)
+        {
+            if (larger.Contains(value))
+            {
+                sharedCount++;
+            }
+        }
+
+        return sharedCount;
+    }
+
     private bool FixtureSnapshotIsComplete(
         CombatBalanceFixtureJson fixture)
     {
@@ -4313,6 +4721,244 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         return attributedApplications ==
             diagnostics.towerScaledSuccessfulApplicationCount;
+    }
+
+    private bool TowerRouteDamageCoverageMatches(
+        CombatBalanceTowerRouteDamageCoverageRuntimeJson runtime,
+        IReadOnlyList<CombatBalanceTowerJson> towers,
+        IReadOnlyList<CombatBalanceTowerWaveJson> towerWaveSummaries)
+    {
+        if (runtime == null ||
+            towers == null ||
+            towerWaveSummaries == null ||
+            runtime.towers == null ||
+            runtime.overlaps == null ||
+            runtime.observedTowerCount != towers.Count ||
+            runtime.towers.Count != towers.Count ||
+            runtime.overlaps.Count != towers.Count * (towers.Count - 1) / 2)
+        {
+            return false;
+        }
+
+        int expectedApplications = 0;
+        int expectedDamage = 0;
+        int expectedKillingBlows = 0;
+
+        for (int i = 0; i < towerWaveSummaries.Count; i++)
+        {
+            CombatBalanceTowerWaveJson summary = towerWaveSummaries[i];
+
+            if (summary == null)
+            {
+                return false;
+            }
+
+            expectedApplications += summary.successfulDamageApplications;
+            expectedDamage += summary.effectiveTowerScaledDamage;
+            expectedKillingBlows += summary.killingBlows;
+        }
+
+        if (runtime.successfulDamageApplications != expectedApplications ||
+            runtime.effectiveDamage != expectedDamage ||
+            runtime.killingBlows != expectedKillingBlows ||
+            runtime.locatedDamageApplications +
+                runtime.unresolvedRouteCellApplicationCount !=
+                    runtime.successfulDamageApplications ||
+            runtime.locatedEffectiveDamage +
+                runtime.unresolvedRouteCellEffectiveDamage !=
+                    runtime.effectiveDamage ||
+            runtime.locatedKillingBlows +
+                runtime.unresolvedRouteCellKillingBlows !=
+                    runtime.killingBlows)
+        {
+            return false;
+        }
+
+        HashSet<int> observedTowerIds = new HashSet<int>();
+        int observedApplications = 0;
+        int observedLocatedApplications = 0;
+        int observedUnresolvedApplications = 0;
+        int observedDamage = 0;
+        int observedLocatedDamage = 0;
+        int observedUnresolvedDamage = 0;
+        int observedKillingBlows = 0;
+        int observedLocatedKillingBlows = 0;
+        int observedUnresolvedKillingBlows = 0;
+
+        for (int i = 0; i < runtime.towers.Count; i++)
+        {
+            CombatBalanceTowerRouteDamageCoverageJson coverage =
+                runtime.towers[i];
+            CombatBalanceTowerJson tower = towers[i];
+
+            if (coverage == null ||
+                tower == null ||
+                coverage.towerInstanceId != tower.instanceId ||
+                coverage.towerDeploymentOrdinal != tower.deploymentOrdinal ||
+                !observedTowerIds.Add(coverage.towerInstanceId) ||
+                coverage.routeCells == null ||
+                !TowerRouteDamageCoverageEntryMatches(
+                    coverage,
+                    towerWaveSummaries))
+            {
+                return false;
+            }
+
+            observedApplications += coverage.successfulDamageApplications;
+            observedLocatedApplications += coverage.locatedDamageApplications;
+            observedUnresolvedApplications +=
+                coverage.unresolvedRouteCellApplicationCount;
+            observedDamage += coverage.effectiveDamage;
+            observedLocatedDamage += coverage.locatedEffectiveDamage;
+            observedUnresolvedDamage +=
+                coverage.unresolvedRouteCellEffectiveDamage;
+            observedKillingBlows += coverage.killingBlows;
+            observedLocatedKillingBlows += coverage.locatedKillingBlows;
+            observedUnresolvedKillingBlows +=
+                coverage.unresolvedRouteCellKillingBlows;
+        }
+
+        if (observedApplications != runtime.successfulDamageApplications ||
+            observedLocatedApplications != runtime.locatedDamageApplications ||
+            observedUnresolvedApplications !=
+                runtime.unresolvedRouteCellApplicationCount ||
+            observedDamage != runtime.effectiveDamage ||
+            observedLocatedDamage != runtime.locatedEffectiveDamage ||
+            observedUnresolvedDamage !=
+                runtime.unresolvedRouteCellEffectiveDamage ||
+            observedKillingBlows != runtime.killingBlows ||
+            observedLocatedKillingBlows != runtime.locatedKillingBlows ||
+            observedUnresolvedKillingBlows !=
+                runtime.unresolvedRouteCellKillingBlows)
+        {
+            return false;
+        }
+
+        int overlapIndex = 0;
+
+        for (int leftIndex = 0;
+             leftIndex < runtime.towers.Count;
+             leftIndex++)
+        {
+            CombatBalanceTowerRouteDamageCoverageJson left =
+                runtime.towers[leftIndex];
+
+            for (int rightIndex = leftIndex + 1;
+                 rightIndex < runtime.towers.Count;
+                 rightIndex++)
+            {
+                CombatBalanceTowerRouteDamageCoverageJson right =
+                    runtime.towers[rightIndex];
+                CombatBalanceTowerRouteDamageOverlapJson overlap =
+                    runtime.overlaps[overlapIndex++];
+
+                towerRouteDamageCoverageByTowerInstanceId.TryGetValue(
+                    left.towerInstanceId,
+                    out TowerRouteDamageCoverageAggregate leftAggregate);
+                towerRouteDamageCoverageByTowerInstanceId.TryGetValue(
+                    right.towerInstanceId,
+                    out TowerRouteDamageCoverageAggregate rightAggregate);
+
+                if (overlap == null ||
+                    overlap.towerAInstanceId != left.towerInstanceId ||
+                    overlap.towerADeploymentOrdinal !=
+                        left.towerDeploymentOrdinal ||
+                    overlap.towerBInstanceId != right.towerInstanceId ||
+                    overlap.towerBDeploymentOrdinal !=
+                        right.towerDeploymentOrdinal ||
+                    overlap.sharedDamageRouteCellCount !=
+                        CountSharedRouteGridCells(
+                            leftAggregate,
+                            rightAggregate) ||
+                    overlap.sharedRoutePhaseCellCount !=
+                        CountSharedRoutePhaseCells(
+                            leftAggregate,
+                            rightAggregate) ||
+                    overlap.sharedDamagedMonsterCount !=
+                        CountSharedMonsterInstances(
+                            leftAggregate,
+                            rightAggregate))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private bool TowerRouteDamageCoverageEntryMatches(
+        CombatBalanceTowerRouteDamageCoverageJson coverage,
+        IReadOnlyList<CombatBalanceTowerWaveJson> towerWaveSummaries)
+    {
+        int expectedApplications = 0;
+        int expectedDamage = 0;
+        int expectedKillingBlows = 0;
+
+        for (int i = 0; i < towerWaveSummaries.Count; i++)
+        {
+            CombatBalanceTowerWaveJson summary = towerWaveSummaries[i];
+
+            if (summary.towerInstanceId != coverage.towerInstanceId)
+            {
+                continue;
+            }
+
+            expectedApplications += summary.successfulDamageApplications;
+            expectedDamage += summary.effectiveTowerScaledDamage;
+            expectedKillingBlows += summary.killingBlows;
+        }
+
+        towerRouteDamageCoverageByTowerInstanceId.TryGetValue(
+            coverage.towerInstanceId,
+            out TowerRouteDamageCoverageAggregate aggregate);
+        int expectedDistinctMonsters = aggregate != null
+            ? aggregate.DamagedMonsterInstanceIds.Count
+            : 0;
+        int cellApplications = 0;
+        int cellDamage = 0;
+        int cellKillingBlows = 0;
+        HashSet<string> distinctGridCells = new HashSet<string>();
+
+        for (int i = 0; i < coverage.routeCells.Count; i++)
+        {
+            CombatBalanceTowerRouteDamageCellJson cell =
+                coverage.routeCells[i];
+
+            if (cell == null ||
+                cell.placementCommitOrdinal < 0 ||
+                cell.successfulDamageApplications <= 0 ||
+                cell.effectiveDamage <= 0 ||
+                cell.distinctDamagedMonsterCount <= 0)
+            {
+                return false;
+            }
+
+            cellApplications += cell.successfulDamageApplications;
+            cellDamage += cell.effectiveDamage;
+            cellKillingBlows += cell.killingBlows;
+            distinctGridCells.Add(CreateRouteGridCellKey(cell.x, cell.z));
+        }
+
+        return coverage.successfulDamageApplications == expectedApplications &&
+               coverage.effectiveDamage == expectedDamage &&
+               coverage.killingBlows == expectedKillingBlows &&
+               coverage.distinctDamagedMonsterCount ==
+                   expectedDistinctMonsters &&
+               coverage.distinctDamageRouteCellCount ==
+                   distinctGridCells.Count &&
+               coverage.locatedDamageApplications == cellApplications &&
+               coverage.locatedEffectiveDamage == cellDamage &&
+               coverage.locatedKillingBlows == cellKillingBlows &&
+               coverage.locatedDamageApplications +
+                   coverage.unresolvedRouteCellApplicationCount ==
+                       coverage.successfulDamageApplications &&
+               coverage.locatedEffectiveDamage +
+                   coverage.unresolvedRouteCellEffectiveDamage ==
+                       coverage.effectiveDamage &&
+               coverage.locatedKillingBlows +
+                   coverage.unresolvedRouteCellKillingBlows ==
+                       coverage.killingBlows;
     }
 
     private CombatBalanceWaveRuntimeJson CreateWaveRuntimeJson()
