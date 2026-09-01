@@ -214,7 +214,11 @@ Values are clamped to their valid gameplay ranges after composition.
 
 Arcane Recovery is the Magic Attack Cycle Duration Basic Upgrade. Magic Orb Maximum Hit Count is not a gameplay stat or Upgrade surface.
 
-Expanded Patrol is the Drone Attack Range Basic Upgrade. Drone Battery Duration remains static entity authoring and is not resolved from Tower Upgrade state.
+Expanded Patrol is the Drone Attack Range Basic Upgrade. Its larger resolved
+range applies immediately and may expose a candidate to a Holding Drone through
+the Tower Runtime Combat live-refresh contract. It does not move the frozen
+Drone range origin or Holding center. Drone Battery Duration remains static
+entity authoring and is not resolved from Tower Upgrade state.
 
 High-Caliber Rounds grants an authored deterministic Damage Bonus through the shared Basic stat contract. Because Damage Bonus is part of Current Resolved BasicDamage, it increases Drone direct and Tower-owned Behaviour damage. It never increases shared-state Buff-lifecycle, Overload, or Elemental hit-reaction FixedDamage.
 
@@ -260,7 +264,7 @@ Package definitions own upgrade-level authoring values and complete runtime-pref
 | Arcane Field | Reconcile one Tower-owned field immediately |
 | Multi Drones | Change scheduler capacity without direct launch, cooldown bypass, or batch fill |
 | Blast Rounds | Affect future Drone shots and eligible unresolved airborne Drone projectiles |
-| Final Dive | Affect active Drones only before battery-end branch resolution |
+| Final Dive | Affect active engaged or Holding Drones only before battery-end branch resolution; Holding without a valid current target does not gain an impact target |
 
 These timing identities are part of the Upgrade contract. Detailed algorithms remain with Tower Runtime Combat or Projectile System.
 

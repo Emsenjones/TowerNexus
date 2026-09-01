@@ -35,7 +35,8 @@ failure case.
 | Task012 | Completed Stage3 Progress, fixed-speed Wave, Player Health, Magic contact, placement, and Build-envelope calibration |
 | Task013 | Completed Stage4 map-gap, Progress, HP520 Orc, fixed-speed Wave, Player Health, and Build-envelope calibration |
 | Task014 | Completed Stage5 Elemental-Core, Progress, fixed-speed Monster Profile, Wave, Player Health, and Build-envelope calibration |
-| Task015 | Stage6 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task015 | In-progress Stage6 matching-Element Reference fixture and complete Stage6 calibration; resumed after Task015A |
+| Task015A | Completed Drone targetless Holding lifecycle refactor and schema-24 regression acceptance |
 | Task016 | Fast-Monster identity and reviewed Wave substitutions |
 | Task017 | Natural Tower-versus-Upgrade Draft offer probability calibration |
 
@@ -54,6 +55,14 @@ sequences, Progress Requirements, Monster Profile reuse or introduction,
 
 Task order is an acceptance dependency, not only a filename order. A later Task
 must not compensate for a failed earlier contract through unrelated Stage values.
+
+Task015A is a narrow runtime checkpoint discovered during Task015 rather than a
+new balance layer. It completed on 2026-09-02 through the accepted Stage6 live
+Holding observation and the Task004, Task007B, and Task013 schema-24 regression
+matrix. No upstream numerical Task reopened. The original deterministic L1-L11
+edge-fixture catalog was not executed individually and remains an explicit
+waiver rather than claimed evidence. Task015 has resumed from its frozen `_02`
+Reference deployment order and placement.
 
 Task007A, Task007B, and Task007C are implementation checkpoints created while
 Task007 exposed stack-contribution, application-topology, and shared-hit-

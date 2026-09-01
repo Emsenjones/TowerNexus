@@ -330,17 +330,56 @@ Each Drone owns:
 
 - Launch movement and release position
 - Current target and allowed retargeting
+- Last valid locked-target position and targetless Holding
 - Orbit movement
 - Burst state and projectile releases
 - Battery state
 - Optional Final Dive branch
 - Completion and unregistering
 
-Launching does not consume battery. Battery begins during active combat flight.
+The ordinary state topology is:
 
-If a normal Drone target becomes invalid, it may select another valid Monster inside the current refreshed range. If none exists, it ends through aerial despawn without ordinary impact gameplay.
+```text
+Launching -> Target Engagement
+          -> Targetless Holding
 
-Normal retargeting preserves the current Burst phase, remaining shot count, timer, and already assigned Elemental-opener state. It never reloads a Burst, bypasses Inter-Burst Cooldown, or grants another Elemental contribution.
+Target Engagement <-> Targetless Holding
+Target Engagement -> Battery-End Final Dive -> Completion
+Target Engagement -> Battery-End Aerial Retirement
+Targetless Holding -> Battery-End Aerial Retirement
+```
+
+Technical cleanup may end any state without ordinary gameplay results. Target
+engagement includes both travel to the selected target's orbit path and active
+orbiting; travel does not create a separate Battery or Burst lifecycle.
+
+Launching does not consume battery. Once launch movement completes, Battery
+advances during both target engagement and targetless Holding.
+
+Attack Range is the current target-eligibility boundary, not a normal Drone
+completion boundary. Drone candidate distance uses the frozen release position
+as range origin and the current refreshed Attack Range as radius. While a target
+remains valid and inside that boundary, the Drone continuously retains its last
+valid locked-target Hit Reference position. If that target becomes invalid or
+leaves range, the Drone first applies its normal target-selection category to
+all current valid in-range candidates.
+
+If no replacement exists, the Drone enters Holding instead of completing. It
+orbits the frozen last valid locked-target position, remains in its active
+capacity slot, fires no Projectile, and continues consuming Battery. Holding
+reuses the authored orbit radius, flight speed, and active-flight height; it
+does not continue reading the old target transform. When a valid in-range
+candidate later appears, the Drone acquires through the same target-selection
+category, flies to that target's orbit path, and resumes ordinary work. A Drone
+that cannot establish a valid frozen Holding center is invalid runtime state and
+uses technical cleanup rather than inventing a center.
+
+Normal retargeting and Holding preserve the current Burst phase, remaining shot
+count, timer, and already assigned Elemental-opener state. Burst timing does not
+advance while the Drone is travelling to an orbit path or Holding without a
+target. No shot slot is consumed without successful Projectile creation. Target
+loss never reloads a Burst, bypasses Inter-Burst Cooldown, or grants another
+Elemental contribution.
 
 While its assigned target remains valid, the Drone does not voluntarily rotate
 targets between shots of one Burst. Existing invalid-target retargeting may
@@ -369,9 +408,30 @@ remain one Buff contribution source through their owning Tower instance.
 
 Battery Duration is static Drone entity authoring for the battle. Applying a Tower Upgrade does not refresh remaining battery or rewrite the battery-end boundary.
 
+Attack Range refresh applies immediately to engagement validity and Holding
+reacquisition. Burst Cooldown refresh preserves the remaining cooldown ratio;
+Holding still freezes that resulting timer until target engagement resumes.
+Blast Rounds may affect future Drone releases and eligible unresolved airborne
+Drone-fired Projectiles. Final Dive may affect an active engaged or Holding
+Drone only before Battery-end resolution, but Holding does not become a valid
+Final Dive target source. Multi Drones changes scheduler capacity without
+altering the state, Battery, or completion of an already active Drone.
+
+Battery-end resolution is the only ordinary gameplay completion boundary for a
+Drone. Owning-Tower cleanup, combat-session cleanup, invalid initialization,
+and external object destruction remain technical cleanup boundaries rather
+than Battery behavior. If Battery ends while Holding and no valid target is
+available, the Drone completes through aerial retirement without direct Hit,
+Position Impact, package Effect, or ordinary Elemental opportunity. Once
+Battery depletion is reached, that boundary resolves before any later
+reacquisition; Battery is never revived by a candidate entering range.
+
 High-Caliber Rounds is an ordinary deterministic Basic Damage Bonus. It updates current resolved BasicDamage and therefore affects future unresolved Drone direct, Blast Rounds, and Final Dive damage. It does not alter shared-state FixedBuff lifecycle, Overload, or Elemental hit-reaction damage.
 
-Final Dive, when active at battery end, locks one target and becomes one-way:
+Final Dive, when active at battery end, requires the current target to remain
+valid inside the Drone's current Attack Range at that exact boundary. Battery
+end does not perform a new target selection. A qualifying target locks one
+Final Dive and becomes one-way:
 
 - Ordinary firing stops.
 - No new target is selected.

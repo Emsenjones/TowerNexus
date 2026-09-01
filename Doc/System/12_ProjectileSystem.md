@@ -111,6 +111,9 @@ Direction flight moves along one launch direction and may resolve Monsters encou
 
 - The selected target may define the initial direction.
 - The projectile is not locked to that target after release.
+- A source Drone entering Holding, reacquiring another target, reaching Battery
+  end, or completing does not redirect or destroy an already released
+  Projectile.
 - Later Monster movement, including placement-driven route continuation,
   rejoin movement, or forced relocation, does not redirect, recreate, destroy,
   or guarantee a hit for the released projectile.
@@ -287,7 +290,8 @@ and diagnostics, but its resolved area targets are always Elemental-ineligible.
 Final Dive remains a Drone completion contract and neither its direct nor
 explosion result has ordinary Elemental authorization.
 
-Drone movement, battery, orbit, and Final Dive do not belong to Projectile System.
+Drone movement, target engagement, Holding, battery, orbit, reacquisition, and
+Final Dive do not belong to Projectile System.
 
 ---
 

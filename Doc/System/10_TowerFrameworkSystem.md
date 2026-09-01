@@ -214,7 +214,7 @@ Projectile entity authoring owns base movement speed, hit distance threshold, sa
 
 Magic Orb entity authoring owns base orbit, contact distance, lifetime, same-target contact cooldown, and entity presentation. Contact distance is evaluated on the Monster movement plane; presentation-only vertical differences between an Orb and a Monster hit anchor do not reduce the authored horizontal contact allowance. The Monster hit anchor remains the damage and feedback position after contact succeeds. Normal gameplay authoring contains no maximum-hit capacity; Orb-group lifetime is the normal completion boundary.
 
-Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation.
+Drone entity authoring owns its projectile entity template, movement, orbit, battery, burst timing, internal Fire Anchor, and entity presentation. Targetless Holding reuses the same movement, orbit, and Battery authoring; it introduces no separate range, lifetime, cadence, or damage value.
 
 Behaviour packages that add Attack Entities author one shared data shape: the additional entity template, positive additional-member count, and positive DamageScale. Scatter Arrow, Multi Shells, Multi Orbs, and Multi Drones consume that shape through their own runtime contracts; the shared authoring shape does not create a generic release runtime. Primary direct attacks use DamageScale `1`. Additional entities use their package-authored scale against the same current resolved BasicDamage.
 
@@ -294,7 +294,9 @@ This section defines identity and gameplay direction. Runtime execution belongs 
 - Releases autonomous Drones one at a time while below current capacity
 - A Drone launches only with Attack Cycle readiness and a valid target
 - Each Drone owns movement, target, orbit, battery, projectile bursts, and completion
-- Loss of target attempts an in-range retarget; no replacement target ends ordinary Drone work
+- Loss of target attempts an in-range retarget; no replacement target enters Battery-consuming Holding around the frozen last valid locked-target position
+- Holding remains an active-capacity member and may leave only through valid in-range reacquisition, Battery-end resolution, or technical cleanup
+- Battery end is the ordinary Drone completion boundary; target loss alone never ends an initialized Drone
 - Drone may enter package-defined Final Dive behavior at battery end
 
 Detailed release scheduling, Live Refresh, entity state machines, and package composition belong to their runtime owner documents.

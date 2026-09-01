@@ -9,7 +9,23 @@ public enum DroneRuntimeState
 {
     Launching,
     Orbiting,
-    FinalDiving
+    FinalDiving,
+    Holding
+}
+
+public enum DroneTargetLossReason
+{
+    None = 0,
+    Invalid = 1,
+    OutOfRange = 2
+}
+
+public enum DroneCompletionReason
+{
+    None = 0,
+    BatteryAerialRetirement = 1,
+    FinalDiveImpact = 2,
+    TechnicalCleanup = 3
 }
 
 public enum DroneBurstPhase
@@ -20,6 +36,88 @@ public enum DroneBurstPhase
 }
 
 #if UNITY_EDITOR
+public enum DroneLifecycleRuntimeObservationType
+{
+    Initialized = 0,
+    LaunchCompleted = 1,
+    TargetLost = 2,
+    ImmediateRetargeted = 3,
+    HoldingEntered = 4,
+    HoldingExited = 5,
+    OrbitEntryCompleted = 6,
+    BatteryDepleted = 7,
+    FinalDiveEntered = 8,
+    FinalDiveCompleted = 9,
+    Completed = 10
+}
+
+public readonly struct DroneLifecycleRuntimeObservation
+{
+    public DroneLifecycleRuntimeObservation(
+        DroneLifecycleRuntimeObservationType observationType,
+        TowerInstance sourceTower,
+        int sourceDroneInstanceId,
+        bool isAdditionalDrone,
+        DroneRuntimeState state,
+        DroneTargetLossReason targetLossReason,
+        DroneCompletionReason completionReason,
+        float batteryRemaining,
+        float observedAtTime)
+    {
+        ObservationType = observationType;
+        SourceTower = sourceTower;
+        SourceDroneInstanceId = sourceDroneInstanceId;
+        IsAdditionalDrone = isAdditionalDrone;
+        State = state;
+        TargetLossReason = targetLossReason;
+        CompletionReason = completionReason;
+        BatteryRemaining = Mathf.Max(0f, batteryRemaining);
+        ObservedAtTime = observedAtTime;
+    }
+
+    public DroneLifecycleRuntimeObservationType ObservationType { get; }
+    public TowerInstance SourceTower { get; }
+    public int SourceDroneInstanceId { get; }
+    public bool IsAdditionalDrone { get; }
+    public DroneRuntimeState State { get; }
+    public DroneTargetLossReason TargetLossReason { get; }
+    public DroneCompletionReason CompletionReason { get; }
+    public float BatteryRemaining { get; }
+    public float ObservedAtTime { get; }
+}
+
+public static class DroneLifecycleRuntimeDiagnostics
+{
+    public static event Action<DroneLifecycleRuntimeObservation> OnObserved;
+
+    public static void Publish(DroneLifecycleRuntimeObservation observation)
+    {
+        Action<DroneLifecycleRuntimeObservation> observers = OnObserved;
+
+        if (observers == null)
+        {
+            return;
+        }
+
+        Delegate[] invocationList = observers.GetInvocationList();
+
+        for (int i = 0; i < invocationList.Length; i++)
+        {
+            try
+            {
+                ((Action<DroneLifecycleRuntimeObservation>)invocationList[i])(
+                    observation);
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(
+                    "Drone lifecycle runtime observation subscriber failed: " +
+                    exception.Message);
+            }
+        }
+    }
+}
+
 public enum DroneBurstRuntimeObservationType
 {
     BurstStarted = 0,
@@ -118,6 +216,13 @@ public readonly struct DroneStatRefresh
 
 public class DroneBehaviour : MonoBehaviour
 {
+    private enum DroneProjectileReleaseResult
+    {
+        Released,
+        TargetUnavailable,
+        TechnicalFailure
+    }
+
     [TitleGroup("Projectile")]
     [Required]
     [SerializeField] private ProjectileBehaviour projectilePrefab;
@@ -178,12 +283,14 @@ public class DroneBehaviour : MonoBehaviour
     private int orbitDirection = 1;
     private float batteryTimer;
     private float burstTimer;
+    private Vector3 lastValidLockedTargetPosition;
     private Vector3 lastValidFinalDiveHitPosition;
     private int burstShotsRemaining;
     private long nextBurstId;
     private long currentBurstId;
     private DroneBurstPhase burstPhase;
     private bool hasReachedOrbitPath;
+    private bool hasLastValidLockedTargetPosition;
     private bool hasResolvedFinalDiveImpact;
     private bool hasResolvedBatteryEnd;
     private bool isInitialized;
@@ -254,6 +361,7 @@ public class DroneBehaviour : MonoBehaviour
         nextBurstId = 1;
         ResetBurstState();
         hasReachedOrbitPath = false;
+        hasLastValidLockedTargetPosition = false;
         hasResolvedFinalDiveImpact = false;
         hasResolvedBatteryEnd = false;
         hasEnded = false;
@@ -269,7 +377,12 @@ public class DroneBehaviour : MonoBehaviour
         isInitialized = true;
         transform.position = releasePosition;
         transform.rotation = releaseRotation;
+        CaptureCurrentTargetPosition();
         SetState(DroneRuntimeState.Launching);
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.Initialized);
+#endif
     }
 
     private bool CanInitialize()
@@ -362,6 +475,9 @@ public class DroneBehaviour : MonoBehaviour
             case DroneRuntimeState.FinalDiving:
                 UpdateFinalDiving();
                 break;
+            case DroneRuntimeState.Holding:
+                UpdateHolding();
+                break;
         }
 
         UpdatePropellerSpin();
@@ -379,13 +495,19 @@ public class DroneBehaviour : MonoBehaviour
     {
         if (isInitialized && !hasEnded)
         {
-            NotifyEndedWithoutDestroy();
+            CompleteDrone(
+                DroneCompletionReason.TechnicalCleanup,
+                playAerialRetirementVfx: false,
+                destroyObject: false);
         }
     }
 
     public void ForceCleanup()
     {
-        EndDrone();
+        CompleteDrone(
+            DroneCompletionReason.TechnicalCleanup,
+            playAerialRetirementVfx: false,
+            destroyObject: true);
     }
 
     public void ApplyStatRefresh(DroneStatRefresh refresh)
@@ -458,12 +580,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private void UpdateLaunching()
     {
-        if (batteryTimer <= 0f)
-        {
-            hasResolvedBatteryEnd = true;
-            AerialDespawn();
-            return;
-        }
+        CaptureCurrentTargetPosition();
 
         MoveTowards(GetLaunchPosition());
 
@@ -472,15 +589,18 @@ public class DroneBehaviour : MonoBehaviour
             return;
         }
 
-        if (!IsValidTargetInRange(currentTarget))
-        {
-            currentTarget = SelectTarget();
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.LaunchCompleted);
+#endif
 
-            if (!IsValidTargetInRange(currentTarget))
-            {
-                AerialDespawn();
-                return;
-            }
+        DroneTargetLossReason targetLossReason =
+            GetTargetLossReason(currentTarget);
+
+        if (targetLossReason != DroneTargetLossReason.None)
+        {
+            ResolveTargetLoss(targetLossReason);
+            return;
         }
 
         BeginOrbitingTarget(currentTarget);
@@ -488,6 +608,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private void UpdateOrbiting()
     {
+        CaptureCurrentTargetPosition();
         DrainBattery();
 
         if (batteryTimer <= 0f)
@@ -496,17 +617,13 @@ public class DroneBehaviour : MonoBehaviour
             return;
         }
 
-        if (!IsValidTargetInRange(currentTarget))
+        DroneTargetLossReason targetLossReason =
+            GetTargetLossReason(currentTarget);
+
+        if (targetLossReason != DroneTargetLossReason.None)
         {
-            currentTarget = SelectTarget();
-
-            if (!IsValidTargetInRange(currentTarget))
-            {
-                AerialDespawn();
-                return;
-            }
-
-            BeginOrbitingTarget(currentTarget);
+            ResolveTargetLoss(targetLossReason);
+            return;
         }
 
         if (!hasReachedOrbitPath)
@@ -520,6 +637,10 @@ public class DroneBehaviour : MonoBehaviour
             }
 
             hasReachedOrbitPath = true;
+#if UNITY_EDITOR
+            PublishLifecycleObservation(
+                DroneLifecycleRuntimeObservationType.OrbitEntryCompleted);
+#endif
         }
         else
         {
@@ -530,6 +651,88 @@ public class DroneBehaviour : MonoBehaviour
         UpdateBurstFire();
     }
 
+    private void UpdateHolding()
+    {
+        DrainBattery();
+
+        if (batteryTimer <= 0f)
+        {
+            ResolveBatteryDepletion();
+            return;
+        }
+
+        MonsterBehaviour selectedTarget = SelectTarget();
+
+        if (IsValidTargetInRange(selectedTarget))
+        {
+            BeginOrbitingTarget(selectedTarget);
+            return;
+        }
+
+        if (!hasLastValidLockedTargetPosition)
+        {
+            CompleteDrone(
+                DroneCompletionReason.TechnicalCleanup,
+                playAerialRetirementVfx: false,
+                destroyObject: true);
+            return;
+        }
+
+        AdvanceOrbitAngle();
+        MoveTowards(CalculateOrbitPosition(lastValidLockedTargetPosition));
+    }
+
+    private void ResolveTargetLoss(DroneTargetLossReason targetLossReason)
+    {
+        if (targetLossReason == DroneTargetLossReason.None)
+        {
+            return;
+        }
+
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.TargetLost,
+            targetLossReason: targetLossReason);
+#endif
+
+        MonsterBehaviour selectedTarget = SelectTarget();
+
+        if (IsValidTargetInRange(selectedTarget))
+        {
+#if UNITY_EDITOR
+            PublishLifecycleObservation(
+                DroneLifecycleRuntimeObservationType.ImmediateRetargeted,
+                targetLossReason: targetLossReason);
+#endif
+            BeginOrbitingTarget(selectedTarget);
+            return;
+        }
+
+        BeginHolding();
+    }
+
+    private void BeginHolding()
+    {
+        if (!hasLastValidLockedTargetPosition)
+        {
+            CompleteDrone(
+                DroneCompletionReason.TechnicalCleanup,
+                playAerialRetirementVfx: false,
+                destroyObject: true);
+            return;
+        }
+
+        currentTarget = null;
+        hasReachedOrbitPath = true;
+        InitializeOrbitAngle(lastValidLockedTargetPosition);
+        orbitDirection = ChooseOrbitDirection();
+        SetState(DroneRuntimeState.Holding);
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.HoldingEntered);
+#endif
+    }
+
     private void ResolveBatteryDepletion()
     {
         if (hasResolvedBatteryEnd)
@@ -538,9 +741,13 @@ public class DroneBehaviour : MonoBehaviour
         }
 
         hasResolvedBatteryEnd = true;
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.BatteryDepleted);
+#endif
 
         if (!IsFinalDiveEnabled() ||
-            !EffectTargetResolver.IsValidMonsterTarget(currentTarget))
+            !IsValidTargetInRange(currentTarget))
         {
             AerialDespawn();
             return;
@@ -550,6 +757,10 @@ public class DroneBehaviour : MonoBehaviour
         hasResolvedFinalDiveImpact = false;
         ResetBurstState();
         SetState(DroneRuntimeState.FinalDiving);
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.FinalDiveEntered);
+#endif
     }
 
     private bool IsFinalDiveEnabled()
@@ -595,7 +806,10 @@ public class DroneBehaviour : MonoBehaviour
                 damageScale,
                 out TowerOwnedDamageResolution damageResolution))
         {
-            Despawn();
+            CompleteDrone(
+                DroneCompletionReason.TechnicalCleanup,
+                playAerialRetirementVfx: false,
+                destroyObject: true);
             return;
         }
 
@@ -648,7 +862,14 @@ public class DroneBehaviour : MonoBehaviour
                         observeResolvedTargetsAsCandidates: true)),
             resolvedFinalDiveExplosionTargets);
 
-        Despawn();
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.FinalDiveCompleted);
+#endif
+        CompleteDrone(
+            DroneCompletionReason.FinalDiveImpact,
+            playAerialRetirementVfx: false,
+            destroyObject: true);
     }
 
     private bool TryResolveFinalDiveDirectTarget(
@@ -692,17 +913,10 @@ public class DroneBehaviour : MonoBehaviour
 
     private void AerialDespawn()
     {
-        if (aerialDespawnVfxPrefab != null)
-        {
-            Instantiate(aerialDespawnVfxPrefab, transform.position, Quaternion.identity);
-        }
-
-        Despawn();
-    }
-
-    private void Despawn()
-    {
-        EndDrone();
+        CompleteDrone(
+            DroneCompletionReason.BatteryAerialRetirement,
+            playAerialRetirementVfx: true,
+            destroyObject: true);
     }
 
     private void DrainBattery()
@@ -778,11 +992,27 @@ public class DroneBehaviour : MonoBehaviour
         int shotOrdinal = Mathf.Max(
             0,
             Mathf.Max(1, burstCount) - burstShotsRemaining);
-        FireProjectile(
+        DroneProjectileReleaseResult releaseResult = TryFireProjectile(
             currentTarget,
             currentBurstId,
             isBurstOpener,
             shotOrdinal);
+
+        if (releaseResult == DroneProjectileReleaseResult.TargetUnavailable)
+        {
+            ResolveTargetLoss(GetTargetLossReason(currentTarget));
+            return;
+        }
+
+        if (releaseResult == DroneProjectileReleaseResult.TechnicalFailure)
+        {
+            CompleteDrone(
+                DroneCompletionReason.TechnicalCleanup,
+                playAerialRetirementVfx: false,
+                destroyObject: true);
+            return;
+        }
+
         burstShotsRemaining--;
 
         if (burstShotsRemaining > 0)
@@ -804,7 +1034,7 @@ public class DroneBehaviour : MonoBehaviour
         burstPhase = DroneBurstPhase.ReadyToStartBurst;
     }
 
-    private void FireProjectile(
+    private DroneProjectileReleaseResult TryFireProjectile(
         MonsterBehaviour target,
         long burstId,
         bool isBurstOpener,
@@ -812,7 +1042,7 @@ public class DroneBehaviour : MonoBehaviour
     {
         if (!IsValidTargetInRange(target))
         {
-            return;
+            return DroneProjectileReleaseResult.TargetUnavailable;
         }
 
         Transform spawnAnchor = GetFireAnchor();
@@ -854,7 +1084,7 @@ public class DroneBehaviour : MonoBehaviour
 
         if (!projectileBehaviour.IsInitialized)
         {
-            return;
+            return DroneProjectileReleaseResult.TechnicalFailure;
         }
 
 #if UNITY_EDITOR
@@ -866,9 +1096,28 @@ public class DroneBehaviour : MonoBehaviour
 #endif
         OnProjectileReleased?.Invoke(projectileBehaviour);
         PlayAttackReleaseVfx(spawnAnchor, targetPosition);
+        return DroneProjectileReleaseResult.Released;
     }
 
 #if UNITY_EDITOR
+    private void PublishLifecycleObservation(
+        DroneLifecycleRuntimeObservationType observationType,
+        DroneTargetLossReason targetLossReason = DroneTargetLossReason.None,
+        DroneCompletionReason completionReason = DroneCompletionReason.None)
+    {
+        DroneLifecycleRuntimeDiagnostics.Publish(
+            new DroneLifecycleRuntimeObservation(
+                observationType,
+                sourceTower,
+                GetInstanceID(),
+                IsAdditionalAttackEntity,
+                State,
+                targetLossReason,
+                completionReason,
+                batteryTimer,
+                Time.time));
+    }
+
     private void PublishBurstObservation(
         DroneBurstRuntimeObservationType observationType,
         long burstId,
@@ -889,7 +1138,10 @@ public class DroneBehaviour : MonoBehaviour
     }
 #endif
 
-    private void EndDrone()
+    private void CompleteDrone(
+        DroneCompletionReason completionReason,
+        bool playAerialRetirementVfx,
+        bool destroyObject)
     {
         if (hasEnded)
         {
@@ -897,25 +1149,29 @@ public class DroneBehaviour : MonoBehaviour
         }
 
         hasEnded = true;
-        isInitialized = false;
-        currentTarget = null;
-        ResetBurstState();
-        OnEnded?.Invoke(this);
-        Destroy(gameObject);
-    }
+#if UNITY_EDITOR
+        PublishLifecycleObservation(
+            DroneLifecycleRuntimeObservationType.Completed,
+            completionReason: completionReason);
+#endif
 
-    private void NotifyEndedWithoutDestroy()
-    {
-        if (hasEnded)
+        if (playAerialRetirementVfx && aerialDespawnVfxPrefab != null)
         {
-            return;
+            Instantiate(
+                aerialDespawnVfxPrefab,
+                transform.position,
+                Quaternion.identity);
         }
 
-        hasEnded = true;
         isInitialized = false;
         currentTarget = null;
         ResetBurstState();
         OnEnded?.Invoke(this);
+
+        if (destroyObject)
+        {
+            Destroy(gameObject);
+        }
     }
 
     private Transform GetFireAnchor()
@@ -1052,20 +1308,52 @@ public class DroneBehaviour : MonoBehaviour
         return (GetMonsterHitPosition(monster) - releasePosition).sqrMagnitude <= attackRangeSqr;
     }
 
+    private DroneTargetLossReason GetTargetLossReason(
+        MonsterBehaviour monster)
+    {
+        if (!IsValidTarget(monster))
+        {
+            return DroneTargetLossReason.Invalid;
+        }
+
+        return IsValidTargetInRange(monster)
+            ? DroneTargetLossReason.None
+            : DroneTargetLossReason.OutOfRange;
+    }
+
+    private void CaptureCurrentTargetPosition()
+    {
+        if (!IsValidTargetInRange(currentTarget))
+        {
+            return;
+        }
+
+        lastValidLockedTargetPosition = GetMonsterHitPosition(currentTarget);
+        hasLastValidLockedTargetPosition = true;
+    }
+
     private void BeginOrbitingTarget(MonsterBehaviour target)
     {
+        bool exitsHolding = State == DroneRuntimeState.Holding;
         currentTarget = target;
+        CaptureCurrentTargetPosition();
         hasReachedOrbitPath = false;
-        InitializeOrbitAngle(target);
+        InitializeOrbitAngle(lastValidLockedTargetPosition);
         orbitDirection = ChooseOrbitDirection();
 
         SetState(DroneRuntimeState.Orbiting);
+#if UNITY_EDITOR
+        if (exitsHolding)
+        {
+            PublishLifecycleObservation(
+                DroneLifecycleRuntimeObservationType.HoldingExited);
+        }
+#endif
     }
 
-    private void InitializeOrbitAngle(MonsterBehaviour target)
+    private void InitializeOrbitAngle(Vector3 center)
     {
-        Vector3 targetPosition = GetMonsterHitPosition(target);
-        Vector3 radialDirection = transform.position - targetPosition;
+        Vector3 radialDirection = transform.position - center;
         radialDirection.y = 0f;
 
         if (radialDirection.sqrMagnitude <= 0.0001f)
@@ -1093,14 +1381,18 @@ public class DroneBehaviour : MonoBehaviour
 
     private Vector3 CalculateOrbitPosition(MonsterBehaviour target)
     {
-        Vector3 targetPosition = GetMonsterHitPosition(target);
+        return CalculateOrbitPosition(GetMonsterHitPosition(target));
+    }
+
+    private Vector3 CalculateOrbitPosition(Vector3 center)
+    {
         float orbitRadius = Mathf.Max(this.orbitRadius, 0.01f);
         Vector3 orbitOffset = new Vector3(
             Mathf.Cos(orbitAngleRadians),
             0f,
             Mathf.Sin(orbitAngleRadians)
         ) * orbitRadius;
-        Vector3 point = targetPosition + orbitOffset;
+        Vector3 point = center + orbitOffset;
         point.y = GetActiveFlightHeight();
         return point;
     }
@@ -1210,7 +1502,8 @@ public class DroneBehaviour : MonoBehaviour
     {
         return state == DroneRuntimeState.Launching ||
                state == DroneRuntimeState.Orbiting ||
-               state == DroneRuntimeState.FinalDiving;
+               state == DroneRuntimeState.FinalDiving ||
+               state == DroneRuntimeState.Holding;
     }
 
     private static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)

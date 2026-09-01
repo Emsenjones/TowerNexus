@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 23;
+    public int schemaVersion = 24;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -569,6 +569,7 @@ internal sealed class CombatBalanceIntegrityJson
     public bool towerRouteDamageCoverageMatches;
     public bool damageDiagnosticsCountsMatch;
     public bool droneBurstDiagnosticsConsistent;
+    public bool droneLifecycleDiagnosticsConsistent;
     public bool elementalOpportunityDiagnosticsConsistent;
     public bool elementalHitReactionDiagnosticsConsistent;
     public bool buffDiagnosticsConsistent;
@@ -689,6 +690,8 @@ internal sealed class CombatBalanceTowerJson
         new CombatBalanceProjectileRuntimeJson();
     public CombatBalanceDroneBurstRuntimeJson droneBurstRuntime =
         new CombatBalanceDroneBurstRuntimeJson();
+    public CombatBalanceDroneLifecycleRuntimeJson droneLifecycleRuntime =
+        new CombatBalanceDroneLifecycleRuntimeJson();
     public List<CombatBalanceUpgradeJson> upgrades =
         new List<CombatBalanceUpgradeJson>();
 }
@@ -717,6 +720,37 @@ internal sealed class CombatBalanceDroneRuntimeJson
     public int laterProjectilesEndedWithoutImpact;
     public List<CombatBalanceDroneBurstJson> bursts =
         new List<CombatBalanceDroneBurstJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceDroneLifecycleRuntimeJson
+{
+    public bool diagnosticsConsistent = true;
+    public List<CombatBalanceDroneLifecycleJson> drones =
+        new List<CombatBalanceDroneLifecycleJson>();
+}
+
+[Serializable]
+internal sealed class CombatBalanceDroneLifecycleJson
+{
+    public int sourceDroneInstanceId;
+    public bool isAdditionalAttackEntity;
+    public int initializedCount;
+    public int launchCompletedCount;
+    public int invalidTargetLossCount;
+    public int outOfRangeTargetLossCount;
+    public int immediateRetargetCount;
+    public int holdingEntryCount;
+    public int holdingExitCount;
+    public int reacquisitionCount;
+    public int orbitEntryCompletedCount;
+    public int batteryDepletedCount;
+    public int finalDiveEnteredCount;
+    public int finalDiveCompletedCount;
+    public int completionCount;
+    public float activeTimeSeconds;
+    public float holdingTimeSeconds;
+    public string completionReason;
 }
 
 [Serializable]

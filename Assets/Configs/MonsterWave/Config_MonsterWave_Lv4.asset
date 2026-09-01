@@ -50,6 +50,6 @@ MonoBehaviour:
     count: 10
     spawnInterval: 2.5
   - waveDelay: 4
-    monsterRuntimeTemplate: {fileID: 5389729251801513952, guid: ef8b8f95e97d742a5a4982c0e73bb673, type: 3}
+    monsterRuntimeTemplate: {fileID: 5918628833992865121, guid: 7c6e219af3504b48a56d81c9270f3e64, type: 3}
     count: 12
     spawnInterval: 2.5

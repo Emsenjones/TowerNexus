@@ -498,6 +498,30 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         public int SourceDroneInstanceId { get; }
         public bool IsAdditionalAttackEntity { get; }
         public bool DiagnosticsConsistent { get; set; } = true;
+        public int InitializedCount { get; set; }
+        public int LaunchCompletedCount { get; set; }
+        public int InvalidTargetLossCount { get; set; }
+        public int OutOfRangeTargetLossCount { get; set; }
+        public int ImmediateRetargetCount { get; set; }
+        public int HoldingEntryCount { get; set; }
+        public int HoldingExitCount { get; set; }
+        public int OrbitEntryCompletedCount { get; set; }
+        public int BatteryDepletedCount { get; set; }
+        public int FinalDiveEnteredCount { get; set; }
+        public int FinalDiveCompletedCount { get; set; }
+        public int CompletionCount { get; set; }
+        public float InitializedAtTime { get; set; }
+        public float HoldingEnteredAtTime { get; set; }
+        public float CompletedAtTime { get; set; }
+        public float HoldingTimeSeconds { get; set; }
+        public bool IsHolding { get; set; }
+        public bool HasCompletedOrbitEntry { get; set; }
+        public bool HasPendingTargetLoss { get; set; }
+        public bool IsCompleted { get; set; }
+        public DroneRuntimeState CurrentState { get; set; } =
+            DroneRuntimeState.Launching;
+        public DroneCompletionReason CompletionReason { get; set; } =
+            DroneCompletionReason.None;
         public Dictionary<long, DroneBurstAggregate> Bursts { get; } =
             new Dictionary<long, DroneBurstAggregate>();
     }
@@ -673,6 +697,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             HandleProjectileRuntimeObserved;
         DroneBurstRuntimeDiagnostics.OnObserved +=
             HandleDroneBurstRuntimeObserved;
+        DroneLifecycleRuntimeDiagnostics.OnObserved +=
+            HandleDroneLifecycleRuntimeObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageResolutionObserved +=
             HandleTowerOwnedDamageResolutionObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved +=
@@ -801,6 +827,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             HandleProjectileRuntimeObserved;
         DroneBurstRuntimeDiagnostics.OnObserved -=
             HandleDroneBurstRuntimeObserved;
+        DroneLifecycleRuntimeDiagnostics.OnObserved -=
+            HandleDroneLifecycleRuntimeObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageResolutionObserved -=
             HandleTowerOwnedDamageResolutionObserved;
         TowerRuntimeStatResolver.OnTowerOwnedDamageApplicationObserved -=
@@ -2356,6 +2384,224 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
     }
 
+    private DroneRuntimeAggregate GetOrCreateDroneRuntimeAggregate(
+        TowerInstance sourceTower,
+        int sourceDroneInstanceId,
+        bool isAdditionalDrone)
+    {
+        int towerInstanceId = sourceTower.GetInstanceID();
+
+        if (!droneRuntimeByTowerInstanceId.TryGetValue(
+                towerInstanceId,
+                out Dictionary<int, DroneRuntimeAggregate> drones))
+        {
+            drones = new Dictionary<int, DroneRuntimeAggregate>();
+            droneRuntimeByTowerInstanceId.Add(towerInstanceId, drones);
+        }
+
+        if (!drones.TryGetValue(
+                sourceDroneInstanceId,
+                out DroneRuntimeAggregate drone))
+        {
+            drone = new DroneRuntimeAggregate(
+                sourceDroneInstanceId,
+                isAdditionalDrone);
+            drones.Add(sourceDroneInstanceId, drone);
+        }
+        else if (drone.IsAdditionalAttackEntity != isAdditionalDrone)
+        {
+            drone.DiagnosticsConsistent = false;
+        }
+
+        return drone;
+    }
+
+    private void HandleDroneLifecycleRuntimeObserved(
+        DroneLifecycleRuntimeObservation observation)
+    {
+        if (!isTrackingRun ||
+            observation.SourceTower == null ||
+            observation.SourceDroneInstanceId == 0)
+        {
+            return;
+        }
+
+        DroneRuntimeAggregate drone = GetOrCreateDroneRuntimeAggregate(
+            observation.SourceTower,
+            observation.SourceDroneInstanceId,
+            observation.IsAdditionalDrone);
+
+        switch (observation.ObservationType)
+        {
+            case DroneLifecycleRuntimeObservationType.Initialized:
+                drone.InitializedCount++;
+                drone.InitializedAtTime = observation.ObservedAtTime;
+                drone.CurrentState = DroneRuntimeState.Launching;
+                drone.DiagnosticsConsistent &=
+                    drone.InitializedCount == 1 &&
+                    observation.State == DroneRuntimeState.Launching &&
+                    observation.CompletionReason == DroneCompletionReason.None;
+                break;
+            case DroneLifecycleRuntimeObservationType.LaunchCompleted:
+                drone.LaunchCompletedCount++;
+                drone.HasCompletedOrbitEntry = false;
+                drone.DiagnosticsConsistent &=
+                    drone.InitializedCount == 1 &&
+                    !drone.IsCompleted &&
+                    drone.LaunchCompletedCount == 1 &&
+                    drone.CurrentState == DroneRuntimeState.Launching;
+                break;
+            case DroneLifecycleRuntimeObservationType.TargetLost:
+                drone.HasPendingTargetLoss = true;
+                drone.HasCompletedOrbitEntry = false;
+
+                if (observation.TargetLossReason ==
+                    DroneTargetLossReason.Invalid)
+                {
+                    drone.InvalidTargetLossCount++;
+                }
+                else if (observation.TargetLossReason ==
+                         DroneTargetLossReason.OutOfRange)
+                {
+                    drone.OutOfRangeTargetLossCount++;
+                }
+                else
+                {
+                    drone.DiagnosticsConsistent = false;
+                }
+
+                drone.DiagnosticsConsistent &=
+                    drone.InitializedCount == 1 &&
+                    !drone.IsCompleted &&
+                    !drone.IsHolding &&
+                    (drone.CurrentState == DroneRuntimeState.Launching ||
+                     drone.CurrentState == DroneRuntimeState.Orbiting);
+                break;
+            case DroneLifecycleRuntimeObservationType.ImmediateRetargeted:
+                drone.ImmediateRetargetCount++;
+                drone.DiagnosticsConsistent &=
+                    drone.HasPendingTargetLoss &&
+                    !drone.IsCompleted &&
+                    !drone.IsHolding;
+                drone.HasPendingTargetLoss = false;
+                break;
+            case DroneLifecycleRuntimeObservationType.HoldingEntered:
+                drone.HoldingEntryCount++;
+                drone.DiagnosticsConsistent &=
+                    drone.HasPendingTargetLoss &&
+                    !drone.IsCompleted &&
+                    !drone.IsHolding &&
+                    observation.State == DroneRuntimeState.Holding;
+                drone.HasPendingTargetLoss = false;
+                drone.IsHolding = true;
+                drone.HasCompletedOrbitEntry = false;
+                drone.HoldingEnteredAtTime = observation.ObservedAtTime;
+                drone.CurrentState = DroneRuntimeState.Holding;
+                break;
+            case DroneLifecycleRuntimeObservationType.HoldingExited:
+                drone.HoldingExitCount++;
+                drone.DiagnosticsConsistent &=
+                    drone.IsHolding &&
+                    !drone.IsCompleted &&
+                    observation.State == DroneRuntimeState.Orbiting;
+                AccumulateDroneHoldingTime(drone, observation.ObservedAtTime);
+                drone.IsHolding = false;
+                drone.HasCompletedOrbitEntry = false;
+                drone.CurrentState = DroneRuntimeState.Orbiting;
+                break;
+            case DroneLifecycleRuntimeObservationType.OrbitEntryCompleted:
+                drone.OrbitEntryCompletedCount++;
+                drone.DiagnosticsConsistent &=
+                    !drone.IsCompleted &&
+                    !drone.IsHolding &&
+                    observation.State == DroneRuntimeState.Orbiting;
+                drone.CurrentState = DroneRuntimeState.Orbiting;
+                drone.HasCompletedOrbitEntry = true;
+                break;
+            case DroneLifecycleRuntimeObservationType.BatteryDepleted:
+                drone.BatteryDepletedCount++;
+                drone.DiagnosticsConsistent &=
+                    drone.InitializedCount == 1 &&
+                    !drone.IsCompleted &&
+                    drone.BatteryDepletedCount == 1 &&
+                    observation.BatteryRemaining <= 0f &&
+                    (observation.State == DroneRuntimeState.Orbiting ||
+                     observation.State == DroneRuntimeState.Holding);
+                break;
+            case DroneLifecycleRuntimeObservationType.FinalDiveEntered:
+                drone.FinalDiveEnteredCount++;
+                drone.DiagnosticsConsistent &=
+                    drone.BatteryDepletedCount == 1 &&
+                    !drone.IsCompleted &&
+                    !drone.IsHolding &&
+                    drone.FinalDiveEnteredCount == 1 &&
+                    observation.State == DroneRuntimeState.FinalDiving;
+                drone.CurrentState = DroneRuntimeState.FinalDiving;
+                break;
+            case DroneLifecycleRuntimeObservationType.FinalDiveCompleted:
+                drone.FinalDiveCompletedCount++;
+                drone.DiagnosticsConsistent &=
+                    !drone.IsCompleted &&
+                    drone.CurrentState == DroneRuntimeState.FinalDiving &&
+                    drone.FinalDiveEnteredCount == 1 &&
+                    drone.FinalDiveCompletedCount == 1;
+                break;
+            case DroneLifecycleRuntimeObservationType.Completed:
+                drone.CompletionCount++;
+
+                if (drone.IsHolding)
+                {
+                    AccumulateDroneHoldingTime(
+                        drone,
+                        observation.ObservedAtTime);
+                    drone.IsHolding = false;
+                }
+
+                drone.CompletedAtTime = observation.ObservedAtTime;
+                drone.CompletionReason = observation.CompletionReason;
+                drone.DiagnosticsConsistent &=
+                    drone.InitializedCount == 1 &&
+                    !drone.IsCompleted &&
+                    drone.CompletionCount == 1 &&
+                    observation.CompletionReason !=
+                        DroneCompletionReason.None &&
+                    CompletionReasonMatchesLifecycle(drone);
+                drone.IsCompleted = true;
+                drone.HasPendingTargetLoss = false;
+                break;
+        }
+    }
+
+    private static void AccumulateDroneHoldingTime(
+        DroneRuntimeAggregate drone,
+        float observedAtTime)
+    {
+        drone.HoldingTimeSeconds += Mathf.Max(
+            0f,
+            observedAtTime - drone.HoldingEnteredAtTime);
+        drone.HoldingEnteredAtTime = 0f;
+    }
+
+    private static bool CompletionReasonMatchesLifecycle(
+        DroneRuntimeAggregate drone)
+    {
+        switch (drone.CompletionReason)
+        {
+            case DroneCompletionReason.BatteryAerialRetirement:
+                return drone.BatteryDepletedCount == 1 &&
+                       drone.FinalDiveEnteredCount == 0 &&
+                       drone.FinalDiveCompletedCount == 0;
+            case DroneCompletionReason.FinalDiveImpact:
+                return drone.BatteryDepletedCount == 1 &&
+                       drone.FinalDiveEnteredCount == 1 &&
+                       drone.FinalDiveCompletedCount == 1;
+            case DroneCompletionReason.TechnicalCleanup:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     private void HandleDroneBurstRuntimeObserved(
         DroneBurstRuntimeObservation observation)
     {
@@ -2367,26 +2613,23 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             return;
         }
 
-        int towerInstanceId = observation.SourceTower.GetInstanceID();
+        DroneRuntimeAggregate drone = GetOrCreateDroneRuntimeAggregate(
+            observation.SourceTower,
+            observation.SourceDroneInstanceId,
+            observation.IsAdditionalDrone);
 
-        if (!droneRuntimeByTowerInstanceId.TryGetValue(
-                towerInstanceId,
-                out Dictionary<int, DroneRuntimeAggregate> drones))
+        if (drone.InitializedCount != 1)
         {
-            drones = new Dictionary<int, DroneRuntimeAggregate>();
-            droneRuntimeByTowerInstanceId.Add(towerInstanceId, drones);
+            drone.DiagnosticsConsistent = false;
         }
 
-        if (!drones.TryGetValue(
-                observation.SourceDroneInstanceId,
-                out DroneRuntimeAggregate drone))
-        {
-            drone = new DroneRuntimeAggregate(
-                observation.SourceDroneInstanceId,
-                observation.IsAdditionalDrone);
-            drones.Add(observation.SourceDroneInstanceId, drone);
-        }
-        else if (drone.IsAdditionalAttackEntity != observation.IsAdditionalDrone)
+        if ((observation.ObservationType ==
+                 DroneBurstRuntimeObservationType.BurstStarted ||
+             observation.ObservationType ==
+                 DroneBurstRuntimeObservationType.ProjectileReleased) &&
+            (drone.IsHolding ||
+             drone.IsCompleted ||
+             !drone.HasCompletedOrbitEntry))
         {
             drone.DiagnosticsConsistent = false;
         }
@@ -3308,6 +3551,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             DamageDiagnosticsCountsMatch(report.damageDiagnostics);
         report.integrity.droneBurstDiagnosticsConsistent =
             DroneBurstDiagnosticsAreConsistent();
+        report.integrity.droneLifecycleDiagnosticsConsistent =
+            DroneLifecycleDiagnosticsAreConsistent();
         report.elementalOpportunityDiagnostics =
             CreateElementalOpportunityDiagnosticsJson();
         report.integrity.elementalOpportunityDiagnosticsConsistent =
@@ -5805,6 +6050,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 towerInstanceId);
             record.droneBurstRuntime = CreateDroneBurstRuntimeJson(
                 towerInstanceId);
+            record.droneLifecycleRuntime = CreateDroneLifecycleRuntimeJson(
+                towerInstanceId);
 
             IReadOnlyList<TowerUpgradeDefinition> upgrades =
                 towerInstance.AppliedUpgrades;
@@ -5982,6 +6229,64 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         return result;
     }
 
+    private CombatBalanceDroneLifecycleRuntimeJson
+        CreateDroneLifecycleRuntimeJson(int towerInstanceId)
+    {
+        CombatBalanceDroneLifecycleRuntimeJson result =
+            new CombatBalanceDroneLifecycleRuntimeJson();
+
+        if (!droneRuntimeByTowerInstanceId.TryGetValue(
+                towerInstanceId,
+                out Dictionary<int, DroneRuntimeAggregate> drones))
+        {
+            return result;
+        }
+
+        List<int> droneIds = new List<int>(drones.Keys);
+        droneIds.Sort();
+
+        for (int i = 0; i < droneIds.Count; i++)
+        {
+            DroneRuntimeAggregate drone = drones[droneIds[i]];
+            float activeTimeSeconds =
+                drone.InitializedCount == 1 && drone.CompletionCount == 1
+                    ? Mathf.Max(
+                        0f,
+                        drone.CompletedAtTime - drone.InitializedAtTime)
+                    : 0f;
+
+            result.diagnosticsConsistent &=
+                DroneLifecycleDiagnosticsAreConsistent(drone);
+            result.drones.Add(new CombatBalanceDroneLifecycleJson
+            {
+                sourceDroneInstanceId = drone.SourceDroneInstanceId,
+                isAdditionalAttackEntity =
+                    drone.IsAdditionalAttackEntity,
+                initializedCount = drone.InitializedCount,
+                launchCompletedCount = drone.LaunchCompletedCount,
+                invalidTargetLossCount = drone.InvalidTargetLossCount,
+                outOfRangeTargetLossCount =
+                    drone.OutOfRangeTargetLossCount,
+                immediateRetargetCount = drone.ImmediateRetargetCount,
+                holdingEntryCount = drone.HoldingEntryCount,
+                holdingExitCount = drone.HoldingExitCount,
+                reacquisitionCount =
+                    drone.ImmediateRetargetCount + drone.HoldingExitCount,
+                orbitEntryCompletedCount =
+                    drone.OrbitEntryCompletedCount,
+                batteryDepletedCount = drone.BatteryDepletedCount,
+                finalDiveEnteredCount = drone.FinalDiveEnteredCount,
+                finalDiveCompletedCount = drone.FinalDiveCompletedCount,
+                completionCount = drone.CompletionCount,
+                activeTimeSeconds = activeTimeSeconds,
+                holdingTimeSeconds = drone.HoldingTimeSeconds,
+                completionReason = drone.CompletionReason.ToString()
+            });
+        }
+
+        return result;
+    }
+
     private CombatBalanceElementalOpportunityDiagnosticsJson
         CreateElementalOpportunityDiagnosticsJson()
     {
@@ -6139,6 +6444,56 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         }
 
         return true;
+    }
+
+    private bool DroneLifecycleDiagnosticsAreConsistent()
+    {
+        foreach (KeyValuePair<int, Dictionary<int, DroneRuntimeAggregate>>
+                     towerEntry in droneRuntimeByTowerInstanceId)
+        {
+            foreach (KeyValuePair<int, DroneRuntimeAggregate> droneEntry in
+                     towerEntry.Value)
+            {
+                if (!DroneLifecycleDiagnosticsAreConsistent(droneEntry.Value))
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static bool DroneLifecycleDiagnosticsAreConsistent(
+        DroneRuntimeAggregate drone)
+    {
+        if (drone == null ||
+            !drone.DiagnosticsConsistent ||
+            drone.InitializedCount != 1 ||
+            drone.LaunchCompletedCount > 1 ||
+            drone.CompletionCount != 1 ||
+            !drone.IsCompleted ||
+            drone.IsHolding ||
+            drone.HasPendingTargetLoss ||
+            drone.HoldingEntryCount < drone.HoldingExitCount ||
+            drone.HoldingEntryCount - drone.HoldingExitCount > 1 ||
+            drone.BatteryDepletedCount > 1 ||
+            drone.FinalDiveEnteredCount > 1 ||
+            drone.FinalDiveCompletedCount > 1 ||
+            drone.HoldingTimeSeconds < 0f ||
+            drone.CompletedAtTime < drone.InitializedAtTime)
+        {
+            return false;
+        }
+
+        if (drone.CompletionReason !=
+                DroneCompletionReason.TechnicalCleanup &&
+            drone.LaunchCompletedCount != 1)
+        {
+            return false;
+        }
+
+        return CompletionReasonMatchesLifecycle(drone);
     }
 
     private static bool DroneRuntimeDiagnosticsAreConsistent(
