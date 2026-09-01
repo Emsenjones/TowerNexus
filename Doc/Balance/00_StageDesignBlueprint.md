@@ -2,11 +2,11 @@
 
 Document Set: Balance
 
-Status: Campaign learning arc approved; Stage1-Stage4 calibration accepted by
-Task010-Task013; Stage5-Stage6 Reference Build v0.2 shapes remain approved
-baselines whose exact repeated support families, Reference-run
-UpgradeDefinitions, ElementTypes, and Stage-local calibration values remain
-downstream decisions
+Status: Campaign learning arc approved; Stage1-Stage5 calibration accepted by
+Task010-Task014; the Stage6 Reference Build v0.2 shape remains an approved
+baseline whose exact Core families, repeated support family,
+UpgradeDefinitions, shared ElementType, and Stage-local calibration values
+remain Task015 decisions
 
 ---
 
@@ -199,24 +199,28 @@ Reference Build:
 
 ## 4.5 Stage5
 
-Status: Reference Build Baseline v0.2
+Status: Accepted Stage5 Calibration v1 (Task014, 2026-09-01)
 
 | Field | Design Target |
 |---|---|
 | Primary Experience | Build the first Elemental core and understand application and stacking |
 | New Content | Elemental Layer |
-| Required Capability | One Tower reaches a coherent Elemental specialization |
+| Required Capability | One Magic Tower reaches L3 with a coherent Basic, Behaviour, and Elemental specialization |
 | Expected Anti-pattern | Average investment across all Towers without reaching an Elemental core |
-| Notes | Five Towers use all four TowerFamilies; exact Core family, repeated family, and ElementType remain TBD |
+| Notes | Player Health 6; 76 Monsters; Progress `[3,3,4,4,4,8,8,10,10]`; final Draft node 54 with 22 later resolutions; the Fire Reference and Cold coherent alternative clear, while fragmented four-family investment fails on the sixth leak |
 
 Reference Build:
 
 | Role | Count | TowerFamily | Intended Final State |
 |---|---:|---|---|
-| Elemental Core | 1 | TBD | L3, one Basic, one Behaviour, one Elemental |
-| Support | 4 | All four TowerFamilies represented | L1, no Upgrades |
+| Elemental Core | 1 | Magic | L3, Arcane Charge, Twin Orbs, and Blazing Orbs in the reproducible Reference |
+| Support | 4 | Cannon, Archer, Drone, and Magic | L1, no Upgrades |
 
-Dual-source Elemental cooperation is not required for the intended Stage5 clear.
+Faster Orbit, Arcane Field, and Frostbound Orbs form the accepted coherent Cold
+alternative on the same Magic Core and placement. Both positive fixtures show
+meaningful single-source Elemental application and stacking plus visible
+non-Elemental Support damage. Dual-source Elemental cooperation is not required
+for the Stage5 clear and remains the Stage6 lesson.
 
 ## 4.6 Stage6
 

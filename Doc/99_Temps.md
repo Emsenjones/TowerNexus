@@ -106,9 +106,5 @@
 23. Differet damage should has its own damage color;
 24. Tower projectile spawn point is not in the right position;
 25. Design Monsters appearing performance;
-
-
-1. Players should be level up faster at the beigin;
-2. Normal monsters are too strong at the begining of Stage, but they are weak at the end of stage;
-2. The player can randomly build towers because monsters cannon give players pressure;
-3. Draft system should be more smart because the proportion of tower draft will decrease during stage.
+26. Text floating issue；
+27. Show monster route.

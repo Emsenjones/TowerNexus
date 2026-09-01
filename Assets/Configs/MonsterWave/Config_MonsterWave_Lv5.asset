@@ -13,27 +13,47 @@ MonoBehaviour:
   m_Name: Config_MonsterWave_Lv5
   m_EditorClassIdentifier: Assembly-CSharp::MonsterWaveConfig
   waves:
-  - waveDelay: 5
+  - waveDelay: 4
     monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
-    count: 13
+    count: 3
+    spawnInterval: 2.5
+  - waveDelay: 6
+    monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
+    count: 3
     spawnInterval: 2.5
   - waveDelay: 5
-    monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
-    count: 13
+    monsterRuntimeTemplate: {fileID: 5848973733325559065, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
+    count: 4
     spawnInterval: 2.5
-  - waveDelay: 5
-    monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
-    count: 13
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 5848973733325559065, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
+    count: 4
     spawnInterval: 2.5
-  - waveDelay: 5
-    monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
-    count: 13
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 5848973733325559065, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
+    count: 4
     spawnInterval: 2.5
-  - waveDelay: 5
-    monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
-    count: 12
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 5848973733325559065, guid: efaad910d8d0a421bae783c47d0a31c0, type: 3}
+    count: 8
     spawnInterval: 2.5
-  - waveDelay: 5
-    monsterRuntimeTemplate: {fileID: 2301366516664085335, guid: 22ef72e7f403a4b8e95afb36c57b1fe1, type: 3}
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 3082340063008460101, guid: cbabe32a21d9843728ed0b40c5d4dd16, type: 3}
+    count: 8
+    spawnInterval: 2.5
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 3082340063008460101, guid: cbabe32a21d9843728ed0b40c5d4dd16, type: 3}
+    count: 10
+    spawnInterval: 2.5
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 5918628833992865121, guid: 7c6e219af3504b48a56d81c9270f3e64, type: 3}
+    count: 10
+    spawnInterval: 2.5
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 6147167272419788473, guid: 11ae00977065c425f8298ca0e5e60680, type: 3}
+    count: 10
+    spawnInterval: 2.5
+  - waveDelay: 4
+    monsterRuntimeTemplate: {fileID: 5389729251801513952, guid: d4f31a2c6b8e49f0a1c7e5d903b2468f, type: 3}
     count: 12
     spawnInterval: 2.5

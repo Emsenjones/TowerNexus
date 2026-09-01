@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c69b96e78e584f878d4068749e0ab2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CombatBalanceRunRecorder
-  runName: Task013_PhaseG_004
+  runName: Task014_PD_S5V5_AltA_HP6_N54_S23_01
   placementRouteForcedRelocationExpectation: 2
   battleRuntimeCoordinator: {fileID: 7811906250627789308}
   stageCompositionController: {fileID: 0}
@@ -577,7 +577,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.size
-      value: 8
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[0].choices.Array.size
@@ -613,7 +613,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[8].choices.Array.size
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[9].choices.Array.size
@@ -634,11 +634,11 @@ PrefabInstance:
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[0].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
+      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[1].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
+      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[2].choices.Array.data[0].towerDefinition
       value: 
@@ -650,11 +650,11 @@ PrefabInstance:
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[4].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+      objectReference: {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[5].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[6].choices.Array.data[0].towerDefinition
       value: 
@@ -662,19 +662,19 @@ PrefabInstance:
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[7].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[8].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[9].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[10].choices.Array.data[0].towerDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[11].choices.Array.data[0].towerDefinition
       value: 
@@ -718,23 +718,23 @@ PrefabInstance:
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[6].choices.Array.data[0].towerUpgradeDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: 499144ae5a9eb4bdeb291f0123049068, type: 2}
+      objectReference: {fileID: 11400000, guid: 350a57194686d4136b25bcf36394e53d, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[7].choices.Array.data[0].towerUpgradeDefinition
       value: 
-      objectReference: {fileID: 11400000, guid: a761134c011b44da1be91512116d7f61, type: 2}
+      objectReference: {fileID: 0}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[8].choices.Array.data[0].towerUpgradeDefinition
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 83605bc8a0ade4983a10e00192c09e89, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[9].choices.Array.data[0].towerUpgradeDefinition
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 9e74b0160f9d04f668443ecd79712ae8, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[10].choices.Array.data[0].towerUpgradeDefinition
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 660f842197d724eca9ae3d212e04a0f9, type: 2}
     - target: {fileID: 2016482243056697407, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: fixedDraftChoiceSteps.Array.data[11].choices.Array.data[0].towerUpgradeDefinition
       value: 
@@ -834,7 +834,7 @@ PrefabInstance:
     - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: 'demoStages.Array.data[0]'
       value: 
-      objectReference: {fileID: 11400000, guid: aacc73e739bfe4ef59c5e22c120d3fd4, type: 2}
+      objectReference: {fileID: 11400000, guid: 4ca53bc93834148b0927ff523d21d19e, type: 2}
     - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: 'demoStages.Array.data[1]'
       value: 

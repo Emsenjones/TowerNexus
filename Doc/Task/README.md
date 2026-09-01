@@ -34,7 +34,7 @@ failure case.
 | Task011 | Completed Stage2 Progress, fixed-speed Monster Profile, Wave, Player Health, and Build-envelope calibration |
 | Task012 | Completed Stage3 Progress, fixed-speed Wave, Player Health, Magic contact, placement, and Build-envelope calibration |
 | Task013 | Completed Stage4 map-gap, Progress, HP520 Orc, fixed-speed Wave, Player Health, and Build-envelope calibration |
-| Task014 | Stage5 Progress, fixed-speed Monster Profile, and Wave calibration |
+| Task014 | Completed Stage5 Elemental-Core, Progress, fixed-speed Monster Profile, Wave, Player Health, and Build-envelope calibration |
 | Task015 | Stage6 Progress, fixed-speed Monster Profile, and Wave calibration |
 | Task016 | Fast-Monster identity and reviewed Wave substitutions |
 | Task017 | Natural Tower-versus-Upgrade Draft offer probability calibration |
@@ -96,8 +96,20 @@ pursuit across the expanded route. The Reference and two coherent Drone
 alternatives clear with `3-4` leaks. Efficient eight-L1 horizontal expansion
 and a timely, well-placed Cannon fixed-core Build both fail on the sixth leak,
 establishing a Build boundary without using intentionally poor placement.
-Orc HP `520` is accepted as the elite capstone. Task014 may begin Stage5
-calibration from this boundary.
+Orc HP `520` is accepted as the elite capstone. Task014 consumes this boundary
+without changing the accepted Stage4 Wave or Orc Profile.
+
+Task014 completed Stage5 V5 calibration on 2026-09-01. Its accepted Stage uses
+Player Health `6`, Progress Requirements `[3,3,4,4,4,8,8,10,10]`, `76`
+fixed-speed Monsters, final Draft node `54`, and `22` later resolutions. The
+Fire Reference and coherent Cold alternative complete one Magic L3 Elemental
+Core and clear with `2-3` leaks in the final HP6 records. Their application,
+stack, single-source Overload, Behaviour, FixedBuff, and non-Elemental Support
+contributions remain visible and Recorder-consistent without any second-source
+Elemental reaction. Equal-budget four-family fragmented investment never
+reaches an Elemental Core and fails on the sixth leak. Task015 may begin from
+this accepted single-Core baseline; Task017 still owns natural offer
+accessibility.
 
 Task010A separately owns the dedicated ten-fixture movement acceptance and
 Stage1 Reference movement regression. Stage2 schema-22 records validate the
