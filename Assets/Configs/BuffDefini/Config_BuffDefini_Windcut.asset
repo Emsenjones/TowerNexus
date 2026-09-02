@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Windcut
   description: Tower damage may strike one nearby monster while active; maximum stacks
     summon a WindVortex
-  activeDuration: 5
+  activeDuration: 8
   periodicTickInterval: 0
   usesStacks: 1
   maximumStacks: 10

@@ -107,4 +107,5 @@
 24. Tower projectile spawn point is not in the right position;
 25. Design Monsters appearing performance;
 26. Text floating issue；
-27. Show monster route.
+27. Show monster route;
+28. Input manager issue.

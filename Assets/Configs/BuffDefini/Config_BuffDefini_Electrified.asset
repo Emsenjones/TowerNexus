@@ -15,7 +15,7 @@ MonoBehaviour:
   displayName: Electrified
   description: Tower damage triggers cooldown-bounded fixed extra damage while active;
     maximum stacks trigger electrical overload
-  activeDuration: 5
+  activeDuration: 8
   periodicTickInterval: 0
   usesStacks: 1
   maximumStacks: 10

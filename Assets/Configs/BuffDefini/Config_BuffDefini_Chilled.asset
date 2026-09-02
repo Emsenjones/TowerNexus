@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Chilled
   description: Reduces movement speed and applies Frozen at maximum stacks
-  activeDuration: 5
+  activeDuration: 8
   periodicTickInterval: 0
   usesStacks: 1
   maximumStacks: 10
@@ -30,5 +30,6 @@ MonoBehaviour:
     effectDefinition: {fileID: 11400000, guid: ed46457b1ecde428e81920743778bfb9, type: 2}
   elementType: 2
   overloadProtectionDuration: 10
+  towerHitReactionCooldown: 0
   statusIcon: {fileID: 21300000, guid: b0354d0d0fef243edaff5c451d6d1dc2, type: 3}
   persistentBuffVfxPrefab: {fileID: 7340198452091193608, guid: d682f18e380904e84b3e61c568a8496c, type: 3}

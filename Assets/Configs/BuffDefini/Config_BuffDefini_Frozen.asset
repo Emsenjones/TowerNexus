@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
   displayName: Frozen
   description: Prevents the monster from moving for a short duration
-  activeDuration: 5
+  activeDuration: 8
   periodicTickInterval: 0
   usesStacks: 0
   maximumStacks: 10
@@ -26,5 +26,6 @@ MonoBehaviour:
     effectDefinition: {fileID: 11400000, guid: e2b85079b761c413d9e61421464c2104, type: 2}
   elementType: 0
   overloadProtectionDuration: 5
+  towerHitReactionCooldown: 0
   statusIcon: {fileID: 21300000, guid: df3ea5ae6f6e543e192da7b6606ad3a9, type: 3}
   persistentBuffVfxPrefab: {fileID: 8404876989691548728, guid: a8b363a82f1d3419aa6fcfdd79e4d422, type: 3}

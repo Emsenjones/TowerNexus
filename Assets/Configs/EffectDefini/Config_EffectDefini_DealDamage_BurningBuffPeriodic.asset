@@ -19,7 +19,7 @@ MonoBehaviour:
   - actionType: 0
     damageMode: 2
     damageScale: 0
-    fixedDamage: 10
+    fixedDamage: 7
     buffDefinition: {fileID: 0}
     moveSpeedMultiplier: 0.5
     isMovementLocked: 0

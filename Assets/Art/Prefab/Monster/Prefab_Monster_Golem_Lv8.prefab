@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 2367576008043052619}
   - component: {fileID: 4631483941930043226}
   m_Layer: 0
-  m_Name: Prefab_MonsterCandidate_Golem
+  m_Name: Prefab_Monster_Golem_Lv8
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Golem
   moveSpeed: 0.25
-  maxHealth: 480
+  maxHealth: 1600
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2

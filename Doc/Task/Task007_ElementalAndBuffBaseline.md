@@ -1,7 +1,9 @@
 # Task007 - Elemental And Buff Baseline
 
-Status: Completed; CombatMathV2 Elemental package values accepted on 2026-08-27
-with schema-20 Phase F-H evidence and the named progression-sentinel waiver
+Status: Completed; reopened cross-family Elemental calibration accepted on
+2026-09-03 with schema-24 Phase I-III evidence. The earlier schema-20 Phase
+F-H evidence remains historical mechanism and regression evidence; its numeric
+baseline is superseded by the schema-24 values and records named below.
 
 Depends on: Completed Task005 Elemental Stack Contribution Damage Authority;
 completed Task006 Drone Burst Elemental Opportunity Refactor; Task007A
@@ -20,6 +22,15 @@ current Electric/Wind contract: contributor-owned StackApplied damage has been
 replaced by shared cooldown-bounded FixedBuff Elemental hit reactions. Its
 remaining edge-transaction smoke is explicitly deferred and does not block this
 calibration.
+
+Stage6 reference testing later exposed a calibration gap rather than a runtime
+contract defect: the historical same-family cooperation fixtures did not prove
+that two different TowerFamilies with the same Element could reliably retain
+stacks and reach Overload under their different attack cadences and coverage.
+Task007 was therefore reopened around one fixed Archer-plus-Magic reference
+pair. The schema-24 continuation calibrates per-Buff Active Duration, shared
+normal value, and cross-family Overload value without changing Elemental
+application eligibility, targeting ownership, or stack contribution authority.
 
 ## 2. Required Screens
 
@@ -71,7 +82,7 @@ calibration.
   persistent reaction damage do not read triggering or contributing Tower
   BasicDamage.
 
-### 4.1 Current Calibration Contract
+### 4.1 Measurement Contract And Historical Reference Profile
 
 Task002 through Task004 accepted Level, Basic, and Behaviour value by comparing
 the owning Tower's controlled output. Task007 uses a different primary measure:
@@ -108,7 +119,8 @@ Elemental Reference Unit:
 
 ERU is a Task007 decision aid for the controlled fixture, not a runtime stat,
 damage type, global formula, or promise that every trigger and target has equal
-value. The accepted reference profile is:
+value. The schema-20 reference profile below remains the historical calibration
+frame that produced the first production baseline:
 
 | Result | Accepted reference |
 |---|---:|
@@ -120,6 +132,12 @@ value. The accepted reference profile is:
 | Two-source damaging Elemental package | Observed `4500-6000` fixed-value units |
 | Overlap Overloads per forty measurement Monsters | Observed `8-15`, with `0` in all accepted isolated references |
 | One Overload result in the standard density fixture | approximately `240-480` fixed-value units or the reviewed Cold control equivalent |
+
+The 2026-09-03 schema-24 continuation does not treat those historical observed
+ranges as immutable caps. Its accepted comparison asks whether one fixed
+cross-family reference pair preserves useful one-source normal value, gains a
+clear matching-source dividend, and keeps the final damaging Builds within one
+practical combat-output range. Section 4.2 owns the current numbers.
 
 For Fire, and for directly comparable Cold control outcomes, the four
 TowerFamily normal-yield results should remain in one bounded range. Their
@@ -157,8 +175,8 @@ Coverage Dividend
       - Two-Source Isolated Elemental Package Yield
 ```
 
-The accepted matching Upgrade dividend is approximately `1.4-1.6 ERU`, and
-Overload is its largest identifiable component for directly damaging Elements.
+The historical Phase G matching Upgrade dividend was approximately `1.4-1.6
+ERU`, and Overload was its largest identifiable component for directly damaging Elements.
 This keeps a
 high-frequency or AoE reaction companion useful without allowing it to replace
 the reward for completing two matching Elemental Upgrades.
@@ -169,12 +187,81 @@ Magic, or Drone. Ratios remain appropriate when comparing the same two Towers
 and same two matching Upgrades in Overlap and Isolated layouts, because that
 comparison measures build cooperation rather than Tower-family power.
 
+### 4.2 Current Schema-24 Cross-Family Calibration Contract
+
+The final reference fixture uses `Prefab_Map_Default_Multiple`, one Level 3
+Archer at `P1` (`(4,12)` plus `(4,13)`) and one Level 3 Magic Tower at `P2`
+(`(2,12)`). The setup Wave contains `22` HP-`60` Dragons. The measurement Wave
+contains `40` HP-`4800` Evil Mages at Move Speed `0.25`, Spawn Interval `2.5s`,
+and Wave Delay `90s`. Requirements are `[2,2,2,2,2,2,2,99]`; the final `99`
+entry is an unreachable sentinel rather than a required Draft. Forced route
+relocation is `RequireZero`.
+
+The one-source control gives only Archer the tested Elemental Upgrade. Magic
+remains Level 3 and non-Elemental, but its successful Tower-owned hits may
+trigger an already-active Electric or Wind normal reaction. The two-source
+treatment gives Magic the matching Elemental Upgrade. This changes stack
+contribution and Overload access without changing either Tower's Basic or
+Behaviour package.
+
+Current accepted authored values are:
+
+| Shared value | Accepted schema-24 value |
+|---|---:|
+| Burning Active Duration / Tick Interval / Periodic FixedDamage | `12s / 1s / 7` |
+| FlameBurst radius / FixedDamage | `1 / 250` |
+| Chilled Active Duration / Move Speed Multiplier | `8s / 0.6` |
+| Frozen Active Duration | `8s` |
+| Electrified Active Duration / reaction cooldown / reaction FixedDamage | `8s / 0.5s / 28` |
+| Overcharged radius / target count / per-target FixedDamage | `2 / 4 / 100` |
+| Windcut Active Duration / reaction cooldown / radius / target count / FixedDamage | `8s / 0.5s / 1 / 1 / 28` |
+| WindVortex Lifetime / Tick Interval / Tick FixedDamage / Damage Radius | `15s / 0.6s / 5 / 1` |
+| Elemental Maximum Stacks / Source Apply Cooldown / Overload Protection | `10 / 0.5s / 10s` |
+
+Stack contribution remains an independently authored TowerFamily value:
+
+| TowerFamily | Fire | Cold | Electric | Wind |
+|---|---:|---:|---:|---:|
+| Archer | `1` | `1` | `1` | `1` |
+| Cannon | `4` | `4` | `4` | `4` |
+| Magic | `3` | `2` | `3` | `3` |
+| Drone | `2` | `2` | `2` | `2` |
+
+The accepted reference-pair observations are:
+
+| Element | One-source normal result | Two-source normal result | Overload result | Two-source total |
+|---|---:|---:|---:|---:|
+| Fire | `3360` periodic FixedDamage | `4291-4375` periodic FixedDamage | `7` Overloads; `4750-5000` FlameBurst damage | `9125-9291` FixedBuff damage |
+| Cold | movement control; no direct FixedDamage | movement control; no direct FixedDamage | `4-7` Frozen applications; final Frozen duration `8s` | final Effective Damage `17640` |
+| Electric | `2996` reaction FixedDamage | `4312-4480` reaction FixedDamage | `6-9` Overloads; `2300-3500` LightningStrike damage | `6612-7980` FixedBuff damage |
+| Wind | `2968` reaction FixedDamage | `4340-4508` reaction FixedDamage | `7` Overloads; `2105-2305` WindVortex damage | `6445-6813` FixedBuff damage |
+
+For the directly damaging normal effects, the one-source maximum/minimum ratio
+is approximately `1.13`; the two-source normal values differ by approximately
+`2%`. Fire, Electric, and Wind therefore occupy one accepted normal-value
+range. Their mean two-source total Effective Damage is respectively `24077`,
+`22335`, and `21617`, a maximum spread of approximately `11.4%`. Fire retains
+the highest direct-damage ceiling, Electric the instant multi-target identity,
+and Wind the persistent spatial identity. Cold remains a movement-control
+package and is not assigned fictitious FixedDamage merely to match the other
+three.
+
+Every accepted two-source damaging run reached Overload. All recorded Fire,
+Electric, and Wind reference-pair Overloads used two distinct contributing
+Tower sources. Electric and Wind normal reaction counts remained stable when
+their Active Duration increased, while their cross-family Overload access
+improved; Active Duration therefore owns stack-retention opportunity rather
+than per-reaction potency. The accepted outcome is deliberately a bounded,
+low-frequency, high-value reward, not identical raw damage for four different
+Element identities.
+
 ## 5. Implementation Phases
 
 Phases A-E preserve the evidence path that exposed and resolved the Task007A,
-Task007B, and Task007C implementation boundaries. They remain historical
-mechanism evidence. Phases F-H are the current numerical continuation and own
-the final Task007 decision.
+Task007B, and Task007C implementation boundaries. Phases F-H preserve the first
+schema-20 production calibration. All remain historical mechanism and
+regression evidence. The schema-24 Phase I-III continuation in Section 8.8
+supersedes only their numeric baseline and owns the final Task007 decision.
 
 ### Phase A - Level 3 Single-Element Application Screen
 
@@ -344,12 +431,14 @@ Each Buff source record includes:
 This source identity is diagnostic only. It does not create Buff state or
 participate in cooldown authority.
 
-Schema `20` is sufficient for the current continuation. Fresh Records must use
-its FixedBuff signatures, Buff application and stack-unit accounting, natural
-expiry and Overload distributions, per-source and per-Wave summaries,
-Elemental opportunity provenance, and Elemental hit-reaction outcomes. Task007
-does not require another Recorder schema merely to calculate ERU, cross-family
-dispersion, or Overlap/Isolated cooperation.
+Schema `20` was sufficient for the original continuation. The reopened
+calibration uses the repository's current schema `24`; no Recorder feature was
+added solely for this balance pass. Its Records retain FixedBuff signatures,
+Buff application and stack-unit accounting, natural-expiry and Overload
+distributions, per-source and per-Wave summaries, Elemental opportunity
+provenance, Elemental hit-reaction outcomes, and placement-route integrity.
+Task007 still does not require a schema change merely to calculate ERU or
+cross-family dispersion.
 
 Before Phase A, the Cold/Frozen authoring baseline is repaired to match the
 System contract:
@@ -587,10 +676,11 @@ cover Fire, Cold, Electric, and Wind once. These Records verify composition and
 presentation; they do not replace Phase F normal-value or Phase G cooperation
 evidence.
 
-### 8.5 Locked CombatMathV2 Elemental Values
+### 8.5 Historical Schema-20 CombatMathV2 Elemental Values
 
-The following values are accepted Task007 production baselines. Unity assets
-remain executable authority; this table is the reviewable calibration record.
+The following values were accepted by the original Task007 pass and are kept to
+preserve its evidence trail. They are superseded by Section 4.2 and are not the
+current production values. Unity assets remain executable authority.
 
 | Shared Buff value | Accepted value |
 |---|---:|
@@ -619,7 +709,7 @@ These contribution values change only the units requested by one authorized
 baseline-primary application. They do not scale normal Buff potency or
 Overload damage.
 
-### 8.6 Accepted Phase F-G Results
+### 8.6 Historical Accepted Phase F-G Results
 
 Phase F accepted the following ordinary damaging yields for Archer / Cannon /
 Magic / Drone:
@@ -655,7 +745,7 @@ every accepted Isolated reference produced none. This passes the intended
 matching-build reward even though Fire and Cold retain useful ordinary value in
 the isolated layout.
 
-### 8.7 Phase H Core Regression
+### 8.7 Historical Phase H Core Regression
 
 The four final Core Records completed with the named Basic, Behaviour, and
 Elemental packages:
@@ -673,23 +763,76 @@ from Tower BasicDamage. All schema-20 combat, Monster, Wave, deployment, damage,
 Elemental opportunity, hit-reaction, Buff, stack-unit, and Wave-attribution
 integrity checks passed.
 
+### 8.8 Schema-24 Reopened Calibration Evidence
+
+Phase I used Fire to screen different cross-family pairs under overlapping
+coverage. Archer plus Magic was selected as the final reference pair because it
+combines different attack cadences without the most extreme low-cadence pairing
+or a same-family duplicate. Phase II confirmed that reference pair and exposed
+Active Duration as the correct stack-retention lever. Phase III retained the
+same fixture and calibrated all four Elements in order: normal value first,
+then matching-source Overload value.
+
+The final accepted evidence set is:
+
+- Fire one-source normal:
+  `Task007_PhaseIII_NormalEffect_ReferencePair_StraightMultiple_HP4800_ArcherMagic_L3x2_BlazingArrows_1Source_P1P2_Control_Burning12_Tick7_FlameBurst250_Schema24_01`;
+- Fire two-source references:
+  `Task007_PhaseI_CrossFamilyCooperation_StraightMultiple_HP4800_ArcherMagic_L3x2_BlazingArrows_BlazingOrbs_2Sources_P1P2_Overlap_Burning12_Tick7_FlameBurst250_Schema24_01`
+  and
+  `Task007_PhaseII_ReferencePairConfirmation_StraightMultiple_HP4800_ArcherMagic_L3x2_BlazingArrows_BlazingOrbs_2Sources_P1P2_Overlap_Burning12_Tick7_FlameBurst250_Schema24_02`;
+- Cold one-source normal:
+  `Task007_PhaseIII_NormalEffect_ReferencePair_StraightMultiple_HP4800_ArcherMagic_L3x2_FrostboundArrows_1Source_P1P2_Control_Chilled8_MoveSpeed06_Frozen5_Schema24_01`;
+- Cold final two-source value:
+  `Task007_PhaseIII_OverloadValue_ReferencePair_StraightMultiple_HP4800_ArcherMagic_L3x2_FrostboundArrows_FrostboundOrbs_2Sources_P1P2_Overlap_Chilled8_MoveSpeed06_Frozen8_Schema24_01`;
+- Electric one-source normal:
+  `Task007_PhaseIII_NormalEffect_ReferencePair_StraightMultiple_HP4800_ArcherMagic_L3x2_ChargedArrows_1Source_P1P2_Control_Electrified8_Reaction28_LightningStrike100x4_Schema24_01`;
+- Electric two-source repetitions:
+  `Task007_PhaseIII_OverloadValue_ReferencePair_StraightMultiple_HP4800_ArcherMagic_L3x2_ChargedArrows_ChargedOrbs_2Sources_P1P2_Overlap_Electrified8_Reaction28_LightningStrike100x4_Schema24_01`
+  and `_02`;
+- Wind one-source normal:
+  `Task007_PhaseIII_NormalEffect_ReferencePair_StraightMultiple_HP4800_ArcherMagic_L3x2_GaleArrows_1Source_P1P2_Control_Windcut5_Reaction28_WindVortexL15_Tick06_Dmg5_Schema24_01`;
+- Wind final two-source repetitions:
+  `Task007_PhaseIII_ActiveDuration_ReferencePair_StraightMultiple_HP4800_ArcherMagic_L3x2_GaleArrows_GaleOrbs_2Sources_P1P2_Overlap_Windcut8_Reaction28_WindVortexL15_Tick06_Dmg5_Schema24_01`
+  and `_02`.
+
+Candidate records for shorter and longer Active Durations, lower Electric/Wind
+reaction damage, shorter Frozen duration, and alternate Fire pairings remain
+diagnostic history rather than final acceptance evidence. All final Records
+above completed the full `62`-Monster fixture and passed every schema-24
+integrity flag, including damage, Buff, stack-unit, Elemental opportunity,
+Elemental hit-reaction, Wave attribution, and placement-route checks.
+
 ## 9. Completion Evidence And Handoff
 
-- Unity authoring validation passed with `75` assets checked.
-- Phase F locked shared normal values and named the retained Cannon Fire and
-  Electric/Wind hit-frequency exceptions.
-- Phase G accepted all four matching-source cooperation packages.
-- Phase H accepted four final Core composition regressions.
-- The fixture's unreachable final requirement `99` intentionally leaves
-  `levelUpCountMatches`, `levelUpResolutionNodesMatch`, and
-  `finalPlayerLevelMatches` false. This progression-only waiver does not apply
-  to combat or Elemental diagnostics.
+- The original schema-20 pass retained its `75`-asset Unity authoring
+  validation, Phase F normal-value matrix, Phase G cooperation matrix, and
+  Phase H Core regressions as historical implementation evidence.
+- The reopened schema-24 pass accepted Burning `12s / 7`, Chilled and Frozen
+  `8s`, Electrified `8s / 28`, Windcut `8s / 28`, and FlameBurst `250` while
+  preserving LightningStrike `100 x 4` and WindVortex `15s / 0.6s / 5`.
+- The final Archer-plus-Magic reference pair aligned Fire, Electric, and Wind
+  two-source normal damage within approximately `2%`; their mean total
+  Effective Damage remained within approximately `11.4%`.
+- The final two-source damaging runs produced `7` Fire Overloads, `6-9`
+  Electric Overloads, and exactly `7` Wind Overloads. Every recorded Overload
+  in those runs contained two contributing Tower sources.
+- Cold remains the explicit movement-control exception. The final record used
+  Chilled `0.6`, Chilled Active Duration `8s`, Frozen Active Duration `8s`, and
+  Magic Cold contribution `2`; it is not assigned fictitious FixedDamage.
+- Every final schema-24 record completed the full fixture and passed all
+  exported integrity flags. Its final requirement `99` remains an intentional
+  unreachable sentinel; the current Recorder reports the corresponding
+  progression accounting consistently without a combat or Elemental waiver.
 - Task007C's remaining edge-transaction smoke remains explicitly deferred. It
   is not reported as passed and does not block the accepted Task007 numerical
   baseline.
 
-Task010 and later Stage Tasks may tune Monster, Wave, route, Draft opportunity,
-and pressure values against this package. They may not repair a Stage result by
-silently changing the accepted Tower Level, Basic, Behaviour, Elemental normal,
-or matching-source cooperation contracts. Reopening Task007 requires a named
-regression caused by a later gameplay-contract or authored-value change.
+Task014 and Task015 must now rerun their Stage5 and Stage6 reference Builds
+before changing MonsterWaveConfig pressure, because their earlier balance
+evidence predates this Elemental value increase. Later Stage Tasks may tune
+Monster, Wave, route, Draft opportunity, and pressure values against the
+accepted package. They may not repair a Stage result by silently changing the
+accepted Tower Level, Basic, Behaviour, Elemental normal, or matching-source
+cooperation contracts. Reopening Task007 again requires a named regression
+caused by a later gameplay-contract or authored-value change.
