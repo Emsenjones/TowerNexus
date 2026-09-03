@@ -35,10 +35,10 @@ failure case.
 | Task012 | Completed Stage3 Progress, fixed-speed Wave, Player Health, Magic contact, placement, and Build-envelope calibration |
 | Task013 | Completed Stage4 map-gap, Progress, HP520 Orc, fixed-speed Wave, Player Health, and Build-envelope calibration |
 | Task014 | Completed Stage5 Elemental-Core, Progress, fixed-speed Monster Profile, Wave, Player Health, and Build-envelope calibration |
-| Task015 | In-progress Stage6 matching-Element Reference fixture and complete Stage6 calibration; resumed after Task015A |
+| Task015 | Completed Stage6 matching-Element cooperation, placement-overlap, Progress, Wave, Player Health, and Build-envelope calibration |
 | Task015A | Completed Drone targetless Holding lifecycle refactor and schema-24 regression acceptance |
-| Task016 | Fast-Monster identity and reviewed Wave substitutions |
-| Task017 | Natural Tower-versus-Upgrade Draft offer probability calibration |
+| Task016 | Planned Fast-Monster identity and reviewed Wave substitutions; temporarily deferred |
+| Task017 | Ready fixed-speed natural Tower-versus-Upgrade Draft offer probability calibration |
 
 Task008 and Task009 were removed before implementation. A Stage-independent
 fixed-speed HP roster could not accept tactical Monster roles without complete
@@ -53,8 +53,11 @@ reachability, legal Reference/Alternative/Anti-pattern fixtures, Fixed Draft
 sequences, Progress Requirements, Monster Profile reuse or introduction,
 `MonsterWaveConfig`, Player Health, and complete acceptance evidence.
 
-Task order is an acceptance dependency, not only a filename order. A later Task
-must not compensate for a failed earlier contract through unrelated Stage values.
+Task order is normally an acceptance dependency, not only a filename order. A
+later Task must not compensate for a failed earlier contract through unrelated
+Stage values. On 2026-09-03, the initial Task017 route was explicitly narrowed
+to the accepted fixed-speed Task010-Task015 campaign while Task016 was deferred.
+Any later Task016 substitution must re-run the affected Task017 Stage cohorts.
 
 Task015A is a narrow runtime checkpoint discovered during Task015 rather than a
 new balance layer. It completed on 2026-09-02 through the accepted Stage6 live
@@ -123,8 +126,20 @@ reaches an Elemental Core and fails on the sixth leak. Task015 may begin from
 this accepted single-Core baseline; Task017 still owns natural offer
 accessibility.
 
+Task015 completed its schema-24 Stage6 calibration on 2026-09-03. Its accepted
+Stage uses Player Health `6`, Progress Requirements
+`[3,3,4,4,4,4,4,4,4,4,4,4,5,5]`, `75` fixed-speed Monsters, final Draft node
+`56`, and `19` later resolutions. The matching-Element Reference and coherent
+Cold alternative clear with `2-3` leaks, while the mixed Cold-and-Fire
+alternative also clears with one leak but produces no two-source reaction. The
+single-source and separated-core controls fail on the sixth leak, establishing
+both a cooperation boundary and a placement-overlap boundary. Golem Lv8 HP
+`2400` and the final four-Monster W12 retain capstone pressure without reopening
+accepted Tower or Elemental values.
+
 Task010A separately owns the dedicated ten-fixture movement acceptance and
 Stage1 Reference movement regression. Stage2 schema-22 records validate the
 movement cases encountered in Task011 but do not replace that focused evidence.
-Task017 will later determine how accessible accepted fixed Builds are under
-natural offers.
+Task017 is the next priority and will determine how accessible the accepted
+fixed-speed Builds are under natural offers. Task016 remains a separate future
+speed-role change rather than an unrecorded prerequisite for that baseline.

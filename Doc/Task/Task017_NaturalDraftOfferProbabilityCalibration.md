@@ -1,15 +1,18 @@
 # Task017 - Natural Draft Offer Probability Calibration
 
-Status: Planned
+Status: Ready
 
-Depends on: Accepted Task016 Fast Monster And Wave Substitution and accepted
-Task010-Task015 Stage Build envelopes
+Depends on: Accepted Task010-Task015 fixed-speed Stage Build envelopes
+
+Deferred input: Task016 Fast Monster And Wave Substitution. The initial Task017
+baseline intentionally excludes it; later accepted substitutions require the
+affected Stage cohorts to be re-run.
 
 ## 1. Goal
 
 Calibrate the natural Draft offer mix between Tower Draft items and Tower
 Upgrade Draft items, including the relative availability of eligible identities,
-after combat values and all six Stage configurations are stable.
+after combat values and all six fixed-speed Stage configurations are stable.
 
 This Task determines whether a coherent Stage-appropriate Build is reasonably
 available through natural offers without guaranteeing the exact Reference Build.
@@ -21,10 +24,13 @@ different reward or because natural sampling never offered a viable path.
 
 - accepted Task010-Task015 Progress Requirements, Monster Profiles, Waves,
   Player Health, Reference Builds, coherent alternatives, and Anti-patterns;
-- accepted Task016 Fast-Monster substitutions and affected regressions;
 - exact Stage Tower and Tower Upgrade pools accepted by Task010-Task015;
 - normal Draft eligibility, Pending reservation, unique-display, Level Up,
   placement, Upgrade application, and consumption rules.
+
+Task016 is not a locked input for the initial baseline. If it later changes a
+Stage Wave, that Stage's natural-offer cohort and the relevant combat regression
+must be repeated before the new result supersedes the fixed-speed evidence.
 
 Task017 must not weaken a Wave, change Monster HP or MoveSpeed, alter Player
 Health, rebalance Tower combat, or reinterpret a Fixed-run Build result to hide
@@ -119,5 +125,5 @@ then reused for the post-change comparison.
   being inferred from the final snapshot alone.
 - Any new weighting rule is deterministic under seed control, documented in the
   Draft System contract, and covered by retry and next-Stage reset regressions.
-- No accepted Task010-Task016 combat or Stage pressure value is changed to
+- No accepted Task010-Task015 combat or Stage pressure value is changed to
   compensate for Draft probability.

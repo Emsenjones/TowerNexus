@@ -1,10 +1,11 @@
 # Task016 - Fast Monster And Wave Substitution
 
-Status: Planned
+Status: Planned; temporarily deferred on 2026-09-03
 
 Depends on: Accepted Task010-Task015 fixed-speed Stage calibrations
 
-Blocks: Task017
+Downstream impact: Any accepted substitution requires affected Task017 Stage
+cohorts to be re-run
 
 ## 1. Goal
 
@@ -63,7 +64,8 @@ Any deliberate formation exception is separately authored and named.
 
 ## 7. Downstream
 
-Task017 calibrates natural Draft offer probability only after these substitutions
-and their affected Stage regressions are accepted. Controlled Stage reports may
-inform its Build targets, but Fixed-mode displayed choices are not natural
-frequency evidence.
+Task017 proceeds first against the accepted Task010-Task015 fixed-speed campaign.
+When Task016 resumes, every accepted substitution and its affected Stage
+regressions become a new locked input for the corresponding Task017 cohorts,
+which must then be re-run. Controlled Stage reports may inform Build targets,
+but Fixed-mode displayed choices are not natural frequency evidence.

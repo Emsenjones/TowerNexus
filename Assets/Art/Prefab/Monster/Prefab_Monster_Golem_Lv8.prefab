@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Golem
   moveSpeed: 0.25
-  maxHealth: 1600
+  maxHealth: 2400
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2

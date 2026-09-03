@@ -109,7 +109,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e72828944a3941e8a279205d0be4ad8f, type: 3}
-  m_Name:  m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
+  m_Name: 
+  m_EditorClassIdentifier: 
   displayName: Orc
   moveSpeed: 0.25
   maxHealth: 1700
@@ -134,7 +135,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1ab67d2c43fb4cb1a4c35c6384276806, type: 3}
-  m_Name:  m_EditorClassIdentifier: Assembly-CSharp::MonsterHitFeedback
+  m_Name: 
+  m_EditorClassIdentifier: 
   animator: {fileID: 2971079900529067286}
   hitFlashRenderers:
   - {fileID: 6660552170839345031}
@@ -153,7 +155,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 28b1242e20ee4010be3c271715c02a28, type: 3}
-  m_Name:  m_EditorClassIdentifier: Assembly-CSharp::MonsterBuffVisualController
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2971079900536402038
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -208,16 +211,24 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9500000, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
       propertyPath: m_Controller
-      value:      objectReference: {fileID: 22100000, guid: 68ba4c1453c6843eabd4e79cb3dd2b50, type: 2}
+      value: 
+      objectReference: {fileID: 22100000, guid: 68ba4c1453c6843eabd4e79cb3dd2b50, type: 2}
     - target: {fileID: 9500000, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
       propertyPath: m_WarningMessage
-      value:      objectReference: {fileID: 0}
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 13700002, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
+      propertyPath: m_Enabled
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 13700002, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value:      objectReference: {fileID: 2100000, guid: f4db11ba444d745de889511630f4e482, type: 2}
+      value: 
+      objectReference: {fileID: 2100000, guid: f4db11ba444d745de889511630f4e482, type: 2}
     - target: {fileID: 8454502816601372657, guid: 48b54176159440ea9a9adf323fc5b2b6, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value:      objectReference: {fileID: 2100000, guid: f4db11ba444d745de889511630f4e482, type: 2}
+      value: 
+      objectReference: {fileID: 2100000, guid: f4db11ba444d745de889511630f4e482, type: 2}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
