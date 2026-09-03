@@ -18,6 +18,7 @@ It owns:
 - Distribution of the selected Player maximum health
 - Distribution of the selected Player progress requirements
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
+- Distribution of the Stage-specific Tower Draft Slot Probability
 - Distribution of the Stage Upgrade pool as Tower level-eligibility authoring
 - Establishment of a fresh battle-local Player runtime for the selected Stage
 - Establishment of a prepared Stage boundary before battle gameplay begins
@@ -42,6 +43,7 @@ StageDefinition is one reusable playable-Stage composition.
 | Monster Wave Config | Wave sequence executed in this Stage |
 | Tower Draft Pool | TowerDefinitions allowed in this Stage's Drafts |
 | Tower Upgrade Draft Pool | TowerUpgradeDefinitions allowed in this Stage's Drafts |
+| Tower Draft Slot Probability | Inclusive `[0, 1]` probability that each natural Player level-up Draft display slot initially requests the Tower category |
 | Show Stage Introduction | Whether the prepared Stage waits for Game Flow introduction confirmation |
 | Introduced Towers | TowerDefinitions presented as newly introduced in this Stage |
 | Introduced Tower Upgrades | TowerUpgradeDefinitions presented as newly introduced in this Stage |
@@ -55,6 +57,12 @@ Each Stage independently authors one Player Progress Requirements sequence. Its 
 StageDefinition owns the reusable progression authoring. Player System receives a battle-local snapshot during Stage composition and owns runtime progress, threshold consumption, and level-up transitions. There is no shared progression curve that overrides or supplements the selected Stage's sequence.
 
 Because every fresh Stage battle begins with one Initial Tower Draft, the Tower Draft Pool must contain at least one valid TowerDefinition. A Stage with no valid Initial Tower Draft candidate is not playable and cannot proceed to Monster Wave execution.
+
+Each Stage independently authors one Tower Draft Slot Probability. The value
+applies to each requested display slot in a natural Player level-up Draft. It
+does not affect the Tower-only Initial Draft, guarantee a realized display or
+selection ratio, or guarantee a Reference Build. Stage System supplies the
+value; Draft System owns category allocation, sampling, and backfill.
 
 The Tower Upgrade Draft Pool also authors each TowerFamily's maximum reachable level for this Stage. The maximum is the highest Required Tower Level among that family's Stage-allowed Upgrades, clamped by the supported and TowerDefinition-configured maximums. A family with no Stage-allowed Upgrade remains at Level 1.
 
@@ -104,7 +112,7 @@ Receive Selected StageDefinition
     -> Supply MonsterWaveConfig To Monster System
     -> Supply Player Max Health To Player System
     -> Supply Player Progress Requirements To Player System
-    -> Supply Draft Pools To Draft System
+    -> Supply Draft Pools And Tower Draft Slot Probability To Draft System
     -> Supply Stage Upgrade Pool To Tower Upgrade System
     -> Initialize Fresh Player Battle-Local State At Full Health, Level 1, And Zero Progress
     -> Confirm No Deferred Release
@@ -139,7 +147,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 | Game Flow System | Prepared Stage readiness and introduction content | Stage ordering, current position, start permission, and result transitions |
 | Map System | Selected Map template and active-instance role | Grid state, spatial queries, Map presentation, and validation |
 | Monster System | Active Map and MonsterWaveConfig | Wave timing, spawning, pathfinding, movement, and resolution |
-| Draft System | Tower and Tower Upgrade pools | Candidate generation, reservation, sampling, and results |
+| Draft System | Tower and Tower Upgrade pools plus Tower Draft Slot Probability | Category allocation, candidate generation, reservation, sampling, backfill, and results |
 | Player System | Player Max Health, Player Progress Requirements, and fresh Stage-battle initialization | Applied runtime snapshots, current health, level progress, level-up, and defeat state |
 | Tower Upgrade System | Stage Upgrade pool as level-eligibility authoring | Stage-bound level cap, Upgrade schema, eligibility, and application |
 | Tower Placement System | Active Map availability | Placement, occupancy commit, and topology requests |
@@ -161,6 +169,7 @@ Stage validation should report at minimum:
 - Null or duplicate TowerDefinition references
 - No valid TowerDefinition available for the required Initial Tower Draft
 - Null or duplicate TowerUpgradeDefinition references
+- Tower Draft Slot Probability outside the inclusive `[0, 1]` range
 - Referenced definitions that fail owner-system validation
 - Tower Upgrade content whose TowerFamily cannot be represented by the Stage Tower pool when that relationship is required
 - Required Tower Level outside the supported or represented TowerDefinition progression
@@ -187,6 +196,7 @@ Current scope includes:
 - One positive Player Max Health value per Stage
 - One non-empty ordered Player Progress Requirements sequence per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
+- One Stage-specific Tower Draft Slot Probability for natural Player level-up Drafts
 - Stage-derived per-TowerFamily level caps with continuous unlock paths
 - At least one valid TowerDefinition for the Initial Tower Draft
 - Optional Stage Introduction content

@@ -94,8 +94,7 @@
 13. *Camera movement;
 14. *Simplify monster wave config;
 15. *6 Stage Map Prefabs;
-16. Value judgement + Replace LingerOribt;
-17. Draft Specific Tower on initial Draft window pop up;
+16. *Value judgement + Replace LingerOribt;
 16. Tower state UI;
 17. Level display window;
 18. Monster route display;
@@ -104,8 +103,6 @@
 21. Camera focuses on the tower which the player taped and pop up TowerInfoWindow;
 22. Develop Monster & Projectile object pool;
 23. Differet damage should has its own damage color;
-24. Tower projectile spawn point is not in the right position;
 25. Design Monsters appearing performance;
 26. Text floating issue；
-27. Show monster route;
 28. Input manager issue.

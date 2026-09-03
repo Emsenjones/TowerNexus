@@ -38,7 +38,7 @@ failure case.
 | Task015 | Completed Stage6 matching-Element cooperation, placement-overlap, Progress, Wave, Player Health, and Build-envelope calibration |
 | Task015A | Completed Drone targetless Holding lifecycle refactor and schema-24 regression acceptance |
 | Task016 | Planned Fast-Monster identity and reviewed Wave substitutions; temporarily deferred |
-| Task017 | Ready fixed-speed natural Tower-versus-Upgrade Draft offer probability calibration |
+| Task017 | In-progress fixed-speed natural Draft offer contract, seeded measurement, implementation, and probability calibration |
 
 Task008 and Task009 were removed before implementation. A Stage-independent
 fixed-speed HP roster could not accept tactical Monster roles without complete
@@ -140,6 +140,9 @@ accepted Tower or Elemental values.
 Task010A separately owns the dedicated ten-fixture movement acceptance and
 Stage1 Reference movement regression. Stage2 schema-22 records validate the
 movement cases encountered in Task011 but do not replace that focused evidence.
-Task017 is the next priority and will determine how accessible the accepted
-fixed-speed Builds are under natural offers. Task016 remains a separate future
-speed-role change rather than an unrecorded prerequisite for that baseline.
+Task017 is in progress. Its documented candidate separates Tower and Upgrade
+categories, allocates each Level-Up display slot from a Stage-authored Tower
+probability, preserves eligible-instance Upgrade weight, and backfills category
+shortages without duplicate identities. Seeded baseline and post-change evidence
+remain pending. Task016 remains a separate future speed-role change rather than
+an unrecorded prerequisite for that baseline.

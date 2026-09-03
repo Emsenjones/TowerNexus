@@ -121,6 +121,7 @@ StageDefinition
     + MonsterWaveConfig
     + Tower Draft Pool
     + Tower Upgrade Draft Pool
+    + Tower Draft Slot Probability
     + Optional Stage Introduction Content
 ```
 
@@ -226,9 +227,16 @@ It consumes Map data and Stage-selected Wave configuration without owning them. 
 
 ## 4.8 Draft System
 
-Owns Draft candidate gathering, eligibility-aware weighting, pending reservation, sampling, displayed-choice deduplication, explicit Draft workflow phase and session identity, Draft-driven battle-simulation pause, and Draft result creation.
+Owns Draft candidate gathering, Stage-authored Level-Up choice-category
+allocation, eligibility-aware weighting, pending reservation, distinct identity
+sampling, cross-category backfill, final display ordering, explicit Draft
+workflow phase and session identity, Draft-driven battle-simulation pause, and
+Draft result creation.
 
-It consumes the Stage-specific Tower and Tower Upgrade pools and forwards the selected result to the appropriate gameplay owner.
+It consumes the Stage-specific Tower and Tower Upgrade pools plus Tower Draft
+Slot Probability and forwards the selected result to the appropriate gameplay
+owner. Upgrade identities remain weighted by remaining eligible Tower capacity
+inside the Upgrade category without permitting duplicate display identities.
 
 ## 4.9 Tower Placement System
 
@@ -287,7 +295,7 @@ Game Flow
                 -> Authored 3D Camera Movement Boundary
                 -> Default Camera Framing Reset
             -> Monster Wave Configuration
-            -> Stage Draft Pools
+            -> Stage Draft Pools And Tower Draft Slot Probability
             -> Prepared Stage
         -> Optional Stage Introduction
         -> Begin Battle

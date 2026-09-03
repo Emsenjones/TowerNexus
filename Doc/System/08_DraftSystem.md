@@ -11,6 +11,7 @@ Draft System turns an approved Draft opportunity into a set of runtime choices a
 It owns:
 
 - Candidate gathering from Stage-specific content pools
+- Stage-authored Level-Up Draft category-slot allocation
 - Eligibility-aware candidate representation
 - Pending Tower Upgrade reservation
 - Candidate weighting and sampling
@@ -31,6 +32,7 @@ Inputs:
 - Player level-up opportunity
 - Stage Tower Draft Pool
 - Stage Tower Upgrade Draft Pool
+- Stage Tower Draft Slot Probability
 - Current deployed Tower instances
 - Tower Upgrade eligibility results
 - Unconsumed Tower Upgrade Draft items
@@ -52,8 +54,10 @@ The first version displays up to three distinct choices. It displays one or two 
 Approved Draft Opportunity
     -> Resolve Initial Or Level-Up Source
     -> Build Candidates Allowed For That Source
-    -> Merge Candidate Entries
-    -> Sample Distinct Display Choices
+    -> Allocate Requested Choice Categories
+    -> Sample Distinct Identities Within Each Category
+    -> Transfer Unfilled Slots Across Categories
+    -> Randomize Final Display Order
     -> Establish Provisional Opening Session
     -> Present Choices With Session Identity
     -> Acquire Battle-Simulation Pause After Successful Opening
@@ -105,7 +109,11 @@ A stopped, released, or failed Stage does not count as completing its Initial To
 
 ## 3.2 Player Level-Up Draft
 
-Each accepted Player level-up opportunity uses the normal combined Tower and eligible Tower Upgrade candidate process. It remains independent of the one Initial Tower Draft granted for that Stage battle.
+Each accepted Player level-up opportunity builds separate Tower and eligible
+Tower Upgrade candidate categories, applies the active Stage's Tower Draft Slot
+Probability to the configured display slots, and then samples distinct reward
+identities. It remains independent of the one Initial Tower Draft granted for
+that Stage battle.
 
 Only the first level-up callback may establish a Draft session. While ordinary gameplay pause prevents later Monster resolution, one debug or future batch-progression transaction may still publish multiple callbacks synchronously. Later callbacks in that transaction are rejected as unsupported overlap: they cannot replace the active Draft, create a reward, close its presentation, or release its pause. Preserving one Draft reward for every callback in a multi-level batch requires a future Draft queue.
 
@@ -162,9 +170,11 @@ Every valid TowerDefinition in the active Stage Tower Draft Pool contributes one
 
 TowerDefinitions outside the current Stage pool do not participate. Pending held Tower Draft items do not reduce this pool.
 
-All first-version candidate entries have equal base weight unless an approved rule explicitly changes weighting.
+Tower candidate identities have equal weight inside the Tower category.
 
-The Initial Tower Draft samples only these Tower Draft candidates. Later Player level-up Drafts may merge them with eligible Tower Upgrade candidates.
+The Initial Tower Draft samples only these Tower Draft candidates. Later Player
+level-up Drafts allocate Tower slots separately from Tower Upgrade slots before
+sampling identities.
 
 ---
 
@@ -188,35 +198,86 @@ Remaining Eligible Capacity
     - Pending Reserved Capacity
 ```
 
-The definition contributes one internal candidate entry per remaining eligible capacity. A non-positive result contributes no candidate.
+The definition contributes one candidate identity whose sampling multiplicity
+equals its remaining eligible capacity. A non-positive result contributes no
+candidate.
 
 Pending reservation must cover:
 
 - The same TowerUpgradeDefinition
 - Any approved exclusive capacity shared by multiple definitions, such as one Elemental Layer slot per Tower
 
-This produces Tower-instance-weighted discovery: content usable by more current Towers has more internal representation, while already-held rewards reduce over-offering.
+This produces Tower-instance-weighted discovery inside the Tower Upgrade
+category: content usable by more current Towers has greater identity weight,
+while already-held rewards reduce over-offering. Multiplicity never permits one
+identity to occupy multiple display slots in the same Draft Window.
 
 ---
 
-# 7. Combined Sampling And Display
+# 7. Category Allocation, Sampling, And Display
 
-For a Player level-up Draft, Tower Draft and Tower Upgrade candidate entries are merged before sampling. The Initial Tower Draft samples only Tower Draft entries.
+For a natural Player level-up Draft, each configured display slot independently
+requests Tower with the active Stage's Tower Draft Slot Probability and requests
+Tower Upgrade otherwise. With three configured slots, the requested category
+composition may be `3/0`, `2/1`, `1/2`, or `0/3`. The first version does not
+guarantee that both categories appear in every Level-Up Draft.
 
-Internal duplicate entries provide weight. Displayed choices remain unique by reward identity:
+The probability controls requested display-slot categories. It is not a
+whole-window category probability, a realized display-share guarantee, a
+selected-reward ratio, or a guarantee of any Build path. The Initial Tower Draft
+does not use this probability and samples only Tower identities.
+
+Within the requested Tower slots, Draft System samples equal-weight Tower
+identities. Within the requested Tower Upgrade slots, it samples identities
+without display replacement using remaining eligible capacity as weight.
+Displayed choices remain unique by reward identity:
 
 - Tower Draft identity is its TowerDefinition.
 - Tower Upgrade Draft identity is its TowerUpgradeDefinition.
 
-The same identity must not appear twice in one displayed Draft set. Removing a sampled duplicate must not accidentally remove its internal weight before the selection process has completed.
+The same identity must not appear twice in one displayed Draft set. Once an
+identity is displayed, all of its multiplicity is excluded from later slots in
+that Draft without changing its probability before selection.
 
-If no Tower Upgrade candidates exist, available Tower Draft candidates may still form the displayed choices. If fewer distinct eligible identities exist than the configured choice count, the Draft shows only the available distinct identities rather than inventing invalid choices.
+If one category cannot fill its requested number of distinct slots, each
+unfilled slot transfers to the other category. The Draft shows fewer choices
+than the configured count only when both categories together contain fewer
+distinct eligible identities than that count. It never repeats an identity or
+invents invalid content to fill a slot.
+
+After category sampling and backfill, Draft System randomizes the combined
+display order through the same owned random source. UI position therefore does
+not expose the internal category-processing order.
+
+Natural sampling is reproducible under controlled seed input. The same seed,
+Stage configuration, candidate state, and accepted choice history produce the
+same category requests, weighted identity results, backfill, and display order.
+Observation records the seed and results but does not control the random source.
 
 Raising a Tower level may make additional Stage-allowed Upgrade identities eligible for later candidate generation. It does not guarantee that any newly eligible identity appears in the next or a later Draft. Sampling risk remains part of the battle, while Stage authoring and Tower Upgrade System prevent a level transition that unlocks no possible Stage content.
 
 ---
 
-# 8. Selection And Consumption Boundary
+# 8. Calibration Observation
+
+Draft System exposes one observation for each opened Draft attempt without
+allowing observation to influence gameplay. The observation identifies:
+
+- Stage, seed, Draft ordinal, session kind, and generation mode;
+- Tower Draft Slot Probability and requested category results;
+- distinct candidates and their multiplicities by category;
+- realized category counts after backfill and any exhaustion reason;
+- final displayed identity order;
+- selected identity and category;
+- held-item creation, Pending registration, and later consumption outcome.
+
+Calibration uses these facts to distinguish availability, player choice,
+held-item creation, application or consumption, and final combat outcome. A
+recorded fact cannot generate, weight, select, apply, or consume a reward.
+
+---
+
+# 9. Selection And Consumption Boundary
 
 Selecting a Draft choice creates a held Draft item; it does not immediately place a Tower or apply an Upgrade.
 
@@ -244,7 +305,7 @@ For an Initial Draft, successful held-item commit next preserves an attempt-scop
 
 ---
 
-# 9. Validation
+# 10. Validation
 
 Draft validation should report at minimum:
 
@@ -253,6 +314,13 @@ Draft validation should report at minimum:
 - Null or duplicate entries inside a Stage pool
 - Definitions that fail owner-system validation
 - Non-positive configured displayed choice count
+- Stage Tower Draft Slot Probability outside the inclusive `[0, 1]` range
+- Requested category counts that do not sum to the configured choice count
+- Upgrade multiplicity that disagrees with eligible capacity after reservation
+- Duplicate displayed identity produced from candidate multiplicity
+- An unfilled display slot while another distinct eligible identity is available
+- Non-reproducible category, identity, backfill, or ordering results under the
+  same controlled seed and candidate history
 - Pending reservation that cannot identify its reward or exclusive capacity
 - A selected identity not present in the active displayed set
 - A stale or mismatched Battle-generation or Draft-attempt identity
@@ -270,16 +338,20 @@ Validation does not silently add content to a Stage or alter Tower Upgrade rules
 
 ---
 
-# 10. Approved Scope And Deferred Topics
+# 11. Approved Scope And Deferred Topics
 
 Current scope includes:
 
 - Stage-specific Tower and Tower Upgrade pools
+- Stage-specific Tower Draft Slot Probability for Player level-up choices
 - One Initial Tower Draft for each fresh Stage battle
 - Player level-up Draft opportunities
 - Three-choice display when enough identities exist
-- Equal weight per internal candidate entry
-- Tower-instance-weighted Upgrade candidates
+- Independent category request per Level-Up Draft display slot
+- Equal-weight Tower identity sampling inside the Tower category
+- Tower-instance-weighted Upgrade identity sampling inside the Upgrade category
+- Cross-category backfill when one category cannot fill its requested slots
+- Seed-controlled final display ordering
 - Pending Upgrade reservation
 - Rogue-like sampling without guaranteed post-Level-Up offers
 - Same-round displayed deduplication
@@ -287,4 +359,9 @@ Current scope includes:
 - Draft-owned battle-simulation pause while the Draft Window is open
 - Battle-generation and attempt identity guards
 
-Deferred topics include Draft queueing for multi-level batch progression, slow motion while dragging a held Draft item, rarity, reroll, ban or pick, global rewards, curses, persistent progression rewards, multiplayer Drafts, and Stage-completion rewards.
+Deferred topics include a guaranteed mixed-category Level-Up window, category
+pity or streak protection, Build-responsive probability changes, guaranteed
+TowerFamily or Upgrade identity, Draft queueing for multi-level batch
+progression, slow motion while dragging a held Draft item, rarity, reroll, ban
+or pick, global rewards, curses, persistent progression rewards, multiplayer
+Drafts, and Stage-completion rewards.
