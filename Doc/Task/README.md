@@ -108,11 +108,14 @@ establishing a Build boundary without using intentionally poor placement.
 Orc HP `520` is accepted as the elite capstone. Task014 consumes this boundary
 without changing the accepted Stage4 Wave or Orc Profile.
 
-Task014 completed Stage5 V5 calibration on 2026-09-01. Its accepted Stage uses
+Task014 completed its schema-24 Stage5 V9 recalibration on 2026-09-03. Its
+accepted Stage uses
 Player Health `6`, Progress Requirements `[3,3,4,4,4,8,8,10,10]`, `76`
 fixed-speed Monsters, final Draft node `54`, and `22` later resolutions. The
 Fire Reference and coherent Cold alternative complete one Magic L3 Elemental
-Core and clear with `2-3` leaks in the final HP6 records. Their application,
+Core and clear with `2-5` leaks in the final HP6 records. Skeleton Lv6 HP
+`1100` and Orc Lv7 HP `1700` restore the intended pressure after Task007's
+Elemental value increase. Their application,
 stack, single-source Overload, Behaviour, FixedBuff, and non-Elemental Support
 contributions remain visible and Recorder-consistent without any second-source
 Elemental reaction. Equal-budget four-family fragmented investment never

@@ -50,7 +50,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterBehaviour
   displayName: Skeleton
   moveSpeed: 0.25
-  maxHealth: 900
+  maxHealth: 1100
   walkingBoolParameterName: IsWalking
   dieTriggerName: Die
   deathDelay: 2

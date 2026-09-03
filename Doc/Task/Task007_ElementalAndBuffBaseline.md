@@ -828,11 +828,12 @@ Elemental hit-reaction, Wave attribution, and placement-route checks.
   is not reported as passed and does not block the accepted Task007 numerical
   baseline.
 
-Task014 and Task015 must now rerun their Stage5 and Stage6 reference Builds
-before changing MonsterWaveConfig pressure, because their earlier balance
-evidence predates this Elemental value increase. Later Stage Tasks may tune
-Monster, Wave, route, Draft opportunity, and pressure values against the
-accepted package. They may not repair a Stage result by silently changing the
-accepted Tower Level, Basic, Behaviour, Elemental normal, or matching-source
-cooperation contracts. Reopening Task007 again requires a named regression
-caused by a later gameplay-contract or authored-value change.
+Task014 completed its required Stage5 schema-24 rerun and accepted V9 pressure
+with Skeleton Lv6 HP `1100` and Orc Lv7 HP `1700`. Task015 must still rerun its
+Stage6 Reference Build before changing MonsterWaveConfig pressure, because its
+earlier balance evidence predates this Elemental value increase. Later Stage
+Tasks may tune Monster, Wave, route, Draft opportunity, and pressure values
+against the accepted package. They may not repair a Stage result by silently
+changing the accepted Tower Level, Basic, Behaviour, Elemental normal, or
+matching-source cooperation contracts. Reopening Task007 again requires a
+named regression caused by a later gameplay-contract or authored-value change.

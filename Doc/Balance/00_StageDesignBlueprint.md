@@ -199,7 +199,7 @@ Reference Build:
 
 ## 4.5 Stage5
 
-Status: Accepted Stage5 Calibration v1 (Task014, 2026-09-01)
+Status: Accepted Stage5 Calibration V9 (Task014, 2026-09-03)
 
 | Field | Design Target |
 |---|---|
@@ -207,7 +207,7 @@ Status: Accepted Stage5 Calibration v1 (Task014, 2026-09-01)
 | New Content | Elemental Layer |
 | Required Capability | One Magic Tower reaches L3 with a coherent Basic, Behaviour, and Elemental specialization |
 | Expected Anti-pattern | Average investment across all Towers without reaching an Elemental core |
-| Notes | Player Health 6; 76 Monsters; Progress `[3,3,4,4,4,8,8,10,10]`; final Draft node 54 with 22 later resolutions; the Fire Reference and Cold coherent alternative clear, while fragmented four-family investment fails on the sixth leak |
+| Notes | Player Health 6; 76 Monsters; Progress `[3,3,4,4,4,8,8,10,10]`; Skeleton Lv6 HP1100; Orc Lv7 HP1700; final Draft node 54 with 22 later resolutions; the Fire Reference and Cold coherent alternative clear, while fragmented four-family investment fails on the sixth leak |
 
 Reference Build:
 

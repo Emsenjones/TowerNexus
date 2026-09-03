@@ -2,7 +2,9 @@
 
 > Status: **Completed**
 >
-> Accepted: **2026-09-01**
+> Accepted: **2026-09-03**
+>
+> Historical acceptance: **2026-09-01**
 >
 > Depends on: Task013 Stage 4 Wave Calibration
 >
@@ -30,6 +32,16 @@ artificially weakened opening.
 All comparisons use Fixed Draft sequences. Task017 separately owns natural
 offer frequency, Build accessibility, and player-choice interpretation.
 
+The 2026-09-01 Stage5 V5 acceptance remains the historical comparison
+baseline. Task014 was reopened on 2026-09-03 because Task007 increased the
+accepted normal and Overload value of the Elemental package used by the
+Reference and coherent alternative. The unchanged Fire Reference first proved
+that V5 pressure had become too low. Calibration then changed only the
+Stage5-specific Skeleton Lv6 and Orc Lv7 HP before rerunning the full positive
+and negative Build envelope. The accepted V9 records restore the intended
+separation without changing Stage assets, Player Health, Progress, Wave order,
+counts, timing, Fixed Drafts, or locked placement.
+
 ### 1.1 Authority And Scope
 
 This Task derives the Stage-specific values from
@@ -46,7 +58,7 @@ calibration Task.
 
 ---
 
-## 2. Accepted Stage 5 V5 Contract
+## 2. Accepted Stage 5 V9 Contract
 
 | Field | Accepted value |
 |---|---|
@@ -60,7 +72,7 @@ calibration Task.
 | Tower pool | Archer / Cannon / Magic / Drone |
 | Upgrade pool | All `40` unlocked definitions: `12` Basic, `12` Behaviour, and `16` Elemental |
 | Monster count | `76` |
-| Total authored Monster HP | `40,960` |
+| Total authored Monster HP | `47,760` |
 | Move Speed | `0.25` for every Profile |
 | Spawn Interval | `2.5s` for every Wave |
 | Wave delays | `4 / 6 / 5 / 4 / 4 / 4 / 4 / 4 / 4 / 4 / 4` |
@@ -101,7 +113,7 @@ flow without adding a calibration-only eligibility path.
   `Prefab_Map_Stage5`, `Config_MonsterWave_Lv5`, four TowerDefinitions, all
   `40` unlocked UpgradeDefinitions, and the `16` Stage5 introductions.
 - `Config_MonsterWave_Lv5` authors the exact eleven-Wave table in Section 3.
-- Evil Mage Lv5, Skeleton Lv6, and Orc Lv7 author HP `520 / 900 / 1300` and
+- Evil Mage Lv5, Skeleton Lv6, and Orc Lv7 author HP `520 / 1100 / 1700` and
   Move Speed `0.25` through independent prefab identities.
 - Recorder Fixed Draft configuration authors the three ten-step fixtures in
   Section 5 and uses the locked placement in Section 4.
@@ -123,8 +135,8 @@ Task014 first accepts these additional formal Profiles, all at Move Speed
 
 - Evil Mage Lv5: HP `520`, an equal-HP Lv5 peer rather than a mutation of the
   accepted Stage4 Orc Lv5;
-- Skeleton Lv6: HP `900`;
-- Orc Lv7: HP `1300`.
+- Skeleton Lv6: HP `1100`;
+- Orc Lv7: HP `1700`.
 
 The Stage4 Orc Lv5 remains HP `520` in `Config_MonsterWave_Lv4`. The Stage5
 Evil Mage Lv5 and Orc Lv7 use independent prefab identities, so Stage5 roster
@@ -141,10 +153,10 @@ growth does not rewrite accepted upstream Wave assets or Profiles.
 | 7 | Turtule Shell Lv4 | `400` | `8` | `2.5s` | `4s` | `34` |
 | 8 | Turtule Shell Lv4 | `400` | `10` | `2.5s` | `4s` | `44` |
 | 9 | Evil Mage Lv5 | `520` | `10` | `2.5s` | `4s` | `54` |
-| 10 | Skeleton Lv6 | `900` | `10` | `2.5s` | `4s` | `64` |
-| 11 | Orc Lv7 | `1300` | `12` | `2.5s` | `4s` | `76` |
+| 10 | Skeleton Lv6 | `1100` | `10` | `2.5s` | `4s` | `64` |
+| 11 | Orc Lv7 | `1700` | `12` | `2.5s` | `4s` | `76` |
 
-The authored `Config_MonsterWave_Lv5` and final schema-23 fixture snapshots
+The authored `Config_MonsterWave_Lv5` and final schema-24 fixture snapshots
 match this table.
 
 ---
@@ -163,13 +175,15 @@ the Recorder:
 | Support | Drone | `(6,8), (6,9), (7,8), (7,9)` |
 | Support | Magic | `(9,6)` |
 
-No final fixture uses intentionally poor placement. The Reference records two
-legal `CoveredByNewFootprint` forced relocations and one reachable route rejoin;
-the Anti-pattern records one legal forced relocation, while the coherent
-alternative records none. These are consequences of placing the accepted
-footprints while Monsters are alive, not balance penalties or illegal fixture
-changes. Forced-relocation usage, placement-route topology, gameplay-state
-preservation, combat ownership, and lifecycle integrity all pass.
+No final fixture uses intentionally poor placement. The Fire Reference records
+no forced relocation. The Cold alternative records two legal
+`CoveredByNewFootprint` forced relocations and one reachable route rejoin under
+the explicit `Ignore` expectation; the Anti-pattern records no forced
+relocation under the same expectation. These outcomes are consequences of
+placing the accepted footprints while Monsters are alive, not balance penalties
+or illegal fixture changes. Forced-relocation usage, placement-route topology,
+gameplay-state preservation, combat ownership, and lifecycle integrity all
+pass.
 
 ---
 
@@ -208,55 +222,52 @@ Final allocations:
 Both positive fixtures complete their Elemental package at node `54` and then
 resolve all `22` remaining Monsters.
 
-Reference Fire evidence:
+Reference Fire evidence in the accepted schema-24 V9 run:
 
 - Blazing Orbs applies Burning across all `22` W10-W11 Monsters;
-- `228` stack units are applied, maximum observed stacks reach `10`, and six
+- `192` stack units are applied, maximum observed stacks reach `10`, and `12`
   single-source Overloads occur;
-- Burning contributes `4,770` FixedBuff damage, including periodic and Overload
-  damage;
+- Burning contributes `12,050` FixedBuff damage, including periodic and
+  Overload damage;
 - TowerScaled and FixedBuff attribution remain separately recorded.
 
-Coherent Cold evidence:
+Coherent Cold evidence in the accepted schema-24 V9 run:
 
 - Frostbound Orbs applies Chilled across all `22` W10-W11 Monsters;
-- `262` stack units are applied, maximum observed stacks reach `10`, seven
-  single-source Overloads occur, and Frozen is applied to seven Monsters;
-- Arcane Field contributes `5,327` TowerScaled Behaviour damage.
+- `300` stack units are applied, maximum observed stacks reach `10`, `19`
+  single-source Overloads occur, and Frozen is applied `19` times across `18`
+  Monsters;
+- the coherent package contributes `38,207` TowerScaled Core damage.
 
 Every recorded Overload has `sourceCount = 1`, and both final positive records
 observe zero cross-Element reaction opportunities. Stage5 therefore proves
 single-Core application and stacking without depending on the two-source
 cooperation reserved for Task015.
 
-Non-Elemental Supports remain materially visible. They contribute `6,879`
-Tower damage in the Reference and `6,301` in the coherent alternative, while
-the Elemental Magic Core remains the primary late-pressure source.
+Non-Elemental Supports remain materially visible. They contribute `7,509`
+TowerScaled damage in the Reference and `7,641` in the coherent alternative,
+while the Elemental Magic Core remains the primary late-pressure source.
 
 ---
 
 ## 7. Final Acceptance Evidence
 
-The HP38 V5 measurement ceiling established full-run leak ranges of `3–5` for
-the Reference and `1–4` for Coherent Alternative A. Those records measure the
-complete pressure envelope but do not own the accepted Player Health.
-
-The final HP6 records are the acceptance authority:
+The final V9 HP6 records are the current acceptance authority:
 
 | Record | Fixture | Result | Killed | Leaked | Unresolved | Final Health | Effective Damage | Damage coverage |
 |---|---|---|---:|---:|---:|---:|---:|---:|
-| `Task014_PD_S5V5_Ref_HP6_N54_S23_01` | Reference | Victory | `74` | `2` | `0` | `4 / 6` | `40,459` | `98.78%` |
-| `Task014_PD_S5V5_AltA_HP6_N54_S23_01` | Coherent Alternative A | Victory | `73` | `3` | `0` | `3 / 6` | `40,091` | `97.88%` |
-| `Task014_PE_S5V5_AntiFrag4Way_HP6_N54_S23_01` | Fragmented Anti-pattern | Defeat | `62` | `6` | `8` | `0 / 6` | `32,133` | `78.45%` at terminal |
+| `Task014_PJ_S5V9_RefFire_HP6_N54_W11_M76_Skeleton1100_Orc1700_Burning12_Tick7_FlameBurst250_Schema24_01` | Reference | Victory | `74` | `2` | `0` | `4 / 6` | `47,273` | `98.98%` |
+| `Task014_PK_S5V9_AltCold_HP6_N54_W11_M76_Skeleton1100_Orc1700_RelocIgnore_Schema24_02` | Coherent Alternative A | Victory | `71` | `5` | `0` | `1 / 6` | `45,848` | `96.00%` |
+| `Task014_PL_S5V9_AntiFrag4Way_HP6_N54_W11_M76_Skeleton1100_Orc1700_RelocIgnore_Schema24_01` | Fragmented Anti-pattern | Defeat | `59` | `6` | `11` | `0 / 6` | `31,826` | `66.64%` at terminal |
 
 Reference and Coherent Alternative A clear W1-W10 without leaks; all positive
-leaks are W11 Orcs. The Anti-pattern clears W1-W9, leaks three W10 Skeletons,
-then reaches Defeat on the third W11 Orc leak. All `76` Monsters spawn, all ten
-Drafts commit, and `14` post-final-Draft resolutions occur before terminal
-Defeat; the eight unresolved W11 Orcs are expected terminal state rather than
+leaks are W11 Orcs. The Anti-pattern clears W1-W9, leaks five W10 Skeletons,
+then reaches Defeat on the first W11 Orc leak. All `76` Monsters spawn, all ten
+Drafts commit, and `11` post-final-Draft resolutions occur before terminal
+Defeat; the eleven unresolved W11 Orcs are expected terminal state rather than
 missing evidence.
 
-All three final records pass every schema-23 integrity check, including fixture,
+All three final records pass every schema-24 integrity check, including fixture,
 resolution, Draft selection, investment commit, Tower deployment, Wave
 attribution, damage diagnostics, placement-route, Buff, and Elemental
 diagnostics.
@@ -265,7 +276,7 @@ diagnostics.
 
 ## 8. Acceptance Decision And Downstream Handoff
 
-Stage5 V5 is accepted because:
+Stage5 V9 is accepted under the schema-24 Elemental values because:
 
 - one Fire or Cold Elemental Magic Core has measurable application, stack, and
   package value;
@@ -288,6 +299,10 @@ substitutions, and Task017 owns natural Draft-offer accessibility. Any later
 change to Stage5 Player Health, Progress, fixed-speed Profiles, Wave table,
 placement, or accepted packages explicitly reopens this Task.
 
+The 2026-09-03 schema-24 rerun satisfies the reopening condition. Task014 is
+complete again, and Task015 may consume V9 as the current accepted single-Core
+baseline.
+
 ---
 
 ## 9. Calibration History And Supersession
@@ -297,10 +312,18 @@ while placement, Progress cadence, roster order, and late-wave HP were still
 being calibrated. V1-V4 results are superseded wherever their Profile identity,
 HP, Wave order, placement, or progression differs from V5.
 
-V5 accepts Skeleton Lv6 HP `900`, Orc Lv7 HP `1300`, the node-`54` progression
-boundary, and the locked placement in this document. The HP38 V5 Reference and
-coherent-alternative records remain measurement evidence; the correctly named
-HP6 Phase D and Phase E records own final pass/fail acceptance.
+V5 historically accepted Skeleton Lv6 HP `900`, Orc Lv7 HP `1300`, the
+node-`54` progression boundary, and the locked placement in this document. Its
+HP38 measurement records and HP6 schema-23 acceptance records remain historical
+evidence only.
+
+After Task007 increased the Elemental normal and Overload package, the unchanged
+V5 Fire Reference cleared with zero leaks. V6-V8 isolated the late-Wave HP
+search: Skeleton Lv6 moved to `1100`, while Orc Lv7 candidates `1600`, `2400`,
+and `2000` respectively proved too weak or too strong for the complete Build
+envelope. V9 accepts Orc Lv7 HP `1700` together with Skeleton Lv6 HP `1100`.
+It preserves W1-W9, all counts and timing, node-`54` progression, Player Health
+`6`, Fixed Drafts, and locked placement.
 
 `Task014_PC_S5V5_AntiFrag4Way_N54_HP38_S23_01` recorded actual Player Health
 `6` despite its `HP38` label. It is retained as diagnostic evidence only and is
