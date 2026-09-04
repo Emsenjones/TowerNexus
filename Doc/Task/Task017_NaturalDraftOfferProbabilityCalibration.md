@@ -1,151 +1,81 @@
 # Task017 - Natural Draft Offer Probability Calibration
 
-Status: In Progress; Draft offer-generation contract approved for documentation
-on 2026-09-04. Runtime implementation and natural-offer evidence are pending.
+Status: Completed on 2026-09-04. The simplified runtime and evidence contract,
+Stage probability authoring, Recorder schema 25, and representative Natural-run
+acceptance are complete.
 
 Depends on: Accepted Task010-Task015 fixed-speed Stage Build envelopes
 
 Deferred input: Task016 Fast Monster And Wave Substitution. The initial Task017
-baseline intentionally excludes it; later accepted substitutions require the
-affected Stage cohorts to be re-run.
+baseline excludes it. A later accepted substitution reopens only the affected
+Stage's Natural runs and smallest relevant combat regression.
 
 ## 1. Goal
 
-Calibrate natural Player level-up Draft offers so eligible Tower Upgrade content
-cannot dilute Tower Draft availability merely because the player deploys more
-Towers, while preserving the approved rule that an Upgrade usable by more
-current Tower instances has greater probability inside the Upgrade category.
+Give each natural Player level-up Draft an explicit Stage-authored balance
+between Tower and Tower Upgrade choices. Eligible Upgrade content must not
+dilute Tower availability merely because the player deploys more Towers, while
+an Upgrade usable by more current Tower instances retains greater weight inside
+the Upgrade category.
 
-This Task determines whether more than one coherent Stage-appropriate Build is
-reasonably accessible without guaranteeing the exact Reference Build. It
-separates offer availability, player choice, Pending and consumption outcomes,
-and final combat results.
+Recorder evidence must make each run explainable through displayed choices,
+player selection, held-item creation, Pending and consumption, final Build,
+placement, and combat outcome. Task017 demonstrates that the natural Draft loop
+is functional, reproducible under a controlled seed, and capable of producing
+playable coherent paths without guaranteeing a precise Build-completion or
+Stage-completion probability.
 
-## 2. Source Documents And Locked Inputs
+## 2. Locked Inputs
 
-Source documents:
+Task010-Task015 continue to own and lock:
 
-- `Doc/System/02_StageSystem.md`
-- `Doc/System/08_DraftSystem.md`
-- `Doc/System/13_TowerUpgradeSystem.md`
-- `Doc/Balance/00_StageDesignBlueprint.md`
-- accepted Task010-Task015 Stage calibration contracts and evidence
+- Progress Requirements, Player Health, Monster Profiles, Waves, and timing;
+- exact Stage Tower and Tower Upgrade pools;
+- accepted Reference, coherent-alternative, and Anti-pattern Builds;
+- accepted placement footprints and combat envelopes;
+- Tower Upgrade eligibility and Pending reservation;
+- deployment, Tower Level Up, Upgrade application, and consumption rules;
+- the separate Tower-only Initial Draft and Fixed Draft eligibility validation.
 
-Locked inputs:
+Task017 must not weaken Stage pressure, change combat values, pad a content pool
+with duplicates, or treat Fixed Draft evidence as Natural availability evidence.
 
-- accepted Task010-Task015 Progress Requirements, Monster Profiles, Waves,
-  Player Health, Reference Builds, coherent alternatives, and Anti-patterns;
-- exact Stage Tower and Tower Upgrade pools accepted by Task010-Task015;
-- Tower Upgrade eligibility and Pending reservation rules;
-- same-round unique display, held-item creation, Level Up, placement, Upgrade
-  application, and consumption rules;
-- Tower Draft dual use for new deployment or same-family Tower Level Up;
-- one Tower-only Initial Draft outside Player progression.
-
-Task016 is not a locked input for the initial baseline. If it later changes a
-Stage Wave, that Stage's natural-offer cohort and relevant combat regression
-must be repeated before the new result supersedes fixed-speed evidence.
-
-Task017 must not weaken a Wave, change Monster HP or MoveSpeed, alter Player
-Health, rebalance Tower combat, or reinterpret a Fixed-run Build result to hide
-an offer-distribution problem.
-
-## 3. Existing Baseline Contract
-
-Natural mode is the authority for probability evidence. Fixed mode may reproduce
-an already accepted Build but contributes no displayed-offer frequency evidence.
-
-The pre-Task017 runtime baseline is:
-
-- each valid Stage TowerDefinition contributes one internal candidate entry;
-- each eligible TowerUpgradeDefinition contributes one entry per remaining
-  eligible Tower instance after Pending reservations;
-- Player level-up Drafts merge Tower and Upgrade entries before sampling;
-- displayed choices are unique by reward identity;
-- the Initial Draft is Tower-only and reported separately.
-
-The unmodified baseline must be measured before the approved category-allocation
-candidate replaces it. Stage pools must not be padded with duplicate content to
-simulate weight.
-
-## 4. Approved Level-Up Offer-Generation Candidate
-
-### 4.1 Stage-Local Slot Probability
+## 3. Level-Up Offer Generation
 
 Each StageDefinition authors one `Tower Draft Slot Probability` in the inclusive
-range `[0, 1]`. It applies only to the three requested display slots in each
-natural Player level-up Draft.
+range `[0, 1]`. For every configured Level-Up Draft display slot, Draft System
+independently requests Tower with that probability and Tower Upgrade otherwise.
+The current authored display count is three, so `3/0`, `2/1`, `1/2`, and `0/3`
+requests are all legal. The implementation reads the configured slot count and
+does not hard-code three.
 
-It is not a whole-window Tower probability, a displayed-share guarantee, a
-selected-reward ratio, or a Reference-Build guarantee. The complementary Tower
-Upgrade slot probability is `1 - Tower Draft Slot Probability`.
+Draft System builds two categories:
 
-### 4.2 Separate Candidate Categories
+- Tower: one identity per valid Stage TowerDefinition, equal weight, unaffected
+  by Pending Tower Drafts;
+- Tower Upgrade: one identity per eligible Stage TowerUpgradeDefinition, with
+  multiplicity equal to remaining eligible Tower capacity after Pending
+  reservation.
 
-Draft System first builds two categories:
+Sampling is without display replacement. Upgrade multiplicity affects weighted
+selection but never permits the same Upgrade identity to occupy two slots in one
+window. An unfilled requested slot transfers to the other category. Fewer than
+the configured number of choices is legal only when both categories together
+contain fewer distinct eligible identities. The combined result receives a
+final seeded shuffle before presentation.
 
-- Tower candidates: one identity per valid Stage TowerDefinition, with equal
-  identity weight. Pending Tower Drafts do not reduce this category.
-- Tower Upgrade candidates: one identity per eligible Stage
-  TowerUpgradeDefinition, with multiplicity equal to remaining eligible Tower
-  capacity after Pending reservation.
+## 4. Initial And Fixed Drafts
 
-Tower Upgrade multiplicity affects weighted selection inside the Upgrade
-category. It never permits the same Upgrade identity to occupy multiple display
-slots in one Draft Window.
+The Initial Draft remains Tower-only, does not use the Stage slot probability,
+and completes only after a selected held Tower Draft item exists. Fixed Draft
+continues to validate every configured result against natural eligibility, but
+does not execute category rolls and contributes no Natural probability evidence.
 
-### 4.3 Independent Slot Requests
+## 5. Initial Stage Hypotheses
 
-For the current three-choice design, Draft System performs three independent
-category rolls. Each roll requests Tower with the Stage-authored Tower Draft
-Slot Probability and otherwise requests Tower Upgrade.
-
-The three requests produce `Requested Tower Slots = X` and
-`Requested Tower Upgrade Slots = Y`, where `X + Y = 3`. Natural outcomes may
-therefore request `3/0`, `2/1`, `1/2`, or `0/3`. The first version adds no rule
-that guarantees both categories in every Level-Up Draft.
-
-### 4.4 Unique Weighted Sampling And Cross-Category Backfill
-
-Draft System samples up to `X` distinct Tower identities and up to `Y` distinct
-Tower Upgrade identities. Tower identities are equal-weight. Upgrade identities
-are sampled without display replacement using their remaining-capacity
-multiplicity as weight.
-
-If one category cannot fill its requested distinct slots, every unfilled slot is
-transferred to the other category. The Draft Window shows fewer than three
-choices only when both categories together contain fewer than three distinct
-eligible identities. It never invents an invalid reward or repeats one identity
-to satisfy a requested count.
-
-After sampling and backfill, Draft System randomizes the combined display order
-through the same controlled random source so UI position does not expose the
-internal category-processing order.
-
-### 4.5 Initial And Fixed Modes
-
-The Initial Draft remains Tower-only and does not consume the Stage slot
-probability. Fixed Draft mode continues to validate configured results against
-natural eligibility but does not execute category rolls and contributes no
-probability evidence.
-
-## 5. Initial Stage Probability Hypotheses
-
-The first candidate value for each Stage is derived from its accepted Reference
-Build resource cost:
-
-```text
-Reference Tower Draft Cost
-    = Tower Deployments
-    + Sum Of Tower Level Increases
-
-Remaining Reference Tower Draft Cost
-    = Reference Tower Draft Cost - One Initial Tower Draft
-
-Initial Tower Draft Slot Probability
-    = Remaining Reference Tower Draft Cost
-    / Player Level-Up Draft Count
-```
+These values express the accepted Reference Builds' Tower-versus-Upgrade
+resource tendency. They are calibration starting points, not mathematical
+guarantees of the selected reward ratio or exact Build accessibility.
 
 | Stage | Player Level-Up Drafts | Remaining Tower / Upgrade Cost | Initial Tower Slot Probability |
 |---|---:|---:|---:|
@@ -156,145 +86,154 @@ Initial Tower Draft Slot Probability
 | Stage5 | 9 | 6 / 3 | 0.667 |
 | Stage6 | 14 | 8 / 6 | 0.571 |
 
-These are testable initial hypotheses, not accepted final balance values. They
-shape requested display-slot categories rather than guaranteeing selection
-counts. If accepted coherent alternatives use materially different category
-costs, the reviewed coherent-Build range takes precedence over fitting only the
-Reference Build.
+## 6. Seed And Recorder Contract
 
-## 6. Ownership
+Natural Draft generation uses a Draft-owned deterministic random source so
+unrelated combat or presentation randomness cannot change offers. A recorded
+seed, the same Stage and Draft-relevant gameplay history, and the same player
+actions reproduce the offer sequence. Recorder observes but never controls the
+random source.
 
-- StageDefinition owns the reusable Tower Draft Slot Probability authoring.
-- Stage System validates and supplies that authored value with the Stage pools.
-- Draft System owns category rolls, distinct identity sampling, Upgrade
-  multiplicity, cross-category backfill, final order, and Draft observations.
-- Tower Upgrade System remains the sole eligibility and application authority.
-- Battle HUD UI System stores Pending Draft items and presents supplied choices;
-  it does not generate, weight, refill, or reroll them.
-- The calibration Recorder observes Draft facts and never changes gameplay
-  candidates, weights, random results, selection, or consumption.
-
-## 7. Seed And Observation Contract
-
-Natural probability evidence uses a Draft-owned controlled random source. A
-recorded seed, the same Stage and candidate state, and the same controlled
-selection policy must reproduce category requests, weighted identities,
-backfill, and final display order. Recorder observation does not own or mutate
-the random source.
+Each run records Stage identity, configured display count, slot probability,
+Draft seed, fixed-seed mode, generation-contract version, and random-algorithm
+version.
 
 Each Draft attempt records at minimum:
 
-- seed, Stage identity, Draft ordinal, session kind, and generation mode;
-- Tower Draft Slot Probability and the three category-roll results;
-- requested Tower and Tower Upgrade slot counts;
-- each distinct natural candidate identity and its multiplicity;
-- available distinct identity count per category;
-- realized category counts after backfill;
-- backfill direction and reason, including total-identity exhaustion;
+- attempt identity, ordinal, session kind, progression node, and Player state;
+- distinct natural candidates and Upgrade multiplicity;
+- requested category sequence and requested Tower/Upgrade counts when applicable;
+- available distinct identity counts, realized counts, and backfill facts;
 - final displayed identities and order;
-- selected identity and category;
-- held-item creation or Pending registration outcome;
-- successful consumption or unresolved Pending outcome.
+- selected identity and whether held-item creation committed;
+- consumption reconciliation through the existing investment-commit identity.
 
-Final-Build deviation must be classified as availability, controlled-choice,
-held-item creation, application or consumption, or combat outcome. Recorder
-facts diagnose the chain; they do not guarantee that every random run wins.
+At battle terminal observation the Recorder freezes the current Pending Draft
+snapshot before deferred report generation. Final reconciliation classifies a
+committed held item as consumed, still Pending, or missing its investment commit.
 
-## 8. Controlled Choice Policies
+## 7. Natural Run Interpretation
 
-Probability runs use named deterministic selection policies so offer
-availability is not confused with changing player preference. At minimum:
+Before testing a Stage, the tester records a short manual choice policy: reward
+priority, Tower deployment-or-Level-Up use, Tower or Upgrade target, accepted
+placement, consumption timing, and ordered fallback when the preferred identity
+is absent. This is a reproducible testing instruction, not an automated policy
+framework.
 
-- Reference-seeking: choose the highest-priority naturally displayed reward on
-  the accepted Reference path;
-- Alternative-seeking: follow one accepted coherent alternative path;
-- capability-seeking fallback: when the planned identity is absent, choose a
-  displayed reward that preserves the Stage's required capability when one
-  exists.
+A failed run is classified as one of:
 
-A displayed but rejected reward is a choice outcome. A reward that remained
-eligible but was never displayed is an availability outcome.
+- Natural offer availability: reasonable choices could not form an accepted
+  path despite coherent player decisions;
+- Player choice or Build allocation: useful displayed choices were rejected and
+  the final Build became fragmented or otherwise incoherent;
+- held-item or consumption outcome: a selected reward did not become the
+  expected investment;
+- placement or coverage: the Build was coherent but its deployment did not
+  provide accepted strategic coverage;
+- unexpected combat outcome: Draft, Build, consumption, and placement were
+  coherent but combat departed from the accepted Stage envelope.
 
-## 9. Required Evidence
+One failed run is a bad-luck or diagnostic sample. A Stage probability changes
+only after repeated representative runs show the same availability pattern.
 
-For every Stage, use reproducible seeded cohorts large enough for the selected
-acceptance bounds and report:
+## 8. Implementation And Authoring
 
-- requested and realized Tower-versus-Upgrade choice share overall and at every
-  Player level-up Draft step;
-- category absence and `3/0`, `2/1`, `1/2`, and `0/3` request frequencies;
-- cross-category backfill and fewer-than-three-choice rates with causes;
-- Basic, Behaviour, and Elemental Upgrade displayed-choice share when eligible;
-- per-family and per-identity eligibility-to-display rate;
-- natural candidate multiplicity at each Draft step;
-- no-useful-offer and path-dead-end rate;
-- completion rate for Reference-seeking and coherent-alternative policies;
-- frequency and cause of horizontal dilution, premature over-concentration, and
-  missing-capability outcomes;
-- confidence interval or equivalent uncertainty for every accepted threshold.
+- Add validated Stage-local Tower Draft Slot Probability authoring.
+- Supply and clear it with the active Stage Draft pools across preparation,
+  release, retry, and replacement.
+- Add a Draft-owned seed with an Editor fixed-seed input.
+- Separate Tower and Upgrade candidate categories.
+- Preserve Upgrade eligibility, multiplicity, and Pending reservation.
+- Implement independent slot requests, distinct sampling, cross-category
+  backfill, and final seeded shuffle.
+- Preserve Initial and Fixed Draft behavior.
+- Extend Recorder schema 25 and integrity for requested versus realized choices,
+  selection, terminal Pending snapshot, and investment reconciliation.
+- Author the Section 5 values in Stage1-Stage6; author a valid explicit value in
+  the Default Stage; retain three choices in the production Draft configuration.
 
-Seed count, category-share bands, and coherent-Build accessibility thresholds
-must be selected before changing runtime weights and reused for comparison.
+## 9. Validation Order
 
-## 10. Implementation And Authoring Checklist
+1. Build runtime and Editor assemblies.
+2. Validate every authored Stage and the complete Stage binding lifecycle.
+3. Prove fixed-seed replay under the same Draft-relevant gameplay history.
+4. Verify requested category composition separately from realized composition.
+5. Exercise legal category mixes, both backfill directions, total-identity
+   exhaustion, identity uniqueness, Upgrade multiplicity, and Pending reservation.
+6. Revalidate Initial Tower-only and Fixed eligibility behavior.
+7. Exercise every Stage through representative exploratory Natural campaigns,
+   including coherent choices and deliberate Anti-pattern choices where useful.
+   Add runs when evidence is inconsistent or a configuration correction makes an
+   earlier run diagnostic-only.
+8. Inspect every report and classify any failure before changing probability.
+9. Rerun the smallest Fixed Draft and consumption regressions.
 
-- Add validated Stage-local Tower Draft Slot Probability authoring without
-  changing accepted Stage pools, Progress, Waves, Player Health, or combat.
-- Supply the probability to Draft System with the active Stage pools and clear
-  all Stage-bound Draft configuration on release, retry, or replacement.
-- Separate Tower and Upgrade category construction for natural Level-Up Drafts.
-- Preserve eligible-instance Upgrade multiplicity and Pending reservation.
-- Implement three independent category rolls, unique weighted sampling,
-  cross-category backfill, and final seeded display shuffle.
-- Preserve Initial Draft and Fixed Draft behavior.
-- Add controlled seed input and complete per-attempt Recorder observations.
-- Add deterministic controlled-choice cohort execution for accepted Reference
-  and coherent-alternative policies.
-- Author the Section 5 values only as initial Task017 candidates until evidence
-  accepts or revises them.
+Different seeds may legally produce the same choices. The selected seed set must
+cover multiple legal outcomes; pairwise difference is not an invariant.
 
-## 11. Execution Order
+## 10. Acceptance
 
-1. Validate the existing Recorder candidate, display, selection, Pending,
-   consumption, Stage, and generation-mode chain.
-2. Add controlled Draft seed and missing baseline observations without changing
-   the current merged-pool algorithm.
-3. Choose cohort size and accessibility thresholds, then measure the unmodified
-   merged-pool baseline.
-4. Implement the approved category-allocation candidate and initial Stage
-   probability hypotheses.
-5. Repeat the exact same seeds and controlled choice policies.
-6. Adjust only the smallest owning Stage probability or sampling rule justified
-   by evidence. Do not pad content pools.
-7. Re-run the smallest Fixed Stage regression needed to prove eligibility,
-   Pending, and consumption semantics remain unchanged.
+- Stage probability binds and clears without stale cross-Stage state.
+- Fixed seed replays category requests, weighted identities, backfill, and order.
+- Display identities are valid and unique; a short window occurs only under
+  total distinct-identity exhaustion.
+- Upgrade weight remains equal to remaining eligible Tower capacity.
+- Initial and Fixed Draft contracts remain unchanged.
+- Recorder reconciles requested and realized categories, displayed and selected
+  identities, held-item creation, Pending, consumption, final Build, and result.
+- Representative Natural records demonstrate that the implemented Draft
+  contract functions across Stage1-Stage6, exposes meaningful player choices,
+  and can produce accepted Reference or coherent-alternative paths. Every seed
+  is not required to expose or complete either path.
+- Failures can be attributed without changing accepted Task010-Task015 combat or
+  Stage-pressure values.
 
-## 12. Acceptance
+The final evidence may claim demonstrated functional stability and observable
+Natural accessibility across representative runs. It must not claim a
+statistically proven Build-completion probability, guaranteed Reference Build,
+or stable Stage completion for every coherent player policy.
 
-- The controlled seed and observation chain is internally consistent and
-  reproducible for retry and next-Stage boundaries.
-- Requested and realized category counts, identity multiplicity, backfill,
-  display, selection, Pending, consumption, and combat outcome reconcile.
-- Valid identities from the other category fill requested-category shortages;
-  fewer than three choices occurs only under total distinct-identity exhaustion.
-- Upgrade identity probability remains weighted by remaining eligible Tower
-  capacity without same-round duplicate display.
-- Natural offers meet reviewed accessibility thresholds for each Stage's
-  required capability and for more than one coherent Build where supported.
-- The exact Reference sequence is not silently guaranteed or treated as the
-  only valid player answer.
-- Tower offers remain meaningful without persistently diluting eligible Upgrade
-  progression; Upgrade offers do not eliminate useful Tower investment.
-- Stage5 Elemental specialization and Stage6 coherent Elemental paths remain
-  reasonably reachable under reviewed policies.
-- No accepted Task010-Task015 combat or Stage-pressure value changes to
-  compensate for Draft probability.
+## 11. Completion Evidence And Decision
 
-## 13. Out Of Scope
+The accepted Phase A evidence contains 44 schema-25 Natural records across all
+six Stages:
 
-- Guaranteed mixed-category Level-Up windows
-- Category pity or protection against random streaks
-- Runtime probability adaptation based on the player's current Build
-- Guaranteed TowerFamily, Upgrade layer, ElementType, identity, or Reference path
-- Reroll, ban, rarity, curses, persistent progression, or global rewards
-- Task016 Fast-Monster identity and Wave substitutions in the initial cohort
+| Stage | Runs | Victory / Defeat | Accepted interpretation |
+|---|---:|---:|---|
+| Stage1 | 8 | 6 / 2 | Reference and alternative play are viable with reasonable placement; incoherent play can still fail. |
+| Stage2 | 8 | 3 / 5 | Early access to a Level 2 Tower is an important player decision and timing risk rather than a Draft runtime defect. |
+| Stage3 | 6 | 4 / 2 | Tower-only Anti-pattern play fails; observed category variation remains legal under independent slot rolls. |
+| Stage4 | 8 | 5 / 3 | Reference and coherent-alternative play pass with reasonable placement; some Anti-pattern runs are near the survival boundary. This cohort used six health; the subsequently accepted asset value is five. |
+| Stage5 | 12 | 3 / 9 | The first four runs used the temporary five-health fixture and remain diagnostic only. At the restored six-health fixture, coherent Elemental Magic paths can pass, while alternative Elemental-family paths are substantially narrower. |
+| Stage6 | 2 | 0 / 2 | Both records completed valid Draft observation; exact same-source Elemental construction remains narrow under the available Draft budget and identity randomness. |
+
+All retained records report schema 25 and pass the Draft selection, Draft count,
+generation-trace, consumption-reconciliation, and investment-commit integrity
+checks applicable to their terminal state. The records expose displayed choices,
+selection, consumption, final investment, placement, leaks, and battle outcome;
+the observed defeats can therefore be investigated without inferring Draft
+behavior from the final Build alone.
+
+The Stage5 and Stage6 results do not justify weakening their accepted combat
+pressure or Reference Build definitions inside Task017. They establish a known
+v0.1 experience limitation: narrow coherent paths can require favorable offers
+and informed adaptation. This is acceptable for the first playable demo because
+the rogue-like variability and complete Stage flow remain available even when a
+run ends in Defeat. Stage-authored reroll opportunities, pity, or other
+accessibility assistance remain separate future experience work.
+
+Task017 is therefore accepted as complete for v0.1 on functional correctness,
+cross-Stage integration, authoring, observability, and representative Play Mode
+stability. It is not accepted as proof that every Stage reliably offers or
+completes its Reference or coherent-alternative Build under every seed.
+
+## 12. Out Of Scope
+
+- Automated large-cohort simulation or statistical probability guarantees
+- Synthetic Build-state evaluators or automatic choice-policy frameworks
+- A permanent legacy-versus-category generation switch
+- Category pity, guaranteed mixed windows, adaptive Build-aware probability,
+  rerolls, bans, rarity, curses, persistent progression, or global rewards
+- Guaranteed TowerFamily, Upgrade layer, ElementType, identity, or exact
+  Reference sequence
+- Task016 Fast-Monster substitution in the initial evidence

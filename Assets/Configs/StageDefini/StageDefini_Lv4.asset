@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: StageDefini_Lv4
   m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
   displayName: Level4
-  playerMaxHealth: 6
+  playerMaxHealth: 5
   playerProgressRequirements: 03000000030000000400000004000000040000000800000008000000
   mapTemplate: {fileID: 3273336904907436118, guid: abbaff0b0ac0449f8bb0cc6ccf2e003f, type: 3}
   monsterWaveConfig: {fileID: 11400000, guid: 79bc531e4fe794e049073e45b83b054b, type: 2}
@@ -47,6 +47,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a753e2e9c195d4e7d958cb32144b4db5, type: 2}
   - {fileID: 11400000, guid: b22ae591a03541149c02876705a9b38c, type: 2}
   - {fileID: 11400000, guid: a1e0e3058577643faba455fdcffc1f38, type: 2}
+  towerDraftSlotProbability: 0.714
   showStageIntroduction: 1
   introducedTowers:
   - {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}

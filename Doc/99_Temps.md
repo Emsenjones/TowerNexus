@@ -105,4 +105,6 @@
 23. Differet damage should has its own damage color;
 25. Design Monsters appearing performance;
 26. Text floating issue；
-28. Input manager issue.
+28. Input manager issue;
+29. Create fast movement monsters;
+30. Offer player reroll opportunity;

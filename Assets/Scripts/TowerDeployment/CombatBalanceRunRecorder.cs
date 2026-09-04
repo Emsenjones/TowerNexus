@@ -41,6 +41,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     [SerializeField] private MonsterManager monsterManager;
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private DraftSystem draftSystem;
+    [SerializeField] private BattleHUDUI battleHUDUI;
     [SerializeField] private TowerPlacementController towerPlacementController;
 
     private readonly Dictionary<MonsterBehaviour, MonsterObservation>
@@ -58,6 +59,9 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         new List<CombatBalanceWaveEventJson>();
     private readonly List<CombatBalanceDraftAttemptJson> draftAttempts =
         new List<CombatBalanceDraftAttemptJson>();
+    private readonly List<CombatBalancePendingDraftJson>
+        terminalPendingDraftSnapshot =
+            new List<CombatBalancePendingDraftJson>();
     private readonly List<CombatBalanceInvestmentCommitJson> investmentCommits =
         new List<CombatBalanceInvestmentCommitJson>();
     private readonly List<CombatBalanceDraftItemJson> towerDraftPoolSnapshot =
@@ -145,6 +149,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     private int initialDraftCompletionCount;
     private string configuredDraftGenerationMode;
     private int configuredFixedDraftStepCount;
+    private int configuredDraftChoiceCount;
+    private float configuredTowerDraftSlotProbability;
+    private int configuredDraftSeed;
+    private bool configuredFixedDraftSeedEnabled;
+    private string configuredGenerationContractVersion;
+    private string configuredDraftRandomAlgorithmVersion;
     private CombatBalanceFixtureJson fixtureSnapshot =
         new CombatBalanceFixtureJson();
 
@@ -624,6 +634,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             draftSystem = FindFirstObjectByType<DraftSystem>();
         }
 
+        if (battleHUDUI == null)
+        {
+            battleHUDUI = FindFirstObjectByType<BattleHUDUI>();
+        }
+
         if (towerPlacementController == null)
         {
             towerPlacementController =
@@ -915,6 +930,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             : DraftChoiceGenerationMode.Natural.ToString();
         configuredFixedDraftStepCount =
             draftSystem.ConfiguredFixedDraftStepCount;
+        configuredDraftChoiceCount = draftSystem.ConfiguredDraftChoiceCount;
+        configuredTowerDraftSlotProbability =
+            draftSystem.BoundTowerDraftSlotProbability;
+        configuredDraftSeed = draftSystem.ActiveDraftSeed;
+        configuredFixedDraftSeedEnabled = draftSystem.UseFixedDraftSeed;
+        configuredGenerationContractVersion =
+            DraftSystem.GenerationContractVersion;
+        configuredDraftRandomAlgorithmVersion =
+            DraftSystem.DraftRandomAlgorithmVersion;
 
         IReadOnlyList<TowerDefinition> towerDefinitions =
             draftSystem.BoundTowerDefinitions;
@@ -969,6 +993,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             CaptureDraftFixture();
         }
 
+        configuredDraftChoiceCount = observation.ConfiguredChoiceCount;
+        configuredTowerDraftSlotProbability =
+            observation.TowerDraftSlotProbability;
+        configuredDraftSeed = observation.DraftSeed;
+        configuredGenerationContractVersion =
+            observation.GenerationContractVersion;
+        configuredDraftRandomAlgorithmVersion =
+            observation.DraftRandomAlgorithmVersion;
+
         CombatBalanceDraftAttemptJson attempt =
             new CombatBalanceDraftAttemptJson
             {
@@ -987,8 +1020,27 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 requiredProgress = playerSystem != null
                     ? playerSystem.RequiredProgress
                     : 0,
-                activeTimeSeconds = GetRunActiveTimeSeconds()
+                activeTimeSeconds = GetRunActiveTimeSeconds(),
+                requestedTowerCount = observation.RequestedTowerCount,
+                requestedUpgradeCount = observation.RequestedUpgradeCount,
+                availableDistinctTowerCount =
+                    observation.AvailableDistinctTowerCount,
+                availableDistinctUpgradeCount =
+                    observation.AvailableDistinctUpgradeCount,
+                realizedTowerCount = observation.RealizedTowerCount,
+                realizedUpgradeCount = observation.RealizedUpgradeCount,
+                towerSlotsBackfilledByUpgrade =
+                    observation.TowerSlotsBackfilledByUpgrade,
+                upgradeSlotsBackfilledByTower =
+                    observation.UpgradeSlotsBackfilledByTower,
+                backfillReason = observation.BackfillReason
             };
+
+        for (int i = 0; i < observation.RequestedCategories.Count; i++)
+        {
+            attempt.requestedCategories.Add(
+                observation.RequestedCategories[i].ToString());
+        }
 
         for (int i = 0; i < observation.NaturalCandidates.Count; i++)
         {
@@ -1044,9 +1096,16 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 continue;
             }
 
-            attempt.selectionCommitted = true;
+            attempt.selectionAttempted = true;
+            attempt.heldItemCreationSucceeded =
+                observation.HeldItemCreationSucceeded;
+            attempt.heldItemCreationFailureReason = observation.FailureReason;
+            attempt.selectionCommitted =
+                observation.HeldItemCreationSucceeded;
             attempt.selectionCommittedAtSeconds =
-                GetRunActiveTimeSeconds();
+                observation.HeldItemCreationSucceeded
+                    ? GetRunActiveTimeSeconds()
+                    : 0f;
             attempt.selectedChoice = CreateDraftItemJson(
                 observation.SelectedChoice,
                 ResolveDisplayedMultiplicity(
@@ -1230,6 +1289,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         progressionEvents.Clear();
         waveEvents.Clear();
         draftAttempts.Clear();
+        terminalPendingDraftSnapshot.Clear();
         investmentCommits.Clear();
         towerDraftPoolSnapshot.Clear();
         towerUpgradeDraftPoolSnapshot.Clear();
@@ -1274,6 +1334,12 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         initialDraftCompletionCount = 0;
         configuredDraftGenerationMode = string.Empty;
         configuredFixedDraftStepCount = 0;
+        configuredDraftChoiceCount = 0;
+        configuredTowerDraftSlotProbability = 0f;
+        configuredDraftSeed = 0;
+        configuredFixedDraftSeedEnabled = false;
+        configuredGenerationContractVersion = string.Empty;
+        configuredDraftRandomAlgorithmVersion = string.Empty;
         hasObservedFirstSpawn = false;
         hasObservedSpawningCompletion = false;
         hasLoggedFinalSummary = false;
@@ -3103,12 +3169,49 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
     private void HandleBattleResultPublished(BattleResult result)
     {
+        CaptureTerminalPendingDraftSnapshot();
         QueueFinalSummary(result.ToString(), null);
     }
 
     private void HandleBattleRuntimeFailed(string failureReason)
     {
+        CaptureTerminalPendingDraftSnapshot();
         QueueFinalSummary("TechnicalFailure", failureReason);
+    }
+
+    private void CaptureTerminalPendingDraftSnapshot()
+    {
+        terminalPendingDraftSnapshot.Clear();
+
+        IReadOnlyList<PendingDraftUIItem> pendingItems =
+            battleHUDUI != null ? battleHUDUI.PendingDraftItems : null;
+
+        if (pendingItems == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < pendingItems.Count; i++)
+        {
+            PendingDraftUIItem pendingItem = pendingItems[i];
+
+            if (pendingItem == null ||
+                !pendingItem.DraftAttemptToken.IsValid ||
+                pendingItem.DraftResult == null)
+            {
+                continue;
+            }
+
+            terminalPendingDraftSnapshot.Add(
+                new CombatBalancePendingDraftJson
+                {
+                    draftAttemptToken =
+                        pendingItem.DraftAttemptToken.ToString(),
+                    item = CreateDraftItemJson(
+                        pendingItem.DraftResult,
+                        1)
+                });
+        }
     }
 
     private void QueueFinalSummary(string terminalState, string failureReason)
@@ -3532,6 +3635,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         report.integrity.draftAttemptCountMatchesProgression =
             report.draftRuntime.observedAttemptCount ==
             report.progression.observedTotalDraftCount;
+        report.integrity.draftGenerationTraceConsistent =
+            DraftGenerationTraceIsConsistent(report.draftRuntime);
+        report.integrity.draftConsumptionReconciled =
+            DraftConsumptionIsReconciled(report.draftRuntime);
         report.integrity.towerDeploymentCoverageMatches =
             TowerDeploymentCoverageMatches(report.towers);
         report.integrity.investmentCommitsMatchDraftSelections =
@@ -4463,12 +4570,24 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 configuredGenerationMode =
                     configuredDraftGenerationMode ?? string.Empty,
                 configuredFixedStepCount = configuredFixedDraftStepCount,
+                configuredChoiceCount = configuredDraftChoiceCount,
+                towerDraftSlotProbability =
+                    configuredTowerDraftSlotProbability,
+                draftSeed = configuredDraftSeed,
+                fixedDraftSeedEnabled = configuredFixedDraftSeedEnabled,
+                generationContractVersion =
+                    configuredGenerationContractVersion ?? string.Empty,
+                draftRandomAlgorithmVersion =
+                    configuredDraftRandomAlgorithmVersion ?? string.Empty,
                 towerDraftPool =
                     new List<CombatBalanceDraftItemJson>(
                         towerDraftPoolSnapshot),
                 towerUpgradeDraftPool =
                     new List<CombatBalanceDraftItemJson>(
                         towerUpgradeDraftPoolSnapshot),
+                terminalPendingDrafts =
+                    new List<CombatBalancePendingDraftJson>(
+                        terminalPendingDraftSnapshot),
                 attempts = new List<CombatBalanceDraftAttemptJson>(
                     draftAttempts)
             };
@@ -4480,9 +4599,50 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             {
                 runtime.committedSelectionCount++;
             }
+
+            runtime.attempts[i].consumptionStatus =
+                ResolveDraftConsumptionStatus(runtime.attempts[i]);
         }
 
         return runtime;
+    }
+
+    private string ResolveDraftConsumptionStatus(
+        CombatBalanceDraftAttemptJson attempt)
+    {
+        if (attempt == null || !attempt.selectionAttempted)
+        {
+            return "NoSelection";
+        }
+
+        if (!attempt.heldItemCreationSucceeded)
+        {
+            return "NotCommitted";
+        }
+
+        for (int i = 0; i < investmentCommits.Count; i++)
+        {
+            if (string.Equals(
+                    investmentCommits[i].draftAttemptToken,
+                    attempt.attemptToken,
+                    StringComparison.Ordinal))
+            {
+                return "Consumed";
+            }
+        }
+
+        for (int i = 0; i < terminalPendingDraftSnapshot.Count; i++)
+        {
+            if (string.Equals(
+                    terminalPendingDraftSnapshot[i].draftAttemptToken,
+                    attempt.attemptToken,
+                    StringComparison.Ordinal))
+            {
+                return "StillPending";
+            }
+        }
+
+        return "MissingInvestmentCommit";
     }
 
     private CombatBalanceInvestmentRuntimeJson CreateInvestmentRuntimeJson()
@@ -4929,6 +5089,137 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                     commit.draftAssetName,
                     StringComparison.Ordinal) ||
                 !committedTokens.Add(commit.draftAttemptToken))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool DraftGenerationTraceIsConsistent(
+        CombatBalanceDraftRuntimeJson draftRuntime)
+    {
+        if (draftRuntime == null || draftRuntime.configuredChoiceCount <= 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < draftRuntime.attempts.Count; i++)
+        {
+            CombatBalanceDraftAttemptJson attempt = draftRuntime.attempts[i];
+
+            if (attempt == null ||
+                attempt.displayedChoices == null ||
+                attempt.realizedTowerCount + attempt.realizedUpgradeCount !=
+                    attempt.displayedChoices.Count ||
+                attempt.displayedChoices.Count >
+                    draftRuntime.configuredChoiceCount)
+            {
+                return false;
+            }
+
+            bool isNaturalLevelUp = string.Equals(
+                    attempt.generationMode,
+                    DraftChoiceGenerationMode.Natural.ToString(),
+                    StringComparison.Ordinal) &&
+                string.Equals(
+                    attempt.sessionKind,
+                    DraftChoiceSessionKind.LevelUp.ToString(),
+                    StringComparison.Ordinal);
+
+            if (!isNaturalLevelUp)
+            {
+                if (attempt.requestedCategories.Count != 0)
+                {
+                    return false;
+                }
+
+                continue;
+            }
+
+            if (attempt.requestedCategories.Count !=
+                    draftRuntime.configuredChoiceCount ||
+                attempt.requestedTowerCount + attempt.requestedUpgradeCount !=
+                    draftRuntime.configuredChoiceCount ||
+                attempt.towerSlotsBackfilledByUpgrade < 0 ||
+                attempt.upgradeSlotsBackfilledByTower < 0)
+            {
+                return false;
+            }
+
+            int displayedTowerCount = 0;
+            int displayedUpgradeCount = 0;
+            HashSet<string> displayedIdentities = new HashSet<string>(
+                StringComparer.Ordinal);
+
+            for (int choiceIndex = 0;
+                 choiceIndex < attempt.displayedChoices.Count;
+                 choiceIndex++)
+            {
+                CombatBalanceDraftItemJson choice =
+                    attempt.displayedChoices[choiceIndex];
+
+                if (choice == null ||
+                    string.IsNullOrEmpty(choice.assetName) ||
+                    !displayedIdentities.Add(
+                        choice.resultType + ":" + choice.assetName))
+                {
+                    return false;
+                }
+
+                if (string.Equals(
+                        choice.resultType,
+                        DraftResultType.TowerDraft.ToString(),
+                        StringComparison.Ordinal))
+                {
+                    displayedTowerCount++;
+                }
+                else if (string.Equals(
+                             choice.resultType,
+                             DraftResultType.TowerUpgradeDraft.ToString(),
+                             StringComparison.Ordinal))
+                {
+                    displayedUpgradeCount++;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            if (displayedTowerCount != attempt.realizedTowerCount ||
+                displayedUpgradeCount != attempt.realizedUpgradeCount ||
+                attempt.displayedChoices.Count <
+                    draftRuntime.configuredChoiceCount &&
+                attempt.availableDistinctTowerCount +
+                    attempt.availableDistinctUpgradeCount >=
+                    draftRuntime.configuredChoiceCount)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool DraftConsumptionIsReconciled(
+        CombatBalanceDraftRuntimeJson draftRuntime)
+    {
+        if (draftRuntime == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < draftRuntime.attempts.Count; i++)
+        {
+            CombatBalanceDraftAttemptJson attempt = draftRuntime.attempts[i];
+
+            if (attempt == null ||
+                string.Equals(
+                    attempt.consumptionStatus,
+                    "MissingInvestmentCommit",
+                    StringComparison.Ordinal))
             {
                 return false;
             }

@@ -15,6 +15,12 @@ public enum DraftChoiceSessionKind
     LevelUp = 1
 }
 
+public enum DraftChoiceCategory
+{
+    Tower = 0,
+    TowerUpgrade = 1
+}
+
 [Serializable]
 public sealed class FixedDraftChoiceEntry
 {
@@ -61,6 +67,21 @@ public sealed class DraftChoicesOpenedObservation
         int draftOrdinal,
         DraftChoiceSessionKind sessionKind,
         DraftChoiceGenerationMode generationMode,
+        int configuredChoiceCount,
+        int draftSeed,
+        float towerDraftSlotProbability,
+        string generationContractVersion,
+        string draftRandomAlgorithmVersion,
+        IReadOnlyList<DraftChoiceCategory> requestedCategories,
+        int requestedTowerCount,
+        int requestedUpgradeCount,
+        int availableDistinctTowerCount,
+        int availableDistinctUpgradeCount,
+        int realizedTowerCount,
+        int realizedUpgradeCount,
+        int towerSlotsBackfilledByUpgrade,
+        int upgradeSlotsBackfilledByTower,
+        string backfillReason,
         IReadOnlyList<DraftChoiceCandidateObservation> naturalCandidates,
         IReadOnlyList<DraftResult> displayedChoices)
     {
@@ -68,6 +89,21 @@ public sealed class DraftChoicesOpenedObservation
         DraftOrdinal = draftOrdinal;
         SessionKind = sessionKind;
         GenerationMode = generationMode;
+        ConfiguredChoiceCount = configuredChoiceCount;
+        DraftSeed = draftSeed;
+        TowerDraftSlotProbability = towerDraftSlotProbability;
+        GenerationContractVersion = generationContractVersion ?? string.Empty;
+        DraftRandomAlgorithmVersion = draftRandomAlgorithmVersion ?? string.Empty;
+        RequestedCategories = CopyCategories(requestedCategories);
+        RequestedTowerCount = requestedTowerCount;
+        RequestedUpgradeCount = requestedUpgradeCount;
+        AvailableDistinctTowerCount = availableDistinctTowerCount;
+        AvailableDistinctUpgradeCount = availableDistinctUpgradeCount;
+        RealizedTowerCount = realizedTowerCount;
+        RealizedUpgradeCount = realizedUpgradeCount;
+        TowerSlotsBackfilledByUpgrade = towerSlotsBackfilledByUpgrade;
+        UpgradeSlotsBackfilledByTower = upgradeSlotsBackfilledByTower;
+        BackfillReason = backfillReason ?? string.Empty;
         NaturalCandidates = CopyCandidates(naturalCandidates);
         DisplayedChoices = CopyChoices(displayedChoices);
     }
@@ -76,11 +112,41 @@ public sealed class DraftChoicesOpenedObservation
     public int DraftOrdinal { get; }
     public DraftChoiceSessionKind SessionKind { get; }
     public DraftChoiceGenerationMode GenerationMode { get; }
+    public int ConfiguredChoiceCount { get; }
+    public int DraftSeed { get; }
+    public float TowerDraftSlotProbability { get; }
+    public string GenerationContractVersion { get; }
+    public string DraftRandomAlgorithmVersion { get; }
+    public IReadOnlyList<DraftChoiceCategory> RequestedCategories { get; }
+    public int RequestedTowerCount { get; }
+    public int RequestedUpgradeCount { get; }
+    public int AvailableDistinctTowerCount { get; }
+    public int AvailableDistinctUpgradeCount { get; }
+    public int RealizedTowerCount { get; }
+    public int RealizedUpgradeCount { get; }
+    public int TowerSlotsBackfilledByUpgrade { get; }
+    public int UpgradeSlotsBackfilledByTower { get; }
+    public string BackfillReason { get; }
     public IReadOnlyList<DraftChoiceCandidateObservation> NaturalCandidates
     {
         get;
     }
     public IReadOnlyList<DraftResult> DisplayedChoices { get; }
+
+    private static IReadOnlyList<DraftChoiceCategory> CopyCategories(
+        IReadOnlyList<DraftChoiceCategory> categories)
+    {
+        DraftChoiceCategory[] copy = categories != null
+            ? new DraftChoiceCategory[categories.Count]
+            : Array.Empty<DraftChoiceCategory>();
+
+        for (int i = 0; i < copy.Length; i++)
+        {
+            copy[i] = categories[i];
+        }
+
+        return Array.AsReadOnly(copy);
+    }
 
     private static IReadOnlyList<DraftChoiceCandidateObservation>
         CopyCandidates(
@@ -121,13 +187,17 @@ public sealed class DraftChoiceCommittedObservation
         int draftOrdinal,
         DraftChoiceSessionKind sessionKind,
         DraftChoiceGenerationMode generationMode,
-        DraftResult selectedChoice)
+        DraftResult selectedChoice,
+        bool heldItemCreationSucceeded,
+        string failureReason)
     {
         AttemptToken = attemptToken;
         DraftOrdinal = draftOrdinal;
         SessionKind = sessionKind;
         GenerationMode = generationMode;
         SelectedChoice = selectedChoice;
+        HeldItemCreationSucceeded = heldItemCreationSucceeded;
+        FailureReason = failureReason ?? string.Empty;
     }
 
     public DraftAttemptToken AttemptToken { get; }
@@ -135,11 +205,16 @@ public sealed class DraftChoiceCommittedObservation
     public DraftChoiceSessionKind SessionKind { get; }
     public DraftChoiceGenerationMode GenerationMode { get; }
     public DraftResult SelectedChoice { get; }
+    public bool HeldItemCreationSucceeded { get; }
+    public string FailureReason { get; }
 }
 #endif
 
 public class DraftSystem : MonoBehaviour
 {
+    public const string GenerationContractVersion = "CategorySlotV1";
+    public const string DraftRandomAlgorithmVersion = "SystemRandomV1";
+
     private enum DraftSessionKind
     {
         None = 0,
@@ -167,6 +242,8 @@ public class DraftSystem : MonoBehaviour
 #if UNITY_EDITOR
     [Header("Editor Calibration")]
     [SerializeField] private bool useFixedDraftChoices;
+    [SerializeField] private bool useFixedDraftSeed;
+    [SerializeField] private int fixedDraftSeed = 1;
     [SerializeField] private List<FixedDraftChoiceStep>
         fixedDraftChoiceSteps = new List<FixedDraftChoiceStep>();
 #endif
@@ -175,6 +252,10 @@ public class DraftSystem : MonoBehaviour
         new List<DraftResult>();
     private readonly List<DraftResult> draftPool =
         new List<DraftResult>();
+    private readonly List<DraftResult> towerDraftCandidatePool =
+        new List<DraftResult>();
+    private readonly List<DraftResult> upgradeDraftCandidatePool =
+        new List<DraftResult>();
     private readonly HashSet<UnityEngine.Object> displayedIdentities =
         new HashSet<UnityEngine.Object>();
 
@@ -182,14 +263,29 @@ public class DraftSystem : MonoBehaviour
     private readonly List<DraftChoiceCandidateObservation>
         naturalCandidateObservations =
             new List<DraftChoiceCandidateObservation>();
+    private readonly List<DraftChoiceCategory> requestedCategoryObservations =
+        new List<DraftChoiceCategory>();
     private int openedDraftCount;
     private int activeDraftOrdinal;
     private DraftChoiceGenerationMode activeGenerationMode;
     private DraftChoiceSessionKind activeObservationSessionKind;
+    private int requestedTowerCount;
+    private int requestedUpgradeCount;
+    private int availableDistinctTowerCount;
+    private int availableDistinctUpgradeCount;
+    private int realizedTowerCount;
+    private int realizedUpgradeCount;
+    private int towerSlotsBackfilledByUpgrade;
+    private int upgradeSlotsBackfilledByTower;
+    private string backfillReason = string.Empty;
 #endif
 
     private IReadOnlyList<TowerDefinition> towerDefinitions;
     private IReadOnlyList<TowerUpgradeDefinition> upgradeDefinitions;
+    private float towerDraftSlotProbability;
+    private bool hasStageDraftConfiguration;
+    private System.Random draftRandom;
+    private int activeDraftSeed;
     private bool isBattleActive;
     private ulong battleGenerationCounter;
     private ulong draftAttemptCounter;
@@ -208,12 +304,18 @@ public class DraftSystem : MonoBehaviour
 
     public bool IsBattleActive => isBattleActive;
     public bool HasStagePools =>
-        towerDefinitions != null && upgradeDefinitions != null;
+        hasStageDraftConfiguration &&
+        towerDefinitions != null &&
+        upgradeDefinitions != null;
 
 #if UNITY_EDITOR
     public bool UseFixedDraftChoices => useFixedDraftChoices;
     public int ConfiguredFixedDraftStepCount =>
         fixedDraftChoiceSteps != null ? fixedDraftChoiceSteps.Count : 0;
+    public int ConfiguredDraftChoiceCount => draftChoiceCount;
+    public float BoundTowerDraftSlotProbability => towerDraftSlotProbability;
+    public int ActiveDraftSeed => activeDraftSeed;
+    public bool UseFixedDraftSeed => useFixedDraftSeed;
     public IReadOnlyList<TowerDefinition> BoundTowerDefinitions =>
         towerDefinitions;
     public IReadOnlyList<TowerUpgradeDefinition> BoundUpgradeDefinitions =>
@@ -253,20 +355,27 @@ public class DraftSystem : MonoBehaviour
 
     public bool BindStagePools(
         IReadOnlyList<TowerDefinition> selectedTowerDefinitions,
-        IReadOnlyList<TowerUpgradeDefinition> selectedUpgradeDefinitions)
+        IReadOnlyList<TowerUpgradeDefinition> selectedUpgradeDefinitions,
+        float selectedTowerDraftSlotProbability)
     {
         if (selectedTowerDefinitions == null ||
-            selectedUpgradeDefinitions == null)
+            selectedUpgradeDefinitions == null ||
+            float.IsNaN(selectedTowerDraftSlotProbability) ||
+            float.IsInfinity(selectedTowerDraftSlotProbability) ||
+            selectedTowerDraftSlotProbability < 0f ||
+            selectedTowerDraftSlotProbability > 1f)
         {
             Debug.LogError(
-                "Draft system cannot bind Stage pools because one or both " +
-                "pools are null.",
+                "Draft system cannot bind Stage Draft configuration because " +
+                "one or more values are missing or invalid.",
                 this);
             return false;
         }
 
         towerDefinitions = selectedTowerDefinitions;
         upgradeDefinitions = selectedUpgradeDefinitions;
+        towerDraftSlotProbability = selectedTowerDraftSlotProbability;
+        hasStageDraftConfiguration = true;
         return true;
     }
 
@@ -344,6 +453,7 @@ public class DraftSystem : MonoBehaviour
 #endif
         currentBattleGeneration = NextNonZero(
             ref battleGenerationCounter);
+        InitializeDraftRandom();
         sessionPhase = DraftSessionPhase.None;
         isBattleActive = true;
         battleHUDUI?.BeginBattle();
@@ -379,6 +489,10 @@ public class DraftSystem : MonoBehaviour
         currentBattleGeneration = 0;
         towerDefinitions = null;
         upgradeDefinitions = null;
+        towerDraftSlotProbability = 0f;
+        hasStageDraftConfiguration = false;
+        draftRandom = null;
+        activeDraftSeed = 0;
     }
 
     public void ClearStageRuntime()
@@ -537,34 +651,42 @@ public class DraftSystem : MonoBehaviour
 
 #if UNITY_EDITOR
         CaptureNaturalCandidateObservations();
+        availableDistinctTowerCount = CountDistinctValidIdentities(
+            towerDraftCandidatePool);
+        availableDistinctUpgradeCount = CountDistinctValidIdentities(
+            upgradeDraftCandidatePool);
 
         if (useFixedDraftChoices)
         {
-            return TryGenerateFixedDraftChoices(
+            bool generatedFixedChoices = TryGenerateFixedDraftChoices(
                 requestedKind,
                 out failureReason);
+            CaptureRealizedCategoryCounts();
+            return generatedFixedChoices;
         }
 #endif
 
-        while (draftChoices.Count < draftChoiceCount &&
-               draftPool.Count > 0)
+        if (draftRandom == null)
         {
-            int randomIndex = UnityEngine.Random.Range(
-                0,
-                draftPool.Count);
-            DraftResult selectedResult = draftPool[randomIndex];
-            draftPool.RemoveAt(randomIndex);
-
-            if (selectedResult == null ||
-                !selectedResult.IsValid ||
-                selectedResult.Identity == null ||
-                !displayedIdentities.Add(selectedResult.Identity))
-            {
-                continue;
-            }
-
-            draftChoices.Add(selectedResult);
+            failureReason = "the Draft-owned random source is not initialized.";
+            return false;
         }
+
+        if (requestedKind == DraftSessionKind.Initial)
+        {
+            SampleDistinctCandidates(
+                towerDraftCandidatePool,
+                draftChoiceCount);
+        }
+        else
+        {
+            GenerateLevelUpDraftChoices();
+        }
+
+        ShuffleDraftChoices();
+#if UNITY_EDITOR
+        CaptureRealizedCategoryCounts();
+#endif
 
         if (draftChoices.Count == 0)
         {
@@ -593,6 +715,8 @@ public class DraftSystem : MonoBehaviour
             if (towerDefinition != null && towerDefinition.IsValid())
             {
                 draftPool.Add(
+                    DraftResult.CreateTowerDraft(towerDefinition));
+                towerDraftCandidatePool.Add(
                     DraftResult.CreateTowerDraft(towerDefinition));
             }
         }
@@ -645,8 +769,144 @@ public class DraftSystem : MonoBehaviour
                 draftPool.Add(
                     DraftResult.CreateTowerUpgradeDraft(
                         upgradeDefinition));
+                upgradeDraftCandidatePool.Add(
+                    DraftResult.CreateTowerUpgradeDraft(
+                        upgradeDefinition));
             }
         }
+    }
+
+    private void GenerateLevelUpDraftChoices()
+    {
+        int towerRequestCount = 0;
+        int upgradeRequestCount = 0;
+
+        for (int slotIndex = 0; slotIndex < draftChoiceCount; slotIndex++)
+        {
+            bool requestsTower =
+                draftRandom.NextDouble() < towerDraftSlotProbability;
+
+            if (requestsTower)
+            {
+                towerRequestCount++;
+#if UNITY_EDITOR
+                requestedCategoryObservations.Add(DraftChoiceCategory.Tower);
+#endif
+            }
+            else
+            {
+                upgradeRequestCount++;
+#if UNITY_EDITOR
+                requestedCategoryObservations.Add(
+                    DraftChoiceCategory.TowerUpgrade);
+#endif
+            }
+        }
+
+#if UNITY_EDITOR
+        requestedTowerCount = towerRequestCount;
+        requestedUpgradeCount = upgradeRequestCount;
+#endif
+
+        int sampledTowerCount = SampleDistinctCandidates(
+            towerDraftCandidatePool,
+            towerRequestCount);
+        int sampledUpgradeCount = SampleDistinctCandidates(
+            upgradeDraftCandidatePool,
+            upgradeRequestCount);
+        int missingTowerSlots = towerRequestCount - sampledTowerCount;
+        int missingUpgradeSlots = upgradeRequestCount - sampledUpgradeCount;
+
+        int upgradeBackfillCount = SampleDistinctCandidates(
+            upgradeDraftCandidatePool,
+            missingTowerSlots);
+        int towerBackfillCount = SampleDistinctCandidates(
+            towerDraftCandidatePool,
+            missingUpgradeSlots);
+
+#if UNITY_EDITOR
+        towerSlotsBackfilledByUpgrade = upgradeBackfillCount;
+        upgradeSlotsBackfilledByTower = towerBackfillCount;
+
+        if (upgradeBackfillCount > 0 || towerBackfillCount > 0)
+        {
+            backfillReason = "RequestedCategoryExhausted";
+        }
+
+        if (draftChoices.Count < draftChoiceCount)
+        {
+            backfillReason = "TotalDistinctIdentityExhaustion";
+        }
+#endif
+    }
+
+    private int SampleDistinctCandidates(
+        List<DraftResult> candidates,
+        int requestedCount)
+    {
+        if (candidates == null || requestedCount <= 0)
+        {
+            return 0;
+        }
+
+        int initialChoiceCount = draftChoices.Count;
+
+        while (draftChoices.Count - initialChoiceCount < requestedCount &&
+               candidates.Count > 0)
+        {
+            int randomIndex = draftRandom.Next(0, candidates.Count);
+            DraftResult selectedResult = candidates[randomIndex];
+            candidates.RemoveAt(randomIndex);
+
+            if (selectedResult == null ||
+                !selectedResult.IsValid ||
+                selectedResult.Identity == null ||
+                !displayedIdentities.Add(selectedResult.Identity))
+            {
+                continue;
+            }
+
+            draftChoices.Add(selectedResult);
+        }
+
+        return draftChoices.Count - initialChoiceCount;
+    }
+
+    private void ShuffleDraftChoices()
+    {
+        for (int i = draftChoices.Count - 1; i > 0; i--)
+        {
+            int swapIndex = draftRandom.Next(0, i + 1);
+            DraftResult value = draftChoices[i];
+            draftChoices[i] = draftChoices[swapIndex];
+            draftChoices[swapIndex] = value;
+        }
+    }
+
+    private static int CountDistinctValidIdentities(
+        IReadOnlyList<DraftResult> candidates)
+    {
+        if (candidates == null)
+        {
+            return 0;
+        }
+
+        HashSet<UnityEngine.Object> identities =
+            new HashSet<UnityEngine.Object>();
+
+        for (int i = 0; i < candidates.Count; i++)
+        {
+            DraftResult candidate = candidates[i];
+
+            if (candidate != null &&
+                candidate.IsValid &&
+                candidate.Identity != null)
+            {
+                identities.Add(candidate.Identity);
+            }
+        }
+
+        return identities.Count;
     }
 
     private int CountEligibleTowerInstancesForUpgrade(
@@ -769,6 +1029,13 @@ public class DraftSystem : MonoBehaviour
                 out PendingDraftUIItem committedItem,
                 out string failureReason))
         {
+#if UNITY_EDITOR
+            PublishDraftChoiceCommitted(
+                callbackToken,
+                selectedResult,
+                false,
+                failureReason);
+#endif
             sessionPhase = DraftSessionPhase.Failed;
             InvalidateActiveAuthority();
             battleHUDUI.CloseDraft();
@@ -796,7 +1063,11 @@ public class DraftSystem : MonoBehaviour
         }
 
 #if UNITY_EDITOR
-        PublishDraftChoiceCommitted(callbackToken, selectedResult);
+        PublishDraftChoiceCommitted(
+            callbackToken,
+            selectedResult,
+            true,
+            string.Empty);
 #endif
 
         sessionPhase = DraftSessionPhase.Completed;
@@ -904,10 +1175,42 @@ public class DraftSystem : MonoBehaviour
     {
         draftChoices.Clear();
         draftPool.Clear();
+        towerDraftCandidatePool.Clear();
+        upgradeDraftCandidatePool.Clear();
         displayedIdentities.Clear();
 #if UNITY_EDITOR
         naturalCandidateObservations.Clear();
+        requestedCategoryObservations.Clear();
+        requestedTowerCount = 0;
+        requestedUpgradeCount = 0;
+        availableDistinctTowerCount = 0;
+        availableDistinctUpgradeCount = 0;
+        realizedTowerCount = 0;
+        realizedUpgradeCount = 0;
+        towerSlotsBackfilledByUpgrade = 0;
+        upgradeSlotsBackfilledByTower = 0;
+        backfillReason = string.Empty;
 #endif
+    }
+
+    private void InitializeDraftRandom()
+    {
+#if UNITY_EDITOR
+        activeDraftSeed = useFixedDraftSeed
+            ? fixedDraftSeed
+            : CreateFreshDraftSeed();
+#else
+        activeDraftSeed = CreateFreshDraftSeed();
+#endif
+        draftRandom = new System.Random(activeDraftSeed);
+    }
+
+    private int CreateFreshDraftSeed()
+    {
+        return unchecked(
+            Guid.NewGuid().GetHashCode() ^
+            GetInstanceID() ^
+            (int)currentBattleGeneration);
     }
 
 #if UNITY_EDITOR
@@ -1233,6 +1536,31 @@ public class DraftSystem : MonoBehaviour
         return false;
     }
 
+    private void CaptureRealizedCategoryCounts()
+    {
+        realizedTowerCount = 0;
+        realizedUpgradeCount = 0;
+
+        for (int i = 0; i < draftChoices.Count; i++)
+        {
+            DraftResult choice = draftChoices[i];
+
+            if (choice == null)
+            {
+                continue;
+            }
+
+            if (choice.ResultType == DraftResultType.TowerDraft)
+            {
+                realizedTowerCount++;
+            }
+            else if (choice.ResultType == DraftResultType.TowerUpgradeDraft)
+            {
+                realizedUpgradeCount++;
+            }
+        }
+    }
+
     private void PublishDraftChoicesOpened(
         DraftAttemptToken attemptToken,
         DraftSessionKind requestedKind)
@@ -1253,6 +1581,21 @@ public class DraftSystem : MonoBehaviour
                 activeDraftOrdinal,
                 activeObservationSessionKind,
                 activeGenerationMode,
+                draftChoiceCount,
+                activeDraftSeed,
+                towerDraftSlotProbability,
+                GenerationContractVersion,
+                DraftRandomAlgorithmVersion,
+                requestedCategoryObservations,
+                requestedTowerCount,
+                requestedUpgradeCount,
+                availableDistinctTowerCount,
+                availableDistinctUpgradeCount,
+                realizedTowerCount,
+                realizedUpgradeCount,
+                towerSlotsBackfilledByUpgrade,
+                upgradeSlotsBackfilledByTower,
+                backfillReason,
                 naturalCandidateObservations,
                 draftChoices);
         Action<DraftChoicesOpenedObservation> handlers =
@@ -1281,7 +1624,9 @@ public class DraftSystem : MonoBehaviour
 
     private void PublishDraftChoiceCommitted(
         DraftAttemptToken attemptToken,
-        DraftResult selectedResult)
+        DraftResult selectedResult,
+        bool heldItemCreationSucceeded,
+        string failureReason)
     {
         if (activeDraftOrdinal <= 0 || selectedResult == null)
         {
@@ -1294,7 +1639,9 @@ public class DraftSystem : MonoBehaviour
                 activeDraftOrdinal,
                 activeObservationSessionKind,
                 activeGenerationMode,
-                selectedResult);
+                selectedResult,
+                heldItemCreationSucceeded,
+                failureReason);
         Action<DraftChoiceCommittedObservation> handlers =
             OnDraftChoiceCommitted;
 

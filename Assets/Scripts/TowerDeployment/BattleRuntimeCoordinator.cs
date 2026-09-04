@@ -105,7 +105,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         int playerMaxHealth,
         IReadOnlyList<int> playerProgressRequirements,
         IReadOnlyList<TowerDefinition> towerPool,
-        IReadOnlyList<TowerUpgradeDefinition> upgradePool)
+        IReadOnlyList<TowerUpgradeDefinition> upgradePool,
+        float towerDraftSlotProbability)
     {
         if (!TryValidatePreparationReferences(out string failureReason))
         {
@@ -130,7 +131,11 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             playerProgressRequirements == null ||
             playerProgressRequirements.Count == 0 ||
             towerPool == null ||
-            upgradePool == null)
+            upgradePool == null ||
+            float.IsNaN(towerDraftSlotProbability) ||
+            float.IsInfinity(towerDraftSlotProbability) ||
+            towerDraftSlotProbability < 0f ||
+            towerDraftSlotProbability > 1f)
         {
             Debug.LogError(
                 "Battle runtime coordinator cannot prepare Stage runtime because " +
@@ -150,7 +155,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 playerMaxHealth,
                 playerProgressRequirements,
                 towerPool,
-                upgradePool);
+                upgradePool,
+                towerDraftSlotProbability);
         }
         catch (Exception exception)
         {
@@ -189,7 +195,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         int playerMaxHealth,
         IReadOnlyList<int> playerProgressRequirements,
         IReadOnlyList<TowerDefinition> towerPool,
-        IReadOnlyList<TowerUpgradeDefinition> upgradePool)
+        IReadOnlyList<TowerUpgradeDefinition> upgradePool,
+        float towerDraftSlotProbability)
     {
         ReleasePreparedBattleRuntimeCore();
 
@@ -236,7 +243,10 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return FailPreparation("preparation was cancelled by a deferred release.");
         }
 
-        if (!draftSystem.BindStagePools(towerPool, upgradePool))
+        if (!draftSystem.BindStagePools(
+                towerPool,
+                upgradePool,
+                towerDraftSlotProbability))
         {
             return FailPreparation("Draft pool binding failed.");
         }

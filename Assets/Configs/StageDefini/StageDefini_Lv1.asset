@@ -26,6 +26,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
   - {fileID: 11400000, guid: 81c23c8d23a140038f44a43dd92745e6, type: 2}
   - {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}
+  towerDraftSlotProbability: 0.5
   showStageIntroduction: 1
   introducedTowers:
   - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}

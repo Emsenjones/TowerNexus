@@ -63,6 +63,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: c1f83a6eedcc149928a32ec049151e5e, type: 2}
   - {fileID: 11400000, guid: 66f15d986d0914eaebf7f84a40df37f0, type: 2}
   - {fileID: 11400000, guid: a5e9b5706a89f473496f38e486979498, type: 2}
+  towerDraftSlotProbability: 0.571
   showStageIntroduction: 0
   introducedTowers: []
   introducedTowerUpgrades: []

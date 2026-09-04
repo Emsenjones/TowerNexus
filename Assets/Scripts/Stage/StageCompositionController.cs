@@ -70,7 +70,8 @@ public class StageCompositionController : MonoBehaviour
                             selectedStage.PlayerMaxHealth,
                             selectedStage.PlayerProgressRequirements,
                             selectedStage.TowerDraftPool,
-                            selectedStage.TowerUpgradeDraftPool))
+                            selectedStage.TowerUpgradeDraftPool,
+                            selectedStage.TowerDraftSlotProbability))
                     {
                         Debug.LogError(
                             $"Stage '{GetStageName(selectedStage)}' failed while " +

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 24;
+    public int schemaVersion = 25;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -455,6 +455,12 @@ internal sealed class CombatBalanceDraftRuntimeJson
 {
     public string configuredGenerationMode;
     public int configuredFixedStepCount;
+    public int configuredChoiceCount;
+    public float towerDraftSlotProbability;
+    public int draftSeed;
+    public bool fixedDraftSeedEnabled;
+    public string generationContractVersion;
+    public string draftRandomAlgorithmVersion;
     public int observedAttemptCount;
     public int committedSelectionCount;
     public List<CombatBalanceDraftItemJson> towerDraftPool =
@@ -463,6 +469,8 @@ internal sealed class CombatBalanceDraftRuntimeJson
         new List<CombatBalanceDraftItemJson>();
     public List<CombatBalanceDraftAttemptJson> attempts =
         new List<CombatBalanceDraftAttemptJson>();
+    public List<CombatBalancePendingDraftJson> terminalPendingDrafts =
+        new List<CombatBalancePendingDraftJson>();
 }
 
 [Serializable]
@@ -477,6 +485,19 @@ internal sealed class CombatBalanceDraftAttemptJson
     public int currentProgress;
     public int requiredProgress;
     public float activeTimeSeconds;
+    public List<string> requestedCategories = new List<string>();
+    public int requestedTowerCount;
+    public int requestedUpgradeCount;
+    public int availableDistinctTowerCount;
+    public int availableDistinctUpgradeCount;
+    public int realizedTowerCount;
+    public int realizedUpgradeCount;
+    public int towerSlotsBackfilledByUpgrade;
+    public int upgradeSlotsBackfilledByTower;
+    public string backfillReason;
+    public bool selectionAttempted;
+    public bool heldItemCreationSucceeded;
+    public string heldItemCreationFailureReason;
     public bool selectionCommitted;
     public float selectionCommittedAtSeconds;
     public List<CombatBalanceDraftItemJson> naturalCandidates =
@@ -485,6 +506,14 @@ internal sealed class CombatBalanceDraftAttemptJson
         new List<CombatBalanceDraftItemJson>();
     public CombatBalanceDraftItemJson selectedChoice =
         new CombatBalanceDraftItemJson();
+    public string consumptionStatus;
+}
+
+[Serializable]
+internal sealed class CombatBalancePendingDraftJson
+{
+    public string draftAttemptToken;
+    public CombatBalanceDraftItemJson item = new CombatBalanceDraftItemJson();
 }
 
 [Serializable]
@@ -563,6 +592,8 @@ internal sealed class CombatBalanceIntegrityJson
     public bool waveMonsterAttributionMatches;
     public bool draftAttemptSelectionsMatch;
     public bool draftAttemptCountMatchesProgression;
+    public bool draftGenerationTraceConsistent;
+    public bool draftConsumptionReconciled;
     public bool towerDeploymentCoverageMatches;
     public bool investmentCommitsMatchDraftSelections;
     public bool towerWaveAttributionMatches;

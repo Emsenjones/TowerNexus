@@ -42,6 +42,8 @@ public class StageDefinition : ScriptableObject
     [SerializeField] private List<TowerDefinition> towerDraftPool = new List<TowerDefinition>();
     [SerializeField] private List<TowerUpgradeDefinition> towerUpgradeDraftPool =
         new List<TowerUpgradeDefinition>();
+    [Range(0f, 1f)]
+    [SerializeField] private float towerDraftSlotProbability = 0.5f;
     [SerializeField] private bool showStageIntroduction;
     [SerializeField] private List<TowerDefinition> introducedTowers =
         new List<TowerDefinition>();
@@ -56,6 +58,7 @@ public class StageDefinition : ScriptableObject
     public MonsterWaveConfig MonsterWaveConfig => monsterWaveConfig;
     public IReadOnlyList<TowerDefinition> TowerDraftPool => towerDraftPool;
     public IReadOnlyList<TowerUpgradeDefinition> TowerUpgradeDraftPool => towerUpgradeDraftPool;
+    public float TowerDraftSlotProbability => towerDraftSlotProbability;
     public bool ShowStageIntroduction => showStageIntroduction;
     public IReadOnlyList<TowerDefinition> IntroducedTowers => introducedTowers;
     public IReadOnlyList<TowerUpgradeDefinition> IntroducedTowerUpgrades =>
@@ -68,8 +71,22 @@ public class StageDefinition : ScriptableObject
         ValidateMapTemplate(result);
         ValidateMonsterWaveConfig(result);
         ValidateDraftPools(result);
+        ValidateDraftProbability(result);
         ValidateIntroduction(result);
         return result;
+    }
+
+    private void ValidateDraftProbability(StageValidationResult result)
+    {
+        if (float.IsNaN(towerDraftSlotProbability) ||
+            float.IsInfinity(towerDraftSlotProbability) ||
+            towerDraftSlotProbability < 0f ||
+            towerDraftSlotProbability > 1f)
+        {
+            result.AddError(
+                "Tower Draft Slot Probability must be finite and within the " +
+                $"inclusive range [0, 1], but is {towerDraftSlotProbability}.");
+        }
     }
 
     [Button("Validate Stage")]
