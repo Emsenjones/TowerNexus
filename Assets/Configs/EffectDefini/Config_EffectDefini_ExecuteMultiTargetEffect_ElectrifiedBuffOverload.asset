@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
+  m_Name: Config_EffectDefini_ExecuteMultiTargetEffect_ElectrifiedBuffOverload
+  m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
+  displayName: Deal multiple effects on Stacks
+  radius: 2
+  executionVfxPrefab: {fileID: 0}
+  actions:
+  - actionType: 5
+    buffDefinition: {fileID: 0}
+    moveSpeedMultiplier: 0.5
+    isMovementLocked: 0
+    multiTargetEffectDefinition: {fileID: 11400000, guid: 95dd1ad3fb8954bcd8bd896979fbc5bd, type: 2}
+    targetCount: 4
+    excludeTriggerTarget: 1
+    windVortexPrefab: {fileID: 0}

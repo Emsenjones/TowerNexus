@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ba1c4a66ca9ef11458583cbca68b0691
+timeCreated: 1585518302
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Shell_Ejection_Repeating_Large_01.prefab
+  uploadId: 0

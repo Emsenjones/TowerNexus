@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ba03473dcbf31a44cb8a407076228f8e
+timeCreated: 1585181990
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Gunshot_BarrelSmoke_01.prefab
+  uploadId: 0

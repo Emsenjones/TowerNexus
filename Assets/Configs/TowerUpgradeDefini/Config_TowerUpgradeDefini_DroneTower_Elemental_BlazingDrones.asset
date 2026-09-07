@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
+  m_Name: Config_TowerUpgradeDefini_DroneTower_Elemental_BlazingDrones
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
+  displayName: Blazing Drones
+  description: Attacks apply Burning
+  icon: {fileID: 21300000, guid: 0fe1b9ffb3d0c431fb465429727a21c3, type: 3}
+  towerFamily: 3
+  requiredTowerLevel: 3
+  upgradeLayer: 2
+  basicStatDeltas: []
+  behaviourPackageType: 0
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  explosiveShellEffect: {fileID: 0}
+  bounceSearchRadius: 1
+  maxBounceCount: 1
+  bounceArcHeight: 1
+  bounceTargetSelectionType: 0
+  arcaneDetonationEffect: {fileID: 0}
+  magicArcaneFieldPrefab: {fileID: 0}
+  blastRoundsEffect: {fileID: 0}
+  finalDiveHitThreshold: 1
+  finalDiveExplosionEffect: {fileID: 0}
+  elementType: 1
+  elementalApplyEffect: {fileID: 11400000, guid: e2002b04373b4422a69bb622fbdb0aeb, type: 2}
+  elementalStackContribution: 2

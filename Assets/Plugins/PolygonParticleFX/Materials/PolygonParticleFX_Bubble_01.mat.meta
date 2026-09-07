@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 43e9d91ac8fd6f84f88ed89971c20f79
+timeCreated: 1576555502
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Materials/PolygonParticleFX_Bubble_01.mat
+  uploadId: 0

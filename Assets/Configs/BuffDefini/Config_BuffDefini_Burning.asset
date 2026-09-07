@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
+  m_Name: Config_BuffDefini_Burning
+  m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
+  displayName: Burning
+  description: Deals periodic Fire damage and explodes at maximum stacks to damage
+    nearby enemies
+  activeDuration: 12
+  periodicTickInterval: 1
+  usesStacks: 1
+  maximumStacks: 10
+  sourceApplyCooldown: 0.5
+  eventBindings:
+  - eventType: 0
+    effectDefinition: {fileID: 11400000, guid: ca535fb633964c0596aaed545a9a3ba3, type: 2}
+  - eventType: 2
+    effectDefinition: {fileID: 11400000, guid: d9abc37880d045259af0bc0e82ceb508, type: 2}
+  elementType: 1
+  overloadProtectionDuration: 10
+  towerHitReactionCooldown: 0
+  statusIcon: {fileID: 21300000, guid: bb573af9f461f418fa63dcd867a889f8, type: 3}
+  persistentBuffVfxPrefab: {fileID: 6904011654687807763, guid: 4376de74f07a24373a09bcaf20ac47ff, type: 3}

@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 61400dcd69108c64b970eb523f3d1783
+timeCreated: 1586906155
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Poison_Green_01.prefab
+  uploadId: 0

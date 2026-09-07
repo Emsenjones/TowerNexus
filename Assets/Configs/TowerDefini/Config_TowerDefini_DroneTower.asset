@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
+  m_Name: Config_TowerDefini_DroneTower
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
+  towerFamily: 3
+  displayName: Drone Tower
+  description: Drone pursuit fire
+  icon: {fileID: 21300000, guid: 6afd18b735003410c976b1a582fcaa54, type: 3}
+  towerPrefab: {fileID: 8270491640636788401, guid: b41b585d975044e40aed1799db9297fb, type: 3}
+  towerLevelConfigs:
+  - level: 1
+    towerModelPrefab: {fileID: 2714246015712790587, guid: 727c23c50dec14c7c954a3da764f2857, type: 3}
+    basicDamage: 10
+  - level: 2
+    towerModelPrefab: {fileID: 1748645362174679808, guid: 5da7fd0e0dd8e463a9abc94635e76511, type: 3}
+    basicDamage: 22
+  - level: 3
+    towerModelPrefab: {fileID: 5647755291008258103, guid: c7b939b30259a48cb86756b7d18df06d, type: 3}
+    basicDamage: 34

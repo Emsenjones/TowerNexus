@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
+  m_Name: Config_TowerUpgradeDefini_ArcherTower_Basic_SharpenedArrows
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
+  displayName: Sharpened Arrows
+  description: Damage +5
+  icon: {fileID: 21300000, guid: 19c06868a2ac54ebdb36f6405265c28b, type: 3}
+  towerFamily: 0
+  requiredTowerLevel: 1
+  upgradeLayer: 0
+  basicStatDeltas:
+  - statType: 2
+    additiveValue: 5
+  behaviourPackageType: 0
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  elementType: 0
+  elementalApplyEffect: {fileID: 0}
+  effectBindings: []

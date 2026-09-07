@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 605ec16af620706418a66c25a7e2a25e
+timeCreated: 1479609776
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001046
+  packageName: Simple Airport - Cartoon Assets
+  packageVersion: 1.2.0
+  assetPath: Assets/SimpleAirport/Prefabs/Characters/SimpleAirport_Pilot_02_Brown.prefab
+  uploadId: 0

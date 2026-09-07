@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: e57dd934961ce0e4d9f17115bb382f19
+timeCreated: 1587005726
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Swirl_Fast_01.prefab
+  uploadId: 0

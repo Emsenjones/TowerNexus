@@ -1,0 +1,15 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AnimtorCtrl_Tower_DroneTower_Lv3
+  m_Controller: {fileID: 9100000, guid: 7b4287f6b699e47cea7afdfc712b5497, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: ef67fd1dec8ab49cb9ab79871bf315c1, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 89c64be1bb1994c10af5d3577f5b3fa0, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 9ee6ee46f238c47f083f7d2ec0d8d806, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: f1b4a974e9ac14476a585ccd0b587e8b, type: 2}

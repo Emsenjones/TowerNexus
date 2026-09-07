@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
+  m_Name: Config_BuffDefini_Frozen
+  m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
+  displayName: Frozen
+  description: Prevents the monster from moving for a short duration
+  activeDuration: 8
+  periodicTickInterval: 0
+  usesStacks: 0
+  maximumStacks: 10
+  sourceApplyCooldown: 0.4
+  eventBindings:
+  - eventType: 3
+    effectDefinition: {fileID: 11400000, guid: a4a5d4689f0e244f6a281de550de3db5, type: 2}
+  - eventType: 5
+    effectDefinition: {fileID: 11400000, guid: e2b85079b761c413d9e61421464c2104, type: 2}
+  elementType: 0
+  overloadProtectionDuration: 5
+  towerHitReactionCooldown: 0
+  statusIcon: {fileID: 21300000, guid: df3ea5ae6f6e543e192da7b6606ad3a9, type: 3}
+  persistentBuffVfxPrefab: {fileID: 8404876989691548728, guid: a8b363a82f1d3419aa6fcfdd79e4d422, type: 3}

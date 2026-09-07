@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f1fd7e4d8684ac4870eaec94bee5846, type: 3}
+  m_Name: StageDefini_Lv4
+  m_EditorClassIdentifier: Assembly-CSharp::StageDefinition
+  displayName: Level4
+  playerMaxHealth: 5
+  playerProgressRequirements: 03000000030000000400000004000000040000000800000008000000
+  mapTemplate: {fileID: 3273336904907436118, guid: abbaff0b0ac0449f8bb0cc6ccf2e003f, type: 3}
+  monsterWaveConfig: {fileID: 11400000, guid: 79bc531e4fe794e049073e45b83b054b, type: 2}
+  towerDraftPool:
+  - {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+  - {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
+  - {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+  - {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}
+  towerUpgradeDraftPool:
+  - {fileID: 11400000, guid: fced72daa7b7c42419e4cb626f897805, type: 2}
+  - {fileID: 11400000, guid: 76b13c72bfb594d89beecab5f1ce3520, type: 2}
+  - {fileID: 11400000, guid: 83605bc8a0ade4983a10e00192c09e89, type: 2}
+  - {fileID: 11400000, guid: a32ce3256980c47fda70f5cbf00c6a27, type: 2}
+  - {fileID: 11400000, guid: 81c23c8d23a140038f44a43dd92745e6, type: 2}
+  - {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}
+  - {fileID: 11400000, guid: 43d1ce78aedd8460fb2773003312c23b, type: 2}
+  - {fileID: 11400000, guid: 499144ae5a9eb4bdeb291f0123049068, type: 2}
+  - {fileID: 11400000, guid: 24709742dca2046779cfef5ef0de9612, type: 2}
+  - {fileID: 11400000, guid: 957a38297f6b9405ea399f0a4fc87b44, type: 2}
+  - {fileID: 11400000, guid: a761134c011b44da1be91512116d7f61, type: 2}
+  - {fileID: 11400000, guid: 10331f3655bcf43a6bf22a9e7b39930d, type: 2}
+  - {fileID: 11400000, guid: 0acd53ffd208c4f399f43a5192483a25, type: 2}
+  - {fileID: 11400000, guid: 8ba6e423e1f554928aa9100d50c4246a, type: 2}
+  - {fileID: 11400000, guid: 350a57194686d4136b25bcf36394e53d, type: 2}
+  - {fileID: 11400000, guid: 171d0503ed81041ffbeb1e4a186b91f7, type: 2}
+  - {fileID: 11400000, guid: e503f7ac2de5244b9b513404c245be6d, type: 2}
+  - {fileID: 11400000, guid: a483cfe8fe0d432a8e455c68fd23b146, type: 2}
+  - {fileID: 11400000, guid: 546d23d1100934c27a3c9b24cf9e9444, type: 2}
+  - {fileID: 11400000, guid: 3065ae8f2b27d49f39547a329a3630c7, type: 2}
+  - {fileID: 11400000, guid: 9e74b0160f9d04f668443ecd79712ae8, type: 2}
+  - {fileID: 11400000, guid: a753e2e9c195d4e7d958cb32144b4db5, type: 2}
+  - {fileID: 11400000, guid: b22ae591a03541149c02876705a9b38c, type: 2}
+  - {fileID: 11400000, guid: a1e0e3058577643faba455fdcffc1f38, type: 2}
+  towerDraftSlotProbability: 0.714
+  showStageIntroduction: 1
+  introducedTowers:
+  - {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}
+  introducedTowerUpgrades:
+  - {fileID: 11400000, guid: 546d23d1100934c27a3c9b24cf9e9444, type: 2}
+  - {fileID: 11400000, guid: 3065ae8f2b27d49f39547a329a3630c7, type: 2}
+  - {fileID: 11400000, guid: 9e74b0160f9d04f668443ecd79712ae8, type: 2}
+  - {fileID: 11400000, guid: a753e2e9c195d4e7d958cb32144b4db5, type: 2}
+  - {fileID: 11400000, guid: b22ae591a03541149c02876705a9b38c, type: 2}
+  - {fileID: 11400000, guid: a1e0e3058577643faba455fdcffc1f38, type: 2}

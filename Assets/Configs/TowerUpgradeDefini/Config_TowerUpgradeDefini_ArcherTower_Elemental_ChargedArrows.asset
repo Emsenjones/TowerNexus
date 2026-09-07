@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
+  m_Name: Config_TowerUpgradeDefini_ArcherTower_Elemental_ChargedArrows
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
+  displayName: Charged Arrows
+  description: Attacks apply Electrified
+  icon: {fileID: 21300000, guid: 01f3856edd9a849a0b3b8a58ffa2a4e2, type: 3}
+  towerFamily: 0
+  requiredTowerLevel: 3
+  upgradeLayer: 2
+  basicStatDeltas: []
+  behaviourPackageType: 0
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  elementType: 3
+  elementalApplyEffect: {fileID: 11400000, guid: a156885fc755141b2b038b196bc2e12e, type: 2}
+  elementalStackContribution: 1
+  effectBindings: []

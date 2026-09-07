@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22c9086a0ca34d4fa05e4beb97600339, type: 3}
+  m_Name: Config_EffectDefini_TowerHitReceived_WindcutBuffOnApply
+  m_EditorClassIdentifier: Assembly-CSharp::EffectDefinition
+  displayName: Windcut Tower Hit Reaction
+  radius: 1
+  executionVfxPrefab: {fileID: 3321206211796593786, guid: b8374902869304382bc99082358c35ad, type: 3}
+  actions:
+  - actionType: 5
+    buffDefinition: {fileID: 0}
+    moveSpeedMultiplier: 0.5
+    isMovementLocked: 0
+    multiTargetEffectDefinition: {fileID: 11400000, guid: 76d8c6476cd9e4bf2b0f071d534bf3bc, type: 2}
+    targetCount: 1
+    excludeTriggerTarget: 1
+    windVortexPrefab: {fileID: 0}

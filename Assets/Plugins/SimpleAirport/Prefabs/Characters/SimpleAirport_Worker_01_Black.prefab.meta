@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d9c8b49dce40f4e4dbc51d65f10ef537
+timeCreated: 1479609792
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001046
+  packageName: Simple Airport - Cartoon Assets
+  packageVersion: 1.2.0
+  assetPath: Assets/SimpleAirport/Prefabs/Characters/SimpleAirport_Worker_01_Black.prefab
+  uploadId: 0

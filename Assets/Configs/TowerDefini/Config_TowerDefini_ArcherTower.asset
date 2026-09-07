@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fa87673884bb446fa753a7e8c6ed3e43, type: 3}
+  m_Name: Config_TowerDefini_ArcherTower
+  m_EditorClassIdentifier: Assembly-CSharp::TowerDefinition
+  towerFamily: 0
+  displayName: Archer Tower
+  description: Fast straight shots
+  icon: {fileID: 21300000, guid: 41664ea1d58bf423d8638c49ea5c1451, type: 3}
+  towerPrefab: {fileID: 6027618472494872927, guid: 5b7ed8402f4fc4e9bbbfc43e6ae17d24, type: 3}
+  towerLevelConfigs:
+  - level: 1
+    towerModelPrefab: {fileID: 3903350526785741268, guid: d256d5dec72004825987f5b254513862, type: 3}
+    basicDamage: 20
+  - level: 2
+    towerModelPrefab: {fileID: 5632306376414796951, guid: 7526a2221a85e4a94bf715bd376adbf6, type: 3}
+    basicDamage: 44
+  - level: 3
+    towerModelPrefab: {fileID: 6373366450379645454, guid: bddad87cd3ef84b518b7e8c968dd884f, type: 3}
+    basicDamage: 68

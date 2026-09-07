@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 5a3c9da90a2a4ea4692cee3096b94082
+timeCreated: 1585282141
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Impact_Water_01.prefab
+  uploadId: 0

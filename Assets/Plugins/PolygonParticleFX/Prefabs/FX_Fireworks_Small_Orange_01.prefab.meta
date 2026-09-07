@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: a66858a1e56e703498927e15f1a8b5e5
+timeCreated: 1588196229
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Fireworks_Small_Orange_01.prefab
+  uploadId: 0

@@ -1,0 +1,68 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 998f4b60f60bf4078857a9043d44dd3b, type: 3}
+  m_Name: Config_MapVisualTheme_Default
+  m_EditorClassIdentifier: Assembly-CSharp::MapVisualTheme
+  tileVisualEntries:
+  - directionMask: 15
+    prefab: {fileID: 6248266414432938754, guid: 3cb05722b66ae454f9dfaeacc3a0c3ee, type: 3}
+  - directionMask: 0
+    prefab: {fileID: 4833171539518596605, guid: 7ce069848e6ef4e8da1b46d995803043, type: 3}
+  - directionMask: 3
+    prefab: {fileID: 572791497747611730, guid: b39553c1147ae447ba985c780394af71, type: 3}
+  - directionMask: 12
+    prefab: {fileID: 8239182823658141738, guid: 30aeeb9417f1d4cf798fa20265e0d5c0, type: 3}
+  - directionMask: 5
+    prefab: {fileID: 4495542783347127306, guid: 8f582bad8c59141bf96fbc71f5c1ebb0, type: 3}
+  - directionMask: 9
+    prefab: {fileID: 2479843565422030850, guid: ab84eeaaff6854b15902f59622fee43d, type: 3}
+  - directionMask: 6
+    prefab: {fileID: 8552104603263621091, guid: c6d8924a82687494090cc3ebc7ee06d5, type: 3}
+  - directionMask: 10
+    prefab: {fileID: 1761870836814924657, guid: dd81e7aeff2ee4a07b29b215ca105008, type: 3}
+  - directionMask: 14
+    prefab: {fileID: 8239182823658141738, guid: 30aeeb9417f1d4cf798fa20265e0d5c0, type: 3}
+  - directionMask: 13
+    prefab: {fileID: 8244670171229859059, guid: fe4efff3e868b43cc8d407738ba3499c, type: 3}
+  - directionMask: 11
+    prefab: {fileID: 6120906901435857719, guid: 8a9d1d90f9410470792cd7254d03ca12, type: 3}
+  - directionMask: 7
+    prefab: {fileID: 4069340670300807731, guid: fbcc06f8e710b4517ab57dcd9311871e, type: 3}
+  - directionMask: 1
+    prefab: {fileID: 6248266414432938754, guid: 716ffbf8b427f4d0a89e90d3c0343ed4, type: 3}
+  - directionMask: 2
+    prefab: {fileID: 6248266414432938754, guid: 2a52890cbe03c451ab860da56c1e846c, type: 3}
+  - directionMask: 4
+    prefab: {fileID: 6248266414432938754, guid: 959f572d742bb412abddd013adf8fdfc, type: 3}
+  - directionMask: 8
+    prefab: {fileID: 6248266414432938754, guid: ba91c6d9835b14c84babaea1610df158, type: 3}
+  obstaclePrefabs:
+  - {fileID: 401846398684725772, guid: b4d68dce9d3ed4c048d0e33d05c52085, type: 3}
+  - {fileID: 5566503396791366205, guid: 9bf96359201a54242b796665734c3df4, type: 3}
+  - {fileID: 7133126945840061894, guid: 2083230f83ae24aa3bb97aa02fe20bcb, type: 3}
+  - {fileID: 3438419119350290480, guid: fd73494c5e6ef41dc866eb7aeedc54f4, type: 3}
+  - {fileID: 5874193818354841403, guid: 44b685669496a40af8b96a8b6fbcaa54, type: 3}
+  - {fileID: 556044219790008832, guid: de40531e97b874018a6eb3c4722e55bb, type: 3}
+  - {fileID: 6988927555458895185, guid: fc3059e2320d24490bca057448c695cd, type: 3}
+  - {fileID: 8043770860329758177, guid: aaf19e7638add4bd29e341d3141d10b7, type: 3}
+  - {fileID: 2543238072862332440, guid: aabe2eefff72f479789e7514427e82f5, type: 3}
+  - {fileID: 6256611332336962789, guid: d5a79829a861c4f7fad73a1b96176962, type: 3}
+  - {fileID: 7100107134117200085, guid: 5c297dde5e6b04beb98c2f9d44de2202, type: 3}
+  - {fileID: 935706752502490403, guid: 04268d47695654897afefa8814930458, type: 3}
+  - {fileID: 3957548872731091391, guid: e9dc83ed7cb6b4205982001fd8a06317, type: 3}
+  - {fileID: 3098560713893911561, guid: 13565d0f935aa42238a6915f226db4e6, type: 3}
+  - {fileID: 1733914792539988284, guid: 8b2cb12f6c66b4fa9857fb35a8c047b3, type: 3}
+  - {fileID: 2583313364796563025, guid: 0d585eb82190047e88403b6fb5485a11, type: 3}
+  - {fileID: 7904072762716237119, guid: f4ccb21719c874e81be746cf6deb7ede, type: 3}
+  - {fileID: 168301391957915400, guid: 7198142c6007c4bcdafedd7c1ef52cb5, type: 3}
+  spawnPrefab: {fileID: 3159169376041858308, guid: c931f16fe74824b95a79338f12ffad9f, type: 3}
+  targetPrefab: {fileID: 2292932403268294017, guid: c628df3d1895d441895ac8514728fda3, type: 3}

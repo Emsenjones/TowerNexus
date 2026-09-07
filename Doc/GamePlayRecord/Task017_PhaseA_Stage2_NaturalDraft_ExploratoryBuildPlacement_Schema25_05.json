@@ -1,0 +1,4503 @@
+{
+    "schemaVersion": 25,
+    "generatedAtLocal": "2026-09-04T16:22:53+08:00",
+    "runLabel": "Task017_PhaseA_Stage2_NaturalDraft_ExploratoryBuildPlacement_Schema25_05",
+    "terminalState": "Defeat",
+    "failureReason": "",
+    "fixture": {
+        "stageDefinitionName": "StageDefini_Lv2",
+        "stageDisplayName": "Level2",
+        "configuredPlayerMaxHealth": 6,
+        "mapTemplateName": "Prefab_Map_Stage2",
+        "runtimeMapName": "Prefab_Map_Stage2_Runtime",
+        "mapWidth": 10,
+        "mapLength": 10,
+        "mapNodeSize": 1.0,
+        "mapNodes": [
+            {
+                "x": 0,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 0,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 8,
+                "nodeType": "Spawn",
+                "baseWalkable": true
+            },
+            {
+                "x": 1,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 2,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 2,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 3,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 3,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 4,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 4,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 7,
+                "nodeType": "Target",
+                "baseWalkable": true
+            },
+            {
+                "x": 5,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 5,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 6,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 6,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 7,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 7,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 8,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 8,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 0,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 1,
+                "nodeType": "Normal",
+                "baseWalkable": false
+            },
+            {
+                "x": 9,
+                "z": 2,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 3,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 4,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 5,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 6,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 7,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 8,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            },
+            {
+                "x": 9,
+                "z": 9,
+                "nodeType": "Normal",
+                "baseWalkable": true
+            }
+        ],
+        "waveConfigName": "Config_MonsterWave_Lv2",
+        "expectedWaveCountAvailable": true,
+        "expectedWaveCount": 6,
+        "expectedMonsterCountAvailable": true,
+        "expectedMonsterCount": 32,
+        "observedMinimumMonsterHealth": 60,
+        "observedMaximumMonsterHealth": 400,
+        "observedMinimumMonsterSpeed": 0.25,
+        "observedMaximumMonsterSpeed": 0.25,
+        "observedAverageSpawnIntervalSeconds": 2.8479416370391847,
+        "waves": [
+            {
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "monsterDisplayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeed": 0.25,
+                "count": 3,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 4.0
+            },
+            {
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "monsterDisplayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeed": 0.25,
+                "count": 3,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 6.0
+            },
+            {
+                "waveNumber": 3,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "monsterDisplayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeed": 0.25,
+                "count": 4,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 5.0
+            },
+            {
+                "waveNumber": 4,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "monsterDisplayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeed": 0.25,
+                "count": 4,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 4.0
+            },
+            {
+                "waveNumber": 5,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "monsterDisplayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeed": 0.25,
+                "count": 8,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 4.0
+            },
+            {
+                "waveNumber": 6,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "monsterDisplayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeed": 0.25,
+                "count": 10,
+                "spawnIntervalSeconds": 2.5,
+                "waveDelaySeconds": 4.0
+            }
+        ],
+        "placementRouteForcedRelocationExpectation": "Ignore"
+    },
+    "combat": {
+        "spawned": 32,
+        "resolved": 30,
+        "killed": 24,
+        "leaked": 6,
+        "unresolved": 2,
+        "notSpawned": 0,
+        "killRate": 0.75,
+        "effectiveDamage": 7175,
+        "totalObservedHealth": 9000,
+        "damageCoverage": 0.7972221970558167,
+        "leakedRemainingHealth": 1685,
+        "averageLeakedRemainingHealth": 280.8333435058594,
+        "peakAlive": 15
+    },
+    "damageDiagnostics": {
+        "towerScaledResolutionCount": 222,
+        "towerScaledRejectedCount": 0,
+        "towerScaledSuccessfulApplicationCount": 222,
+        "towerScaledAppliedDamageTotal": 7809,
+        "fixedBuffResolutionCount": 0,
+        "fixedBuffSuccessfulApplicationCount": 0,
+        "fixedBuffAppliedDamageTotal": 0,
+        "maximumTowerScaledRelativeRoundingError": 0.0,
+        "towerScaledSignatures": [
+            {
+                "towerInstanceId": -366974,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "level": 1,
+                "levelBasicDamage": 20,
+                "rawDamageBonus": 0.0,
+                "resolvedBasicDamage": 20.0,
+                "damageSourceType": "PrimaryDirect",
+                "effectDefinitionName": "",
+                "actionOrdinal": -1,
+                "damageScale": 1.0,
+                "rawProduct": 20.0,
+                "finalDamage": 20,
+                "relativeRoundingError": 0.0,
+                "resolutionCount": 9,
+                "successfulApplicationCount": 9,
+                "appliedDamageTotal": 180
+            },
+            {
+                "towerInstanceId": -366974,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "level": 2,
+                "levelBasicDamage": 44,
+                "rawDamageBonus": 0.0,
+                "resolvedBasicDamage": 44.0,
+                "damageSourceType": "PrimaryDirect",
+                "effectDefinitionName": "",
+                "actionOrdinal": -1,
+                "damageScale": 1.0,
+                "rawProduct": 44.0,
+                "finalDamage": 44,
+                "relativeRoundingError": 0.0,
+                "resolutionCount": 94,
+                "successfulApplicationCount": 94,
+                "appliedDamageTotal": 4136
+            },
+            {
+                "towerInstanceId": -373156,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "level": 1,
+                "levelBasicDamage": 20,
+                "rawDamageBonus": 0.0,
+                "resolvedBasicDamage": 20.0,
+                "damageSourceType": "PrimaryDirect",
+                "effectDefinitionName": "",
+                "actionOrdinal": -1,
+                "damageScale": 1.0,
+                "rawProduct": 20.0,
+                "finalDamage": 20,
+                "relativeRoundingError": 0.0,
+                "resolutionCount": 8,
+                "successfulApplicationCount": 8,
+                "appliedDamageTotal": 160
+            },
+            {
+                "towerInstanceId": -373156,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "level": 2,
+                "levelBasicDamage": 44,
+                "rawDamageBonus": 0.0,
+                "resolvedBasicDamage": 44.0,
+                "damageSourceType": "AdditionalDirect",
+                "effectDefinitionName": "",
+                "actionOrdinal": -1,
+                "damageScale": 0.25,
+                "rawProduct": 11.0,
+                "finalDamage": 11,
+                "relativeRoundingError": 0.0,
+                "resolutionCount": 47,
+                "successfulApplicationCount": 47,
+                "appliedDamageTotal": 517
+            },
+            {
+                "towerInstanceId": -373156,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "level": 2,
+                "levelBasicDamage": 44,
+                "rawDamageBonus": 0.0,
+                "resolvedBasicDamage": 44.0,
+                "damageSourceType": "PrimaryDirect",
+                "effectDefinitionName": "",
+                "actionOrdinal": -1,
+                "damageScale": 1.0,
+                "rawProduct": 44.0,
+                "finalDamage": 44,
+                "relativeRoundingError": 0.0,
+                "resolutionCount": 64,
+                "successfulApplicationCount": 64,
+                "appliedDamageTotal": 2816
+            }
+        ],
+        "towerScaledRejections": [],
+        "fixedBuffSignatures": []
+    },
+    "timing": {
+        "runDurationSeconds": 150.21307373046876,
+        "spawnSpanSeconds": 88.28619384765625,
+        "spawningCompleted": true,
+        "spawningCompletedAtSeconds": 88.28619384765625,
+        "battleDurationSeconds": 145.02059936523438,
+        "secondsAfterFinalDraft": 53.596343994140628,
+        "finalBuildCommitObserved": true,
+        "finalBuildCommittedAtSeconds": 97.93441772460938,
+        "secondsAfterFinalBuildCommit": 52.278656005859378
+    },
+    "player": {
+        "initialHealth": 6,
+        "finalHealth": 0,
+        "maximumHealth": 6
+    },
+    "progression": {
+        "requirements": [
+            3,
+            3,
+            4,
+            4,
+            4
+        ],
+        "expectedLevelUpCount": 5,
+        "expectedTotalDraftCount": 6,
+        "expectedFinalDraftResolutionNode": 18,
+        "initialDraftCompleted": true,
+        "observedLevelUpCount": 5,
+        "observedTotalDraftCount": 6,
+        "finalLevel": 6,
+        "finalProgress": 12,
+        "finalRequiredProgress": 0,
+        "observedFinalDraftResolutionNode": 18,
+        "resolutionsAfterFinalDraft": 12,
+        "events": [
+            {
+                "ordinal": 1,
+                "kind": "Initial",
+                "resolvedMonsterCount": 0,
+                "playerLevel": 1,
+                "currentProgress": 0,
+                "requiredProgress": 3,
+                "activeTimeSeconds": 1.18743896484375,
+                "spawned": 0,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 0,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 2,
+                "kind": "LevelUp",
+                "resolvedMonsterCount": 3,
+                "playerLevel": 2,
+                "currentProgress": 0,
+                "requiredProgress": 3,
+                "activeTimeSeconds": 18.427459716796876,
+                "spawned": 4,
+                "resolved": 3,
+                "killed": 3,
+                "leaked": 0,
+                "alive": 1,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 3,
+                "kind": "LevelUp",
+                "resolvedMonsterCount": 6,
+                "playerLevel": 3,
+                "currentProgress": 0,
+                "requiredProgress": 4,
+                "activeTimeSeconds": 27.268341064453126,
+                "spawned": 7,
+                "resolved": 6,
+                "killed": 6,
+                "leaked": 0,
+                "alive": 1,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 4,
+                "kind": "LevelUp",
+                "resolvedMonsterCount": 10,
+                "playerLevel": 4,
+                "currentProgress": 0,
+                "requiredProgress": 4,
+                "activeTimeSeconds": 50.946136474609378,
+                "spawned": 15,
+                "resolved": 10,
+                "killed": 10,
+                "leaked": 0,
+                "alive": 5,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 5,
+                "kind": "LevelUp",
+                "resolvedMonsterCount": 14,
+                "playerLevel": 5,
+                "currentProgress": 0,
+                "requiredProgress": 4,
+                "activeTimeSeconds": 66.61624145507813,
+                "spawned": 21,
+                "resolved": 14,
+                "killed": 14,
+                "leaked": 0,
+                "alive": 7,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 6,
+                "kind": "LevelUp",
+                "resolvedMonsterCount": 18,
+                "playerLevel": 6,
+                "currentProgress": 0,
+                "requiredProgress": 0,
+                "activeTimeSeconds": 96.61672973632813,
+                "spawned": 32,
+                "resolved": 18,
+                "killed": 18,
+                "leaked": 0,
+                "alive": 14,
+                "playerHealth": 6
+            }
+        ]
+    },
+    "waveRuntime": {
+        "observedWaveStartCount": 6,
+        "observedWaveCompletionCount": 6,
+        "events": [
+            {
+                "ordinal": 1,
+                "kind": "SpawnStarted",
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "configuredCount": 3,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 5.192474365234375,
+                "spawned": 0,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 0,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 2,
+                "kind": "SpawnCompleted",
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "configuredCount": 3,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 10.197784423828125,
+                "spawned": 3,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 3,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 3,
+                "kind": "SpawnStarted",
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "configuredCount": 3,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 6.0,
+                "activeTimeSeconds": 16.205291748046876,
+                "spawned": 3,
+                "resolved": 2,
+                "killed": 2,
+                "leaked": 0,
+                "alive": 1,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 4,
+                "kind": "SpawnCompleted",
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "configuredCount": 3,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 6.0,
+                "activeTimeSeconds": 21.220703125,
+                "spawned": 6,
+                "resolved": 3,
+                "killed": 3,
+                "leaked": 0,
+                "alive": 3,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 5,
+                "kind": "SpawnStarted",
+                "waveNumber": 3,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "configuredCount": 4,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 5.0,
+                "activeTimeSeconds": 26.22344970703125,
+                "spawned": 6,
+                "resolved": 5,
+                "killed": 5,
+                "leaked": 0,
+                "alive": 1,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 6,
+                "kind": "SpawnCompleted",
+                "waveNumber": 3,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "configuredCount": 4,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 5.0,
+                "activeTimeSeconds": 33.78350830078125,
+                "spawned": 10,
+                "resolved": 6,
+                "killed": 6,
+                "leaked": 0,
+                "alive": 4,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 7,
+                "kind": "SpawnStarted",
+                "waveNumber": 4,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "configuredCount": 4,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 37.78643798828125,
+                "spawned": 10,
+                "resolved": 7,
+                "killed": 7,
+                "leaked": 0,
+                "alive": 3,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 8,
+                "kind": "SpawnCompleted",
+                "waveNumber": 4,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "configuredCount": 4,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 45.30230712890625,
+                "spawned": 14,
+                "resolved": 8,
+                "killed": 8,
+                "leaked": 0,
+                "alive": 6,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 9,
+                "kind": "SpawnStarted",
+                "waveNumber": 5,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "configuredCount": 8,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 49.302703857421878,
+                "spawned": 14,
+                "resolved": 9,
+                "killed": 9,
+                "leaked": 0,
+                "alive": 5,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 10,
+                "kind": "SpawnCompleted",
+                "waveNumber": 5,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "configuredCount": 8,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 66.87945556640625,
+                "spawned": 22,
+                "resolved": 14,
+                "killed": 14,
+                "leaked": 0,
+                "alive": 8,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 11,
+                "kind": "SpawnStarted",
+                "waveNumber": 6,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "configuredCount": 10,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 70.88888549804688,
+                "spawned": 22,
+                "resolved": 14,
+                "killed": 14,
+                "leaked": 0,
+                "alive": 8,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 12,
+                "kind": "SpawnCompleted",
+                "waveNumber": 6,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "configuredCount": 10,
+                "configuredSpawnIntervalSeconds": 2.5,
+                "configuredWaveDelaySeconds": 4.0,
+                "activeTimeSeconds": 93.47866821289063,
+                "spawned": 32,
+                "resolved": 17,
+                "killed": 17,
+                "leaked": 0,
+                "alive": 15,
+                "playerHealth": 6
+            }
+        ],
+        "resolutionSummaries": [
+            {
+                "waveNumber": 1,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "configuredCount": 3,
+                "spawned": 3,
+                "resolved": 3,
+                "killed": 3,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "successfulDamageApplications": 9,
+                "effectiveDamage": 180,
+                "leakedRemainingHealth": 0,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 12.301727294921875,
+                "lastResolutionAtSeconds": 18.427459716796876
+            },
+            {
+                "waveNumber": 2,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "configuredCount": 3,
+                "spawned": 3,
+                "resolved": 3,
+                "killed": 3,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "successfulDamageApplications": 6,
+                "effectiveDamage": 180,
+                "leakedRemainingHealth": 0,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 22.52947998046875,
+                "lastResolutionAtSeconds": 27.268341064453126
+            },
+            {
+                "waveNumber": 3,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "configuredCount": 4,
+                "spawned": 4,
+                "resolved": 4,
+                "killed": 4,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "successfulDamageApplications": 20,
+                "effectiveDamage": 720,
+                "leakedRemainingHealth": 0,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 35.185333251953128,
+                "lastResolutionAtSeconds": 50.946136474609378
+            },
+            {
+                "waveNumber": 4,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "configuredCount": 4,
+                "spawned": 4,
+                "resolved": 4,
+                "killed": 4,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "successfulDamageApplications": 22,
+                "effectiveDamage": 720,
+                "leakedRemainingHealth": 0,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 58.105255126953128,
+                "lastResolutionAtSeconds": 66.61624145507813
+            },
+            {
+                "waveNumber": 5,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "configuredCount": 8,
+                "spawned": 8,
+                "resolved": 8,
+                "killed": 4,
+                "leaked": 4,
+                "unresolvedAtReport": 0,
+                "successfulDamageApplications": 51,
+                "effectiveDamage": 2084,
+                "leakedRemainingHealth": 1116,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 75.94082641601563,
+                "lastResolutionAtSeconds": 138.17660522460938
+            },
+            {
+                "waveNumber": 6,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "configuredCount": 10,
+                "spawned": 10,
+                "resolved": 8,
+                "killed": 6,
+                "leaked": 2,
+                "unresolvedAtReport": 2,
+                "successfulDamageApplications": 114,
+                "effectiveDamage": 3291,
+                "leakedRemainingHealth": 569,
+                "hasResolvedMonsters": true,
+                "firstResolutionAtSeconds": 101.87274169921875,
+                "lastResolutionAtSeconds": 150.21307373046876
+            }
+        ]
+    },
+    "draftRuntime": {
+        "configuredGenerationMode": "Natural",
+        "configuredFixedStepCount": 15,
+        "configuredChoiceCount": 3,
+        "towerDraftSlotProbability": 0.6000000238418579,
+        "draftSeed": -1431354599,
+        "fixedDraftSeedEnabled": false,
+        "generationContractVersion": "CategorySlotV1",
+        "draftRandomAlgorithmVersion": "SystemRandomV1",
+        "observedAttemptCount": 6,
+        "committedSelectionCount": 6,
+        "towerDraftPool": [
+            {
+                "resultType": "TowerDraft",
+                "assetName": "Config_TowerDefini_ArcherTower",
+                "displayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "upgradeLayer": "",
+                "requiredTowerLevel": 0,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerDraft",
+                "assetName": "Config_TowerDefini_CannonTower",
+                "displayName": "Cannon Tower",
+                "towerFamily": "Cannon",
+                "upgradeLayer": "",
+                "requiredTowerLevel": 0,
+                "multiplicity": 1
+            }
+        ],
+        "towerUpgradeDraftPool": [
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                "displayName": "Eagle Sight",
+                "towerFamily": "Archer",
+                "upgradeLayer": "Basic",
+                "requiredTowerLevel": 1,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                "displayName": "Quick Draw",
+                "towerFamily": "Archer",
+                "upgradeLayer": "Basic",
+                "requiredTowerLevel": 1,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_SharpenedArrows",
+                "displayName": "Sharpened Arrows",
+                "towerFamily": "Archer",
+                "upgradeLayer": "Basic",
+                "requiredTowerLevel": 1,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ExplosiveArrow",
+                "displayName": "Explosive Arrow",
+                "towerFamily": "Archer",
+                "upgradeLayer": "Behaviour",
+                "requiredTowerLevel": 2,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_PiercingArrow",
+                "displayName": "Piercing Arrow",
+                "towerFamily": "Archer",
+                "upgradeLayer": "Behaviour",
+                "requiredTowerLevel": 2,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                "displayName": "Scatter Arrow",
+                "towerFamily": "Archer",
+                "upgradeLayer": "Behaviour",
+                "requiredTowerLevel": 2,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_CannonTower_Basic_ExtendedBarrel",
+                "displayName": "Extended Barrel",
+                "towerFamily": "Cannon",
+                "upgradeLayer": "Basic",
+                "requiredTowerLevel": 1,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_CannonTower_Basic_FasterReload",
+                "displayName": "Faster Reload",
+                "towerFamily": "Cannon",
+                "upgradeLayer": "Basic",
+                "requiredTowerLevel": 1,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_CannonTower_Basic_ReinforcedShells",
+                "displayName": "Reinforced Shells",
+                "towerFamily": "Cannon",
+                "upgradeLayer": "Basic",
+                "requiredTowerLevel": 1,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_CannonTower_Behaviour_BouncingShell",
+                "displayName": "Bouncing Shell",
+                "towerFamily": "Cannon",
+                "upgradeLayer": "Behaviour",
+                "requiredTowerLevel": 2,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_CannonTower_Behaviour_ExplosiveShell",
+                "displayName": "Explosive Shell",
+                "towerFamily": "Cannon",
+                "upgradeLayer": "Behaviour",
+                "requiredTowerLevel": 2,
+                "multiplicity": 1
+            },
+            {
+                "resultType": "TowerUpgradeDraft",
+                "assetName": "Config_TowerUpgradeDefini_CannonTower_Behaviour_TwinShells",
+                "displayName": "Twin Shells",
+                "towerFamily": "Cannon",
+                "upgradeLayer": "Behaviour",
+                "requiredTowerLevel": 2,
+                "multiplicity": 1
+            }
+        ],
+        "attempts": [
+            {
+                "attemptToken": "3:12",
+                "ordinal": 1,
+                "sessionKind": "Initial",
+                "generationMode": "Natural",
+                "resolvedMonsterCount": 0,
+                "playerLevel": 1,
+                "currentProgress": 0,
+                "requiredProgress": 3,
+                "activeTimeSeconds": 1.18743896484375,
+                "requestedCategories": [],
+                "requestedTowerCount": 0,
+                "requestedUpgradeCount": 0,
+                "availableDistinctTowerCount": 2,
+                "availableDistinctUpgradeCount": 0,
+                "realizedTowerCount": 2,
+                "realizedUpgradeCount": 0,
+                "towerSlotsBackfilledByUpgrade": 0,
+                "upgradeSlotsBackfilledByTower": 0,
+                "backfillReason": "",
+                "selectionAttempted": true,
+                "heldItemCreationSucceeded": true,
+                "heldItemCreationFailureReason": "",
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 1.18743896484375,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerDraft",
+                    "assetName": "Config_TowerDefini_ArcherTower",
+                    "displayName": "Archer Tower",
+                    "towerFamily": "Archer",
+                    "upgradeLayer": "",
+                    "requiredTowerLevel": 0,
+                    "multiplicity": 1
+                },
+                "consumptionStatus": "Consumed"
+            },
+            {
+                "attemptToken": "3:13",
+                "ordinal": 2,
+                "sessionKind": "LevelUp",
+                "generationMode": "Natural",
+                "resolvedMonsterCount": 3,
+                "playerLevel": 2,
+                "currentProgress": 0,
+                "requiredProgress": 3,
+                "activeTimeSeconds": 18.427459716796876,
+                "requestedCategories": [
+                    "TowerUpgrade",
+                    "Tower",
+                    "Tower"
+                ],
+                "requestedTowerCount": 2,
+                "requestedUpgradeCount": 1,
+                "availableDistinctTowerCount": 2,
+                "availableDistinctUpgradeCount": 3,
+                "realizedTowerCount": 2,
+                "realizedUpgradeCount": 1,
+                "towerSlotsBackfilledByUpgrade": 0,
+                "upgradeSlotsBackfilledByTower": 0,
+                "backfillReason": "",
+                "selectionAttempted": true,
+                "heldItemCreationSucceeded": true,
+                "heldItemCreationFailureReason": "",
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 18.427459716796876,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                        "displayName": "Quick Draw",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_SharpenedArrows",
+                        "displayName": "Sharpened Arrows",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerDraft",
+                    "assetName": "Config_TowerDefini_ArcherTower",
+                    "displayName": "Archer Tower",
+                    "towerFamily": "Archer",
+                    "upgradeLayer": "",
+                    "requiredTowerLevel": 0,
+                    "multiplicity": 1
+                },
+                "consumptionStatus": "Consumed"
+            },
+            {
+                "attemptToken": "3:14",
+                "ordinal": 3,
+                "sessionKind": "LevelUp",
+                "generationMode": "Natural",
+                "resolvedMonsterCount": 6,
+                "playerLevel": 3,
+                "currentProgress": 0,
+                "requiredProgress": 4,
+                "activeTimeSeconds": 27.268341064453126,
+                "requestedCategories": [
+                    "Tower",
+                    "Tower",
+                    "TowerUpgrade"
+                ],
+                "requestedTowerCount": 2,
+                "requestedUpgradeCount": 1,
+                "availableDistinctTowerCount": 2,
+                "availableDistinctUpgradeCount": 6,
+                "realizedTowerCount": 2,
+                "realizedUpgradeCount": 1,
+                "towerSlotsBackfilledByUpgrade": 0,
+                "upgradeSlotsBackfilledByTower": 0,
+                "backfillReason": "",
+                "selectionAttempted": true,
+                "heldItemCreationSucceeded": true,
+                "heldItemCreationFailureReason": "",
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 27.268341064453126,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                        "displayName": "Quick Draw",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_SharpenedArrows",
+                        "displayName": "Sharpened Arrows",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ExplosiveArrow",
+                        "displayName": "Explosive Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_PiercingArrow",
+                        "displayName": "Piercing Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                        "displayName": "Scatter Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerDraft",
+                    "assetName": "Config_TowerDefini_ArcherTower",
+                    "displayName": "Archer Tower",
+                    "towerFamily": "Archer",
+                    "upgradeLayer": "",
+                    "requiredTowerLevel": 0,
+                    "multiplicity": 1
+                },
+                "consumptionStatus": "Consumed"
+            },
+            {
+                "attemptToken": "3:15",
+                "ordinal": 4,
+                "sessionKind": "LevelUp",
+                "generationMode": "Natural",
+                "resolvedMonsterCount": 10,
+                "playerLevel": 4,
+                "currentProgress": 0,
+                "requiredProgress": 4,
+                "activeTimeSeconds": 50.946136474609378,
+                "requestedCategories": [
+                    "Tower",
+                    "TowerUpgrade",
+                    "Tower"
+                ],
+                "requestedTowerCount": 2,
+                "requestedUpgradeCount": 1,
+                "availableDistinctTowerCount": 2,
+                "availableDistinctUpgradeCount": 6,
+                "realizedTowerCount": 2,
+                "realizedUpgradeCount": 1,
+                "towerSlotsBackfilledByUpgrade": 0,
+                "upgradeSlotsBackfilledByTower": 0,
+                "backfillReason": "",
+                "selectionAttempted": true,
+                "heldItemCreationSucceeded": true,
+                "heldItemCreationFailureReason": "",
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 50.946136474609378,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                        "displayName": "Quick Draw",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_SharpenedArrows",
+                        "displayName": "Sharpened Arrows",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ExplosiveArrow",
+                        "displayName": "Explosive Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_PiercingArrow",
+                        "displayName": "Piercing Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                        "displayName": "Scatter Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                        "displayName": "Quick Draw",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerUpgradeDraft",
+                    "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                    "displayName": "Quick Draw",
+                    "towerFamily": "Archer",
+                    "upgradeLayer": "Basic",
+                    "requiredTowerLevel": 1,
+                    "multiplicity": 2
+                },
+                "consumptionStatus": "Consumed"
+            },
+            {
+                "attemptToken": "3:16",
+                "ordinal": 5,
+                "sessionKind": "LevelUp",
+                "generationMode": "Natural",
+                "resolvedMonsterCount": 14,
+                "playerLevel": 5,
+                "currentProgress": 0,
+                "requiredProgress": 4,
+                "activeTimeSeconds": 66.61624145507813,
+                "requestedCategories": [
+                    "Tower",
+                    "TowerUpgrade",
+                    "Tower"
+                ],
+                "requestedTowerCount": 2,
+                "requestedUpgradeCount": 1,
+                "availableDistinctTowerCount": 2,
+                "availableDistinctUpgradeCount": 6,
+                "realizedTowerCount": 2,
+                "realizedUpgradeCount": 1,
+                "towerSlotsBackfilledByUpgrade": 0,
+                "upgradeSlotsBackfilledByTower": 0,
+                "backfillReason": "",
+                "selectionAttempted": true,
+                "heldItemCreationSucceeded": true,
+                "heldItemCreationFailureReason": "",
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 66.61624145507813,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                        "displayName": "Quick Draw",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_SharpenedArrows",
+                        "displayName": "Sharpened Arrows",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ExplosiveArrow",
+                        "displayName": "Explosive Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_PiercingArrow",
+                        "displayName": "Piercing Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                        "displayName": "Scatter Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 1
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerDraft",
+                    "assetName": "Config_TowerDefini_ArcherTower",
+                    "displayName": "Archer Tower",
+                    "towerFamily": "Archer",
+                    "upgradeLayer": "",
+                    "requiredTowerLevel": 0,
+                    "multiplicity": 1
+                },
+                "consumptionStatus": "Consumed"
+            },
+            {
+                "attemptToken": "3:17",
+                "ordinal": 6,
+                "sessionKind": "LevelUp",
+                "generationMode": "Natural",
+                "resolvedMonsterCount": 18,
+                "playerLevel": 6,
+                "currentProgress": 0,
+                "requiredProgress": 0,
+                "activeTimeSeconds": 96.61672973632813,
+                "requestedCategories": [
+                    "Tower",
+                    "TowerUpgrade",
+                    "TowerUpgrade"
+                ],
+                "requestedTowerCount": 1,
+                "requestedUpgradeCount": 2,
+                "availableDistinctTowerCount": 2,
+                "availableDistinctUpgradeCount": 6,
+                "realizedTowerCount": 1,
+                "realizedUpgradeCount": 2,
+                "towerSlotsBackfilledByUpgrade": 0,
+                "upgradeSlotsBackfilledByTower": 0,
+                "backfillReason": "",
+                "selectionAttempted": true,
+                "heldItemCreationSucceeded": true,
+                "heldItemCreationFailureReason": "",
+                "selectionCommitted": true,
+                "selectionCommittedAtSeconds": 96.61672973632813,
+                "naturalCandidates": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_ArcherTower",
+                        "displayName": "Archer Tower",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_EagleSight",
+                        "displayName": "Eagle Sight",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                        "displayName": "Quick Draw",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_SharpenedArrows",
+                        "displayName": "Sharpened Arrows",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Basic",
+                        "requiredTowerLevel": 1,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ExplosiveArrow",
+                        "displayName": "Explosive Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_PiercingArrow",
+                        "displayName": "Piercing Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                        "displayName": "Scatter Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 2
+                    }
+                ],
+                "displayedChoices": [
+                    {
+                        "resultType": "TowerDraft",
+                        "assetName": "Config_TowerDefini_CannonTower",
+                        "displayName": "Cannon Tower",
+                        "towerFamily": "Cannon",
+                        "upgradeLayer": "",
+                        "requiredTowerLevel": 0,
+                        "multiplicity": 1
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_PiercingArrow",
+                        "displayName": "Piercing Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 2
+                    },
+                    {
+                        "resultType": "TowerUpgradeDraft",
+                        "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                        "displayName": "Scatter Arrow",
+                        "towerFamily": "Archer",
+                        "upgradeLayer": "Behaviour",
+                        "requiredTowerLevel": 2,
+                        "multiplicity": 2
+                    }
+                ],
+                "selectedChoice": {
+                    "resultType": "TowerUpgradeDraft",
+                    "assetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                    "displayName": "Scatter Arrow",
+                    "towerFamily": "Archer",
+                    "upgradeLayer": "Behaviour",
+                    "requiredTowerLevel": 2,
+                    "multiplicity": 2
+                },
+                "consumptionStatus": "Consumed"
+            }
+        ],
+        "terminalPendingDrafts": []
+    },
+    "investmentRuntime": {
+        "committedInvestmentCount": 6,
+        "finalBuildCommitObserved": true,
+        "finalBuildCommitResolutionNode": 18,
+        "resolutionsAfterFinalBuildCommit": 12,
+        "commits": [
+            {
+                "ordinal": 1,
+                "kind": "Deployment",
+                "authoritySource": "Draft",
+                "draftAttemptToken": "3:12",
+                "draftOrdinal": 1,
+                "draftResultType": "TowerDraft",
+                "draftAssetName": "Config_TowerDefini_ArcherTower",
+                "towerInstanceId": -366974,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "previousLevel": 0,
+                "currentLevel": 1,
+                "upgradeLayer": "",
+                "activeTimeSeconds": 3.060394287109375,
+                "resolvedMonsterCount": 0,
+                "spawned": 0,
+                "resolved": 0,
+                "killed": 0,
+                "leaked": 0,
+                "alive": 0,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 2,
+                "kind": "LevelUp",
+                "authoritySource": "Draft",
+                "draftAttemptToken": "3:13",
+                "draftOrdinal": 2,
+                "draftResultType": "TowerDraft",
+                "draftAssetName": "Config_TowerDefini_ArcherTower",
+                "towerInstanceId": -366974,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "previousLevel": 1,
+                "currentLevel": 2,
+                "upgradeLayer": "",
+                "activeTimeSeconds": 19.36334228515625,
+                "resolvedMonsterCount": 3,
+                "spawned": 5,
+                "resolved": 3,
+                "killed": 3,
+                "leaked": 0,
+                "alive": 2,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 3,
+                "kind": "Deployment",
+                "authoritySource": "Draft",
+                "draftAttemptToken": "3:14",
+                "draftOrdinal": 3,
+                "draftResultType": "TowerDraft",
+                "draftAssetName": "Config_TowerDefini_ArcherTower",
+                "towerInstanceId": -373156,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "previousLevel": 0,
+                "currentLevel": 1,
+                "upgradeLayer": "",
+                "activeTimeSeconds": 35.83984375,
+                "resolvedMonsterCount": 7,
+                "spawned": 10,
+                "resolved": 7,
+                "killed": 7,
+                "leaked": 0,
+                "alive": 3,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 4,
+                "kind": "Upgrade",
+                "authoritySource": "Draft",
+                "draftAttemptToken": "3:15",
+                "draftOrdinal": 4,
+                "draftResultType": "TowerUpgradeDraft",
+                "draftAssetName": "Config_TowerUpgradeDefini_ArcherTower_Basic_QuickDraw",
+                "towerInstanceId": -366974,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "previousLevel": 2,
+                "currentLevel": 2,
+                "upgradeLayer": "Basic",
+                "activeTimeSeconds": 51.79888916015625,
+                "resolvedMonsterCount": 10,
+                "spawned": 15,
+                "resolved": 10,
+                "killed": 10,
+                "leaked": 0,
+                "alive": 5,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 5,
+                "kind": "LevelUp",
+                "authoritySource": "Draft",
+                "draftAttemptToken": "3:16",
+                "draftOrdinal": 5,
+                "draftResultType": "TowerDraft",
+                "draftAssetName": "Config_TowerDefini_ArcherTower",
+                "towerInstanceId": -373156,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "previousLevel": 1,
+                "currentLevel": 2,
+                "upgradeLayer": "",
+                "activeTimeSeconds": 67.72857666015625,
+                "resolvedMonsterCount": 14,
+                "spawned": 22,
+                "resolved": 14,
+                "killed": 14,
+                "leaked": 0,
+                "alive": 8,
+                "playerHealth": 6
+            },
+            {
+                "ordinal": 6,
+                "kind": "Upgrade",
+                "authoritySource": "Draft",
+                "draftAttemptToken": "3:17",
+                "draftOrdinal": 6,
+                "draftResultType": "TowerUpgradeDraft",
+                "draftAssetName": "Config_TowerUpgradeDefini_ArcherTower_Behaviour_ScatterArrow",
+                "towerInstanceId": -373156,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "previousLevel": 2,
+                "currentLevel": 2,
+                "upgradeLayer": "Behaviour",
+                "activeTimeSeconds": 97.93441772460938,
+                "resolvedMonsterCount": 18,
+                "spawned": 32,
+                "resolved": 18,
+                "killed": 18,
+                "leaked": 0,
+                "alive": 14,
+                "playerHealth": 6
+            }
+        ]
+    },
+    "execution": {
+        "initialDraftCompleted": true,
+        "allExpectedLevelUpsObserved": true,
+        "expectedFinalPlayerLevelReached": true,
+        "allConfiguredWavesStarted": true,
+        "allConfiguredWavesCompleted": true,
+        "allConfiguredMonstersSpawned": true,
+        "finalBuildCommitted": true,
+        "postFinalBuildCombatObserved": true
+    },
+    "integrity": {
+        "fixtureSnapshotComplete": true,
+        "resolutionCountsMatch": true,
+        "leakCountMatchesPlayerHealthLoss": true,
+        "monsterRuntimeCountsMatch": true,
+        "monsterRuntimeDamageMatches": true,
+        "monsterRuntimeRegistrationCoverageMatch": true,
+        "monsterRuntimeStartedAtFullHealth": true,
+        "levelUpResolutionNodesMatch": true,
+        "waveMonsterAttributionMatches": true,
+        "draftAttemptSelectionsMatch": true,
+        "draftAttemptCountMatchesProgression": true,
+        "draftGenerationTraceConsistent": true,
+        "draftConsumptionReconciled": true,
+        "towerDeploymentCoverageMatches": true,
+        "investmentCommitsMatchDraftSelections": true,
+        "towerWaveAttributionMatches": true,
+        "towerRouteDamageCoverageMatches": true,
+        "damageDiagnosticsCountsMatch": true,
+        "droneBurstDiagnosticsConsistent": true,
+        "droneLifecycleDiagnosticsConsistent": true,
+        "elementalOpportunityDiagnosticsConsistent": true,
+        "elementalHitReactionDiagnosticsConsistent": true,
+        "buffDiagnosticsConsistent": true,
+        "buffStackUnitAccountingConsistent": true,
+        "buffWaveAttributionMatches": true,
+        "placementRouteBatchCountsMatch": true,
+        "placementRouteCommitStatePreserved": true,
+        "placementRouteTopologyValid": true,
+        "placementRouteGameplayStatePreserved": true,
+        "placementRouteCombatOwnershipPreserved": true,
+        "placementRouteLifecycleConsistent": true,
+        "placementRouteForcedRelocationUsageValid": true
+    },
+    "monsterRuntime": {
+        "observedTypes": 3,
+        "instanceSamples": 32,
+        "registrationObservedInstances": 32,
+        "fallbackObservedInstances": 0,
+        "instancesObservedAtFullHealth": 32,
+        "instancesObservedAfterDamage": 0,
+        "unobservedDamageAtObservationStart": 0,
+        "successfulDamageApplications": 222,
+        "types": [
+            {
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 6,
+                "resolved": 6,
+                "killed": 6,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 6,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 6,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 15,
+                "effectiveDamage": 360,
+                "leakedRemainingHealth": 0,
+                "resolutionLifetimeSeconds": {
+                    "samples": 6,
+                    "minimum": 6.047637939453125,
+                    "average": 6.90411901473999,
+                    "maximum": 8.22967529296875
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 6,
+                    "minimum": 6.047637939453125,
+                    "average": 6.90411901473999,
+                    "maximum": 8.22967529296875
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 0,
+                    "minimum": 0.0,
+                    "average": 0.0,
+                    "maximum": 0.0
+                }
+            },
+            {
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 8,
+                "resolved": 8,
+                "killed": 8,
+                "leaked": 0,
+                "unresolvedAtReport": 0,
+                "registrationObservedInstances": 8,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 8,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 42,
+                "effectiveDamage": 1440,
+                "leakedRemainingHealth": 0,
+                "resolutionLifetimeSeconds": {
+                    "samples": 8,
+                    "minimum": 8.961883544921875,
+                    "average": 17.382854461669923,
+                    "maximum": 23.817108154296876
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 8,
+                    "minimum": 8.961883544921875,
+                    "average": 17.382854461669923,
+                    "maximum": 23.817108154296876
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 0,
+                    "minimum": 0.0,
+                    "average": 0.0,
+                    "maximum": 0.0
+                }
+            },
+            {
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawned": 18,
+                "resolved": 16,
+                "killed": 10,
+                "leaked": 6,
+                "unresolvedAtReport": 2,
+                "registrationObservedInstances": 18,
+                "fallbackObservedInstances": 0,
+                "instancesObservedAtFullHealth": 18,
+                "instancesObservedAfterDamage": 0,
+                "unobservedDamageAtObservationStart": 0,
+                "successfulDamageApplications": 165,
+                "effectiveDamage": 5375,
+                "leakedRemainingHealth": 1685,
+                "resolutionLifetimeSeconds": {
+                    "samples": 16,
+                    "minimum": 26.63812255859375,
+                    "average": 46.285430908203128,
+                    "maximum": 73.74267578125
+                },
+                "killedLifetimeSeconds": {
+                    "samples": 10,
+                    "minimum": 26.63812255859375,
+                    "average": 30.629165649414064,
+                    "maximum": 42.274505615234378
+                },
+                "leakedLifetimeSeconds": {
+                    "samples": 6,
+                    "minimum": 71.29714965820313,
+                    "average": 72.37921142578125,
+                    "maximum": 73.74267578125
+                }
+            }
+        ],
+        "instances": [
+            {
+                "spawnOrdinal": 1,
+                "sourceWaveNumber": 1,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 5.192474365234375,
+                "resolvedAtSeconds": 12.301727294921875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 7.1092529296875
+            },
+            {
+                "spawnOrdinal": 2,
+                "sourceWaveNumber": 1,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 7.695220947265625,
+                "resolvedAtSeconds": 15.331878662109375,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 7.63665771484375
+            },
+            {
+                "spawnOrdinal": 3,
+                "sourceWaveNumber": 1,
+                "sourceWaveSpawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 10.197784423828125,
+                "resolvedAtSeconds": 18.427459716796876,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 8.22967529296875
+            },
+            {
+                "spawnOrdinal": 4,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 16.205291748046876,
+                "resolvedAtSeconds": 22.52947998046875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 6.324188232421875
+            },
+            {
+                "spawnOrdinal": 5,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 18.717559814453126,
+                "resolvedAtSeconds": 24.79486083984375,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 6.077301025390625
+            },
+            {
+                "spawnOrdinal": 6,
+                "sourceWaveNumber": 2,
+                "sourceWaveSpawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_Slime_Lv1",
+                "displayName": "Slime",
+                "maximumHealth": 60,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 21.220703125,
+                "resolvedAtSeconds": 27.268341064453126,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 60,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 60,
+                "lifetimeSeconds": 6.047637939453125
+            },
+            {
+                "spawnOrdinal": 7,
+                "sourceWaveNumber": 3,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 26.22344970703125,
+                "resolvedAtSeconds": 35.185333251953128,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 8.961883544921875
+            },
+            {
+                "spawnOrdinal": 8,
+                "sourceWaveNumber": 3,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 28.730987548828126,
+                "resolvedAtSeconds": 40.37274169921875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 11.641754150390625
+            },
+            {
+                "spawnOrdinal": 9,
+                "sourceWaveNumber": 3,
+                "sourceWaveSpawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 31.25823974609375,
+                "resolvedAtSeconds": 45.636260986328128,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 14.378021240234375
+            },
+            {
+                "spawnOrdinal": 10,
+                "sourceWaveNumber": 3,
+                "sourceWaveSpawnOrdinal": 4,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 33.78350830078125,
+                "resolvedAtSeconds": 50.946136474609378,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 17.162628173828126
+            },
+            {
+                "spawnOrdinal": 11,
+                "sourceWaveNumber": 4,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 37.78643798828125,
+                "resolvedAtSeconds": 58.105255126953128,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 20.318817138671876
+            },
+            {
+                "spawnOrdinal": 12,
+                "sourceWaveNumber": 4,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 40.290252685546878,
+                "resolvedAtSeconds": 62.57916259765625,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 6,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 22.288909912109376
+            },
+            {
+                "spawnOrdinal": 13,
+                "sourceWaveNumber": 4,
+                "sourceWaveSpawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 42.79913330078125,
+                "resolvedAtSeconds": 66.61624145507813,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 6,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 23.817108154296876
+            },
+            {
+                "spawnOrdinal": 14,
+                "sourceWaveNumber": 4,
+                "sourceWaveSpawnOrdinal": 4,
+                "runtimeTemplateName": "Prefab_Monster_MonsterPlant_Lv3",
+                "displayName": "Monster Plant",
+                "maximumHealth": 180,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 45.30230712890625,
+                "resolvedAtSeconds": 65.7960205078125,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 180,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 180,
+                "lifetimeSeconds": 20.49371337890625
+            },
+            {
+                "spawnOrdinal": 15,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 49.302703857421878,
+                "resolvedAtSeconds": 75.94082641601563,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 10,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 26.63812255859375
+            },
+            {
+                "spawnOrdinal": 16,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 51.836669921875,
+                "resolvedAtSeconds": 83.28359985351563,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 10,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 31.446929931640626
+            },
+            {
+                "spawnOrdinal": 17,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 54.34222412109375,
+                "resolvedAtSeconds": 96.61672973632813,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 10,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 42.274505615234378
+            },
+            {
+                "spawnOrdinal": 18,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 4,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 56.861541748046878,
+                "resolvedAtSeconds": 128.77191162109376,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 268,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 132,
+                "lifetimeSeconds": 71.91036987304688
+            },
+            {
+                "spawnOrdinal": 19,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 5,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 59.369873046875,
+                "resolvedAtSeconds": 132.68304443359376,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 312,
+                "successfulDamageApplications": 2,
+                "effectiveDamage": 88,
+                "lifetimeSeconds": 73.31317138671875
+            },
+            {
+                "spawnOrdinal": 20,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 6,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 61.874755859375,
+                "resolvedAtSeconds": 89.43240356445313,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 10,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 27.557647705078126
+            },
+            {
+                "spawnOrdinal": 21,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 7,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 64.37844848632813,
+                "resolvedAtSeconds": 136.57861328125,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 268,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 132,
+                "lifetimeSeconds": 72.20016479492188
+            },
+            {
+                "spawnOrdinal": 22,
+                "sourceWaveNumber": 5,
+                "sourceWaveSpawnOrdinal": 8,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 66.87945556640625,
+                "resolvedAtSeconds": 138.17660522460938,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 268,
+                "successfulDamageApplications": 3,
+                "effectiveDamage": 132,
+                "lifetimeSeconds": 71.29714965820313
+            },
+            {
+                "spawnOrdinal": 23,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 1,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 70.88888549804688,
+                "resolvedAtSeconds": 144.63156127929688,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 257,
+                "successfulDamageApplications": 4,
+                "effectiveDamage": 143,
+                "lifetimeSeconds": 73.74267578125
+            },
+            {
+                "spawnOrdinal": 24,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 2,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 73.38995361328125,
+                "resolvedAtSeconds": 101.87274169921875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 12,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 28.4827880859375
+            },
+            {
+                "spawnOrdinal": 25,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 3,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 75.89187622070313,
+                "resolvedAtSeconds": 107.19540405273438,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 15,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 31.30352783203125
+            },
+            {
+                "spawnOrdinal": 26,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 4,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 78.40133666992188,
+                "resolvedAtSeconds": 150.21307373046876,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Leaked",
+                "finalHealth": 312,
+                "successfulDamageApplications": 5,
+                "effectiveDamage": 88,
+                "lifetimeSeconds": 71.81173706054688
+            },
+            {
+                "spawnOrdinal": 27,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 5,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 80.91940307617188,
+                "resolvedAtSeconds": 0.0,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Unresolved",
+                "finalHealth": 125,
+                "successfulDamageApplications": 7,
+                "effectiveDamage": 275,
+                "lifetimeSeconds": 69.29367065429688
+            },
+            {
+                "spawnOrdinal": 28,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 6,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 83.43283081054688,
+                "resolvedAtSeconds": 111.19931030273438,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 12,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 27.7664794921875
+            },
+            {
+                "spawnOrdinal": 29,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 7,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 85.93548583984375,
+                "resolvedAtSeconds": 0.0,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Unresolved",
+                "finalHealth": 15,
+                "successfulDamageApplications": 14,
+                "effectiveDamage": 385,
+                "lifetimeSeconds": 64.277587890625
+            },
+            {
+                "spawnOrdinal": 30,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 8,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 88.45626831054688,
+                "resolvedAtSeconds": 116.36257934570313,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 13,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 27.90631103515625
+            },
+            {
+                "spawnOrdinal": 31,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 9,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 90.96011352539063,
+                "resolvedAtSeconds": 121.6248779296875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 16,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 30.664764404296876
+            },
+            {
+                "spawnOrdinal": 32,
+                "sourceWaveNumber": 6,
+                "sourceWaveSpawnOrdinal": 10,
+                "runtimeTemplateName": "Prefab_Monster_TurtuleShell_Lv4",
+                "displayName": "Turtule Shell",
+                "maximumHealth": 400,
+                "moveSpeedAtSpawn": 0.25,
+                "spawnedAtSeconds": 93.47866821289063,
+                "resolvedAtSeconds": 125.729248046875,
+                "observedThroughRegistrationEvent": true,
+                "healthAtObservationStart": 400,
+                "unobservedDamageAtObservationStart": 0,
+                "resolutionType": "Killed",
+                "finalHealth": 0,
+                "successfulDamageApplications": 16,
+                "effectiveDamage": 400,
+                "lifetimeSeconds": 32.250579833984378
+            }
+        ]
+    },
+    "placementRouteRuntime": {
+        "forcedRelocationExpectation": "Ignore",
+        "committedPlacementCount": 2,
+        "observedMonsterRevisionCount": 3,
+        "alreadyOnNewRouteCount": 3,
+        "reachableRouteRejoinCount": 0,
+        "forcedRelocationCount": 0,
+        "lifecycleObservationCount": 0,
+        "commits": [
+            {
+                "ordinal": 1,
+                "towerInstanceId": -366974,
+                "activeTimeSeconds": 3.060394287109375,
+                "footprint": [
+                    {
+                        "x": 2,
+                        "z": 6
+                    },
+                    {
+                        "x": 2,
+                        "z": 5
+                    }
+                ],
+                "authoritativeRoute": [
+                    {
+                        "x": 1,
+                        "z": 8
+                    },
+                    {
+                        "x": 1,
+                        "z": 7
+                    },
+                    {
+                        "x": 1,
+                        "z": 6
+                    },
+                    {
+                        "x": 1,
+                        "z": 5
+                    },
+                    {
+                        "x": 1,
+                        "z": 4
+                    },
+                    {
+                        "x": 1,
+                        "z": 3
+                    },
+                    {
+                        "x": 1,
+                        "z": 2
+                    },
+                    {
+                        "x": 2,
+                        "z": 2
+                    },
+                    {
+                        "x": 3,
+                        "z": 2
+                    },
+                    {
+                        "x": 3,
+                        "z": 3
+                    },
+                    {
+                        "x": 4,
+                        "z": 3
+                    },
+                    {
+                        "x": 4,
+                        "z": 4
+                    },
+                    {
+                        "x": 4,
+                        "z": 5
+                    },
+                    {
+                        "x": 4,
+                        "z": 6
+                    },
+                    {
+                        "x": 4,
+                        "z": 7
+                    },
+                    {
+                        "x": 5,
+                        "z": 7
+                    }
+                ],
+                "playerHealthBefore": 6,
+                "playerHealthAfter": 6,
+                "playerProgressBefore": 0,
+                "playerProgressAfter": 0,
+                "aliveMonsterCountBefore": 0,
+                "aliveMonsterCountAfter": 0,
+                "resolvedMonsterCountBefore": 0,
+                "resolvedMonsterCountAfter": 0,
+                "alreadyOnNewRouteCount": 0,
+                "reachableRouteRejoinCount": 0,
+                "forcedRelocationCount": 0,
+                "combatOwnershipFingerprintBefore": "",
+                "combatOwnershipFingerprintAfter": "",
+                "monsters": []
+            },
+            {
+                "ordinal": 2,
+                "towerInstanceId": -373156,
+                "activeTimeSeconds": 35.83984375,
+                "footprint": [
+                    {
+                        "x": 2,
+                        "z": 2
+                    },
+                    {
+                        "x": 2,
+                        "z": 1
+                    }
+                ],
+                "authoritativeRoute": [
+                    {
+                        "x": 1,
+                        "z": 8
+                    },
+                    {
+                        "x": 1,
+                        "z": 7
+                    },
+                    {
+                        "x": 1,
+                        "z": 6
+                    },
+                    {
+                        "x": 1,
+                        "z": 5
+                    },
+                    {
+                        "x": 1,
+                        "z": 4
+                    },
+                    {
+                        "x": 1,
+                        "z": 3
+                    },
+                    {
+                        "x": 1,
+                        "z": 2
+                    },
+                    {
+                        "x": 1,
+                        "z": 1
+                    },
+                    {
+                        "x": 1,
+                        "z": 0
+                    },
+                    {
+                        "x": 2,
+                        "z": 0
+                    },
+                    {
+                        "x": 3,
+                        "z": 0
+                    },
+                    {
+                        "x": 3,
+                        "z": 1
+                    },
+                    {
+                        "x": 3,
+                        "z": 2
+                    },
+                    {
+                        "x": 3,
+                        "z": 3
+                    },
+                    {
+                        "x": 4,
+                        "z": 3
+                    },
+                    {
+                        "x": 4,
+                        "z": 4
+                    },
+                    {
+                        "x": 4,
+                        "z": 5
+                    },
+                    {
+                        "x": 4,
+                        "z": 6
+                    },
+                    {
+                        "x": 4,
+                        "z": 7
+                    },
+                    {
+                        "x": 5,
+                        "z": 7
+                    }
+                ],
+                "playerHealthBefore": 6,
+                "playerHealthAfter": 6,
+                "playerProgressBefore": 1,
+                "playerProgressAfter": 1,
+                "aliveMonsterCountBefore": 3,
+                "aliveMonsterCountAfter": 3,
+                "resolvedMonsterCountBefore": 7,
+                "resolvedMonsterCountAfter": 7,
+                "alreadyOnNewRouteCount": 3,
+                "reachableRouteRejoinCount": 0,
+                "forcedRelocationCount": 0,
+                "combatOwnershipFingerprintBefore": "tower=-366978;target=-371894",
+                "combatOwnershipFingerprintAfter": "tower=-366978;target=-371894",
+                "monsters": [
+                    {
+                        "revisionId": 1,
+                        "monsterInstanceId": -371894,
+                        "spawnOrdinal": 8,
+                        "sourceWaveNumber": 3,
+                        "sourceWaveSpawnOrdinal": 2,
+                        "mode": "AlreadyOnNewRoute",
+                        "forcedRelocationReason": "None",
+                        "capturedWorldPosition": {
+                            "x": -3.584446430206299,
+                            "y": 0.0,
+                            "z": 1.6845568418502808
+                        },
+                        "immediatePostCommitPosition": {
+                            "x": -3.584446430206299,
+                            "y": 0.0,
+                            "z": 1.6845568418502808
+                        },
+                        "preparedWorldPosition": {
+                            "x": -3.584446430206299,
+                            "y": 0.0,
+                            "z": 1.6845568418502808
+                        },
+                        "hasComparableCapturedPosition": true,
+                        "hasComparableImmediateDisplacement": true,
+                        "immediateDisplacement": 0.0,
+                        "hasComparableRelocationDistance": false,
+                        "plannedRelocationDistance": 0.0,
+                        "plannedConnectorDistance": 0.0,
+                        "requiresExactTargetApproach": false,
+                        "requiresConnector": false,
+                        "joinedAtCommit": false,
+                        "physicalGrid": {
+                            "x": 1,
+                            "z": 6
+                        },
+                        "joinGrid": {
+                            "x": 1,
+                            "z": 6
+                        },
+                        "recoveryGrid": {
+                            "x": 0,
+                            "z": 0
+                        },
+                        "connectorPath": [],
+                        "preparedContinuation": [
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 1,
+                                "z": 1
+                            },
+                            {
+                                "x": 1,
+                                "z": 0
+                            },
+                            {
+                                "x": 2,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 1
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 4
+                            },
+                            {
+                                "x": 4,
+                                "z": 5
+                            },
+                            {
+                                "x": 4,
+                                "z": 6
+                            },
+                            {
+                                "x": 4,
+                                "z": 7
+                            },
+                            {
+                                "x": 5,
+                                "z": 7
+                            }
+                        ],
+                        "routeSuffix": [
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 1,
+                                "z": 1
+                            },
+                            {
+                                "x": 1,
+                                "z": 0
+                            },
+                            {
+                                "x": 2,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 1
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 4
+                            },
+                            {
+                                "x": 4,
+                                "z": 5
+                            },
+                            {
+                                "x": 4,
+                                "z": 6
+                            },
+                            {
+                                "x": 4,
+                                "z": 7
+                            },
+                            {
+                                "x": 5,
+                                "z": 7
+                            }
+                        ],
+                        "preGameplayStateFingerprint": "health=180/180;speed=1;locked=False;lane=-371894;targetable=True;buff=1|0|0|0",
+                        "postGameplayStateFingerprint": "health=180/180;speed=1;locked=False;lane=-371894;targetable=True;buff=1|0|0|0"
+                    },
+                    {
+                        "revisionId": 2,
+                        "monsterInstanceId": -372230,
+                        "spawnOrdinal": 9,
+                        "sourceWaveNumber": 3,
+                        "sourceWaveSpawnOrdinal": 3,
+                        "mode": "AlreadyOnNewRoute",
+                        "forcedRelocationReason": "None",
+                        "capturedWorldPosition": {
+                            "x": -3.5898935794830324,
+                            "y": 0.0,
+                            "z": 2.3164443969726564
+                        },
+                        "immediatePostCommitPosition": {
+                            "x": -3.5898935794830324,
+                            "y": 0.0,
+                            "z": 2.3164443969726564
+                        },
+                        "preparedWorldPosition": {
+                            "x": -3.5898935794830324,
+                            "y": 0.0,
+                            "z": 2.3164443969726564
+                        },
+                        "hasComparableCapturedPosition": true,
+                        "hasComparableImmediateDisplacement": true,
+                        "immediateDisplacement": 0.0,
+                        "hasComparableRelocationDistance": false,
+                        "plannedRelocationDistance": 0.0,
+                        "plannedConnectorDistance": 0.0,
+                        "requiresExactTargetApproach": false,
+                        "requiresConnector": false,
+                        "joinedAtCommit": false,
+                        "physicalGrid": {
+                            "x": 1,
+                            "z": 7
+                        },
+                        "joinGrid": {
+                            "x": 1,
+                            "z": 7
+                        },
+                        "recoveryGrid": {
+                            "x": 0,
+                            "z": 0
+                        },
+                        "connectorPath": [],
+                        "preparedContinuation": [
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 1,
+                                "z": 1
+                            },
+                            {
+                                "x": 1,
+                                "z": 0
+                            },
+                            {
+                                "x": 2,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 1
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 4
+                            },
+                            {
+                                "x": 4,
+                                "z": 5
+                            },
+                            {
+                                "x": 4,
+                                "z": 6
+                            },
+                            {
+                                "x": 4,
+                                "z": 7
+                            },
+                            {
+                                "x": 5,
+                                "z": 7
+                            }
+                        ],
+                        "routeSuffix": [
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 1,
+                                "z": 1
+                            },
+                            {
+                                "x": 1,
+                                "z": 0
+                            },
+                            {
+                                "x": 2,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 1
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 4
+                            },
+                            {
+                                "x": 4,
+                                "z": 5
+                            },
+                            {
+                                "x": 4,
+                                "z": 6
+                            },
+                            {
+                                "x": 4,
+                                "z": 7
+                            },
+                            {
+                                "x": 5,
+                                "z": 7
+                            }
+                        ],
+                        "preGameplayStateFingerprint": "health=180/180;speed=1;locked=False;lane=-372230;targetable=True;buff=1|0|0|0",
+                        "postGameplayStateFingerprint": "health=180/180;speed=1;locked=False;lane=-372230;targetable=True;buff=1|0|0|0"
+                    },
+                    {
+                        "revisionId": 3,
+                        "monsterInstanceId": -372744,
+                        "spawnOrdinal": 10,
+                        "sourceWaveNumber": 3,
+                        "sourceWaveSpawnOrdinal": 4,
+                        "mode": "AlreadyOnNewRoute",
+                        "forcedRelocationReason": "None",
+                        "capturedWorldPosition": {
+                            "x": -3.4849658012390138,
+                            "y": 0.0,
+                            "z": 2.9935972690582277
+                        },
+                        "immediatePostCommitPosition": {
+                            "x": -3.4849658012390138,
+                            "y": 0.0,
+                            "z": 2.9935972690582277
+                        },
+                        "preparedWorldPosition": {
+                            "x": -3.4849658012390138,
+                            "y": 0.0,
+                            "z": 2.9935972690582277
+                        },
+                        "hasComparableCapturedPosition": true,
+                        "hasComparableImmediateDisplacement": true,
+                        "immediateDisplacement": 0.0,
+                        "hasComparableRelocationDistance": false,
+                        "plannedRelocationDistance": 0.0,
+                        "plannedConnectorDistance": 0.0,
+                        "requiresExactTargetApproach": false,
+                        "requiresConnector": false,
+                        "joinedAtCommit": false,
+                        "physicalGrid": {
+                            "x": 1,
+                            "z": 7
+                        },
+                        "joinGrid": {
+                            "x": 1,
+                            "z": 7
+                        },
+                        "recoveryGrid": {
+                            "x": 0,
+                            "z": 0
+                        },
+                        "connectorPath": [],
+                        "preparedContinuation": [
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 1,
+                                "z": 1
+                            },
+                            {
+                                "x": 1,
+                                "z": 0
+                            },
+                            {
+                                "x": 2,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 1
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 4
+                            },
+                            {
+                                "x": 4,
+                                "z": 5
+                            },
+                            {
+                                "x": 4,
+                                "z": 6
+                            },
+                            {
+                                "x": 4,
+                                "z": 7
+                            },
+                            {
+                                "x": 5,
+                                "z": 7
+                            }
+                        ],
+                        "routeSuffix": [
+                            {
+                                "x": 1,
+                                "z": 7
+                            },
+                            {
+                                "x": 1,
+                                "z": 6
+                            },
+                            {
+                                "x": 1,
+                                "z": 5
+                            },
+                            {
+                                "x": 1,
+                                "z": 4
+                            },
+                            {
+                                "x": 1,
+                                "z": 3
+                            },
+                            {
+                                "x": 1,
+                                "z": 2
+                            },
+                            {
+                                "x": 1,
+                                "z": 1
+                            },
+                            {
+                                "x": 1,
+                                "z": 0
+                            },
+                            {
+                                "x": 2,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 0
+                            },
+                            {
+                                "x": 3,
+                                "z": 1
+                            },
+                            {
+                                "x": 3,
+                                "z": 2
+                            },
+                            {
+                                "x": 3,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 3
+                            },
+                            {
+                                "x": 4,
+                                "z": 4
+                            },
+                            {
+                                "x": 4,
+                                "z": 5
+                            },
+                            {
+                                "x": 4,
+                                "z": 6
+                            },
+                            {
+                                "x": 4,
+                                "z": 7
+                            },
+                            {
+                                "x": 5,
+                                "z": 7
+                            }
+                        ],
+                        "preGameplayStateFingerprint": "health=180/180;speed=1;locked=False;lane=-372744;targetable=True;buff=1|0|0|0",
+                        "postGameplayStateFingerprint": "health=180/180;speed=1;locked=False;lane=-372744;targetable=True;buff=1|0|0|0"
+                    }
+                ]
+            }
+        ],
+        "lifecycle": []
+    },
+    "towers": [
+        {
+            "instanceId": -366974,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 2,
+            "deploymentObserved": true,
+            "deploymentOrdinal": 1,
+            "deployedAtSeconds": 3.060394287109375,
+            "deploymentWorldPosition": {
+                "x": -2.5,
+                "y": 0.0,
+                "z": 1.0
+            },
+            "deploymentGridPositions": [
+                {
+                    "x": 2,
+                    "z": 5
+                },
+                {
+                    "x": 2,
+                    "z": 6
+                }
+            ],
+            "hasCombatRuntime": true,
+            "baseDamage": 44,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 44,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.7000000476837158,
+            "projectileRuntime": {
+                "projectilesReleased": 103,
+                "initialProjectilesReleased": 103,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 0,
+                "arcTargetResolvedImpacts": 0,
+                "arcIntendedTargetImpacts": 0,
+                "arcFallbackTargetImpacts": 0,
+                "arcPositionOnlyImpacts": 0,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 0,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 0.0,
+                "arcTargetRelation": {
+                    "sampledInitialImpacts": 0,
+                    "primaryIntendedTargetImpacts": 0,
+                    "primaryFallbackTargetImpacts": 0,
+                    "primaryPositionOnlyImpacts": 0,
+                    "additionalIntendedTargetImpacts": 0,
+                    "additionalFallbackTargetImpacts": 0,
+                    "additionalPositionOnlyImpacts": 0,
+                    "fallbackImmediateLaterSpawnImpacts": 0,
+                    "fallbackImmediateEarlierSpawnImpacts": 0,
+                    "fallbackNonAdjacentImpacts": 0,
+                    "fallbackUnknownRelationImpacts": 0,
+                    "positionOnlyNearestOtherAvailable": 0,
+                    "positionOnlyNearestOtherImmediateLaterSpawn": 0,
+                    "positionOnlyNearestOtherImmediateEarlierSpawn": 0,
+                    "positionOnlyNearestOtherNonAdjacent": 0,
+                    "positionOnlyNearestOtherUnknownRelation": 0,
+                    "positionOnlyWithoutNearestOther": 0,
+                    "observedMinimumHitDistanceThreshold": 0.0,
+                    "observedMaximumHitDistanceThreshold": 0.0,
+                    "confirmationToReleaseSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "releaseToImpactSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "plannedTravelTimeSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToFallbackDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "fallbackMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToPositionOnlyNearestOtherDistance": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "positionOnlyNearestOtherMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "samples": []
+                }
+            },
+            "droneBurstRuntime": {
+                "diagnosticsConsistent": true,
+                "drones": []
+            },
+            "droneLifecycleRuntime": {
+                "diagnosticsConsistent": true,
+                "drones": []
+            },
+            "upgrades": [
+                {
+                    "displayName": "Quick Draw",
+                    "layer": "Basic",
+                    "requiredLevel": 1,
+                    "behaviourPackage": "",
+                    "element": "",
+                    "elementalStackContribution": 0
+                }
+            ]
+        },
+        {
+            "instanceId": -373156,
+            "displayName": "Archer Tower",
+            "family": "Archer",
+            "level": 2,
+            "deploymentObserved": true,
+            "deploymentOrdinal": 2,
+            "deployedAtSeconds": 35.83984375,
+            "deploymentWorldPosition": {
+                "x": -2.5,
+                "y": 0.0,
+                "z": -3.0
+            },
+            "deploymentGridPositions": [
+                {
+                    "x": 2,
+                    "z": 1
+                },
+                {
+                    "x": 2,
+                    "z": 2
+                }
+            ],
+            "hasCombatRuntime": true,
+            "baseDamage": 44,
+            "baseRange": 2.0,
+            "baseCycleSeconds": 0.8500000238418579,
+            "resolvedDamage": 44,
+            "resolvedRange": 2.0,
+            "resolvedCycleSeconds": 0.8500000238418579,
+            "projectileRuntime": {
+                "projectilesReleased": 144,
+                "initialProjectilesReleased": 144,
+                "childProjectilesReleased": 0,
+                "arcProjectilesReleased": 0,
+                "arcTargetResolvedImpacts": 0,
+                "arcIntendedTargetImpacts": 0,
+                "arcFallbackTargetImpacts": 0,
+                "arcPositionOnlyImpacts": 0,
+                "arcPositionOnlyIntendedInvalid": 0,
+                "arcPositionOnlyIntendedOutOfRange": 0,
+                "arcPositionOnlyWithoutIntendedTarget": 0,
+                "arcEndedWithoutImpact": 0,
+                "arcUnresolvedAtReport": 0,
+                "arcTargetResolutionRate": 0.0,
+                "arcTargetRelation": {
+                    "sampledInitialImpacts": 0,
+                    "primaryIntendedTargetImpacts": 0,
+                    "primaryFallbackTargetImpacts": 0,
+                    "primaryPositionOnlyImpacts": 0,
+                    "additionalIntendedTargetImpacts": 0,
+                    "additionalFallbackTargetImpacts": 0,
+                    "additionalPositionOnlyImpacts": 0,
+                    "fallbackImmediateLaterSpawnImpacts": 0,
+                    "fallbackImmediateEarlierSpawnImpacts": 0,
+                    "fallbackNonAdjacentImpacts": 0,
+                    "fallbackUnknownRelationImpacts": 0,
+                    "positionOnlyNearestOtherAvailable": 0,
+                    "positionOnlyNearestOtherImmediateLaterSpawn": 0,
+                    "positionOnlyNearestOtherImmediateEarlierSpawn": 0,
+                    "positionOnlyNearestOtherNonAdjacent": 0,
+                    "positionOnlyNearestOtherUnknownRelation": 0,
+                    "positionOnlyWithoutNearestOther": 0,
+                    "observedMinimumHitDistanceThreshold": 0.0,
+                    "observedMaximumHitDistanceThreshold": 0.0,
+                    "confirmationToReleaseSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "releaseToImpactSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "plannedTravelTimeSeconds": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtRelease": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToIntendedDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "intendedMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToFallbackDistanceAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "fallbackMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "landingToPositionOnlyNearestOtherDistance": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "positionOnlyNearestOtherMoveSpeedAtImpact": {
+                        "samples": 0,
+                        "minimum": 0.0,
+                        "average": 0.0,
+                        "maximum": 0.0
+                    },
+                    "samples": []
+                }
+            },
+            "droneBurstRuntime": {
+                "diagnosticsConsistent": true,
+                "drones": []
+            },
+            "droneLifecycleRuntime": {
+                "diagnosticsConsistent": true,
+                "drones": []
+            },
+            "upgrades": [
+                {
+                    "displayName": "Scatter Arrow",
+                    "layer": "Behaviour",
+                    "requiredLevel": 2,
+                    "behaviourPackage": "ArcherScatterArrow",
+                    "element": "",
+                    "elementalStackContribution": 0
+                }
+            ]
+        }
+    ],
+    "towerWaveSummaries": [
+        {
+            "towerInstanceId": -373156,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 4,
+            "successfulDamageApplications": 8,
+            "effectiveTowerScaledDamage": 104,
+            "killingBlows": 4
+        },
+        {
+            "towerInstanceId": -373156,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 5,
+            "successfulDamageApplications": 27,
+            "effectiveTowerScaledDamage": 1028,
+            "killingBlows": 4
+        },
+        {
+            "towerInstanceId": -373156,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 6,
+            "successfulDamageApplications": 84,
+            "effectiveTowerScaledDamage": 1971,
+            "killingBlows": 6
+        },
+        {
+            "towerInstanceId": -366974,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 1,
+            "successfulDamageApplications": 9,
+            "effectiveTowerScaledDamage": 180,
+            "killingBlows": 3
+        },
+        {
+            "towerInstanceId": -366974,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 2,
+            "successfulDamageApplications": 6,
+            "effectiveTowerScaledDamage": 180,
+            "killingBlows": 3
+        },
+        {
+            "towerInstanceId": -366974,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 3,
+            "successfulDamageApplications": 20,
+            "effectiveTowerScaledDamage": 720,
+            "killingBlows": 4
+        },
+        {
+            "towerInstanceId": -366974,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 4,
+            "successfulDamageApplications": 14,
+            "effectiveTowerScaledDamage": 616,
+            "killingBlows": 0
+        },
+        {
+            "towerInstanceId": -366974,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 5,
+            "successfulDamageApplications": 24,
+            "effectiveTowerScaledDamage": 1056,
+            "killingBlows": 0
+        },
+        {
+            "towerInstanceId": -366974,
+            "towerDisplayName": "Archer Tower",
+            "towerFamily": "Archer",
+            "waveNumber": 6,
+            "successfulDamageApplications": 30,
+            "effectiveTowerScaledDamage": 1320,
+            "killingBlows": 0
+        }
+    ],
+    "towerRouteDamageCoverage": {
+        "observedTowerCount": 2,
+        "successfulDamageApplications": 222,
+        "locatedDamageApplications": 222,
+        "unresolvedRouteCellApplicationCount": 0,
+        "effectiveDamage": 7175,
+        "locatedEffectiveDamage": 7175,
+        "unresolvedRouteCellEffectiveDamage": 0,
+        "killingBlows": 24,
+        "locatedKillingBlows": 24,
+        "unresolvedRouteCellKillingBlows": 0,
+        "towers": [
+            {
+                "towerInstanceId": -366974,
+                "towerDeploymentOrdinal": 1,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "successfulDamageApplications": 103,
+                "locatedDamageApplications": 103,
+                "unresolvedRouteCellApplicationCount": 0,
+                "effectiveDamage": 4072,
+                "locatedEffectiveDamage": 4072,
+                "unresolvedRouteCellEffectiveDamage": 0,
+                "killingBlows": 10,
+                "locatedKillingBlows": 10,
+                "unresolvedRouteCellKillingBlows": 0,
+                "distinctDamagedMonsterCount": 32,
+                "distinctDamageRouteCellCount": 4,
+                "routeCells": [
+                    {
+                        "placementCommitOrdinal": 1,
+                        "x": 1,
+                        "z": 6,
+                        "successfulDamageApplications": 4,
+                        "effectiveDamage": 88,
+                        "killingBlows": 3,
+                        "distinctDamagedMonsterCount": 3
+                    },
+                    {
+                        "placementCommitOrdinal": 1,
+                        "x": 1,
+                        "z": 7,
+                        "successfulDamageApplications": 16,
+                        "effectiveDamage": 452,
+                        "killingBlows": 4,
+                        "distinctDamagedMonsterCount": 7
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 1,
+                        "z": 4,
+                        "successfulDamageApplications": 59,
+                        "effectiveDamage": 2556,
+                        "killingBlows": 1,
+                        "distinctDamagedMonsterCount": 23
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 1,
+                        "z": 5,
+                        "successfulDamageApplications": 18,
+                        "effectiveDamage": 712,
+                        "killingBlows": 2,
+                        "distinctDamagedMonsterCount": 12
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 1,
+                        "z": 6,
+                        "successfulDamageApplications": 6,
+                        "effectiveDamage": 264,
+                        "killingBlows": 0,
+                        "distinctDamagedMonsterCount": 2
+                    }
+                ]
+            },
+            {
+                "towerInstanceId": -373156,
+                "towerDeploymentOrdinal": 2,
+                "towerDisplayName": "Archer Tower",
+                "towerFamily": "Archer",
+                "successfulDamageApplications": 119,
+                "locatedDamageApplications": 119,
+                "unresolvedRouteCellApplicationCount": 0,
+                "effectiveDamage": 3103,
+                "locatedEffectiveDamage": 3103,
+                "unresolvedRouteCellEffectiveDamage": 0,
+                "killingBlows": 14,
+                "locatedKillingBlows": 14,
+                "unresolvedRouteCellKillingBlows": 0,
+                "distinctDamagedMonsterCount": 18,
+                "distinctDamageRouteCellCount": 8,
+                "routeCells": [
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 1,
+                        "z": 0,
+                        "successfulDamageApplications": 9,
+                        "effectiveDamage": 188,
+                        "killingBlows": 3,
+                        "distinctDamagedMonsterCount": 4
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 1,
+                        "z": 1,
+                        "successfulDamageApplications": 34,
+                        "effectiveDamage": 856,
+                        "killingBlows": 5,
+                        "distinctDamagedMonsterCount": 9
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 1,
+                        "z": 2,
+                        "successfulDamageApplications": 43,
+                        "effectiveDamage": 1090,
+                        "killingBlows": 2,
+                        "distinctDamagedMonsterCount": 12
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 1,
+                        "z": 3,
+                        "successfulDamageApplications": 13,
+                        "effectiveDamage": 261,
+                        "killingBlows": 3,
+                        "distinctDamagedMonsterCount": 8
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 2,
+                        "z": 0,
+                        "successfulDamageApplications": 2,
+                        "effectiveDamage": 88,
+                        "killingBlows": 0,
+                        "distinctDamagedMonsterCount": 1
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 3,
+                        "z": 0,
+                        "successfulDamageApplications": 4,
+                        "effectiveDamage": 176,
+                        "killingBlows": 0,
+                        "distinctDamagedMonsterCount": 1
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 3,
+                        "z": 1,
+                        "successfulDamageApplications": 7,
+                        "effectiveDamage": 169,
+                        "killingBlows": 1,
+                        "distinctDamagedMonsterCount": 2
+                    },
+                    {
+                        "placementCommitOrdinal": 2,
+                        "x": 3,
+                        "z": 2,
+                        "successfulDamageApplications": 7,
+                        "effectiveDamage": 275,
+                        "killingBlows": 0,
+                        "distinctDamagedMonsterCount": 2
+                    }
+                ]
+            }
+        ],
+        "overlaps": [
+            {
+                "towerAInstanceId": -366974,
+                "towerADeploymentOrdinal": 1,
+                "towerADisplayName": "Archer Tower",
+                "towerAFamily": "Archer",
+                "towerBInstanceId": -373156,
+                "towerBDeploymentOrdinal": 2,
+                "towerBDisplayName": "Archer Tower",
+                "towerBFamily": "Archer",
+                "sharedDamageRouteCellCount": 0,
+                "sharedRoutePhaseCellCount": 0,
+                "sharedDamagedMonsterCount": 18
+            }
+        ]
+    },
+    "buffs": [],
+    "elementalOpportunityDiagnostics": {
+        "candidateResults": 0,
+        "eligibleResults": 0,
+        "dispatchedRequests": 0,
+        "diagnosticsConsistent": true,
+        "scopes": []
+    },
+    "elementalHitReactionDiagnostics": {
+        "totals": {
+            "observedReactionOpportunities": 0,
+            "evaluatedReactionOpportunities": 0,
+            "triggeredReactions": 0,
+            "blockedByReactionCooldown": 0,
+            "noValidReactionTarget": 0,
+            "invalidatedReactionOpportunities": 0,
+            "ownerResolvedByEarlierElementalReaction": 0,
+            "buffInstanceOrCycleChanged": 0,
+            "reactionTargetInvalidBeforeCommit": 0,
+            "reactionCommitRejected": 0,
+            "successfulReactionDamageTargets": 0,
+            "totalReactionFixedDamage": 0,
+            "reactionGapSampleCount": 0,
+            "reactionGapSeconds": {
+                "samples": 0,
+                "minimum": 0.0,
+                "average": 0.0,
+                "maximum": 0.0
+            }
+        },
+        "diagnosticsConsistent": true,
+        "buffs": []
+    }
+}

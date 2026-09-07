@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: ca38b4fca70a84e47892790122a1ec48
+timeCreated: 1588196490
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 100100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Prefabs/FX_Fireworks_Large_Red_01.prefab
+  uploadId: 0

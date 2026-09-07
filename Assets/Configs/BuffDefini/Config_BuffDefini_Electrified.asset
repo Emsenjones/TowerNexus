@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efced4751dde4773bd6c251ef9f1328a, type: 3}
+  m_Name: Config_BuffDefini_Electrified
+  m_EditorClassIdentifier: Assembly-CSharp::BuffDefinition
+  displayName: Electrified
+  description: Tower damage triggers cooldown-bounded fixed extra damage while active;
+    maximum stacks trigger electrical overload
+  activeDuration: 8
+  periodicTickInterval: 0
+  usesStacks: 1
+  maximumStacks: 10
+  sourceApplyCooldown: 0.5
+  eventBindings:
+  - eventType: 6
+    effectDefinition: {fileID: 11400000, guid: 011df70d1141a430996c7d1a3d6f172c, type: 2}
+  - eventType: 2
+    effectDefinition: {fileID: 11400000, guid: 15324e50f42de47dca6c589aebc9ce8d, type: 2}
+  elementType: 3
+  overloadProtectionDuration: 10
+  towerHitReactionCooldown: 0.5
+  statusIcon: {fileID: 21300000, guid: 0b0a6d64cbf76431e9b7348592eb5989, type: 3}
+  persistentBuffVfxPrefab: {fileID: 1264885020831819667, guid: dfe5d0b84b6e6466c8a6631142f3da1c, type: 3}

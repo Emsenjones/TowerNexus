@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: b0921f44478f0f048a2a6c682c1bfb87
+timeCreated: 1576616879
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Materials/PolygonParticleFX_Emissive_Fire.mat
+  uploadId: 0

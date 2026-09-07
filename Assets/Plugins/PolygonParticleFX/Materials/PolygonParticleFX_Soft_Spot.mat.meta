@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: 3bd0bff47a21f0b4089acd1d1b075bb3
+timeCreated: 1585183846
+licenseType: Store
+NativeFormatImporter:
+  mainObjectFileID: 2100000
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 20001022
+  packageName: POLYGON - Particle FX Pack - Art by Synty
+  packageVersion: 1.3.2
+  assetPath: Assets/PolygonParticleFX/Materials/PolygonParticleFX_Soft_Spot.mat
+  uploadId: 0

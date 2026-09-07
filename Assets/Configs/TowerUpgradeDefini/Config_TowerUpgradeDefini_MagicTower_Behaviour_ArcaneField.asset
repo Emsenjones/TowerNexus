@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c4291a96dce44c56bd06e86960356b06, type: 3}
+  m_Name: Config_TowerUpgradeDefini_MagicTower_Behaviour_ArcaneField
+  m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeDefinition
+  displayName: Arcane Field
+  description: Damages nearby monsters over time
+  icon: {fileID: 21300000, guid: 552abccece44d4a2abac96edec82fd25, type: 3}
+  towerFamily: 2
+  requiredTowerLevel: 2
+  upgradeLayer: 1
+  basicStatDeltas: []
+  behaviourPackageType: 202
+  piercingMaxHitCount: 3
+  scatterAngleOffset: 15
+  explosiveShellEffect: {fileID: 0}
+  bounceSearchRadius: 1
+  maxBounceCount: 1
+  bounceArcHeight: 1
+  bounceTargetSelectionType: 0
+  arcaneDetonationEffect: {fileID: 0}
+  magicArcaneFieldPrefab: {fileID: 1505402801219553238, guid: f33809e029e81449ea40b12334e34f35, type: 3}
+  blastRoundsEffect: {fileID: 0}
+  finalDiveHitThreshold: 1
+  finalDiveExplosionEffect: {fileID: 0}
+  elementType: 0
+  elementalApplyEffect: {fileID: 0}
