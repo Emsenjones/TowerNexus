@@ -3709,7 +3709,54 @@ MonoBehaviour:
   battleHUDUI: {fileID: 4430054556091105857}
   draftChoiceCount: 3
   useFixedDraftChoices: 0
-  fixedDraftChoiceSteps: []
+  useFixedDraftSeed: 0
+  fixedDraftSeed: 1001
+  fixedDraftChoiceSteps:
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 447bf4aaa4dee499c9a74975fd774e00, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: 76b13c72bfb594d89beecab5f1ce3520, type: 2}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: 209cc6102ce74847a47fe625f0775630, type: 2}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: 346e262a8da5c46c889e1cb80ff29a72, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: c532f1d360c2544578e8dc0e98b659ea, type: 2}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: 350a57194686d4136b25bcf36394e53d, type: 2}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: e503f7ac2de5244b9b513404c245be6d, type: 2}
+  - choices:
+    - towerDefinition: {fileID: 11400000, guid: e00671911d9c746308754d02eb6d997b, type: 2}
+      towerUpgradeDefinition: {fileID: 0}
+  - choices:
+    - towerDefinition: {fileID: 0}
+      towerUpgradeDefinition: {fileID: 11400000, guid: 66f15d986d0914eaebf7f84a40df37f0, type: 2}
 --- !u!1 &6369237998951487967
 GameObject:
   m_ObjectHideFlags: 0
@@ -5515,7 +5562,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3261855449354590494}
-  - component: {fileID: 2046345648947699159}
   - component: {fileID: 4303056428248239281}
   m_Layer: 0
   m_Name: Prefab_GameRuntime
@@ -5547,20 +5593,6 @@ Transform:
   - {fileID: 4544560715218859623}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &2046345648947699159
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8939497704752416150}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e7f1444193a43b798e16611af596f20, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ExpAddController
-  playerSystem: {fileID: 8439368486033747447}
-  addedProgress: 1
 --- !u!114 &4303056428248239281
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5574,7 +5606,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameFlowController
   demoStages:
-  - {fileID: 11400000, guid: 9f2aaa0ae562f4d00aeba91658bf4009, type: 2}
+  - {fileID: 11400000, guid: 3cbcb494b08af4efb85765bfa4fdfd7e, type: 2}
+  - {fileID: 11400000, guid: c6a7dbddf59aa485fae8889106a20b2e, type: 2}
+  - {fileID: 11400000, guid: d2cf34bed2baf405683600a978d3350a, type: 2}
+  - {fileID: 11400000, guid: aacc73e739bfe4ef59c5e22c120d3fd4, type: 2}
+  - {fileID: 11400000, guid: 4ca53bc93834148b0927ff523d21d19e, type: 2}
+  - {fileID: 11400000, guid: 6c71501ca7ca042bb9e46e493851ce3b, type: 2}
   stageCompositionController: {fileID: 4707264216546559258}
 --- !u!1 &9015606273351229035
 GameObject:

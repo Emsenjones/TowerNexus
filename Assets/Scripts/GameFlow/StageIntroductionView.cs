@@ -22,12 +22,8 @@ public class StageIntroductionView : MonoBehaviour
 
     private void Awake()
     {
+        // GameFlowUIRoot owns visibility; Awake may run during the first Show().
         SetInteractionEnabled(false);
-
-        if (rootObject != null)
-        {
-            rootObject.SetActive(false);
-        }
     }
 
     private void OnEnable()
