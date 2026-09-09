@@ -16,6 +16,21 @@ internal readonly struct PreparedTowerCombatLevelRevision
     internal ResolvedTowerCombatStats ResolvedStats { get; }
 }
 
+public enum RequiredUpgradeRefreshResult
+{
+    Applied,
+    NotRequired,
+    TechnicalFailure
+}
+
+internal readonly struct PreparedTowerCombatUpgradeRevision
+{
+    internal PreparedTowerCombatUpgradeRevision(ResolvedTowerCombatStats previous, ResolvedTowerCombatStats current)
+    { Previous = previous; Current = current; }
+    internal ResolvedTowerCombatStats Previous { get; }
+    internal ResolvedTowerCombatStats Current { get; }
+}
+
 [DisallowMultipleComponent]
 public abstract class TowerCombatBehaviour : MonoBehaviour
 {
@@ -38,7 +53,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         new HashSet<TowerBehaviourPackageType>();
 
     private TowerInstance towerInstance;
-    private TowerInstance subscribedUpgradeTowerInstance;
     private MonsterManager monsterManager;
     private TowerBehaviour towerBehaviour;
     private TowerDefinition towerDefinition;
@@ -110,7 +124,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         OnCombatInitialized();
         hasCompletedSubtypeInitialization = true;
         isRuntimeSessionActive = true;
-        SubscribeToRuntimeNotifications();
     }
 
     public void BeginBattle()
@@ -229,7 +242,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         isBattleActive = true;
         isPreparedForBattleActivation = false;
         isRuntimeSessionActive = true;
-        SubscribeToRuntimeNotifications();
     }
 
     public void StopBattle()
@@ -369,8 +381,11 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     {
     }
 
-    protected virtual void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)
+    protected virtual RequiredUpgradeRefreshResult RefreshBehaviourPackage(
+        TowerUpgradeDefinition upgradeDefinition, out string failureReason)
     {
+        failureReason = string.Empty;
+        return RequiredUpgradeRefreshResult.NotRequired;
     }
 
     protected void SetCurrentTarget(MonsterBehaviour target)
@@ -1067,7 +1082,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
         isRuntimeSessionActive = true;
         isPreparedForBattleActivation = false;
-        SubscribeToRuntimeNotifications();
         return true;
     }
 
@@ -1078,90 +1092,65 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         OnResolvedBaselineEstablished(cachedResolvedStats);
     }
 
-    private void SubscribeToRuntimeNotifications()
+    internal bool TryPrepareUpgradeRevision(
+        TowerInstance expectedTower, TowerUpgradeDefinition upgrade,
+        out PreparedTowerCombatUpgradeRevision revision,
+        out string failureReason)
     {
-        if (!isRuntimeSessionActive || towerInstance == null)
+        revision = default;
+        if (towerInstance != expectedTower || !isActiveAndEnabled || !isBattleActive || !isRuntimeSessionActive ||
+            !hasResolvedStatsCache || !TryValidateExplicitOwner() ||
+            monsterManager == null || !monsterManager.isActiveAndEnabled ||
+            !monsterManager.IsBattleActive || upgrade == null)
         {
-            return;
+            failureReason = "Tower combat is not ready for an Upgrade revision.";
+            return false;
         }
-
-        if (subscribedUpgradeTowerInstance == towerInstance)
+        ResolvedTowerCombatStats next = TowerRuntimeStatResolver.Resolve(
+            towerInstance, CreateBaseStats(), candidateUpgrade: upgrade);
+        if (!IsFiniteNonNegative(next.AttackRange) ||
+            !IsFiniteNonNegative(next.AttackCycleDuration) ||
+            !IsFiniteNonNegative(next.MagicOrbRotationSpeed) ||
+            !IsFiniteNonNegative(next.DroneBurstCooldown) ||
+            !IsFiniteNonNegative(next.ResolvedBasicDamage) || next.ResolvedBasicDamage <= 0f)
         {
-            return;
+            failureReason = "Prepared Upgrade combat values are invalid.";
+            return false;
         }
-
-        UnsubscribeFromRuntimeNotifications();
-        subscribedUpgradeTowerInstance = towerInstance;
-        subscribedUpgradeTowerInstance.OnUpgradeRecorded += HandleUpgradeRecorded;
+        revision = new PreparedTowerCombatUpgradeRevision(cachedResolvedStats, next);
+        failureReason = string.Empty;
+        return true;
     }
 
-    private void UnsubscribeFromRuntimeNotifications()
-    {
-        if (subscribedUpgradeTowerInstance != null)
-        {
-            subscribedUpgradeTowerInstance.OnUpgradeRecorded -= HandleUpgradeRecorded;
-        }
+    private static bool IsFiniteNonNegative(float value) =>
+        !float.IsNaN(value) && !float.IsInfinity(value) && value >= 0f;
 
-        subscribedUpgradeTowerInstance = null;
+    internal void CommitPreparedUpgradeBaseline(PreparedTowerCombatUpgradeRevision revision)
+    {
+        cachedResolvedStats = revision.Current;
+        hasResolvedStatsCache = true;
     }
 
-    private bool CanHandleNotification(TowerInstance sourceTower)
+    internal RequiredUpgradeRefreshResult RefreshCommittedUpgrade(
+        TowerUpgradeDefinition upgrade, PreparedTowerCombatUpgradeRevision revision,
+        out string failureReason)
     {
-        return isBattleActive &&
-               isRuntimeSessionActive &&
-               hasResolvedStatsCache &&
-               sourceTower != null &&
-               sourceTower == towerInstance &&
-               sourceTower == subscribedUpgradeTowerInstance &&
-               monsterManager != null &&
-               monsterManager.isActiveAndEnabled &&
-               TryValidateExplicitOwner();
-    }
-
-    private void HandleUpgradeRecorded(
-        TowerInstance sourceTower,
-        TowerUpgradeDefinition upgradeDefinition)
-    {
-        if (!CanHandleNotification(sourceTower) || upgradeDefinition == null)
+        failureReason = string.Empty;
+        if (!isBattleActive || !isRuntimeSessionActive)
         {
-            return;
+            // A synchronous lifecycle cancellation may close this owner during refresh.
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
-
-        switch (upgradeDefinition.UpgradeLayer)
+        if (upgrade.UpgradeLayer == TowerUpgradeLayer.Basic)
         {
-            case TowerUpgradeLayer.Basic:
-                RefreshResolvedStats(upgradeDefinition);
-                break;
-            case TowerUpgradeLayer.Behaviour:
-                OnBehaviourPackageRecorded(upgradeDefinition);
-                break;
-            case TowerUpgradeLayer.Elemental:
-                break;
+            if (UpgradeIncludesBasicStat(upgrade, TowerUpgradeBasicStatType.AttackCycleDuration))
+                RefreshAttackCycleRatio(revision.Previous.AttackCycleDuration, revision.Current.AttackCycleDuration);
+            OnResolvedStatsChanged(revision.Previous, revision.Current, upgrade);
+            return RequiredUpgradeRefreshResult.Applied;
         }
-    }
-
-    private void RefreshResolvedStats(TowerUpgradeDefinition sourceUpgrade)
-    {
-        ResolvedTowerCombatStats previousStats = cachedResolvedStats;
-        ResolvedTowerCombatStats currentStats =
-            TowerRuntimeStatResolver.Resolve(towerInstance, CreateBaseStats());
-        cachedResolvedStats = currentStats;
-
-        bool refreshAttackCycleDuration = UpgradeIncludesBasicStat(
-            sourceUpgrade,
-            TowerUpgradeBasicStatType.AttackCycleDuration);
-
-        if (refreshAttackCycleDuration)
-        {
-            RefreshAttackCycleRatio(
-                previousStats.AttackCycleDuration,
-                currentStats.AttackCycleDuration);
-        }
-
-        OnResolvedStatsChanged(
-            previousStats,
-            currentStats,
-            sourceUpgrade);
+        if (upgrade.UpgradeLayer == TowerUpgradeLayer.Behaviour)
+            return RefreshBehaviourPackage(upgrade, out failureReason);
+        return RequiredUpgradeRefreshResult.NotRequired;
     }
 
     private void RefreshAttackCycleRatio(
@@ -1183,8 +1172,6 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     private void DeactivateRuntimeSession(bool clearExplicitOwner)
     {
-        UnsubscribeFromRuntimeNotifications();
-
         if (isRuntimeSessionActive || hasResolvedStatsCache)
         {
             CleanupOwnedCombatRuntime();

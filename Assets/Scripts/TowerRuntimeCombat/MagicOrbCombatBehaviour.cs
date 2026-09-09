@@ -124,30 +124,31 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
             currentStats.MagicOrbRotationSpeed));
     }
 
-    protected override void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)
+    protected override RequiredUpgradeRefreshResult RefreshBehaviourPackage(
+        TowerUpgradeDefinition upgradeDefinition, out string failureReason)
     {
-        if (upgradeDefinition == null)
-        {
-            return;
-        }
-
+        failureReason = string.Empty;
+        RequiredUpgradeRefreshResult result = RequiredUpgradeRefreshResult.NotRequired;
         switch (upgradeDefinition.BehaviourPackageType)
         {
             case TowerBehaviourPackageType.MagicMultiOrbs:
-                ReconcileActiveMultiOrbs(upgradeDefinition.AdditionalAttackEntities);
+                result = ReconcileActiveMultiOrbs(upgradeDefinition.AdditionalAttackEntities);
                 break;
             case TowerBehaviourPackageType.MagicArcaneDetonation:
                 if (activeMagicOrbGroup != null)
                 {
                     activeMagicOrbGroup.EnableArcaneDetonation(
-                        upgradeDefinition,
-                        upgradeDefinition.ArcaneDetonationEffect);
+                        upgradeDefinition, upgradeDefinition.ArcaneDetonationEffect);
+                    result = RequiredUpgradeRefreshResult.Applied;
                 }
                 break;
             case TowerBehaviourPackageType.MagicArcaneField:
-                EnsureArcaneFieldExists();
+                result = EnsureArcaneFieldExists(requireActiveBattle: true);
                 break;
         }
+        if (result == RequiredUpgradeRefreshResult.TechnicalFailure)
+            failureReason = "Required Magic upgrade runtime could not be created or initialized.";
+        return result;
     }
 
     protected override void OnCombatUpdate()
@@ -318,7 +319,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         return true;
     }
 
-    private void ReconcileActiveMultiOrbs(
+    private RequiredUpgradeRefreshResult ReconcileActiveMultiOrbs(
         AdditionalAttackEntityAuthoring additionalAttackEntities)
     {
         MagicOrbGroupRuntime group = activeMagicOrbGroup;
@@ -328,41 +329,48 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
 
         if (group == null ||
             !group.IsActive ||
-            group.MemberCount >= desiredMemberCount ||
-            additionalAttackEntities?.Prefab == null)
+            group.MemberCount >= desiredMemberCount)
         {
-            return;
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
+
+        if (additionalAttackEntities?.Prefab == null)
+            return RequiredUpgradeRefreshResult.TechnicalFailure;
 
         int missingMemberCount = desiredMemberCount - group.MemberCount;
         System.Collections.Generic.List<MagicOrbBehaviour> stagedMembers =
             new System.Collections.Generic.List<MagicOrbBehaviour>(missingMemberCount);
 
-        for (int i = 0; i < missingMemberCount; i++)
+        bool committed = false;
+        GameObject unownedCandidate = null;
+        try
         {
-            GameObject candidateObject = Instantiate(
-                additionalAttackEntities.Prefab,
-                group.OrbitCenterPosition,
-                Quaternion.identity);
-            candidateObject.SetActive(false);
-
-            if (!candidateObject.TryGetComponent(out MagicOrbBehaviour candidate) ||
-                !candidate.IsAuthoredConfigurationValid())
+            for (int i = 0; i < missingMemberCount; i++)
             {
-                Destroy(candidateObject);
-                CleanupStagedMembers(stagedMembers);
-                return;
+                unownedCandidate = Instantiate(additionalAttackEntities.Prefab,
+                    group.OrbitCenterPosition, Quaternion.identity);
+                unownedCandidate.SetActive(false);
+                if (!IsBattleActive || !group.IsActive)
+                    return RequiredUpgradeRefreshResult.NotRequired;
+                if (!unownedCandidate.TryGetComponent(out MagicOrbBehaviour candidate) ||
+                    !candidate.IsAuthoredConfigurationValid())
+                    return RequiredUpgradeRefreshResult.TechnicalFailure;
+                stagedMembers.Add(candidate);
+                unownedCandidate = null;
             }
-
-            stagedMembers.Add(candidate);
+            committed = group.TryCommitStagedMembers(stagedMembers,
+                desiredMemberCount, additionalAttackEntities.DamageScale);
+            if (!IsBattleActive) return RequiredUpgradeRefreshResult.NotRequired;
+            if (!committed || !group.IsActive) return RequiredUpgradeRefreshResult.TechnicalFailure;
+            for (int i = 0; i < stagedMembers.Count; i++)
+                if (stagedMembers[i] == null || !stagedMembers[i].IsInitialized)
+                    return RequiredUpgradeRefreshResult.TechnicalFailure;
+            return RequiredUpgradeRefreshResult.Applied;
         }
-
-        if (!group.TryCommitStagedMembers(
-                stagedMembers,
-                desiredMemberCount,
-                additionalAttackEntities.DamageScale))
+        finally
         {
-            CleanupStagedMembers(stagedMembers);
+            if (unownedCandidate != null) Destroy(unownedCandidate);
+            if (!committed) CleanupStagedMembers(stagedMembers);
         }
     }
 
@@ -467,11 +475,11 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         SetIdle();
     }
 
-    private void EnsureArcaneFieldExists()
+    private RequiredUpgradeRefreshResult EnsureArcaneFieldExists(bool requireActiveBattle = false)
     {
         if (IsCurrentArcaneField(activeMagicArcaneField))
         {
-            return;
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
 
         if (activeMagicArcaneField != null)
@@ -485,7 +493,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         if (IsCurrentArcaneField(existingField))
         {
             activeMagicArcaneField = existingField;
-            return;
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
 
         if (TowerInstance == null ||
@@ -498,26 +506,39 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
                 existingField.Cleanup();
             }
 
-            return;
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
 
         MagicArcaneFieldBehaviour field = existingField;
 
         if (field == null && !TryInstantiateMagicArcaneField(arcaneFieldUpgrade.MagicArcaneFieldPrefab, out field))
         {
-            return;
+            return RequiredUpgradeRefreshResult.TechnicalFailure;
         }
 
         field.Cleanup();
+        if (requireActiveBattle && !IsBattleActive)
+            return RequiredUpgradeRefreshResult.NotRequired;
 
         if (!field.Initialize(TowerInstance, MonsterManager, arcaneFieldUpgrade))
         {
             field.Cleanup();
             activeMagicArcaneField = null;
-            return;
+            return RequiredUpgradeRefreshResult.TechnicalFailure;
         }
 
+        if (requireActiveBattle && !IsBattleActive)
+        {
+            field.Cleanup();
+            return RequiredUpgradeRefreshResult.NotRequired;
+        }
+        if (!IsCurrentArcaneField(field))
+        {
+            field.Cleanup();
+            return RequiredUpgradeRefreshResult.TechnicalFailure;
+        }
         activeMagicArcaneField = field;
+        return RequiredUpgradeRefreshResult.Applied;
     }
 
     private bool IsCurrentArcaneField(MagicArcaneFieldBehaviour field)

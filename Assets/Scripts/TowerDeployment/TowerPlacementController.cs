@@ -25,6 +25,15 @@ public readonly struct TowerInvestmentCommitObservation
         TowerInstance = towerInstance;
         PreviousLevel = previousLevel;
         CurrentLevel = currentLevel;
+        TowerInstanceId = towerInstance != null ? towerInstance.GetInstanceID() : 0;
+        TowerDefinition definition = towerInstance != null ? towerInstance.TowerDefinition : null;
+        TowerDisplayName = definition != null ? definition.DisplayName :
+            (towerInstance != null ? towerInstance.name : string.Empty);
+        TowerFamilyName = definition != null ? definition.TowerFamily.ToString() : string.Empty;
+        DraftResultTypeName = draftResult != null ? draftResult.ResultType.ToString() : string.Empty;
+        DraftAssetName = draftResult?.Identity != null ? draftResult.Identity.name : string.Empty;
+        UpgradeLayerName = draftResult?.TowerUpgradeDefinition != null
+            ? draftResult.TowerUpgradeDefinition.UpgradeLayer.ToString() : string.Empty;
     }
 
     public TowerInvestmentCommitKind Kind { get; }
@@ -33,6 +42,12 @@ public readonly struct TowerInvestmentCommitObservation
     public TowerInstance TowerInstance { get; }
     public int PreviousLevel { get; }
     public int CurrentLevel { get; }
+    public int TowerInstanceId { get; }
+    public string TowerDisplayName { get; }
+    public string TowerFamilyName { get; }
+    public string DraftResultTypeName { get; }
+    public string DraftAssetName { get; }
+    public string UpgradeLayerName { get; }
 }
 
 public class TowerPlacementController : MonoBehaviour
@@ -61,6 +76,13 @@ public class TowerPlacementController : MonoBehaviour
     private TowerBehaviour currentUpgradeTarget;
     private PendingDraftUIItem currentDraftEntry;
     private bool isDragging;
+    private bool isCompletingPlacement;
+    public bool CanStartDraftInteraction => !isCompletingPlacement &&
+        (towerUpgradeSystem == null || !towerUpgradeSystem.IsApplyingUpgrade);
+
+    internal bool OwnsDeployedTower(TowerInstance tower) =>
+        isBattleActive && tower != null && deployedTowers.Exists(
+            entry => entry != null && entry.TowerInstance == tower);
     private bool isTowerTargetCandidateActive;
     private bool isLevelUpPreviewActive;
     private bool isBattleActive;
@@ -90,6 +112,8 @@ public class TowerPlacementController : MonoBehaviour
         MonsterRouteRevisionBatch> OnPlacementRouteRevisionCommitted;
     public event System.Action<TowerInvestmentCommitObservation>
         OnTowerInvestmentCommitted;
+
+    internal event System.Action<TowerInvestmentCommitObservation> OnInvestmentEvidenceCommitted;
 
     private void Awake()
     {
@@ -129,11 +153,13 @@ public class TowerPlacementController : MonoBehaviour
 
     public void BeginPlacement(TowerDefinition towerDefinition, PendingDraftUIItem draftedDraftEntry)
     {
+        if (!CanStartDraftInteraction) return;
         BeginTowerDraftDrag(DraftResult.CreateTowerDraft(towerDefinition), draftedDraftEntry);
     }
 
     public void BeginDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
+        if (!CanStartDraftInteraction) return;
         if (!isBattleActive)
         {
             draftedDraftEntry?.RestorePendingPosition();
@@ -237,30 +263,36 @@ public class TowerPlacementController : MonoBehaviour
 
     public void CancelPlacement()
     {
-        HideAttackRangePreviewsForCurrentDrag();
-        ClearUpgradeTargetHighlights();
-
-        if (currentDraftEntry != null)
+        placementValidator?.InvalidatePreviewCache();
+        try
         {
-            currentDraftEntry.RestorePendingPosition();
-        }
+            HideAttackRangePreviewsForCurrentDrag();
+            ClearUpgradeTargetHighlights();
 
-        if (currentPreview != null)
+            if (currentDraftEntry != null)
+            {
+                currentDraftEntry.RestorePendingPosition();
+            }
+
+            if (currentPreview != null)
+            {
+                Destroy(currentPreview.gameObject);
+            }
+        }
+        finally
         {
-            Destroy(currentPreview.gameObject);
+            currentPreview = null;
+            currentDraftResult = null;
+            currentTowerDefinition = null;
+            currentTowerUpgradeDefinition = null;
+            currentTargetNode = null;
+            currentLevelUpTarget = null;
+            currentUpgradeTarget = null;
+            currentDraftEntry = null;
+            isDragging = false;
+            isTowerTargetCandidateActive = false;
+            isLevelUpPreviewActive = false;
         }
-
-        currentPreview = null;
-        currentDraftResult = null;
-        currentTowerDefinition = null;
-        currentTowerUpgradeDefinition = null;
-        currentTargetNode = null;
-        currentLevelUpTarget = null;
-        currentUpgradeTarget = null;
-        currentDraftEntry = null;
-        isDragging = false;
-        isTowerTargetCandidateActive = false;
-        isLevelUpPreviewActive = false;
     }
 
     public bool BindActiveMap(MapGeneratorBehaviour activeMap)
@@ -388,7 +420,8 @@ public class TowerPlacementController : MonoBehaviour
             TowerBehaviour tower = deployedTowers[i];
             TowerCombatBehaviour combatBehaviour =
                 tower != null ? tower.GetComponent<TowerCombatBehaviour>() : null;
-            combatBehaviour?.StopBattle();
+            try { combatBehaviour?.StopBattle(); }
+            catch (System.Exception exception) { Debug.LogException(exception, this); }
         }
     }
 
@@ -423,23 +456,32 @@ public class TowerPlacementController : MonoBehaviour
 
     private void CompletePlacement()
     {
+        if (isCompletingPlacement || !CanStartDraftInteraction) return;
+        isCompletingPlacement = true;
+        try { CompletePlacementCore(); }
+        finally
+        {
+            try { CancelPlacement(); }
+            finally { isCompletingPlacement = false; }
+        }
+    }
+
+    private void CompletePlacementCore()
+    {
         if (!isBattleActive)
         {
-            CancelPlacement();
             return;
         }
 
         if (battleHUDUI != null &&
             battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
         {
-            DragCancelCurrentOperation();
             return;
         }
 
         if (IsTowerUpgradeDraftDrag())
         {
             CompleteTowerUpgrade();
-            CancelPlacement();
             return;
         }
 
@@ -450,7 +492,6 @@ public class TowerPlacementController : MonoBehaviour
                 CompleteLevelUp();
             }
 
-            CancelPlacement();
             return;
         }
 
@@ -467,13 +508,6 @@ public class TowerPlacementController : MonoBehaviour
                 TryCommitNewTowerPlacement();
             }
         }
-
-        CancelPlacement();
-    }
-
-    private void DragCancelCurrentOperation()
-    {
-        CancelPlacement();
     }
 
     private void CompleteLevelUp()
@@ -613,45 +647,11 @@ public class TowerPlacementController : MonoBehaviour
 
     private void CompleteTowerUpgrade()
     {
-        if (towerUpgradeSystem == null ||
-            currentUpgradeTarget == null ||
-            currentUpgradeTarget.TowerInstance == null ||
-            currentTowerUpgradeDefinition == null)
-        {
-            return;
-        }
-
-        PendingDraftUIItem consumedDraft = currentDraftEntry;
-        TowerInstance targetTower = currentUpgradeTarget.TowerInstance;
-
-        if (!towerUpgradeSystem.TryApplyUpgrade(
-                targetTower,
-                currentTowerUpgradeDefinition,
-                out string failureReason))
-        {
-            Debug.LogWarning(
-                $"Tower placement controller failed to apply upgrade '{currentTowerUpgradeDefinition.name}' to '{currentUpgradeTarget.name}': {failureReason}",
-                this);
-            return;
-        }
-
-        if (currentUpgradeTarget.VisualController != null)
-        {
-            currentUpgradeTarget.VisualController.PlayUpgradeAppliedFeedback();
-        }
-
-        if (battleHUDUI != null && currentDraftEntry != null)
-        {
-            battleHUDUI.RemovePendingDraft(currentDraftEntry);
-            currentDraftEntry = null;
-        }
-
-        PublishTowerInvestmentCommitted(
-            TowerInvestmentCommitKind.Upgrade,
-            consumedDraft,
-            targetTower,
-            targetTower.CurrentLevel,
-            targetTower.CurrentLevel);
+        if (towerUpgradeSystem == null || currentUpgradeTarget == null) return;
+        if (!towerUpgradeSystem.TryApplyHeldUpgrade(
+                currentUpgradeTarget.TowerInstance, currentTowerUpgradeDefinition,
+                currentDraftEntry, currentDraftResult, battleHUDUI, out string failureReason))
+            Debug.LogWarning($"Tower upgrade request ended: {failureReason}", this);
     }
 
     private void UpdatePreviewPosition(Vector3 screenPosition)
@@ -1080,39 +1080,30 @@ public class TowerPlacementController : MonoBehaviour
         int previousLevel,
         int currentLevel)
     {
-        System.Action<TowerInvestmentCommitObservation> handlers =
-            OnTowerInvestmentCommitted;
+        if (consumedDraft == null || !consumedDraft.DraftAttemptToken.IsValid ||
+            consumedDraft.DraftResult == null || towerInstance == null) return;
+        var observation = new TowerInvestmentCommitObservation(kind,
+            consumedDraft.DraftAttemptToken, consumedDraft.DraftResult,
+            towerInstance, previousLevel, currentLevel);
+        PublishInvestmentEvidence(observation);
+        PublishInvestmentNotification(observation);
+    }
 
-        if (handlers == null ||
-            consumedDraft == null ||
-            !consumedDraft.DraftAttemptToken.IsValid ||
-            consumedDraft.DraftResult == null ||
-            towerInstance == null)
+    internal void PublishInvestmentEvidence(TowerInvestmentCommitObservation observation) =>
+        PublishInvestmentHandlers(OnInvestmentEvidenceCommitted, observation);
+
+    internal void PublishInvestmentNotification(TowerInvestmentCommitObservation observation) =>
+        PublishInvestmentHandlers(OnTowerInvestmentCommitted, observation);
+
+    private void PublishInvestmentHandlers(
+        System.Action<TowerInvestmentCommitObservation> handlers,
+        TowerInvestmentCommitObservation observation)
+    {
+        if (handlers == null) return;
+        foreach (System.Delegate subscriber in handlers.GetInvocationList())
         {
-            return;
-        }
-
-        TowerInvestmentCommitObservation observation =
-            new TowerInvestmentCommitObservation(
-                kind,
-                consumedDraft.DraftAttemptToken,
-                consumedDraft.DraftResult,
-                towerInstance,
-                previousLevel,
-                currentLevel);
-        System.Delegate[] subscribers = handlers.GetInvocationList();
-
-        for (int i = 0; i < subscribers.Length; i++)
-        {
-            try
-            {
-                ((System.Action<TowerInvestmentCommitObservation>)subscribers[i])
-                    .Invoke(observation);
-            }
-            catch (System.Exception exception)
-            {
-                Debug.LogException(exception, this);
-            }
+            try { ((System.Action<TowerInvestmentCommitObservation>)subscriber)(observation); }
+            catch (System.Exception exception) { Debug.LogException(exception, this); }
         }
     }
 

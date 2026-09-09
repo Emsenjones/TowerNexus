@@ -694,7 +694,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             towerPlacementController.OnTowerDeploymentCommitted +=
                 HandleTowerDeploymentCommitted;
-            towerPlacementController.OnTowerInvestmentCommitted +=
+            towerPlacementController.OnInvestmentEvidenceCommitted +=
                 HandleTowerInvestmentCommitted;
             towerPlacementController.OnPlacementRouteRevisionCommitted +=
                 HandlePlacementRouteRevisionCommitted;
@@ -702,9 +702,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         if (battleRuntimeCoordinator != null)
         {
-            battleRuntimeCoordinator.OnBattleResultPublished +=
+            battleRuntimeCoordinator.OnBeforeBattleCleanup += CaptureTerminalPendingDraftSnapshot;
+            battleRuntimeCoordinator.OnBattleResultEvidence +=
                 HandleBattleResultPublished;
-            battleRuntimeCoordinator.OnBattleRuntimeFailed +=
+            battleRuntimeCoordinator.OnBattleFailureEvidence +=
                 HandleBattleRuntimeFailed;
         }
 
@@ -824,7 +825,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             towerPlacementController.OnTowerDeploymentCommitted -=
                 HandleTowerDeploymentCommitted;
-            towerPlacementController.OnTowerInvestmentCommitted -=
+            towerPlacementController.OnInvestmentEvidenceCommitted -=
                 HandleTowerInvestmentCommitted;
             towerPlacementController.OnPlacementRouteRevisionCommitted -=
                 HandlePlacementRouteRevisionCommitted;
@@ -832,9 +833,10 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         if (battleRuntimeCoordinator != null)
         {
-            battleRuntimeCoordinator.OnBattleResultPublished -=
+            battleRuntimeCoordinator.OnBeforeBattleCleanup -= CaptureTerminalPendingDraftSnapshot;
+            battleRuntimeCoordinator.OnBattleResultEvidence -=
                 HandleBattleResultPublished;
-            battleRuntimeCoordinator.OnBattleRuntimeFailed -=
+            battleRuntimeCoordinator.OnBattleFailureEvidence -=
                 HandleBattleRuntimeFailed;
         }
 
@@ -1289,6 +1291,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         progressionEvents.Clear();
         waveEvents.Clear();
         draftAttempts.Clear();
+        hasCapturedTerminalPendingDraftSnapshot = false;
         terminalPendingDraftSnapshot.Clear();
         investmentCommits.Clear();
         towerDraftPoolSnapshot.Clear();
@@ -1814,17 +1817,11 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         TowerInvestmentCommitObservation observation)
     {
         if (!isTrackingRun ||
-            !observation.DraftAttemptToken.IsValid ||
-            observation.DraftResult == null ||
-            observation.TowerInstance == null)
+            !observation.DraftAttemptToken.IsValid)
         {
             return;
         }
 
-        TowerInstance tower = observation.TowerInstance;
-        TowerDefinition towerDefinition = tower.TowerDefinition;
-        TowerUpgradeDefinition upgradeDefinition =
-            observation.DraftResult.TowerUpgradeDefinition;
         int draftOrdinal = ResolveDraftOrdinal(
             observation.DraftAttemptToken);
         investmentCommits.Add(new CombatBalanceInvestmentCommitJson
@@ -1836,21 +1833,14 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 : "EditorDebug",
             draftAttemptToken = observation.DraftAttemptToken.ToString(),
             draftOrdinal = draftOrdinal,
-            draftResultType = observation.DraftResult.ResultType.ToString(),
-            draftAssetName = GetAssetName(
-                observation.DraftResult.Identity),
-            towerInstanceId = tower.GetInstanceID(),
-            towerDisplayName = towerDefinition != null
-                ? towerDefinition.DisplayName
-                : tower.name,
-            towerFamily = towerDefinition != null
-                ? towerDefinition.TowerFamily.ToString()
-                : string.Empty,
+            draftResultType = observation.DraftResultTypeName,
+            draftAssetName = observation.DraftAssetName,
+            towerInstanceId = observation.TowerInstanceId,
+            towerDisplayName = observation.TowerDisplayName,
+            towerFamily = observation.TowerFamilyName,
             previousLevel = observation.PreviousLevel,
             currentLevel = observation.CurrentLevel,
-            upgradeLayer = upgradeDefinition != null
-                ? upgradeDefinition.UpgradeLayer.ToString()
-                : string.Empty,
+            upgradeLayer = observation.UpgradeLayerName,
             activeTimeSeconds = GetRunActiveTimeSeconds(),
             resolvedMonsterCount = resolvedCount,
             spawned = spawnedCount,
@@ -3169,18 +3159,20 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
     private void HandleBattleResultPublished(BattleResult result)
     {
-        CaptureTerminalPendingDraftSnapshot();
         QueueFinalSummary(result.ToString(), null);
     }
 
     private void HandleBattleRuntimeFailed(string failureReason)
     {
-        CaptureTerminalPendingDraftSnapshot();
         QueueFinalSummary("TechnicalFailure", failureReason);
     }
 
+    private bool hasCapturedTerminalPendingDraftSnapshot;
+
     private void CaptureTerminalPendingDraftSnapshot()
     {
+        if (!isTrackingRun || hasCapturedTerminalPendingDraftSnapshot) return;
+        hasCapturedTerminalPendingDraftSnapshot = true;
         terminalPendingDraftSnapshot.Clear();
 
         IReadOnlyList<PendingDraftUIItem> pendingItems =

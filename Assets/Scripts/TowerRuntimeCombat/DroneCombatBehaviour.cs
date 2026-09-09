@@ -112,13 +112,16 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         }
     }
 
-    protected override void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)
+    protected override RequiredUpgradeRefreshResult RefreshBehaviourPackage(
+        TowerUpgradeDefinition upgradeDefinition, out string failureReason)
     {
+        failureReason = string.Empty;
         if (upgradeDefinition == null)
         {
-            return;
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
 
+        bool refreshed = false;
         List<DroneBehaviour> droneSnapshot = GetActiveDroneSnapshot();
 
         switch (upgradeDefinition.BehaviourPackageType)
@@ -130,7 +133,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
 
                     if (drone != null)
                     {
-                        drone.RefreshBlastRounds(
+                        refreshed |= drone.RefreshBlastRounds(
                             upgradeDefinition,
                             upgradeDefinition.BlastRoundsEffect);
                     }
@@ -144,7 +147,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
 
                     if (projectile != null)
                     {
-                        projectile.TryRefreshBlastRounds(
+                        refreshed |= projectile.TryRefreshBlastRounds(
                             upgradeDefinition,
                             upgradeDefinition.BlastRoundsEffect);
                     }
@@ -157,7 +160,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
 
                     if (drone != null)
                     {
-                        drone.RefreshFinalDive(
+                        refreshed |= drone.RefreshFinalDive(
                             upgradeDefinition,
                             upgradeDefinition.FinalDiveHitThreshold,
                             upgradeDefinition.FinalDiveExplosionEffect);
@@ -165,6 +168,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
                 }
                 break;
         }
+        return refreshed ? RequiredUpgradeRefreshResult.Applied : RequiredUpgradeRefreshResult.NotRequired;
     }
 
     protected override void OnCombatUpdate()

@@ -24,6 +24,15 @@ It records what a Tower has gained. Tower Runtime Combat, Projectile, Effect, Bu
 
 It does not own Draft generation, placement intent detection, UI feedback, combat scheduling, Projectile flight, Effect execution, Buff state, or Tower-local rendering.
 
+Upgrade acceptance separates preparation, semantic commitment, necessary combat
+refresh, and optional notification. Player acceptance requires exact held-reward
+identity and consumption in the same callback-free commitment as Upgrade state.
+The prepared operation is synchronous and single-use. Required combat refresh
+runs explicitly once before optional Upgrade notifications; it does not depend on
+subscriber order. A post-commit technical failure does not restore accepted rewards.
+Tooling may apply an Upgrade without a player reward, using the same eligibility
+and combat-refresh core without fabricating Draft consumption or investment.
+
 ---
 
 # 2. Growth Model

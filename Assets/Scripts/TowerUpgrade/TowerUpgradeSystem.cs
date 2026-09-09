@@ -335,24 +335,127 @@ public class TowerUpgradeSystem : MonoBehaviour
         return true;
     }
 
-    public bool TryApplyUpgrade(
-        TowerInstance targetTower,
-        TowerUpgradeDefinition upgradeDefinition,
+    private BattleRuntimeCoordinator battleRuntime;
+    private TowerPlacementController placement;
+    private TowerInvestmentCommitObservation committedInvestment;
+    private bool hasUnpublishedInvestment;
+    public bool IsApplyingUpgrade { get; private set; }
+
+    internal void BindUpgradeRuntime(BattleRuntimeCoordinator coordinator,
+        TowerPlacementController controller)
+    {
+        battleRuntime = coordinator;
+        placement = controller;
+    }
+
+    internal void FlushCommittedInvestment()
+    {
+        if (!hasUnpublishedInvestment) return;
+        hasUnpublishedInvestment = false;
+        placement.PublishInvestmentEvidence(committedInvestment);
+    }
+
+    internal bool TryApplyHeldUpgrade(TowerInstance targetTower,
+        TowerUpgradeDefinition upgradeDefinition, PendingDraftUIItem heldItem,
+        DraftResult heldResult, BattleHUDUI hud, out string failureReason) =>
+        TryApplyUpgradeCore(targetTower, upgradeDefinition, heldItem,
+            heldResult, hud, false, out failureReason);
+
+#if UNITY_EDITOR
+    public bool TryApplyDebugUpgrade(TowerInstance targetTower,
+        TowerUpgradeDefinition upgradeDefinition, out string failureReason) =>
+        TryApplyUpgradeCore(targetTower, upgradeDefinition, null,
+            null, null, true, out failureReason);
+#endif
+
+    private bool TryApplyUpgradeCore(TowerInstance targetTower,
+        TowerUpgradeDefinition upgradeDefinition, PendingDraftUIItem heldItem,
+        DraftResult heldResult, BattleHUDUI hud, bool isDebug,
         out string failureReason)
     {
-        if (!CanApplyUpgrade(targetTower, upgradeDefinition, out failureReason))
-        {
-            return false;
-        }
+        failureReason = "Upgrade operation is busy or the active Battle no longer owns the target.";
+        if (IsApplyingUpgrade || battleRuntime == null || !battleRuntime.IsBattleActive ||
+            placement == null || (isDebug && !placement.CanStartDraftInteraction) ||
+            !placement.OwnsDeployedTower(targetTower)) return false;
 
-        if (!targetTower.TryRecordUpgrade(upgradeDefinition))
+        bool committed = false;
+        IsApplyingUpgrade = true;
+        try
         {
-            failureReason = $"Target tower failed to record upgrade '{upgradeDefinition.name}'.";
-            return false;
-        }
+            if (!CanApplyUpgrade(targetTower, upgradeDefinition, out failureReason)) return false;
+            PreparedPendingDraftConsumption consumption = default;
+            if (!isDebug && (hud == null || heldItem == null ||
+                !heldItem.DraftAttemptToken.IsValid || heldResult == null ||
+                heldItem.DraftResult != heldResult ||
+                heldResult.ResultType != DraftResultType.TowerUpgradeDraft ||
+                heldResult.TowerUpgradeDefinition != upgradeDefinition ||
+                !hud.TryPreparePendingDraftConsumption(heldItem, out consumption)))
+            {
+                failureReason = "The exact held Upgrade Draft is no longer consumable.";
+                return false;
+            }
+            if (!targetTower.TryGetComponent(out TowerCombatBehaviour combat))
+            {
+                failureReason = "The target combat owner is missing.";
+                return false;
+            }
+            if (!combat.TryPrepareUpgradeRevision(targetTower, upgradeDefinition,
+                    out PreparedTowerCombatUpgradeRevision revision, out failureReason)) return false;
+            targetTower.PrepareUpgradeCapacity();
+            var observation = isDebug ? default : new TowerInvestmentCommitObservation(
+                TowerInvestmentCommitKind.Upgrade, heldItem.DraftAttemptToken,
+                heldResult, targetTower, targetTower.CurrentLevel, targetTower.CurrentLevel);
 
-        failureReason = string.Empty;
-        return true;
+            // No callbacks or runtime entity creation in this semantic commit section.
+            targetTower.CommitPreparedUpgrade(upgradeDefinition);
+            combat.CommitPreparedUpgradeBaseline(revision);
+            if (!isDebug) hud.CommitPreparedPendingDraftConsumption(consumption);
+            committedInvestment = observation;
+            hasUnpublishedInvestment = !isDebug;
+            committed = true;
+
+            RequiredUpgradeRefreshResult refresh;
+            try { refresh = combat.RefreshCommittedUpgrade(upgradeDefinition, revision, out failureReason); }
+            catch (System.Exception exception)
+            {
+                Debug.LogException(exception, this);
+                failureReason = "Required upgrade refresh threw: " + exception.Message;
+                refresh = RequiredUpgradeRefreshResult.TechnicalFailure;
+            }
+
+            // Also flushed by Stop/Release if synchronous runtime callbacks end the Stage.
+            FlushCommittedInvestment();
+            if (refresh == RequiredUpgradeRefreshResult.TechnicalFailure)
+            {
+                battleRuntime.FailCommittedUpgrade(this, failureReason);
+                if (!isDebug) placement.PublishInvestmentNotification(observation);
+                return false;
+            }
+
+            if (!isDebug) placement.PublishInvestmentNotification(observation);
+            if (targetTower != null) targetTower.PublishUpgradeRecordedSafely(upgradeDefinition);
+            if (battleRuntime.IsBattleActive && targetTower != null)
+            {
+                try
+                {
+                    if (targetTower.TryGetComponent(out TowerBehaviour behaviour))
+                        behaviour.VisualController?.PlayUpgradeAppliedFeedback();
+                }
+                catch (System.Exception exception) { Debug.LogException(exception, this); }
+            }
+            failureReason = string.Empty;
+            return true;
+        }
+        finally
+        {
+            try
+            {
+                FlushCommittedInvestment();
+                if (committed && !isDebug && heldItem != null && hud != null)
+                    hud.ReleaseConsumedPendingDraftView(heldItem);
+            }
+            finally { IsApplyingUpgrade = false; }
+        }
     }
 
     public static bool IsSupportedRequiredTowerLevel(int requiredTowerLevel)

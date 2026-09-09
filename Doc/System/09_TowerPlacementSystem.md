@@ -19,6 +19,17 @@ It does not own Draft generation, held-item presentation, Tower level or upgrade
 
 Tower placement is runtime battlefield editing: accepted occupancy changes effective walkability and may change Monster routes.
 
+Ordinary Upgrade acceptance preflights the exact currently held Upgrade identity,
+target membership, eligibility, consumption, and required combat readiness. Its
+synchronous semantic commit records the Upgrade, applies the prepared baseline,
+and consumes the reward without optional callbacks. Necessary runtime refresh
+follows once. An unrecoverable required refresh failure closes the Battle through
+result-neutral Technical Failure; it does not refund or replay accepted investment.
+Committed investment facts and terminal observations are retained before Stage
+release, independent of presentation and flow-subscriber ordering. Acceptance,
+notification, and outer cleanup share one interaction guard, while stop/release
+remains legal. Optional notification or presentation failure cannot undo commitment.
+
 ---
 
 # 2. Placement Input Contract
@@ -35,6 +46,22 @@ Only one drag operation and one active Tower placement preview may exist at a ti
 The held item is consumed only after the receiving gameplay system accepts the requested result. Semantic consumption removes the exact item from Battle HUD ownership and marks its view consumed in the same non-failing commit, so every pointer and drag handler rejects it immediately. Destruction of the consumed view is later presentation cleanup. Rejection or cancellation preserves the item.
 
 An accepted Draft-item drag owns its pointer gesture until release or cancellation. Camera System must not begin or continue a pan from that gesture, including after the pointer moves from the UI into the battlefield.
+
+---
+
+## 2.1 Preview Query Reuse
+
+Preview may reuse a topology result only after validating the current Map binding
+and index and resolving the complete current footprint. Reuse requires identical
+Map/binding identity, structure and walkability revisions, and footprint node
+identities. Unresolved footprints or unavailable configuration do not reuse cached
+results. Occupied and route-blocking results for resolved footprints may be cached.
+New gestures, cancellation, and rebinding clear preview reuse. Tower Level-Up and
+Upgrade eligibility remain live checks.
+
+Final submission creates a fresh topology plan and prepares current living-Monster
+movement revisions. Preview reuse never authorizes commitment or reuses a prepared
+Monster batch. Path order and movement continuity retain their existing contracts.
 
 ---
 

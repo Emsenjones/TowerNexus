@@ -308,6 +308,24 @@ Camera System may consume the Active Map's framing origin, plane, gameplay footp
 
 ---
 
+## 10.1 Runtime Query Validity
+
+Map owns its node index and separate structure and walkability revisions. A valid
+index serves ordinary node, endpoint, and neighbor queries without rediscovering
+the node hierarchy. Reads do not advance revisions. Structural changes invalidate
+the whole index; malformed coordinates or ownership never expose a stale or
+partially indexed Map. Index readiness is distinct from full Battle readiness:
+a complete all-Normal authoring scaffold remains queryable before endpoints and
+presentation are configured.
+
+Node mutations notify their Map. Ownership transfer invalidates both affected
+Maps; release removes owner references. A committed occupancy change invalidates
+dependent previews synchronously before post-commit observation. Candidate
+blockers remain read-only. Presentation-only changes do not alter topology
+revisions. Full authoring validation still inspects the actual hierarchy.
+
+---
+
 # 11. Validation
 
 Map validation is available through one reusable programmatic operation that returns valid/invalid state together with aggregated errors and warnings. Authoring UI reports this result, and Stage validation reuses the same operation rather than duplicating Map rules.

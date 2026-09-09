@@ -36,16 +36,69 @@ internal sealed class TowerPlacementTopologyPlan
     }
 }
 
+internal sealed class TowerPlacementPreviewQueryCache
+{
+    private MapGeneratorBehaviour map;
+    private AStarPathfindingService pathfinding;
+    private ulong structureRevision, walkabilityRevision, bindingRevision;
+    private readonly List<GridNodeBehaviour> footprint = new List<GridNodeBehaviour>();
+    private bool hasResult, result;
+
+    internal void Clear()
+    {
+        hasResult = false;
+        map = null;
+        pathfinding = null;
+        footprint.Clear();
+    }
+
+    internal bool TryGet(MapGeneratorBehaviour currentMap, AStarPathfindingService service,
+        IReadOnlyList<GridNodeBehaviour> nodes, out bool canPlace)
+    {
+        canPlace = false;
+        if (!hasResult || map != currentMap || pathfinding != service ||
+            structureRevision != currentMap.StructureRevision ||
+            walkabilityRevision != currentMap.WalkabilityRevision ||
+            bindingRevision != service.BindingRevision || footprint.Count != nodes.Count) return false;
+        // Resolved footprints are unique. Compare full identities, independent of anchor order.
+        for (int i = 0; i < nodes.Count; i++)
+            if (!footprint.Contains(nodes[i])) return false;
+        canPlace = result;
+        return true;
+    }
+
+    internal void Store(MapGeneratorBehaviour currentMap, AStarPathfindingService service,
+        IReadOnlyList<GridNodeBehaviour> nodes, bool canPlace)
+    {
+        map = currentMap;
+        pathfinding = service;
+        structureRevision = map.StructureRevision;
+        walkabilityRevision = map.WalkabilityRevision;
+        bindingRevision = service.BindingRevision;
+        footprint.Clear();
+        for (int i = 0; i < nodes.Count; i++) footprint.Add(nodes[i]);
+        result = canPlace;
+        hasResult = true;
+    }
+}
+
 public class TowerPlacementValidator : MonoBehaviour
 {
     [SerializeField] private AStarPathfindingService pathfindingService;
 
     private MapGeneratorBehaviour mapGenerator;
+    private readonly TowerPlacementPreviewQueryCache previewCache = new TowerPlacementPreviewQueryCache();
+#if UNITY_EDITOR
+    public int PreviewTopologyQueryCount { get; private set; }
+    public int PreviewCacheHitCount { get; private set; }
+#endif
+    public void InvalidatePreviewCache() => previewCache.Clear();
 
     public void Initialize(
         MapGeneratorBehaviour mapGenerator,
         AStarPathfindingService pathfindingService)
     {
+        InvalidatePreviewCache();
         this.mapGenerator = mapGenerator;
         this.pathfindingService = pathfindingService;
     }
@@ -105,13 +158,73 @@ public class TowerPlacementValidator : MonoBehaviour
 
     public bool CanPlaceTower(TowerPlacementPreview preview)
     {
-        return TryCreateTopologyPlan(
-            preview,
-            out _,
-            out _,
-            out _,
-            out _,
-            captureDiagnostics: false);
+        if (!TryResolveQueryEndpoints(out GridNodeBehaviour spawn, out GridNodeBehaviour target,
+                out _) || !TryGetOccupiedNodes(preview, out List<GridNodeBehaviour> nodes))
+        {
+            previewCache.Clear();
+            return false;
+        }
+        if (previewCache.TryGet(mapGenerator, pathfindingService, nodes, out bool cachedResult))
+        {
+#if UNITY_EDITOR
+            PreviewCacheHitCount++;
+#endif
+            return cachedResult;
+        }
+#if UNITY_EDITOR
+        PreviewTopologyQueryCount++;
+#endif
+        bool result = TryEvaluateTopology(nodes, spawn, target, out _, out _, out _);
+        previewCache.Store(mapGenerator, pathfindingService, nodes, result);
+        return result;
+    }
+
+    private bool TryResolveQueryEndpoints(out GridNodeBehaviour spawn,
+        out GridNodeBehaviour target, out string failureReason)
+    {
+        spawn = target = null;
+        if (mapGenerator == null || pathfindingService == null ||
+            pathfindingService.ActiveMap != mapGenerator)
+        {
+            failureReason = "Map and A* service must be bound to the same Active Map.";
+            return false;
+        }
+        if (!mapGenerator.TryEnsureNodeIndex())
+        {
+            failureReason = "The Active Map node index is unavailable: " + mapGenerator.NodeIndexFailureReason;
+            return false;
+        }
+        spawn = mapGenerator.GetSpawnNode();
+        target = mapGenerator.GetTargetNode();
+        if (spawn == null || target == null)
+        {
+            failureReason = "The Active Map does not provide unambiguous Spawn and Target Grid Nodes.";
+            return false;
+        }
+        failureReason = string.Empty;
+        return true;
+    }
+
+    private bool TryEvaluateTopology(IReadOnlyList<GridNodeBehaviour> nodes,
+        GridNodeBehaviour spawn, GridNodeBehaviour target,
+        out List<GridNodeBehaviour> route, out bool? routeExists, out string failureReason)
+    {
+        route = null;
+        routeExists = null;
+        for (int i = 0; i < nodes.Count; i++)
+        {
+            if (nodes[i] == null || !nodes[i].IsWalkable)
+            {
+                failureReason = "the candidate Tower footprint contains an unavailable Grid Node.";
+                return false;
+            }
+        }
+        // Candidate blockers remain read-only; the same A* order is used by final submission.
+        route = pathfindingService.FindPath(spawn, target, nodes);
+        routeExists = route != null && route.Count > 0;
+        failureReason = routeExists.Value ? string.Empty :
+            "the candidate Tower footprint blocks the Spawn-to-Target route.";
+        return routeExists.Value;
     }
 
     internal bool TryCreateTopologyPlan(
@@ -125,86 +238,22 @@ public class TowerPlacementValidator : MonoBehaviour
         topologyPlan = null;
         diagnosticFootprint = null;
         routeExists = null;
-
-        if (!TryGetOccupiedNodes(preview, out List<GridNodeBehaviour> occupiedNodes))
+        if (!TryResolveQueryEndpoints(out GridNodeBehaviour spawn, out GridNodeBehaviour target,
+                out failureReason)) return false;
+        if (!TryGetOccupiedNodes(preview, out List<GridNodeBehaviour> nodes))
         {
-            failureReason =
-                "the candidate Tower footprint could not be resolved on the Active Map.";
+            failureReason = "the candidate Tower footprint could not be resolved on the Active Map.";
             return false;
         }
-
-        for (int i = 0; i < occupiedNodes.Count; i++)
+        if (!TryEvaluateTopology(nodes, spawn, target, out List<GridNodeBehaviour> route,
+                out routeExists, out failureReason))
         {
-            GridNodeBehaviour node = occupiedNodes[i];
-
-            if (node == null || !node.IsWalkable)
-            {
-                diagnosticFootprint = CopyDiagnosticFootprint(
-                    occupiedNodes,
-                    captureDiagnostics);
-                failureReason =
-                    "the candidate Tower footprint contains an unavailable Grid Node.";
-                return false;
-            }
-        }
-
-        if (pathfindingService == null || mapGenerator == null)
-        {
-            diagnosticFootprint = CopyDiagnosticFootprint(
-                occupiedNodes,
-                captureDiagnostics);
-            failureReason =
-                "the Active Map or A* pathfinding service is not assigned.";
+            diagnosticFootprint = CopyDiagnosticFootprint(nodes, captureDiagnostics);
             return false;
         }
-
-        if (pathfindingService.ActiveMap != mapGenerator)
-        {
-            diagnosticFootprint = CopyDiagnosticFootprint(
-                occupiedNodes,
-                captureDiagnostics);
-            failureReason =
-                "the A* pathfinding service is not bound to the same Active Map.";
-            return false;
-        }
-
-        GridNodeBehaviour spawnNode = mapGenerator.GetSpawnNode();
-        GridNodeBehaviour targetNode = mapGenerator.GetTargetNode();
-
-        if (spawnNode == null || targetNode == null)
-        {
-            diagnosticFootprint = CopyDiagnosticFootprint(
-                occupiedNodes,
-                captureDiagnostics);
-            failureReason =
-                "the Active Map does not provide both Spawn and Target Grid Nodes.";
-            return false;
-        }
-
-        List<GridNodeBehaviour> authoritativeRoute = pathfindingService.FindPath(
-            spawnNode,
-            targetNode,
-            occupiedNodes);
-        routeExists =
-            authoritativeRoute != null && authoritativeRoute.Count > 0;
-
-        if (!routeExists.Value)
-        {
-            diagnosticFootprint = CopyDiagnosticFootprint(
-                occupiedNodes,
-                captureDiagnostics);
-            failureReason =
-                "the candidate Tower footprint blocks the Spawn-to-Target route.";
-            return false;
-        }
-
-        topologyPlan = new TowerPlacementTopologyPlan(
-            occupiedNodes,
-            authoritativeRoute);
-        diagnosticFootprint = captureDiagnostics
-            ? topologyPlan.Footprint
-            : null;
-        failureReason = string.Empty;
+        // A final plan is never retained in, or recovered from, the preview cache.
+        topologyPlan = new TowerPlacementTopologyPlan(nodes, route);
+        diagnosticFootprint = captureDiagnostics ? topologyPlan.Footprint : null;
         return true;
     }
 

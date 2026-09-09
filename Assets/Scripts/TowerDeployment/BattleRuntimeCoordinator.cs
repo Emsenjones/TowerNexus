@@ -39,8 +39,39 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     public event Action<BattleResult> OnBattleResultPublished;
     public event Action<string> OnBattleRuntimeFailed;
 
+    internal event Action OnBeforeBattleCleanup;
+    internal event Action<BattleResult> OnBattleResultEvidence;
+    internal event Action<string> OnBattleFailureEvidence;
+
+    internal void FailCommittedUpgrade(TowerUpgradeSystem owner, string reason)
+    {
+        if (owner == towerUpgradeSystem) TryFailBattleRuntime(reason);
+    }
+
+    private void PublishSafely<T>(Action<T> handlers, T value)
+    {
+        if (handlers == null) return;
+        foreach (Delegate subscriber in handlers.GetInvocationList())
+        {
+            try { ((Action<T>)subscriber)(value); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+        }
+    }
+
+    private void CaptureBeforeCleanup()
+    {
+        towerUpgradeSystem?.FlushCommittedInvestment();
+        if (OnBeforeBattleCleanup == null) return;
+        foreach (Delegate subscriber in OnBeforeBattleCleanup.GetInvocationList())
+        {
+            try { ((Action)subscriber)(); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+        }
+    }
+
     private void OnEnable()
     {
+        towerUpgradeSystem?.BindUpgradeRuntime(this, towerPlacementController);
         if (playerSystem != null)
         {
             playerSystem.OnPlayerDefeated += HandlePlayerDefeated;
@@ -108,6 +139,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         IReadOnlyList<TowerUpgradeDefinition> upgradePool,
         float towerDraftSlotProbability)
     {
+        if (towerUpgradeSystem != null && towerUpgradeSystem.IsApplyingUpgrade) return false;
+        towerUpgradeSystem?.BindUpgradeRuntime(this, towerPlacementController);
         if (!TryValidatePreparationReferences(out string failureReason))
         {
             Debug.LogError(
@@ -427,6 +460,12 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         return true;
     }
 
+    private void RunCleanupSafely(Action cleanup)
+    {
+        try { cleanup(); }
+        catch (Exception exception) { Debug.LogException(exception, this); }
+    }
+
     private void CloseBattleAuthorityAndGates()
     {
         IsBattleActive = false;
@@ -434,18 +473,19 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         preparedPlayerMaxHealth = 0;
         preparedPlayerProgressRequirements.Clear();
         isBattlePrepared = false;
-        monsterSpawner?.StopBattle();
-        playerSystem?.StopBattle();
-        monsterManager?.CloseBattleGate();
-        towerPlacementController?.CloseBattleGate();
-        draftSystem?.StopBattle();
+        RunCleanupSafely(() => monsterSpawner?.StopBattle());
+        RunCleanupSafely(() => playerSystem?.StopBattle());
+        RunCleanupSafely(() => monsterManager?.CloseBattleGate());
+        RunCleanupSafely(() => towerPlacementController?.CloseBattleGate());
+        RunCleanupSafely(() => draftSystem?.StopBattle());
     }
 
     public void StopBattle()
     {
+        CaptureBeforeCleanup();
         CloseBattleAuthorityAndGates();
-        monsterManager?.ForceCleanupAllMonsters();
-        towerPlacementController?.StopTrackedTowerCombat();
+        RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
+        RunCleanupSafely(() => towerPlacementController?.StopTrackedTowerCombat());
     }
 
     public void ReleasePreparedBattleRuntime()
@@ -735,8 +775,10 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return;
         }
 
+        CaptureBeforeCleanup();
+        PublishSafely(OnBattleResultEvidence, result);
         StopBattle();
-        OnBattleResultPublished?.Invoke(result);
+        PublishSafely(OnBattleResultPublished, result);
     }
 
     private void ResetResultTracking()
@@ -862,9 +904,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             $"{concreteReason}",
             this);
 
-        CloseBattleAuthorityAndGates();
-        monsterManager?.ForceCleanupAllMonsters();
-        towerPlacementController?.StopTrackedTowerCombat();
-        OnBattleRuntimeFailed?.Invoke(concreteReason);
+        CaptureBeforeCleanup();
+        PublishSafely(OnBattleFailureEvidence, concreteReason);
+        StopBattle();
+        PublishSafely(OnBattleRuntimeFailed, concreteReason);
     }
 }

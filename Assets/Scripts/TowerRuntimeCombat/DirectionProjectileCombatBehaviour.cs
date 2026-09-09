@@ -118,19 +118,22 @@ public sealed class DirectionProjectileCombatBehaviour : TowerCombatBehaviour
         ResetPendingAttack();
     }
 
-    protected override void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)
+    protected override RequiredUpgradeRefreshResult RefreshBehaviourPackage(
+        TowerUpgradeDefinition upgradeDefinition, out string failureReason)
     {
+        failureReason = string.Empty;
         if (upgradeDefinition == null)
         {
-            return;
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
 
         switch (upgradeDefinition.BehaviourPackageType)
         {
             case TowerBehaviourPackageType.ArcherPiercingArrow:
                 RefreshActivePiercing(upgradeDefinition.PiercingMaxHitCount);
-                break;
+                return RequiredUpgradeRefreshResult.Applied;
         }
+        return RequiredUpgradeRefreshResult.NotRequired;
     }
 
     private void CapturePendingAttackTopology()

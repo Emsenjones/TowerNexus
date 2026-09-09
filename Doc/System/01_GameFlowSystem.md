@@ -24,6 +24,12 @@ It coordinates Stage and battle runtime owners without absorbing their domain ru
 
 The Demo uses one ordered sequence of directly referenced StageDefinitions. Unlocking, persistence, branching routes, and a Stage-selection interface are separate future designs.
 
+Before a terminal Battle notification can cause Stage release, committed
+investment facts and terminal observation snapshots are finalized. Observation
+and public flow notifications are ordered phases, not subscriber-order assumptions.
+A necessary Upgrade refresh failure after commitment uses the same result-neutral
+Technical Failure route; accepted investment is neither refunded nor replayed.
+
 ---
 
 # 2. Game Flow State Model

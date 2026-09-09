@@ -529,32 +529,34 @@ public class DroneBehaviour : MonoBehaviour
 
     }
 
-    public void RefreshBlastRounds(
+    public bool RefreshBlastRounds(
         TowerUpgradeDefinition sourceUpgrade,
         EffectDefinition effectDefinition)
     {
         if (!isInitialized || hasEnded)
         {
-            return;
+            return false;
         }
 
         blastRoundsSourceUpgrade = sourceUpgrade;
         blastRoundsEffect = effectDefinition;
+        return true;
     }
 
-    public void RefreshFinalDive(
+    public bool RefreshFinalDive(
         TowerUpgradeDefinition sourceUpgrade,
         float hitThreshold,
         EffectDefinition explosionEffect)
     {
         if (!isInitialized || hasEnded || hasResolvedBatteryEnd)
         {
-            return;
+            return false;
         }
 
         finalDiveSourceUpgrade = sourceUpgrade;
         finalDiveHitThreshold = Mathf.Max(0f, hitThreshold);
         finalDiveExplosionEffect = explosionEffect;
+        return true;
     }
 
     private void RefreshBurstCooldown(float resolvedBurstCooldown)

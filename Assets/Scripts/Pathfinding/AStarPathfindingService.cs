@@ -75,6 +75,10 @@ public class AStarPathfindingService : MonoBehaviour
 
     public MapGeneratorBehaviour ActiveMap => mapGenerator;
     public bool HasActiveMap => mapGenerator != null;
+    public ulong BindingRevision { get; private set; }
+#if UNITY_EDITOR
+    public int SearchCount { get; private set; }
+#endif
 
     public bool BindActiveMap(MapGeneratorBehaviour activeMap)
     {
@@ -84,12 +88,14 @@ public class AStarPathfindingService : MonoBehaviour
             return false;
         }
 
+        BindingRevision++;
         mapGenerator = activeMap;
         return true;
     }
 
     public void ClearActiveMap()
     {
+        BindingRevision++;
         mapGenerator = null;
     }
 
@@ -120,6 +126,9 @@ public class AStarPathfindingService : MonoBehaviour
         GridNodeBehaviour targetNode,
         IReadOnlyCollection<GridNodeBehaviour> temporaryBlockedNodes)
     {
+#if UNITY_EDITOR
+        SearchCount++;
+#endif
         if (mapGenerator == null)
         {
             Debug.LogWarning("A* pathfinding service cannot find path: map generator is not assigned.", this);

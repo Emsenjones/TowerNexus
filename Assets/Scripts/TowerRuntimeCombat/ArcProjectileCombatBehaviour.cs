@@ -109,13 +109,16 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
         ResetPendingAttack();
     }
 
-    protected override void OnBehaviourPackageRecorded(TowerUpgradeDefinition upgradeDefinition)
+    protected override RequiredUpgradeRefreshResult RefreshBehaviourPackage(
+        TowerUpgradeDefinition upgradeDefinition, out string failureReason)
     {
+        failureReason = string.Empty;
         if (upgradeDefinition == null)
         {
-            return;
+            return RequiredUpgradeRefreshResult.NotRequired;
         }
 
+        bool refreshed = false;
         List<ProjectileBehaviour> projectileSnapshot = GetOwnedProjectileSnapshot();
 
         switch (upgradeDefinition.BehaviourPackageType)
@@ -127,7 +130,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 
                     if (projectile != null)
                     {
-                        projectile.TryRefreshExplosiveShell(
+                        refreshed |= projectile.TryRefreshExplosiveShell(
                             upgradeDefinition,
                             upgradeDefinition.ExplosiveShellEffect);
                     }
@@ -140,7 +143,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
 
                     if (projectile != null)
                     {
-                        projectile.TryEnableInitialBouncingShell(
+                        refreshed |= projectile.TryEnableInitialBouncingShell(
                             upgradeDefinition.BounceSearchRadius,
                             upgradeDefinition.MaxBounceCount,
                             upgradeDefinition.BounceArcHeight,
@@ -150,6 +153,7 @@ public sealed class ArcProjectileCombatBehaviour : TowerCombatBehaviour
                 }
                 break;
         }
+        return refreshed ? RequiredUpgradeRefreshResult.Applied : RequiredUpgradeRefreshResult.NotRequired;
     }
 
     private void ReleasePendingAttack()

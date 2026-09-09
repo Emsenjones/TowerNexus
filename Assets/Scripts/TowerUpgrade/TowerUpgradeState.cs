@@ -93,15 +93,15 @@ public class TowerUpgradeState
         return activeBehaviourPackageTypes;
     }
 
-    public bool TryRecordUpgrade(TowerUpgradeDefinition upgradeDefinition)
+    internal void PrepareUpgradeCapacity()
     {
-        if (upgradeDefinition == null || HasUpgrade(upgradeDefinition))
-        {
-            return false;
-        }
+        // Allocation belongs to preflight, not the callback-free semantic commit.
+        if (appliedUpgrades.Capacity == appliedUpgrades.Count)
+            appliedUpgrades.Capacity = appliedUpgrades.Count + 1;
+    }
 
+    internal void CommitPreparedUpgrade(TowerUpgradeDefinition upgradeDefinition)
+    {
         appliedUpgrades.Add(upgradeDefinition);
-
-        return true;
     }
 }

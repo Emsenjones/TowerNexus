@@ -19,6 +19,13 @@ It presents:
 
 It observes gameplay state and forwards player intent. It does not own Player state, Draft generation, Draft-driven simulation pause, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
 
+An ordinary Upgrade commits the exact held reward consumption together with its
+accepted Upgrade state before optional callbacks or presentation. Required combat
+refresh is distinct from notification. A consumed view stays non-interactive even
+if refresh, notification, or destruction fails. A new drag is rejected until the
+accepting interaction has completed its outer cleanup; Battle stop/release remains
+permitted. Terminal reward snapshots precede destructive Stage cleanup.
+
 ---
 
 # 2. Battle UI Composition

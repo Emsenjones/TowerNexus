@@ -51,11 +51,40 @@ public class MapGeneratorBehaviour : MonoBehaviour
     [SerializeField] private MapCameraBoundary cameraBoundary;
     [SerializeField] private Transform cameraDefaultPose;
 
-    private readonly Dictionary<Vector2Int, GridNodeBehaviour> nodeDictionary =
-        new Dictionary<Vector2Int, GridNodeBehaviour>();
+    private readonly MapRuntimeNodeIndex runtimeIndex = new MapRuntimeNodeIndex();
+    private GridNodeBehaviour[] indexedHierarchy = System.Array.Empty<GridNodeBehaviour>();
+    private bool indexReleased;
+    private Transform observedNodesRoot;
+    private int observedWidth, observedHeight;
+    private float observedNodeSize;
 
-    private bool nodeDictionaryDirty = true;
-    private int dictionaryHierarchyNodeCount;
+    public ulong StructureRevision => runtimeIndex.StructureRevision;
+    public ulong WalkabilityRevision => runtimeIndex.WalkabilityRevision;
+    public string NodeIndexFailureReason => runtimeIndex.FailureReason;
+#if UNITY_EDITOR
+    public int NodeIndexBuildCount => runtimeIndex.BuildCount;
+    public int HierarchyQueryCount { get; private set; }
+    private NodeAuthoringSnapshot[] authoringSnapshot = System.Array.Empty<NodeAuthoringSnapshot>();
+
+    private readonly struct NodeAuthoringSnapshot
+    {
+        internal NodeAuthoringSnapshot(GridNodeBehaviour node)
+        {
+            Node = node;
+            Parent = node != null ? node.transform.parent : null;
+            Position = node != null ? node.GridPosition : default;
+            Type = node != null ? node.NodeType : default;
+            Walkable = node != null && node.BaseWalkable;
+            NotificationRevision = node != null ? node.AuthoringRevision : 0;
+        }
+        internal GridNodeBehaviour Node { get; }
+        internal Transform Parent { get; }
+        internal Vector2Int Position { get; }
+        internal GridNodeType Type { get; }
+        internal bool Walkable { get; }
+        internal ulong NotificationRevision { get; }
+    }
+#endif
 
     public int Width => width;
     public int Lengh => lengh;
@@ -67,12 +96,109 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
     private void OnEnable()
     {
+        indexReleased = false;
+        NotifyNodeStructureChanged();
         RebuildNodeDictionary();
+    }
+
+    private void OnDisable()
+    {
+        indexReleased = true;
+        ReleaseNodeOwners();
+        runtimeIndex.Release();
     }
 
     private void OnValidate()
     {
-        nodeDictionaryDirty = true;
+        if (observedNodesRoot != nodesRoot || observedWidth != width ||
+            observedHeight != lengh || observedNodeSize != nodeSize)
+            NotifyNodeStructureChanged();
+    }
+
+    // Explicit structural edit boundary for each affected Map. Runtime node transfers
+    // also call node.RefreshMapOwnership(); removals detach before deferred Destroy.
+    public void NotifyNodeStructureChanged() => runtimeIndex.InvalidateStructure();
+    internal void NotifyNodeWalkabilityChanged() => runtimeIndex.InvalidateWalkability();
+
+    internal bool OwnsNodeHierarchy(GridNodeBehaviour node) =>
+        node != null && IsNodesRootSafelyOwned() && node.transform != nodesRoot &&
+        node.transform.IsChildOf(nodesRoot) &&
+        node.GetComponentInParent<MapGeneratorBehaviour>(true) == this &&
+        !HasGridNodeAncestorInsideNodesRoot(node);
+
+    public bool TryEnsureNodeIndex()
+    {
+        if (indexReleased) return false;
+        if (runtimeIndex.IsDirty) RebuildNodeDictionary();
+        return runtimeIndex.IsValid;
+    }
+
+#if UNITY_EDITOR
+    [UnityEditor.InitializeOnLoadMethod]
+    private static void RegisterEditorTopologyChecks()
+    {
+        UnityEditor.EditorApplication.hierarchyChanged -= CheckEditedMapTopologies;
+        UnityEditor.EditorApplication.hierarchyChanged += CheckEditedMapTopologies;
+        UnityEditor.Undo.undoRedoPerformed -= CheckEditedMapTopologies;
+        UnityEditor.Undo.undoRedoPerformed += CheckEditedMapTopologies;
+    }
+
+    private static void CheckEditedMapTopologies()
+    {
+        // Runtime hierarchy churn (projectiles/VFX) is not a topology-edit signal.
+        // Runtime structure changes use the explicit node/Map mutation boundary.
+        if (Application.isPlaying) return;
+        foreach (MapGeneratorBehaviour map in Resources.FindObjectsOfTypeAll<MapGeneratorBehaviour>())
+            if (map != null && !map.indexReleased) map.CheckEditorTopology();
+    }
+
+    private void CheckEditorTopology()
+    {
+        GridNodeBehaviour[] nodes = GetHierarchyNodes();
+        bool changed = observedNodesRoot != nodesRoot || observedWidth != width ||
+            observedHeight != lengh || observedNodeSize != nodeSize ||
+            nodes.Length != authoringSnapshot.Length;
+        bool walkabilityChanged = false;
+        for (int i = 0; !changed && i < nodes.Length; i++)
+        {
+            GridNodeBehaviour node = nodes[i];
+            NodeAuthoringSnapshot previous = authoringSnapshot[i];
+            changed = node == null || previous.Node != node ||
+                previous.Parent != node.transform.parent || previous.Position != node.GridPosition ||
+                previous.Type != node.NodeType;
+            walkabilityChanged |= node != null && previous.Walkable != node.BaseWalkable &&
+                previous.NotificationRevision == node.AuthoringRevision;
+        }
+        if (changed)
+        {
+            // Reconcile inactive-node ownership at the edit boundary, never per lookup.
+            foreach (GridNodeBehaviour node in indexedHierarchy)
+                if (node != null) node.RefreshMapOwnership();
+            foreach (GridNodeBehaviour node in nodes)
+                if (node != null) node.RefreshMapOwnership();
+            if (!runtimeIndex.IsDirty) NotifyNodeStructureChanged();
+        }
+        else if (walkabilityChanged)
+        {
+            NotifyNodeWalkabilityChanged();
+        }
+        CaptureAuthoringSnapshot(nodes);
+    }
+
+    private void CaptureAuthoringSnapshot(GridNodeBehaviour[] nodes)
+    {
+        authoringSnapshot = new NodeAuthoringSnapshot[nodes.Length];
+        for (int i = 0; i < nodes.Length; i++) authoringSnapshot[i] = new NodeAuthoringSnapshot(nodes[i]);
+        RememberMapConfiguration();
+    }
+#endif
+
+    private void RememberMapConfiguration()
+    {
+        observedNodesRoot = nodesRoot;
+        observedWidth = width;
+        observedHeight = lengh;
+        observedNodeSize = nodeSize;
     }
 
     [Button("Generate Map")]
@@ -142,19 +268,20 @@ public class MapGeneratorBehaviour : MonoBehaviour
                     continue;
                 }
 
+                node.ReleaseMapOwner(this);
+                // Remove from the hierarchy now; Destroy is deferred in Play Mode.
+                node.transform.SetParent(null, true);
                 DestroyOwnedObject(node.gameObject);
             }
         }
 
-        nodeDictionary.Clear();
-        dictionaryHierarchyNodeCount = 0;
-        nodeDictionaryDirty = false;
+        ReleaseNodeOwners();
+        runtimeIndex.Release();
     }
 
     public GridNodeBehaviour GetNode(Vector2Int gridPosition)
     {
-        EnsureNodeDictionaryValid();
-        return nodeDictionary.TryGetValue(gridPosition, out GridNodeBehaviour node) ? node : null;
+        return TryEnsureNodeIndex() ? runtimeIndex.GetNode(gridPosition) : null;
     }
 
     public GridNodeBehaviour GetNode(int x, int y)
@@ -162,40 +289,16 @@ public class MapGeneratorBehaviour : MonoBehaviour
         return GetNode(new Vector2Int(x, y));
     }
 
-    public GridNodeBehaviour GetSpawnNode()
-    {
-        EnsureNodeDictionaryValid();
+    public GridNodeBehaviour GetSpawnNode() =>
+        TryEnsureNodeIndex() ? runtimeIndex.Spawn : null;
 
-        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> entry in nodeDictionary)
-        {
-            if (entry.Value != null && entry.Value.NodeType == GridNodeType.Spawn)
-            {
-                return entry.Value;
-            }
-        }
-
-        return null;
-    }
-
-    public GridNodeBehaviour GetTargetNode()
-    {
-        EnsureNodeDictionaryValid();
-
-        foreach (KeyValuePair<Vector2Int, GridNodeBehaviour> entry in nodeDictionary)
-        {
-            if (entry.Value != null && entry.Value.NodeType == GridNodeType.Target)
-            {
-                return entry.Value;
-            }
-        }
-
-        return null;
-    }
+    public GridNodeBehaviour GetTargetNode() =>
+        TryEnsureNodeIndex() ? runtimeIndex.Target : null;
 
     public bool TryGetNodeByWorldPosition(Vector3 worldPosition, out GridNodeBehaviour node)
     {
         node = null;
-        EnsureNodeDictionaryValid();
+        if (!TryEnsureNodeIndex()) return false;
 
         if (nodesRoot == null || nodeSize <= 0f || !IsFinite(worldPosition))
         {
@@ -221,7 +324,8 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
         Vector2Int gridPosition = new Vector2Int(gridX, gridY);
 
-        return nodeDictionary.TryGetValue(gridPosition, out node) && node != null;
+        node = runtimeIndex.GetNode(gridPosition);
+        return node != null;
     }
 
     private static bool TryResolvePhysicalGridCoordinate(
@@ -269,8 +373,7 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
     public bool HasNode(Vector2Int gridPosition)
     {
-        EnsureNodeDictionaryValid();
-        return nodeDictionary.ContainsKey(gridPosition);
+        return TryEnsureNodeIndex() && runtimeIndex.GetNode(gridPosition) != null;
     }
 
     public bool IsInsideBounds(Vector2Int gridPosition)
@@ -283,16 +386,15 @@ public class MapGeneratorBehaviour : MonoBehaviour
 
     public List<GridNodeBehaviour> GetNeighborNodes(Vector2Int gridPosition)
     {
-        EnsureNodeDictionaryValid();
         List<GridNodeBehaviour> neighbors = new List<GridNodeBehaviour>();
+        if (!TryEnsureNodeIndex()) return neighbors;
 
         for (int i = 0; i < OrthogonalDirections.Length; i++)
         {
             Vector2Int neighborPosition = gridPosition + OrthogonalDirections[i];
 
-            if (IsInsideBounds(neighborPosition) &&
-                nodeDictionary.TryGetValue(neighborPosition, out GridNodeBehaviour neighbor) &&
-                neighbor != null)
+            GridNodeBehaviour neighbor = runtimeIndex.GetNode(neighborPosition);
+            if (IsInsideBounds(neighborPosition) && neighbor != null)
             {
                 neighbors.Add(neighbor);
             }
@@ -1082,79 +1184,32 @@ public class MapGeneratorBehaviour : MonoBehaviour
         }
     }
 
-    private void EnsureNodeDictionaryValid()
+    private void ReleaseNodeOwners()
     {
-        if (nodesRoot == null)
-        {
-            nodeDictionary.Clear();
-            dictionaryHierarchyNodeCount = 0;
-            nodeDictionaryDirty = false;
-            return;
-        }
-
-        GridNodeBehaviour[] hierarchyNodes = GetHierarchyNodes();
-
-        if (!nodeDictionaryDirty && hierarchyNodes.Length == dictionaryHierarchyNodeCount)
-        {
-            bool matches = true;
-
-            for (int i = 0; i < hierarchyNodes.Length; i++)
-            {
-                GridNodeBehaviour node = hierarchyNodes[i];
-
-                if (node == null ||
-                    !nodeDictionary.TryGetValue(node.GridPosition, out GridNodeBehaviour cachedNode) ||
-                    cachedNode != node)
-                {
-                    matches = false;
-                    break;
-                }
-            }
-
-            if (matches)
-            {
-                return;
-            }
-        }
-
-        RebuildNodeDictionary(hierarchyNodes);
+        foreach (GridNodeBehaviour node in indexedHierarchy)
+            if (node != null) node.ReleaseMapOwner(this);
+        indexedHierarchy = System.Array.Empty<GridNodeBehaviour>();
     }
 
     private void RebuildNodeDictionary()
     {
-        RebuildNodeDictionary(GetHierarchyNodes());
-    }
-
-    private void RebuildNodeDictionary(GridNodeBehaviour[] hierarchyNodes)
-    {
-        nodeDictionary.Clear();
-        dictionaryHierarchyNodeCount = hierarchyNodes.Length;
-
-        for (int i = 0; i < hierarchyNodes.Length; i++)
-        {
-            GridNodeBehaviour node = hierarchyNodes[i];
-
-            if (node == null)
-            {
-                continue;
-            }
-
-            if (nodeDictionary.ContainsKey(node.GridPosition))
-            {
-                Debug.LogWarning(
-                    $"Map node lookup skipped duplicate coordinate {node.GridPosition} on {GetNodeLabel(node)}.",
-                    node);
-                continue;
-            }
-
-            nodeDictionary.Add(node.GridPosition, node);
-        }
-
-        nodeDictionaryDirty = false;
+        GridNodeBehaviour[] nodes = GetHierarchyNodes();
+        ReleaseNodeOwners();
+        indexedHierarchy = nodes;
+        foreach (GridNodeBehaviour node in nodes)
+            if (node != null && OwnsNodeHierarchy(node)) node.BindMapOwner(this);
+        runtimeIndex.Rebuild(nodes, width, lengh, OwnsNodeHierarchy);
+        RememberMapConfiguration();
+#if UNITY_EDITOR
+        CaptureAuthoringSnapshot(nodes);
+#endif
     }
 
     private GridNodeBehaviour[] GetHierarchyNodes()
     {
+#if UNITY_EDITOR
+        HierarchyQueryCount++;
+#endif
         return nodesRoot != null
             ? nodesRoot.GetComponentsInChildren<GridNodeBehaviour>(true)
             : new GridNodeBehaviour[0];

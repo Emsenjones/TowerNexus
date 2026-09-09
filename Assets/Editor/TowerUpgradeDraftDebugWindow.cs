@@ -573,18 +573,21 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             return;
         }
 
+        string targetName = tower.name;
         int appliedCount = 0;
 
         for (int i = 0; i < upgrades.Count; i++)
         {
             TowerUpgradeDefinition upgrade = upgrades[i];
 
+            if (tower == null || upgradeSystem == null) return;
+
             if (tower.HasUpgrade(upgrade))
             {
                 continue;
             }
 
-            if (upgradeSystem.TryApplyUpgrade(
+            if (upgradeSystem.TryApplyDebugUpgrade(
                     tower,
                     upgrade,
                     out string failureReason))
@@ -595,25 +598,16 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
 
             Debug.LogWarning(
                 $"Tower upgrade debug window failed to apply " +
-                $"'{GetUpgradeName(upgrade)}' to '{tower.name}' after " +
+                $"'{GetUpgradeName(upgrade)}' to '{targetName}' after " +
                 $"committing {appliedCount} earlier list entries: " +
                 failureReason,
                 tower);
             return;
         }
 
-        TowerBehaviour towerBehaviour = tower.GetComponent<TowerBehaviour>();
-
-        if (appliedCount > 0 &&
-            towerBehaviour != null &&
-            towerBehaviour.VisualController != null)
-        {
-            towerBehaviour.VisualController.PlayUpgradeAppliedFeedback();
-        }
-
         Debug.Log(
             $"Tower upgrade debug window directly applied {appliedCount} " +
-            $"configured Upgrades to '{tower.name}'. Entries already applied " +
+            $"configured Upgrades to '{targetName}'. Entries already applied " +
             "were skipped.",
             tower);
         Repaint();

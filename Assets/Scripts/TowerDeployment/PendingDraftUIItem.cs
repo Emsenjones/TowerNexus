@@ -300,7 +300,8 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     private bool CanInteract()
     {
-        return isBattleActive && !isConsumed;
+        return isBattleActive && !isConsumed &&
+               (placementController == null || placementController.CanStartDraftInteraction);
     }
 
     private void UpdateIcon(Sprite icon)

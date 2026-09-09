@@ -17,7 +17,8 @@ public static class TowerRuntimeStatResolver
     public static ResolvedTowerCombatStats Resolve(
         TowerInstance towerInstance,
         TowerCombatBaseStats baseStats,
-        TowerLevelConfig levelConfigOverride = null)
+        TowerLevelConfig levelConfigOverride = null,
+        TowerUpgradeDefinition candidateUpgrade = null)
     {
         float attackRangeDelta = 0f;
         float attackCycleDurationDelta = 0f;
@@ -42,6 +43,14 @@ public static class TowerRuntimeStatResolver
                     ref droneBurstCooldownDelta
                 );
             }
+        }
+
+        if (candidateUpgrade != null &&
+            (towerInstance == null || !towerInstance.HasUpgrade(candidateUpgrade)))
+        {
+            AccumulateBasicStatDeltas(candidateUpgrade, ref attackRangeDelta,
+                ref attackCycleDurationDelta, ref damageBonus,
+                ref magicOrbRotationSpeedDelta, ref droneBurstCooldownDelta);
         }
 
         TowerLevelConfig levelConfig = ResolveLevelConfig(

@@ -145,14 +145,21 @@ public class TowerInstance : MonoBehaviour
         return upgradeState.GetActiveBehaviourPackageTypes();
     }
 
-    public bool TryRecordUpgrade(TowerUpgradeDefinition upgradeDefinition)
-    {
-        if (!upgradeState.TryRecordUpgrade(upgradeDefinition))
-        {
-            return false;
-        }
+    internal void PrepareUpgradeCapacity() => upgradeState.PrepareUpgradeCapacity();
 
-        OnUpgradeRecorded?.Invoke(this, upgradeDefinition);
-        return true;
+    internal void CommitPreparedUpgrade(TowerUpgradeDefinition upgradeDefinition)
+    {
+        upgradeState.CommitPreparedUpgrade(upgradeDefinition);
+    }
+
+    internal void PublishUpgradeRecordedSafely(TowerUpgradeDefinition upgradeDefinition)
+    {
+        Action<TowerInstance, TowerUpgradeDefinition> handlers = OnUpgradeRecorded;
+        if (handlers == null) return;
+        foreach (Delegate subscriber in handlers.GetInvocationList())
+        {
+            try { ((Action<TowerInstance, TowerUpgradeDefinition>)subscriber)(this, upgradeDefinition); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+        }
     }
 }

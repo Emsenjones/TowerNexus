@@ -353,6 +353,14 @@ public class StageCompositionController : MonoBehaviour
             return false;
         }
 
+        if (!rootMapOwners[0].TryEnsureNodeIndex())
+        {
+            Debug.LogError(
+                $"Stage Map node index is unavailable: {rootMapOwners[0].NodeIndexFailureReason}",
+                mapObject);
+            return false;
+        }
+
         candidateMap = rootMapOwners[0];
         candidateCameraBoundary = candidateMap.CameraBoundary;
         candidateCameraDefaultPose = candidateMap.CameraDefaultPose;

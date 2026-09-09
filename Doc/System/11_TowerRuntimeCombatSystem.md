@@ -24,6 +24,15 @@ It does not own Tower placement, Tower Upgrade eligibility, Projectile flight, M
 
 Tower Runtime Combat decides when an Attack Entity is released. After release, the entity's runtime domain decides how it moves, hits, and completes.
 
+Upgrade-driven combat refresh is called explicitly by the acceptance owner and
+is not owned by optional Upgrade notifications. Candidate Basic values are
+resolved without changing accepted Tower state. The prepared baseline is committed
+before scheduler and eligible-entity refresh. Required refresh distinguishes
+successful application, a normal absence of eligible work, and technical failure.
+Missing required creation/initialization is a failure even without an exception;
+ended entities or absent active groups normally require no refresh. Unexpected
+failure after semantic commitment terminates the Battle without replay or refund.
+
 ---
 
 # 2. Combat Session Contract
