@@ -2327,7 +2327,7 @@ internal sealed class CombatRecordingSession
         IsFrozen = true;
         var report = new CombatReportBuilder(this).Build(terminalState, failureReason, generatedAt);
         string json = JsonUtility.ToJson(report, true);
-        string path = GetReportPath(Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Doc", "GamePlayRecord")), report.runLabel);
+        string path = GetReportPath(Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Doc", "CombatReports")), report.runLabel);
         CombatReportExporter.Enqueue(path, json, terminalState);
     }
 

@@ -29,6 +29,10 @@ class Harness { static void Main(string[] paths) {int n=0; foreach(var path in p
 ''')
  exe=p/'Integrity.exe'
  subprocess.run(['csc','-nologo','-nowarn:0649','-langversion:8.0','-define:UNITY_EDITOR','-r:System.Web.Extensions.dll',f'-out:{exe}',str(h),str(base/'CombatReportIntegrity.cs'),str(base/'CombatRouteAccumulator.cs'),str(root/'Assets/Scripts/Diagnostics/CombatBalance/CombatBalanceRunJsonReport.cs')],check=True)
- reports=[root/'Doc/GamePlayRecord'/name for name in ['Task005_Stage4_FourTower_DeploymentUpgrade_Acceptance_01.json',*[f'Task005_Stage5_SingleElemental_Acceptance_{i:02}.json' for i in range(1,4)]]]
+ names=['Task005_Stage4_FourTower_DeploymentUpgrade_Acceptance_01.json',*[f'Task005_Stage5_SingleElemental_Acceptance_{i:02}.json' for i in range(1,4)]]
+ reports=[]
+ for name in names:
+  archived=subprocess.check_output(['git','show','9cc5572598ef27021f8841df7ec44b133c0c372d:Doc/GamePlayRecord/'+name],cwd=root)
+  report_path=p/name;report_path.write_bytes(archived);reports.append(report_path)
  assert len(reports)==4,len(reports)
  subprocess.run(['mono',str(exe),*map(str,reports)],check=True)

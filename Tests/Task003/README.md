@@ -32,3 +32,6 @@ changing the checkout; keep that history reachable.
 These are managed contract checks, not Unity Edit Mode/Play Mode, physics, prefab,
 rendering or fresh Recorder export evidence. Native acceptance is recorded separately
 in `Doc/Task/Task003_PendingDraftStateOwnership.md`.
+
+The referenced Task document is archived at commit `9cc5572598ef27021f8841df7ec44b133c0c372d`
+under its original `Doc/Task/` path. See `Doc/History/ArchitectureRefactor_Closeout.md`.

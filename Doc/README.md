@@ -9,6 +9,7 @@ This directory separates durable runtime contracts from iterative balance design
 | `System/` | Stable gameplay rules, ownership, authoring contracts, and runtime invariants | Source of truth for how the game works |
 | `Balance/` | Cross-Stage growth experience, campaign learning goals, and Reference Builds | Source of truth for approved balance and Stage design intent |
 | `Task/` | Bounded implementation contracts | Temporary execution guidance |
+| `CombatReports/` | Generated combat diagnostic JSON reports | Runtime evidence, not design authority |
 | `History/` | Milestone references and acceptance limits | Historical evidence index, not current design authority |
 | `99_Temps.md` | Unstructured notes and future ideas | Not an approved source of truth |
 
@@ -35,12 +36,13 @@ This directory separates durable runtime contracts from iterative balance design
   retirement does not imply that every planned test passed.
 - Gameplay reports may be removed from the current working tree after their
   corresponding code, assets, Tasks, and reports are preserved together in Git.
-  New runs recreate `GamePlayRecord/` as needed.
+  New runs recreate `CombatReports/` as needed.
 
 ## Main Index
 
 - [System Documents](System/00_ProjectOverview.md)
 - [Stage Design Blueprint](Balance/00_StageDesignBlueprint.md)
 - [Tower Growth And Upgrade Identity](Balance/01_TowerGrowthAndUpgradeIdentity.md)
-- [Current Task Workspace](Task/README.md)
+- [Task Workspace](Task/)
+- [ArchitectureRefactor Historical Evidence](History/ArchitectureRefactor_Closeout.md)
 - [CombatMathV2 Historical Evidence](History/CombatMathV2_Closeout.md)

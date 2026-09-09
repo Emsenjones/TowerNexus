@@ -23,5 +23,11 @@ This is scoped replay, not a complete old/new Recorder event-stream comparison.
 It does not establish native destruction timing, real MonoBehaviour subscription
 ordering, final-hit/Elemental full-report equivalence, fresh Recorder exports,
 Unity allocation/frame-time savings, on/off gameplay parity or iOS compilation.
-Task006 Section 9 lists the remaining native acceptance steps. Task001–005 suites
+Archived Task006 Section 9 lists the original native acceptance steps. Remaining
+checks were explicitly waived at iteration closeout. Task001–005 suites
 retain their separate documented boundaries; old reports do not become new runs.
+
+Historical JSON fixtures are loaded using `git show` from commit
+`9cc5572598ef27021f8841df7ec44b133c0c372d` into the test temporary directory.
+The harness does not depend on live `Doc/CombatReports` output. A clone needs this
+commit in its Git history. See `Doc/History/ArchitectureRefactor_Closeout.md`.

@@ -27,3 +27,6 @@ during preparation. They do not prove native view cleanup, prefab validation, na
 Recorder export, or Game Flow event ordering. They are managed checks, not Unity
 Edit Mode or Play Mode evidence. The remaining native acceptance matrix is in
 `Doc/Task/Task001_UpgradeCommitConsistency.md`. No production fault hooks are added.
+
+The referenced Task document is archived at commit `9cc5572598ef27021f8841df7ec44b133c0c372d`
+under its original `Doc/Task/` path. See `Doc/History/ArchitectureRefactor_Closeout.md`.
