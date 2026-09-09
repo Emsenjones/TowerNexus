@@ -92,12 +92,16 @@ public class TowerPlacementValidator : MonoBehaviour
     public int PreviewTopologyQueryCount { get; private set; }
     public int PreviewCacheHitCount { get; private set; }
 #endif
+    internal MapGeneratorBehaviour ActiveMap => mapGenerator;
+    internal ulong BindingRevision { get; private set; }
+    internal ulong PathBindingRevision => pathfindingService != null ? pathfindingService.BindingRevision : 0;
     public void InvalidatePreviewCache() => previewCache.Clear();
 
     public void Initialize(
         MapGeneratorBehaviour mapGenerator,
         AStarPathfindingService pathfindingService)
     {
+        BindingRevision++;
         InvalidatePreviewCache();
         this.mapGenerator = mapGenerator;
         this.pathfindingService = pathfindingService;
@@ -228,22 +232,23 @@ public class TowerPlacementValidator : MonoBehaviour
     }
 
     internal bool TryCreateTopologyPlan(
-        TowerPlacementPreview preview,
+        TowerPlacementCandidate candidate,
         out TowerPlacementTopologyPlan topologyPlan,
         out IReadOnlyList<GridNodeBehaviour> diagnosticFootprint,
         out bool? routeExists,
         out string failureReason,
         bool captureDiagnostics = true)
     {
-        topologyPlan = null;
-        diagnosticFootprint = null;
-        routeExists = null;
+        topologyPlan = null; diagnosticFootprint = null; routeExists = null;
         if (!TryResolveQueryEndpoints(out GridNodeBehaviour spawn, out GridNodeBehaviour target,
                 out failureReason)) return false;
-        if (!TryGetOccupiedNodes(preview, out List<GridNodeBehaviour> nodes))
+        if (candidate == null || !candidate.IsCurrent(this) || candidate.Footprint.Count == 0)
+        { failureReason = "The deployment candidate expired or has no footprint."; return false; }
+        var nodes = candidate.Footprint;
+        for (int i = 0; i < nodes.Count; i++)
         {
-            failureReason = "the candidate Tower footprint could not be resolved on the Active Map.";
-            return false;
+            if (nodes[i] == null || mapGenerator.GetNode(nodes[i].GridPosition) != nodes[i])
+            { failureReason = "The footprint contains a foreign Map node."; return false; }
         }
         if (!TryEvaluateTopology(nodes, spawn, target, out List<GridNodeBehaviour> route,
                 out routeExists, out failureReason))
@@ -251,7 +256,6 @@ public class TowerPlacementValidator : MonoBehaviour
             diagnosticFootprint = CopyDiagnosticFootprint(nodes, captureDiagnostics);
             return false;
         }
-        // A final plan is never retained in, or recovered from, the preview cache.
         topologyPlan = new TowerPlacementTopologyPlan(nodes, route);
         diagnosticFootprint = captureDiagnostics ? topologyPlan.Footprint : null;
         return true;

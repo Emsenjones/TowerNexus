@@ -262,7 +262,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &705900838
 MonoBehaviour:
   m_ObjectHideFlags: 16
@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c69b96e78e584f878d4068749e0ab2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  runName: Task017_PhaseA_Stage6_NaturalDraft_ExploratoryBuildPlacement_Schema25_01
+  runName: Task004_Stage1_SubmissionLifecycle_Acceptance_01
   placementRouteForcedRelocationExpectation: 2
   battleRuntimeCoordinator: {fileID: 7811906250627789308}
   stageCompositionController: {fileID: 0}
@@ -284,7 +284,6 @@ MonoBehaviour:
   playerSystem: {fileID: 7811906250627789305}
   draftSystem: {fileID: 1240751315}
   battleHUDUI: {fileID: 0}
-  towerPlacementController: {fileID: 1897187894}
 --- !u!4 &705900839
 Transform:
   m_ObjectHideFlags: 16
@@ -481,17 +480,6 @@ MonoBehaviour:
       m_PostInfinity: 2
       m_RotationOrder: 4
   CustomBlends: {fileID: 0}
---- !u!114 &1897187894 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5527772070008687998, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
-  m_PrefabInstance: {fileID: 7811906250627789304}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f8f1e61edd8a475e9ab22151f5d1b6b8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TowerPlacementController
 --- !u!1001 &7811906250627789304
 PrefabInstance:
   m_ObjectHideFlags: 0

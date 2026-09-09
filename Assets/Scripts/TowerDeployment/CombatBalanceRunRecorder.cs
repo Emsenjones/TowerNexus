@@ -42,7 +42,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private DraftSystem draftSystem;
     [SerializeField] private BattleHUDUI battleHUDUI;
-    [SerializeField] private TowerPlacementController towerPlacementController;
+    private TowerPlacementSubmission subscribedSubmission;
 
     private readonly Dictionary<MonsterBehaviour, MonsterObservation>
         trackedMonsters =
@@ -638,12 +638,6 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         {
             battleHUDUI = FindFirstObjectByType<BattleHUDUI>();
         }
-
-        if (towerPlacementController == null)
-        {
-            towerPlacementController =
-                FindFirstObjectByType<TowerPlacementController>();
-        }
     }
 
     private void SubscribeToRuntime()
@@ -690,13 +684,14 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 HandlePlacementRouteLifecycleObserved;
         }
 
-        if (towerPlacementController != null)
+        if (subscribedSubmission == null && battleRuntimeCoordinator != null)
         {
-            towerPlacementController.OnTowerDeploymentCommitted +=
+            subscribedSubmission = battleRuntimeCoordinator.Submission;
+            subscribedSubmission.OnTowerDeploymentCommitted +=
                 HandleTowerDeploymentCommitted;
-            towerPlacementController.OnInvestmentEvidenceCommitted +=
+            subscribedSubmission.OnInvestmentEvidenceCommitted +=
                 HandleTowerInvestmentCommitted;
-            towerPlacementController.OnPlacementRouteRevisionCommitted +=
+            subscribedSubmission.OnPlacementRouteRevisionCommitted +=
                 HandlePlacementRouteRevisionCommitted;
         }
 
@@ -763,10 +758,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
             missingReferences.Add(nameof(draftSystem));
         }
 
-        if (towerPlacementController == null)
-        {
-            missingReferences.Add(nameof(towerPlacementController));
-        }
+
 
         if (missingReferences.Count > 0)
         {
@@ -821,14 +813,15 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
                 HandlePlacementRouteLifecycleObserved;
         }
 
-        if (towerPlacementController != null)
+        if (subscribedSubmission != null)
         {
-            towerPlacementController.OnTowerDeploymentCommitted -=
+            subscribedSubmission.OnTowerDeploymentCommitted -=
                 HandleTowerDeploymentCommitted;
-            towerPlacementController.OnInvestmentEvidenceCommitted -=
+            subscribedSubmission.OnInvestmentEvidenceCommitted -=
                 HandleTowerInvestmentCommitted;
-            towerPlacementController.OnPlacementRouteRevisionCommitted -=
+            subscribedSubmission.OnPlacementRouteRevisionCommitted -=
                 HandlePlacementRouteRevisionCommitted;
+            subscribedSubmission = null;
         }
 
         if (battleRuntimeCoordinator != null)
@@ -3175,8 +3168,8 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
         hasCapturedTerminalPendingDraftSnapshot = true;
         terminalPendingDraftSnapshot.Clear();
 
-        IReadOnlyList<PendingDraftUIItem> pendingItems =
-            battleHUDUI != null ? battleHUDUI.PendingDraftItems : null;
+        IReadOnlyList<PendingDraftEntry> pendingItems =
+            draftSystem != null ? draftSystem.PendingDrafts : null;
 
         if (pendingItems == null)
         {
@@ -3185,7 +3178,7 @@ public sealed class CombatBalanceRunRecorder : MonoBehaviour
 
         for (int i = 0; i < pendingItems.Count; i++)
         {
-            PendingDraftUIItem pendingItem = pendingItems[i];
+            PendingDraftEntry pendingItem = pendingItems[i];
 
             if (pendingItem == null ||
                 !pendingItem.DraftAttemptToken.IsValid ||

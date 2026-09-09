@@ -13,7 +13,7 @@ It owns:
 - Candidate gathering from Stage-specific content pools
 - Stage-authored Level-Up Draft category-slot allocation
 - Eligibility-aware candidate representation
-- Pending Tower Upgrade reservation
+- Battle-local Held reward identity, single-use consumption and Pending Tower Upgrade reservation
 - Candidate weighting and sampling
 - Same-round displayed-choice deduplication
 - Draft workflow state and result creation
@@ -297,11 +297,11 @@ Select Tower Upgrade Draft
 
 Cancelling or rejecting a drag preserves the held item and any reservation it represents. Successful consumption removes both.
 
-Held-item creation is atomic. A selected result is committed only after one complete held item has been created, validated, initialized, made interactive, and registered in the pending-item collection. Failure leaves no partial registration and does not publish accepted Draft completion.
+Held-item creation is atomic. A selected result is committed only after its model entry and usable presentation have been prepared and Battle/session authority has been revalidated. Preparation does not enable input. Draft then registers the entry and its view binding together; input becomes available only after selection commit finishes. Failure leaves no partial registration and does not publish accepted Draft completion.
 
 The active session must atomically move from Awaiting Selection to Committing Selection before held-item creation begins. Object construction, activation, initialization, or nested presentation callbacks therefore cannot enter a second held-item transaction. Failure establishes Failed.
 
-For an Initial Draft, successful held-item commit next preserves an attempt-scoped completed record containing the exact completed token and committed held item, then establishes Completed. Active selection authority may then be invalidated without erasing the evidence required by Battle coordination. Presentation closes, pause releases, and completion publishes only after the record exists. The completed Initial record survives completion publication and is cleared only by fresh Battle reset or Stage cleanup.
+For an Initial Draft, successful held-item commit next preserves an attempt-scoped completed record containing the exact completed token and committed model entry, then establishes Completed. Active selection authority may then be invalidated without erasing the evidence required by Battle coordination. Presentation closes, pause releases, and completion publishes only after the record exists. The completed Initial record survives completion publication and is cleared only by fresh Battle reset or Stage cleanup.
 
 ---
 
@@ -365,3 +365,20 @@ TowerFamily or Upgrade identity, Draft queueing for multi-level batch
 progression, slow motion while dragging a held Draft item, rarity, reroll, ban
 or pick, global rewards, curses, persistent progression rewards, multiplayer
 Drafts, and Stage-completion rewards.
+
+### Pending ownership contract
+
+Draft owns Battle-local Held reward identities, source Draft tokens and consumption.
+HUD presents those entries; hiding or rebuilding presentation preserves ownership,
+order and reservations. Only the exact current owner/entry may be consumed once.
+Stop closes mutations while retaining terminal Pending evidence; Stage release
+invalidates entries. Initial selection and Debug batches prepare usable presentation
+before atomic registration. Failed preparation grants nothing. Deploy, Level Up and
+Upgrade commit gameplay and exact consumption together; immutable investment evidence
+precedes external notifications that may end the Stage. Rebuild cancels active drag
+and rejects input from replaced views. Draft remains the pause/session authority.
+
+
+### Placement submission and membership
+
+Draft queries the stable submission owner for ordered read-only deployed Tower membership. Queries do not rebuild or prune members. Pending ownership remains in Draft and is bound directly to submission; view hierarchy is not the consumption authority.

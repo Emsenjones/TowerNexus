@@ -20,6 +20,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private TowerUpgradeSystem towerUpgradeSystem;
 
+    internal TowerPlacementSubmission Submission { get; } = new TowerPlacementSubmission();
     private bool hasFreshPlayerState;
     private bool isBattlePrepared;
     private bool hasNormalSpawningCompleted;
@@ -33,6 +34,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         new List<int>();
     private bool isLifecycleOperationInProgress;
     private bool releaseRequested;
+    private bool isReleasing;
     public bool IsBattleActive { get; private set; }
     public bool IsBattlePrepared => isBattlePrepared;
 
@@ -71,7 +73,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void OnEnable()
     {
-        towerUpgradeSystem?.BindUpgradeRuntime(this, towerPlacementController);
+        towerPlacementController?.BindSubmission(Submission);
+        draftSystem?.BindSubmission(Submission);
+        towerUpgradeSystem?.BindUpgradeRuntime(this, Submission);
         if (playerSystem != null)
         {
             playerSystem.OnPlayerDefeated += HandlePlayerDefeated;
@@ -139,8 +143,10 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         IReadOnlyList<TowerUpgradeDefinition> upgradePool,
         float towerDraftSlotProbability)
     {
-        if (towerUpgradeSystem != null && towerUpgradeSystem.IsApplyingUpgrade) return false;
-        towerUpgradeSystem?.BindUpgradeRuntime(this, towerPlacementController);
+        if (Submission.IsBusy || (towerUpgradeSystem != null && towerUpgradeSystem.IsApplyingUpgrade)) return false;
+        towerPlacementController?.BindSubmission(Submission);
+        draftSystem?.BindSubmission(Submission);
+        towerUpgradeSystem?.BindUpgradeRuntime(this, Submission);
         if (!TryValidatePreparationReferences(out string failureReason))
         {
             Debug.LogError(
@@ -212,7 +218,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        if (isLifecycleOperationInProgress)
+        if (isLifecycleOperationInProgress || isReleasing)
         {
             failureReason =
                 "another Battle runtime lifecycle operation is already in progress.";
@@ -301,6 +307,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return FailPreparation("preparation was cancelled by a deferred release.");
         }
 
+        towerPlacementController.ConfigureSubmission(this, draftSystem);
         isBattlePrepared = true;
 
         if (!CanBeginPreparedBattle(out string failureReason))
@@ -359,7 +366,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public bool BeginPreparedBattle()
     {
-        if (isLifecycleOperationInProgress)
+        if (isLifecycleOperationInProgress || isReleasing)
         {
             Debug.LogError(
                 "Battle runtime coordinator rejected a reentrant Battle begin request.",
@@ -410,6 +417,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         monsterManager.BeginBattle();
         towerPlacementController.BeginBattle();
         draftSystem.BeginBattle();
+        Submission.BeginBattle();
         monsterSpawner.BeginBattle();
 
         if (!AreConsumerGatesOpen())
@@ -469,6 +477,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private void CloseBattleAuthorityAndGates()
     {
         IsBattleActive = false;
+        Submission.CloseBattleGate();
         hasFreshPlayerState = false;
         preparedPlayerMaxHealth = 0;
         preparedPlayerProgressRequirements.Clear();
@@ -485,11 +494,17 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         CaptureBeforeCleanup();
         CloseBattleAuthorityAndGates();
         RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
-        RunCleanupSafely(() => towerPlacementController?.StopTrackedTowerCombat());
+        RunCleanupSafely(() => Submission.StopTrackedTowerCombat());
     }
 
     public void ReleasePreparedBattleRuntime()
     {
+        if (isReleasing)
+        {
+            // During preparation, an explicit release still cancels the incoming Stage.
+            if (isLifecycleOperationInProgress) releaseRequested = true;
+            return;
+        }
         if (isLifecycleOperationInProgress)
         {
             releaseRequested = true;
@@ -501,15 +516,23 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void ReleasePreparedBattleRuntimeCore()
     {
-        StopBattle();
-        draftSystem?.ClearStageUi();
-        towerPlacementController?.DestroyTrackedTowers();
-        monsterSpawner?.ClearStageBinding();
-        draftSystem?.ClearStagePools();
-        towerUpgradeSystem?.ClearStageLevelRules();
-        towerPlacementController?.ClearActiveMap();
-        pathfindingService?.ClearActiveMap();
-        ResetResultTracking();
+        if (isReleasing) return;
+        isReleasing = true;
+        try
+        {
+            CaptureBeforeCleanup();
+            CloseBattleAuthorityAndGates();
+            RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
+            RunCleanupSafely(() => draftSystem?.ClearStageUi());
+            Submission.DestroyTrackedTowers();
+            monsterSpawner?.ClearStageBinding();
+            draftSystem?.ClearStagePools();
+            towerUpgradeSystem?.ClearStageLevelRules();
+            towerPlacementController?.ClearActiveMap();
+            pathfindingService?.ClearActiveMap();
+            ResetResultTracking();
+        }
+        finally { isReleasing = false; }
     }
 
     private bool CanBeginPreparedBattle(out string failureReason)
@@ -804,7 +827,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
         if (!draftSystem.TryConfirmCommittedInitialDraft(
                 attemptToken,
-                out PendingDraftUIItem committedItem) ||
+                out PendingDraftEntry committedItem) ||
             committedItem == null ||
             committedItem.DraftResult == null ||
             !committedItem.DraftResult.IsValid ||

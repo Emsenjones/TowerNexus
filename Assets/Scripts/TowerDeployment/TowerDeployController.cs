@@ -20,16 +20,16 @@ public class TowerDeployController : MonoBehaviour
     }
 
     internal bool TryPrepareTower(
-        TowerPlacementPreview preview,
+        TowerPlacementCandidate candidate,
         TowerPlacementTopologyPlan topologyPlan,
         out TowerBehaviour preparedTower,
         out string failureReason)
     {
         preparedTower = null;
 
-        if (preview == null)
+        if (candidate == null)
         {
-            failureReason = "the Tower placement preview is missing.";
+            failureReason = "the Tower placement candidate is missing.";
             return false;
         }
 
@@ -53,7 +53,7 @@ public class TowerDeployController : MonoBehaviour
             return false;
         }
 
-        TowerDefinition towerDefinition = preview.TowerDefinition;
+        TowerDefinition towerDefinition = candidate.Definition;
 
         if (towerDefinition == null || !towerDefinition.IsValid())
         {
@@ -92,9 +92,9 @@ public class TowerDeployController : MonoBehaviour
             }
 
             towerObject.transform.SetPositionAndRotation(
-                preview.transform.position,
-                preview.transform.rotation);
-            towerObject.transform.localScale = preview.transform.localScale;
+                candidate.Position,
+                candidate.Rotation);
+            towerObject.transform.localScale = candidate.LocalScale;
 
             if (!towerObject.TryGetComponent(out TowerInstance towerInstance))
             {

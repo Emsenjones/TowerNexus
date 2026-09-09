@@ -359,3 +359,8 @@ Validation reports the source content and does not silently replace the authored
 Current scope includes four TowerFamilies, four base archetypes, two projectile flight identities, per-level BasicDamage and model data, runtime-template non-damage combat data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
 
 Deferred Tower identities include support, trap, summon, resource, laser, boomerang, missile, and other archetypes that require reviewed behavior rather than expansion of one generic Tower type.
+
+
+### Placement submission and membership
+
+A runtime Tower joins Battle-owned deployed membership only on accepted deployment. Read-only queries do not alter that membership. Stop retains Towers for the result-screen lifetime; release detaches membership before per-Tower stop/disable/destruction and continues cleaning other Towers after individual failures.

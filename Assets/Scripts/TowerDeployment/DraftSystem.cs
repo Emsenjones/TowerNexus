@@ -300,7 +300,15 @@ public class DraftSystem : MonoBehaviour
     private float capturedTimeScale;
 
     private DraftAttemptToken completedInitialToken;
-    private PendingDraftUIItem committedInitialHeldItem;
+    private PendingDraftEntry committedInitialHeldItem;
+    internal PendingDraftCollection PendingOwner { get; } = new PendingDraftCollection();
+    public IReadOnlyList<PendingDraftEntry> PendingDrafts => PendingOwner.Held;
+    private bool isPreparingPendingViews;
+    internal bool IsPendingMutationBusy => isPreparingPendingViews ||
+        sessionPhase == DraftSessionPhase.CommittingSelection;
+
+    private TowerPlacementSubmission submission;
+    internal void BindSubmission(TowerPlacementSubmission owner) { submission = owner; }
 
     public bool IsBattleActive => isBattleActive;
     public bool HasStagePools =>
@@ -446,13 +454,18 @@ public class DraftSystem : MonoBehaviour
 
     public void BeginBattle()
     {
+        isBattleActive = false;
+        PendingOwner.Stop();
         CancelActiveSession();
+        battleHUDUI?.ClearStageRuntime();
         ClearCompletedInitialRecord();
 #if UNITY_EDITOR
         ResetDraftObservationState();
 #endif
         currentBattleGeneration = NextNonZero(
             ref battleGenerationCounter);
+        PendingOwner.BeginBattle(currentBattleGeneration);
+        battleHUDUI?.BindDraftOwner(this);
         InitializeDraftRandom();
         sessionPhase = DraftSessionPhase.None;
         isBattleActive = true;
@@ -461,6 +474,7 @@ public class DraftSystem : MonoBehaviour
 
     public void StopBattle()
     {
+        PendingOwner.Stop();
         isBattleActive = false;
         CancelActiveSession();
         ClearTransientDraftCollections();
@@ -478,6 +492,7 @@ public class DraftSystem : MonoBehaviour
 
     public void ClearStagePools()
     {
+        PendingOwner.Clear();
         ClearTransientDraftCollections();
         ClearCompletedInitialRecord();
 #if UNITY_EDITOR
@@ -523,13 +538,13 @@ public class DraftSystem : MonoBehaviour
 
     public bool TryConfirmCommittedInitialDraft(
         DraftAttemptToken attemptToken,
-        out PendingDraftUIItem committedItem)
+        out PendingDraftEntry committedItem)
     {
         committedItem = null;
 
         if (!attemptToken.IsValid ||
             completedInitialToken != attemptToken ||
-            committedInitialHeldItem == null)
+            !PendingOwner.IsCurrent(committedInitialHeldItem))
         {
             return false;
         }
@@ -726,13 +741,13 @@ public class DraftSystem : MonoBehaviour
     {
         if (upgradeDefinitions == null ||
             towerUpgradeSystem == null ||
-            towerPlacementController == null)
+            submission == null)
         {
             return;
         }
 
         IReadOnlyList<TowerInstance> deployedTowerInstances =
-            towerPlacementController.DeployedTowerInstances;
+            submission?.DeployedTowerInstances;
 
         if (deployedTowerInstances == null)
         {
@@ -945,13 +960,12 @@ public class DraftSystem : MonoBehaviour
     private int CountPendingReservedCapacityForUpgrade(
         TowerUpgradeDefinition upgradeDefinition)
     {
-        if (upgradeDefinition == null || battleHUDUI == null)
+        if (upgradeDefinition == null)
         {
             return 0;
         }
 
-        IReadOnlyList<PendingDraftUIItem> pendingDraftItems =
-            battleHUDUI.PendingDraftItems;
+        IReadOnlyList<PendingDraftEntry> pendingDraftItems = PendingDrafts;
 
         if (pendingDraftItems == null)
         {
@@ -964,7 +978,7 @@ public class DraftSystem : MonoBehaviour
              pendingIndex < pendingDraftItems.Count;
              pendingIndex++)
         {
-            PendingDraftUIItem pendingDraftItem =
+            PendingDraftEntry pendingDraftItem =
                 pendingDraftItems[pendingIndex];
             TowerUpgradeDefinition pendingUpgradeDefinition =
                 pendingDraftItem != null
@@ -1023,12 +1037,11 @@ public class DraftSystem : MonoBehaviour
         sessionPhase = DraftSessionPhase.CommittingSelection;
         DraftSessionKind committingKind = sessionKind;
 
-        if (!battleHUDUI.TryAddPendingDraft(
-                selectedResult,
-                callbackToken,
-                out PendingDraftUIItem committedItem,
-                out string failureReason))
+        if (!TryGrantPendingBatch(
+                new[] { selectedResult }, new[] { callbackToken }, callbackToken,
+                out PendingDraftEntry[] committedItems, out string failureReason))
         {
+            if (!IsCommittingSelection(callbackToken)) return;
 #if UNITY_EDITOR
             PublishDraftChoiceCommitted(
                 callbackToken,
@@ -1036,6 +1049,7 @@ public class DraftSystem : MonoBehaviour
                 false,
                 failureReason);
 #endif
+            if (!IsCommittingSelection(callbackToken)) return;
             sessionPhase = DraftSessionPhase.Failed;
             InvalidateActiveAuthority();
             battleHUDUI.CloseDraft();
@@ -1059,7 +1073,7 @@ public class DraftSystem : MonoBehaviour
         if (committingKind == DraftSessionKind.Initial)
         {
             completedInitialToken = callbackToken;
-            committedInitialHeldItem = committedItem;
+            committedInitialHeldItem = committedItems[0];
         }
 
 #if UNITY_EDITOR
@@ -1070,14 +1084,110 @@ public class DraftSystem : MonoBehaviour
             string.Empty);
 #endif
 
+        if (!IsCommittingSelection(callbackToken)) return;
         sessionPhase = DraftSessionPhase.Completed;
         InvalidateActiveAuthority();
         battleHUDUI.CloseDraft();
         ReleasePause(callbackToken);
 
-        if (committingKind == DraftSessionKind.Initial)
+        if (committingKind == DraftSessionKind.Initial && isBattleActive &&
+            completedInitialToken == callbackToken && PendingOwner.IsCurrent(committedInitialHeldItem))
         {
             OnInitialDraftCompleted?.Invoke(callbackToken);
+        }
+    }
+
+    private bool IsCommittingSelection(DraftAttemptToken token) => isBattleActive &&
+        activeToken == token && sessionPhase == DraftSessionPhase.CommittingSelection;
+
+    private bool TryGrantPendingBatch(IReadOnlyList<DraftResult> results,
+        IReadOnlyList<DraftAttemptToken> sources, DraftAttemptToken selectionToken,
+        out PendingDraftEntry[] entries, out string failureReason)
+    {
+        entries = null;
+        failureReason = "Pending preparation is unavailable or the Battle changed.";
+        if (isPreparingPendingViews || !isBattleActive || battleHUDUI == null ||
+            !PendingOwner.TryPrepareGrant(results, sources, out var grant)) return false;
+        var views = new List<PendingDraftUIItem>(grant.Entries.Length);
+        bool committed = false;
+        isPreparingPendingViews = true;
+        try
+        {
+            battleHUDUI.PrepareViewCapacity(grant.Entries.Length);
+            foreach (var entry in grant.Entries)
+            {
+                if (!battleHUDUI.TryPreparePendingView(entry, out var item, out failureReason)) return false;
+                views.Add(item);
+            }
+            failureReason = "Pending registration authority expired during view preparation.";
+            if (selectionToken.IsValid && !IsCommittingSelection(selectionToken)) return false;
+            if (battleHUDUI == null || !battleHUDUI.ArePreparedViewsUsable(views) || !PendingOwner.TryCommitGrant(grant)) return false;
+            // Both lists have reserved capacity; registration contains no callbacks.
+            battleHUDUI.RegisterPreparedViews(views);
+            entries = grant.Entries;
+            committed = true;
+            failureReason = string.Empty;
+            return true;
+        }
+        finally
+        {
+            if (!committed) battleHUDUI.DiscardPreparedViews(views);
+            isPreparingPendingViews = false;
+        }
+    }
+
+#if UNITY_EDITOR
+    public bool TryGrantDebugPendingBatch(IReadOnlyList<DraftResult> results,
+        IReadOnlyList<DraftAttemptToken> sources, out string failureReason)
+    {
+        failureReason = "Pending grant is blocked by an active Draft or investment operation.";
+        if (sessionPhase == DraftSessionPhase.CommittingSelection ||
+            sessionPhase == DraftSessionPhase.AwaitingSelection || towerPlacementController == null ||
+            !towerPlacementController.CanStartDraftInteraction) return false;
+        return TryGrantPendingBatch(results, sources, default, out _, out failureReason);
+    }
+#endif
+
+    [ContextMenu("Rebuild Pending Draft Views")]
+    private void RebuildPendingViewsForInspection()
+    {
+        if (!TryRebuildPendingViews(out string failureReason)) Debug.LogWarning(failureReason, this);
+    }
+
+    public bool TryRebuildPendingViews(out string failureReason)
+    {
+        failureReason = "Pending rebuild is unavailable during a Draft or investment operation.";
+        if (!isBattleActive || isPreparingPendingViews || battleHUDUI == null ||
+            sessionPhase == DraftSessionPhase.CommittingSelection ||
+            towerPlacementController == null || !towerPlacementController.CanStartDraftInteraction) return false;
+        isPreparingPendingViews = true;
+        ulong generation = currentBattleGeneration;
+        var entries = new List<PendingDraftEntry>(PendingDrafts);
+        var views = new List<PendingDraftUIItem>(entries.Count);
+        bool replaced = false;
+        try
+        {
+            towerPlacementController.CancelPlacement();
+            battleHUDUI.PrepareViewCapacity(entries.Count);
+            foreach (var entry in entries)
+            {
+                if (!battleHUDUI.TryPreparePendingView(entry, out var item, out failureReason)) return false;
+                views.Add(item);
+            }
+            failureReason = "Pending ownership changed during view preparation.";
+            if (!isBattleActive || currentBattleGeneration != generation || entries.Count != PendingDrafts.Count) return false;
+            for (int i = 0; i < entries.Count; i++)
+                if (!ReferenceEquals(entries[i], PendingDrafts[i])) return false;
+            if (battleHUDUI == null || !battleHUDUI.ArePreparedViewsUsable(views)) return false;
+            battleHUDUI.ReplacePendingViews(views);
+            replaced = true;
+            failureReason = string.Empty;
+            return true;
+        }
+        finally
+        {
+            if (!replaced) battleHUDUI.DiscardPreparedViews(views);
+            isPreparingPendingViews = false;
         }
     }
 

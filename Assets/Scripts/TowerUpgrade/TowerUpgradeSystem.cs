@@ -336,83 +336,76 @@ public class TowerUpgradeSystem : MonoBehaviour
     }
 
     private BattleRuntimeCoordinator battleRuntime;
-    private TowerPlacementController placement;
+    private TowerPlacementSubmission submission;
     private TowerInvestmentCommitObservation committedInvestment;
     private bool hasUnpublishedInvestment;
     public bool IsApplyingUpgrade { get; private set; }
 
     internal void BindUpgradeRuntime(BattleRuntimeCoordinator coordinator,
-        TowerPlacementController controller)
+        TowerPlacementSubmission owner)
     {
         battleRuntime = coordinator;
-        placement = controller;
+        submission = owner;
     }
 
     internal void FlushCommittedInvestment()
     {
         if (!hasUnpublishedInvestment) return;
         hasUnpublishedInvestment = false;
-        placement.PublishInvestmentEvidence(committedInvestment);
+        submission.PublishInvestmentEvidence(committedInvestment);
     }
 
-    internal bool TryApplyHeldUpgrade(TowerInstance targetTower,
-        TowerUpgradeDefinition upgradeDefinition, PendingDraftUIItem heldItem,
-        DraftResult heldResult, BattleHUDUI hud, out string failureReason) =>
-        TryApplyUpgradeCore(targetTower, upgradeDefinition, heldItem,
-            heldResult, hud, false, out failureReason);
-
 #if UNITY_EDITOR
-    public bool TryApplyDebugUpgrade(TowerInstance targetTower,
-        TowerUpgradeDefinition upgradeDefinition, out string failureReason) =>
-        TryApplyUpgradeCore(targetTower, upgradeDefinition, null,
-            null, null, true, out failureReason);
+    public TowerSubmissionResult ApplyDebugUpgrade(TowerInstance targetTower,
+        TowerUpgradeDefinition upgradeDefinition) => submission != null
+        ? submission.SubmitDebugUpgrade(targetTower, upgradeDefinition)
+        : TowerSubmissionResult.Reject("Submission is not bound.");
 #endif
 
-    private bool TryApplyUpgradeCore(TowerInstance targetTower,
-        TowerUpgradeDefinition upgradeDefinition, PendingDraftUIItem heldItem,
-        DraftResult heldResult, BattleHUDUI hud, bool isDebug,
-        out string failureReason)
+    internal TowerSubmissionResult ApplyAuthorizedUpgrade(TowerPlacementSubmission.Operation operation,
+        TowerInstance targetTower, TowerUpgradeDefinition upgradeDefinition,
+        PendingDraftEntry heldItem, PendingDraftCollection owner, bool isDebug)
     {
-        failureReason = "Upgrade operation is busy or the active Battle no longer owns the target.";
+        string failureReason = "Upgrade operation is busy or the active Battle no longer owns the target.";
         if (IsApplyingUpgrade || battleRuntime == null || !battleRuntime.IsBattleActive ||
-            placement == null || (isDebug && !placement.CanStartDraftInteraction) ||
-            !placement.OwnsDeployedTower(targetTower)) return false;
-
-        bool committed = false;
+            submission == null || !submission.AuthorizesUpgrade(operation, targetTower, upgradeDefinition, heldItem, isDebug))
+            return TowerSubmissionResult.Reject(failureReason);
+        DraftResult heldResult = heldItem?.DraftResult;
         IsApplyingUpgrade = true;
         try
         {
-            if (!CanApplyUpgrade(targetTower, upgradeDefinition, out failureReason)) return false;
+            if (!CanApplyUpgrade(targetTower, upgradeDefinition, out failureReason)) return TowerSubmissionResult.Reject(failureReason);
             PreparedPendingDraftConsumption consumption = default;
-            if (!isDebug && (hud == null || heldItem == null ||
+            if (!isDebug && (owner == null || heldItem == null ||
                 !heldItem.DraftAttemptToken.IsValid || heldResult == null ||
                 heldItem.DraftResult != heldResult ||
                 heldResult.ResultType != DraftResultType.TowerUpgradeDraft ||
                 heldResult.TowerUpgradeDefinition != upgradeDefinition ||
-                !hud.TryPreparePendingDraftConsumption(heldItem, out consumption)))
+                !owner.TryPrepareConsumption(heldItem, out consumption)))
             {
                 failureReason = "The exact held Upgrade Draft is no longer consumable.";
-                return false;
+                return TowerSubmissionResult.Reject(failureReason);
             }
             if (!targetTower.TryGetComponent(out TowerCombatBehaviour combat))
             {
                 failureReason = "The target combat owner is missing.";
-                return false;
+                return TowerSubmissionResult.Reject(failureReason);
             }
             if (!combat.TryPrepareUpgradeRevision(targetTower, upgradeDefinition,
-                    out PreparedTowerCombatUpgradeRevision revision, out failureReason)) return false;
+                    out PreparedTowerCombatUpgradeRevision revision, out failureReason)) return TowerSubmissionResult.Reject(failureReason);
             targetTower.PrepareUpgradeCapacity();
             var observation = isDebug ? default : new TowerInvestmentCommitObservation(
                 TowerInvestmentCommitKind.Upgrade, heldItem.DraftAttemptToken,
                 heldResult, targetTower, targetTower.CurrentLevel, targetTower.CurrentLevel);
 
             // No callbacks or runtime entity creation in this semantic commit section.
+            if (!submission.AuthorizesUpgrade(operation, targetTower, upgradeDefinition, heldItem, isDebug) ||
+                (!isDebug && !owner.TryCommitConsumption(consumption)))
+            { failureReason = "Pending consumption authority expired during preparation."; return TowerSubmissionResult.Reject(failureReason); }
             targetTower.CommitPreparedUpgrade(upgradeDefinition);
             combat.CommitPreparedUpgradeBaseline(revision);
-            if (!isDebug) hud.CommitPreparedPendingDraftConsumption(consumption);
             committedInvestment = observation;
             hasUnpublishedInvestment = !isDebug;
-            committed = true;
 
             RequiredUpgradeRefreshResult refresh;
             try { refresh = combat.RefreshCommittedUpgrade(upgradeDefinition, revision, out failureReason); }
@@ -428,11 +421,11 @@ public class TowerUpgradeSystem : MonoBehaviour
             if (refresh == RequiredUpgradeRefreshResult.TechnicalFailure)
             {
                 battleRuntime.FailCommittedUpgrade(this, failureReason);
-                if (!isDebug) placement.PublishInvestmentNotification(observation);
-                return false;
+                if (!isDebug) submission.PublishInvestmentNotification(observation);
+                return new TowerSubmissionResult(TowerSubmissionOutcome.CommittedWithTechnicalFailure, failureReason);
             }
 
-            if (!isDebug) placement.PublishInvestmentNotification(observation);
+            if (!isDebug) submission.PublishInvestmentNotification(observation);
             if (targetTower != null) targetTower.PublishUpgradeRecordedSafely(upgradeDefinition);
             if (battleRuntime.IsBattleActive && targetTower != null)
             {
@@ -444,15 +437,13 @@ public class TowerUpgradeSystem : MonoBehaviour
                 catch (System.Exception exception) { Debug.LogException(exception, this); }
             }
             failureReason = string.Empty;
-            return true;
+            return new TowerSubmissionResult(TowerSubmissionOutcome.Committed);
         }
         finally
         {
             try
             {
                 FlushCommittedInvestment();
-                if (committed && !isDebug && heldItem != null && hud != null)
-                    hud.ReleaseConsumedPendingDraftView(heldItem);
             }
             finally { IsApplyingUpgrade = false; }
         }

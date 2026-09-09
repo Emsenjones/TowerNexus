@@ -14,8 +14,10 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     [SerializeField] private Sprite elementalUpgradeIconBackground;
     [SerializeField] private TMP_Text nameText;
 
-    private DraftResult draftResult;
-    private DraftAttemptToken draftAttemptToken;
+    public PendingDraftEntry Entry { get; private set; }
+    private BattleHUDUI hud;
+    private DraftResult draftResult => Entry?.DraftResult;
+    private DraftAttemptToken draftAttemptToken => Entry != null ? Entry.DraftAttemptToken : default;
     private TowerPlacementController placementController;
     private RectTransform rectTransform;
     private RectTransform pendingItemContainer;
@@ -28,7 +30,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private bool hasStoredPendingPosition;
     private bool isDragVisualActive;
     private bool isBattleActive;
-    private bool isConsumed;
+    private bool isConsumed => Entry == null || Entry.IsConsumed;
 
     public DraftResult DraftResult => draftResult;
     public DraftAttemptToken DraftAttemptToken => draftAttemptToken;
@@ -39,6 +41,11 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private void Awake()
     {
         rectTransform = transform as RectTransform;
+    }
+
+    private void OnEnable()
+    {
+        if (Entry != null) BeginBattle();
     }
 
     private void OnDisable()
@@ -88,19 +95,21 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     }
 
     public bool TryInitialize(
-        DraftResult selectedDraftResult,
-        DraftAttemptToken selectedDraftAttemptToken,
+        PendingDraftEntry entry,
+        BattleHUDUI owner,
         TowerPlacementController selectedPlacementController,
         RectTransform selectedPendingItemContainer,
         RectTransform selectedDragVisualRoot,
         out string failureReason)
     {
-        draftResult = null;
-        draftAttemptToken = default;
+        Entry = null;
+        hud = null;
+        DraftResult selectedDraftResult = entry?.DraftResult;
+        DraftAttemptToken selectedDraftAttemptToken = entry != null ? entry.DraftAttemptToken : default;
         placementController = null;
         pendingItemContainer = null;
         dragVisualRoot = null;
-        isConsumed = false;
+
 
         if (!TryValidateReferences(out failureReason))
         {
@@ -148,8 +157,8 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
             return false;
         }
 
-        draftResult = selectedDraftResult;
-        draftAttemptToken = selectedDraftAttemptToken;
+        Entry = entry;
+        hud = owner;
         placementController = selectedPlacementController;
         pendingItemContainer = selectedPendingItemContainer;
         dragVisualRoot = selectedDragVisualRoot;
@@ -292,15 +301,9 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
         isDragVisualActive = false;
     }
 
-    internal void MarkConsumed()
-    {
-        isConsumed = true;
-        isBattleActive = false;
-    }
-
     private bool CanInteract()
     {
-        return isBattleActive && !isConsumed &&
+        return isBattleActive && !isConsumed && hud != null && hud.IsCurrentPendingView(this) &&
                (placementController == null || placementController.CanStartDraftInteraction);
     }
 

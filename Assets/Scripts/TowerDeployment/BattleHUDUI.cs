@@ -5,20 +5,6 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-internal readonly struct PreparedPendingDraftConsumption
-{
-    internal PreparedPendingDraftConsumption(
-        PendingDraftUIItem item,
-        int ownedIndex)
-    {
-        Item = item;
-        OwnedIndex = ownedIndex;
-    }
-
-    internal PendingDraftUIItem Item { get; }
-    internal int OwnedIndex { get; }
-}
-
 public class BattleHUDUI : MonoBehaviour
 {
     [SerializeField] private PlayerSystem playerSystem;
@@ -35,19 +21,24 @@ public class BattleHUDUI : MonoBehaviour
     private readonly List<PendingDraftUIItem> pendingDraftItems = new List<PendingDraftUIItem>();
     private bool isBattleActive;
 
-    public IReadOnlyList<PendingDraftUIItem> PendingDraftItems => pendingDraftItems;
+    public DraftSystem DraftOwner { get; private set; }
+    internal void BindDraftOwner(DraftSystem owner) { DraftOwner = owner; }
     public bool IsDraftOpen => draftUI != null && draftUI.IsOpen;
 
     private void OnEnable()
     {
         SubscribeToPlayerSystem();
         InitializeFromPlayerSystem();
-        draftUI?.CloseDraft();
+        if (DraftOwner == null || !DraftOwner.IsBattleActive) draftUI?.CloseDraft();
+        if (DraftOwner != null && DraftOwner.IsBattleActive)
+            foreach (var item in pendingDraftItems) item?.BeginBattle();
     }
 
     private void OnDisable()
     {
         UnsubscribeFromPlayerSystem();
+        if (towerPlacementController != null && towerPlacementController.CanStartDraftInteraction)
+            towerPlacementController.CancelPlacement();
     }
 
     public void UpdateLevel(int level)
@@ -167,17 +158,17 @@ public class BattleHUDUI : MonoBehaviour
         return true;
     }
 
-    public bool TryAddPendingDraft(
-        DraftResult draftResult,
-        DraftAttemptToken draftAttemptToken,
+    internal bool TryPreparePendingView(
+        PendingDraftEntry entry,
         out PendingDraftUIItem committedItem,
         out string failureReason)
     {
         committedItem = null;
+        DraftResult draftResult = entry?.DraftResult;
 
-        if (!isBattleActive)
+        if (!isBattleActive || !isActiveAndEnabled)
         {
-            failureReason = "the Battle HUD battle gate is closed.";
+            failureReason = "the Battle HUD battle gate or presentation is closed.";
             return false;
         }
 
@@ -223,8 +214,8 @@ public class BattleHUDUI : MonoBehaviour
             }
 
             if (!item.TryInitialize(
-                    draftResult,
-                    draftAttemptToken,
+                    entry,
+                    this,
                     towerPlacementController,
                     pendingDraftContainer,
                     pendingDraftDragVisualRoot,
@@ -237,7 +228,7 @@ public class BattleHUDUI : MonoBehaviour
             }
 
             item.BeginBattle();
-            pendingDraftItems.Add(item);
+
             committedItem = item;
             failureReason = string.Empty;
             return true;
@@ -253,78 +244,55 @@ public class BattleHUDUI : MonoBehaviour
         }
     }
 
-    public void RemovePendingDraft(PendingDraftUIItem item)
+    internal bool IsCurrentPendingView(PendingDraftUIItem item) => isBattleActive && isActiveAndEnabled &&
+        item != null && item.isActiveAndEnabled && pendingDraftItems.Contains(item) && DraftOwner != null &&
+        !DraftOwner.IsPendingMutationBusy &&
+        DraftOwner.PendingOwner.CanConsume(item.Entry);
+
+    internal bool ArePreparedViewsUsable(IReadOnlyList<PendingDraftUIItem> views)
     {
-        if (!OwnsPendingDraft(item))
-        {
-            Debug.LogWarning(
-                "Battle HUD UI cannot remove pending draft: the item is not " +
-                "owned by the active pending-item collection.",
-                this);
-            return;
-        }
-
-        ConsumePendingDraft(item);
-    }
-
-    internal bool OwnsPendingDraft(PendingDraftUIItem item)
-    {
-        return isBattleActive &&
-               item != null &&
-               !item.IsConsumed &&
-               pendingDraftItems.Contains(item);
-    }
-
-    internal bool TryPreparePendingDraftConsumption(
-        PendingDraftUIItem item,
-        out PreparedPendingDraftConsumption preparedConsumption)
-    {
-        preparedConsumption = default;
-
-        if (!isBattleActive || item == null || item.IsConsumed)
-        {
-            return false;
-        }
-
-        int ownedIndex = pendingDraftItems.IndexOf(item);
-
-        if (ownedIndex < 0)
-        {
-            return false;
-        }
-
-        preparedConsumption = new PreparedPendingDraftConsumption(
-            item,
-            ownedIndex);
+        if (!isBattleActive || !isActiveAndEnabled || pendingDraftContainer == null ||
+            !pendingDraftContainer.gameObject.activeInHierarchy) return false;
+        for (int i = 0; i < views.Count; i++)
+            if (views[i] == null || !views[i].isActiveAndEnabled || views[i].IsConsumed ||
+                views[i].transform.parent != pendingDraftContainer) return false;
         return true;
     }
 
-    internal void CommitPreparedPendingDraftConsumption(
-        PreparedPendingDraftConsumption preparedConsumption)
+    internal void RegisterPreparedViews(IReadOnlyList<PendingDraftUIItem> views)
     {
-        pendingDraftItems.RemoveAt(preparedConsumption.OwnedIndex);
-        preparedConsumption.Item.MarkConsumed();
+        for (int i = 0; i < views.Count; i++) pendingDraftItems.Add(views[i]);
+    }
+
+    internal void PrepareViewCapacity(int count)
+    {
+        if (pendingDraftItems.Capacity < pendingDraftItems.Count + count)
+            pendingDraftItems.Capacity = pendingDraftItems.Count + count;
     }
 
     internal void ReleaseConsumedPendingDraftView(PendingDraftUIItem item)
     {
-        if (item != null)
+        if (item == null || !item.IsConsumed) return;
+        pendingDraftItems.Remove(item);
+        try { Destroy(item.gameObject); }
+        catch (Exception exception) { Debug.LogException(exception, this); }
+    }
+
+    internal void DiscardPreparedViews(IReadOnlyList<PendingDraftUIItem> views)
+    {
+        for (int i = 0; i < views.Count; i++)
         {
-            Destroy(item.gameObject);
+            try { if (views[i] != null) Destroy(views[i].gameObject); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
         }
     }
 
-    internal void ConsumePendingDraft(PendingDraftUIItem item)
+    internal void ReplacePendingViews(IReadOnlyList<PendingDraftUIItem> replacements)
     {
-        if (!TryPreparePendingDraftConsumption(
-                item,
-                out PreparedPendingDraftConsumption preparedConsumption))
-        {
-            return;
-        }
-
-        CommitPreparedPendingDraftConsumption(preparedConsumption);
-        ReleaseConsumedPendingDraftView(item);
+        var previous = pendingDraftItems.ToArray();
+        pendingDraftItems.Clear();
+        RegisterPreparedViews(replacements);
+        DiscardPreparedViews(previous);
     }
 
     public bool IsScreenPositionInsideDraftItemInteractionArea(Vector2 screenPosition)

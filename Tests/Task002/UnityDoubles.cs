@@ -76,3 +76,19 @@ public class TowerPlacementPreview
 {
     public TowerAnchorSet TowerAnchorSet;
 }
+
+#if !BASELINE
+// Task002 supplies resolved candidates to the real final validator. Candidate capture
+// and geometry checks execute against production code in Task004's integration suite.
+internal sealed class TowerPlacementCandidate
+{
+    private TowerPlacementValidator owner;
+    internal System.Collections.Generic.IReadOnlyList<GridNodeBehaviour> Footprint;
+    internal bool IsCurrent(TowerPlacementValidator value)=>ReferenceEquals(owner,value);
+    internal static TowerPlacementCandidate FromPreview(TowerPlacementValidator owner,TowerPlacementPreview preview)
+    {
+        owner.TryGetOccupiedNodes(preview,out var nodes);
+        return new TowerPlacementCandidate{owner=owner,Footprint=nodes.AsReadOnly()};
+    }
+}
+#endif

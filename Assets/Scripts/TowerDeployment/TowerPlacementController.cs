@@ -2,54 +2,6 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-public enum TowerInvestmentCommitKind
-{
-    Deployment = 0,
-    LevelUp = 1,
-    Upgrade = 2
-}
-
-public readonly struct TowerInvestmentCommitObservation
-{
-    public TowerInvestmentCommitObservation(
-        TowerInvestmentCommitKind kind,
-        DraftAttemptToken draftAttemptToken,
-        DraftResult draftResult,
-        TowerInstance towerInstance,
-        int previousLevel,
-        int currentLevel)
-    {
-        Kind = kind;
-        DraftAttemptToken = draftAttemptToken;
-        DraftResult = draftResult;
-        TowerInstance = towerInstance;
-        PreviousLevel = previousLevel;
-        CurrentLevel = currentLevel;
-        TowerInstanceId = towerInstance != null ? towerInstance.GetInstanceID() : 0;
-        TowerDefinition definition = towerInstance != null ? towerInstance.TowerDefinition : null;
-        TowerDisplayName = definition != null ? definition.DisplayName :
-            (towerInstance != null ? towerInstance.name : string.Empty);
-        TowerFamilyName = definition != null ? definition.TowerFamily.ToString() : string.Empty;
-        DraftResultTypeName = draftResult != null ? draftResult.ResultType.ToString() : string.Empty;
-        DraftAssetName = draftResult?.Identity != null ? draftResult.Identity.name : string.Empty;
-        UpgradeLayerName = draftResult?.TowerUpgradeDefinition != null
-            ? draftResult.TowerUpgradeDefinition.UpgradeLayer.ToString() : string.Empty;
-    }
-
-    public TowerInvestmentCommitKind Kind { get; }
-    public DraftAttemptToken DraftAttemptToken { get; }
-    public DraftResult DraftResult { get; }
-    public TowerInstance TowerInstance { get; }
-    public int PreviousLevel { get; }
-    public int CurrentLevel { get; }
-    public int TowerInstanceId { get; }
-    public string TowerDisplayName { get; }
-    public string TowerFamilyName { get; }
-    public string DraftResultTypeName { get; }
-    public string DraftAssetName { get; }
-    public string UpgradeLayerName { get; }
-}
-
 public class TowerPlacementController : MonoBehaviour
 {
     [SerializeField] private Camera placementCamera;
@@ -65,8 +17,15 @@ public class TowerPlacementController : MonoBehaviour
 
     private MapGeneratorBehaviour mapGenerator;
     private TowerPlacementPreview currentPreview;
-    private readonly List<TowerBehaviour> deployedTowers = new List<TowerBehaviour>();
-    private readonly List<TowerInstance> deployedTowerInstances = new List<TowerInstance>();
+    private TowerPlacementSubmission submission;
+    private static readonly IReadOnlyList<TowerBehaviour> NoTowers = System.Array.Empty<TowerBehaviour>();
+    private IReadOnlyList<TowerBehaviour> deployedTowers => submission != null ? submission.DeployedTowers : NoTowers;
+    internal void BindSubmission(TowerPlacementSubmission owner) { submission = owner; }
+    internal void ConfigureSubmission(BattleRuntimeCoordinator runtime, DraftSystem draft)
+    {
+        submission.Bind(runtime, draft, placementValidator, deployController,
+            towerUpgradeSystem, monsterManager, mapGenerator);
+    }
     private readonly List<TowerBehaviour> highlightedUpgradeTargets = new List<TowerBehaviour>();
     private DraftResult currentDraftResult;
     private TowerDefinition currentTowerDefinition;
@@ -78,11 +37,10 @@ public class TowerPlacementController : MonoBehaviour
     private bool isDragging;
     private bool isCompletingPlacement;
     public bool CanStartDraftInteraction => !isCompletingPlacement &&
+        submission != null && !submission.IsBusy &&
+        (battleHUDUI == null || battleHUDUI.DraftOwner == null || !battleHUDUI.DraftOwner.IsPendingMutationBusy) &&
         (towerUpgradeSystem == null || !towerUpgradeSystem.IsApplyingUpgrade);
 
-    internal bool OwnsDeployedTower(TowerInstance tower) =>
-        isBattleActive && tower != null && deployedTowers.Exists(
-            entry => entry != null && entry.TowerInstance == tower);
     private bool isTowerTargetCandidateActive;
     private bool isLevelUpPreviewActive;
     private bool isBattleActive;
@@ -92,28 +50,10 @@ public class TowerPlacementController : MonoBehaviour
     public TowerPlacementPreview CurrentPreview => currentPreview;
     public TowerDefinition CurrentTowerDefinition => currentTowerDefinition;
     public GridNodeBehaviour CurrentTargetNode => currentTargetNode;
-    public IReadOnlyList<TowerInstance> DeployedTowerInstances
-    {
-        get
-        {
-            RebuildDeployedTowerInstances();
-            return deployedTowerInstances;
-        }
-    }
     public bool IsDragging => isDragging;
     public bool IsBattleActive => isBattleActive;
     public MapGeneratorBehaviour ActiveMap => mapGenerator;
     public Camera PlacementCamera => placementCamera;
-
-    public event System.Action<TowerInstance> OnTowerDeploymentCommitted;
-    internal event System.Action<
-        TowerInstance,
-        TowerPlacementTopologyPlan,
-        MonsterRouteRevisionBatch> OnPlacementRouteRevisionCommitted;
-    public event System.Action<TowerInvestmentCommitObservation>
-        OnTowerInvestmentCommitted;
-
-    internal event System.Action<TowerInvestmentCommitObservation> OnInvestmentEvidenceCommitted;
 
     private void Awake()
     {
@@ -154,11 +94,14 @@ public class TowerPlacementController : MonoBehaviour
     public void BeginPlacement(TowerDefinition towerDefinition, PendingDraftUIItem draftedDraftEntry)
     {
         if (!CanStartDraftInteraction) return;
-        BeginTowerDraftDrag(DraftResult.CreateTowerDraft(towerDefinition), draftedDraftEntry);
+        if (draftedDraftEntry == null || draftedDraftEntry.TowerDefinition != towerDefinition) return;
+        BeginDraftDrag(draftedDraftEntry.DraftResult, draftedDraftEntry);
     }
 
     public void BeginDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
     {
+        if (battleHUDUI == null || !battleHUDUI.IsCurrentPendingView(draftedDraftEntry) ||
+            draftedDraftEntry.DraftResult != draftResult) return;
         if (!CanStartDraftInteraction) return;
         if (!isBattleActive)
         {
@@ -316,6 +259,7 @@ public class TowerPlacementController : MonoBehaviour
             return false;
         }
 
+        submission?.CloseBattleGate();
         mapGenerator = activeMap;
         ApplyMapBinding();
         missingMapGeneratorWarningLogged = false;
@@ -324,6 +268,7 @@ public class TowerPlacementController : MonoBehaviour
 
     public void ClearActiveMap()
     {
+        submission?.CloseBattleGate();
         CloseBattleGate();
         mapGenerator = null;
         ApplyMapBinding();
@@ -391,267 +336,57 @@ public class TowerPlacementController : MonoBehaviour
         return true;
     }
 
-    public void BeginBattle()
-    {
-        isBattleActive = true;
-        RemoveNullDeployedTowerEntries();
-
-        for (int i = 0; i < deployedTowers.Count; i++)
-        {
-            TowerBehaviour tower = deployedTowers[i];
-            TowerCombatBehaviour combatBehaviour =
-                tower != null ? tower.GetComponent<TowerCombatBehaviour>() : null;
-            combatBehaviour?.BeginBattle();
-        }
-    }
+    public void BeginBattle() { isBattleActive = true; }
 
     public void CloseBattleGate()
     {
         isBattleActive = false;
-        CancelPlacement();
-    }
-
-    public void StopTrackedTowerCombat()
-    {
-        RemoveNullDeployedTowerEntries();
-
-        for (int i = 0; i < deployedTowers.Count; i++)
-        {
-            TowerBehaviour tower = deployedTowers[i];
-            TowerCombatBehaviour combatBehaviour =
-                tower != null ? tower.GetComponent<TowerCombatBehaviour>() : null;
-            try { combatBehaviour?.StopBattle(); }
-            catch (System.Exception exception) { Debug.LogException(exception, this); }
-        }
-    }
-
-    public void DestroyTrackedTowers()
-    {
-        CloseBattleGate();
         ClearUpgradeTargetHighlights();
-        StopTrackedTowerCombat();
-
-        for (int i = deployedTowers.Count - 1; i >= 0; i--)
-        {
-            TowerBehaviour tower = deployedTowers[i];
-
-            if (tower == null)
-            {
-                continue;
-            }
-
-            tower.gameObject.SetActive(false);
-            Destroy(tower.gameObject);
-        }
-
-        deployedTowers.Clear();
-        deployedTowerInstances.Clear();
-    }
-
-    public void StopBattle()
-    {
-        CloseBattleGate();
-        StopTrackedTowerCombat();
+        CancelPlacement();
     }
 
     private void CompletePlacement()
     {
-        if (isCompletingPlacement || !CanStartDraftInteraction) return;
+        if (!CanStartDraftInteraction || !submission.TryBeginInteraction(out var lease)) return;
+        var view = currentDraftEntry;
         isCompletingPlacement = true;
-        try { CompletePlacementCore(); }
-        finally
-        {
-            try { CancelPlacement(); }
-            finally { isCompletingPlacement = false; }
-        }
-    }
-
-    private void CompletePlacementCore()
-    {
-        if (!isBattleActive)
-        {
-            return;
-        }
-
-        if (battleHUDUI != null &&
-            battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
-        {
-            return;
-        }
-
-        if (IsTowerUpgradeDraftDrag())
-        {
-            CompleteTowerUpgrade();
-            return;
-        }
-
-        if (isTowerTargetCandidateActive)
-        {
-            if (isLevelUpPreviewActive && currentLevelUpTarget != null)
-            {
-                CompleteLevelUp();
-            }
-
-            return;
-        }
-
-        if (currentPreview != null)
-        {
-            if (deployController == null)
-            {
-                LogPlacementRejected(
-                    "TowerReadiness",
-                    "Tower Deploy Controller is not assigned.");
-            }
-            else
-            {
-                TryCommitNewTowerPlacement();
-            }
-        }
-    }
-
-    private void CompleteLevelUp()
-    {
-        if (towerUpgradeSystem == null ||
-            battleHUDUI == null ||
-            currentLevelUpTarget == null ||
-            currentLevelUpTarget.TowerInstance == null ||
-            currentTowerDefinition == null ||
-            currentDraftEntry == null)
-        {
-            return;
-        }
-
-        if (!TryValidateHeldTowerDraft(out string draftFailureReason))
-        {
-            Debug.LogWarning(
-                $"Tower placement controller cannot prepare Level Up: {draftFailureReason}",
-                this);
-            return;
-        }
-
-        if (!battleHUDUI.TryPreparePendingDraftConsumption(
-                currentDraftEntry,
-                out PreparedPendingDraftConsumption preparedDraftConsumption))
-        {
-            Debug.LogWarning(
-                "Tower placement controller cannot prepare Level Up: the exact held Draft cannot be consumed.",
-                this);
-            return;
-        }
-
-        if (!towerUpgradeSystem.TryPrepareLevelUp(
-                currentLevelUpTarget.TowerInstance,
-                currentTowerDefinition,
-                out PreparedTowerLevelUp preparedLevelUp,
-                out string levelFailureReason))
-        {
-            Debug.LogWarning(
-                $"Tower placement controller cannot prepare Level Up: {levelFailureReason}",
-                this);
-            return;
-        }
-
-        if (!currentLevelUpTarget.TryPrepareLevelVisualRefresh(
-                preparedLevelUp.NextLevelConfig,
-                out string visualFailureReason))
-        {
-            Debug.LogWarning(
-                $"Tower placement controller cannot prepare Level Up: {visualFailureReason}",
-                this);
-            return;
-        }
-
-        if (!currentLevelUpTarget.TryGetComponent(
-                out TowerCombatBehaviour targetCombat))
-        {
-            Debug.LogWarning(
-                "Tower placement controller cannot prepare Level Up: the target Tower combat runtime is missing.",
-                this);
-            return;
-        }
-
-        if (!targetCombat.TryPrepareLevelDamageRevision(
-                preparedLevelUp.NextLevelConfig,
-                out PreparedTowerCombatLevelRevision preparedCombatRevision,
-                out string combatFailureReason))
-        {
-            Debug.LogWarning(
-                $"Tower placement controller cannot prepare Level Up: {combatFailureReason}",
-                this);
-            return;
-        }
-
-        PendingDraftUIItem consumedDraft = preparedDraftConsumption.Item;
-
-        towerUpgradeSystem.CommitPreparedLevelUp(preparedLevelUp);
-        targetCombat.ApplyPreparedLevelDamageRevision(preparedCombatRevision);
-        battleHUDUI.CommitPreparedPendingDraftConsumption(
-            preparedDraftConsumption);
-        currentDraftEntry = null;
-
-        towerUpgradeSystem.PublishPreparedLevelUp(preparedLevelUp);
-        PublishTowerInvestmentCommitted(
-            TowerInvestmentCommitKind.LevelUp,
-            consumedDraft,
-            preparedLevelUp.TargetTower,
-            preparedLevelUp.PreviousLevel,
-            preparedLevelUp.NextLevel);
-        RunLevelUpPresentation(currentLevelUpTarget, consumedDraft);
-    }
-
-    private void RunLevelUpPresentation(
-        TowerBehaviour levelledTower,
-        PendingDraftUIItem consumedDraft)
-    {
-        bool didRefreshVisual = false;
-
         try
         {
-            didRefreshVisual = levelledTower != null &&
-                               levelledTower.RefreshTowerVisual();
-
-            if (!didRefreshVisual)
-            {
-                Debug.LogWarning(
-                    "Tower Level Up committed with a model-refresh presentation warning.",
-                    this);
-            }
+            TowerSubmissionResult result = CompletePlacementCore(lease);
+            if (!string.IsNullOrEmpty(result.FailureReason)) Debug.LogWarning(result.FailureReason, this);
         }
-        catch (System.Exception exception)
-        {
-            Debug.LogException(exception, this);
-        }
-
-        if (didRefreshVisual)
+        finally
         {
             try
             {
-                levelledTower.VisualController?.PlayTowerSpawnRefreshFeedback();
+                // Consumption remains authoritative even if a post-commit observer fails.
+                if (battleHUDUI != null) battleHUDUI.ReleaseConsumedPendingDraftView(view);
             }
-            catch (System.Exception exception)
+            finally
             {
-                Debug.LogException(exception, this);
+                try { CancelPlacement(); }
+                finally { isCompletingPlacement = false; lease.Dispose(); }
             }
-        }
-
-        try
-        {
-            battleHUDUI.ReleaseConsumedPendingDraftView(consumedDraft);
-        }
-        catch (System.Exception exception)
-        {
-            Debug.LogException(exception, this);
         }
     }
 
-    private void CompleteTowerUpgrade()
+    private TowerSubmissionResult CompletePlacementCore(TowerPlacementSubmission.Interaction lease)
     {
-        if (towerUpgradeSystem == null || currentUpgradeTarget == null) return;
-        if (!towerUpgradeSystem.TryApplyHeldUpgrade(
-                currentUpgradeTarget.TowerInstance, currentTowerUpgradeDefinition,
-                currentDraftEntry, currentDraftResult, battleHUDUI, out string failureReason))
-            Debug.LogWarning($"Tower upgrade request ended: {failureReason}", this);
+        if (!isBattleActive || battleHUDUI == null || !battleHUDUI.IsCurrentPendingView(currentDraftEntry) ||
+            currentDraftEntry.DraftResult != currentDraftResult)
+            return TowerSubmissionResult.Reject("The current Pending view or Battle is unavailable.");
+        if (battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
+            return TowerSubmissionResult.Reject(string.Empty);
+        var entry = currentDraftEntry.Entry;
+        if (IsTowerUpgradeDraftDrag())
+            return submission.SubmitUpgrade(entry, currentUpgradeTarget != null ? currentUpgradeTarget.TowerInstance : null, lease);
+        if (isTowerTargetCandidateActive)
+            return isLevelUpPreviewActive && currentLevelUpTarget != null
+                ? submission.SubmitLevelUp(entry, currentLevelUpTarget.TowerInstance, lease)
+                : TowerSubmissionResult.Reject(string.Empty);
+        if (!TowerPlacementCandidate.TryCapture(placementValidator, currentPreview, out var candidate, out string reason))
+            return TowerSubmissionResult.Reject(reason);
+        return submission.SubmitDeployment(entry, candidate, lease);
     }
 
     private void UpdatePreviewPosition(Vector3 screenPosition)
@@ -805,7 +540,6 @@ public class TowerPlacementController : MonoBehaviour
             return null;
         }
 
-        RemoveNullDeployedTowerEntries();
 
         for (int i = 0; i < deployedTowers.Count; i++)
         {
@@ -842,560 +576,6 @@ public class TowerPlacementController : MonoBehaviour
         isLevelUpPreviewActive = false;
     }
 
-    private bool TryCommitNewTowerPlacement()
-    {
-        string topologyFailureReason = placementValidator == null
-            ? "Tower Placement Validator is not assigned."
-            : string.Empty;
-        IReadOnlyList<GridNodeBehaviour> diagnosticFootprint = null;
-        bool? routeExists = null;
-
-        if (placementValidator == null ||
-            !placementValidator.TryCreateTopologyPlan(
-                currentPreview,
-                out TowerPlacementTopologyPlan topologyPlan,
-                out diagnosticFootprint,
-                out routeExists,
-                out topologyFailureReason))
-        {
-            LogPlacementRejected(
-                "TopologyPlan",
-                topologyFailureReason,
-                diagnosticFootprint,
-                routeExists);
-            return false;
-        }
-
-        if (!TryValidateHeldTowerDraft(out string draftFailureReason))
-        {
-            LogPlacementRejected(
-                "DraftPreflight",
-                draftFailureReason,
-                topologyPlan.Footprint,
-                routeExists: true);
-            return false;
-        }
-
-        string revisionFailureReason = monsterManager == null
-            ? "Monster Manager is not assigned."
-            : string.Empty;
-
-        if (monsterManager == null ||
-            !monsterManager.TryPrepareTopologyRevision(
-                topologyPlan,
-                out MonsterRouteRevisionBatch revisionBatch,
-                out revisionFailureReason))
-        {
-            LogPlacementRejected(
-                "MonsterRevisionPreparation",
-                revisionFailureReason,
-                topologyPlan.Footprint,
-                routeExists: true);
-            return false;
-        }
-
-        if (!deployController.TryPrepareTower(
-                currentPreview,
-                topologyPlan,
-                out TowerBehaviour preparedTower,
-                out string towerFailureReason))
-        {
-            LogPlacementRejected(
-                "TowerReadiness",
-                towerFailureReason,
-                topologyPlan.Footprint,
-                routeExists: true);
-            return false;
-        }
-
-        if (!TryValidatePreparedTowerForCommit(
-                preparedTower,
-                topologyPlan,
-                out TowerCombatBehaviour preparedCombat,
-                out string commitFailureReason))
-        {
-            DiscardPreparedTower(preparedTower);
-            LogPlacementRejected(
-                "CommitPreflight",
-                commitFailureReason,
-                topologyPlan.Footprint,
-                routeExists: true);
-            return false;
-        }
-
-        PendingDraftUIItem consumedDraft = currentDraftEntry;
-        revisionBatch.CombatOwnershipFingerprintBefore =
-            CaptureExistingCombatOwnershipFingerprint();
-        CommitPreparedPlacement(
-            topologyPlan,
-            revisionBatch,
-            preparedTower,
-            preparedCombat,
-            consumedDraft);
-        revisionBatch.CombatOwnershipFingerprintAfter =
-            CaptureExistingCombatOwnershipFingerprint(
-                preparedTower.TowerInstance);
-        currentDraftEntry = null;
-        PublishTowerDeploymentCommitted(
-            preparedTower.TowerInstance,
-            consumedDraft,
-            topologyPlan,
-            revisionBatch);
-
-        bool hasPresentationWarning =
-            !TryRunPlacementPresentation(preparedTower);
-        LogPlacementAccepted(
-            topologyPlan,
-            revisionBatch,
-            hasPresentationWarning
-                ? "AcceptedWithPresentationWarning"
-                : "Accepted");
-        return true;
-    }
-
-    private void PublishTowerDeploymentCommitted(
-        TowerInstance towerInstance,
-        PendingDraftUIItem consumedDraft,
-        TowerPlacementTopologyPlan topologyPlan,
-        MonsterRouteRevisionBatch revisionBatch)
-    {
-        System.Action<TowerInstance> handlers = OnTowerDeploymentCommitted;
-
-        if (towerInstance == null)
-        {
-            return;
-        }
-
-        if (handlers != null)
-        {
-            System.Delegate[] subscribers = handlers.GetInvocationList();
-
-            for (int i = 0; i < subscribers.Length; i++)
-            {
-                try
-                {
-                    ((System.Action<TowerInstance>)subscribers[i]).Invoke(
-                        towerInstance);
-                }
-                catch (System.Exception exception)
-                {
-                    Debug.LogException(exception, this);
-                }
-            }
-        }
-
-        PublishPlacementRouteRevisionCommitted(
-            towerInstance,
-            topologyPlan,
-            revisionBatch);
-        monsterManager.PublishCommittedPlacementRouteLifecycle(revisionBatch);
-
-        PublishTowerInvestmentCommitted(
-            TowerInvestmentCommitKind.Deployment,
-            consumedDraft,
-            towerInstance,
-            0,
-            towerInstance.CurrentLevel);
-    }
-
-    private void PublishPlacementRouteRevisionCommitted(
-        TowerInstance towerInstance,
-        TowerPlacementTopologyPlan topologyPlan,
-        MonsterRouteRevisionBatch revisionBatch)
-    {
-        System.Action<
-            TowerInstance,
-            TowerPlacementTopologyPlan,
-            MonsterRouteRevisionBatch> handlers =
-                OnPlacementRouteRevisionCommitted;
-
-        if (handlers == null)
-        {
-            return;
-        }
-
-        System.Delegate[] subscribers = handlers.GetInvocationList();
-
-        for (int i = 0; i < subscribers.Length; i++)
-        {
-            try
-            {
-                ((System.Action<
-                    TowerInstance,
-                    TowerPlacementTopologyPlan,
-                    MonsterRouteRevisionBatch>)subscribers[i]).Invoke(
-                        towerInstance,
-                        topologyPlan,
-                        revisionBatch);
-            }
-            catch (System.Exception exception)
-            {
-                Debug.LogException(exception, this);
-            }
-        }
-    }
-
-    private string CaptureExistingCombatOwnershipFingerprint(
-        TowerInstance excludedTower = null)
-    {
-        List<TowerCombatBehaviour> combatRuntimes =
-            new List<TowerCombatBehaviour>();
-
-        for (int i = 0; i < deployedTowers.Count; i++)
-        {
-            TowerBehaviour tower = deployedTowers[i];
-
-            if (tower == null ||
-                tower.TowerInstance == excludedTower ||
-                !tower.TryGetComponent(out TowerCombatBehaviour combat))
-            {
-                continue;
-            }
-
-            combatRuntimes.Add(combat);
-        }
-
-        combatRuntimes.Sort((left, right) =>
-            left.GetInstanceID().CompareTo(right.GetInstanceID()));
-        StringBuilder builder = new StringBuilder();
-
-        for (int i = 0; i < combatRuntimes.Count; i++)
-        {
-            if (i > 0)
-            {
-                builder.Append('|');
-            }
-
-            builder.Append(
-                combatRuntimes[i].CapturePlacementOwnershipFingerprint());
-        }
-
-        return builder.ToString();
-    }
-
-    private void PublishTowerInvestmentCommitted(
-        TowerInvestmentCommitKind kind,
-        PendingDraftUIItem consumedDraft,
-        TowerInstance towerInstance,
-        int previousLevel,
-        int currentLevel)
-    {
-        if (consumedDraft == null || !consumedDraft.DraftAttemptToken.IsValid ||
-            consumedDraft.DraftResult == null || towerInstance == null) return;
-        var observation = new TowerInvestmentCommitObservation(kind,
-            consumedDraft.DraftAttemptToken, consumedDraft.DraftResult,
-            towerInstance, previousLevel, currentLevel);
-        PublishInvestmentEvidence(observation);
-        PublishInvestmentNotification(observation);
-    }
-
-    internal void PublishInvestmentEvidence(TowerInvestmentCommitObservation observation) =>
-        PublishInvestmentHandlers(OnInvestmentEvidenceCommitted, observation);
-
-    internal void PublishInvestmentNotification(TowerInvestmentCommitObservation observation) =>
-        PublishInvestmentHandlers(OnTowerInvestmentCommitted, observation);
-
-    private void PublishInvestmentHandlers(
-        System.Action<TowerInvestmentCommitObservation> handlers,
-        TowerInvestmentCommitObservation observation)
-    {
-        if (handlers == null) return;
-        foreach (System.Delegate subscriber in handlers.GetInvocationList())
-        {
-            try { ((System.Action<TowerInvestmentCommitObservation>)subscriber)(observation); }
-            catch (System.Exception exception) { Debug.LogException(exception, this); }
-        }
-    }
-
-    private bool TryValidateHeldTowerDraft(out string failureReason)
-    {
-        if (battleHUDUI == null)
-        {
-            failureReason = "Battle HUD UI is not assigned.";
-            return false;
-        }
-
-        if (currentDraftEntry == null ||
-            !battleHUDUI.OwnsPendingDraft(currentDraftEntry))
-        {
-            failureReason =
-                "the exact held Tower Draft is not owned by the active " +
-                "pending-item collection.";
-            return false;
-        }
-
-        if (currentDraftResult == null ||
-            !currentDraftResult.IsValid ||
-            currentDraftResult.ResultType != DraftResultType.TowerDraft ||
-            currentDraftEntry.DraftResult != currentDraftResult ||
-            currentDraftEntry.TowerDefinition != currentTowerDefinition ||
-            currentPreview == null ||
-            currentPreview.TowerDefinition != currentTowerDefinition)
-        {
-            failureReason =
-                "the held Tower Draft identity does not match the active " +
-                "placement preview.";
-            return false;
-        }
-
-        failureReason = string.Empty;
-        return true;
-    }
-
-    private bool TryValidatePreparedTowerForCommit(
-        TowerBehaviour preparedTower,
-        TowerPlacementTopologyPlan topologyPlan,
-        out TowerCombatBehaviour preparedCombat,
-        out string failureReason)
-    {
-        preparedCombat = null;
-
-        if (preparedTower == null ||
-            preparedTower.TowerInstance == null ||
-            preparedTower.VisualController == null ||
-            preparedTower.VisualController.CurrentTowerModelInstance == null)
-        {
-            failureReason = "the prepared Tower is missing required runtime state.";
-            return false;
-        }
-
-        IReadOnlyList<GridNodeBehaviour> preparedFootprint =
-            preparedTower.TowerInstance.OccupiedNodes;
-
-        if (preparedFootprint.Count != topologyPlan.Footprint.Count)
-        {
-            failureReason =
-                "the prepared Tower footprint differs from the topology plan.";
-            return false;
-        }
-
-        for (int i = 0; i < topologyPlan.Footprint.Count; i++)
-        {
-            if (!ContainsNode(preparedFootprint, topologyPlan.Footprint[i]))
-            {
-                failureReason =
-                    "the prepared Tower footprint differs from the topology plan.";
-                return false;
-            }
-        }
-
-        if (deployedTowers.Contains(preparedTower) ||
-            !preparedTower.TryGetComponent(out preparedCombat) ||
-            !preparedCombat.IsPreparedForBattleActivation)
-        {
-            failureReason =
-                "the prepared Tower combat runtime is not ready for activation.";
-            preparedCombat = null;
-            return false;
-        }
-
-        failureReason = string.Empty;
-        return true;
-    }
-
-    private void CommitPreparedPlacement(
-        TowerPlacementTopologyPlan topologyPlan,
-        MonsterRouteRevisionBatch revisionBatch,
-        TowerBehaviour preparedTower,
-        TowerCombatBehaviour preparedCombat,
-        PendingDraftUIItem consumedDraft)
-    {
-        for (int i = 0; i < topologyPlan.Footprint.Count; i++)
-        {
-            topologyPlan.Footprint[i].SetRuntimeOccupied(true);
-        }
-
-        monsterManager.ApplyPreparedMovementRevisionBatch(revisionBatch);
-        deployedTowers.Add(preparedTower);
-        preparedCombat.ActivatePreparedBattleRuntime();
-        battleHUDUI.ConsumePendingDraft(consumedDraft);
-    }
-
-    private bool TryRunPlacementPresentation(TowerBehaviour deployedTower)
-    {
-        bool succeeded = true;
-
-        try
-        {
-            if (mapGenerator == null ||
-                !mapGenerator.RefreshRuntimeTileVisuals())
-            {
-                succeeded = false;
-            }
-        }
-        catch (System.Exception exception)
-        {
-            succeeded = false;
-            Debug.LogException(exception, this);
-        }
-
-        try
-        {
-            deployedTower.VisualController?.PlayTowerSpawnRefreshFeedback();
-        }
-        catch (System.Exception exception)
-        {
-            succeeded = false;
-            Debug.LogException(exception, this);
-        }
-
-        return succeeded;
-    }
-
-    private void LogPlacementRejected(
-        string failureStage,
-        string failureReason,
-        IReadOnlyList<GridNodeBehaviour> footprint = null,
-        bool? routeExists = null)
-    {
-        Debug.LogWarning(
-            $"Tower placement transaction: Outcome=Rejected; " +
-            $"FootprintGridPositions={FormatGridPositions(footprint)}; " +
-            $"RouteExists={FormatRouteExists(routeExists)}; " +
-            $"FailureStage={failureStage}; FailureReason={failureReason}",
-            this);
-    }
-
-    private void LogPlacementAccepted(
-        TowerPlacementTopologyPlan topologyPlan,
-        MonsterRouteRevisionBatch revisionBatch,
-        string outcome)
-    {
-        Debug.Log(
-            $"Tower placement transaction: Outcome={outcome}; " +
-            $"FootprintNodes={topologyPlan.Footprint.Count}; " +
-            $"FootprintGridPositions=" +
-            $"{FormatGridPositions(topologyPlan.Footprint)}; " +
-            $"RouteExists=True; " +
-            $"AuthoritativeRouteNodes={topologyPlan.AuthoritativeRoute.Count}; " +
-            $"LivingMonsters={revisionBatch.LivingMonsterCount}; " +
-            $"AlreadyOnNewRoute={revisionBatch.AlreadyOnNewRouteCount}; " +
-            $"ReachableRouteRejoin={revisionBatch.ReachableRouteRejoinCount}; " +
-            $"ForcedRelocation={revisionBatch.ForcedRelocationCount}",
-            this);
-
-        for (int i = 0; i < revisionBatch.Entries.Count; i++)
-        {
-            MonsterRouteRevisionEntry entry = revisionBatch.Entries[i];
-            Debug.Log(
-                $"Tower placement Monster revision: " +
-                $"Monster={entry.Monster.name}; " +
-                $"RevisionId={entry.RevisionId}; " +
-                $"Mode={entry.Mode}; " +
-                $"RelocationReason={entry.RelocationReason}; " +
-                $"PrePosition={entry.CapturedWorldPosition}; " +
-                $"PhysicalGrid=" +
-                $"{entry.PhysicalCurrentGrid?.GridPosition.ToString() ?? "Unresolved"}; " +
-                $"JoinGrid=" +
-                $"{entry.JoinGrid?.GridPosition.ToString() ?? "None"}; " +
-                $"RecoveryGrid=" +
-                $"{entry.RecoveryGrid?.GridPosition.ToString() ?? "None"}; " +
-                $"RelocationDistance=" +
-                $"{(entry.HasComparableRelocationDistance ? entry.RelocationDistance.ToString() : "Uncompared")}; " +
-                $"RequiresExactTargetApproach=" +
-                $"{entry.RequiresExactTargetApproach}",
-                entry.Monster);
-        }
-    }
-
-    private static string FormatGridPositions(
-        IReadOnlyList<GridNodeBehaviour> footprint)
-    {
-        if (footprint == null)
-        {
-            return "Unresolved";
-        }
-
-        StringBuilder builder = new StringBuilder("[");
-
-        for (int i = 0; i < footprint.Count; i++)
-        {
-            if (i > 0)
-            {
-                builder.Append(',');
-            }
-
-            GridNodeBehaviour node = footprint[i];
-
-            if (node == null)
-            {
-                builder.Append("Null");
-                continue;
-            }
-
-            Vector2Int gridPosition = node.GridPosition;
-            builder.Append('(');
-            builder.Append(gridPosition.x);
-            builder.Append(',');
-            builder.Append(gridPosition.y);
-            builder.Append(')');
-        }
-
-        builder.Append(']');
-        return builder.ToString();
-    }
-
-    private static string FormatRouteExists(bool? routeExists)
-    {
-        return routeExists.HasValue
-            ? routeExists.Value ? "True" : "False"
-            : "Unresolved";
-    }
-
-    private void DiscardPreparedTower(TowerBehaviour preparedTower)
-    {
-        if (preparedTower == null)
-        {
-            return;
-        }
-
-        preparedTower.gameObject.SetActive(false);
-        Destroy(preparedTower.gameObject);
-    }
-
-    private static bool ContainsNode(
-        IReadOnlyList<GridNodeBehaviour> nodes,
-        GridNodeBehaviour targetNode)
-    {
-        for (int i = 0; i < nodes.Count; i++)
-        {
-            if (nodes[i] == targetNode)
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private void RemoveNullDeployedTowerEntries()
-    {
-        for (int i = deployedTowers.Count - 1; i >= 0; i--)
-        {
-            if (deployedTowers[i] == null || deployedTowers[i].TowerInstance == null)
-            {
-                ClearUpgradeTargetHighlight(deployedTowers[i]);
-                deployedTowers.RemoveAt(i);
-            }
-        }
-    }
-
-    private void RebuildDeployedTowerInstances()
-    {
-        deployedTowerInstances.Clear();
-        RemoveNullDeployedTowerEntries();
-
-        for (int i = 0; i < deployedTowers.Count; i++)
-        {
-            TowerBehaviour tower = deployedTowers[i];
-
-            if (tower != null && tower.TowerInstance != null)
-            {
-                deployedTowerInstances.Add(tower.TowerInstance);
-            }
-        }
-    }
-
     private bool IsTowerUpgradeDraftDrag()
     {
         return currentDraftResult != null &&
@@ -1404,7 +584,6 @@ public class TowerPlacementController : MonoBehaviour
 
     private void ShowAttackRangePreviewsForCurrentDrag()
     {
-        RemoveNullDeployedTowerEntries();
 
         for (int i = 0; i < deployedTowers.Count; i++)
         {
@@ -1427,7 +606,6 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
-        RemoveNullDeployedTowerEntries();
 
         for (int i = 0; i < deployedTowers.Count; i++)
         {
@@ -1453,7 +631,7 @@ public class TowerPlacementController : MonoBehaviour
 
             if (highlightedTarget == null ||
                 highlightedTarget.TowerInstance == null ||
-                !deployedTowers.Contains(highlightedTarget) ||
+                (submission == null || !submission.OwnsDeployedTower(highlightedTarget.TowerInstance)) ||
                 !towerUpgradeSystem.CanApplyUpgrade(
                     highlightedTarget.TowerInstance,
                     currentTowerUpgradeDefinition,
@@ -1508,7 +686,6 @@ public class TowerPlacementController : MonoBehaviour
 
     private void HideAttackRangePreviewsForCurrentDrag()
     {
-        RemoveNullDeployedTowerEntries();
 
         for (int i = 0; i < deployedTowers.Count; i++)
         {

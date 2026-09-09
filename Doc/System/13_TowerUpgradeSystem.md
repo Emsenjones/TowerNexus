@@ -88,7 +88,7 @@ The non-failing semantic commit:
 
 1. Advances the Tower by exactly one level and replaces its Level-authored BasicDamage.
 2. Applies the prepared combat baseline through pure cache assignment.
-3. Removes the exact held Tower Draft from semantic ownership and marks its view consumed.
+3. Removes the exact held Tower Draft from semantic ownership and records the Draft entry as consumed.
 
 After commit, the systems publish exception-isolated level-change and diagnostic
 notifications. Those notifications do not refresh gameplay state. The Tower
@@ -189,7 +189,7 @@ Rejected application records nothing, publishes nothing, plays no success result
 
 After acceptance:
 
-- The interaction owner consumes the held item and pending reservation.
+- The acceptance path asks Draft ownership to consume the exact Held entry and pending reservation.
 - Tower visual presentation may show Upgrade success feedback.
 - Tower Runtime Combat resolves new values and package state.
 - Immediate persistent package runtime, such as Arcane Field, may be reconciled.
@@ -375,3 +375,10 @@ Invalid content is an authoring error. Runtime does not silently reinterpret it 
 Current scope includes three Tower levels, Stage-derived per-TowerFamily level caps, Basic/Behaviour/Elemental layers, the twelve reviewed Behaviour packages, one package of each type per Tower, one Elemental Layer per Tower, per-Tower duplicate rules, and Stage-specific Upgrade pool eligibility support. Removed Hunting Arrow, Magic Orb Maximum Hit Count, and Drone Battery Duration Upgrade identities have no compatibility aliases or fallback interpretation.
 
 Deferred topics include prerequisites, rarity, evolution chains, Upgrade replacement, multi-element Towers, global Upgrades, specialization paths, and persistent progression.
+
+Accepted investments capture immutable consumption facts and publish evidence before external notifications that can end the Stage. Stop retains unconsumed Draft entries for terminal capture; Stage release invalidates them.
+
+
+### Placement submission and membership
+
+Upgrade eligibility and required-refresh commitment remain owned here. The stable submission owner supplies target membership, direct Draft authority and a current internal operation. Fresh Debug requests use the same submission gate; an authorized Upgrade core does not self-reject. Committed technical failure is explicit and cannot be interpreted as an unconsumed rejection.

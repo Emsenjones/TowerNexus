@@ -17,7 +17,7 @@ It presents:
 - Drag, placement, and Tower-target feedback
 - Battle notifications approved by future designs
 
-It observes gameplay state and forwards player intent. It does not own Player state, Draft generation, Draft-driven simulation pause, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
+It observes gameplay state and forwards player intent. It does not own Player state, Draft generation or reward ownership, Draft-driven simulation pause, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
 
 An ordinary Upgrade commits the exact held reward consumption together with its
 accepted Upgrade state before optional callbacks or presentation. Required combat
@@ -96,7 +96,9 @@ Both roots use the same UI coordinate space. The drag-visual root has no layout 
 
 The Draft Item Interaction Area displays selected rewards that have not yet been consumed.
 
-Before a held item participates in an accepted gameplay transaction, the HUD can confirm the exact item and its owned collection index. Successful Tower placement, Level Up, or Upgrade application removes that exact item from the pending-item collection and marks its view consumed synchronously inside the accepting gameplay commit. Marking consumed is deterministic state assignment: every pointer, drag, and return-to-container handler immediately rejects the view. Later destruction is presentation cleanup. Post-commit notification, destruction, or other presentation failure does not restore the consumed item or leave it interactive. Rejection, cancellation, or pre-commit failure preserves it.
+Draft owns the read-only collection of Held reward entries. HUD binds each entry to its current view. Before input, the view must still be the current binding and its exact entry must remain consumable. Deployment, Level Up and Upgrade consume the model entry inside their gameplay commit. Replaced or consumed views immediately lose interaction authority; later destruction is presentation cleanup. Rejection and cancellation preserve the entry.
+
+Rebuild cancels active drag and prepares all replacement views before switching bindings. It preserves entry identities, ordering and reservations, and keeps the old views if preparation fails. Ordinary hide or presentation teardown does not clear rewards.
 
 It supports:
 
@@ -215,3 +217,8 @@ Deferred Battle HUD topics include:
 - General notification feed
 
 Future UI must preserve the same presentation-versus-gameplay ownership boundary.
+
+
+### Placement submission and membership
+
+HUD and placement interaction retain view/gesture cleanup. Their operation protection lasts through that cleanup, even when submission has returned. Rejected and committed outcomes are distinct; a committed technical failure does not restore the consumed reward. Pending grants and rebuilds reject during submission or outer cleanup.

@@ -1,7 +1,7 @@
 # Task003 - Pending Draft State Ownership
 
 Series: ArchitectureRefactor
-Status: Draft - Pending Review
+Status: Implemented - Core Play Mode Smoke Passed; Targeted Acceptance Pending
 Branch: `codex/architecture-refactor`
 Depends on: Accepted Task001. Task002 is independent of this ownership migration.
 
@@ -14,7 +14,7 @@ reads those views as gameplay data. Initial completion also retains a view refer
 Move held-reward identity and consumption into the Draft domain so presentation
 can be rebuilt without altering reward ownership or reservation capacity.
 
-## 2. Proposed Contract
+## 2. Approved Contract
 
 - DraftSystem owns one Battle-local Pending collection implemented by a small
   data class. Each entry has an immutable identity, source DraftAttemptToken,
@@ -48,7 +48,8 @@ Draft owner. Do not move evidence behind public terminal subscribers.
 
 `Assets/Scripts/TowerDeployment/DraftSystem.cs`, `DraftAttemptToken.cs`,
 `BattleHUDUI.cs`, `PendingDraftUIItem.cs`, the consuming portions of
-`TowerPlacementController.cs`, and a new local Pending data model/collection.
+`TowerPlacementController.cs`, a new local Pending data model/collection, `TowerUpgradeSystem.cs`,
+`BattleRuntimeCoordinator.cs`, `TowerUpgradeDraftDebugWindow.cs` and managed tests.
 Adapt Recorder Pending snapshots and investment correlation to the model in this
 task so reports stay usable; broad Recorder decomposition remains Task006.
 
@@ -58,15 +59,14 @@ UI authority and duplicate collections after migration.
 
 ## 4. Documentation And Review Decisions
 
-This changes an explicit existing ownership contract. After review, update
+This changes an explicit existing ownership contract. The approved implementation updates
 [HUD](../System/04_BattleHUDUISystem.md), [Draft](../System/08_DraftSystem.md),
 [Placement](../System/09_TowerPlacementSystem.md), and the ownership summary in
-[Overview](../System/00_ProjectOverview.md) before implementation. Check the
+[Overview](../System/00_ProjectOverview.md) before implementation and reconciles the
 [Upgrade](../System/13_TowerUpgradeSystem.md) consumption wording as well.
 
-Review the model identity shape, initial view preparation/commit sequence, and
-UI teardown versus Stage-release policy. Proposed default: preserve current
-interactive-readiness gating while separating accepted state from the view.
+Approved: retain interactive-readiness gating while separating accepted state
+from presentation. Identity, preparation and release details are recorded in Section 8.
 
 ## 5. Implementation Sequence
 
@@ -98,4 +98,102 @@ bitwise determinism from the Draft-only seed.
 
 Record model API and owner decisions for Task004, and terminal snapshot changes
 for Task006. Historical schema-25 traces are comparison sources, not fresh
-acceptance. No implementation or evidence exists yet.
+acceptance. Implementation and validation evidence will be recorded below.
+
+## 8. Approved Review Supplements
+
+- Identity validation includes the exact collection owner and entry reference;
+  equal generation/sequence numbers from different owners do not confer authority.
+- Stop invalidates prepared mutations but retains Held entries for terminal capture.
+  Release and a new Battle invalidate the old generation. Tickets are synchronous,
+  single-use and must be revalidated before the first semantic write.
+- Initial selection prepares the entire usable, non-interactive view before a
+  callback-free registration. Revalidate Battle/session after preparation.
+- HUD rebuild cancels drag, prepares all replacements before switching bindings,
+  and preserves identities, ordering and reservations if preparation fails.
+- Debug Pending batches prepare every candidate before one atomic registration;
+  failed preparation never consumes or rolls back an accepted reward.
+- Deployment and Level Up capture immutable investment facts before commit and
+  publish evidence before any external lifecycle notification. Preserve Upgrade's
+  pre-cleanup flush and required-refresh TechnicalFailure handling.
+- Scope explicitly includes TowerUpgradeSystem, BattleRuntimeCoordinator,
+  TowerUpgradeDraftDebugWindow and managed contract tests. Test the actual Pending
+  collection connected to the actual Upgrade commit core.
+
+## 9. Implementation And Managed Evidence — 2026-09-09
+
+- `PendingDraftCollection` owns read-only Held entries, immutable generation/sequence
+  and source tokens, exact owner/reference checks, lifecycle invalidation and
+  single-use prepared grants/consumption. Source Draft tokens remain attribution,
+  not Pending ownership IDs. Stop retains Held state; release/new Battle invalidates it.
+- HUD binds entries to current views and owns visual cleanup only. Rebuild cancels
+  drag, prepares every replacement, validates usable presentation again, and switches
+  bindings without consuming or granting anything. Replaced, hidden and consumed
+  views cannot submit input. Existing serialized references are reused.
+- Initial confirmation uses a committed model entry. Normal selection and Editor
+  Pending batches share all-or-nothing preparation/registration. Direct Debug
+  Upgrade remains separate from reward consumption.
+- Deployment, Level Up and Upgrade consume through the same model. Deployment and
+  Level Up capture immutable investment facts before commit and publish evidence
+  before external lifecycle callbacks. Upgrade retains its pre-cleanup flush and
+  required-refresh TechnicalFailure boundary; outer placement still guards view cleanup.
+- Recorder reads terminal Pending from Draft data; source-token attribution and
+  schema-25 semantics remain unchanged. No fresh native Recorder result is claimed.
+- `python3 Tests/Task001/run.py`: **30 passed**, actual Upgrade core connected to
+  actual Pending collection/result/token and production investment observation.
+- `python3 Tests/Task003/run.py`: **14 passed**, including Initial/preparation failure,
+  atomic Debug-style batches, rebuild/current-view gates, Stop/old-generation/owner
+  rejection and synchronous Stage release from LevelChanged and all three deployment
+  callback categories. The latter executes production commit/notification segments
+  after preflight against native boundary doubles.
+- Draft baseline at `7bec5ca`: **300 traces match** across 100 seeds and three Pending
+  states, comparing reservations, displayed order and subsequent RNG state. Controlled
+  candidate eligibility is not a whole-game deterministic replay.
+- `python3 Tests/Task002/run.py`: **32,192 baseline/current observations match**.
+- Runtime and Editor managed compilation: **0 warnings, 0 errors**.
+  `git diff --check`: **passed**. These checks do not replace Unity import or
+  Play Mode acceptance.
+
+For Task004: submission should carry `PendingDraftEntry` and resolve the current
+Draft owner, while pointer interactions also validate their current view binding.
+For Task006: preserve model-based terminal capture before Stage clear and immutable
+investment evidence before external lifecycle notifications.
+
+## 10. Native Acceptance Handoff — Partially Verified
+
+1. **Stage1 opening:** before Initial selection, simulation remains paused and Waves
+   have not started. Select one Tower: one Pending item appears, pause restores and
+   spawning starts once. Observe the Unity Console throughout.
+2. **Three consumption paths:** deploy a new Tower, use a same-family Tower Draft
+   for Level Up, and apply an ordinary Upgrade. Each acceptance removes exactly one
+   item. Invalid targets, return-to-container and cancelled drags retain the item.
+3. **Held presentation rebuild:** keep at least two Pending items (Debug grants may
+   be used). From the DraftSystem component menu choose **Rebuild Pending Draft Views**.
+   Check count, reward types and order remain unchanged, and the rebuilt items still
+   work. For drag cancellation, pause the Editor during a drag, invoke rebuild, then
+   resume. Also hide/show HUD and verify rewards are retained and input recovers.
+4. **Terminal/restart:** finish or lose with a reward still Held, inspect the fresh
+   Recorder result for retained Pending attribution and no missing/duplicate investment
+   consumption, then start a fresh Stage and confirm old rewards do not carry over.
+5. **Targeted fault acceptance:** native Initial prefab/readiness failure, later-item
+   Debug batch preparation failure, late view destruction and synchronous Stage release
+   callbacks remain separate native checks. Managed injection covers their contracts;
+   it is not a waiver of native evidence. Any later waiver must be recorded explicitly.
+
+### User-Reported Play Mode Evidence
+
+- Played two Stages without noticing issues.
+- With two Draft items in the Pending area, invoked **Rebuild Pending Draft Views**
+  on DraftSystem and observed no visible change.
+- After rebuilding, successfully consumed the Tower Upgrade Draft to upgrade an
+  existing Tower and consumed the Tower Draft to deploy a new Tower in the scene.
+
+This passes the reported ordinary-play smoke and post-rebuild interaction/consumption
+for Deployment and ordinary Upgrade. It is user-reported native evidence; model
+identity/order invariants retain the managed evidence listed in Section 9.
+
+Dedicated Level Up, rejected/cancelled drag, rebuild during drag, HUD hide/show,
+Initial pause/spawn counting, terminal Recorder reconciliation and the targeted
+native failure cases above have not been separately confirmed. No waiver is inferred
+from the successful smoke test. Keep these acceptance items pending rather than
+marking the entire Task Completed. No Task003 commit/push performed.

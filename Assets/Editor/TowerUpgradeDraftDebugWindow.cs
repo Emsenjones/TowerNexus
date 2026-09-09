@@ -440,48 +440,25 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
             }
         }
 
-        List<PendingDraftUIItem> committedItems =
-            new List<PendingDraftUIItem>();
-
-        for (int i = 0; i < upgrades.Count; i++)
+        var results = new List<DraftResult>();
+        var tokens = new List<DraftAttemptToken>();
+        foreach (var upgrade in upgrades)
         {
-            TowerUpgradeDefinition upgrade = upgrades[i];
-
-            if (tower.HasUpgrade(upgrade))
-            {
-                continue;
-            }
-
-            DraftResult draftResult =
-                DraftResult.CreateTowerUpgradeDraft(upgrade);
-
-            if (battleHud.TryAddPendingDraft(
-                    draftResult,
-                    CreateDebugDraftAttemptToken(),
-                    out PendingDraftUIItem committedItem,
-                    out string failureReason))
-            {
-                committedItems.Add(committedItem);
-                continue;
-            }
-
-            for (int committedIndex = 0;
-                 committedIndex < committedItems.Count;
-                 committedIndex++)
-            {
-                battleHud.RemovePendingDraft(committedItems[committedIndex]);
-            }
-
-            Debug.LogWarning(
-                $"Tower upgrade debug window failed to grant " +
-                $"'{GetUpgradeName(upgrade)}': {failureReason}. Pending " +
-                "Drafts created by this batch were rolled back.",
-                battleHud);
+            if (tower.HasUpgrade(upgrade)) continue;
+            results.Add(DraftResult.CreateTowerUpgradeDraft(upgrade));
+            tokens.Add(CreateDebugDraftAttemptToken());
+        }
+        if (results.Count == 0) return;
+        string failureReason = "Draft owner is unavailable.";
+        if (battleHud.DraftOwner == null ||
+            !battleHud.DraftOwner.TryGrantDebugPendingBatch(results, tokens, out failureReason))
+        {
+            Debug.LogWarning($"Pending batch preparation failed: {failureReason}. No rewards granted.", battleHud);
             return;
         }
 
         Debug.Log(
-            $"Tower upgrade debug window granted {committedItems.Count} " +
+            $"Tower upgrade debug window granted {results.Count} " +
             $"Pending Upgrade Drafts after validating '{tower.name}'. The " +
             "Drafts remain target-independent and must be dragged through " +
             "the normal flow.",
@@ -540,11 +517,10 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
         DraftResult draftResult =
             DraftResult.CreateTowerDraft(towerDefinition);
 
-        if (!battleHud.TryAddPendingDraft(
-                draftResult,
-                CreateDebugDraftAttemptToken(),
-                out _,
-                out string failureReason))
+        string failureReason = "Draft owner is unavailable.";
+        if (battleHud.DraftOwner == null || !battleHud.DraftOwner.TryGrantDebugPendingBatch(
+                new[] { draftResult }, new[] { CreateDebugDraftAttemptToken() },
+                out failureReason))
         {
             Debug.LogWarning(
                 $"Tower upgrade debug window failed to grant " +
@@ -587,18 +563,17 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
                 continue;
             }
 
-            if (upgradeSystem.TryApplyDebugUpgrade(
-                    tower,
-                    upgrade,
-                    out string failureReason))
+            TowerSubmissionResult result = upgradeSystem.ApplyDebugUpgrade(tower, upgrade);
+            string failureReason = result.FailureReason;
+            if (result.Outcome == TowerSubmissionOutcome.Committed)
             {
                 appliedCount++;
                 continue;
             }
 
             Debug.LogWarning(
-                $"Tower upgrade debug window failed to apply " +
-                $"'{GetUpgradeName(upgrade)}' to '{targetName}' after " +
+                $"Tower upgrade debug request ended as {result.Outcome}: " +
+                $"'{GetUpgradeName(upgrade)}' on '{targetName}', after " +
                 $"committing {appliedCount} earlier list entries: " +
                 failureReason,
                 tower);
@@ -828,17 +803,17 @@ public sealed class TowerUpgradeDraftDebugWindow : EditorWindow
     {
         failureReason = string.Empty;
 
-        if (battleHud == null || candidate == null)
+        if (battleHud == null || battleHud.DraftOwner == null || candidate == null)
         {
             return false;
         }
 
-        IReadOnlyList<PendingDraftUIItem> pendingItems =
-            battleHud.PendingDraftItems;
+        IReadOnlyList<PendingDraftEntry> pendingItems =
+            battleHud.DraftOwner.PendingDrafts;
 
         for (int i = 0; i < pendingItems.Count; i++)
         {
-            PendingDraftUIItem pendingItem = pendingItems[i];
+            PendingDraftEntry pendingItem = pendingItems[i];
             TowerUpgradeDefinition pendingUpgrade = pendingItem != null
                 ? pendingItem.TowerUpgradeDefinition
                 : null;

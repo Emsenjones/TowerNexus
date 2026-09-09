@@ -12,16 +12,18 @@ The baseline mode reads the original `TowerInstance` and `TowerUpgradeState` fro
 a throwing observer prevents the subsequent consumption call. It does not change
 the checkout. Keep that history reachable to rerun the baseline.
 
-The current mode compiles the actual `TowerUpgradeSystem`, `TowerInstance`, and
-`TowerUpgradeState` directly from this checkout. It runs 29 assertions-based cases
+The current mode uses the actual Submission entry and compiles `TowerUpgradeSystem`, `TowerInstance`, and
+`TowerUpgradeState`, `PendingDraftCollection`, `DraftResult`, `DraftAttemptToken`,
+and the production investment observation directly from this checkout. It runs 30 assertions-based cases
 for acceptance/rejection, exactly-once commitment, required refresh failure,
 optional event/presentation exceptions, nested requests, cancellation flushing,
 and Debug authority. Generated binaries live only in a temporary directory.
 
-`ContractDoubles.cs` substitutes Unity, HUD, placement, combat, definitions, and
-Battle termination boundaries. Consequently these tests validate the transaction
-core's behavior against those contracts; they do not prove real HUD collection
-mutation, prefab validation, native entity creation, subtype refresh, timer ratios,
+`Tests/Task004/BoundaryDoubles.cs` substitutes native Unity, combat, definitions,
+Tower instantiation and Battle termination boundaries. Submission, membership,
+Pending ownership and Upgrade commitment execute production code. Consequently these tests validate the transaction
+core against the actual Pending model, including cross-owner rejection and Stop
+during preparation. They do not prove native view cleanup, prefab validation, native entity creation, subtype refresh, timer ratios,
 Recorder export, or Game Flow event ordering. They are managed checks, not Unity
 Edit Mode or Play Mode evidence. The remaining native acceptance matrix is in
 `Doc/Task/Task001_UpgradeCommitConsistency.md`. No production fault hooks are added.

@@ -205,7 +205,7 @@ It does not own Draft generation, UI presentation, Monster lifecycle, or Stage f
 
 Owns presentation and interaction for battle information, Draft choices, held Draft items, drag feedback, and placement feedback.
 
-It observes or forwards domain intent but does not own player state, Draft rules, Draft-driven simulation pause, placement validation, combat outcomes, or Game Flow presentation.
+It observes or forwards domain intent but does not own player state, Draft rules or Held reward ownership, Draft-driven simulation pause, placement validation, combat outcomes, or Game Flow presentation.
 
 ## 4.5 Map System
 
@@ -392,3 +392,8 @@ Task Documents under `Doc/Task/` are implementation contracts for a bounded deve
 | Tower growth, upgrade eligibility, and application | `13_TowerUpgradeSystem.md` |
 | Reusable one-shot gameplay resolution | `14_EffectSystem.md` |
 | Persistent Buff and Elemental runtime state | `15_BuffSystem.md` |
+
+
+### Placement submission and membership
+
+Battle coordination owns a stable submission service across Stage transitions. Placement interaction owns pointer/preview/highlight state; submission owns gameplay acceptance and ordered deployed membership. Draft owns rewards. Stop retains stopped Towers, while release clears authoritative membership before per-Tower destruction callbacks.

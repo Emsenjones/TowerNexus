@@ -36,3 +36,7 @@ Native Unity acceptance remains in Task002 Section 8: actual inactive-node/edito
 callback behavior and Undo/Redo, Clear/Generate with deferred destruction, genuine
 Tile/Feature refresh, moving-Monster placement, Stage lifecycle and native profiling.
 The doubles cannot establish those runtime outcomes or replace their acceptance.
+
+Task004 adaptation: final-query fixtures provide resolved candidate snapshots to the
+production validator. Baseline source still uses Preview. Actual candidate capture,
+owner/Map checks and prepared geometry execute in Task004's integration suite.

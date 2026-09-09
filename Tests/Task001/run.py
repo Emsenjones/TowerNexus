@@ -5,13 +5,12 @@ import subprocess
 import tempfile
 import sys
 root = Path(__file__).resolve().parents[2]
-sources = [root / path for path in (
-    'Assets/Scripts/TowerUpgrade/TowerUpgradeSystem.cs',
-    'Assets/Scripts/TowerFramework/TowerInstance.cs',
-    'Assets/Scripts/TowerUpgrade/TowerUpgradeState.cs',
-    'Tests/Task001/ContractDoubles.cs',
-    'Tests/Task001/CommitTests.cs',
-)]
+if '--baseline' not in sys.argv:
+    sys.path.insert(0, str(root / 'Tests/Task004'))
+    from build import build
+    with tempfile.TemporaryDirectory(prefix='towernexus-upgrade-') as folder:
+        build(folder, [root / 'Tests/Task001/CommitTests.cs'], 'CommitTests')
+    sys.exit(0)
 with tempfile.TemporaryDirectory(prefix='towernexus-task001-') as folder:
     if '--baseline' in sys.argv:
         sources = [root / 'Tests/Task001/Baseline.cs']

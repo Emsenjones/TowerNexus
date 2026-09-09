@@ -34,7 +34,7 @@ remains legal. Optional notification or presentation failure cannot undo commitm
 
 # 2. Placement Input Contract
 
-Tower Placement System receives one active held Draft item from Battle HUD UI System.
+Tower Placement System receives drag intent from Battle HUD UI System and validates the associated Held entry with Draft ownership.
 
 | Draft Item | Valid Intent |
 |---|---|
@@ -43,7 +43,7 @@ Tower Placement System receives one active held Draft item from Battle HUD UI Sy
 
 Only one drag operation and one active Tower placement preview may exist at a time.
 
-The held item is consumed only after the receiving gameplay system accepts the requested result. Semantic consumption removes the exact item from Battle HUD ownership and marks its view consumed in the same non-failing commit, so every pointer and drag handler rejects it immediately. Destruction of the consumed view is later presentation cleanup. Rejection or cancellation preserves the item.
+The held item is consumed only after the receiving gameplay system accepts the requested result. Semantic consumption removes the exact entry from Draft ownership and records it as consumed in the same non-failing commit, so every pointer and drag handler rejects it immediately. Destruction of the consumed view is later presentation cleanup. Rejection or cancellation preserves the item.
 
 An accepted Draft-item drag owns its pointer gesture until release or cancellation. Camera System must not begin or continue a pan from that gesture, including after the pointer moves from the UI into the battlefield.
 
@@ -220,9 +220,9 @@ Current Candidate Grid Node
 
 A Tower Draft may target an existing Tower when the TowerFamily matches. Tower Upgrade System remains the final authority for level limits and level-up acceptance.
 
-Before an accepted result, the interaction preflights the exact held Tower Draft and Battle HUD ownership together with the target, next valid TowerLevelConfig, combat-runtime readiness, and fully prepared next combat baseline.
+Before an accepted result, the interaction preflights the exact held Tower Draft and Draft-domain ownership together with the target, next valid TowerLevelConfig, combat-runtime readiness, and fully prepared next combat baseline.
 
-The non-failing semantic commit advances the Level, applies that prepared combat baseline through pure state assignment, removes the exact Draft from Battle HUD ownership, and marks its Pending view consumed. It does not call presentation, publish events, traverse active Attack Entities, or repeat validation. `OnLevelChanged` and diagnostics are exception-isolated post-commit notifications and are not combat-refresh authority.
+The non-failing semantic commit advances the Level, applies that prepared combat baseline through pure state assignment, consumes the exact entry through Draft-domain ownership. It does not call presentation, publish events, traverse active Attack Entities, or repeat validation. Investment evidence is published before `OnLevelChanged` or other external notifications. These notifications are exception-isolated and are not combat-refresh authority.
 
 The Tower-owned visual path then performs best-effort level-model replacement, Attack Origin handoff, VFX, and consumed-view destruction. Presentation failure cannot roll back the accepted Level, damage baseline, or Draft consumption, and a failed cleanup cannot leave an interactive ghost Draft.
 
@@ -362,3 +362,21 @@ Current scope includes:
 - General return-to-area drag cancellation
 
 Deferred topics include Tower recycling, redeployment inventory, Tower rotation, dynamic footprint changes, multiplayer synchronization, traps, and temporary non-Tower blockers.
+
+Accepted investments capture immutable consumption facts and publish evidence before external notifications that can end the Stage. Stop retains unconsumed Draft entries for terminal capture; Stage release invalidates them.
+
+
+### Placement submission and membership contract
+
+Battle coordination owns a stable placement-submission service. Interaction owns
+pointer/preview/highlight state; submission owns accepted deployment and investment
+coordination and the ordered, read-only deployed membership. Reads never prune or
+rebuild membership. Pending authority comes directly from Draft. Deployment candidates
+capture one coherent definition, shape and pose; final submission revalidates current
+Battle/Map authority and topology. Rejected, committed and committed technical failure
+are distinct outcomes. Outer interaction protection lasts through visual cleanup;
+internal submission protection permits only its authorized Upgrade core, while new
+requests are blocked. Terminal evidence precedes cleanup. Stop retains members;
+release detaches the member snapshot before per-Tower callbacks and isolates cleanup
+failures. Observers retain one subscription to the stable submission service across
+Stage changes. Existing geometry, combat rules and result-screen lifetimes are preserved.

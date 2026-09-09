@@ -85,7 +85,13 @@ def execute(folder, baseline, fixtures):
     target=folder/(mode+'Map.cs')
     target.write_text(generate_map(old(map_path) if baseline else (root/map_path).read_text(),baseline));sources.append(target)
     if not baseline:sources.append(root/'Assets/Scripts/Map/MapRuntimeNodeIndex.cs')
-    sources += [root/'Tests/Task002/UnityDoubles.cs',root/'Tests/Task002/QueryTests.cs']
+    query_source=(root/'Tests/Task002/QueryTests.cs').read_text()
+    if not baseline:
+        for variable in ['preview','stationary']:
+            query_source=query_source.replace('TryCreateTopologyPlan('+variable+',',
+                'TryCreateTopologyPlan(TowerPlacementCandidate.FromPreview(validator,'+variable+'),')
+    query=folder/(mode+'QueryTests.cs');query.write_text(query_source)
+    sources += [root/'Tests/Task002/UnityDoubles.cs',query]
     exe=folder/(mode+'.exe')
     subprocess.run(['csc','-nologo','-nowarn:0649','-langversion:8.0','-define:UNITY_EDITOR'+(';BASELINE' if baseline else ''),
                     f'-out:{exe}',*map(str,sources)],cwd=root,check=True)
