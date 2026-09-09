@@ -3,7 +3,7 @@
 Document Set: Balance
 
 Status: CombatMathV2 Tower growth and Upgrade value hierarchy accepted; exact
-Level, Upgrade, Effect, Buff, and Stage values remain Task- and asset-owned
+Level, Upgrade, Effect, Buff, and Stage values are authored in their owning assets
 
 ---
 
@@ -107,7 +107,7 @@ BasicDamage(Level 3) - BasicDamage(Level 2)
     > BasicDamage(Level 1)
 ```
 
-Equivalent wording: each Tower Draft spent on Level Up adds more nominal same-family damage capacity than the same Draft spent on another undeveloped Level 1 Tower. Exact margins and integer values belong to Task003. This is not a guarantee that one higher-level Tower always outperforms multiple Towers in a real Map, because horizontal expansion owns legitimate spatial value.
+Equivalent wording: each Tower Draft spent on Level Up adds more nominal same-family damage capacity than the same Draft spent on another undeveloped Level 1 Tower. Exact margins and integer values are derived through calibration and authored in Tower Level assets. This is not a guarantee that one higher-level Tower always outperforms multiple Towers in a real Map, because horizontal expansion owns legitimate spatial value.
 
 ---
 
@@ -172,8 +172,8 @@ combination of immediate BasicDamage growth and later Upgrade access, not an
 attempt to make horizontal deployment numerically obsolete.
 
 Basic and Behaviour percentages are same-Tower controlled comparisons.
-Elemental uses absolute package value instead. Task007 defines one Elemental
-Reference Unit as the rounded median absolute gain of an accepted Behaviour
+Elemental uses absolute package value instead. One Elemental
+Reference Unit is defined as the rounded median absolute gain of an accepted Behaviour
 Upgrade in its controlled fixture. That unit is a design comparison aid, not a
 runtime stat or global conversion formula.
 
@@ -215,11 +215,11 @@ Use the smallest comparison that answers the design question:
 - use Stage completion only after the package itself has passed its owning
   calibration contract.
 
-Task002 owns the naked Level 1 baseline, Task003 the Level curve, Task004 Basic
-and Behaviour evidence, and Task007 Elemental normal and cooperation evidence.
-Those Task documents and authored assets own exact accepted numbers. This
-Balance document owns the durable interpretation used when later Stage work
-decides whether to deploy, Level, specialize, or complete a matching Build.
+Calibration separately establishes the naked Level 1 baseline, Level curve,
+Basic and Behaviour value, and Elemental normal and cooperation value. Exact
+accepted parameters are authored in their owning assets. This Balance document
+owns the durable interpretation used when later Stage work decides whether to
+deploy, Level, specialize, or complete a matching Build.
 
 ---
 
@@ -235,4 +235,4 @@ Growth should remain readable and reasonably smooth across the limited Draft inv
 
 Tower-owned direct and Behaviour damage derives from the producing Tower's current Level `BasicDamage`. Periodic, Overload, Protection, persistent-area, and shared Electric/Wind Elemental hit-reaction damage uses independently authored fixed values. Elemental stack contribution changes only progress toward Overload. This distinction lets Level growth strengthen the Tower's own damage package without making an already-active shared Buff inherit source-family damage or later Tower growth.
 
-CombatMathV2 Task003, Task004, Task005, and Task007 own candidate targets, fixed-condition evidence, accepted Level/Upgrade values, and revision decisions. Unity assets remain the executable source for authored parameters. This document retains only the design intent used to judge those outputs.
+New calibration tasks derive candidate targets and acceptance fixtures from this document and the owning System contracts. Unity assets remain the executable source for authored parameters. Historical calibration evidence is accessible through the [CombatMathV2 closeout index](../History/CombatMathV2_Closeout.md); it does not override current design intent.

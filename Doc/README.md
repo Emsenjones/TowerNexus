@@ -9,6 +9,7 @@ This directory separates durable runtime contracts from iterative balance design
 | `System/` | Stable gameplay rules, ownership, authoring contracts, and runtime invariants | Source of truth for how the game works |
 | `Balance/` | Cross-Stage growth experience, campaign learning goals, and Reference Builds | Source of truth for approved balance and Stage design intent |
 | `Task/` | Bounded implementation contracts | Temporary execution guidance |
+| `History/` | Milestone references and acceptance limits | Historical evidence index, not current design authority |
 | `99_Temps.md` | Unstructured notes and future ideas | Not an approved source of truth |
 
 ## Reading Order
@@ -28,11 +29,18 @@ This directory separates durable runtime contracts from iterative balance design
 - Task Documents derive implementation values from the Blueprint and owning System contracts.
 - An authored value is not automatically an approved target.
 - When documents and assets disagree, record the drift and reconcile it explicitly.
+- Retire completed or explicitly deferred Task documents after durable decisions
+  are synchronized and historical evidence is preserved in a named Git version.
+  Preserve known limitations and unexecuted checks in the milestone index;
+  retirement does not imply that every planned test passed.
+- Gameplay reports may be removed from the current working tree after their
+  corresponding code, assets, Tasks, and reports are preserved together in Git.
+  New runs recreate `GamePlayRecord/` as needed.
 
 ## Main Index
 
 - [System Documents](System/00_ProjectOverview.md)
 - [Stage Design Blueprint](Balance/00_StageDesignBlueprint.md)
 - [Tower Growth And Upgrade Identity](Balance/01_TowerGrowthAndUpgradeIdentity.md)
-- [Current CombatMathV2 Task Documents](Task/README.md)
-- [Archived CombatMathV1 Task Documents](Task/Archive/CombatMathV1_2026-08-21/)
+- [Current Task Workspace](Task/README.md)
+- [CombatMathV2 Historical Evidence](History/CombatMathV2_Closeout.md)
