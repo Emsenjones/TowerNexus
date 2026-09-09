@@ -15,8 +15,9 @@ parameters. Historical Tasks and reports do not override those authorities.
 - [Historical GamePlayRecord directory](https://github.com/Emsenjones/TowerNexus/tree/b9fc1a9e5bc8aabfabfd4b17e6c622d323a4a0f3/Doc/GamePlayRecord)
 
 The tag was pushed to origin and its peeled commit verified before cleanup.
-The snapshot contains 22 Task-directory files and 521 gameplay records. These
-include experiments, superseded fixtures, and historical failures as well as
+The snapshot contains 22 Task-directory files and 521 GamePlayRecord-directory
+files (520 JSON reports and one metadata file). The reports include experiments,
+superseded fixtures, and historical failures as well as
 accepted evidence. The old Task README is not a reliable final status summary:
 for example, it still describes Task017 as in progress. Read the owning Task's
 closeout and the actual report fixture together.
