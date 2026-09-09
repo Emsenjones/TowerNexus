@@ -103,95 +103,127 @@ internal sealed class TowerPlacementSubmission
     internal TowerSubmissionResult SubmitDeployment(PendingDraftEntry entry, TowerPlacementCandidate candidate,
         Interaction lease = null)
     {
-        if (!TryEnter(entry, null, null, false, lease, out var current))
-            return TowerSubmissionResult.Reject("Deployment authority is unavailable or busy.");
-        TowerBehaviour preparedTower = null;
-        bool committed = false;
-        try
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battle.DiagnosticIdentity))
+#endif
         {
-            if (entry.DraftResult.ResultType != DraftResultType.TowerDraft || candidate == null ||
-                candidate.Definition != entry.TowerDefinition || candidate.Map != mapGenerator ||
-                !candidate.TryClaim(placementValidator)) return TowerSubmissionResult.Reject("Invalid or expired deployment candidate.");
-            if (!placementValidator.TryCreateTopologyPlan(candidate, out var plan, out var footprint,
-                    out var routeExists, out string reason))
-            { LogPlacementRejected("TopologyPlan", reason, footprint, routeExists); return TowerSubmissionResult.Reject(reason); }
-            if (monsterManager == null || !monsterManager.TryPrepareTopologyRevision(plan, out var batch, out reason))
-                return TowerSubmissionResult.Reject("Monster revision preparation failed: " + reason);
-            if (deployController == null || !deployController.TryPrepareTower(candidate, plan, out preparedTower, out reason))
-                return TowerSubmissionResult.Reject("Tower readiness failed: " + reason);
-            if (!IsCurrent(current) || !candidate.IsCurrent(placementValidator) ||
-                !candidate.MatchesPreparedTower(preparedTower) ||
-                !TryValidatePreparedTowerForCommit(preparedTower, plan, out var combat, out reason) ||
-                !draft.PendingOwner.TryPrepareConsumption(entry, out var consumption))
-                return TowerSubmissionResult.Reject("Deployment authority or prepared geometry changed during readiness.");
-            var observation = new TowerInvestmentCommitObservation(TowerInvestmentCommitKind.Deployment,
-                entry.DraftAttemptToken, entry.DraftResult, preparedTower.TowerInstance, 0, preparedTower.TowerInstance.CurrentLevel);
-            members.PrepareCapacity();
-            batch.CombatOwnershipFingerprintBefore = CaptureExistingCombatOwnershipFingerprint();
-            if (!IsCurrent(current) || !draft.PendingOwner.TryCommitConsumption(consumption))
-                return TowerSubmissionResult.Reject("Deployment authority expired before commit.");
-            CommitPreparedPlacement(plan, batch, preparedTower, combat);
-            committed = true;
-            batch.CombatOwnershipFingerprintAfter = CaptureExistingCombatOwnershipFingerprint(preparedTower.TowerInstance);
-            PublishInvestmentEvidence(observation);
-            PublishTowerDeploymentCommitted(preparedTower.TowerInstance, plan, batch);
-            PublishInvestmentNotification(observation);
-            bool warning = active && !TryRunPlacementPresentation(preparedTower);
-            try { LogPlacementAccepted(plan, batch, warning ? "AcceptedWithPresentationWarning" : "Accepted"); }
-            catch (Exception exception) { Debug.LogException(exception, battle); }
-            return new TowerSubmissionResult(TowerSubmissionOutcome.Committed);
-        }
-        finally
-        {
-            try { if (!committed) DeployedTowerCollection.DestroyTower(preparedTower); }
-            finally { operation = null; }
+            if (!TryEnter(entry, null, null, false, lease, out var current))
+                return TowerSubmissionResult.Reject("Deployment authority is unavailable or busy.");
+            TowerBehaviour preparedTower = null;
+            bool committed = false;
+            try
+            {
+                if (entry.DraftResult.ResultType != DraftResultType.TowerDraft || candidate == null ||
+                    candidate.Definition != entry.TowerDefinition || candidate.Map != mapGenerator ||
+                    !candidate.TryClaim(placementValidator)) return TowerSubmissionResult.Reject("Invalid or expired deployment candidate.");
+                if (!placementValidator.TryCreateTopologyPlan(candidate, out var plan, out var footprint,
+                        out var routeExists, out string reason))
+                { LogPlacementRejected("TopologyPlan", reason, footprint, routeExists); return TowerSubmissionResult.Reject(reason); }
+                if (monsterManager == null || !monsterManager.TryPrepareTopologyRevision(plan, out var batch, out reason))
+                    return TowerSubmissionResult.Reject("Monster revision preparation failed: " + reason);
+                if (deployController == null || !deployController.TryPrepareTower(candidate, plan, out preparedTower, out reason))
+                    return TowerSubmissionResult.Reject("Tower readiness failed: " + reason);
+                if (!IsCurrent(current) || !candidate.IsCurrent(placementValidator) ||
+                    !candidate.MatchesPreparedTower(preparedTower) ||
+                    !TryValidatePreparedTowerForCommit(preparedTower, plan, out var combat, out reason) ||
+                    !draft.PendingOwner.TryPrepareConsumption(entry, out var consumption))
+                    return TowerSubmissionResult.Reject("Deployment authority or prepared geometry changed during readiness.");
+                var observation = new TowerInvestmentCommitObservation(TowerInvestmentCommitKind.Deployment,
+                    entry.DraftAttemptToken, entry.DraftResult, preparedTower.TowerInstance, 0, preparedTower.TowerInstance.CurrentLevel);
+                members.PrepareCapacity();
+#if UNITY_EDITOR
+                if (CombatDiagnosticScope.Enabled(battle.DiagnosticIdentity))
+                    batch.CombatOwnershipFingerprintBefore = CombatDiagnosticScope.Capture(
+                        battle.DiagnosticIdentity, () => CaptureExistingCombatOwnershipFingerprint());
+#endif
+                if (!IsCurrent(current) || !draft.PendingOwner.TryCommitConsumption(consumption))
+                    return TowerSubmissionResult.Reject("Deployment authority expired before commit.");
+                CommitPreparedPlacement(plan, batch, preparedTower, combat);
+                committed = true;
+#if UNITY_EDITOR
+                if (CombatDiagnosticScope.Enabled(battle.DiagnosticIdentity))
+                    batch.CombatOwnershipFingerprintAfter = CombatDiagnosticScope.Capture(
+                        battle.DiagnosticIdentity, () => CaptureExistingCombatOwnershipFingerprint(preparedTower.TowerInstance));
+#endif
+                PublishInvestmentEvidence(observation);
+                PublishTowerDeploymentCommitted(preparedTower.TowerInstance, plan, batch);
+                PublishInvestmentNotification(observation);
+                bool warning = active && !TryRunPlacementPresentation(preparedTower);
+                try { LogPlacementAccepted(plan, batch, warning ? "AcceptedWithPresentationWarning" : "Accepted"); }
+                catch (Exception exception) { Debug.LogException(exception, battle); }
+                return new TowerSubmissionResult(TowerSubmissionOutcome.Committed);
+            }
+            finally
+            {
+                try { if (!committed) DeployedTowerCollection.DestroyTower(preparedTower); }
+                finally { operation = null; }
+            }
+
         }
     }
 
     internal TowerSubmissionResult SubmitLevelUp(PendingDraftEntry entry, TowerInstance target, Interaction lease = null)
     {
-        if (!TryEnter(entry, target, null, false, lease, out var current))
-            return TowerSubmissionResult.Reject("Level Up authority is unavailable or busy.");
-        try
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battle.DiagnosticIdentity))
+#endif
         {
-            string reason = "The exact Tower Draft or target is not owned by this Battle.";
-            var behaviour = members.Find(target);
-            if (entry.DraftResult.ResultType != DraftResultType.TowerDraft || !OwnsDeployedTower(target) || behaviour == null)
-                return TowerSubmissionResult.Reject(reason);
-            if (!draft.PendingOwner.TryPrepareConsumption(entry, out var consumption) ||
-                !towerUpgradeSystem.TryPrepareLevelUp(target, entry.TowerDefinition, out var level, out reason) ||
-                !behaviour.TryPrepareLevelVisualRefresh(level.NextLevelConfig, out reason)) return TowerSubmissionResult.Reject(reason);
-            if (!behaviour.TryGetComponent(out TowerCombatBehaviour combat)) return TowerSubmissionResult.Reject("Combat owner is missing.");
-            if (!combat.TryPrepareLevelDamageRevision(level.NextLevelConfig, out var revision, out reason)) return TowerSubmissionResult.Reject(reason);
-            var observation = new TowerInvestmentCommitObservation(TowerInvestmentCommitKind.LevelUp,
-                entry.DraftAttemptToken, entry.DraftResult, target, level.PreviousLevel, level.NextLevel);
-            if (!IsCurrent(current) || !OwnsDeployedTower(target) || !draft.PendingOwner.TryCommitConsumption(consumption))
-                return TowerSubmissionResult.Reject("Level Up authority expired during preparation.");
-            towerUpgradeSystem.CommitPreparedLevelUp(level);
-            combat.ApplyPreparedLevelDamageRevision(revision);
-            PublishInvestmentEvidence(observation);
-            towerUpgradeSystem.PublishPreparedLevelUp(level);
-            PublishInvestmentNotification(observation);
-            if (active) RunLevelUpPresentation(behaviour);
-            return new TowerSubmissionResult(TowerSubmissionOutcome.Committed);
+            if (!TryEnter(entry, target, null, false, lease, out var current))
+                return TowerSubmissionResult.Reject("Level Up authority is unavailable or busy.");
+            try
+            {
+                string reason = "The exact Tower Draft or target is not owned by this Battle.";
+                var behaviour = members.Find(target);
+                if (entry.DraftResult.ResultType != DraftResultType.TowerDraft || !OwnsDeployedTower(target) || behaviour == null)
+                    return TowerSubmissionResult.Reject(reason);
+                if (!draft.PendingOwner.TryPrepareConsumption(entry, out var consumption) ||
+                    !towerUpgradeSystem.TryPrepareLevelUp(target, entry.TowerDefinition, out var level, out reason) ||
+                    !behaviour.TryPrepareLevelVisualRefresh(level.NextLevelConfig, out reason)) return TowerSubmissionResult.Reject(reason);
+                if (!behaviour.TryGetComponent(out TowerCombatBehaviour combat)) return TowerSubmissionResult.Reject("Combat owner is missing.");
+                if (!combat.TryPrepareLevelDamageRevision(level.NextLevelConfig, out var revision, out reason)) return TowerSubmissionResult.Reject(reason);
+                var observation = new TowerInvestmentCommitObservation(TowerInvestmentCommitKind.LevelUp,
+                    entry.DraftAttemptToken, entry.DraftResult, target, level.PreviousLevel, level.NextLevel);
+                if (!IsCurrent(current) || !OwnsDeployedTower(target) || !draft.PendingOwner.TryCommitConsumption(consumption))
+                    return TowerSubmissionResult.Reject("Level Up authority expired during preparation.");
+                towerUpgradeSystem.CommitPreparedLevelUp(level);
+                combat.ApplyPreparedLevelDamageRevision(revision);
+                PublishInvestmentEvidence(observation);
+                towerUpgradeSystem.PublishPreparedLevelUp(level);
+                PublishInvestmentNotification(observation);
+                if (active) RunLevelUpPresentation(behaviour);
+                return new TowerSubmissionResult(TowerSubmissionOutcome.Committed);
+            }
+            finally { operation = null; }
+
         }
-        finally { operation = null; }
     }
 
     internal TowerSubmissionResult SubmitUpgrade(PendingDraftEntry entry, TowerInstance target, Interaction lease = null)
     {
-        var upgrade = entry?.TowerUpgradeDefinition;
-        if (!TryEnter(entry, target, upgrade, false, lease, out var current))
-            return TowerSubmissionResult.Reject("Upgrade authority is unavailable or busy.");
-        try { return towerUpgradeSystem.ApplyAuthorizedUpgrade(current, target, upgrade, entry, draft.PendingOwner, false); }
-        finally { operation = null; }
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battle.DiagnosticIdentity))
+#endif
+        {
+            var upgrade = entry?.TowerUpgradeDefinition;
+            if (!TryEnter(entry, target, upgrade, false, lease, out var current))
+                return TowerSubmissionResult.Reject("Upgrade authority is unavailable or busy.");
+            try { return towerUpgradeSystem.ApplyAuthorizedUpgrade(current, target, upgrade, entry, draft.PendingOwner, false); }
+            finally { operation = null; }
+
+        }
     }
     internal TowerSubmissionResult SubmitDebugUpgrade(TowerInstance target, TowerUpgradeDefinition upgrade)
     {
-        if (!TryEnter(null, target, upgrade, true, null, out var current))
-            return TowerSubmissionResult.Reject("Debug Upgrade authority is unavailable or busy.");
-        try { return towerUpgradeSystem.ApplyAuthorizedUpgrade(current, target, upgrade, null, null, true); }
-        finally { operation = null; }
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battle.DiagnosticIdentity))
+#endif
+        {
+            if (!TryEnter(null, target, upgrade, true, null, out var current))
+                return TowerSubmissionResult.Reject("Debug Upgrade authority is unavailable or busy.");
+            try { return towerUpgradeSystem.ApplyAuthorizedUpgrade(current, target, upgrade, null, null, true); }
+            finally { operation = null; }
+
+        }
     }
 
     private void RunLevelUpPresentation(

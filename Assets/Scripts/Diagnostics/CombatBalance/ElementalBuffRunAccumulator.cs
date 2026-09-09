@@ -1542,7 +1542,10 @@ internal sealed class ElementalHitReactionRunAccumulator
     {
         public SourceAggregate(ElementalHitReactionObservation observation)
         {
-            SourceTower = observation.TriggeringTower;
+            Source = CombatDiagnosticScope.Source(observation.TriggeringTower);
+            SourceIdentityValid = observation.DamageSourceIdentity.IsValid;
+            UpgradeName = observation.TriggeringElementalUpgrade != null ? observation.TriggeringElementalUpgrade.name : string.Empty;
+            EffectName = observation.DamageSourceIdentity.EffectDefinition != null ? observation.DamageSourceIdentity.EffectDefinition.name : string.Empty;
             TriggeringElementalUpgrade =
                 observation.TriggeringElementalUpgrade;
             DamageSourceIdentity = observation.DamageSourceIdentity;
@@ -1552,7 +1555,10 @@ internal sealed class ElementalHitReactionRunAccumulator
             MaximumResultOrdinal = observation.Diagnostics.ResultOrdinal;
         }
 
-        public TowerInstance SourceTower { get; }
+        public CombatDiagnosticSource Source { get; }
+        public bool SourceIdentityValid { get; }
+        public string UpgradeName { get; }
+        public string EffectName { get; }
         public TowerUpgradeDefinition TriggeringElementalUpgrade { get; }
         public TowerDamageSourceIdentity DamageSourceIdentity { get; }
         public ElementalOpportunityDiagnosticContext Diagnostics { get; }
@@ -1796,9 +1802,9 @@ internal sealed class ElementalHitReactionRunAccumulator
             SourceAggregate source = entry.Value;
 
             if (source == null ||
-                source.SourceTower == null ||
+                source.Source.Id == 0 ||
                 !source.Diagnostics.IsValid ||
-                !source.DamageSourceIdentity.IsValid ||
+                !source.SourceIdentityValid ||
                 !source.IsConsistent())
             {
                 return false;
@@ -1896,29 +1902,18 @@ internal sealed class ElementalHitReactionRunAccumulator
         for (int i = 0; i < keys.Count; i++)
         {
             SourceAggregate source = sources[keys[i]];
-            TowerDefinition towerDefinition = source.SourceTower != null
-                ? source.SourceTower.TowerDefinition
-                : null;
             TowerDamageSourceIdentity damageSource =
                 source.DamageSourceIdentity;
             records.Add(
                 new CombatBalanceElementalHitReactionSourceJson
                 {
-                    sourceTowerInstanceId = source.SourceTower != null
-                        ? source.SourceTower.GetInstanceID()
-                        : 0,
-                    towerFamily = towerDefinition != null
-                        ? towerDefinition.TowerFamily.ToString()
-                        : string.Empty,
+                    sourceTowerInstanceId = source.Source.Id,
+                    towerFamily = source.Source.Family,
                     triggeringElementalUpgradeName =
-                        source.TriggeringElementalUpgrade != null
-                            ? source.TriggeringElementalUpgrade.name
-                            : string.Empty,
+                        source.UpgradeName,
                     sourceElementRelation = source.SourceElementRelation,
                     damageSourceType = damageSource.SourceType.ToString(),
-                    effectDefinitionName = damageSource.EffectDefinition != null
-                        ? damageSource.EffectDefinition.name
-                        : string.Empty,
+                    effectDefinitionName = source.EffectName,
                     actionOrdinal = damageSource.ActionOrdinal,
                     provenance = source.Diagnostics.Provenance.ToString(),
                     memberIdentity =

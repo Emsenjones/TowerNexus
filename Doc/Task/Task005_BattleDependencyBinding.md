@@ -1,7 +1,7 @@
 # Task005 - Battle Dependency Binding
 
 Series: ArchitectureRefactor
-Status: Implemented - Native Combat And Wind Recorder Evidence Passed; Targeted Acceptance Pending
+Status: Completed - Remaining Targeted Acceptance Waived For This Iteration
 Branch: `codex/architecture-refactor`
 Depends on: Task004 implementation and confirmed Stage1/Recorder evidence; remaining targeted native acceptance is not implicitly waived. Preserve Task001-Task003 contracts.
 
@@ -220,3 +220,17 @@ Runs 01/02 contain no displayed Elemental option; run 03 offers Gale Arrows at d
 ordinal 9. This is concrete accessibility evidence, not a probability estimate or a
 basis for changing balance values in this refactor. No runtime/assets were changed
 as part of this record review.
+
+
+## Iteration Closeout — 2026-09-10
+
+The user explicitly elected to close the ArchitectureRefactor iteration after the
+completed implementation and recorded managed/native evidence, and to investigate
+further cases when a concrete bug or unexpected behavior is observed. Remaining
+unexecuted acceptance checks are waived for this iteration, not recorded as passed.
+This closeout supersedes earlier pending/no-waiver status statements in this file;
+the earlier sections remain the historical record of actual coverage.
+
+Task001–Task006 are complete within their approved refactor scope. No new gameplay,
+balance tuning or speculative follow-up implementation is included. Known coverage
+limits remain available for future diagnosis; completion is not a zero-bug claim.

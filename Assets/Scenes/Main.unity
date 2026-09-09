@@ -275,7 +275,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c69b96e78e584f878d4068749e0ab2a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  runName: Task005_Stage4_FourTower_DeploymentUpgrade_Acceptance_01
+  runName: Task006_Stage5_ElementalEntity_Acceptance_01
   placementRouteForcedRelocationExpectation: 2
   battleRuntimeCoordinator: {fileID: 7811906250627789308}
   stageCompositionController: {fileID: 0}
@@ -650,16 +650,16 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: demoStages.Array.size
-      value: 3
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: 'demoStages.Array.data[0]'
       value: 
-      objectReference: {fileID: 11400000, guid: aacc73e739bfe4ef59c5e22c120d3fd4, type: 2}
+      objectReference: {fileID: 11400000, guid: 3cbcb494b08af4efb85765bfa4fdfd7e, type: 2}
     - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: 'demoStages.Array.data[1]'
       value: 
-      objectReference: {fileID: 11400000, guid: 4ca53bc93834148b0927ff523d21d19e, type: 2}
+      objectReference: {fileID: 11400000, guid: aacc73e739bfe4ef59c5e22c120d3fd4, type: 2}
     - target: {fileID: 4303056428248239281, guid: b175f26b63bd043298bd36d1245658c1, type: 3}
       propertyPath: 'demoStages.Array.data[2]'
       value: 

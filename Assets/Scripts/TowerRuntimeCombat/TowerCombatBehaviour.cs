@@ -257,16 +257,22 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     public void OnAttackAnimationRelease()
     {
-        if (!isBattleActive ||
-            !isRuntimeSessionActive ||
-            !TryValidateExplicitOwner() ||
-            (battleBinding == null || !battleBinding.IsUsable) ||
-            !IsWaitingForAnimationRelease)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            return;
-        }
+            if (!isBattleActive ||
+                !isRuntimeSessionActive ||
+                !TryValidateExplicitOwner() ||
+                (battleBinding == null || !battleBinding.IsUsable) ||
+                !IsWaitingForAnimationRelease)
+            {
+                return;
+            }
 
-        OnAnimationRelease();
+            OnAnimationRelease();
+
+        }
     }
 
     public void OnTowerPresentationReplaced()
@@ -329,21 +335,27 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     protected void Update()
     {
-        if (!EnsureRuntimeSession())
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            return;
+            if (!EnsureRuntimeSession())
+            {
+                return;
+            }
+
+            UpdateAttackCycle();
+            OnOwnedRuntimeUpdate();
+
+            if (!CanScheduleCombat())
+            {
+                return;
+            }
+
+            DetectEnemies();
+            OnCombatUpdate();
+
         }
-
-        UpdateAttackCycle();
-        OnOwnedRuntimeUpdate();
-
-        if (!CanScheduleCombat())
-        {
-            return;
-        }
-
-        DetectEnemies();
-        OnCombatUpdate();
     }
 
     protected abstract TowerCombatBaseStats CreateBaseStats();

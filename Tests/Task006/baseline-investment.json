@@ -1,0 +1,2226 @@
+[
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NoSelection",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 7,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 2,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 0,
+      "finalBuildCommitObserved": false,
+      "finalBuildCommitResolutionNode": 0,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": []
+    },
+    "time": 0
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 5,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 3
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 1,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  },
+  {
+    "status": "NotCommitted",
+    "runtime": {
+      "committedInvestmentCount": 2,
+      "finalBuildCommitObserved": true,
+      "finalBuildCommitResolutionNode": 10,
+      "resolutionsAfterFinalBuildCommit": 0,
+      "commits": [
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:1",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 3,
+          "resolvedMonsterCount": 5,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        },
+        {
+          "ordinal": 0,
+          "kind": null,
+          "authoritySource": null,
+          "draftAttemptToken": "1:2",
+          "draftOrdinal": 0,
+          "draftResultType": null,
+          "draftAssetName": null,
+          "towerInstanceId": 0,
+          "towerDisplayName": null,
+          "towerFamily": null,
+          "previousLevel": 0,
+          "currentLevel": 0,
+          "upgradeLayer": null,
+          "activeTimeSeconds": 9,
+          "resolvedMonsterCount": 10,
+          "spawned": 0,
+          "resolved": 0,
+          "killed": 0,
+          "leaked": 0,
+          "alive": 0,
+          "playerHealth": 0
+        }
+      ]
+    },
+    "time": 9
+  }
+]

@@ -1,7 +1,7 @@
 # Task003 - Pending Draft State Ownership
 
 Series: ArchitectureRefactor
-Status: Implemented - Core Play Mode Smoke Passed; Targeted Acceptance Pending
+Status: Completed - Remaining Targeted Acceptance Waived For This Iteration
 Branch: `codex/architecture-refactor`
 Depends on: Accepted Task001. Task002 is independent of this ownership migration.
 
@@ -197,3 +197,17 @@ Initial pause/spawn counting, terminal Recorder reconciliation and the targeted
 native failure cases above have not been separately confirmed. No waiver is inferred
 from the successful smoke test. Keep these acceptance items pending rather than
 marking the entire Task Completed. No Task003 commit/push performed.
+
+
+## Iteration Closeout — 2026-09-10
+
+The user explicitly elected to close the ArchitectureRefactor iteration after the
+completed implementation and recorded managed/native evidence, and to investigate
+further cases when a concrete bug or unexpected behavior is observed. Remaining
+unexecuted acceptance checks are waived for this iteration, not recorded as passed.
+This closeout supersedes earlier pending/no-waiver status statements in this file;
+the earlier sections remain the historical record of actual coverage.
+
+Task001–Task006 are complete within their approved refactor scope. No new gameplay,
+balance tuning or speculative follow-up implementation is included. Known coverage
+limits remain available for future diagnosis; completion is not a zero-bug claim.

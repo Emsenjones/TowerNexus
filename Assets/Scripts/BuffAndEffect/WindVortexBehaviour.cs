@@ -78,27 +78,33 @@ public class WindVortexBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            Despawn();
-            return;
-        }
-        if (!isInitialized)
-        {
-            return;
-        }
+            if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+            {
+                Despawn();
+                return;
+            }
+            if (!isInitialized)
+            {
+                return;
+            }
 
-        float deltaTime = Time.deltaTime;
-        remainingLifetime -= deltaTime;
+            float deltaTime = Time.deltaTime;
+            remainingLifetime -= deltaTime;
 
-        if (remainingLifetime <= 0f)
-        {
-            Despawn();
-            return;
+            if (remainingLifetime <= 0f)
+            {
+                Despawn();
+                return;
+            }
+
+            UpdateTargetAndMovement(deltaTime);
+            UpdateDamageTicks(deltaTime);
+
         }
-
-        UpdateTargetAndMovement(deltaTime);
-        UpdateDamageTicks(deltaTime);
     }
 
     private bool CanInitialize()

@@ -1,7 +1,7 @@
 # Tower Nexus Architecture Refactor Tasks
 
 Active Series: `ArchitectureRefactor`
-Status: Task001 and Task002 completed with recorded targeted Unity acceptance waivers; Task003-Task006 await individual review.
+Status: Completed - Task001–Task006 implemented; remaining acceptance explicitly waived for this iteration (2026-09-10).
 Branch: `codex/architecture-refactor`
 Draft baseline: `10eaf6f` (documentation/evidence retirement complete).
 
@@ -11,10 +11,10 @@ Draft baseline: `10eaf6f` (documentation/evidence retirement complete).
 |---|---|---|---|
 | [Task001 - Upgrade Commit Consistency](Task001_UpgradeCommitConsistency.md) | Exact reward consumption and required combat refresh | Current runtime | Completed - Targeted Unity Acceptance Waived |
 | [Task002 - Map Runtime Query Caching](Task002_MapRuntimeQueryCaching.md) | Runtime index and preview-query invalidation | Independent; reviewed after Task001 | Completed - Remaining Targeted Unity Acceptance Waived |
-| [Task003 - Pending Draft State Ownership](Task003_PendingDraftStateOwnership.md) | Draft-owned reward data with independent views | Task001 | Draft - Pending Review |
-| [Task004 - Tower Placement Responsibility Separation](Task004_TowerPlacementResponsibilitySeparation.md) | Input/preview, submission, and deployed membership boundaries | Task001-Task003 | Draft - Pending Review |
-| [Task005 - Battle Dependency Binding](Task005_BattleDependencyBinding.md) | Explicit gameplay query scope and lifetime | Task004 | Draft - Pending Review |
-| [Task006 - Combat Diagnostics Isolation](Task006_CombatDiagnosticsIsolation.md) | Optional producer cost and Recorder responsibility separation | Task001-Task005 | Draft - Pending Review |
+| [Task003 - Pending Draft State Ownership](Task003_PendingDraftStateOwnership.md) | Draft-owned reward data with independent views | Task001 | Completed - Remaining Targeted Acceptance Waived For This Iteration |
+| [Task004 - Tower Placement Responsibility Separation](Task004_TowerPlacementResponsibilitySeparation.md) | Input/preview, submission, and deployed membership boundaries | Task001-Task003 | Completed - Remaining Targeted Acceptance Waived For This Iteration |
+| [Task005 - Battle Dependency Binding](Task005_BattleDependencyBinding.md) | Explicit gameplay query scope and lifetime | Task004 | Completed - Remaining Targeted Acceptance Waived For This Iteration |
+| [Task006 - Combat Diagnostics Isolation](Task006_CombatDiagnosticsIsolation.md) | Optional producer cost and Recorder responsibility separation | Task001-Task005 | Completed - Remaining Targeted Acceptance Waived For This Iteration |
 
 Task numbers are local to this series. Use `ArchitectureRefactor Task001` when
 contrasting with the retired `CombatMathV2 Task001`; the identical numeric suffix
@@ -56,3 +56,26 @@ known limits, and unexecuted acceptance checks. This series does not erase them.
 Retired CombatMathV2 Task016 Fast-Monster/Wave substitution remains deferred.
 It is not a dependency of this refactor series. Natural Draft assistance such as
 rerolls/pity and new gameplay content remain separate future work.
+
+
+## ArchitectureRefactor Iteration Closeout — 2026-09-10
+
+The user accepts this iteration as complete and elects not to run the remaining
+targeted tests, including Task006 Recorder on/off profiling. Those checks are
+explicitly waived for this iteration, not passed. Future bugs or unexpected behavior
+will be diagnosed and fixed as concrete follow-up work; no additional tests block
+this closeout. Each Task retains its actual evidence and historical coverage limits.
+No measured Unity performance gain or exhaustive lifecycle correctness is claimed.
+
+Implementation history:
+
+- `7bec5ca`: Task001–Task002.
+- `c621362`: Task003–Task004.
+- `630fcad`: Task005 and its four native acceptance reports.
+- Task006 implementation and its three new native reports are in the current
+  worktree, not yet committed. Completion does not imply commit, push or merge.
+
+Task004, Task005 and Task006 JSON evidence is under `Doc/GamePlayRecord` with the
+corresponding `TaskNNN_` prefixes. See each Task's evidence sections for exact runs.
+Task006 Section 9.5 records normal Victory/Defeat, retained Piercing Arrow Pending,
+Elemental/entity observations and Recorder partial-cancel/next-Battle recovery.

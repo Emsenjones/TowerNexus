@@ -14,6 +14,9 @@ public readonly struct FixedBuffDamageObservation
         int resolvedTargetCount,
         int successfulApplicationCount)
     {
+#if UNITY_EDITOR
+        BattleIdentity = CombatDiagnosticScope.CurrentIdentity;
+#endif
         EffectDefinition = effectDefinition;
         ActionOrdinal = actionOrdinal;
         FixedDamage = fixedDamage;
@@ -22,6 +25,9 @@ public readonly struct FixedBuffDamageObservation
         SuccessfulApplicationCount = successfulApplicationCount;
     }
 
+#if UNITY_EDITOR
+    internal object BattleIdentity { get; }
+#endif
     public EffectDefinition EffectDefinition { get; }
     public int ActionOrdinal { get; }
     public int FixedDamage { get; }
@@ -75,74 +81,80 @@ public static class EffectExecutor
         EffectTriggerContext triggerContext,
         List<MonsterBehaviour> resolvedTargets)
     {
-        if (resolvedTargets == null)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(triggerContext.BattleBinding))
+#endif
         {
-            return default;
-        }
-
-        resolvedTargets.Clear();
-
-        if (triggerContext.RemovalPermission == null &&
-            (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable)) return default;
-
-        if (effectDefinition == null)
-        {
-            return default;
-        }
-
-        if (!effectDefinition.IsValid())
-        {
-            return default;
-        }
-
-        if (!EffectTargetResolver.TryResolveTargets(effectDefinition, triggerContext, resolvedTargets))
-        {
-            if (!triggerContext.RequiresCommittedActionForExecutionVfx)
+            if (resolvedTargets == null)
             {
-                SpawnExecutionVfx(effectDefinition, triggerContext, resolvedTargets);
+                return default;
             }
-            return default;
-        }
 
-        List<MonsterBehaviour> executionTargets = new List<MonsterBehaviour>(resolvedTargets);
+            resolvedTargets.Clear();
 
-        ElementalOpportunityDiagnosticContext opportunityDiagnostics =
-            triggerContext.ElementalOpportunityDiagnostics;
+            if (triggerContext.RemovalPermission == null &&
+                (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable)) return default;
 
-        if (opportunityDiagnostics.IsValid &&
-            opportunityDiagnostics.ObserveResolvedTargetsAsCandidates)
-        {
-            for (int i = 0; i < executionTargets.Count; i++)
+            if (effectDefinition == null)
             {
-                ElementalApplication.ObserveCandidate(
-                    triggerContext.SourceTower,
-                    executionTargets[i],
-                    opportunityDiagnostics.WithResultOrdinal(
-                        opportunityDiagnostics.ResultOrdinal + i));
+                return default;
             }
+
+            if (!effectDefinition.IsValid())
+            {
+                return default;
+            }
+
+            if (!EffectTargetResolver.TryResolveTargets(effectDefinition, triggerContext, resolvedTargets))
+            {
+                if (!triggerContext.RequiresCommittedActionForExecutionVfx)
+                {
+                    SpawnExecutionVfx(effectDefinition, triggerContext, resolvedTargets);
+                }
+                return default;
+            }
+
+            List<MonsterBehaviour> executionTargets = new List<MonsterBehaviour>(resolvedTargets);
+
+            ElementalOpportunityDiagnosticContext opportunityDiagnostics =
+                triggerContext.ElementalOpportunityDiagnostics;
+
+            if (opportunityDiagnostics.IsValid &&
+                opportunityDiagnostics.ObserveResolvedTargetsAsCandidates)
+            {
+                for (int i = 0; i < executionTargets.Count; i++)
+                {
+                    ElementalApplication.ObserveCandidate(
+                        triggerContext.SourceTower,
+                        executionTargets[i],
+                        opportunityDiagnostics.WithResultOrdinal(
+                            opportunityDiagnostics.ResultOrdinal + i));
+                }
+            }
+
+            IReadOnlyList<EffectAction> actions = effectDefinition.Actions;
+            bool executedAnyAction = false;
+
+            for (int i = 0; i < actions.Count; i++)
+            {
+                // Non-short-circuit aggregation preserves authored action order even after a successful action.
+                executedAnyAction |= ExecuteAction(
+                    effectDefinition,
+                    i,
+                    actions[i],
+                    triggerContext,
+                    executionTargets);
+            }
+
+            if (!triggerContext.RequiresCommittedActionForExecutionVfx ||
+                executedAnyAction)
+            {
+                SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
+            }
+
+            return new EffectExecutionResult(true, executedAnyAction);
+
         }
-
-        IReadOnlyList<EffectAction> actions = effectDefinition.Actions;
-        bool executedAnyAction = false;
-
-        for (int i = 0; i < actions.Count; i++)
-        {
-            // Non-short-circuit aggregation preserves authored action order even after a successful action.
-            executedAnyAction |= ExecuteAction(
-                effectDefinition,
-                i,
-                actions[i],
-                triggerContext,
-                executionTargets);
-        }
-
-        if (!triggerContext.RequiresCommittedActionForExecutionVfx ||
-            executedAnyAction)
-        {
-            SpawnExecutionVfx(effectDefinition, triggerContext, executionTargets);
-        }
-
-        return new EffectExecutionResult(true, executedAnyAction);
     }
 
     private static bool ExecuteAction(

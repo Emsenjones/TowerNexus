@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory(prefix='towernexus-task004-') as folder:
  generated=Path(folder)/'InteractionHarness.cs'
  generated.write_text('using System; using UnityEngine;\npartial class InteractionHarness {\n'+predicate+'\n'+
      method(source,'CompletePlacement')+'\n'+method(source,'CompletePlacementCore')+'\n}')
- recorder=(root/'Assets/Scripts/TowerDeployment/CombatBalanceRunRecorder.cs').read_text()
+ recorder=(root/'Assets/Scripts/Diagnostics/CombatBalance/CombatRecordingSession.cs').read_text()
  bindings=Path(folder)/'RecorderBindings.cs'
  bindings.write_text('partial class RecorderBindingHarness { void Subscribe() { '+
      block(recorder,'        if (subscribedSubmission == null && battleRuntimeCoordinator != null)')+

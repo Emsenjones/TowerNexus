@@ -362,35 +362,41 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            EndProjectile();
-            return;
-        }
-        if (!isInitialized || hasImpacted)
-        {
-            return;
-        }
+            if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+            {
+                EndProjectile();
+                return;
+            }
+            if (!isInitialized || hasImpacted)
+            {
+                return;
+            }
 
-        elapsedLifetime += Time.deltaTime;
+            elapsedLifetime += Time.deltaTime;
 
-        if (elapsedLifetime >= maxLifetime)
-        {
-            DestroyProjectile();
-            return;
-        }
-
-        switch (flightType)
-        {
-            case ProjectileFlightType.Direction:
-                UpdateDirectionFlight();
-                break;
-            case ProjectileFlightType.Arc:
-                UpdateArcFlight();
-                break;
-            default:
+            if (elapsedLifetime >= maxLifetime)
+            {
                 DestroyProjectile();
-                break;
+                return;
+            }
+
+            switch (flightType)
+            {
+                case ProjectileFlightType.Direction:
+                    UpdateDirectionFlight();
+                    break;
+                case ProjectileFlightType.Arc:
+                    UpdateArcFlight();
+                    break;
+                default:
+                    DestroyProjectile();
+                    break;
+            }
+
         }
     }
 
@@ -1204,6 +1210,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
 #if UNITY_EDITOR
             if (monster != targetMonster &&
+                CombatDiagnosticScope.Enabled(battleBinding) &&
                 (arcNearestOtherTargetAtImpact == null ||
                  distanceSqr <
                  arcLandingToNearestOtherDistanceAtImpact *
@@ -1460,29 +1467,35 @@ public class ProjectileBehaviour : MonoBehaviour
     private void PublishRuntimeObservationSafely(
         ProjectileRuntimeObservation observation)
     {
-        Action<ProjectileRuntimeObservation> handlers = OnRuntimeObserved;
-
-        if (handlers == null)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            return;
-        }
+            Action<ProjectileRuntimeObservation> handlers = OnRuntimeObserved;
 
-        Delegate[] invocationList = handlers.GetInvocationList();
+            if (handlers == null)
+            {
+                return;
+            }
 
-        for (int i = 0; i < invocationList.Length; i++)
-        {
-            try
+            Delegate[] invocationList = handlers.GetInvocationList();
+
+            for (int i = 0; i < invocationList.Length; i++)
             {
-                ((Action<ProjectileRuntimeObservation>)invocationList[i])
-                    .Invoke(observation);
+                try
+                {
+                    ((Action<ProjectileRuntimeObservation>)invocationList[i])
+                        .Invoke(observation);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogWarning(
+                        "Projectile runtime observation subscriber failed: " +
+                        exception.Message,
+                        this);
+                }
             }
-            catch (Exception exception)
-            {
-                Debug.LogWarning(
-                    "Projectile runtime observation subscriber failed: " +
-                    exception.Message,
-                    this);
-            }
+
         }
     }
 #endif

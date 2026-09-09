@@ -1,7 +1,7 @@
 # Task004 - Tower Placement Responsibility Separation
 
 Series: ArchitectureRefactor
-Status: Implemented - Stage1 Play Mode And Recorder Passed; Targeted Acceptance Pending
+Status: Completed - Remaining Targeted Acceptance Waived For This Iteration
 Branch: `codex/architecture-refactor`
 Depends on: Task001-Task003 contracts. Task003 core Play Mode smoke passed; its remaining targeted acceptance stays explicitly pending and is not waived by this plan.
 
@@ -361,3 +361,17 @@ Evidence: `Doc/GamePlayRecord/Task004_Stage1_SubmissionLifecycle_Acceptance_02.j
 
 Other unconfirmed native scenarios listed above remain pending. No runtime change
 or waiver follows from this record review.
+
+
+## Iteration Closeout — 2026-09-10
+
+The user explicitly elected to close the ArchitectureRefactor iteration after the
+completed implementation and recorded managed/native evidence, and to investigate
+further cases when a concrete bug or unexpected behavior is observed. Remaining
+unexecuted acceptance checks are waived for this iteration, not recorded as passed.
+This closeout supersedes earlier pending/no-waiver status statements in this file;
+the earlier sections remain the historical record of actual coverage.
+
+Task001–Task006 are complete within their approved refactor scope. No new gameplay,
+balance tuning or speculative follow-up implementation is included. Known coverage
+limits remain available for future diagnosis; completion is not a zero-bug claim.

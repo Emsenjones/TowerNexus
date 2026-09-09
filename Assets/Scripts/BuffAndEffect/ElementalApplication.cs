@@ -153,83 +153,92 @@ public static class TowerOwnedHitTransaction
         bool allowsElementalApplication,
         bool publishDamageApplication = true)
     {
-        if (battleBinding == null || !battleBinding.CanTarget(target) ||
-            damageResolution.FinalDamage <= 0 ||
-            damageResolution.SourceTower == null)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            return false;
-        }
-
-        ElementalApplicationTransaction applicationTransaction = null;
-        bool damageApplied = false;
-        int healthBeforeDamage = target.CurrentHealth;
-        int healthAfterDirectDamage = healthBeforeDamage;
-        target.BeginTowerOwnedHitTransaction();
-
-        try
-        {
-            target.TakeDamage(damageResolution.FinalDamage);
-            damageApplied = true;
-            healthAfterDirectDamage = target.CurrentHealth;
-
-            if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 &&
-                target.IsGameplayTargetable &&
-                allowsElementalApplication)
+            if (battleBinding == null || !battleBinding.CanTarget(target) ||
+                damageResolution.FinalDamage <= 0 ||
+                damageResolution.SourceTower == null)
             {
-                applicationTransaction =
-                    ElementalApplication.TryApplyFromTowerAttack(
-                        battleBinding,
-                        damageResolution.SourceTower,
-                        target,
-                        hitPosition,
-                        diagnostics);
+                return false;
             }
 
-            if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 && target.IsGameplayTargetable)
-            {
-                target.ResolveElementalHitReactions(
-                    damageResolution.SourceTower,
-                    damageResolution.DamageSourceIdentity,
-                    diagnostics);
-            }
+#if UNITY_EDITOR
+            CombatDiagnosticScope.CaptureTarget(target);
+#endif
+            ElementalApplicationTransaction applicationTransaction = null;
+            bool damageApplied = false;
+            int healthBeforeDamage = target.CurrentHealth;
+            int healthAfterDirectDamage = healthBeforeDamage;
+            target.BeginTowerOwnedHitTransaction();
 
-            applicationTransaction?.FinalizePendingOverloads();
-        }
-        finally
-        {
-            // TakeDamage can commit health before a user/native callback throws.
-            if (!damageApplied && target.CurrentHealth < healthBeforeDamage)
+            try
             {
+                target.TakeDamage(damageResolution.FinalDamage);
                 damageApplied = true;
                 healthAfterDirectDamage = target.CurrentHealth;
+
+                if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 &&
+                    target.IsGameplayTargetable &&
+                    allowsElementalApplication)
+                {
+                    applicationTransaction =
+                        ElementalApplication.TryApplyFromTowerAttack(
+                            battleBinding,
+                            damageResolution.SourceTower,
+                            target,
+                            hitPosition,
+                            diagnostics);
+                }
+
+                if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 && target.IsGameplayTargetable)
+                {
+                    target.ResolveElementalHitReactions(
+                        damageResolution.SourceTower,
+                        damageResolution.DamageSourceIdentity,
+                        diagnostics);
+                }
+
+                applicationTransaction?.FinalizePendingOverloads();
             }
-            try { applicationTransaction?.FinalizePendingOverloads(); }
             finally
             {
-                try { target.EndTowerOwnedHitTransaction(); }
+                // TakeDamage can commit health before a user/native callback throws.
+                if (!damageApplied && target.CurrentHealth < healthBeforeDamage)
+                {
+                    damageApplied = true;
+                    healthAfterDirectDamage = target.CurrentHealth;
+                }
+                try { applicationTransaction?.FinalizePendingOverloads(); }
                 finally
                 {
-                    if (damageApplied && publishDamageApplication)
+                    try { target.EndTowerOwnedHitTransaction(); }
+                    finally
                     {
-                        TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+                        if (damageApplied && publishDamageApplication)
+                        {
+                            TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+                                damageResolution,
+                                1);
+                        }
+
+                        int appliedDamage = Mathf.Max(
+                            0,
+                            healthBeforeDamage - healthAfterDirectDamage);
+                        TowerRuntimeStatResolver.PublishTowerOwnedTargetDamage(
                             damageResolution,
-                            1);
+                            target,
+                            appliedDamage,
+                            healthBeforeDamage > 0 && healthAfterDirectDamage <= 0);
+
                     }
-
-                    int appliedDamage = Mathf.Max(
-                        0,
-                        healthBeforeDamage - healthAfterDirectDamage);
-                    TowerRuntimeStatResolver.PublishTowerOwnedTargetDamage(
-                        damageResolution,
-                        target,
-                        appliedDamage,
-                        healthBeforeDamage > 0 && healthAfterDirectDamage <= 0);
-
                 }
             }
-        }
 
-        return damageApplied;
+            return damageApplied;
+
+        }
     }
 }
 

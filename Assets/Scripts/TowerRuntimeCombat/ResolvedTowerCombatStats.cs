@@ -105,6 +105,11 @@ public readonly struct TowerOwnedDamageResolution
         int finalDamage)
     {
         SourceTower = sourceTower;
+#if UNITY_EDITOR
+        DiagnosticSource = CombatDiagnosticScope.Enabled(CombatDiagnosticScope.CurrentIdentity)
+            ? CombatDiagnosticScope.Capture(CombatDiagnosticScope.CurrentIdentity,
+                () => new CombatDiagnosticSource(sourceTower, damageSourceIdentity.EffectDefinition)) : default;
+#endif
         TowerFamily = towerFamily;
         Level = level;
         LevelBasicDamage = levelBasicDamage;
@@ -116,6 +121,9 @@ public readonly struct TowerOwnedDamageResolution
         FinalDamage = finalDamage;
     }
 
+#if UNITY_EDITOR
+    internal CombatDiagnosticSource DiagnosticSource { get; }
+#endif
     public TowerInstance SourceTower { get; }
     public TowerFamily TowerFamily { get; }
     public int Level { get; }
@@ -151,12 +159,20 @@ public readonly struct TowerOwnedDamageResolutionObservation
         TowerOwnedDamageResolution resolution)
     {
         SourceTower = sourceTower;
+#if UNITY_EDITOR
+        DiagnosticSource = CombatDiagnosticScope.Enabled(CombatDiagnosticScope.CurrentIdentity)
+            ? CombatDiagnosticScope.Capture(CombatDiagnosticScope.CurrentIdentity,
+                () => new CombatDiagnosticSource(sourceTower, damageSourceIdentity.EffectDefinition)) : default;
+#endif
         DamageSourceIdentity = damageSourceIdentity;
         DamageScale = damageScale;
         FailureReason = failureReason;
         Resolution = resolution;
     }
 
+#if UNITY_EDITOR
+    internal CombatDiagnosticSource DiagnosticSource { get; }
+#endif
     public TowerInstance SourceTower { get; }
     public TowerDamageSourceIdentity DamageSourceIdentity { get; }
     public float DamageScale { get; }

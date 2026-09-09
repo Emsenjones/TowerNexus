@@ -456,51 +456,57 @@ public class MonsterBuffRuntime
 
     public void Tick(float deltaTime)
     {
-        if (owner == null || owner.CombatBinding == null || !owner.CombatBinding.IsUsable) return;
-        BeginStateMutation();
-
-        try
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(owner != null ? owner.CombatBinding : null))
+#endif
         {
-            List<MonsterBuffInstance> tickSnapshot = new List<MonsterBuffInstance>(buffInstances);
+            if (owner == null || owner.CombatBinding == null || !owner.CombatBinding.IsUsable) return;
+            BeginStateMutation();
 
-            for (int i = 0; i < tickSnapshot.Count; i++)
+            try
             {
-                MonsterBuffInstance buffInstance = tickSnapshot[i];
+                List<MonsterBuffInstance> tickSnapshot = new List<MonsterBuffInstance>(buffInstances);
 
-                if (buffInstance == null)
+                for (int i = 0; i < tickSnapshot.Count; i++)
                 {
-                    if (buffInstances.Remove(buffInstance))
+                    MonsterBuffInstance buffInstance = tickSnapshot[i];
+
+                    if (buffInstance == null)
                     {
-                        QueueStateRefresh();
+                        if (buffInstances.Remove(buffInstance))
+                        {
+                            QueueStateRefresh();
+                        }
+
+                        continue;
                     }
 
-                    continue;
-                }
+                    if (!IsActive(buffInstance) || removalInProgress.Contains(buffInstance))
+                    {
+                        continue;
+                    }
 
-                if (!IsActive(buffInstance) || removalInProgress.Contains(buffInstance))
-                {
-                    continue;
-                }
+                    bool remainsActive = buffInstance.Tick(deltaTime, out int periodicTickCount);
 
-                bool remainsActive = buffInstance.Tick(deltaTime, out int periodicTickCount);
+                    for (int tickIndex = 0; tickIndex < periodicTickCount && IsActive(buffInstance); tickIndex++)
+                    {
+                        ExecuteLifecycleEffect(buffInstance, BuffEventType.PeriodicTick);
+                    }
 
-                for (int tickIndex = 0; tickIndex < periodicTickCount && IsActive(buffInstance); tickIndex++)
-                {
-                    ExecuteLifecycleEffect(buffInstance, BuffEventType.PeriodicTick);
-                }
-
-                if (!remainsActive && IsActive(buffInstance))
-                {
-                    BuffRemovalReason removalReason = buffInstance.IsInProtectionPhase
-                        ? BuffRemovalReason.ProtectionExpired
-                        : BuffRemovalReason.ActiveDurationExpired;
-                    RemoveBuffInstance(buffInstance, removalReason);
+                    if (!remainsActive && IsActive(buffInstance))
+                    {
+                        BuffRemovalReason removalReason = buffInstance.IsInProtectionPhase
+                            ? BuffRemovalReason.ProtectionExpired
+                            : BuffRemovalReason.ActiveDurationExpired;
+                        RemoveBuffInstance(buffInstance, removalReason);
+                    }
                 }
             }
-        }
-        finally
-        {
-            EndStateMutation();
+            finally
+            {
+                EndStateMutation();
+            }
+
         }
     }
 

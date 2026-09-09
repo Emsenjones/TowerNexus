@@ -407,69 +407,74 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private bool BeginPreparedBattleCore()
     {
-        if (!CanBeginPreparedBattle(out string failureReason))
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(combatBinding))
+#endif
         {
-            Debug.LogError(
-                $"Battle runtime coordinator cannot begin prepared battle: {failureReason}",
-                this);
-            return false;
+            if (!CanBeginPreparedBattle(out string failureReason))
+            {
+                Debug.LogError(
+                    $"Battle runtime coordinator cannot begin prepared battle: {failureReason}",
+                    this);
+                return false;
+            }
+
+            IsBattleActive = true;
+            playerSystem.BeginBattle();
+            monsterManager.BeginBattle();
+            combatBinding.Open();
+            towerPlacementController.BeginBattle();
+            draftSystem.BeginBattle();
+            Submission.BeginBattle();
+            monsterSpawner.BeginBattle();
+
+            if (!AreConsumerGatesOpen())
+            {
+                Debug.LogError(
+                    "Battle runtime coordinator failed to open every consumer battle gate.",
+                    this);
+                return false;
+            }
+
+            if (!draftSystem.TryOpenInitialTowerDraft(
+                    out DraftAttemptToken initialDraftToken,
+                    out string initialDraftFailureReason))
+            {
+                Debug.LogError(
+                    "Battle runtime coordinator failed to open the Initial Tower " +
+                    $"Draft: {initialDraftFailureReason}",
+                    this);
+                return false;
+            }
+
+            expectedInitialDraftToken = initialDraftToken;
+
+            if (!CanContinueLifecycleOperation())
+            {
+                Debug.LogWarning(
+                    "Battle runtime coordinator cancelled Battle begin after a " +
+                    "deferred release request.",
+                    this);
+                return false;
+            }
+
+            if (!IsBattleActive ||
+                !AreConsumerGatesOpen() ||
+                !draftSystem.IsAwaitingDraft(initialDraftToken))
+            {
+                Debug.LogError(
+                    "Battle runtime coordinator did not retain every Battle gate after " +
+                    "opening the Initial Tower Draft.",
+                    this);
+                return false;
+            }
+
+            hasFreshPlayerState = false;
+            preparedPlayerMaxHealth = 0;
+            preparedPlayerProgressRequirements.Clear();
+            isBattlePrepared = false;
+            return true;
         }
-
-        IsBattleActive = true;
-        playerSystem.BeginBattle();
-        monsterManager.BeginBattle();
-        combatBinding.Open();
-        towerPlacementController.BeginBattle();
-        draftSystem.BeginBattle();
-        Submission.BeginBattle();
-        monsterSpawner.BeginBattle();
-
-        if (!AreConsumerGatesOpen())
-        {
-            Debug.LogError(
-                "Battle runtime coordinator failed to open every consumer battle gate.",
-                this);
-            return false;
-        }
-
-        if (!draftSystem.TryOpenInitialTowerDraft(
-                out DraftAttemptToken initialDraftToken,
-                out string initialDraftFailureReason))
-        {
-            Debug.LogError(
-                "Battle runtime coordinator failed to open the Initial Tower " +
-                $"Draft: {initialDraftFailureReason}",
-                this);
-            return false;
-        }
-
-        expectedInitialDraftToken = initialDraftToken;
-
-        if (!CanContinueLifecycleOperation())
-        {
-            Debug.LogWarning(
-                "Battle runtime coordinator cancelled Battle begin after a " +
-                "deferred release request.",
-                this);
-            return false;
-        }
-
-        if (!IsBattleActive ||
-            !AreConsumerGatesOpen() ||
-            !draftSystem.IsAwaitingDraft(initialDraftToken))
-        {
-            Debug.LogError(
-                "Battle runtime coordinator did not retain every Battle gate after " +
-                "opening the Initial Tower Draft.",
-                this);
-            return false;
-        }
-
-        hasFreshPlayerState = false;
-        preparedPlayerMaxHealth = 0;
-        preparedPlayerProgressRequirements.Clear();
-        isBattlePrepared = false;
-        return true;
     }
 
     private void RunCleanupSafely(Action cleanup)
@@ -484,6 +489,13 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         Submission.CloseBattleGate();
     }
 
+#if UNITY_EDITOR
+    internal object DiagnosticIdentity => combatBinding;
+    internal MonsterManager DiagnosticMonsters => monsterManager;
+    internal MonsterSpawner DiagnosticSpawner => monsterSpawner;
+    internal PlayerSystem DiagnosticPlayer => playerSystem;
+    internal DraftSystem DiagnosticDraft => draftSystem;
+#endif
     private BattleCombatBinding combatBinding;
 
     private void CloseBattleAuthorityAndGates()
@@ -504,11 +516,17 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public void StopBattle()
     {
-        RevokeCombatAuthority();
-        CaptureBeforeCleanup();
-        CloseBattleAuthorityAndGates();
-        RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
-        RunCleanupSafely(() => Submission.StopTrackedTowerCombat());
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(combatBinding))
+#endif
+        {
+            RevokeCombatAuthority();
+            CaptureBeforeCleanup();
+            CloseBattleAuthorityAndGates();
+            RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
+            RunCleanupSafely(() => Submission.StopTrackedTowerCombat());
+
+        }
     }
 
     public void ReleasePreparedBattleRuntime()
@@ -531,24 +549,30 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void ReleasePreparedBattleRuntimeCore()
     {
-        if (isReleasing) return;
-        RevokeCombatAuthority();
-        isReleasing = true;
-        try
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(combatBinding))
+#endif
         {
-            CaptureBeforeCleanup();
-            CloseBattleAuthorityAndGates();
-            RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
-            RunCleanupSafely(() => draftSystem?.ClearStageUi());
-            Submission.DestroyTrackedTowers();
-            monsterSpawner?.ClearStageBinding();
-            draftSystem?.ClearStagePools();
-            towerUpgradeSystem?.ClearStageLevelRules();
-            towerPlacementController?.ClearActiveMap();
-            pathfindingService?.ClearActiveMap();
-            ResetResultTracking();
+            if (isReleasing) return;
+            RevokeCombatAuthority();
+            isReleasing = true;
+            try
+            {
+                CaptureBeforeCleanup();
+                CloseBattleAuthorityAndGates();
+                RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
+                RunCleanupSafely(() => draftSystem?.ClearStageUi());
+                Submission.DestroyTrackedTowers();
+                monsterSpawner?.ClearStageBinding();
+                draftSystem?.ClearStagePools();
+                towerUpgradeSystem?.ClearStageLevelRules();
+                towerPlacementController?.ClearActiveMap();
+                pathfindingService?.ClearActiveMap();
+                ResetResultTracking();
+            }
+            finally { isReleasing = false; }
+
         }
-        finally { isReleasing = false; }
     }
 
     private bool CanBeginPreparedBattle(out string failureReason)
@@ -804,20 +828,26 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void TryCompleteBattleResult(BattleResult result)
     {
-        BattleTerminalState requestedTerminalState =
-            result == BattleResult.Victory
-                ? BattleTerminalState.Victory
-                : BattleTerminalState.Defeat;
-
-        if (!TryClaimBattleTerminalState(requestedTerminalState))
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(combatBinding))
+#endif
         {
-            return;
-        }
+            BattleTerminalState requestedTerminalState =
+                result == BattleResult.Victory
+                    ? BattleTerminalState.Victory
+                    : BattleTerminalState.Defeat;
 
-        CaptureBeforeCleanup();
-        PublishSafely(OnBattleResultEvidence, result);
-        StopBattle();
-        PublishSafely(OnBattleResultPublished, result);
+            if (!TryClaimBattleTerminalState(requestedTerminalState))
+            {
+                return;
+            }
+
+            CaptureBeforeCleanup();
+            PublishSafely(OnBattleResultEvidence, result);
+            StopBattle();
+            PublishSafely(OnBattleResultPublished, result);
+
+        }
     }
 
     private void ResetResultTracking()
@@ -929,24 +959,30 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void TryFailBattleRuntime(string failureReason)
     {
-        if (!TryClaimBattleTerminalState(
-                BattleTerminalState.TechnicalFailure))
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(combatBinding))
+#endif
         {
-            return;
+            if (!TryClaimBattleTerminalState(
+                    BattleTerminalState.TechnicalFailure))
+            {
+                return;
+            }
+
+            string concreteReason = string.IsNullOrWhiteSpace(failureReason)
+                ? "an unspecified Battle runtime failure occurred."
+                : failureReason;
+
+            Debug.LogError(
+                $"Battle runtime coordinator terminated the Battle: " +
+                $"{concreteReason}",
+                this);
+
+            CaptureBeforeCleanup();
+            PublishSafely(OnBattleFailureEvidence, concreteReason);
+            StopBattle();
+            PublishSafely(OnBattleRuntimeFailed, concreteReason);
+
         }
-
-        string concreteReason = string.IsNullOrWhiteSpace(failureReason)
-            ? "an unspecified Battle runtime failure occurred."
-            : failureReason;
-
-        Debug.LogError(
-            $"Battle runtime coordinator terminated the Battle: " +
-            $"{concreteReason}",
-            this);
-
-        CaptureBeforeCleanup();
-        PublishSafely(OnBattleFailureEvidence, concreteReason);
-        StopBattle();
-        PublishSafely(OnBattleRuntimeFailed, concreteReason);
     }
 }

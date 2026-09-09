@@ -449,6 +449,10 @@ public class MonsterBehaviour : MonoBehaviour
     internal MonsterPlacementGameplayStateSnapshot
         CapturePlacementGameplayState()
     {
+#if UNITY_EDITOR
+        if (!CombatDiagnosticScope.Enabled(CombatBinding)) return null;
+        return CombatDiagnosticScope.Capture(CombatBinding, () =>
+        {
         EnsureBuffRuntime();
         return new MonsterPlacementGameplayStateSnapshot
         {
@@ -460,6 +464,10 @@ public class MonsterBehaviour : MonoBehaviour
             IsGameplayTargetable = IsGameplayTargetable,
             BuffFingerprint = buffRuntime.CapturePlacementFingerprint()
         };
+        });
+#else
+        return null;
+#endif
     }
 
     public void StopMovement()
@@ -1156,50 +1164,62 @@ public class MonsterBehaviour : MonoBehaviour
 
     public void ForceCleanup()
     {
-        if (isCleaningUp)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(CombatBinding))
+#endif
         {
-            return;
-        }
+            if (isCleaningUp)
+            {
+                return;
+            }
 
-        isCleaningUp = true;
-        isResolved = true;
-        PublishPlacementResolutionBeforeJoin(
-            MonsterPlacementRouteResolutionReason.TechnicalCleanup);
-        StopGameplayState(BuffRemovalReason.TechnicalCleanup);
-        monsterManager?.UnregisterMonster(this);
-        Destroy(gameObject);
+            isCleaningUp = true;
+            isResolved = true;
+            PublishPlacementResolutionBeforeJoin(
+                MonsterPlacementRouteResolutionReason.TechnicalCleanup);
+            StopGameplayState(BuffRemovalReason.TechnicalCleanup);
+            monsterManager?.UnregisterMonster(this);
+            Destroy(gameObject);
+
+        }
     }
 
     private void TryResolve(bool reachedTarget)
     {
-        if (isResolved || isCleaningUp)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(CombatBinding))
+#endif
         {
-            return;
+            if (isResolved || isCleaningUp)
+            {
+                return;
+            }
+
+            isResolved = true;
+            isDead = !reachedTarget;
+            PublishPlacementResolutionBeforeJoin(
+                reachedTarget
+                    ? MonsterPlacementRouteResolutionReason.Leaked
+                    : MonsterPlacementRouteResolutionReason.Killed);
+            StopGameplayState(
+                reachedTarget
+                    ? BuffRemovalReason.MonsterLeaked
+                    : BuffRemovalReason.MonsterKilled);
+
+            OnResolved?.Invoke(this, reachedTarget);
+
+            if (reachedTarget)
+            {
+                OnTargetReached?.Invoke(this);
+                Destroy(gameObject);
+                return;
+            }
+
+            OnDied?.Invoke(this);
+            PlayDeathAnimation();
+            Destroy(gameObject, GetDeathDelay());
+
         }
-
-        isResolved = true;
-        isDead = !reachedTarget;
-        PublishPlacementResolutionBeforeJoin(
-            reachedTarget
-                ? MonsterPlacementRouteResolutionReason.Leaked
-                : MonsterPlacementRouteResolutionReason.Killed);
-        StopGameplayState(
-            reachedTarget
-                ? BuffRemovalReason.MonsterLeaked
-                : BuffRemovalReason.MonsterKilled);
-
-        OnResolved?.Invoke(this, reachedTarget);
-
-        if (reachedTarget)
-        {
-            OnTargetReached?.Invoke(this);
-            Destroy(gameObject);
-            return;
-        }
-
-        OnDied?.Invoke(this);
-        PlayDeathAnimation();
-        Destroy(gameObject, GetDeathDelay());
     }
 
     private void StopGameplayState(BuffRemovalReason buffRemovalReason)

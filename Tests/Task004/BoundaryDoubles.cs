@@ -182,8 +182,11 @@ public partial class DraftSystem : UnityEngine.MonoBehaviour
 }
 public class BattleRuntimeCoordinator : UnityEngine.MonoBehaviour
 {
+    internal object DiagnosticIdentity => this;
     public bool IsBattleActive=true;public int FailureCount;public Action OnFailure;
     internal readonly TowerPlacementSubmission Submission=new TowerPlacementSubmission();
     internal void FailCommittedUpgrade(TowerUpgradeSystem owner,string reason)
     {owner.FlushCommittedInvestment();FailureCount++;IsBattleActive=false;Submission.CloseBattleGate();OnFailure?.Invoke();}
 }
+
+internal static class CombatDiagnosticScope { internal struct Scope : IDisposable { public void Dispose() {} } internal static Scope Enter(object identity) => default; internal static bool Enabled(object identity) => false; internal static T Capture<T>(object identity,Func<T> capture) => capture(); }

@@ -459,33 +459,39 @@ public class DroneBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            ForceCleanup();
-            return;
-        }
-        if (!isInitialized)
-        {
-            return;
-        }
+            if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+            {
+                ForceCleanup();
+                return;
+            }
+            if (!isInitialized)
+            {
+                return;
+            }
 
-        switch (State)
-        {
-            case DroneRuntimeState.Launching:
-                UpdateLaunching();
-                break;
-            case DroneRuntimeState.Orbiting:
-                UpdateOrbiting();
-                break;
-            case DroneRuntimeState.FinalDiving:
-                UpdateFinalDiving();
-                break;
-            case DroneRuntimeState.Holding:
-                UpdateHolding();
-                break;
-        }
+            switch (State)
+            {
+                case DroneRuntimeState.Launching:
+                    UpdateLaunching();
+                    break;
+                case DroneRuntimeState.Orbiting:
+                    UpdateOrbiting();
+                    break;
+                case DroneRuntimeState.FinalDiving:
+                    UpdateFinalDiving();
+                    break;
+                case DroneRuntimeState.Holding:
+                    UpdateHolding();
+                    break;
+            }
 
-        UpdatePropellerSpin();
+            UpdatePropellerSpin();
+
+        }
     }
 
     private void OnDisable()
@@ -509,10 +515,16 @@ public class DroneBehaviour : MonoBehaviour
 
     public void ForceCleanup()
     {
-        CompleteDrone(
-            DroneCompletionReason.TechnicalCleanup,
-            playAerialRetirementVfx: false,
-            destroyObject: true);
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
+        {
+            CompleteDrone(
+                DroneCompletionReason.TechnicalCleanup,
+                playAerialRetirementVfx: false,
+                destroyObject: true);
+
+        }
     }
 
     public void ApplyStatRefresh(DroneStatRefresh refresh)
@@ -1116,17 +1128,23 @@ public class DroneBehaviour : MonoBehaviour
         DroneTargetLossReason targetLossReason = DroneTargetLossReason.None,
         DroneCompletionReason completionReason = DroneCompletionReason.None)
     {
-        DroneLifecycleRuntimeDiagnostics.Publish(
-            new DroneLifecycleRuntimeObservation(
-                observationType,
-                sourceTower,
-                GetInstanceID(),
-                IsAdditionalAttackEntity,
-                State,
-                targetLossReason,
-                completionReason,
-                batteryTimer,
-                Time.time));
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
+        {
+            DroneLifecycleRuntimeDiagnostics.Publish(
+                new DroneLifecycleRuntimeObservation(
+                    observationType,
+                    sourceTower,
+                    GetInstanceID(),
+                    IsAdditionalAttackEntity,
+                    State,
+                    targetLossReason,
+                    completionReason,
+                    batteryTimer,
+                    Time.time));
+
+        }
     }
 
     private void PublishBurstObservation(
@@ -1136,16 +1154,22 @@ public class DroneBehaviour : MonoBehaviour
         bool allowsElementalApplication,
         int count = 1)
     {
-        DroneBurstRuntimeDiagnostics.Publish(
-            new DroneBurstRuntimeObservation(
-                observationType,
-                sourceTower,
-                GetInstanceID(),
-                IsAdditionalAttackEntity,
-                burstId,
-                isOpeningShotSlot,
-                allowsElementalApplication,
-                count));
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
+        {
+            DroneBurstRuntimeDiagnostics.Publish(
+                new DroneBurstRuntimeObservation(
+                    observationType,
+                    sourceTower,
+                    GetInstanceID(),
+                    IsAdditionalAttackEntity,
+                    burstId,
+                    isOpeningShotSlot,
+                    allowsElementalApplication,
+                    count));
+
+        }
     }
 #endif
 

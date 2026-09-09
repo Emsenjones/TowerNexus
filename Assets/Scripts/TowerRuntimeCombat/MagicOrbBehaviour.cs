@@ -339,28 +339,34 @@ internal sealed class MagicOrbGroupRuntime
 
     public void Tick(float deltaTime)
     {
-        if (!IsActive)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            return;
+            if (!IsActive)
+            {
+                return;
+            }
+
+            if (sourceTower == null || (battleBinding == null || !battleBinding.IsUsable))
+            {
+                ForceCleanup();
+                return;
+            }
+
+            elapsedLifetime += Mathf.Max(0f, deltaTime);
+
+            if (elapsedLifetime >= maxLifetime)
+            {
+                CompleteNormally();
+                return;
+            }
+
+            orbitPhase += rotationSpeed * Mathf.Max(0f, deltaTime);
+            UpdateMemberPositions();
+            ResolveContactsInStableOrder();
+
         }
-
-        if (sourceTower == null || (battleBinding == null || !battleBinding.IsUsable))
-        {
-            ForceCleanup();
-            return;
-        }
-
-        elapsedLifetime += Mathf.Max(0f, deltaTime);
-
-        if (elapsedLifetime >= maxLifetime)
-        {
-            CompleteNormally();
-            return;
-        }
-
-        orbitPhase += rotationSpeed * Mathf.Max(0f, deltaTime);
-        UpdateMemberPositions();
-        ResolveContactsInStableOrder();
     }
 
     public void ApplyStatRefresh(MagicOrbStatRefresh refresh)

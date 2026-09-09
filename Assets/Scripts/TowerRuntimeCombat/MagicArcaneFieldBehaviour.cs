@@ -91,23 +91,29 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
 
     private void Update()
     {
-        if (!isInitialized)
+#if UNITY_EDITOR
+        using (CombatDiagnosticScope.Enter(battleBinding))
+#endif
         {
-            return;
-        }
+            if (!isInitialized)
+            {
+                return;
+            }
 
-        if (!HasValidSource())
-        {
-            Cleanup();
-            return;
-        }
+            if (!HasValidSource())
+            {
+                Cleanup();
+                return;
+            }
 
-        tickTimer += Time.deltaTime;
+            tickTimer += Time.deltaTime;
 
-        while (isInitialized && tickTimer >= tickInterval)
-        {
-            tickTimer -= tickInterval;
-            ExecuteTick();
+            while (isInitialized && tickTimer >= tickInterval)
+            {
+                tickTimer -= tickInterval;
+                ExecuteTick();
+            }
+
         }
     }
 
