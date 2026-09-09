@@ -331,3 +331,10 @@ Invalid data must not be repaired by changing flight identity or inventing a tar
 Current scope includes Direction and Arc flight; direct Monster Hits; Position Impact; finite Piercing; Scatter independence; Explosive Arrow; Bouncing Shell; Drone-fired projectiles; and optional impact presentation. Tracking flight is not part of the current projectile schema or runtime contract.
 
 Deferred topics include generic chain, split, boomerang, ricochet, and missile frameworks. New behaviors require explicit contracts rather than Tower-specific branching inside the shared projectile lifecycle.
+
+## Battle Dependency Lifetime
+
+A released Projectile and its bounce children retain their originating Battle
+identity. They cannot acquire a new Battle's targets after retry or Stage replacement.
+Loss of gameplay authority ends the Projectile without impact, additional effects,
+or child release, while preserving already committed observations.

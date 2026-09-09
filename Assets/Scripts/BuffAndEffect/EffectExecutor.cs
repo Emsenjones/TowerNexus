@@ -82,6 +82,9 @@ public static class EffectExecutor
 
         resolvedTargets.Clear();
 
+        if (triggerContext.RemovalPermission == null &&
+            (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable)) return default;
+
         if (effectDefinition == null)
         {
             return default;
@@ -149,6 +152,14 @@ public static class EffectExecutor
         EffectTriggerContext triggerContext,
         IReadOnlyList<MonsterBehaviour> targets)
     {
+        if (triggerContext.RemovalPermission != null &&
+            (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable))
+        {
+            if (action == null || (action.ActionType != EffectActionType.ClearMoveSpeedMultiplier &&
+                !(action.ActionType == EffectActionType.SetMovementLock && !action.IsMovementLocked))) return false;
+        }
+        else if (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable) return false;
+
         if (action == null)
         {
             return false;
@@ -234,7 +245,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+            if (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.CanTarget(target))
             {
                 continue;
             }
@@ -242,6 +253,7 @@ public static class EffectExecutor
             if (action.DamageMode == EffectDamageMode.TowerScaled)
             {
                 if (!TowerOwnedHitTransaction.ApplyDamage(
+                        battleBinding: triggerContext.BattleBinding,
                         target,
                         towerResolution,
                         GetMonsterHitPosition(target),
@@ -333,7 +345,7 @@ public static class EffectExecutor
         {
             MonsterBehaviour target = targets[i];
 
-            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+            if (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.CanTarget(target))
             {
                 continue;
             }
@@ -344,6 +356,8 @@ public static class EffectExecutor
                     triggerContext,
                     target);
             }
+
+            if (!triggerContext.BattleBinding.CanTarget(target)) continue;
 
             BuffApplyRequest request = buffDefinition.ElementType != ElementType.None
                 ? new BuffApplyRequest(
@@ -486,7 +500,7 @@ public static class EffectExecutor
             MonsterBehaviour target = candidateTargets[targetIndex];
             candidateTargets.RemoveAt(targetIndex);
 
-            if (!EffectTargetResolver.IsValidMonsterTarget(target))
+            if (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.CanTarget(target))
             {
                 continue;
             }
@@ -494,6 +508,7 @@ public static class EffectExecutor
             EffectExecutionResult childExecution = ExecuteInternal(
                 action.MultiTargetEffectDefinition,
                 new EffectTriggerContext(
+                    battleBinding: triggerContext.BattleBinding,
                     sourceTower: triggerContext.SourceTower,
                     sourceUpgrade: triggerContext.SourceUpgrade,
                     targetMonster: target,
@@ -525,11 +540,11 @@ public static class EffectExecutor
             return false;
         }
 
-        MonsterManager monsterManager = Object.FindFirstObjectByType<MonsterManager>();
+        BattleCombatBinding monsterManager = triggerContext.BattleBinding;
 
-        if (monsterManager == null)
+        if (monsterManager == null || !monsterManager.IsUsable)
         {
-            Debug.LogWarning("Effect executor cannot spawn WindVortex: MonsterManager was not found.");
+            Debug.LogWarning("Effect executor cannot spawn WindVortex: the originating Battle binding is unavailable.");
             return false;
         }
 

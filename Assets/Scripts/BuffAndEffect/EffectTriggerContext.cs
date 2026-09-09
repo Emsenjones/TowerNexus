@@ -82,6 +82,7 @@ public readonly struct ElementalOpportunityDiagnosticContext
 public readonly struct EffectTriggerContext
 {
     public EffectTriggerContext(
+        BattleCombatBinding battleBinding,
         TowerInstance sourceTower,
         TowerUpgradeDefinition sourceUpgrade,
         MonsterBehaviour targetMonster,
@@ -93,8 +94,11 @@ public readonly struct EffectTriggerContext
         ElementalOpportunityDiagnosticContext elementalOpportunityDiagnostics =
             default,
         ElementalApplicationTransaction elementalApplicationTransaction = null,
-        bool requiresCommittedActionForExecutionVfx = false)
+        bool requiresCommittedActionForExecutionVfx = false,
+        BuffRemovalPermission removalPermission = null)
     {
+        BattleBinding = battleBinding;
+        RemovalPermission = removalPermission;
         SourceTower = sourceTower;
         SourceUpgrade = sourceUpgrade;
         TargetMonster = targetMonster;
@@ -109,6 +113,8 @@ public readonly struct EffectTriggerContext
             requiresCommittedActionForExecutionVfx;
     }
 
+    public BattleCombatBinding BattleBinding { get; }
+    internal BuffRemovalPermission RemovalPermission { get; }
     public TowerInstance SourceTower { get; }
     public TowerUpgradeDefinition SourceUpgrade { get; }
     public MonsterBehaviour TargetMonster { get; }

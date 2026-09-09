@@ -294,3 +294,18 @@ ending recursion.
 Current scope includes ordered one-shot actions, single-target and radius resolution, ApplyBuff, multi-target child execution, the reviewed WindVortex entity, movement requests, execution presentation, and explicit Elemental eligibility.
 
 Deferred topics include persistent Effect Zones, delayed or repeated generic Effect execution, a generic moving-Zone framework, arbitrary action graphs, recursive Elemental propagation, and generalized projectile spawning.
+
+## Battle Dependency Lifetime
+
+Every Effect execution carries the originating Battle authority, including direct,
+radius, nested, periodic and persistent results. Single targets must belong to that
+Battle; nested executions and WindVortex inherit the same identity. Execution never
+searches for an alternative Battle. Authority is rechecked between callbacks and
+subsequent target/action commits. A closed Battle cannot deal damage, apply Buffs,
+acquire movement control or create gameplay entities.
+
+Removal cleanup is a separate, temporary owner permission. After Battle closure it
+permits only releasing the original owner's slow or movement lock, with no radius
+query or gameplay output. It expires when removal execution returns and cannot act
+on a reused Monster lifetime. Dead-owner Overload targeting is not this permission;
+it still requires the original Battle's active gameplay authority.

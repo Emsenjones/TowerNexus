@@ -489,3 +489,10 @@ Deferred topics include:
 - Boss-specific global UI
 
 These topics require separate design review before changing the current ownership boundary.
+
+## Battle Dependency Lifetime
+
+A registered Monster belongs to one Battle and one runtime lifetime. Registration
+establishes that ownership before observers or combat consumers receive it. Target
+queries and damage requests must respect the originating Battle. Resetting a runtime
+invalidates owner-specific cleanup permissions from the previous lifetime.

@@ -52,7 +52,7 @@ The following invalidate the session:
 
 A missing Attack Origin does not invalidate the complete session. It blocks new detection or release work that needs the origin while already released entities continue independently.
 
-Recovery may reacquire external services such as the Monster source, but it must not silently bind a different Tower instance or accept a changed TowerDefinition identity. Those changes require a new explicit combat session.
+Recovery uses the original, still-valid Battle dependency. It cannot reacquire a different Monster source, bind a different Tower instance, or accept a changed TowerDefinition identity. Those changes require a new explicit combat session.
 
 ---
 
@@ -556,3 +556,15 @@ Presentation-only failure uses approved fallback behavior and must not silently 
 Current scope includes Archer, Cannon, Magic, and Drone orchestration; presentation-gated release; Attack Cycles; target selection; active entity ownership; selective Live Refresh; Arcane Field; and technical cleanup.
 
 Object pooling, Tower demolition, Monster-driven Tower destruction, new attack archetypes, and unreviewed package behavior are deferred.
+
+## Battle Dependency Lifetime
+
+Attack entities capture the Battle authority that released them and pass that same
+identity to their children and hit transactions. Revocation prevents new targeting,
+release, damage, Elemental application and shared reactions. Checks after callbacks
+prevent a committed hit from causing new consequences after a synchronous Stop.
+Committed damage evidence and unconditional transaction finalization remain valid.
+An intentionally closed identity cancels quietly; an unexpectedly broken required
+Monster dependency during an active Battle terminates that Battle with a technical
+failure diagnostic. Disabling and re-enabling a Tower component may recover only
+against its original, still-valid Battle authority.

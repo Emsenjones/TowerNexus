@@ -145,6 +145,7 @@ public readonly struct ElementalHitReactionObservation
 public static class TowerOwnedHitTransaction
 {
     public static bool ApplyDamage(
+        BattleCombatBinding battleBinding,
         MonsterBehaviour target,
         TowerOwnedDamageResolution damageResolution,
         Vector3 hitPosition,
@@ -152,7 +153,7 @@ public static class TowerOwnedHitTransaction
         bool allowsElementalApplication,
         bool publishDamageApplication = true)
     {
-        if (!EffectTargetResolver.IsValidMonsterTarget(target) ||
+        if (battleBinding == null || !battleBinding.CanTarget(target) ||
             damageResolution.FinalDamage <= 0 ||
             damageResolution.SourceTower == null)
         {
@@ -171,19 +172,20 @@ public static class TowerOwnedHitTransaction
             damageApplied = true;
             healthAfterDirectDamage = target.CurrentHealth;
 
-            if (target.CurrentHealth > 0 &&
+            if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 &&
                 target.IsGameplayTargetable &&
                 allowsElementalApplication)
             {
                 applicationTransaction =
                     ElementalApplication.TryApplyFromTowerAttack(
+                        battleBinding,
                         damageResolution.SourceTower,
                         target,
                         hitPosition,
                         diagnostics);
             }
 
-            if (target.CurrentHealth > 0 && target.IsGameplayTargetable)
+            if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 && target.IsGameplayTargetable)
             {
                 target.ResolveElementalHitReactions(
                     damageResolution.SourceTower,
@@ -195,25 +197,37 @@ public static class TowerOwnedHitTransaction
         }
         finally
         {
-            applicationTransaction?.FinalizePendingOverloads();
-            target.EndTowerOwnedHitTransaction();
-        }
+            // TakeDamage can commit health before a user/native callback throws.
+            if (!damageApplied && target.CurrentHealth < healthBeforeDamage)
+            {
+                damageApplied = true;
+                healthAfterDirectDamage = target.CurrentHealth;
+            }
+            try { applicationTransaction?.FinalizePendingOverloads(); }
+            finally
+            {
+                try { target.EndTowerOwnedHitTransaction(); }
+                finally
+                {
+                    if (damageApplied && publishDamageApplication)
+                    {
+                        TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
+                            damageResolution,
+                            1);
+                    }
 
-        if (damageApplied && publishDamageApplication)
-        {
-            TowerRuntimeStatResolver.PublishTowerOwnedDamageApplication(
-                damageResolution,
-                1);
-        }
+                    int appliedDamage = Mathf.Max(
+                        0,
+                        healthBeforeDamage - healthAfterDirectDamage);
+                    TowerRuntimeStatResolver.PublishTowerOwnedTargetDamage(
+                        damageResolution,
+                        target,
+                        appliedDamage,
+                        healthBeforeDamage > 0 && healthAfterDirectDamage <= 0);
 
-        int appliedDamage = Mathf.Max(
-            0,
-            healthBeforeDamage - healthAfterDirectDamage);
-        TowerRuntimeStatResolver.PublishTowerOwnedTargetDamage(
-            damageResolution,
-            target,
-            appliedDamage,
-            healthBeforeDamage > 0 && healthAfterDirectDamage <= 0);
+                }
+            }
+        }
 
         return damageApplied;
     }
@@ -227,12 +241,13 @@ public static class ElementalApplication
 #endif
 
     public static ElementalApplicationTransaction TryApplyFromTowerAttack(
+        BattleCombatBinding battleBinding,
         TowerInstance sourceTower,
         MonsterBehaviour targetMonster,
         Vector3 applicationPosition,
         ElementalOpportunityDiagnosticContext diagnostics)
     {
-        if (sourceTower == null || !EffectTargetResolver.IsValidMonsterTarget(targetMonster))
+        if (battleBinding == null || !battleBinding.CanTarget(targetMonster) || sourceTower == null)
         {
             return null;
         }
@@ -251,6 +266,7 @@ public static class ElementalApplication
         EffectExecutor.Execute(
             elementalUpgradeDefinition.ElementalApplyEffect,
             new EffectTriggerContext(
+                battleBinding: battleBinding,
                 sourceTower: sourceTower,
                 sourceUpgrade: elementalUpgradeDefinition,
                 targetMonster: targetMonster,

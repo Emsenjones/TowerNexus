@@ -19,7 +19,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     [SerializeField] private EffectDefinition tickEffect;
 
     private TowerInstance sourceTower;
-    private MonsterManager monsterManager;
+    private BattleCombatBinding battleBinding;
     private TowerUpgradeDefinition sourceUpgrade;
     private float tickTimer;
     private int tickOrdinal;
@@ -32,13 +32,13 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
 
     public bool Initialize(
         TowerInstance sourceTower,
-        MonsterManager monsterManager,
+        BattleCombatBinding battleBinding,
         TowerUpgradeDefinition sourceUpgrade)
     {
         ClearRuntimeState();
 
         this.sourceTower = sourceTower;
-        this.monsterManager = monsterManager;
+        this.battleBinding = battleBinding;
         this.sourceUpgrade = sourceUpgrade;
         tickTimer = 0f;
 
@@ -114,7 +114,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     private bool CanInitialize()
     {
         if (sourceTower == null ||
-            monsterManager == null ||
+            (battleBinding == null || !battleBinding.IsUsable) ||
             sourceUpgrade == null ||
             !IsAuthoredConfigurationValid())
         {
@@ -141,7 +141,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                sourceTower.isActiveAndEnabled &&
                sourceTower.gameObject.activeInHierarchy &&
                transform.IsChildOf(sourceTower.transform) &&
-               monsterManager != null &&
+               battleBinding != null && battleBinding.IsUsable &&
                sourceUpgrade != null &&
                sourceTower.HasUpgrade(sourceUpgrade);
     }
@@ -152,7 +152,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
         int currentTickOrdinal = tickOrdinal++;
 
         EffectTargetResolver.CollectValidTargetsInRadius(
-            monsterManager.GetAliveMonsters(),
+            battleBinding.GetAliveMonsters(),
             fieldCenter,
             radius,
             null,
@@ -170,6 +170,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
             EffectExecutor.Execute(
                 tickEffect,
                 new EffectTriggerContext(
+                    battleBinding: battleBinding,
                     sourceTower: sourceTower,
                     sourceUpgrade: sourceUpgrade,
                     targetMonster: target,
@@ -202,7 +203,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
         tickOrdinal = 0;
         tickTargets.Clear();
         sourceTower = null;
-        monsterManager = null;
+        battleBinding = null;
         sourceUpgrade = null;
     }
 }

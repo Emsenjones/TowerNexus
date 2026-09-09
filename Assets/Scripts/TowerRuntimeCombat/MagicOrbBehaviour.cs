@@ -227,7 +227,7 @@ internal sealed class MagicOrbGroupRuntime
         new List<MonsterBehaviour>();
 
     private readonly TowerInstance sourceTower;
-    private readonly MonsterManager monsterManager;
+    private readonly BattleCombatBinding battleBinding;
     private readonly Vector3 orbitCenterPosition;
     private readonly float orbitRadius;
     private readonly float contactDistance;
@@ -247,7 +247,7 @@ internal sealed class MagicOrbGroupRuntime
     public MagicOrbGroupRuntime(
         long releaseGroupId,
         TowerInstance sourceTower,
-        MonsterManager monsterManager,
+        BattleCombatBinding battleBinding,
         MagicOrbRuntimeOptions runtimeOptions,
         Vector3 orbitCenterPosition,
         float initialOrbitPhase,
@@ -256,7 +256,7 @@ internal sealed class MagicOrbGroupRuntime
     {
         ReleaseGroupId = releaseGroupId;
         this.sourceTower = sourceTower;
-        this.monsterManager = monsterManager;
+        this.battleBinding = battleBinding;
         this.orbitCenterPosition = orbitCenterPosition;
         rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
         arcaneDetonationSourceUpgrade = runtimeOptions.ArcaneDetonationSourceUpgrade;
@@ -279,7 +279,7 @@ internal sealed class MagicOrbGroupRuntime
     public bool CanInitialize()
     {
         return sourceTower != null &&
-               monsterManager != null &&
+               battleBinding != null && battleBinding.IsUsable &&
                rotationSpeed >= 0f &&
                orbitRadius >= 0f &&
                contactDistance >= 0f &&
@@ -344,7 +344,7 @@ internal sealed class MagicOrbGroupRuntime
             return;
         }
 
-        if (sourceTower == null || monsterManager == null)
+        if (sourceTower == null || (battleBinding == null || !battleBinding.IsUsable))
         {
             ForceCleanup();
             return;
@@ -463,7 +463,7 @@ internal sealed class MagicOrbGroupRuntime
 
     private void ResolveContactsInStableOrder()
     {
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
 
         for (int memberIndex = 0; memberIndex < members.Count; memberIndex++)
         {
@@ -550,6 +550,7 @@ internal sealed class MagicOrbGroupRuntime
         }
 
         TowerOwnedHitTransaction.ApplyDamage(
+                battleBinding: battleBinding,
             monster,
             damageResolution,
             hitPosition,
@@ -617,6 +618,7 @@ internal sealed class MagicOrbGroupRuntime
             EffectExecutor.ExecuteWithResolvedTargets(
                 arcaneDetonationEffect,
                 new EffectTriggerContext(
+                    battleBinding: battleBinding,
                     sourceTower: sourceTower,
                     sourceUpgrade: arcaneDetonationSourceUpgrade,
                     targetMonster: null,

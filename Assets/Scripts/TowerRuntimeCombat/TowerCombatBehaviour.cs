@@ -53,7 +53,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         new HashSet<TowerBehaviourPackageType>();
 
     private TowerInstance towerInstance;
-    private MonsterManager monsterManager;
+    private BattleCombatBinding battleBinding;
     private TowerBehaviour towerBehaviour;
     private TowerDefinition towerDefinition;
     private ResolvedTowerCombatStats cachedResolvedStats;
@@ -83,19 +83,19 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     protected TowerInstance TowerInstance => towerInstance;
     protected TowerDefinition TowerDefinition => towerDefinition;
-    protected MonsterManager MonsterManager => monsterManager;
+    protected BattleCombatBinding CombatBinding => battleBinding;
     protected TargetSelectionType TargetSelectionType => targetSelectionType;
     protected GameObject AttackReleaseVfxPrefab => attackReleaseVfxPrefab;
     protected bool IsWaitingForAnimationRelease =>
         attackState == TowerAttackState.WaitingForAnimationRelease;
     protected bool IsAttackCycleReady => attackCycleTimer <= 0f;
 
-    public void Initialize(TowerInstance initializedTowerInstance, MonsterManager initializedMonsterManager)
+    public void Initialize(TowerInstance initializedTowerInstance, BattleCombatBinding initializedBattleBinding)
     {
         DeactivateRuntimeSession(clearExplicitOwner: true);
 
         towerInstance = initializedTowerInstance;
-        monsterManager = initializedMonsterManager;
+        battleBinding = initializedBattleBinding;
         towerDefinition = towerInstance != null ? towerInstance.TowerDefinition : null;
         hasExplicitInitialization = towerInstance != null && towerDefinition != null;
         hasCompletedSubtypeInitialization = false;
@@ -114,7 +114,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             return;
         }
 
-        if (!TryValidateExplicitOwner() || !TryResolveMonsterManager())
+        if (!TryValidateExplicitOwner() || !TryValidateCombatBinding())
         {
             hasResolvedStatsCache = false;
             return;
@@ -159,9 +159,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             return false;
         }
 
-        if (monsterManager == null ||
-            !monsterManager.isActiveAndEnabled ||
-            !monsterManager.IsBattleActive)
+        if ((battleBinding == null || !battleBinding.IsUsable))
         {
             failureReason =
                 "the combat runtime does not have an active Monster Manager.";
@@ -262,8 +260,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         if (!isBattleActive ||
             !isRuntimeSessionActive ||
             !TryValidateExplicitOwner() ||
-            monsterManager == null ||
-            !monsterManager.isActiveAndEnabled ||
+            (battleBinding == null || !battleBinding.IsUsable) ||
             !IsWaitingForAnimationRelease)
         {
             return;
@@ -467,12 +464,12 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     protected bool IsRegisteredGameplayTarget(MonsterBehaviour monster)
     {
-        if (monster == null || !monster.IsGameplayTargetable || monsterManager == null)
+        if (monster == null || !monster.IsGameplayTargetable || (battleBinding == null || !battleBinding.IsUsable))
         {
             return false;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
 
         for (int i = 0; i < aliveMonsters.Count; i++)
         {
@@ -526,7 +523,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     {
         releasedProjectile = null;
 
-        if (projectilePrefab == null || origin == null)
+        if (battleBinding == null || !battleBinding.IsUsable || projectilePrefab == null || origin == null)
         {
             return false;
         }
@@ -538,7 +535,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
         projectileBehaviour.Initialize(
             towerInstance,
-            monsterManager,
+            battleBinding,
             projectilePrefab,
             target,
             targetPosition,
@@ -615,12 +612,12 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     {
         results.Clear();
 
-        if (!isRuntimeSessionActive || monsterManager == null)
+        if (!isRuntimeSessionActive || (battleBinding == null || !battleBinding.IsUsable))
         {
             return;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
 
         for (int i = 0; i < aliveMonsters.Count; i++)
         {
@@ -814,8 +811,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         }
 
         if (!TryValidateExplicitOwner() ||
-            monsterManager == null ||
-            !monsterManager.isActiveAndEnabled)
+            (battleBinding == null || !battleBinding.IsUsable))
         {
             DeactivateRuntimeSession(clearExplicitOwner: false);
             return false;
@@ -848,7 +844,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     private void DetectEnemies()
     {
         detectedEnemies.Clear();
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
 
         for (int i = 0; i < aliveMonsters.Count; i++)
         {
@@ -1042,15 +1038,14 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
                towerInstance.CurrentLevelConfig.IsValid();
     }
 
-    private bool TryResolveMonsterManager()
+    private bool TryValidateCombatBinding()
     {
-        if (monsterManager != null && monsterManager.isActiveAndEnabled)
+        if (battleBinding != null && battleBinding.IsUsable)
         {
             return true;
         }
 
-        monsterManager = FindFirstObjectByType<MonsterManager>();
-        return monsterManager != null && monsterManager.isActiveAndEnabled;
+        return false;
     }
 
     private bool TryRecoverRuntimeSession()
@@ -1059,7 +1054,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             !isActiveAndEnabled ||
             isRuntimeSessionActive ||
             !TryValidateExplicitOwner() ||
-            !TryResolveMonsterManager())
+            !TryValidateCombatBinding())
         {
             return false;
         }
@@ -1100,8 +1095,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         revision = default;
         if (towerInstance != expectedTower || !isActiveAndEnabled || !isBattleActive || !isRuntimeSessionActive ||
             !hasResolvedStatsCache || !TryValidateExplicitOwner() ||
-            monsterManager == null || !monsterManager.isActiveAndEnabled ||
-            !monsterManager.IsBattleActive || upgrade == null)
+            (battleBinding == null || !battleBinding.IsUsable) || !battleBinding.IsUsable || upgrade == null)
         {
             failureReason = "Tower combat is not ready for an Upgrade revision.";
             return false;
@@ -1193,7 +1187,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         hasCompletedSubtypeInitialization = false;
         towerInstance = null;
         towerDefinition = null;
-        monsterManager = null;
+        battleBinding = null;
     }
 
     private void CleanupOwnedCombatRuntime()

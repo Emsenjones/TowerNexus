@@ -170,6 +170,8 @@ public class MonsterBehaviour : MonoBehaviour
         ClearMovementControls();
         EnsureBuffRuntime();
         buffRuntime.Clear(BuffRemovalReason.RuntimeReset);
+        RuntimeIdentity = new object();
+        CombatBinding = null;
         CacheBuffVisualController();
         isDead = false;
         isResolved = false;
@@ -255,11 +257,15 @@ public class MonsterBehaviour : MonoBehaviour
         return true;
     }
 
+    public BattleCombatBinding CombatBinding { get; private set; }
+    internal object RuntimeIdentity { get; private set; } = new object();
+
     public void SetRuntimeReferences(
         MonsterManager monsterManager,
         DamageNumberManager damageNumberManager = null)
     {
         this.monsterManager = monsterManager;
+        CombatBinding = monsterManager != null ? monsterManager.CombatBinding : null;
         this.damageNumberManager = damageNumberManager;
     }
 

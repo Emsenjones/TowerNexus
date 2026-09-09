@@ -259,3 +259,14 @@ Validation does not silently convert one runtime model into another.
 Current scope includes stackable and non-stackable Buffs, Active Duration refresh, Source Apply Cooldown, Periodic Ticks, lifecycle Effects, Elemental stacking, Overload, Protection, status presentation, persistent presentation, and the Fire, Cold, Electric, and Wind content contracts.
 
 Deferred topics include multiple simultaneous speed modifiers, haste, Buff replacement priorities, natural-expiry-only events, dispel categories, cross-Buff dependency graphs, and recursive Elemental application.
+
+## Battle Dependency Lifetime
+
+Buff lifecycle execution retains the owner's Battle identity independently of its
+nullable source Tower. FixedBuff behavior continues without a source Tower while
+that Battle and owner remain valid; TowerScaled source requirements are unchanged.
+Closing a Battle stops new applications, ticks and Overload output, but removal
+still releases existing owner-bound controls and presentation. Pending Overload
+completion is finalized once without reviving combat or leaving an unfinished
+stacking state. An earned Overload on a dead owner may still execute from its
+captured context while the original Battle remains active.

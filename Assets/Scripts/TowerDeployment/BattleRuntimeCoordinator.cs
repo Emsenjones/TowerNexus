@@ -238,6 +238,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         float towerDraftSlotProbability)
     {
         ReleasePreparedBattleRuntimeCore();
+        combatBinding = new BattleCombatBinding(monsterManager, TryFailBattleRuntime);
+        monsterManager.CombatBinding = combatBinding;
+        towerPlacementController.BindBattleDependencies(monsterManager, pathfindingService);
 
         if (!pathfindingService.BindActiveMap(activeMap))
         {
@@ -415,6 +418,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         IsBattleActive = true;
         playerSystem.BeginBattle();
         monsterManager.BeginBattle();
+        combatBinding.Open();
         towerPlacementController.BeginBattle();
         draftSystem.BeginBattle();
         Submission.BeginBattle();
@@ -474,8 +478,17 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         catch (Exception exception) { Debug.LogException(exception, this); }
     }
 
+    private void RevokeCombatAuthority()
+    {
+        combatBinding?.Close();
+        Submission.CloseBattleGate();
+    }
+
+    private BattleCombatBinding combatBinding;
+
     private void CloseBattleAuthorityAndGates()
     {
+        RevokeCombatAuthority();
         IsBattleActive = false;
         Submission.CloseBattleGate();
         hasFreshPlayerState = false;
@@ -491,6 +504,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public void StopBattle()
     {
+        RevokeCombatAuthority();
         CaptureBeforeCleanup();
         CloseBattleAuthorityAndGates();
         RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
@@ -499,6 +513,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public void ReleasePreparedBattleRuntime()
     {
+        RevokeCombatAuthority();
         if (isReleasing)
         {
             // During preparation, an explicit release still cancels the incoming Stage.
@@ -517,6 +532,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private void ReleasePreparedBattleRuntimeCore()
     {
         if (isReleasing) return;
+        RevokeCombatAuthority();
         isReleasing = true;
         try
         {
@@ -906,6 +922,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
+        RevokeCombatAuthority();
         battleTerminalState = requestedState;
         return true;
     }

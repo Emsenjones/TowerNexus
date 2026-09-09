@@ -263,7 +263,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         MagicOrbGroupRuntime group = new MagicOrbGroupRuntime(
             nextReleaseGroupId++,
             TowerInstance,
-            MonsterManager,
+            CombatBinding,
             runtimeOptions,
             orbitCenterPosition,
             Random.Range(0f, 360f),
@@ -520,7 +520,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         if (requireActiveBattle && !IsBattleActive)
             return RequiredUpgradeRefreshResult.NotRequired;
 
-        if (!field.Initialize(TowerInstance, MonsterManager, arcaneFieldUpgrade))
+        if (!field.Initialize(TowerInstance, CombatBinding, arcaneFieldUpgrade))
         {
             field.Cleanup();
             activeMagicArcaneField = null;
@@ -601,6 +601,7 @@ public sealed class MagicOrbCombatBehaviour : TowerCombatBehaviour
         out MagicArcaneFieldBehaviour field)
     {
         field = null;
+        if (CombatBinding == null || !CombatBinding.IsUsable) return false;
 
         if (fieldPrefab == null)
         {

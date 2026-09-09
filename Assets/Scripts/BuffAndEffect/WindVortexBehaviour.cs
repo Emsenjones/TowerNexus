@@ -33,7 +33,7 @@ public class WindVortexBehaviour : MonoBehaviour
     [Required]
     [SerializeField] private EffectDefinition onTickEffectDefinition;
 
-    private MonsterManager monsterManager;
+    private BattleCombatBinding battleBinding;
     private TowerInstance sourceTower;
     private TowerUpgradeDefinition sourceUpgrade;
     private MonsterBehaviour currentTarget;
@@ -48,11 +48,11 @@ public class WindVortexBehaviour : MonoBehaviour
     public float RemainingLifetime => Mathf.Max(0f, remainingLifetime);
 
     public void Initialize(
-        MonsterManager monsterManager,
+        BattleCombatBinding battleBinding,
         TowerInstance sourceTower,
         TowerUpgradeDefinition sourceUpgrade)
     {
-        this.monsterManager = monsterManager;
+        this.battleBinding = battleBinding;
         this.sourceTower = sourceTower;
         this.sourceUpgrade = sourceUpgrade;
         currentTarget = null;
@@ -78,6 +78,11 @@ public class WindVortexBehaviour : MonoBehaviour
 
     private void Update()
     {
+        if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+        {
+            Despawn();
+            return;
+        }
         if (!isInitialized)
         {
             return;
@@ -103,9 +108,9 @@ public class WindVortexBehaviour : MonoBehaviour
             return false;
         }
 
-        if (monsterManager == null)
+        if ((battleBinding == null || !battleBinding.IsUsable))
         {
-            Debug.LogWarning("Wind vortex cannot initialize: MonsterManager is null.", this);
+            Debug.LogWarning("Wind vortex cannot initialize: BattleCombatBinding is null.", this);
             return false;
         }
 
@@ -222,7 +227,7 @@ public class WindVortexBehaviour : MonoBehaviour
 
     private bool TryAcquireTarget(MonsterBehaviour excludedTarget)
     {
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
         int candidateCount = EffectTargetResolver.CollectValidTargetsInRadius(
             aliveMonsters,
             transform.position,
@@ -264,7 +269,7 @@ public class WindVortexBehaviour : MonoBehaviour
     private void ExecuteDamageTick()
     {
         EffectTargetResolver.CollectValidTargetsInRadius(
-            monsterManager.GetAliveMonsters(),
+            battleBinding.GetAliveMonsters(),
             transform.position,
             damageRadius,
             null,
@@ -282,6 +287,7 @@ public class WindVortexBehaviour : MonoBehaviour
             EffectExecutor.Execute(
                 onTickEffectDefinition,
                 new EffectTriggerContext(
+                    battleBinding: battleBinding,
                     sourceTower: sourceTower,
                     sourceUpgrade: sourceUpgrade,
                     targetMonster: target,

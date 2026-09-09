@@ -21,7 +21,7 @@ public class ProjectileBehaviour : MonoBehaviour
     [SerializeField] private GameObject impactVfxPrefab;
 
     private TowerInstance sourceTower;
-    private MonsterManager monsterManager;
+    private BattleCombatBinding battleBinding;
     private ProjectileBehaviour projectileTemplate;
     private ProjectileFlightType flightType;
     private MonsterBehaviour targetMonster;
@@ -144,7 +144,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     public void Initialize(
         TowerInstance sourceTower,
-        MonsterManager monsterManager,
+        BattleCombatBinding battleBinding,
         ProjectileBehaviour projectileTemplate,
         MonsterBehaviour targetMonster,
         Vector3 targetPosition,
@@ -157,7 +157,7 @@ public class ProjectileBehaviour : MonoBehaviour
         ArcherProjectileReleaseIdentity archerReleaseIdentity = default)
     {
         this.sourceTower = sourceTower;
-        this.monsterManager = monsterManager;
+        this.battleBinding = battleBinding;
         this.projectileTemplate = projectileTemplate;
         this.flightType = flightType;
         this.targetMonster = targetMonster;
@@ -260,7 +260,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool CanInitialize()
     {
-        if (projectileTemplate == null)
+        if (battleBinding == null || !battleBinding.IsUsable || projectileTemplate == null)
         {
             Debug.LogWarning("Projectile behaviour cannot initialize: projectile template is null.", this);
             return false;
@@ -303,7 +303,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool CanInitializeDirectionFlight()
     {
-        if (monsterManager == null)
+        if ((battleBinding == null || !battleBinding.IsUsable))
         {
             Debug.LogWarning("Projectile behaviour cannot initialize direction flight: monster manager is null.", this);
             return false;
@@ -320,7 +320,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool CanInitializeArcFlight()
     {
-        if (monsterManager == null)
+        if ((battleBinding == null || !battleBinding.IsUsable))
         {
             Debug.LogWarning("Projectile behaviour cannot initialize Arc flight: monster manager is null.", this);
             return false;
@@ -362,6 +362,11 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void Update()
     {
+        if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+        {
+            EndProjectile();
+            return;
+        }
         if (!isInitialized || hasImpacted)
         {
             return;
@@ -651,6 +656,7 @@ public class ProjectileBehaviour : MonoBehaviour
         }
 
         TowerOwnedHitTransaction.ApplyDamage(
+                battleBinding: battleBinding,
             hitMonster,
             damageResolution,
             impactPosition,
@@ -682,6 +688,7 @@ public class ProjectileBehaviour : MonoBehaviour
         EffectExecutor.ExecuteWithResolvedTargets(
             explosiveArrowEffect,
             new EffectTriggerContext(
+                    battleBinding: battleBinding,
                 sourceTower: sourceTower,
                 sourceUpgrade: explosiveArrowSourceUpgrade,
                 targetMonster: directTarget,
@@ -709,6 +716,7 @@ public class ProjectileBehaviour : MonoBehaviour
         EffectExecutor.ExecuteWithResolvedTargets(
             blastRoundsEffect,
             new EffectTriggerContext(
+                    battleBinding: battleBinding,
                 sourceTower: sourceTower,
                 sourceUpgrade: blastRoundsSourceUpgrade,
                 targetMonster: null,
@@ -782,6 +790,7 @@ public class ProjectileBehaviour : MonoBehaviour
         {
             bounceHitHistory.Add(hitMonster);
             TowerOwnedHitTransaction.ApplyDamage(
+                battleBinding: battleBinding,
                 hitMonster,
                 damageResolution,
                 impactPosition,
@@ -823,6 +832,7 @@ public class ProjectileBehaviour : MonoBehaviour
         EffectExecutor.ExecuteWithResolvedTargets(
             explosiveShellEffect,
             new EffectTriggerContext(
+                    battleBinding: battleBinding,
                 sourceTower: sourceTower,
                 sourceUpgrade: explosiveShellSourceUpgrade,
                 targetMonster: null,
@@ -859,12 +869,12 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         bounceTarget = null;
 
-        if (monsterManager == null)
+        if ((battleBinding == null || !battleBinding.IsUsable))
         {
             return false;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
         float searchRadiusSqr = bounceSearchRadius * bounceSearchRadius;
         bounceCandidates.Clear();
 
@@ -961,7 +971,7 @@ public class ProjectileBehaviour : MonoBehaviour
         Vector3 impactPosition,
         Vector3 bounceTargetPosition)
     {
-        if (projectileTemplate == null)
+        if (battleBinding == null || !battleBinding.IsUsable || projectileTemplate == null)
         {
             return false;
         }
@@ -973,7 +983,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
         childProjectile.Initialize(
             sourceTower,
-            monsterManager,
+            battleBinding,
             projectileTemplate,
             targetMonster: null,
             targetPosition: bounceTargetPosition,
@@ -1110,6 +1120,7 @@ public class ProjectileBehaviour : MonoBehaviour
         Vector3 triggerPosition)
     {
         return new EffectTriggerContext(
+                    battleBinding: battleBinding,
             sourceTower: sourceTower,
             sourceUpgrade: null,
             targetMonster: flightType == ProjectileFlightType.Arc ? null : hitMonster,
@@ -1151,7 +1162,7 @@ public class ProjectileBehaviour : MonoBehaviour
         arcLandingToNearestOtherDistanceAtImpact = 0f;
 #endif
 
-        if (monsterManager == null || hitDistanceThreshold <= 0f)
+        if ((battleBinding == null || !battleBinding.IsUsable) || hitDistanceThreshold <= 0f)
         {
 #if UNITY_EDITOR
             arcImpactResolutionType = hasIntendedTargetSnapshot
@@ -1161,7 +1172,7 @@ public class ProjectileBehaviour : MonoBehaviour
             return false;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
         float hitDistanceThresholdSqr = hitDistanceThreshold * hitDistanceThreshold;
 
         if (IsTrackedValidTarget(targetMonster) &&
@@ -1294,12 +1305,12 @@ public class ProjectileBehaviour : MonoBehaviour
     {
         hitMonster = null;
 
-        if (monsterManager == null || !IsDirectHitEnabled())
+        if ((battleBinding == null || !battleBinding.IsUsable) || !IsDirectHitEnabled())
         {
             return false;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
         float hitDistanceThresholdSqr = hitDistanceThreshold * hitDistanceThreshold;
         float nearestDistanceSqr = float.MaxValue;
 
@@ -1356,12 +1367,12 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private bool IsTrackedValidTarget(MonsterBehaviour monster)
     {
-        if (!IsValidTarget(monster) || monsterManager == null)
+        if (!IsValidTarget(monster) || (battleBinding == null || !battleBinding.IsUsable))
         {
             return false;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
 
         for (int i = 0; i < aliveMonsters.Count; i++)
         {

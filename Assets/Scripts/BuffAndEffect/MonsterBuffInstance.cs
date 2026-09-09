@@ -26,6 +26,8 @@ public class MonsterBuffInstance
     {
         definition = request.BuffDefinition;
         this.owner = owner;
+        BattleBinding = owner != null ? owner.CombatBinding : null;
+        OwnerRuntimeIdentity = owner != null ? owner.RuntimeIdentity : null;
         sourceTower = request.SourceTower;
         sourceUpgrade = request.SourceUpgrade;
         remainingPhaseDuration = definition.ActiveDuration;
@@ -38,6 +40,8 @@ public class MonsterBuffInstance
         RecordSourceApplyCooldown(request.SourceTower);
     }
 
+    public BattleCombatBinding BattleBinding { get; }
+    internal object OwnerRuntimeIdentity { get; }
     public BuffDefinition Definition => definition;
     public MonsterBehaviour Owner => owner;
     public TowerInstance SourceTower => sourceTower;

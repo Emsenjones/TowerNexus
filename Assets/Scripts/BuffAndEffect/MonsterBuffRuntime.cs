@@ -80,7 +80,7 @@ public class MonsterBuffRuntime
     {
         BuffDefinition buffDefinition = request.BuffDefinition;
 
-        if (owner == null ||
+        if (owner == null || owner.CombatBinding == null || !owner.CombatBinding.CanTarget(owner) ||
             buffDefinition == null ||
             !buffDefinition.IsValid() ||
             (buffDefinition.UsesStacks && request.RequestedStackUnits <= 0))
@@ -344,7 +344,8 @@ public class MonsterBuffRuntime
             {
                 MonsterBuffInstance buffInstance = reactionInstances[i];
 
-                if (owner == null || owner.CurrentHealth <= 0)
+                if (owner == null || owner.CurrentHealth <= 0 ||
+                        buffInstance.BattleBinding == null || !buffInstance.BattleBinding.IsUsable)
                 {
                     QueueElementalHitReactionObservation(
                         buffInstance,
@@ -455,6 +456,7 @@ public class MonsterBuffRuntime
 
     public void Tick(float deltaTime)
     {
+        if (owner == null || owner.CombatBinding == null || !owner.CombatBinding.IsUsable) return;
         BeginStateMutation();
 
         try
@@ -617,7 +619,8 @@ public class MonsterBuffRuntime
                 ? buffDefinition.GetEffectDefinition(eventType)
                 : null;
 
-        if (effectDefinition == null || buffOwner == null)
+        if (effectDefinition == null || buffOwner == null ||
+            !ReferenceEquals(buffOwner.RuntimeIdentity, buffInstance.OwnerRuntimeIdentity))
         {
             return false;
         }
@@ -626,26 +629,35 @@ public class MonsterBuffRuntime
         Vector3 triggerPosition = triggerPositionOverride ??
             (hitAnchor != null ? hitAnchor.position : buffOwner.transform.position);
 
-        bool effectCommitted = EffectExecutor.Execute(
-            effectDefinition,
-            new EffectTriggerContext(
-                sourceTower: hasSourceContextOverride
-                    ? sourceTowerOverride
-                    : buffInstance.SourceTower,
-                sourceUpgrade: hasSourceContextOverride
-                    ? sourceUpgradeOverride
-                    : buffInstance.SourceUpgrade,
-                targetMonster: buffOwner,
-                hasTriggerPosition: true,
-                triggerPosition: triggerPosition,
-                allowsElementalApplication: false,
-                allowsLifecycleOwnerTarget:
-                    eventType == BuffEventType.Removed ||
-                    (eventType == BuffEventType.Overload &&
-                     buffOwner.CurrentHealth <= 0),
-                requiresCommittedActionForExecutionVfx:
-                    requiresCommittedActionForExecutionVfx)
-        );
+        var removalPermission = eventType == BuffEventType.Removed
+            ? new BuffRemovalPermission(buffOwner, buffInstance.BattleBinding, buffInstance.OwnerRuntimeIdentity) : null;
+        bool effectCommitted;
+        try
+        {
+            effectCommitted = EffectExecutor.Execute(
+                effectDefinition,
+                new EffectTriggerContext(
+                    battleBinding: buffInstance.BattleBinding,
+                    removalPermission: removalPermission,
+                    sourceTower: hasSourceContextOverride
+                        ? sourceTowerOverride
+                        : buffInstance.SourceTower,
+                    sourceUpgrade: hasSourceContextOverride
+                        ? sourceUpgradeOverride
+                        : buffInstance.SourceUpgrade,
+                    targetMonster: buffOwner,
+                    hasTriggerPosition: true,
+                    triggerPosition: triggerPosition,
+                    allowsElementalApplication: false,
+                    allowsLifecycleOwnerTarget:
+                        eventType == BuffEventType.Removed ||
+                        (eventType == BuffEventType.Overload &&
+                         buffOwner.CurrentHealth <= 0),
+                    requiresCommittedActionForExecutionVfx:
+                        requiresCommittedActionForExecutionVfx)
+            );
+        }
+        finally { removalPermission?.Close(); }
 
         if (queueObservationOnCommittedActionOnly && effectCommitted)
         {
@@ -773,11 +785,14 @@ public class MonsterBuffRuntime
             {
                 if (IsActive(buffInstance))
                 {
-                    if (owner == null || owner.CurrentHealth <= 0)
+                    if (owner == null || owner.CurrentHealth <= 0 ||
+                        buffInstance.BattleBinding == null || !buffInstance.BattleBinding.IsUsable)
                     {
                         RemoveBuffInstance(
                             buffInstance,
-                            BuffRemovalReason.MonsterKilled);
+                            owner == null || owner.CurrentHealth <= 0
+                                ? BuffRemovalReason.MonsterKilled
+                                : BuffRemovalReason.TechnicalCleanup);
                     }
                     else if (buffInstance.TryEnterProtectionPhase())
                     {

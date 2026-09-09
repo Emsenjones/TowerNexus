@@ -827,21 +827,17 @@ public class TowerPlacementController : MonoBehaviour
                hit.collider.transform.IsChildOf(currentPreview.transform);
     }
 
+    internal void BindBattleDependencies(MonsterManager monsters, AStarPathfindingService paths)
+    {
+        monsterManager = monsters;
+        pathfindingService = paths;
+    }
+
     private void EnsureStableRuntimeDependencies()
     {
         if (battleHUDUI == null)
         {
             Debug.LogError("Tower placement controller requires an assigned BattleHUDUI reference.", this);
-        }
-
-        if (pathfindingService == null)
-        {
-            pathfindingService = FindFirstObjectByType<AStarPathfindingService>();
-        }
-
-        if (monsterManager == null)
-        {
-            monsterManager = FindFirstObjectByType<MonsterManager>();
         }
 
         if (towerUpgradeSystem == null)

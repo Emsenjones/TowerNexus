@@ -266,7 +266,7 @@ public class DroneBehaviour : MonoBehaviour
     private readonly List<MonsterBehaviour> resolvedFinalDiveExplosionTargets = new List<MonsterBehaviour>();
 
     private TowerInstance sourceTower;
-    private MonsterManager monsterManager;
+    private BattleCombatBinding battleBinding;
     private DroneReleaseData releaseData;
     private TowerUpgradeDefinition blastRoundsSourceUpgrade;
     private TowerUpgradeDefinition finalDiveSourceUpgrade;
@@ -327,7 +327,7 @@ public class DroneBehaviour : MonoBehaviour
 
     public void Initialize(
         TowerInstance sourceTower,
-        MonsterManager monsterManager,
+        BattleCombatBinding battleBinding,
         DroneReleaseData releaseData,
         DroneRuntimeOptions runtimeOptions,
         ResolvedTowerCombatStats resolvedStats,
@@ -338,7 +338,7 @@ public class DroneBehaviour : MonoBehaviour
         MonsterBehaviour initialTarget)
     {
         this.sourceTower = sourceTower;
-        this.monsterManager = monsterManager;
+        this.battleBinding = battleBinding;
         this.releaseData = releaseData;
         blastRoundsSourceUpgrade = runtimeOptions.BlastRoundsSourceUpgrade;
         blastRoundsEffect = runtimeOptions.BlastRoundsEffect;
@@ -387,7 +387,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private bool CanInitialize()
     {
-        if (sourceTower == null || monsterManager == null)
+        if (sourceTower == null || (battleBinding == null || !battleBinding.IsUsable))
         {
             Debug.LogWarning(
                 "Drone cannot initialize: source Tower or monster manager is null.",
@@ -459,6 +459,11 @@ public class DroneBehaviour : MonoBehaviour
 
     private void Update()
     {
+        if (isInitialized && (battleBinding == null || !battleBinding.IsUsable))
+        {
+            ForceCleanup();
+            return;
+        }
         if (!isInitialized)
         {
             return;
@@ -829,6 +834,7 @@ public class DroneBehaviour : MonoBehaviour
                     0,
                     topologyAuthorized: false));
             TowerOwnedHitTransaction.ApplyDamage(
+                battleBinding: battleBinding,
                 directTarget,
                 damageResolution,
                 impactPosition,
@@ -846,6 +852,7 @@ public class DroneBehaviour : MonoBehaviour
         EffectExecutor.ExecuteWithResolvedTargets(
             finalDiveExplosionEffect,
             new EffectTriggerContext(
+                    battleBinding: battleBinding,
                 sourceTower: sourceTower,
                 sourceUpgrade: finalDiveSourceUpgrade,
                 targetMonster: null,
@@ -880,12 +887,12 @@ public class DroneBehaviour : MonoBehaviour
     {
         directTarget = null;
 
-        if (monsterManager == null || finalDiveHitThreshold <= 0f)
+        if ((battleBinding == null || !battleBinding.IsUsable) || finalDiveHitThreshold <= 0f)
         {
             return false;
         }
 
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
         float hitThresholdSqr = finalDiveHitThreshold * finalDiveHitThreshold;
         float nearestDistanceSqr = float.MaxValue;
 
@@ -1042,6 +1049,8 @@ public class DroneBehaviour : MonoBehaviour
         bool isBurstOpener,
         int shotOrdinal)
     {
+        if (battleBinding == null || !battleBinding.IsUsable)
+            return DroneProjectileReleaseResult.TechnicalFailure;
         if (!IsValidTargetInRange(target))
         {
             return DroneProjectileReleaseResult.TargetUnavailable;
@@ -1057,7 +1066,7 @@ public class DroneBehaviour : MonoBehaviour
             isBurstOpener && !IsAdditionalAttackEntity;
         projectileBehaviour.Initialize(
             sourceTower,
-            monsterManager,
+            battleBinding,
             projectilePrefab,
             target,
             targetPosition,
@@ -1209,7 +1218,7 @@ public class DroneBehaviour : MonoBehaviour
 
     private MonsterBehaviour SelectTarget()
     {
-        IReadOnlyList<MonsterBehaviour> aliveMonsters = monsterManager.GetAliveMonsters();
+        IReadOnlyList<MonsterBehaviour> aliveMonsters = battleBinding.GetAliveMonsters();
         List<MonsterBehaviour> candidates = new List<MonsterBehaviour>();
 
         for (int i = 0; i < aliveMonsters.Count; i++)

@@ -294,6 +294,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
         DroneReleaseData releaseData,
         DroneRuntimeOptions runtimeOptions)
     {
+        if (CombatBinding == null || !CombatBinding.IsUsable) return false;
         GameObject droneObject = Instantiate(releasePrefab, releasePosition, releaseRotation);
 
         if (!droneObject.TryGetComponent(out DroneBehaviour droneBehaviour))
@@ -307,7 +308,7 @@ public sealed class DroneCombatBehaviour : TowerCombatBehaviour
 
         droneBehaviour.Initialize(
             TowerInstance,
-            MonsterManager,
+            CombatBinding,
             releaseData,
             runtimeOptions,
             resolvedStats,

@@ -12,10 +12,17 @@ public static class EffectTargetResolver
         MonsterBehaviour monster,
         EffectTriggerContext triggerContext)
     {
-        return IsValidMonsterTarget(monster) ||
+        if (triggerContext.RemovalPermission != null &&
+            !triggerContext.RemovalPermission.Allows(triggerContext.TargetMonster)) return false;
+        if (triggerContext.RemovalPermission != null &&
+            (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable))
+            return triggerContext.RemovalPermission.Allows(monster);
+        return (triggerContext.BattleBinding != null &&
+                triggerContext.BattleBinding.IsUsable && triggerContext.BattleBinding.Owns(monster) &&
+                (IsValidMonsterTarget(monster) ||
                (triggerContext.AllowsLifecycleOwnerTarget &&
                 monster != null &&
-                monster == triggerContext.TargetMonster);
+                monster == triggerContext.TargetMonster)));
     }
 
     public static Vector3 GetMonsterHitPosition(MonsterBehaviour monster)
@@ -89,6 +96,16 @@ public static class EffectTargetResolver
             return false;
         }
 
+        if (triggerContext.RemovalPermission != null &&
+            !triggerContext.RemovalPermission.Allows(triggerContext.TargetMonster)) return false;
+        if (triggerContext.RemovalPermission != null &&
+            (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable))
+        {
+            if (effectDefinition.Radius > 0f) return false;
+            return TryResolveSingleTarget(triggerContext, targets);
+        }
+        if (triggerContext.BattleBinding == null || !triggerContext.BattleBinding.IsUsable) return false;
+
         if (effectDefinition.Radius <= 0f)
         {
             return TryResolveSingleTarget(triggerContext, targets);
@@ -124,7 +141,7 @@ public static class EffectTargetResolver
             return false;
         }
 
-        MonsterManager monsterManager = Object.FindFirstObjectByType<MonsterManager>();
+        BattleCombatBinding monsterManager = triggerContext.BattleBinding;
 
         if (monsterManager == null)
         {
@@ -132,12 +149,14 @@ public static class EffectTargetResolver
             return false;
         }
 
-        return CollectValidTargetsInRadius(
+        CollectValidTargetsInRadius(
                    monsterManager.GetAliveMonsters(),
                    center,
                    effectDefinition.Radius,
                    null,
-                   targets) > 0;
+                   targets);
+        targets.RemoveAll(target => !monsterManager.CanTarget(target));
+        return targets.Count > 0;
     }
 
     private static bool TryGetRadiusCenter(EffectTriggerContext triggerContext, out Vector3 center)

@@ -215,3 +215,11 @@ Deferred Game Flow topics include:
 - Scene transition strategy
 
 Multiple Spawn Routes and route-specific Wave composition are also deferred to future Map and Monster design.
+
+## Battle Dependency Lifetime
+
+Each prepared Battle receives a distinct combat authority identity. Activation opens
+that identity once; terminal acceptance, Stop, Release (including deferred Release)
+and preparation failure permanently revoke it before evidence callbacks. Evidence
+may still read committed state before physical cleanup. A retry never reactivates
+an outgoing identity, even when it reuses the same runtime services.

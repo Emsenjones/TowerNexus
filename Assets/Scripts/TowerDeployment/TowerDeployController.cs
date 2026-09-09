@@ -130,7 +130,7 @@ public class TowerDeployController : MonoBehaviour
                     out failureReason);
             }
 
-            towerCombatBehaviour.Initialize(towerInstance, monsterManager);
+            towerCombatBehaviour.Initialize(towerInstance, monsterManager != null ? monsterManager.CombatBinding : null);
 
             if (!towerCombatBehaviour.TryPrepareBattleActivation(
                     out string combatFailureReason))

@@ -79,6 +79,8 @@ partial class RecorderBindingHarness
 
 partial class ReleaseRoutingHarness
 {
+    private void RevokeCombatAuthority() { }
+
     private bool isReleasing,isLifecycleOperationInProgress,releaseRequested;
     private int calls;
     private void ReleasePreparedBattleRuntimeCore(){calls++;}

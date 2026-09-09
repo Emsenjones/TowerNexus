@@ -244,6 +244,8 @@ public class MonsterManager : MonoBehaviour
         return aliveMonsters;
     }
 
+    public BattleCombatBinding CombatBinding { get; internal set; }
+
     public void BeginBattle()
     {
         isBattleActive = true;
@@ -277,6 +279,7 @@ public class MonsterManager : MonoBehaviour
 
     public void CloseBattleGate()
     {
+        CombatBinding?.Close();
         isBattleActive = false;
     }
 
@@ -311,6 +314,8 @@ public class MonsterManager : MonoBehaviour
             return false;
         }
 
+        if (CombatBinding == null || !CombatBinding.IsUsable ||
+            !ReferenceEquals(monster.CombatBinding, CombatBinding)) return false;
         aliveMonsters.Add(monster);
         monster.OnResolved += HandleMonsterResolved;
         monster.OnPlacementRouteLifecycleObserved +=
