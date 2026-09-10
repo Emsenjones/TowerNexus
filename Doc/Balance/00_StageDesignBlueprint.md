@@ -113,38 +113,38 @@ number of rewards, and do not guarantee a Reference Build or a clear. The
 mechanical contract belongs to [Draft System](../System/08_DraftSystem.md); StageDefinition
 authors the executable budget.
 
-Status: Baseline v0.1, approved as initial test values on 2026-09-10. These values
-await the Re-roll implementation and Stage asset authoring; they are not runtime
-or Play Mode acceptance evidence.
+Status: Demo baseline accepted 2026-09-11. The implemented Stage-local budgets
+and authored probabilities are:
 
-| Stage | Initial Free Re-roll Count | Initial Intent |
-|---|---:|---|
-| Stage1 | 1 | Introduce one opportunity to correct a later Draft choice set |
-| Stage2 | 1 | Provide a small amount of flexibility across two TowerFamilies |
-| Stage3 | 2 | Allow more correction as the eligible content range expands |
-| Stage4 | 3 | Address the reported difficulty increase with four TowerFamilies |
-| Stage5 | 4 | Support timely level, package, and Elemental investment |
-| Stage6 | 5 | Support the timing and reward combinations of two developed cores |
+| Stage | Free Re-roll Count | Tower Draft Slot Probability |
+|---|---:|---:|
+| Stage1 | 1 | 0.500 |
+| Stage2 | 1 | 0.600 |
+| Stage3 | 2 | 0.667 |
+| Stage4 | 3 | 0.600 |
+| Stage5 | 4 | 0.667 |
+| Stage6 | 5 | 0.571 |
 
-Initial and Level-Up Drafts share these counts. Stage1-Stage3 Initial Tower pools
-contain no more than three distinct identities, so their Initial Draft already
-shows every Tower choice; No Other Candidates feedback preserves the budget
-for later Drafts.
+Stage4 probability was revised from 0.714; all initial budgets were retained.
+Initial and Level-Up Drafts share each Stage's budget. Stage1-Stage3 Initial
+pools already expose all available Towers, so no-other-candidate feedback
+preserves their balance for later Drafts. Retry starts with the configured budget.
 
-The first calibration pass prioritizes Stage4-Stage6. Keep existing category
-probabilities, eligibility, content pools, progress, combat values, Maps, and
-legal placement assumptions stable while measuring the effect of the initial
-budgets. Inspect each run's actual choices, Re-roll usage, Pending consumption,
-investment timing, placement, and combat outcome. Separate missing eligible
-offers from content not yet unlocked, fragmented selection, delayed consumption,
-and coverage or combat problems before changing a count.
+The current Demo acceptance requires an observed successful Build and placement
+strategy per Stage, with repeated successes where available. It does not promise
+a stable win rate, every core family's viability, or guaranteed Natural Build
+completion. Stage5 non-Magic core balance is deferred; Stage6 same-Element dual
+cores remain a learning goal, not a required Demo completion condition. The
+historical Reference Builds below remain reproducible design references; their
+original stronger acceptance scope is not implied by this Demo closeout.
 
-Fixed Draft controls remain without Re-rolls and establish Build efficacy.
-Natural runs with Re-rolls test accessibility and player agency. Reusing a seed
-does not guarantee identical later offers when Re-roll request history differs.
-Representative runs do not establish a fixed completion rate. Budget changes
-and their evidence belong to bounded calibration work; any broader combat or
-probability change needs its own reviewed scope.
+Fixed Drafts establish conditional Build efficacy and do not permit Re-rolls.
+Natural Drafts test accessibility and decisions; different Re-roll histories
+change later offers even with the same seed. Keep missing eligible offers,
+selection, consumption timing, placement, and combat interpretation separate.
+99-roll exploration is not normal-budget acceptance. Named evidence and explicit
+validation limits are preserved in the
+[Re-roll closeout](../History/ReRollSystem_Closeout.md).
 
 ---
 

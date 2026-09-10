@@ -1,7 +1,7 @@
 # Task003 - Re-roll Accessibility Calibration
 
 Iteration: Re-roll System
-Status: Planned; calibration has not started.
+Status: Completed for the approved Demo scope; original broader gates are subject to the closeout waivers.
 Dependencies: [Task002 - Stage Free Re-roll System](Task002_StageFreeRerollSystem.md)
 with functional, authoring, and Recorder acceptance; Task001 transitively.
 
@@ -133,3 +133,10 @@ record that limitation and the next decision rather than marking the objective
 achieved because more Re-rolls were added. Broader balance changes remain separate.
 
 Current evidence: Initial budget hypothesis only; no calibration runs performed.
+
+## Final Demo disposition (2026-09-11)
+
+This disposition supersedes earlier pending-status notes and uncompleted broad
+acceptance checklists above. See [durable closeout](../History/ReRollSystem_Closeout.md)
+for accepted scope, native/manual evidence, report inventory, and explicit
+waivers. Historical implementation and test details above are retained as such.

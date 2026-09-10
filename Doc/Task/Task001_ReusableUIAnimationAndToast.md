@@ -1,7 +1,7 @@
 # Task001 - Reusable UI Animation And Toast
 
 Iteration: Re-roll System
-Status: In Progress; implementation and static/managed validation complete; user reports DamageNumber visual validation passed, integrated Toast acceptance pending.
+Status: Completed for the approved Demo scope; original broader gates are subject to the closeout waivers.
 Dependencies: None.
 Next: [Task002 - Stage Free Re-roll System](Task002_StageFreeRerollSystem.md).
 
@@ -206,3 +206,10 @@ in two existing RectTransforms (text anchors/size and animated-root size). Those
 asset values were preserved. The migration test now recognizes exactly those
 reviewed layout values while retaining the original animation payload, GUID,
 hierarchy and reference oracles; it does not silently replace the baseline.
+
+## Final Demo disposition (2026-09-11)
+
+This disposition supersedes earlier pending-status notes and uncompleted broad
+acceptance checklists above. See [durable closeout](../History/ReRollSystem_Closeout.md)
+for accepted scope, native/manual evidence, report inventory, and explicit
+waivers. Historical implementation and test details above are retained as such.

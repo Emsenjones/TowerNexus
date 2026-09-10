@@ -29,11 +29,11 @@ compiles the changed classes against actual Unity/DOTween/TMP references with
 and without UNITY_EDITOR. It never launches Unity or edits generated projects.
 Generated managed test binaries and source overlays live only in temp directories.
 
-Pending native evidence: Unity import and Inspector references; Editor Preview;
+Original native checklist (see closeout for accepted checks and deferred scope): Unity import and Inspector references; Editor Preview;
 real battle damage and placement; Toast fade/motion while paused and at changed
 speed; repeated replay; early disable/destruction; no UI raycast interception;
 no native lifecycle or completion residue. These checks belong to
-[Task001](../../../Doc/Task/Task001_ReusableUIAnimationAndToast.md), not the managed
+[Re-roll closeout](../../../Doc/History/ReRollSystem_Closeout.md), not the managed
 assertion count. No iOS build, device test, or visual test is claimed.
 
 UIAnimationPlayer is a serializable plain class. The hosts forward clocks and

@@ -47,15 +47,10 @@ This directory separates durable runtime contracts from iterative balance design
 - [ArchitectureRefactor Historical Evidence](History/ArchitectureRefactor_Closeout.md)
 - [CombatMathV2 Historical Evidence](History/CombatMathV2_Closeout.md)
 
-## Active Task Iteration: Re-roll System
+## Re-roll System Demo Closeout
 
-The following contracts execute in dependency order. Task001 has user-reported
-DamageNumber visual acceptance; Task002 optimization (schema 27) is implemented pending native Draft/Toast
-integration and Recorder export acceptance. Task003 remains planned:
-
-1. [Task001 - Reusable UI Animation And Toast](Task/Task001_ReusableUIAnimationAndToast.md)
-2. [Task002 - Stage Free Re-roll System](Task/Task002_StageFreeRerollSystem.md)
-3. [Task003 - Re-roll Accessibility Calibration](Task/Task003_RerollAccessibilityCalibration.md)
-
-These numbers are local to this iteration. Historical Task contracts and
-existing `Tests/TaskNNN` harnesses retain their original identities.
+Reusable UI animation, Toast, Stage-local Re-rolls, and the bounded Demo
+calibration are complete for the approved scope. See the
+[Re-roll milestone](History/ReRollSystem_Closeout.md) for per-Stage decisions,
+named reports, user-confirmed native checks, and deferred balance requirements.
+Task documents are retired after preserving their final state in Git.

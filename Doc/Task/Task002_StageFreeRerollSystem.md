@@ -1,7 +1,7 @@
 # Task002 - Stage Free Re-roll System
 
 Iteration: Re-roll System
-Status: In Progress; approved optimization implemented and static/managed validation passed; schema-27 native integration/export acceptance pending.
+Status: Completed for the approved Demo scope; original broader gates are subject to the closeout waivers.
 Dependencies: [Task001 - Reusable UI Animation And Toast](Task001_ReusableUIAnimationAndToast.md).
 Next: [Task003 - Re-roll Accessibility Calibration](Task003_RerollAccessibilityCalibration.md).
 
@@ -292,3 +292,10 @@ Unity acceptance still required: actual pointer press/release, paused Toast repl
 input pass-through, final-count selection, retry/Stage transitions, and fresh schema-27
 zero/one/multiple Re-roll exports. No native/device or fresh battle-export acceptance
 is claimed by these managed checks. Task003 remains pending feature acceptance.
+
+## Final Demo disposition (2026-09-11)
+
+This disposition supersedes earlier pending-status notes and uncompleted broad
+acceptance checklists above. See [durable closeout](../History/ReRollSystem_Closeout.md)
+for accepted scope, native/manual evidence, report inventory, and explicit
+waivers. Historical implementation and test details above are retained as such.
