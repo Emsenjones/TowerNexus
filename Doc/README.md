@@ -46,3 +46,15 @@ This directory separates durable runtime contracts from iterative balance design
 - [Task Workspace](Task/)
 - [ArchitectureRefactor Historical Evidence](History/ArchitectureRefactor_Closeout.md)
 - [CombatMathV2 Historical Evidence](History/CombatMathV2_Closeout.md)
+
+## Active Task Iteration: Re-roll System
+
+The following planned contracts execute in dependency order. Their creation
+does not indicate implementation or native acceptance:
+
+1. [Task001 - Reusable UI Animation And Toast](Task/Task001_ReusableUIAnimationAndToast.md)
+2. [Task002 - Stage Free Re-roll System](Task/Task002_StageFreeRerollSystem.md)
+3. [Task003 - Re-roll Accessibility Calibration](Task/Task003_RerollAccessibilityCalibration.md)
+
+These numbers are local to this iteration. Historical Task contracts and
+existing `Tests/TaskNNN` harnesses retain their original identities.

@@ -19,6 +19,7 @@ It owns:
 - Distribution of the selected Player progress requirements
 - Distribution of Stage-specific Tower and Tower Upgrade Draft pools
 - Distribution of the Stage-specific Tower Draft Slot Probability
+- Distribution of the Stage-specific Initial Free Re-roll Count
 - Distribution of the Stage Upgrade pool as Tower level-eligibility authoring
 - Establishment of a fresh battle-local Player runtime for the selected Stage
 - Establishment of a prepared Stage boundary before battle gameplay begins
@@ -44,6 +45,7 @@ StageDefinition is one reusable playable-Stage composition.
 | Tower Draft Pool | TowerDefinitions allowed in this Stage's Drafts |
 | Tower Upgrade Draft Pool | TowerUpgradeDefinitions allowed in this Stage's Drafts |
 | Tower Draft Slot Probability | Inclusive `[0, 1]` probability that each natural Player level-up Draft display slot initially requests the Tower category |
+| Initial Free Re-roll Count | Non-negative integer budget initialized for each fresh battle, shared by its Initial and Level-Up Drafts |
 | Show Stage Introduction | Whether the prepared Stage waits for Game Flow introduction confirmation |
 | Introduced Towers | TowerDefinitions presented as newly introduced in this Stage |
 | Introduced Tower Upgrades | TowerUpgradeDefinitions presented as newly introduced in this Stage |
@@ -63,6 +65,16 @@ applies to each requested display slot in a natural Player level-up Draft. It
 does not affect the Tower-only Initial Draft, guarantee a realized display or
 selection ratio, or guarantee a Reference Build. Stage System supplies the
 value; Draft System owns category allocation, sampling, and backfill.
+
+Each Stage independently authors one Initial Free Re-roll Count. Zero is valid.
+Draft System receives the configured budget and owns its battle-local remaining
+balance. Every fresh battle, including a retry, starts with the configured count;
+unused balance does not accumulate or carry to another battle. Opening or
+refreshing the Draft Window does not replenish it. Spending never modifies the
+reusable StageDefinition. Re-roll replaces candidates rather than adding Player
+progress, a Draft opportunity, or a reward. Candidate rules and spending acceptance
+belong to Draft System; per-Stage test budgets and calibration intent belong to
+the Stage Design Blueprint and bounded calibration work.
 
 The Tower Upgrade Draft Pool also authors each TowerFamily's maximum reachable level for this Stage. The maximum is the highest Required Tower Level among that family's Stage-allowed Upgrades, clamped by the supported and TowerDefinition-configured maximums. A family with no Stage-allowed Upgrade remains at Level 1.
 
@@ -112,7 +124,7 @@ Receive Selected StageDefinition
     -> Supply MonsterWaveConfig To Monster System
     -> Supply Player Max Health To Player System
     -> Supply Player Progress Requirements To Player System
-    -> Supply Draft Pools And Tower Draft Slot Probability To Draft System
+    -> Supply Draft Pools, Tower Draft Slot Probability, And Initial Free Re-roll Count To Draft System
     -> Supply Stage Upgrade Pool To Tower Upgrade System
     -> Initialize Fresh Player Battle-Local State At Full Health, Level 1, And Zero Progress
     -> Confirm No Deferred Release
@@ -147,7 +159,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 | Game Flow System | Prepared Stage readiness and introduction content | Stage ordering, current position, start permission, and result transitions |
 | Map System | Selected Map template and active-instance role | Grid state, spatial queries, Map presentation, and validation |
 | Monster System | Active Map and MonsterWaveConfig | Wave timing, spawning, pathfinding, movement, and resolution |
-| Draft System | Tower and Tower Upgrade pools plus Tower Draft Slot Probability | Category allocation, candidate generation, reservation, sampling, backfill, and results |
+| Draft System | Tower and Tower Upgrade pools, Tower Draft Slot Probability, and Initial Free Re-roll Count | Category allocation, candidate generation, reservation, sampling, backfill, battle-local Re-roll balance and acceptance, and results |
 | Player System | Player Max Health, Player Progress Requirements, and fresh Stage-battle initialization | Applied runtime snapshots, current health, level progress, level-up, and defeat state |
 | Tower Upgrade System | Stage Upgrade pool as level-eligibility authoring | Stage-bound level cap, Upgrade schema, eligibility, and application |
 | Tower Placement System | Active Map availability | Placement, occupancy commit, and topology requests |
@@ -170,6 +182,7 @@ Stage validation should report at minimum:
 - No valid TowerDefinition available for the required Initial Tower Draft
 - Null or duplicate TowerUpgradeDefinition references
 - Tower Draft Slot Probability outside the inclusive `[0, 1]` range
+- Negative Initial Free Re-roll Count
 - Referenced definitions that fail owner-system validation
 - Tower Upgrade content whose TowerFamily cannot be represented by the Stage Tower pool when that relationship is required
 - Required Tower Level outside the supported or represented TowerDefinition progression
@@ -197,6 +210,7 @@ Current scope includes:
 - One non-empty ordered Player Progress Requirements sequence per Stage
 - Stage-specific Tower and Tower Upgrade Draft pools
 - One Stage-specific Tower Draft Slot Probability for natural Player level-up Drafts
+- One non-negative Stage-specific Initial Free Re-roll Count for each fresh battle
 - Stage-derived per-TowerFamily level caps with continuous unlock paths
 - At least one valid TowerDefinition for the Initial Tower Draft
 - Optional Stage Introduction content

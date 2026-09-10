@@ -74,6 +74,7 @@ Core flow and battle rules:
 - Battle gameplay remains inactive during Stage preparation and optional Stage Introduction.
 - Every fresh Stage battle grants exactly one Initial Tower Draft after Battle start permission and before Monster Wave execution begins.
 - The Initial Tower Draft creates one held Tower Draft item without changing Player level or progress.
+- Each fresh Stage battle initializes a Stage-authored free Re-roll budget shared by Initial and Level-Up Drafts. Re-roll replaces the current choices within the same paused Draft and does not grant an additional reward; unused budget does not carry across Stages or retries.
 - The first Wave Delay begins only after the Initial Tower Draft selection is accepted; Tower deployment itself may occur during that delay.
 - Every Initial or Player level-up Draft pauses battle simulation while its Draft Window is open. Draft presentation and selection remain interactive, and the prior simulation rate is restored before gameplay resumes.
 - Monsters enter from the Map's Spawn node and attempt to reach its Target node.
@@ -122,6 +123,7 @@ StageDefinition
     + Tower Draft Pool
     + Tower Upgrade Draft Pool
     + Tower Draft Slot Probability
+    + Initial Free Re-roll Count
     + Optional Stage Introduction Content
 ```
 
@@ -203,7 +205,7 @@ It does not own Draft generation, UI presentation, Monster lifecycle, or Stage f
 
 ## 4.4 Battle HUD UI System
 
-Owns presentation and interaction for battle information, Draft choices, held Draft items, drag feedback, and placement feedback.
+Owns presentation and interaction for battle information, Draft choices, free Re-roll controls and balance display, Draft-local Toast feedback, held Draft items, drag feedback, and placement feedback. Reusable UI animation supports presentation that continues while battle simulation is paused.
 
 It observes or forwards domain intent but does not own player state, Draft rules or Held reward ownership, Draft-driven simulation pause, placement validation, combat outcomes, or Game Flow presentation.
 
@@ -230,12 +232,13 @@ It consumes Map data and Stage-selected Wave configuration without owning them. 
 Owns Draft candidate gathering, Stage-authored Level-Up choice-category
 allocation, eligibility-aware weighting, pending reservation, distinct identity
 sampling, cross-category backfill, final display ordering, explicit Draft
-workflow phase and session identity, Draft-driven battle-simulation pause, and
-Draft result creation.
+workflow phase and session identity, current choice-set identity, battle-local
+free Re-roll balance and replacement commits, Draft-driven battle-simulation
+pause, and Draft result creation.
 
-It consumes the Stage-specific Tower and Tower Upgrade pools plus Tower Draft
-Slot Probability and forwards the selected result to the appropriate gameplay
-owner. Upgrade identities remain weighted by remaining eligible Tower capacity
+It consumes the Stage-specific Tower and Tower Upgrade pools, Tower Draft Slot
+Probability, and Initial Free Re-roll Count, and forwards the selected result to
+the appropriate gameplay owner. Upgrade identities remain weighted by remaining eligible Tower capacity
 inside the Upgrade category without permitting duplicate display identities.
 
 ## 4.9 Tower Placement System

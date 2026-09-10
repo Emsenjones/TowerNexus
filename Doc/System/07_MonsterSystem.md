@@ -425,6 +425,12 @@ When a Monster receives a displayed damage result, Monster System requests one t
 
 The presentation appears near the Monster, performs its authored visual motion, and then removes or recycles itself. It remains valid even if the Monster dies immediately after the request.
 
+Damage numbers may use the reusable UI animation contract in
+`04_BattleHUDUISystem.md` Section 6.4. Sharing animation playback does not transfer
+damage-number ownership to HUD or Draft. Damage-number timing follows battle
+simulation, including its pause and rate; interface feedback such as Draft Toasts
+uses presentation time independently of that simulation.
+
 Exact typography, easing, animation channels, preview tools, and pooling strategy are presentation implementation or authoring-guide concerns rather than Monster System rules.
 
 ---

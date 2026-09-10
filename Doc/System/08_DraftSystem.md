@@ -18,6 +18,8 @@ It owns:
 - Same-round displayed-choice deduplication
 - Draft workflow state and result creation
 - Explicit Draft workflow phase, Draft-session identity, and stale-callback rejection
+- Battle-local free Re-roll budget, acceptance, and remaining balance
+- Choice-set identity and atomic replacement within one Draft session
 - Battle-simulation pause while the Draft Window is open
 
 It does not own Player progression, Stage composition, UI layout, Tower placement, Tower Upgrade application, Map occupancy, or combat behavior.
@@ -33,13 +35,16 @@ Inputs:
 - Stage Tower Draft Pool
 - Stage Tower Upgrade Draft Pool
 - Stage Tower Draft Slot Probability
+- Stage Initial Free Re-roll Count
+- Player Re-roll intent for the current Draft session and choice set
 - Current deployed Tower instances
 - Tower Upgrade eligibility results
 - Unconsumed Tower Upgrade Draft items
 
 Outputs:
 
-- One displayed Draft choice set
+- One current displayed Draft choice set, replaceable through accepted Re-rolls
+- Remaining free Re-roll balance and semantic Re-roll outcomes for presentation
 - One selected Tower Draft or Tower Upgrade Draft result
 - Accepted completion of the Initial Tower Draft after its held Tower Draft item exists
 - One owned battle-simulation pause for the active Draft session
@@ -62,6 +67,7 @@ Approved Draft Opportunity
     -> Present Choices With Session Identity
     -> Acquire Battle-Simulation Pause After Successful Opening
     -> Await One Selection
+        -> Optionally Re-roll The Current Choice Set And Continue Awaiting Selection
     -> Claim Selection Commit Before Held-Item Creation
     -> Accept One Selection
     -> Create Held Draft Item
@@ -73,7 +79,7 @@ Approved Draft Opportunity
 
 Only one choice from the active set may become a result. Presentation closure, duplicate input, or stale selection must not create additional rewards.
 
-Each Draft session belongs to one fresh Battle generation and one unique attempt within that Battle. Stop, release, retry, replacement, or disable invalidates the active session. Completion and technical-failure facts are accepted only from the exact current session; identity must not collide with an earlier Battle.
+Each Draft session belongs to one fresh Battle generation and one unique attempt within that Battle. Stop, release, retry, session replacement, or disable invalidates the active session. Re-roll replaces its choice set while preserving that session. Completion and technical-failure facts are accepted only from the exact current session; identity must not collide with an earlier Battle.
 
 Every session moves through one explicit workflow phase:
 
@@ -81,15 +87,22 @@ Every session moves through one explicit workflow phase:
 None
     -> Opening
     -> Awaiting Selection
-    -> Committing Selection
-        -> Completed
-        -> Failed
+        -> Refreshing Choices
+            -> Awaiting Selection With Replaced Choices Or Preserved Old Choices
+        -> Committing Selection
+            -> Completed
+            -> Failed
 
-Opening / Awaiting Selection / Committing Selection
+Opening / Awaiting Selection / Refreshing Choices / Committing Selection
     -> Cancelled By Lifecycle Cleanup
 ```
 
 The attempt identity is provisional before it is exposed to presentation callbacks. A successful opening acquires the attempt-owned pause before entering Awaiting Selection. Opening failure rolls the provisional session back synchronously and publishes no asynchronous failure fact.
+
+Each displayed choice set also has an identity within its session. Selection and
+Re-roll requests are bound to the set that produced them. A replaced set loses
+input authority immediately, even if the same reward identity appears in the new
+set. Session identity and reward membership alone do not authorize stale input.
 
 ## 3.1 Initial Tower Draft
 
@@ -130,7 +143,8 @@ Pause rules are:
 - Successful selection first enters Committing Selection, then commits the held item, closes presentation, releases pause, and only then publishes completion.
 - Synchronous opening failure acquires no pause and returns failure directly.
 - Asynchronous technical failure releases pause before reporting failure.
-- Stop, release, replacement, retry, and disable cancel the session and release its pause without publishing completion or technical failure.
+- Stop, release, session replacement, retry, and disable cancel the session and release its pause without publishing completion or technical failure.
+- Re-roll keeps the same session-owned pause continuously; it neither resumes battle simulation nor acquires another pause.
 - Nested or stale callbacks cannot release another session's pause.
 
 Pausing prevents ordinary later Monster resolution and Player progress while a Draft is open. Same-frame reentrant level-up or selection callbacks are still rejected by session identity and exactly-once guards.
@@ -138,6 +152,63 @@ Pausing prevents ordinary later Monster resolution and Player progress while a D
 Slow motion while dragging a held Draft item is a separate future behavior. It does not share the Draft Window pause lifetime.
 
 The attempt identity prevents another Draft from releasing the active pause; it cannot arbitrate an unrelated simulation-rate writer. If another runtime time owner is introduced, direct Draft ownership must be replaced by a shared pause or time-control service.
+
+## 3.4 Free Re-roll
+
+Each fresh Stage battle initializes its remaining free Re-roll count from the
+Stage-authored non-negative budget. The Initial Tower Draft and all Level-Up
+Drafts share that balance. Multiple Re-rolls may be spent in one Draft. Retry
+starts a fresh configured budget; neither Stage transitions nor retry carry
+unused balance. Presentation opening, hiding, or rebuilding does not reset it.
+
+Re-roll replaces the entire displayed choice set and leaves the player with one
+selection from the resulting set. It does not create a new Draft opportunity,
+advance its ordinal, create or consume a held reward, change Pending reservations,
+advance Player progress, or complete the Initial Draft. Initial Re-rolls remain
+Tower-only. Wave timing still waits for the accepted Initial held Tower reward.
+
+An actionable Re-roll requires a live battle, the exact current session and
+choice-set identity, Awaiting Selection, an open presentation, the owned pause,
+and positive remaining balance. Fixed Draft sequence mode rejects Re-rolls so
+its authored steps retain their meaning. A fixed seed in Natural mode still
+permits Re-rolls.
+
+Draft gathers distinct eligible identities using the active session's source
+rules, current Upgrade eligibility, and Pending reservations. Multiplicity is a
+sampling weight, not an additional distinct identity. If every eligible identity
+is already displayed, Draft returns No Other Candidates without replacing the
+set or spending balance. With three configured slots and unchanged eligibility,
+this includes pools of one, two, or three distinct identities. This outcome is
+normal feedback, not a technical failure. It does not disable an otherwise
+actionable button; HUD presents a Toast when the player requests it.
+
+Otherwise, Re-roll uses the existing category probability, identity weights,
+deduplication, backfill, and shuffle rules through the Draft-owned random source.
+It displays up to the configured choice count. Prior displayed identities are
+not excluded. Partial or complete repetition of the previous set is valid and
+spends one Re-roll when replacement succeeds; a changed order is not promised
+to include a new reward. Re-roll cannot unlock ineligible content or guarantee a
+TowerFamily, Upgrade, category composition, or Build.
+
+Replacement follows one protected transaction:
+
+```text
+Accept Current Re-roll Intent And Claim Refreshing Choices
+    -> Gather Eligible Identities And Check For Other Candidates
+    -> Generate And Prepare Replacement Choices And Usable Presentation
+    -> Revalidate Battle, Session, Choice-Set Identity, And Budget
+    -> Commit New Set And Its Identity Together With Exactly One Budget Decrement
+    -> Return To Awaiting Selection And Publish Committed Observation
+```
+
+Selection and further Re-roll requests are rejected during refresh. Preparation
+does not expose new interactive choices or discard the old set. No Other
+Candidates or preparation failure preserves the old choices, choice-set identity,
+and balance, and returns a still-live session to Awaiting Selection. Cancellation
+by battle or session termination instead discards preparation and never restores
+an outgoing window or spends its budget. Repeated or stale requests cannot
+commit the same replacement twice. After the last free Re-roll succeeds, the
+new choices remain selectable with a displayed balance of zero.
 
 ---
 
@@ -250,8 +321,9 @@ display order through the same owned random source. UI position therefore does
 not expose the internal category-processing order.
 
 Natural sampling is reproducible under controlled seed input. The same seed,
-Stage configuration, candidate state, and accepted choice history produce the
-same category requests, weighted identity results, backfill, and display order.
+Stage configuration, candidate state, and selection and Re-roll request history
+produce the same category requests, weighted identity results, backfill, and
+display order.
 Observation records the seed and results but does not control the random source.
 
 Raising a Tower level may make additional Stage-allowed Upgrade identities eligible for later candidate generation. It does not guarantee that any newly eligible identity appears in the next or a later Draft. Sampling risk remains part of the battle, while Stage authoring and Tower Upgrade System prevent a level transition that unlocks no possible Stage content.
@@ -260,16 +332,32 @@ Raising a Tower level may make additional Stage-allowed Upgrade identities eligi
 
 # 8. Calibration Observation
 
-Draft System exposes one observation for each opened Draft attempt without
-allowing observation to influence gameplay. The observation identifies:
+Draft System exposes the initial displayed set and every committed Re-roll set
+under the same Draft attempt without allowing observation to influence gameplay.
+Each set observation identifies:
 
 - Stage, seed, Draft ordinal, session kind, and generation mode;
+- choice-set identity, initial opening versus Re-roll, and Re-roll ordinal;
+- configured free budget and remaining balance before and after replacement;
 - Tower Draft Slot Probability and requested category results;
 - distinct candidates and their multiplicities by category;
 - realized category counts after backfill and any exhaustion reason;
-- final displayed identity order;
-- selected identity and category;
-- held-item creation, Pending registration, and later consumption outcome.
+- final displayed identity order.
+
+The final selection identifies its exact displayed set, identity, and category,
+followed by held-item creation, Pending registration, and later consumption
+outcome. Superseded sets remain offer evidence; they are not unconsumed rewards
+or additional Draft attempts. Rejected and failed Re-roll requests can be
+distinguished from accepted replacements and do not count as displayed sets or
+budget consumption. Terminal evidence preserves remaining balance and the
+committed set history before Stage cleanup.
+
+Observation distinguishes Draft opportunity count, displayed-set count,
+successful Re-roll count, and reward commit count. Probability analysis separates
+Initial from Level-Up sets and initial offers from player-requested replacement
+offers; selective Re-roll use is not an unbiased sample of original offers.
+Fixed Draft fixtures remain without Re-rolls. Candidate-generation and report
+contract versions identify the interpretation of recorded histories.
 
 Calibration uses these facts to distinguish availability, player choice,
 held-item creation, application or consumption, and final combat outcome. A
@@ -315,6 +403,17 @@ Draft validation should report at minimum:
 - Definitions that fail owner-system validation
 - Non-positive configured displayed choice count
 - Stage Tower Draft Slot Probability outside the inclusive `[0, 1]` range
+- Negative configured or remaining free Re-roll count
+- Budget reset by presentation refresh, written back into StageDefinition, or carried between battles
+- Re-roll accepted outside the current Awaiting Selection authority or in Fixed Draft sequence mode
+- No Other Candidates calculated from raw weights or Stage lists instead of eligible distinct identities
+- Balance spent or choices lost after a rejected or failed replacement
+- Multiple decrements for one committed replacement
+- Replaced-set input accepted, including an identity also present in the new set
+- Refresh exposing partial choices or allowing overlapping selection or refresh commits
+- Re-roll advancing Player progress, Draft ordinal, held rewards, or Initial completion
+- Re-roll releasing or reacquiring the active Draft pause
+- Replacement observations counted as extra Draft opportunities or rewards
 - Requested category counts that do not sum to the configured choice count
 - Upgrade multiplicity that disagrees with eligible capacity after reservation
 - Duplicate displayed identity produced from candidate multiplicity
@@ -344,6 +443,10 @@ Current scope includes:
 
 - Stage-specific Tower and Tower Upgrade pools
 - Stage-specific Tower Draft Slot Probability for Player level-up choices
+- Stage-authored free Re-roll budget shared by Initial and Level-Up Drafts
+- Atomic whole-set replacement, choice-set identity, and balance presentation
+- No Other Candidates feedback without spending and cross-set repetition allowed
+- Per-set Re-roll observation within one Draft opportunity
 - One Initial Tower Draft for each fresh Stage battle
 - Player level-up Draft opportunities
 - Three-choice display when enough identities exist
@@ -361,8 +464,10 @@ Current scope includes:
 
 Deferred topics include a guaranteed mixed-category Level-Up window, category
 pity or streak protection, Build-responsive probability changes, guaranteed
-TowerFamily or Upgrade identity, Draft queueing for multi-level batch
-progression, slow motion while dragging a held Draft item, rarity, reroll, ban
+TowerFamily or Upgrade identity, guaranteed new identities across Re-rolls,
+paid Re-rolls, extra budget grants within a battle, per-card locking or selective
+Re-roll, Draft queueing for multi-level batch progression, slow motion while
+dragging a held Draft item, rarity, ban
 or pick, global rewards, curses, persistent progression rewards, multiplayer
 Drafts, and Stage-completion rewards.
 

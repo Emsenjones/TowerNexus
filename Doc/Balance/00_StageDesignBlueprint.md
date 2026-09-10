@@ -34,6 +34,10 @@ It does not own:
 
 Those values are derived by the relevant Task from this Blueprint and the owning System contracts, then authored in Unity assets.
 
+The explicitly approved initial Re-roll budget hypotheses in Section 2.1 are
+starting inputs to that process, not claims about current executable values or
+accepted difficulty calibration.
+
 Decision status:
 
 | Status | Meaning |
@@ -100,6 +104,47 @@ Player Health is calibrated after the Build envelope is visible. It provides a
 reviewed Build-maturation and execution margin for coherent Builds; it must not
 be used by itself to manufacture a power gap that the Monster Wave and Build
 packages do not otherwise express.
+
+## 2.1 Free Re-roll Accessibility Baseline
+
+Limited free Re-rolls let players spend a shared Stage budget to improve the
+timing and coherence of their choices. They increase candidate exposure, not the
+number of rewards, and do not guarantee a Reference Build or a clear. The
+mechanical contract belongs to [Draft System](../System/08_DraftSystem.md); StageDefinition
+authors the executable budget.
+
+Status: Baseline v0.1, approved as initial test values on 2026-09-10. These values
+await the Re-roll implementation and Stage asset authoring; they are not runtime
+or Play Mode acceptance evidence.
+
+| Stage | Initial Free Re-roll Count | Initial Intent |
+|---|---:|---|
+| Stage1 | 1 | Introduce one opportunity to correct a later Draft choice set |
+| Stage2 | 1 | Provide a small amount of flexibility across two TowerFamilies |
+| Stage3 | 2 | Allow more correction as the eligible content range expands |
+| Stage4 | 3 | Address the reported difficulty increase with four TowerFamilies |
+| Stage5 | 4 | Support timely level, package, and Elemental investment |
+| Stage6 | 5 | Support the timing and reward combinations of two developed cores |
+
+Initial and Level-Up Drafts share these counts. Stage1-Stage3 Initial Tower pools
+contain no more than three distinct identities, so their Initial Draft already
+shows every Tower choice; No Other Candidates feedback preserves the budget
+for later Drafts.
+
+The first calibration pass prioritizes Stage4-Stage6. Keep existing category
+probabilities, eligibility, content pools, progress, combat values, Maps, and
+legal placement assumptions stable while measuring the effect of the initial
+budgets. Inspect each run's actual choices, Re-roll usage, Pending consumption,
+investment timing, placement, and combat outcome. Separate missing eligible
+offers from content not yet unlocked, fragmented selection, delayed consumption,
+and coverage or combat problems before changing a count.
+
+Fixed Draft controls remain without Re-rolls and establish Build efficacy.
+Natural runs with Re-rolls test accessibility and player agency. Reusing a seed
+does not guarantee identical later offers when Re-roll request history differs.
+Representative runs do not establish a fixed completion rate. Budget changes
+and their evidence belong to bounded calibration work; any broader combat or
+probability change needs its own reviewed scope.
 
 ---
 

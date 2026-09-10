@@ -228,7 +228,7 @@ Stage Defeat offers:
 - Retry the current Stage through the complete Stage Preparing flow.
 - Return to the main menu.
 
-Next-Stage and retry transitions both release the previous Stage runtime before preparing the selected Stage. They never reuse prior Player state or applied Player configuration, Map state, Camera boundary or Pan displacement, Monsters, Towers, pending Drafts, Wave execution state, or battle-active authority.
+Next-Stage and retry transitions both release the previous Stage runtime before preparing the selected Stage. They never reuse prior Player state or applied Player configuration, Map state, Camera boundary or Pan displacement, Monsters, Towers, pending Drafts, remaining free Re-roll balance, Wave execution state, or battle-active authority. Draft System initializes the selected Stage's authored Re-roll budget for the fresh battle; Game Flow does not grant or spend Re-rolls.
 
 A valid result-neutral runtime failure transitions directly from the active Battle to Main Menu after releasing the failed Stage. No retry, victory, defeat, or technical-error window is implied.
 

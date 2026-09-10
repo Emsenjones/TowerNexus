@@ -13,9 +13,9 @@ It presents:
 - Player level and level progress
 - Current player health
 - Draft choices
+- Free Re-roll control, remaining count, and Draft-local Toast feedback
 - Selected but unconsumed Draft items
 - Drag, placement, and Tower-target feedback
-- Battle notifications approved by future designs
 
 It observes gameplay state and forwards player intent. It does not own Player state, Draft generation or reward ownership, Draft-driven simulation pause, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
 
@@ -34,7 +34,7 @@ One authored Battle UI layer may group the battle HUD, Monster status presentati
 
 The layer is a composition boundary, not a runtime owner or gameplay service locator. Gameplay systems communicate only with the presentation capability they require.
 
-The Draft Window remains an authored part of the battle UI while closed. Opening a Draft creates transient choice items; closing it removes only those transient items and returns the window to its closed state.
+The Draft Window remains an authored part of the battle UI while closed. Opening a Draft creates transient choice items; closing it removes those items and any Draft-owned Toast, resets press feedback, and returns the window to its closed state. Closing presentation does not itself reset the gameplay-owned Re-roll balance.
 
 Monster status displays and damage numbers remain owned by Monster System even when rendered on the same UI surface.
 
@@ -58,20 +58,29 @@ Presentation updates when the owning gameplay state changes. The HUD must not de
 
 # 4. Draft Window
 
-Draft System supplies one active set of choices. Battle HUD UI System presents that set and returns one player selection.
+Draft System supplies one active set of choices and the remaining free Re-roll balance. Battle HUD UI System presents them and forwards selection or Re-roll intent for the exact current session and choice set.
 
 ```text
 Draft Choices Supplied
     -> Validate And Open Draft Window
     -> Report Successful Opening
     -> Present Distinct Choices
+        -> Player Requests Re-roll
+            -> Draft Accepts Replacement: Refresh Choices And Remaining Count
+            -> Draft Reports No Other Candidates: Present Toast Without Spending
+            -> Continue Awaiting One Selection
     -> Player Selects One Choice
     -> Return Selection Intent
     -> Owning Draft Session Commits Or Rejects The Selection
     -> Close Draft Window After Accepted Commit Or Lifecycle Cleanup
 ```
 
-The UI cannot create, replace, reroll, weight, or validate Draft candidates unless a future Draft rule explicitly grants that action.
+The UI requests Re-roll but cannot generate, weight, validate, or independently
+replace Draft candidates or decrement the balance. Draft System decides the
+outcome and commits the replacement together with its budget cost. Old choices
+remain available if replacement preparation fails while the session is live;
+new choices become interactive only after acceptance. Superseded views cannot
+submit selection or Re-roll intent, even when a reward also appears in the new set.
 
 The same Draft Window presents both the required Initial Tower Draft and later Player level-up Drafts. When fewer distinct eligible choices exist than the configured display count, the window presents only the available choices; one-choice and two-choice Initial Drafts are valid authored outcomes and do not require placeholder entries.
 
@@ -89,6 +98,36 @@ Battle HUD authoring supplies two explicit pending-item roots inside the current
 - The drag-visual root temporarily contains the one active dragged item, owns drag ordering and pointer-coordinate conversion, and covers the required battlefield drag space.
 
 Both roots use the same UI coordinate space. The drag-visual root has no layout or content-size authority, is not clipped by a masking ancestor, renders above ordinary Battle HUD content, and introduces no additional input-blocking surface. Pending items receive both roots explicitly and do not discover either root or a Canvas through hierarchy or fallback lookup. Both roots remain Battle HUD presentation ownership and do not become Draft, placement, or shared battle-root services.
+
+## 4.1 Re-roll Presentation And Input
+
+Draft Window authoring supplies:
+
+- A Re-roll button with its child label `Re-roll`.
+- Active, Press, and Inactive button images, plus the label's authored press offset.
+- A separate numeric remaining-count text presentation.
+- The fixed label `Free re-rolls remaining: `, arranged with that number by authored layout.
+- A reusable Toast template and an explicit Draft-owned presentation container.
+
+The numeric text reads Draft-owned balance when the window opens and after a
+Re-roll request is resolved. No Other Candidates keeps the same number. Layout,
+button placement, typography, and the Toast's authored location belong to UI
+authoring rather than Draft gameplay rules.
+
+| State | Contract |
+|---|---|
+| Active | Positive balance and a current Natural Draft awaiting input; no effective press. Use the Active image and the label's resting position. |
+| Press | An actionable button is effectively held by the pointer inside it. Use the Press image and apply the offset from the resting position. |
+| Inactive | Balance is zero, a refresh or selection commit is in progress, or current Draft interaction is unavailable, including Fixed Draft sequence mode. Use the Inactive image, restore the label, and reject input. |
+
+Having no other eligible identities does not disable an otherwise Active button.
+A valid click forwards the request so Draft can return No Other Candidates and
+the window can explain it. Press alone changes feedback; an accepted click after
+release inside the button requests the action. Release outside cancels the click.
+Pointer exit restores resting feedback, and release, cancellation, disabling,
+window closure, or battle termination clears the press state. Offsets do not
+accumulate across presses. Finishing the last Re-roll disables only further
+Re-rolls, not selection from the new choices.
 
 ---
 
@@ -146,6 +185,59 @@ While a Tower-related Draft item is dragged, the UI may present eligible, inelig
 
 Tower Upgrade System owns TowerFamily, level, duplicate, layer-capacity, and maximum-level eligibility. Tower visual presentation owns Tower-local highlighting when that feedback is rendered on the Tower.
 
+## 6.3 Draft-local Toast
+
+No Other Candidates displays `No other draft choices available.` using an
+authored reusable Toast template. The Draft Window owns its container, the
+runtime instance, and cleanup. This is a local feedback surface, not a global
+notification service or queued feed.
+
+The Toast fades in, stays briefly visible, fades out, and is removed after its
+complete animation. Position motion can run concurrently, such as a small eased
+upward movement. The authored outer placement stays separate from the animated
+content so playback does not take over layout positioning.
+
+The same window keeps at most one Toast instance. Repeated requests reset it to
+its authored animation start values and replay it; they neither stack instances
+nor accumulate displacement. The Toast is visible above the relevant Draft
+content but does not intercept pointer input. Closing the Draft, ending the
+battle, or releasing its presentation stops playback and removes the instance.
+Toast completion or cancellation never changes choices, budget, or rewards.
+
+## 6.4 Reusable UI Animation
+
+UI animation is a reusable presentation capability, independent of the gameplay
+owner requesting a visual. It operates on an explicitly authored animated
+content target and opacity target, and supports Position, Scale, and Fade steps.
+Each enabled step defines start and target values, duration, delay, and easing.
+Delay is an offset from the start of the whole playback, not a wait after the
+previous listed step. Duration and delay must be finite and non-negative.
+
+Different properties may animate concurrently. Steps controlling the same
+property must not overlap in time; successive steps may meet at an endpoint.
+Ambiguous or conflicting timelines are authoring errors. At playback start,
+each animated property takes the start value of its earliest enabled step by
+timeline time, rather than the last step encountered in a list. At each later
+step's scheduled start, its configured start value applies to that step; gaps
+hold the preceding state. Authors use matching end and start values for smooth
+continuity. A later Fade-out step must not overwrite Fade-in's initial opacity
+before its scheduled time.
+
+Playback completes after the last enabled step's delay plus duration. Replaying
+stops the previous playback, restores animation start values, and establishes
+one new completion. Cancellation stops further visual updates and does not
+report normal completion. Completion reports to the owning presentation, which
+decides removal or reuse; shared playback does not own text, gameplay state,
+object lifetime, or notification routing.
+
+Reusable UI playback defaults to presentation time independent of battle pause
+or battle speed. Draft Toasts use that mode. An explicit simulation-time mode
+supports combat-linked visuals; damage numbers retain their existing
+simulation-time behavior when sharing playback. UI animation must not write or
+release the battle simulation rate. Reusing this capability preserves authored
+damage-number content, references, and motion rather than moving Monster
+presentation ownership into Draft or HUD.
+
 ---
 
 # 7. Interaction Results
@@ -178,6 +270,17 @@ Battle UI authoring validation should report at minimum:
 - Missing Draft Window or Draft choice container
 - Missing or non-blocking modal Draft interaction surface
 - Invalid Draft choice-item presentation or interaction references
+- Missing Re-roll button, state images, press target, or remaining-count presentation
+- Remaining-count text disagreeing with Draft-owned balance
+- No Other Candidates incorrectly disabling the button or consuming a Re-roll
+- Inactive or superseded Draft controls still accepting input
+- Press offsets accumulating or surviving cancellation or window closure
+- Missing Toast template or unintended presentation container
+- Toast intercepting input, stacking on repeated requests, or surviving its Draft
+- Toast playback stopping or changing speed with paused or slowed battle simulation
+- UI animation with missing required targets, invalid timing, or overlapping steps for one property
+- Later animation steps overwriting the earliest start values before their scheduled time
+- Cancelled playback reporting completion or replay retaining previous displacement
 - Missing Draft Item Interaction Area
 - Missing or unintended pending-item container
 - Missing or unintended pending-item drag-visual root
@@ -203,7 +306,10 @@ Validation must not create gameplay state or silently replace authored UI.
 
 # 9. Approved Scope And Deferred Topics
 
-Current scope includes player information, pause-independent Draft presentation, held Draft items, atomic pending-item registration, drag cancellation, placement feedback, and Tower target feedback.
+Current scope includes player information, pause-independent Draft presentation,
+free Re-roll controls and balance display, Draft-local Toasts, reusable Position,
+Scale, and Fade animation, held Draft items, atomic pending-item registration,
+drag cancellation, placement feedback, and Tower target feedback.
 
 Game Flow System owns battle-result and Stage-transition presentation, including distinct Victory and Defeat interactions. Those surfaces are outside Battle HUD UI System rather than deferred Battle HUD features.
 
@@ -214,7 +320,7 @@ Deferred Battle HUD topics include:
 - Minimap
 - Player skills
 - Multiplayer status
-- General notification feed
+- Global Toast routing, queued notifications, and a general notification feed
 
 Future UI must preserve the same presentation-versus-gameplay ownership boundary.
 
