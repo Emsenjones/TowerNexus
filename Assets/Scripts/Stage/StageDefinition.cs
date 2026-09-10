@@ -44,6 +44,8 @@ public class StageDefinition : ScriptableObject
         new List<TowerUpgradeDefinition>();
     [Range(0f, 1f)]
     [SerializeField] private float towerDraftSlotProbability = 0.5f;
+    [MinValue(0)]
+    [SerializeField] private int freeRerollCount;
     [SerializeField] private bool showStageIntroduction;
     [SerializeField] private List<TowerDefinition> introducedTowers =
         new List<TowerDefinition>();
@@ -59,6 +61,7 @@ public class StageDefinition : ScriptableObject
     public IReadOnlyList<TowerDefinition> TowerDraftPool => towerDraftPool;
     public IReadOnlyList<TowerUpgradeDefinition> TowerUpgradeDraftPool => towerUpgradeDraftPool;
     public float TowerDraftSlotProbability => towerDraftSlotProbability;
+    public int FreeRerollCount => freeRerollCount;
     public bool ShowStageIntroduction => showStageIntroduction;
     public IReadOnlyList<TowerDefinition> IntroducedTowers => introducedTowers;
     public IReadOnlyList<TowerUpgradeDefinition> IntroducedTowerUpgrades =>
@@ -72,6 +75,7 @@ public class StageDefinition : ScriptableObject
         ValidateMonsterWaveConfig(result);
         ValidateDraftPools(result);
         ValidateDraftProbability(result);
+        if (freeRerollCount < 0) result.AddError("Free Re-roll Count must be non-negative.");
         ValidateIntroduction(result);
         return result;
     }

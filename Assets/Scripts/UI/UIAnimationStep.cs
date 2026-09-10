@@ -4,10 +4,10 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 
 [Serializable]
-public class DamageNumberAnimationStep
+public class UIAnimationStep
 {
     [SerializeField] private bool enabled = true;
-    [SerializeField] private DamageNumberAnimationType animationType;
+    [SerializeField] private UIAnimationType animationType;
     [SerializeField] private float duration = 0.6f;
     [SerializeField] private float delay;
     [SerializeField] private Ease easeType = Ease.OutQuad;
@@ -29,31 +29,33 @@ public class DamageNumberAnimationStep
     [ShowIf(nameof(IsFadeStep))]
     [SerializeField] private float targetAlpha;
 
+    internal UIAnimationStep Snapshot() => (UIAnimationStep)MemberwiseClone();
+
     public bool Enabled => enabled;
-    public DamageNumberAnimationType AnimationType => animationType;
-    public float Duration => Mathf.Max(0f, duration);
-    public float Delay => Mathf.Max(0f, delay);
+    public UIAnimationType AnimationType => animationType;
+    public float Duration => duration;
+    public float Delay => delay;
     public Ease EaseType => easeType;
     public Vector2 StartAnchoredPosition => startAnchoredPosition;
     public Vector2 TargetAnchoredPosition => targetAnchoredPosition;
     public Vector3 StartScale => startScale;
     public Vector3 TargetScale => targetScale;
-    public float StartAlpha => Mathf.Clamp01(startAlpha);
-    public float TargetAlpha => Mathf.Clamp01(targetAlpha);
+    public float StartAlpha => startAlpha;
+    public float TargetAlpha => targetAlpha;
 
-    private bool IsPositionStep => animationType == DamageNumberAnimationType.Position;
-    private bool IsScaleStep => animationType == DamageNumberAnimationType.Scale;
-    private bool IsFadeStep => animationType == DamageNumberAnimationType.Fade;
+    private bool IsPositionStep => animationType == UIAnimationType.Position;
+    private bool IsScaleStep => animationType == UIAnimationType.Scale;
+    private bool IsFadeStep => animationType == UIAnimationType.Fade;
 
-    public static DamageNumberAnimationStep CreatePositionStep(
+    public static UIAnimationStep CreatePositionStep(
         Vector2 startAnchoredPosition,
         Vector2 targetAnchoredPosition,
         float duration,
         Ease easeType)
     {
-        return new DamageNumberAnimationStep
+        return new UIAnimationStep
         {
-            animationType = DamageNumberAnimationType.Position,
+            animationType = UIAnimationType.Position,
             startAnchoredPosition = startAnchoredPosition,
             targetAnchoredPosition = targetAnchoredPosition,
             duration = duration,
@@ -61,16 +63,16 @@ public class DamageNumberAnimationStep
         };
     }
 
-    public static DamageNumberAnimationStep CreateScaleStep(
+    public static UIAnimationStep CreateScaleStep(
         Vector3 startScale,
         Vector3 targetScale,
         float duration,
         float delay,
         Ease easeType)
     {
-        return new DamageNumberAnimationStep
+        return new UIAnimationStep
         {
-            animationType = DamageNumberAnimationType.Scale,
+            animationType = UIAnimationType.Scale,
             startScale = startScale,
             targetScale = targetScale,
             duration = duration,
@@ -79,16 +81,16 @@ public class DamageNumberAnimationStep
         };
     }
 
-    public static DamageNumberAnimationStep CreateFadeStep(
+    public static UIAnimationStep CreateFadeStep(
         float startAlpha,
         float targetAlpha,
         float duration,
         float delay,
         Ease easeType)
     {
-        return new DamageNumberAnimationStep
+        return new UIAnimationStep
         {
-            animationType = DamageNumberAnimationType.Fade,
+            animationType = UIAnimationType.Fade,
             startAlpha = startAlpha,
             targetAlpha = targetAlpha,
             duration = duration,
@@ -98,9 +100,9 @@ public class DamageNumberAnimationStep
     }
 }
 
-public enum DamageNumberAnimationType
+public enum UIAnimationType
 {
-    Position,
-    Scale,
-    Fade
+    Position = 0,
+    Scale = 1,
+    Fade = 2
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Real Pending collection + extracted production orchestration/sampling, native boundaries doubled."""
 from pathlib import Path
-import subprocess, tempfile
+import subprocess, tempfile, re
 root = Path(__file__).resolve().parents[2]
 draft_path = 'Assets/Scripts/TowerDeployment/DraftSystem.cs'
 current = (root / draft_path).read_text()
@@ -40,6 +40,10 @@ with tempfile.TemporaryDirectory(prefix='towernexus-task003-') as folder:
         methods='\n'.join(method(source,n) for n in ['AddTowerUpgradeDraftCandidates',
             'CountPendingReservedCapacityForUpgrade','DoesPendingUpgradeReserveCapacityForUpgrade',
             'GenerateLevelUpDraftChoices','SampleDistinctCandidates','ShuffleDraftChoices'])
+        if label == 'CurrentSampler':
+            # The oracle fixture represents one prepared set; remove only context qualification.
+            methods=re.sub(r'DraftChoiceSet set,\s*', '', methods).replace('DraftChoiceSet set', '').replace('set.', '')
+            methods=re.sub(r'\(set,\s*', '(', methods).replace('(set)', '()')
         header=(root/'Tests/Task003/Sampler.cs').read_text().replace('SAMPLER',label)
         path=folder/(label+'.cs');path.write_text(header+'\n'+methods+'\n}');samplers.append(path)
     # Full investment entry coverage moved to Task004; no obsolete post-preflight extraction.

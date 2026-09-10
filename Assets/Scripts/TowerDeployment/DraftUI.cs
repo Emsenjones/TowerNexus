@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class DraftUI : MonoBehaviour
 {
@@ -9,12 +10,23 @@ public class DraftUI : MonoBehaviour
     [SerializeField] private Transform draftItemContainer;
     [SerializeField] private GameObject towerDraftItemPrefab;
 
-    private readonly List<TowerContentUIItem> draftItems =
+    [Header("Re-roll")]
+    [SerializeField] private Button rerollActiveButton;
+    [SerializeField] private Button rerollInactiveButton;
+    [SerializeField] private TMP_Text rerollCountText;
+    [SerializeField] private ToastUI toastPrefab;
+    [SerializeField] private Transform toastContainer;
+    [SerializeField] private string noOtherChoicesMessage = "No other draft choices available.";
+
+    private Action onReroll;
+    private ToastUI toastInstance;
+    private int presentationEpoch;
+
+    private List<TowerContentUIItem> draftItems =
         new List<TowerContentUIItem>();
-    private Action<DraftResult> onDraftSelected;
     private bool isBattleActive;
 
-    public bool IsOpen => rootObject != null && rootObject.activeSelf;
+    public bool IsOpen => isActiveAndEnabled && rootObject != null && rootObject.activeInHierarchy;
 
     private void Awake()
     {
@@ -75,6 +87,14 @@ public class DraftUI : MonoBehaviour
             return false;
         }
 
+        if (rerollActiveButton == null || rerollInactiveButton == null ||
+            rerollActiveButton == rerollInactiveButton || rerollCountText == null ||
+            !rerollCountText.transform.IsChildOf(rerollActiveButton.transform) ||
+            toastPrefab == null || toastContainer == null)
+        {
+            failureReason = "Re-roll buttons, count child, Toast prefab and container are required.";
+            return false;
+        }
         failureReason = string.Empty;
         return true;
     }
@@ -90,8 +110,8 @@ public class DraftUI : MonoBehaviour
             return false;
         }
 
+        presentationEpoch++;
         ClearDraftItems();
-        onDraftSelected = null;
 
         if (rootObject != null)
         {
@@ -116,8 +136,8 @@ public class DraftUI : MonoBehaviour
             return false;
         }
 
-        onDraftSelected = onSelected;
         int createdItemCount = 0;
+        int openingEpoch = presentationEpoch;
 
         for (int i = 0; i < draftResults.Count; i++)
         {
@@ -157,7 +177,7 @@ public class DraftUI : MonoBehaviour
 
                 if (!item.TryInitializeSelectable(
                         draftResult,
-                        HandleDraftSelected))
+                        result => { if (isBattleActive && IsOpen) onSelected(result); }))
                 {
                     Destroy(itemObject);
                     return FailOpen(
@@ -165,6 +185,13 @@ public class DraftUI : MonoBehaviour
                         out failureReason);
                 }
 
+                if (!isBattleActive || openingEpoch != presentationEpoch)
+                {
+                    itemObject.SetActive(false);
+                    Destroy(itemObject);
+                    failureReason = "Draft opening was cancelled during item preparation.";
+                    return false;
+                }
                 draftItems.Add(item);
                 createdItemCount++;
             }
@@ -199,8 +226,12 @@ public class DraftUI : MonoBehaviour
 
     public void CloseDraft()
     {
+        presentationEpoch++;
+        onReroll = null;
+        if (rerollActiveButton != null)
+            rerollActiveButton.onClick.RemoveListener(HandleReroll);
+        ClearToast();
         ClearDraftItems();
-        onDraftSelected = null;
 
         if (rootObject != null)
         {
@@ -219,21 +250,133 @@ public class DraftUI : MonoBehaviour
         CloseDraft();
     }
 
-    private void HandleDraftSelected(DraftResult draftResult)
+    public void BindReroll(int remaining, bool allowed, Action callback)
     {
-        if (!isBattleActive)
-        {
-            CloseDraft();
-            return;
-        }
+        onReroll = callback;
+        rerollActiveButton.onClick.RemoveListener(HandleReroll);
+        rerollActiveButton.onClick.AddListener(HandleReroll);
+        rerollCountText.text = remaining.ToString();
+        rerollActiveButton.gameObject.SetActive(remaining > 0);
+        rerollInactiveButton.gameObject.SetActive(remaining <= 0);
+        rerollActiveButton.interactable = allowed;
+        // The exhausted button has feedback only, with no gameplay listener.
+        rerollInactiveButton.interactable = true;
+    }
 
-        if (draftResult == null || !draftResult.IsValid)
-        {
-            Debug.LogWarning("Draft UI cannot select draft result: draft result is invalid.", this);
-            return;
-        }
+    private void HandleReroll()
+    {
+        if (isBattleActive && IsOpen) onReroll?.Invoke();
+    }
 
-        onDraftSelected?.Invoke(draftResult);
+    public void ShowNoOtherChoices()
+    {
+        if (!isBattleActive || !IsOpen) return;
+        if (toastInstance == null) toastInstance = Instantiate(toastPrefab, toastContainer);
+        toastInstance.transform.SetAsLastSibling();
+        if (!toastInstance.TryPlay(noOtherChoicesMessage, completed =>
+            { if (toastInstance == completed) ClearToast(); }, out string reason))
+        {
+            Debug.LogWarning("Draft Toast failed: " + reason, this);
+            ClearToast();
+        }
+    }
+
+    private void ClearToast()
+    {
+        ToastUI previous = toastInstance;
+        toastInstance = null;
+        if (previous == null) return;
+        previous.Cancel();
+        previous.gameObject.SetActive(false);
+        Destroy(previous.gameObject);
+    }
+
+    private void OnDisable()
+    {
+        presentationEpoch++;
+        ClearToast();
+    }
+
+    public bool TryPrepareChoices(IReadOnlyList<DraftResult> choices,
+        Action<DraftResult> selection, out DraftViewPreparation prepared, out string reason)
+    {
+        prepared = null;
+        reason = "Draft presentation is unavailable.";
+        if (!isBattleActive || !IsOpen || selection == null || choices == null || choices.Count == 0)
+            return false;
+        var batch = new DraftViewPreparation { Owner = this, Epoch = presentationEpoch };
+        try
+        {
+            batch.StagingRoot = new GameObject("Prepared Draft choices");
+            batch.StagingRoot.SetActive(false);
+            batch.StagingRoot.transform.SetParent(draftItemContainer, false);
+            foreach (var choice in choices)
+            {
+                var instance = Instantiate(towerDraftItemPrefab, batch.StagingRoot.transform);
+                if (!instance.TryGetComponent(out TowerContentUIItem item))
+                { Destroy(instance); throw new InvalidOperationException("Missing Draft item component."); }
+                batch.Items.Add(item);
+                if (!item.TryInitializeSelectable(choice, selection))
+                    throw new InvalidOperationException("Draft item initialization failed.");
+            }
+            if (!CanCommitChoices(batch)) { batch.Dispose(); return false; }
+            prepared = batch;
+            reason = string.Empty;
+            return true;
+        }
+        catch (Exception error)
+        {
+            batch.Dispose();
+            reason = "Draft preparation failed: " + error.Message;
+            return false;
+        }
+    }
+
+    public bool CanCommitChoices(DraftViewPreparation batch)
+    {
+        if (!OwnsPresentation(batch) || batch.Transferred || batch.Items.Count == 0) return false;
+        foreach (var item in batch.Items) if (item == null) return false;
+        return true;
+    }
+
+    private bool OwnsPresentation(DraftViewPreparation batch) => batch != null &&
+        batch.Owner == this && batch.Epoch == presentationEpoch && isBattleActive && IsOpen;
+
+    public void CommitChoiceOwnership(DraftViewPreparation batch)
+    {
+        // Caller has just validated. No callbacks, allocation, or Unity lifecycle operations.
+        batch.Previous = draftItems;
+        draftItems = batch.Items;
+        batch.Transferred = true;
+    }
+
+    public DraftRerollPresentation PresentChoices(DraftViewPreparation batch, out string reason)
+    {
+        reason = string.Empty;
+        if (!OwnsPresentation(batch)) return DraftRerollPresentation.Cancelled;
+        try
+        {
+            foreach (var item in batch.Previous)
+            {
+                if (!OwnsPresentation(batch)) return DraftRerollPresentation.Cancelled;
+                if (item != null) { item.gameObject.SetActive(false); Destroy(item.gameObject); }
+            }
+            // Snapshot: lifecycle cancellation can detach/clear the live list.
+            foreach (var item in batch.Items.ToArray())
+            {
+                if (!OwnsPresentation(batch)) return DraftRerollPresentation.Cancelled;
+                if (item == null) throw new InvalidOperationException("Prepared Draft card became unavailable.");
+                item.gameObject.SetActive(false);
+                item.transform.SetParent(draftItemContainer, false);
+                item.gameObject.SetActive(true);
+            }
+            return OwnsPresentation(batch) ? DraftRerollPresentation.Completed : DraftRerollPresentation.Cancelled;
+        }
+        catch (Exception error)
+        {
+            reason = error.Message;
+            return OwnsPresentation(batch) ? DraftRerollPresentation.TechnicalFailure : DraftRerollPresentation.Cancelled;
+        }
     }
 
     private bool FailOpen(
@@ -247,16 +390,53 @@ public class DraftUI : MonoBehaviour
 
     private void ClearDraftItems()
     {
-        for (int i = draftItems.Count - 1; i >= 0; i--)
+        var previous = draftItems;
+        draftItems = new List<TowerContentUIItem>();
+        for (int i = previous.Count - 1; i >= 0; i--)
         {
-            TowerContentUIItem uiItem = draftItems[i];
+            TowerContentUIItem uiItem = previous[i];
 
             if (uiItem != null)
             {
+                uiItem.gameObject.SetActive(false);
                 Destroy(uiItem.gameObject);
             }
         }
 
-        draftItems.Clear();
+        previous.Clear();
+    }
+}
+
+
+// HUD-owned, single-use preparation. Gameplay does not know concrete card components.
+public sealed class DraftViewPreparation : IDisposable
+{
+    internal DraftUI Owner;
+    internal int Epoch;
+    internal GameObject StagingRoot;
+    internal List<TowerContentUIItem> Items = new List<TowerContentUIItem>();
+    internal List<TowerContentUIItem> Previous;
+    internal bool Transferred;
+    private bool disposed;
+    public void Dispose()
+    {
+        if (disposed) return;
+        disposed = true;
+        Retire(Transferred ? Previous : Items);
+        if (StagingRoot != null) UnityEngine.Object.Destroy(StagingRoot);
+        StagingRoot = null;
+        Owner = null;
+    }
+    private static void Retire(List<TowerContentUIItem> items)
+    {
+        if (items == null) return;
+        foreach (var item in items.ToArray())
+        {
+            if (item == null) continue;
+            try { item.gameObject.SetActive(false); }
+            catch (Exception error) { Debug.LogException(error); }
+            finally { if (item != null) UnityEngine.Object.Destroy(item.gameObject); }
+        }
+        items.Clear();
     }
 }

@@ -20,9 +20,11 @@ public class DamageNumberManager : MonoBehaviour
         ClearCreatedDamageNumbers();
     }
 
+    private void OnDisable() => ClearCreatedDamageNumbers();
+
     public void ShowDamage(int damage, Vector3 worldPosition)
     {
-        if (damage <= 0)
+        if (damage <= 0 || !isActiveAndEnabled)
         {
             return;
         }
@@ -66,7 +68,12 @@ public class DamageNumberManager : MonoBehaviour
 
         createdDamageNumbers.Add(damageNumber);
         damageNumberTransform.position = cameraToUse.WorldToScreenPoint(worldPosition);
-        damageNumber.Play(damage, HandleDamageNumberComplete);
+        damageNumber.Unavailable += HandleDamageNumberComplete;
+        if (!damageNumber.TryPlay(damage, HandleDamageNumberComplete, out string failureReason))
+        {
+            Debug.LogWarning(failureReason, this);
+            HandleDamageNumberComplete(damageNumber);
+        }
     }
 
     private bool TryGetItemContainer(out RectTransform parent)
@@ -90,27 +97,27 @@ public class DamageNumberManager : MonoBehaviour
 
     private void HandleDamageNumberComplete(DamageNumberUI damageNumber)
     {
-        if (damageNumber == null)
-        {
-            return;
-        }
-
-        createdDamageNumbers.Remove(damageNumber);
-        Destroy(damageNumber.gameObject);
+        if (!createdDamageNumbers.Remove(damageNumber)) return;
+        ReleaseDamageNumber(damageNumber);
     }
 
     private void ClearCreatedDamageNumbers()
     {
-        for (int i = 0; i < createdDamageNumbers.Count; i++)
+        while (createdDamageNumbers.Count > 0)
         {
-            DamageNumberUI damageNumber = createdDamageNumbers[i];
-
-            if (damageNumber != null)
-            {
-                Destroy(damageNumber.gameObject);
-            }
+            int index = createdDamageNumbers.Count - 1;
+            DamageNumberUI damageNumber = createdDamageNumbers[index];
+            createdDamageNumbers.RemoveAt(index);
+            ReleaseDamageNumber(damageNumber);
         }
+    }
 
-        createdDamageNumbers.Clear();
+    private void ReleaseDamageNumber(DamageNumberUI damageNumber)
+    {
+        if (damageNumber == null) return;
+        damageNumber.Unavailable -= HandleDamageNumberComplete;
+        damageNumber.Cancel();
+        damageNumber.gameObject.SetActive(false);
+        Destroy(damageNumber.gameObject);
     }
 }

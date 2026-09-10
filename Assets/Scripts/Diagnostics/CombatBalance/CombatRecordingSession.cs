@@ -35,6 +35,11 @@ internal sealed class CombatRecordingSession
     internal TowerPlacementSubmission subscribedSubmission;
     internal readonly object identity;
     internal CombatDiagnosticScope.Lease lease;
+    internal int rerollRequestStartCount;
+    internal readonly List<long> startedRerollRequestIds = new List<long>();
+    internal int initialFreeRerolls;
+    internal int terminalFreeRerolls;
+    internal readonly List<CombatBalanceRerollRequestJson> rerollRequests = new List<CombatBalanceRerollRequestJson>();
     internal bool terminalCaptured;
     internal List<CombatBalanceTowerJson> terminalTowers;
     internal int terminalAlive;
@@ -375,6 +380,8 @@ internal sealed class CombatRecordingSession
         {
             draftSystem.OnInitialDraftCompleted +=
                 HandleInitialDraftCompleted;
+            draftSystem.OnRerollRequestStarted += HandleRerollRequestStarted;
+            draftSystem.OnRerollRequest += HandleRerollRequest;
             draftSystem.OnDraftChoicesOpened +=
                 HandleDraftChoicesOpened;
             draftSystem.OnDraftChoiceCommitted +=
@@ -501,6 +508,8 @@ internal sealed class CombatRecordingSession
         {
             draftSystem.OnInitialDraftCompleted -=
                 HandleInitialDraftCompleted;
+            draftSystem.OnRerollRequestStarted -= HandleRerollRequestStarted;
+            draftSystem.OnRerollRequest -= HandleRerollRequest;
             draftSystem.OnDraftChoicesOpened -=
                 HandleDraftChoicesOpened;
             draftSystem.OnDraftChoiceCommitted -=
@@ -641,6 +650,7 @@ internal sealed class CombatRecordingSession
             return;
         }
 
+        initialFreeRerolls = draftSystem.ConfiguredFreeRerollCount;
         configuredDraftGenerationMode = draftSystem.UseFixedDraftChoices
             ? DraftChoiceGenerationMode.Fixed.ToString()
             : DraftChoiceGenerationMode.Natural.ToString();
@@ -695,6 +705,37 @@ internal sealed class CombatRecordingSession
         }
     }
 
+    internal void HandleRerollRequestStarted(long requestId)
+    {
+        if (!AcceptEvent || !isTrackingRun) return;
+        try
+        {
+            rerollRequestStartCount++;
+            startedRerollRequestIds.Add(requestId);
+        }
+        catch (Exception error) { CombatDiagnosticScope.Fail(identity, error); }
+    }
+
+    internal void HandleRerollRequest(DraftRerollObservation observation)
+    {
+        if (!AcceptEvent || !isTrackingRun) return;
+        try
+        {
+            rerollRequests.Add(new CombatBalanceRerollRequestJson
+            {
+                requestId = observation.RequestId,
+                attemptToken = observation.AttemptToken.ToString(), requestedRevision = observation.RequestedRevision,
+                result = observation.Result.ToString(), failureReason = observation.FailureReason,
+                committed = observation.Committed, samplingStarted = observation.SamplingStarted,
+                committedRevision = observation.CommittedRevision,
+                budgetBefore = observation.BudgetBefore, budgetAfter = observation.BudgetAfter,
+                presentation = observation.Presentation.ToString(),
+                activeTimeSeconds = GetRunActiveTimeSeconds()
+            });
+        }
+        catch (Exception error) { CombatDiagnosticScope.Fail(identity, error); }
+    }
+
     internal void HandleDraftChoicesOpened(
         DraftChoicesOpenedObservation observation)
     {
@@ -721,9 +762,13 @@ internal sealed class CombatRecordingSession
             configuredDraftRandomAlgorithmVersion =
                 observation.DraftRandomAlgorithmVersion;
 
-            CombatBalanceDraftAttemptJson attempt =
-                new CombatBalanceDraftAttemptJson
+            CombatBalanceDraftChoiceSetJson set =
+                new CombatBalanceDraftChoiceSetJson
                 {
+                    requestId = observation.RequestId,
+                    revision = observation.ChoiceSetRevision,
+                    budgetBefore = observation.BudgetBefore,
+                    budgetAfter = observation.BudgetAfter,
                     attemptToken = observation.AttemptToken.ToString(),
                     ordinal = observation.DraftOrdinal,
                     sessionKind = observation.SessionKind.ToString(),
@@ -757,7 +802,7 @@ internal sealed class CombatRecordingSession
 
             for (int i = 0; i < observation.RequestedCategories.Count; i++)
             {
-                attempt.requestedCategories.Add(
+                set.requestedCategories.Add(
                     observation.RequestedCategories[i].ToString());
             }
 
@@ -768,7 +813,7 @@ internal sealed class CombatRecordingSession
 
                 if (candidate != null && candidate.DraftResult != null)
                 {
-                    attempt.naturalCandidates.Add(CreateDraftItemJson(
+                    set.naturalCandidates.Add(CreateDraftItemJson(
                         candidate.DraftResult,
                         candidate.Multiplicity));
                 }
@@ -780,7 +825,7 @@ internal sealed class CombatRecordingSession
 
                 if (displayedChoice != null)
                 {
-                    attempt.displayedChoices.Add(CreateDraftItemJson(
+                    set.displayedChoices.Add(CreateDraftItemJson(
                         displayedChoice,
                         ResolveNaturalMultiplicity(
                             observation.NaturalCandidates,
@@ -788,7 +833,22 @@ internal sealed class CombatRecordingSession
                 }
             }
 
-            draftAccumulator.draftAttempts.Add(attempt);
+            if (set.revision == 1)
+            {
+                var attempt = new CombatBalanceDraftAttemptJson
+                {
+                    attemptToken = set.attemptToken, ordinal = set.ordinal,
+                    sessionKind = set.sessionKind, generationMode = set.generationMode
+                };
+                attempt.choiceSets.Add(set);
+                draftAccumulator.draftAttempts.Add(attempt);
+            }
+            else
+            {
+                var attempt = draftAccumulator.draftAttempts.Find(a => a.attemptToken == set.attemptToken);
+                if (attempt == null) throw new InvalidOperationException("Re-roll has no original Draft attempt.");
+                attempt.choiceSets.Add(set);
+            }
 
         }
         catch (Exception error) { CombatDiagnosticScope.Fail(identity, error); }
@@ -821,6 +881,9 @@ internal sealed class CombatRecordingSession
                     continue;
                 }
 
+                attempt.selectedSetRevision = observation.ChoiceSetRevision;
+                var selectedSet = attempt.choiceSets.Find(set => set.revision == observation.ChoiceSetRevision);
+                if (selectedSet == null) throw new InvalidOperationException("Selected Draft set is missing.");
                 attempt.selectionAttempted = true;
                 attempt.heldItemCreationSucceeded =
                     observation.HeldItemCreationSucceeded;
@@ -834,7 +897,7 @@ internal sealed class CombatRecordingSession
                 attempt.selectedChoice = CreateDraftItemJson(
                     observation.SelectedChoice,
                     ResolveDisplayedMultiplicity(
-                        attempt.displayedChoices,
+                        selectedSet.displayedChoices,
                         observation.SelectedChoice));
                 return;
             }
@@ -1023,6 +1086,9 @@ internal sealed class CombatRecordingSession
         progressionEvents.Clear();
         waveEvents.Clear();
         draftAccumulator.draftAttempts.Clear();
+        rerollRequests.Clear();
+        startedRerollRequestIds.Clear();
+        rerollRequestStartCount = 0;
         hasCapturedTerminalPendingDraftSnapshot = false;
         draftAccumulator.terminalPendingDraftSnapshot.Clear();
         draftAccumulator.investmentCommits.Clear();
@@ -2249,6 +2315,7 @@ internal sealed class CombatRecordingSession
                 terminalLevel = playerSystem != null ? playerSystem.CurrentLevel : 0;
                 terminalProgress = playerSystem != null ? playerSystem.CurrentProgress : 0;
                 terminalRequired = playerSystem != null ? playerSystem.RequiredProgress : 0;
+                terminalFreeRerolls = draftSystem != null ? draftSystem.FreeRerollsRemaining : 0;
                 terminalCaptured = true;
             }
             if (!isTrackingRun || hasCapturedTerminalPendingDraftSnapshot) return;
@@ -2517,6 +2584,11 @@ internal sealed class CombatRecordingSession
         CombatBalanceDraftRuntimeJson runtime =
             new CombatBalanceDraftRuntimeJson
             {
+                rerollRequestStartCount = rerollRequestStartCount,
+                startedRerollRequestIds = new List<long>(startedRerollRequestIds),
+                initialFreeRerolls = initialFreeRerolls,
+                remainingFreeRerolls = terminalCaptured ? terminalFreeRerolls : draftSystem != null ? draftSystem.FreeRerollsRemaining : 0,
+                rerollRequests = new List<CombatBalanceRerollRequestJson>(rerollRequests),
                 configuredGenerationMode =
                     configuredDraftGenerationMode ?? string.Empty,
                 configuredFixedStepCount = configuredFixedDraftStepCount,
@@ -2545,6 +2617,20 @@ internal sealed class CombatRecordingSession
 
         for (int i = 0; i < runtime.attempts.Count; i++)
         {
+            var currentAttempt = runtime.attempts[i];
+            runtime.originalChoiceExposureCount += currentAttempt.choiceSets[0].displayedChoices.Count;
+            if (currentAttempt.sessionKind == "Initial") runtime.initialOriginalChoiceExposureCount += currentAttempt.choiceSets[0].displayedChoices.Count;
+            else runtime.levelUpOriginalChoiceExposureCount += currentAttempt.choiceSets[0].displayedChoices.Count;
+            for (int setIndex = 1; setIndex < currentAttempt.choiceSets.Count; setIndex++)
+            {
+                runtime.successfulRerollCount++;
+                if (currentAttempt.sessionKind == "Initial") runtime.initialRerollCount++;
+                else runtime.levelUpRerollCount++;
+                int exposures = currentAttempt.choiceSets[setIndex].displayedChoices.Count;
+                runtime.rerollChoiceExposureCount += exposures;
+                if (currentAttempt.sessionKind == "Initial") runtime.initialRerollChoiceExposureCount += exposures;
+                else runtime.levelUpRerollChoiceExposureCount += exposures;
+            }
             if (runtime.attempts[i].selectionCommitted)
             {
                 runtime.committedSelectionCount++;
@@ -2710,12 +2796,15 @@ internal sealed class CombatRecordingSession
             return false;
         }
 
-        for (int i = 0; i < draftRuntime.attempts.Count; i++)
+        if (!RerollHistoryIsConsistent(draftRuntime)) return false;
+        var sets = new List<CombatBalanceDraftChoiceSetJson>();
+        foreach (var ownerAttempt in draftRuntime.attempts) sets.AddRange(ownerAttempt.choiceSets);
+        for (int i = 0; i < sets.Count; i++)
         {
-            CombatBalanceDraftAttemptJson attempt = draftRuntime.attempts[i];
+            CombatBalanceDraftChoiceSetJson attempt = sets[i];
 
             if (attempt == null ||
-                attempt.displayedChoices == null ||
+                attempt.displayedChoices == null || attempt.requestedCategories == null ||
                 attempt.realizedTowerCount + attempt.realizedUpgradeCount !=
                     attempt.displayedChoices.Count ||
                 attempt.displayedChoices.Count >
@@ -2806,6 +2895,113 @@ internal sealed class CombatRecordingSession
         }
 
         return true;
+    }
+
+    internal static bool RerollHistoryIsConsistent(CombatBalanceDraftRuntimeJson runtime)
+    {
+        if (runtime == null || runtime.rerollRequests == null || runtime.startedRerollRequestIds == null ||
+            runtime.rerollRequestStartCount != runtime.startedRerollRequestIds.Count ||
+            runtime.rerollRequestStartCount != runtime.rerollRequests.Count) return false;
+        var started = new HashSet<long>(runtime.startedRerollRequestIds);
+        if (started.Count != runtime.rerollRequestStartCount) return false;
+        foreach (long id in started) if (id <= 0) return false;
+        var requests = new Dictionary<long, CombatBalanceRerollRequestJson>();
+        foreach (var request in runtime.rerollRequests)
+        {
+            if (request == null || !started.Contains(request.requestId) || requests.ContainsKey(request.requestId) ||
+                request.budgetBefore < 0 || request.budgetAfter < 0 ||
+                !Enum.TryParse(request.result, out DraftRerollResult outcome) || !Enum.IsDefined(typeof(DraftRerollResult), outcome) ||
+                !Enum.TryParse(request.presentation, out DraftRerollPresentation presentation) ||
+                !Enum.IsDefined(typeof(DraftRerollPresentation), presentation)) return false;
+            if (request.committed)
+            {
+                if (outcome != DraftRerollResult.Success || !request.samplingStarted ||
+                    request.committedRevision != request.requestedRevision + 1 ||
+                    request.budgetAfter != request.budgetBefore - 1 || presentation == DraftRerollPresentation.NotPresented) return false;
+            }
+            else if (outcome == DraftRerollResult.Success || request.committedRevision != 0 ||
+                request.budgetAfter != request.budgetBefore || presentation != DraftRerollPresentation.NotPresented) return false;
+            requests.Add(request.requestId, request);
+        }
+        var joinedRequests = new HashSet<long>();
+        int budget = runtime.initialFreeRerolls;
+        int successful = 0, initialRerolls = 0, levelUpRerolls = 0;
+        int initialOriginalExposures = 0, levelUpOriginalExposures = 0;
+        int initialRerollExposures = 0, levelUpRerollExposures = 0, selections = 0;
+        var tokens = new HashSet<string>(StringComparer.Ordinal);
+        if (runtime.attempts == null || budget < 0) return false;
+        foreach (var attempt in runtime.attempts)
+        {
+            if (attempt == null || attempt.choiceSets == null || attempt.choiceSets.Count == 0 ||
+                attempt.choiceSets[0] == null || attempt.choiceSets[0].displayedChoices == null ||
+                string.IsNullOrEmpty(attempt.attemptToken) || !tokens.Add(attempt.attemptToken) ||
+                attempt.ordinal != tokens.Count) return false;
+            bool initial = attempt.sessionKind == "Initial";
+            if (!initial && attempt.sessionKind != "LevelUp") return false;
+            if (initial) initialOriginalExposures += attempt.choiceSets[0].displayedChoices.Count;
+            else levelUpOriginalExposures += attempt.choiceSets[0].displayedChoices.Count;
+            if (attempt.selectionCommitted) selections++;
+            for (int i = 0; i < attempt.choiceSets.Count; i++)
+            {
+                var set = attempt.choiceSets[i];
+                if (set == null || set.revision != i + 1 || set.budgetBefore != budget ||
+                    set.attemptToken != attempt.attemptToken || set.ordinal != attempt.ordinal ||
+                    set.sessionKind != attempt.sessionKind || set.generationMode != attempt.generationMode)
+                    return false;
+                if (set.displayedChoices == null || set.naturalCandidates == null) return false;
+                if (i == 0 && set.requestId != 0) return false;
+                if (i > 0)
+                {
+                    if (!requests.TryGetValue(set.requestId, out var request) || !request.committed ||
+                        !joinedRequests.Add(set.requestId) || request.attemptToken != set.attemptToken ||
+                        request.requestedRevision != set.revision - 1 || request.committedRevision != set.revision ||
+                        request.budgetBefore != set.budgetBefore || request.budgetAfter != set.budgetAfter) return false;
+                    budget--; successful++;
+                    if (set.generationMode == "Fixed") return false;
+                    if (initial) { initialRerolls++; initialRerollExposures += set.displayedChoices.Count; }
+                    else { levelUpRerolls++; levelUpRerollExposures += set.displayedChoices.Count; }
+                }
+                var eligible = new Dictionary<string, int>(StringComparer.Ordinal);
+                if (set.generationMode == "Natural")
+                {
+                    foreach (var candidate in set.naturalCandidates)
+                    {
+                        if (candidate == null || string.IsNullOrEmpty(candidate.assetName) || candidate.multiplicity <= 0) return false;
+                        string key = candidate.resultType + ":" + candidate.assetName;
+                        if (eligible.ContainsKey(key)) return false;
+                        eligible.Add(key, candidate.multiplicity);
+                    }
+                    foreach (var choice in set.displayedChoices)
+                        if (choice == null || !eligible.TryGetValue(choice.resultType + ":" + choice.assetName, out int weight) ||
+                            choice.multiplicity != weight) return false;
+                }
+                else if (set.generationMode != "Fixed") return false;
+                var identities = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var choice in set.displayedChoices)
+                    if (choice == null || string.IsNullOrEmpty(choice.assetName) ||
+                        !identities.Add(choice.resultType + ":" + choice.assetName) ||
+                        initial && choice.resultType != "TowerDraft") return false;
+                if (budget < 0 || set.budgetAfter != budget) return false;
+            }
+            if (attempt.selectionAttempted)
+            {
+                if (attempt.selectedChoice == null || attempt.selectedSetRevision != attempt.choiceSets.Count) return false;
+                var selectedSet = attempt.choiceSets[attempt.selectedSetRevision - 1];
+                if (!selectedSet.displayedChoices.Exists(choice => choice.assetName == attempt.selectedChoice.assetName &&
+                    choice.resultType == attempt.selectedChoice.resultType)) return false;
+            }
+        }
+        foreach (var request in requests.Values)
+            if (request.committed != joinedRequests.Contains(request.requestId)) return false;
+        return budget == runtime.remainingFreeRerolls && successful == runtime.successfulRerollCount &&
+            tokens.Count == runtime.observedAttemptCount && selections == runtime.committedSelectionCount &&
+            initialRerolls == runtime.initialRerollCount && levelUpRerolls == runtime.levelUpRerollCount &&
+            initialOriginalExposures == runtime.initialOriginalChoiceExposureCount &&
+            levelUpOriginalExposures == runtime.levelUpOriginalChoiceExposureCount &&
+            initialRerollExposures == runtime.initialRerollChoiceExposureCount &&
+            levelUpRerollExposures == runtime.levelUpRerollChoiceExposureCount &&
+            initialOriginalExposures + levelUpOriginalExposures == runtime.originalChoiceExposureCount &&
+            initialRerollExposures + levelUpRerollExposures == runtime.rerollChoiceExposureCount;
     }
 
     internal static bool DraftConsumptionIsReconciled(

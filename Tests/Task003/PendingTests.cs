@@ -11,6 +11,7 @@ public class PendingDraftUIItem
 public partial class BattleHUDUI
 {
     public bool isBattleActive = true, isActiveAndEnabled = true;
+    public bool IsDraftOpen = true;
     public DraftSystem DraftOwner;
     private List<PendingDraftUIItem> pendingDraftItems => Views;
     public List<PendingDraftUIItem> Views = new List<PendingDraftUIItem>();
@@ -35,20 +36,23 @@ public partial class BattleHUDUI
 }
 public partial class DraftSystem : UnityEngine.MonoBehaviour
 {
-    private enum DraftSessionPhase { None, AwaitingSelection, CommittingSelection, Failed, Completed }
+    private enum DraftSessionPhase { None, AwaitingSelection, CommittingSelection, Failed, Completed, Refreshing }
     private enum DraftSessionKind { Initial, LevelUp }
     internal PendingDraftCollection PendingOwner = new PendingDraftCollection();
     public IReadOnlyList<PendingDraftEntry> PendingDrafts => PendingOwner.Held;
     public BattleHUDUI battleHUDUI = new BattleHUDUI();
     public TowerPlacementController towerPlacementController = new TowerPlacementController();
     internal bool IsPendingMutationBusy => isPreparingPendingViews || sessionPhase == DraftSessionPhase.CommittingSelection;
+    private object rerollOperation;
+    private int choiceSetRevision = 1;
     private bool isPreparingPendingViews, isBattleActive = true;
     private ulong currentBattleGeneration = 1;
     private DraftAttemptToken activeToken = new DraftAttemptToken(1,1), completedInitialToken;
     private PendingDraftEntry committedInitialHeldItem;
     private DraftSessionPhase sessionPhase = DraftSessionPhase.AwaitingSelection;
     private DraftSessionKind sessionKind = DraftSessionKind.Initial;
-    private HashSet<UnityEngine.Object> displayedIdentities = new HashSet<UnityEngine.Object>();
+    private class ChoiceSet { internal HashSet<UnityEngine.Object> displayedIdentities = new HashSet<UnityEngine.Object>(); }
+    private ChoiceSet currentChoiceSet = new ChoiceSet();
     public int Completed, Failed, PauseReleases;
     private Action<DraftAttemptToken> OnInitialDraftCompleted;
     private Action<DraftAttemptToken,string> OnInitialDraftFailed;
@@ -56,10 +60,11 @@ public partial class DraftSystem : UnityEngine.MonoBehaviour
     { battleHUDUI.DraftOwner = this; PendingOwner.BeginBattle(1); OnInitialDraftCompleted = t => Completed++; OnInitialDraftFailed = (t,s) => Failed++; }
     private bool IsCommittingSelection(DraftAttemptToken token) => isBattleActive && activeToken == token && sessionPhase == DraftSessionPhase.CommittingSelection;
     private void InvalidateActiveAuthority() { activeToken = default; }
+    private bool OwnsPause(DraftAttemptToken token) => token == activeToken;
     private void ReleasePause(DraftAttemptToken token) { PauseReleases++; }
     public void EnterGameplay() { sessionPhase = DraftSessionPhase.Completed; }
     public void Stop() { isBattleActive = false; PendingOwner.Stop(); activeToken = default; }
-    public void Select(DraftResult result) { displayedIdentities.Add(result.Identity); HandleDraftSelected(activeToken, result); }
+    public void Select(DraftResult result) { currentChoiceSet.displayedIdentities.Add(result.Identity); HandleDraftSelected(activeToken, choiceSetRevision, result); }
     public bool Grant(params DraftResult[] results)
     {
         var tokens = new List<DraftAttemptToken>();

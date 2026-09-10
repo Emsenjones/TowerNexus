@@ -75,6 +75,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     {
         towerPlacementController?.BindSubmission(Submission);
         draftSystem?.BindSubmission(Submission);
+        draftSystem?.BindCoordinator(this);
         towerUpgradeSystem?.BindUpgradeRuntime(this, Submission);
         if (playerSystem != null)
         {
@@ -141,11 +142,13 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         IReadOnlyList<int> playerProgressRequirements,
         IReadOnlyList<TowerDefinition> towerPool,
         IReadOnlyList<TowerUpgradeDefinition> upgradePool,
-        float towerDraftSlotProbability)
+        float towerDraftSlotProbability,
+        int freeRerollCount)
     {
         if (Submission.IsBusy || (towerUpgradeSystem != null && towerUpgradeSystem.IsApplyingUpgrade)) return false;
         towerPlacementController?.BindSubmission(Submission);
         draftSystem?.BindSubmission(Submission);
+        draftSystem?.BindCoordinator(this);
         towerUpgradeSystem?.BindUpgradeRuntime(this, Submission);
         if (!TryValidatePreparationReferences(out string failureReason))
         {
@@ -174,7 +177,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             float.IsNaN(towerDraftSlotProbability) ||
             float.IsInfinity(towerDraftSlotProbability) ||
             towerDraftSlotProbability < 0f ||
-            towerDraftSlotProbability > 1f)
+            towerDraftSlotProbability > 1f || freeRerollCount < 0)
         {
             Debug.LogError(
                 "Battle runtime coordinator cannot prepare Stage runtime because " +
@@ -195,7 +198,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 playerProgressRequirements,
                 towerPool,
                 upgradePool,
-                towerDraftSlotProbability);
+                towerDraftSlotProbability, freeRerollCount);
         }
         catch (Exception exception)
         {
@@ -235,7 +238,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         IReadOnlyList<int> playerProgressRequirements,
         IReadOnlyList<TowerDefinition> towerPool,
         IReadOnlyList<TowerUpgradeDefinition> upgradePool,
-        float towerDraftSlotProbability)
+        float towerDraftSlotProbability,
+        int freeRerollCount)
     {
         ReleasePreparedBattleRuntimeCore();
         combatBinding = new BattleCombatBinding(monsterManager, TryFailBattleRuntime);
@@ -288,7 +292,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         if (!draftSystem.BindStagePools(
                 towerPool,
                 upgradePool,
-                towerDraftSlotProbability))
+                towerDraftSlotProbability, freeRerollCount))
         {
             return FailPreparation("Draft pool binding failed.");
         }
@@ -923,6 +927,13 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                     : localFailureReason);
             return;
         }
+    }
+
+    internal void FailDraftPresentation(DraftSystem source, DraftAttemptToken token, string reason)
+    {
+        if (!IsBattleActive || battleTerminalState != BattleTerminalState.None ||
+            source != draftSystem || !source.OwnsDraftSession(token)) return;
+        TryFailBattleRuntime("Committed Draft presentation failed: " + reason);
     }
 
     private void HandleInitialDraftFailed(

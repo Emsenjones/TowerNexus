@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using DG.Tweening;
 using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
@@ -8,229 +6,101 @@ using UnityEngine;
 public class DamageNumberUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI damageText;
-    [SerializeField] private CanvasGroup canvasGroup;
-    [SerializeField] private RectTransform animatedRoot;
+    [SerializeField] private UIAnimationPlayer animationPlayer = new UIAnimationPlayer(UIAnimationTimeMode.Scaled);
     [SerializeField] private int previewDamageValue = 999;
-    // Small random offset to reduce overlap when multiple damage numbers appear simultaneously.
     [SerializeField] private Vector2 randomOffsetRangeX = new Vector2(-1f, 1f);
     [SerializeField] private Vector2 randomOffsetRangeY = new Vector2(-1f, 1f);
-    [ListDrawerSettings(ShowFoldout = true, DefaultExpandedState = true)]
-    [SerializeField] private List<DamageNumberAnimationStep> animationSteps = new List<DamageNumberAnimationStep>
-    {
-        DamageNumberAnimationStep.CreatePositionStep(new Vector2(0f, 80f), new Vector2(0f, 80f), 0.6f, Ease.OutQuad),
-        DamageNumberAnimationStep.CreateScaleStep(new Vector3(0.8f, 0.8f, 0.8f), new Vector3(1.2f, 1.2f, 1.2f), 0.12f, 0f, Ease.OutBack),
-        DamageNumberAnimationStep.CreateScaleStep(new Vector3(1.2f, 1.2f, 1.2f), Vector3.one, 0.12f, 0.12f, Ease.OutQuad),
-        DamageNumberAnimationStep.CreateFadeStep(1f, 0f, 0.4f, 0.2f, Ease.InQuad)
-    };
 
-    private RectTransform rectTransform;
-    private Sequence activeSequence;
-    private Action<DamageNumberUI> onAnimationComplete;
+    // Cancellation is not completion. The instance owner still needs to remove
+    // its registration if this component/object disappears early.
+    public event Action<DamageNumberUI> Unavailable;
 
-    public void Play(int damage, Action<DamageNumberUI> onComplete = null)
+    public bool TryPlay(int damage, Action<DamageNumberUI> onComplete, out string failureReason)
     {
-        onAnimationComplete = onComplete;
-        ApplyRandomSpawnOffset();
-        PrepareForPlayback(damage);
-        activeSequence = BuildSequence(true);
+        Cancel();
+        if (!isActiveAndEnabled || damageText == null || animationPlayer == null ||
+            animationPlayer.TimeMode != UIAnimationTimeMode.Scaled || !(transform is RectTransform root))
+        {
+            failureReason = "Damage number requires active presentation, text, RectTransform, and a scaled animation player.";
+            return false;
+        }
+        if (!animationPlayer.TryValidate(out failureReason)) return false;
+        damageText.text = damage.ToString();
+        // The manager establishes the spawn location before each runtime play.
+        // Shared animation touches the child, never this world-positioned root.
+        root.anchoredPosition += new Vector2(
+            UnityEngine.Random.Range(randomOffsetRangeX.x, randomOffsetRangeX.y),
+            UnityEngine.Random.Range(randomOffsetRangeY.x, randomOffsetRangeY.y));
+        bool started = animationPlayer.TryPlay(() => onComplete?.Invoke(this), out failureReason);
+        if (started) BeginEditorPreview();
+        return started;
     }
+
+    public void Cancel()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.update -= EditorUpdate;
+#endif
+        animationPlayer?.Cancel();
+    }
+
+    private void Update()
+    {
+        if (Application.isPlaying) animationPlayer?.Tick(Time.deltaTime, Time.unscaledDeltaTime);
+    }
+
+    private void BeginEditorPreview()
+    {
+#if UNITY_EDITOR
+        if (Application.isPlaying) return;
+        editorTime = UnityEditor.EditorApplication.timeSinceStartup;
+        UnityEditor.EditorApplication.update -= EditorUpdate;
+        UnityEditor.EditorApplication.update += EditorUpdate;
+#endif
+    }
+
+#if UNITY_EDITOR
+    private double editorTime;
+    private void EditorUpdate()
+    {
+        if (this == null || !isActiveAndEnabled || Application.isPlaying)
+        {
+            Cancel();
+            return;
+        }
+        double now = UnityEditor.EditorApplication.timeSinceStartup;
+        float delta = (float)(now - editorTime);
+        editorTime = now;
+        animationPlayer?.Tick(delta * Time.timeScale, delta);
+        if (animationPlayer == null || !animationPlayer.IsPlaying)
+            UnityEditor.EditorApplication.update -= EditorUpdate;
+        UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+    }
+#endif
 
     [Button("Preview")]
     [ContextMenu("Preview")]
     public void Preview()
     {
-        PrepareForPlayback(previewDamageValue);
-        activeSequence = BuildSequence(false);
-    }
-
-    private void Awake()
-    {
-        CacheReferences();
-    }
-
-    private void OnDestroy()
-    {
-        KillActiveSequence();
-    }
-
-    private void CacheReferences()
-    {
-        if (rectTransform == null)
+        Cancel();
+        if (!isActiveAndEnabled || damageText == null || animationPlayer == null)
         {
-            rectTransform = transform as RectTransform;
-        }
-
-        if (animatedRoot == null)
-        {
-            animatedRoot = rectTransform;
-        }
-
-        if (canvasGroup == null)
-        {
-            canvasGroup = GetComponent<CanvasGroup>();
-        }
-    }
-
-    private void ApplyRandomSpawnOffset()
-    {
-        CacheReferences();
-
-        if (rectTransform == null)
-        {
+            Debug.LogWarning("Damage number preview requires text and animation player.", this);
             return;
         }
-
-        float randomX = UnityEngine.Random.Range(randomOffsetRangeX.x, randomOffsetRangeX.y);
-        float randomY = UnityEngine.Random.Range(randomOffsetRangeY.x, randomOffsetRangeY.y);
-
-        rectTransform.anchoredPosition += new Vector2(randomX, randomY);
+        damageText.text = previewDamageValue.ToString();
+        if (animationPlayer.TryPlay(null, out string reason)) BeginEditorPreview();
+        else Debug.LogWarning(reason, this);
     }
 
-    private void PrepareForPlayback(int damage)
+    private void OnDisable() => NotifyUnavailable();
+    private void OnDestroy() => NotifyUnavailable();
+
+    private void NotifyUnavailable()
     {
-        CacheReferences();
-        KillActiveSequence();
-
-        if (damageText == null)
-        {
-            Debug.LogWarning("Damage number UI cannot display damage: damage text is not assigned.", this);
-        }
-        else
-        {
-            damageText.text = damage.ToString();
-        }
-
-        if (animatedRoot == null)
-        {
-            Debug.LogWarning("Damage number UI cannot animate: animated root is not assigned.", this);
-            return;
-        }
-
-        ApplyStartValues();
-    }
-
-    private void ApplyStartValues()
-    {
-        if (animatedRoot == null)
-        {
-            return;
-        }
-
-        for (int i = 0; i < animationSteps.Count; i++)
-        {
-            DamageNumberAnimationStep step = animationSteps[i];
-
-            if (step == null || !step.Enabled)
-            {
-                continue;
-            }
-
-            switch (step.AnimationType)
-            {
-                case DamageNumberAnimationType.Position:
-                    animatedRoot.anchoredPosition = step.StartAnchoredPosition;
-                    break;
-                case DamageNumberAnimationType.Scale:
-                    animatedRoot.localScale = step.StartScale;
-                    break;
-                case DamageNumberAnimationType.Fade:
-                    if (canvasGroup == null)
-                    {
-                        Debug.LogWarning("Damage number UI cannot apply fade start value: CanvasGroup is not assigned.", this);
-                        break;
-                    }
-
-                    canvasGroup.alpha = step.StartAlpha;
-                    break;
-            }
-        }
-    }
-
-    private Sequence BuildSequence(bool destroyWhenComplete)
-    {
-        if (animatedRoot == null)
-        {
-            CompletePlayback(destroyWhenComplete);
-            return null;
-        }
-
-        Sequence sequence = DOTween.Sequence();
-        sequence.SetTarget(this);
-        bool hasTween = false;
-
-        for (int i = 0; i < animationSteps.Count; i++)
-        {
-            DamageNumberAnimationStep step = animationSteps[i];
-
-            if (step == null || !step.Enabled)
-            {
-                continue;
-            }
-
-            Tween tween = CreateTween(step);
-
-            if (tween == null)
-            {
-                continue;
-            }
-
-            sequence.Insert(step.Delay, tween);
-            hasTween = true;
-        }
-
-        if (!hasTween)
-        {
-            sequence.Kill();
-            CompletePlayback(destroyWhenComplete);
-            return null;
-        }
-
-        sequence.OnComplete(() => CompletePlayback(destroyWhenComplete));
-        return sequence;
-    }
-
-    private Tween CreateTween(DamageNumberAnimationStep step)
-    {
-        switch (step.AnimationType)
-        {
-            case DamageNumberAnimationType.Position:
-                return animatedRoot.DOAnchorPos(step.TargetAnchoredPosition, step.Duration)
-                    .SetEase(step.EaseType);
-            case DamageNumberAnimationType.Scale:
-                return animatedRoot.DOScale(step.TargetScale, step.Duration)
-                    .SetEase(step.EaseType);
-            case DamageNumberAnimationType.Fade:
-                if (canvasGroup == null)
-                {
-                    Debug.LogWarning("Damage number UI cannot play fade tween: CanvasGroup is not assigned.", this);
-                    return null;
-                }
-
-                return canvasGroup.DOFade(step.TargetAlpha, step.Duration)
-                    .SetEase(step.EaseType);
-            default:
-                return null;
-        }
-    }
-
-    private void CompletePlayback(bool destroyWhenComplete)
-    {
-        activeSequence = null;
-
-        if (destroyWhenComplete)
-        {
-            onAnimationComplete?.Invoke(this);
-        }
-    }
-
-    private void KillActiveSequence()
-    {
-        if (activeSequence == null)
-        {
-            return;
-        }
-
-        activeSequence.Kill();
-        activeSequence = null;
+        Cancel();
+        Action<DamageNumberUI> unavailable = Unavailable;
+        Unavailable = null;
+        unavailable?.Invoke(this);
     }
 }

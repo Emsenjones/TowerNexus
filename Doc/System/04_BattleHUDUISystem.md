@@ -103,31 +103,30 @@ Both roots use the same UI coordinate space. The drag-visual root has no layout 
 
 Draft Window authoring supplies:
 
-- A Re-roll button with its child label `Re-roll`.
-- Active, Press, and Inactive button images, plus the label's authored press offset.
-- A separate numeric remaining-count text presentation.
-- The fixed label `Free re-rolls remaining: `, arranged with that number by authored layout.
-- A reusable Toast template and an explicit Draft-owned presentation container.
+- Separate available and exhausted Re-roll controls, each with normal/pressed feedback.
+- The numeric remaining count inside the available control. No separate remaining-count label is required.
+- A reusable Toast template, an explicit Draft-owned presentation container, and
+  the message `No other draft choices available.`
 
-The numeric text reads Draft-owned balance when the window opens and after a
-Re-roll request is resolved. No Other Candidates keeps the same number. Layout,
-button placement, typography, and the Toast's authored location belong to UI
-authoring rather than Draft gameplay rules.
+The count reads Draft-owned balance when the window opens and after a request
+resolves. Positive balance shows only the available control; zero balance shows
+only the exhausted control. This visibility rule is separate from permission to
+request a Re-roll. Fixed Draft sequence mode and protected refresh/selection
+transactions do not accept gameplay requests even with positive balance.
 
-| State | Contract |
-|---|---|
-| Active | Positive balance and a current Natural Draft awaiting input; no effective press. Use the Active image and the label's resting position. |
-| Press | An actionable button is effectively held by the pointer inside it. Use the Press image and apply the offset from the resting position. |
-| Inactive | Balance is zero, a refresh or selection commit is in progress, or current Draft interaction is unavailable, including Fixed Draft sequence mode. Use the Inactive image, restore the label, and reject input. |
+The exhausted control remains responsive to press feedback, but has no gameplay
+action and produces no Toast. Both controls reuse ordinary button feedback;
+a Re-roll-specific press-state implementation is unnecessary. Authoring owns
+layout, typography, resting/pressed images, content offsets, and Toast placement.
 
-Having no other eligible identities does not disable an otherwise Active button.
+Having no other eligible identities does not disable the available control.
 A valid click forwards the request so Draft can return No Other Candidates and
-the window can explain it. Press alone changes feedback; an accepted click after
-release inside the button requests the action. Release outside cancels the click.
-Pointer exit restores resting feedback, and release, cancellation, disabling,
-window closure, or battle termination clears the press state. Offsets do not
-accumulate across presses. Finishing the last Re-roll disables only further
-Re-rolls, not selection from the new choices.
+HUD can explain it. Press alone changes feedback; an accepted click after
+release inside requests the action. Release outside cancels the click. Pointer
+exit restores resting feedback; cancellation, disabling, window closure, or
+battle termination clears the press state. Offsets do not accumulate.
+Finishing the last Re-roll switches to the exhausted control while leaving the
+new cards selectable.
 
 ---
 
@@ -212,6 +211,9 @@ content target and opacity target, and supports Position, Scale, and Fade steps.
 Each enabled step defines start and target values, duration, delay, and easing.
 Delay is an offset from the start of the whole playback, not a wait after the
 previous listed step. Duration and delay must be finite and non-negative.
+Validation reads the raw authored values, including the sum of delay and
+duration; it must not silently clamp invalid timing into a valid step. An empty
+or fully disabled timeline rejects playback rather than waiting indefinitely.
 
 Different properties may animate concurrently. Steps controlling the same
 property must not overlap in time; successive steps may meet at an endpoint.
@@ -229,6 +231,15 @@ one new completion. Cancellation stops further visual updates and does not
 report normal completion. Completion reports to the owning presentation, which
 decides removal or reuse; shared playback does not own text, gameplay state,
 object lifetime, or notification routing.
+
+A new play request cancels the previous playback before validating its new
+configuration. Failure leaves it stopped with no completion notification; the
+caller owns failed-instance cleanup. Zero-duration steps apply their target at
+their scheduled time. A valid timeline with total duration zero completes on
+the next effective playback update, after the play request returns. Cancellation
+or replacement before that update revokes the old completion. Same-property
+steps may meet at an endpoint regardless of list order, and an update spanning
+several boundaries must produce the state at the resulting timeline time.
 
 Reusable UI playback defaults to presentation time independent of battle pause
 or battle speed. Draft Toasts use that mode. An explicit simulation-time mode
@@ -270,10 +281,10 @@ Battle UI authoring validation should report at minimum:
 - Missing Draft Window or Draft choice container
 - Missing or non-blocking modal Draft interaction surface
 - Invalid Draft choice-item presentation or interaction references
-- Missing Re-roll button, state images, press target, or remaining-count presentation
+- Missing available/exhausted Re-roll controls, feedback references, or child count presentation
 - Remaining-count text disagreeing with Draft-owned balance
 - No Other Candidates incorrectly disabling the button or consuming a Re-roll
-- Inactive or superseded Draft controls still accepting input
+- Exhausted or superseded Draft controls still accepting gameplay actions
 - Press offsets accumulating or surviving cancellation or window closure
 - Missing Toast template or unintended presentation container
 - Toast intercepting input, stacking on repeated requests, or surviving its Draft
@@ -328,3 +339,12 @@ Future UI must preserve the same presentation-versus-gameplay ownership boundary
 ### Placement submission and membership
 
 HUD and placement interaction retain view/gesture cleanup. Their operation protection lasts through that cleanup, even when submission has returned. Rejected and committed outcomes are distinct; a committed technical failure does not restore the consumed reward. Pending grants and rebuilds reject during submission or outer cleanup.
+
+
+## Re-roll Prepared Presentation Ownership
+
+The HUD owns a single-use prepared-view handle. Preparing it does not change the
+current cards. Final validation and ownership transfer are separate from presentation;
+transfer performs no lifecycle callbacks. Presentation may retire old cards and expose
+new ones only while its window ownership remains valid. Disposal is idempotent and
+cannot restore an expired window. The exhausted button remains feedback-only.

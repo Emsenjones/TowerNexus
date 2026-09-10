@@ -48,6 +48,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: b22ae591a03541149c02876705a9b38c, type: 2}
   - {fileID: 11400000, guid: a1e0e3058577643faba455fdcffc1f38, type: 2}
   towerDraftSlotProbability: 0.714
+  freeRerollCount: 3
   showStageIntroduction: 1
   introducedTowers:
   - {fileID: 11400000, guid: c341e05d90121488a8a8ce58d7b3899a, type: 2}

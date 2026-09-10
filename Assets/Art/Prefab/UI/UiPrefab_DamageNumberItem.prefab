@@ -51,45 +51,47 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DamageNumberUI
   damageText: {fileID: 2902563685988067440}
-  canvasGroup: {fileID: 1620823943524245982}
-  animatedRoot: {fileID: 4721239818144917664}
+  animationPlayer:
+    animatedRoot: {fileID: 4721239818144917664}
+    canvasGroup: {fileID: 1620823943524245982}
+    timeMode: 1
+    animationSteps:
+    - enabled: 1
+      animationType: 0
+      duration: 0.4
+      delay: 0
+      easeType: 12
+      startAnchoredPosition: {x: 0, y: 0}
+      targetAnchoredPosition: {x: 0, y: 30}
+      startScale: {x: 1, y: 1, z: 1}
+      targetScale: {x: 1, y: 1, z: 1}
+      startAlpha: 1
+      targetAlpha: 0
+    - enabled: 1
+      animationType: 1
+      duration: 0.4
+      delay: 0
+      easeType: 24
+      startAnchoredPosition: {x: 0, y: 80}
+      targetAnchoredPosition: {x: 0, y: 160}
+      startScale: {x: 3, y: 3, z: 3}
+      targetScale: {x: 1, y: 1, z: 1}
+      startAlpha: 1
+      targetAlpha: 0
+    - enabled: 1
+      animationType: 2
+      duration: 0.2
+      delay: 0
+      easeType: 1
+      startAnchoredPosition: {x: 0, y: 80}
+      targetAnchoredPosition: {x: 0, y: 160}
+      startScale: {x: 1, y: 1, z: 1}
+      targetScale: {x: 1, y: 1, z: 1}
+      startAlpha: 0
+      targetAlpha: 1
   previewDamageValue: 999
   randomOffsetRangeX: {x: -10, y: 10}
   randomOffsetRangeY: {x: -10, y: 10}
-  animationSteps:
-  - enabled: 1
-    animationType: 0
-    duration: 0.4
-    delay: 0
-    easeType: 12
-    startAnchoredPosition: {x: 0, y: 0}
-    targetAnchoredPosition: {x: 0, y: 30}
-    startScale: {x: 1, y: 1, z: 1}
-    targetScale: {x: 1, y: 1, z: 1}
-    startAlpha: 1
-    targetAlpha: 0
-  - enabled: 1
-    animationType: 1
-    duration: 0.4
-    delay: 0
-    easeType: 24
-    startAnchoredPosition: {x: 0, y: 80}
-    targetAnchoredPosition: {x: 0, y: 160}
-    startScale: {x: 3, y: 3, z: 3}
-    targetScale: {x: 1, y: 1, z: 1}
-    startAlpha: 1
-    targetAlpha: 0
-  - enabled: 1
-    animationType: 2
-    duration: 0.2
-    delay: 0
-    easeType: 1
-    startAnchoredPosition: {x: 0, y: 80}
-    targetAnchoredPosition: {x: 0, y: 160}
-    startScale: {x: 1, y: 1, z: 1}
-    targetScale: {x: 1, y: 1, z: 1}
-    startAlpha: 0
-    targetAlpha: 1
 --- !u!225 &1620823943524245982
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -135,10 +137,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 4721239818144917664}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 0, y: -34.295}
+  m_SizeDelta: {x: 101.58, y: 68.59}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5554117766524280542
 CanvasRenderer:
@@ -288,5 +290,5 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}

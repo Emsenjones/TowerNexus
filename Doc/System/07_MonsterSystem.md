@@ -431,6 +431,12 @@ damage-number ownership to HUD or Draft. Damage-number timing follows battle
 simulation, including its pause and rate; interface feedback such as Draft Toasts
 uses presentation time independently of that simulation.
 
+Stopping presentation animation does not count as normal completion. The
+damage-number instance owner clears its registrations and instances when its
+presentation is disabled, and removes a registration if that individual number
+is disabled or destroyed early. Re-enabling presentation does not revive
+cancelled numbers. Failed playback also releases the newly created instance.
+
 Exact typography, easing, animation channels, preview tools, and pooling strategy are presentation implementation or authoring-guide concerns rather than Monster System rules.
 
 ---

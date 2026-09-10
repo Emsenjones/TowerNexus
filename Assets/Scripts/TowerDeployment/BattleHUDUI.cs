@@ -330,6 +330,32 @@ public class BattleHUDUI : MonoBehaviour
             out failureReason);
     }
 
+    public void BindReroll(int remaining, bool allowed, Action callback) =>
+        draftUI?.BindReroll(remaining, allowed, callback);
+
+    public void ShowNoOtherDraftChoices() => draftUI?.ShowNoOtherChoices();
+
+    public bool TryPrepareDraftChoices(IReadOnlyList<DraftResult> choices,
+        Action<DraftResult> selection, out DraftViewPreparation prepared, out string reason)
+    {
+        prepared = null;
+        reason = "Battle HUD is unavailable.";
+        return isBattleActive && draftUI != null &&
+            draftUI.TryPrepareChoices(choices, selection, out prepared, out reason);
+    }
+
+    public bool CanCommitDraftChoices(DraftViewPreparation prepared) =>
+        isBattleActive && draftUI != null && draftUI.CanCommitChoices(prepared);
+
+    public void CommitDraftChoiceOwnership(DraftViewPreparation prepared) => draftUI.CommitChoiceOwnership(prepared);
+
+    public DraftRerollPresentation PresentDraftChoices(DraftViewPreparation prepared, out string reason)
+    {
+        reason = string.Empty;
+        if (!isBattleActive || draftUI == null) return DraftRerollPresentation.Cancelled;
+        return draftUI.PresentChoices(prepared, out reason);
+    }
+
     public void CloseDraft()
     {
         draftUI?.CloseDraft();

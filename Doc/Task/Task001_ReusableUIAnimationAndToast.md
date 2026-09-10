@@ -1,7 +1,7 @@
 # Task001 - Reusable UI Animation And Toast
 
 Iteration: Re-roll System
-Status: Planned; implementation and native acceptance have not started.
+Status: In Progress; implementation and static/managed validation complete; user reports DamageNumber visual validation passed, integrated Toast acceptance pending.
 Dependencies: None.
 Next: [Task002 - Stage Free Re-roll System](Task002_StageFreeRerollSystem.md).
 
@@ -27,7 +27,10 @@ Sources:
 | ToastUI | Toast text and playback on an authored reusable prefab |
 | Calling presentation | Instance/container ownership and cleanup; Task002 connects this to DraftWindow |
 
-Candidate names are `UIAnimationStep`, `UIAnimationPlayer`, and `ToastUI`.
+The types are `UIAnimationStep`, `UIAnimationPlayer`, and `ToastUI`.
+`UIAnimationPlayer` is a serializable ordinary class embedded in DamageNumberUI
+and ToastUI, not an independently attached component. Each host owns runtime
+updates, editor preview updates, and cancellation on disable/destruction.
 Review the live code before fixing APIs. Do not introduce a general UI framework,
 global Toast manager, queue, new pooling system, or changes to Draft generation.
 
@@ -54,11 +57,20 @@ global Toast manager, queue, new pooling system, or changes to Draft generation.
   code after migration rather than retaining parallel implementations.
 - Define safe handling of empty/disabled timelines and zero-duration steps in
   the implementation plan; they must not leak instances or repeat completion.
+- Validate raw authored values, including finite Delay + Duration. A new play
+  request cancels the previous playback before validation; rejection leaves it
+  stopped and sends no completion. An empty/all-disabled timeline is rejected.
+- Zero-total-duration playback completes on the next effective update after
+  TryPlay returns. Cancellation/replay can revoke that pending completion.
+- DamageNumberManager clears instances on disable, and individual early
+  disable/destruction unregisters its number without reporting normal completion.
 
 ## 4. Starting Points And Authoring Handoff
 
-Inspect `Assets/Scripts/Monster/DamageNumberAnimationStep.cs`,
-`DamageNumberUI.cs`, `DamageNumberManager.cs`, and
+The migration baseline at `1a044e9` contains
+`Assets/Scripts/Monster/DamageNumberAnimationStep.cs`. Its current replacement is
+`Assets/Scripts/UI/UIAnimationStep.cs`, accompanied by `UIAnimationPlayer.cs`
+and `ToastUI.cs`. Inspect `DamageNumberUI.cs`, `DamageNumberManager.cs`, and
 `Assets/Art/Prefab/UI/UiPrefab_DamageNumberItem.prefab`.
 
 The implementation plan must identify serialized migrations and how values,
@@ -68,14 +80,17 @@ these new Task numbers happen to match.
 
 Unity authoring checklist:
 
-- [ ] Existing DamageNumber prefab uses the shared player with its original data
+- [x] Existing DamageNumber prefab uses the shared player with its original data
   and explicit simulation-time mode.
-- [ ] Toast prefab provides text, opacity target, animated content, and a
+- [x] Toast prefab provides text, opacity target, animated content, and a
   non-blocking presentation hierarchy.
-- [ ] Author Fade-in, hold, Fade-out, and concurrent position motion using steps.
+- [x] Author Fade-in, hold, Fade-out, and concurrent position motion using steps.
   Example starting timing: Fade-in at 0s for 0.15s, motion at 0s for 1.2s,
   Fade-out at 0.95s for 0.25s. These are adjustable visual values.
-- [ ] Expose playback configuration and references needed by another UI caller.
+- [x] Expose playback configuration and references needed by another UI caller.
+
+The authoring checkmarks above are serialized-file evidence only. Unity import,
+Inspector confirmation, appearance, and native interaction remain pending.
 
 The user owns final layout, Inspector wiring, Unity import/reserialization, and
 Play Mode unless separately delegated. Provide exact handoff instructions and
@@ -106,4 +121,88 @@ files, commands/results, serialized migration evidence, Unity visual evidence,
 and unresolved or explicitly waived checks. Task002 may consume a stable
 reviewed API; this Task is not Completed merely because its code compiles.
 
-Current evidence: Design contract only; no implementation or tests performed.
+## 7. Implementation And Validation Evidence (2026-09-10)
+
+Implemented the reviewed contract from the task "评审 Task001 Stage Re-roll 方案"
+(`01a08a09-92a2-7a00-b388-cd3551df7ce2`).
+
+- `UIAnimationStep` preserves the original data field names, enum values, and
+  script meta GUID. Timing/Alpha getters expose raw values for validation.
+- The inline `UIAnimationPlayer` samples one explicit timeline per host update using DOTween
+  easing. It does not construct independent property Tweens whose callbacks can
+  race at shared endpoints. Enabled steps and playback targets/time mode are
+  captured per play. Completion clears state before invoking the owner.
+- Host Update supplies scaled/unscaled deltas to `UIAnimationPlayer.Tick`; the
+  player selects its captured clock and skips the starting frame. Each host owns
+  its Editor Preview subscription and detaches it on cancel or completion.
+- DamageNumber now delegates playback; Manager owns normal, failed, disabled,
+  and early-removed instance cleanup. Old animation implementation was removed.
+- Original DamageNumber prefab GUID, original component IDs, targets, text,
+  random offset ranges, easing and full step payload are preserved. Its actual
+  animation remains Position 0-to-30 over 0.4s, Scale 3-to-1 over 0.4s, and Fade
+  0-to-1 over 0.2s. No Fade-out was added to that prefab.
+- `UiPrefab_ToastItem.prefab` is standalone, uses the existing TMP font/material,
+  has non-blocking text and CanvasGroup, and separates placement from animation.
+  It is not yet connected to DraftWindow; Task002 owns that integration.
+
+Validation performed:
+
+| Evidence | Result | Boundary |
+|---|---|---|
+| `python3 Tests/Reroll/Task001/run.py` | 92 assertions passed | Whole production player, Toast and DamageNumber owner classes with explicit managed clock/UI/easing doubles; not native Unity/DOTween execution |
+| `python3 Tests/Reroll/Task001/assets.py` | Passed | Exact migration payload, GUID/reference/hierarchy preservation and Toast serialized ownership/input flags |
+| Runtime and Editor project build | 0 warnings, 0 errors | `dotnet build Assembly-CSharp-Editor.csproj --no-restore -m:1 -nr:false -p:LangVersion=8.0` with a temporary source-list overlay for the moved/new files, since Unity project regeneration was not run |
+| Changed production classes against actual Unity/DOTween/TMP references | Passed with and without `UNITY_EDITOR` | C# compilation, not an iOS build or native playback test |
+| Focused diff checks | Passed | Code, metadata, prefab, test and documentation whitespace |
+
+Managed coverage includes reversed-list shared endpoints, updates crossing
+multiple boundaries, gap hold, explicit later start values, parallel channels,
+raw invalid/overflow timing, zero-duration cancellation/replay, failed replay,
+clock selection, completion reentrancy, playback snapshots, manager disable,
+early instance disable/destruction, failed instance creation cleanup, and outer
+spawn-position preservation. Tests use a separate Re-roll directory; archived
+test harnesses and their oracles were not overwritten.
+
+## 8. Unity Handoff And Outstanding Acceptance
+
+1. Let Unity import the moved/new scripts and prefabs and regenerate project
+   files. Confirm no missing script, compile, or serialized-reference errors.
+2. Open `Assets/Art/Prefab/UI/UiPrefab_DamageNumberItem.prefab`. Confirm its
+   DamageNumberUI contains an inline Animation Player foldout; its Animated Root is
+   `RecTransform_AnimatedRoot`, its CanvasGroup remains the original root group,
+   and Time Mode is Scaled. Verify the original three steps and random ranges.
+3. Use DamageNumber Preview in Editor and Play Mode, then observe actual damage
+   in battle. Verify text/world placement, random offset, motion, scale, and fade.
+   Disable/re-enable the presentation owner and remove an individual number
+   mid-animation; no frozen number should survive or remain registered.
+4. Open `Assets/Art/Prefab/UI/UiPrefab_ToastItem.prefab` and temporarily place it under
+   a test Canvas to use Preview. ToastUI references its text and embeds the player; the player
+   targets the child and its CanvasGroup, with Unscaled time. The user has authored its background and animation parameters; preserve these
+   settings during Draft integration.
+5. Preview with normal, paused, and changed battle time scale. Replay during
+   fade-in, hold, and fade-out; then disable/destroy during playback. Confirm no
+   accumulated offset, blocked underlying button, or stale completion. Editor
+   Preview keeps the instance; runtime callers remove it on completion.
+6. Record native results here before marking Completed. Task002 must handle
+   `ToastUI.TryPlay` failure and normal completion, own the single instance, and
+   cancel/remove it on Draft closure.
+
+The user reported that the initial component-based version imported into Unity
+without errors. The subsequent user-requested inline-class revision preserves
+both prefabs' current animation settings and the user's ToastItem asset rename;
+it removes the standalone player component and nests its data in each host.
+Managed coverage now also exercises both hosts' Update forwarding, host disable
+and inactive rejection, and the serializable class/default clock configuration.
+
+On 2026-09-10 the user reported that DamageNumber behaves correctly in Unity
+and that a first Toast parameter calibration is authored. This is user-reported
+native DamageNumber evidence, not an agent-run test or proof of every lifecycle
+case above. The user explicitly requested proceeding with Task002 and deferring
+Toast integration testing until the Draft UI extension is ready. Integrated
+paused Toast/replay/cleanup and device acceptance remain unverified.
+
+The Task002 integration check also found user-authored DamageNumber layout edits
+in two existing RectTransforms (text anchors/size and animated-root size). Those
+asset values were preserved. The migration test now recognizes exactly those
+reviewed layout values while retaining the original animation payload, GUID,
+hierarchy and reference oracles; it does not silently replace the baseline.

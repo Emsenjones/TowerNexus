@@ -49,8 +49,9 @@ This directory separates durable runtime contracts from iterative balance design
 
 ## Active Task Iteration: Re-roll System
 
-The following planned contracts execute in dependency order. Their creation
-does not indicate implementation or native acceptance:
+The following contracts execute in dependency order. Task001 has user-reported
+DamageNumber visual acceptance; Task002 optimization (schema 27) is implemented pending native Draft/Toast
+integration and Recorder export acceptance. Task003 remains planned:
 
 1. [Task001 - Reusable UI Animation And Toast](Task/Task001_ReusableUIAnimationAndToast.md)
 2. [Task002 - Stage Free Re-roll System](Task/Task002_StageFreeRerollSystem.md)

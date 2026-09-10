@@ -175,7 +175,8 @@ permits Re-rolls.
 
 Draft gathers distinct eligible identities using the active session's source
 rules, current Upgrade eligibility, and Pending reservations. Multiplicity is a
-sampling weight, not an additional distinct identity. If every eligible identity
+sampling weight, not an additional distinct identity. Zero-probability categories
+contribute alternatives only when category backfill can actually reach them. If every eligible identity
 is already displayed, Draft returns No Other Candidates without replacing the
 set or spending balance. With three configured slots and unchanged eligibility,
 this includes pools of one, two, or three distinct identities. This outcome is
@@ -198,7 +199,8 @@ Accept Current Re-roll Intent And Claim Refreshing Choices
     -> Generate And Prepare Replacement Choices And Usable Presentation
     -> Revalidate Battle, Session, Choice-Set Identity, And Budget
     -> Commit New Set And Its Identity Together With Exactly One Budget Decrement
-    -> Return To Awaiting Selection And Publish Committed Observation
+    -> Publish Committed Observation While Input Remains Protected
+    -> Expose New Choices And Return To Awaiting Selection
 ```
 
 Selection and further Re-roll requests are rejected during refresh. Preparation
@@ -208,7 +210,12 @@ and balance, and returns a still-live session to Awaiting Selection. Cancellatio
 by battle or session termination instead discards preparation and never restores
 an outgoing window or spends its budget. Repeated or stale requests cannot
 commit the same replacement twice. After the last free Re-roll succeeds, the
-new choices remain selectable with a displayed balance of zero.
+new choices remain selectable with the exhausted Re-roll control shown.
+
+A generated batch that fails presentation preparation still advances the random
+stream; it does not spend balance or replace the current set. Rejected requests
+and No Other Candidates do not draw random values. Reproducibility therefore
+requires the same seed, eligibility, and complete request/failure history.
 
 ---
 
@@ -487,3 +494,30 @@ and rejects input from replaced views. Draft remains the pause/session authority
 ### Placement submission and membership
 
 Draft queries the stable submission owner for ordered read-only deployed Tower membership. Queries do not rebuild or prune members. Pending ownership remains in Draft and is bound directly to submission; view hierarchy is not the consumption authority.
+
+
+## Re-roll Commit And Terminal Observation Boundary
+
+Preparation uses an independent candidate set and one eligibility snapshot. The
+current set always represents committed content. Final validation and model/view
+ownership transfer contain no external notifications or presentation lifecycle work.
+
+A committed replacement remains a successful Re-roll even if presentation is later
+cancelled or fails. Record model commitment separately from presentation outcome.
+A presentation failure belonging to the still-current Draft terminates that battle
+as a technical failure for both Initial and Level-Up; an expired operation cannot
+terminate a new battle. Precommit failures alone preserve the previous set/budget.
+
+The operation remains protected through final request notifications and cleanup.
+Battle termination immediately revokes gameplay, captures terminal budget/Pending,
+and waits only for already-started observations to drain before finalizing evidence.
+Each observed request has a unique identity, independently registered start and one
+final result. Committed replacements and requests reconcile one-to-one. Natural
+presentation identities and weights must match the recorded eligibility snapshot.
+
+
+Recursive requests made while a Re-roll operation guard is held are rejected before
+observation admission, preventing diagnostic callbacks from recursively producing
+request events. Every admitted observed request has one independent start and final
+result. Candidate history is owned solely by the attempt's ordered choice sets;
+opportunity, selection and consumption data are separate from generation data.

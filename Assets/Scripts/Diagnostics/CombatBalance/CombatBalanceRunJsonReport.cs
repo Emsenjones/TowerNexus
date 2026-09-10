@@ -5,7 +5,7 @@ using System.Collections.Generic;
 [Serializable]
 internal sealed class CombatBalanceRunJsonReport
 {
-    public int schemaVersion = 25;
+    public int schemaVersion = 27;
     public string generatedAtLocal;
     public string runLabel;
     public string terminalState;
@@ -461,6 +461,20 @@ internal sealed class CombatBalanceDraftRuntimeJson
     public bool fixedDraftSeedEnabled;
     public string generationContractVersion;
     public string draftRandomAlgorithmVersion;
+    public int initialFreeRerolls;
+    public int remainingFreeRerolls;
+    public int rerollRequestStartCount;
+    public List<long> startedRerollRequestIds = new List<long>();
+    public int successfulRerollCount;
+    public int initialRerollCount;
+    public int levelUpRerollCount;
+    public int initialOriginalChoiceExposureCount;
+    public int levelUpOriginalChoiceExposureCount;
+    public int initialRerollChoiceExposureCount;
+    public int levelUpRerollChoiceExposureCount;
+    public int originalChoiceExposureCount;
+    public int rerollChoiceExposureCount;
+    public List<CombatBalanceRerollRequestJson> rerollRequests = new List<CombatBalanceRerollRequestJson>();
     public int observedAttemptCount;
     public int committedSelectionCount;
     public List<CombatBalanceDraftItemJson> towerDraftPool =
@@ -474,7 +488,7 @@ internal sealed class CombatBalanceDraftRuntimeJson
 }
 
 [Serializable]
-internal sealed class CombatBalanceDraftAttemptJson
+internal class CombatBalanceDraftChoiceSetJson
 {
     public string attemptToken;
     public int ordinal;
@@ -495,18 +509,50 @@ internal sealed class CombatBalanceDraftAttemptJson
     public int towerSlotsBackfilledByUpgrade;
     public int upgradeSlotsBackfilledByTower;
     public string backfillReason;
+    public List<CombatBalanceDraftItemJson> naturalCandidates =
+        new List<CombatBalanceDraftItemJson>();
+    public List<CombatBalanceDraftItemJson> displayedChoices =
+        new List<CombatBalanceDraftItemJson>();
+    public long requestId;
+    public int revision;
+    public int budgetBefore;
+    public int budgetAfter;
+}
+
+[Serializable]
+internal sealed class CombatBalanceDraftAttemptJson
+{
+    public string attemptToken;
+    public int ordinal;
+    public string sessionKind;
+    public string generationMode;
+    public List<CombatBalanceDraftChoiceSetJson> choiceSets = new List<CombatBalanceDraftChoiceSetJson>();
+    public int selectedSetRevision;
     public bool selectionAttempted;
     public bool heldItemCreationSucceeded;
     public string heldItemCreationFailureReason;
     public bool selectionCommitted;
     public float selectionCommittedAtSeconds;
-    public List<CombatBalanceDraftItemJson> naturalCandidates =
-        new List<CombatBalanceDraftItemJson>();
-    public List<CombatBalanceDraftItemJson> displayedChoices =
-        new List<CombatBalanceDraftItemJson>();
     public CombatBalanceDraftItemJson selectedChoice =
         new CombatBalanceDraftItemJson();
     public string consumptionStatus;
+}
+
+[Serializable]
+internal sealed class CombatBalanceRerollRequestJson
+{
+    public long requestId;
+    public bool committed;
+    public bool samplingStarted;
+    public int committedRevision;
+    public int budgetBefore;
+    public int budgetAfter;
+    public string presentation;
+    public string attemptToken;
+    public int requestedRevision;
+    public string result;
+    public string failureReason;
+    public float activeTimeSeconds;
 }
 
 [Serializable]
