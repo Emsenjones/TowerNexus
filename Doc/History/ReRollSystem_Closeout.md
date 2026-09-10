@@ -3,6 +3,10 @@
 Date: 2026-09-11
 Status: Completed for the user-approved Demo scope; broader balance validation deferred.
 
+Pre-retirement snapshot: Git commit `ae50bd2` preserves the final Task001-Task003
+documents together with code, assets, and reports. The Task documents were then
+removed from the active workspace at the user's request.
+
 ## Accepted scope and limits
 
 Each Stage has an observed successful Build and placement route, with repeated

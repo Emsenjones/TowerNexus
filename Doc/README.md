@@ -43,7 +43,7 @@ This directory separates durable runtime contracts from iterative balance design
 - [System Documents](System/00_ProjectOverview.md)
 - [Stage Design Blueprint](Balance/00_StageDesignBlueprint.md)
 - [Tower Growth And Upgrade Identity](Balance/01_TowerGrowthAndUpgradeIdentity.md)
-- [Task Workspace](Task/)
+- Task workspace: no active task documents; retired contracts remain in Git.
 - [ArchitectureRefactor Historical Evidence](History/ArchitectureRefactor_Closeout.md)
 - [CombatMathV2 Historical Evidence](History/CombatMathV2_Closeout.md)
 
