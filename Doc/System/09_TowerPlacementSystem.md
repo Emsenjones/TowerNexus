@@ -13,7 +13,7 @@ Tower Placement System converts a dragged Draft item into either:
 - A Tower Upgrade intent targeting an existing Tower
 - A cancelled drag that preserves the held item
 
-It owns drag-state coordination, Grid snapping, footprint resolution, placement preview state, placement validation, existing-Tower intent detection, runtime occupancy commit, and the resulting Map topology refresh request.
+It owns drag-state coordination, Grid snapping, footprint resolution, placement preview state, Monster dashed-line path state and displayed-route selection, placement validation, existing-Tower intent detection, runtime occupancy commit, and the resulting Map topology refresh request.
 
 It does not own Draft generation, held-item presentation, Tower level or upgrade eligibility, Tower-local visual rendering, Map data, pathfinding execution, Monster movement, or Tower combat.
 
@@ -276,6 +276,57 @@ During a Tower Upgrade Draft drag, every current deployed Tower may be evaluated
 
 This feedback indicates target eligibility only. It does not simulate package-specific combat outcomes.
 
+## 7.5 Monster Dashed-Line Path State
+
+During an active Battle, the Monster dashed-line path has three display states.
+Monster System supplies ordered main-route data; Tower Placement System selects
+the state and route; Battle HUD UI System renders the requested presentation.
+
+| State | Trigger And Route Selection | Presentation |
+|---|---|---|
+| Solid | No active Tower Draft drag; display the current formal main route | White and fully opaque |
+| Valid Preview | Active Tower Draft drag; display the candidate main route when its complete footprint is valid and a route survives, otherwise the formal main route for the fallback cases below | White and semi-transparent |
+| Blocked Preview | A complete otherwise valid new-Tower footprint blocks the Spawn-to-Target route; retain the displayed route from immediately before the blocking result | Red and semi-transparent |
+
+Beginning a Tower Draft drag immediately enters Valid Preview with the current
+formal main route, even before the Tower enters the Map. During ordinary
+new-Tower placement, resolve the complete snapped footprint before requesting
+its hypothetical main route. Refresh the preview when that footprint or its
+Map topology changes. Pointer movement that leaves both unchanged does not
+require a different route result.
+
+The formal main route is shown in Valid Preview when the Tower is still in the
+Pending area, leaves the Map, has a footprint partially outside the Map, overlaps
+unavailable or occupied nodes, or enters existing-Tower level-up targeting.
+Existing-Tower targeting leaves occupancy unchanged, including an ineligible
+level-up target. White path feedback means no route-blocking warning is active;
+it does not assert that the Tower is deployable. Tower-local invalid feedback
+and final acceptance remain authoritative for other placement constraints.
+
+Route blocking immediately enters Blocked Preview during drag, before input
+release. Only color and opacity change: the retained path geometry is not
+updated. Continuous movement across multiple blocking candidates preserves the
+same retained geometry. Each new drag seeds its retained route from the formal
+main route, so blocking before any valid candidate also has a route to retain.
+
+Returning to a valid candidate immediately replaces the route and restores
+Valid Preview. Entering a fallback case immediately restores the formal route
+in Valid Preview. The next blocking result retains whichever valid-preview
+route was displayed immediately before it. Retained candidate geometry belongs
+only to the current drag and current Battle/Map topology; it cannot survive a
+new drag, topology replacement, or Battle replacement as current preview data.
+
+Successful deployment finishes the drag and displays the committed formal
+main route in Solid. Failed release, return-to-Pending cancellation, or other
+drag cancellation finishes the drag and displays the unchanged formal main
+route in Solid. A red preview never persists after the drag ends. Battle end
+or Stage release instead removes the line under the Stage lifecycle contract.
+
+The line does not modify placement validity, consume a Draft, commit occupancy,
+refresh Tiles, or redirect Monsters. Final placement validation remains fresh
+and independent of the preview. Tower Upgrade Draft targeting does not propose
+new occupancy and does not initiate these Tower Draft route-preview states.
+
 ---
 
 # 8. Drag Cancellation
@@ -289,6 +340,7 @@ Cancellation:
 - Hides all drag-time attack range presentation
 - Clears all Tower target feedback
 - Clears placement and target state
+- Clears retained dashed-line candidate data and restores the formal route in Solid while Battle remains active
 - Does not invoke placement, level-up, or upgrade application
 
 The same cleanup occurs after accepted or rejected release, with item consumption determined only by the gameplay result.
@@ -325,6 +377,10 @@ Placement authoring and runtime validation should report or reject at minimum:
 - Candidate anchors outside the Map
 - Candidate nodes that are unwalkable or already occupied
 - Candidate occupancy that blocks a required route
+- A dashed-line state that treats a non-route placement failure as route blocking
+- Blocked Preview that updates retained path geometry or survives drag completion
+- Valid candidate preview that disagrees with the authoritative new main route under unchanged topology and footprint
+- Retained dashed-line data reused across a new drag, topology replacement, or Battle/Map replacement
 - Placement preflight that mutates occupancy or Monster state
 - Incomplete Tower definition, Level 1 model, visual, combat, runtime-owner, or Pending Draft ownership preflight
 - Prepared revision application that performs pathfinding or exposes an ordinary commit-time failure
@@ -359,6 +415,7 @@ Current scope includes:
 - Atomic occupancy, all-living-Monster route revision, and held-Draft consumption commit
 - Runtime occupancy and Tile-only topology refresh
 - New-Tower, level-up, attack-range, and eligible-target feedback
+- Solid, Valid Preview, and Blocked Preview state selection for the Monster dashed-line path
 - General return-to-area drag cancellation
 
 Deferred topics include Tower recycling, redeployment inventory, Tower rotation, dynamic footprint changes, multiplayer synchronization, traps, and temporary non-Tower blockers.

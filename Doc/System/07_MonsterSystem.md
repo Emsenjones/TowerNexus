@@ -14,6 +14,7 @@ Monster System owns the complete runtime lifecycle of battlefield Monsters:
 - Health and damage reception
 - Movement and pathfinding
 - Dynamic path recalculation
+- Formal and read-only candidate Spawn-to-Target main-route data for Monster dashed-line path feedback
 - Death and Target arrival
 - Exactly-once Monster resolution reporting
 - Monster-local animation and hit feedback requests
@@ -338,6 +339,49 @@ continuation, rejoin movement, or forced relocation does not destroy, recreate,
 redirect, or guarantee a hit for an in-flight Projectile; later Monster
 movement or relocation may cause it to hit or miss under its existing rules.
 
+## 6.3 Main Route For Monster Dashed-Line Path
+
+Monster System supplies one ordered shortest Spawn-to-Target main route under
+the active Map's effective walkability. The formal main route represents
+committed topology; a candidate main route represents the same Map with the
+Dragged Tower's complete proposed footprint treated as additional blockers.
+Both include Spawn and Target and use the same orthogonal traversal and stable
+selection rules when multiple shortest routes exist. Identical topology,
+endpoints, and candidate footprint produce the same ordered main route.
+
+This route data is available when Battle begins, before the first Monster
+spawns or Wave timing is authorized. It does not depend on any live Monster
+instance. Formal main-route data reflects each committed topology change.
+
+A candidate query distinguishes:
+
+- A valid candidate footprint with a surviving ordered main route.
+- A valid candidate footprint whose additional blockers leave no route.
+- A candidate that cannot be evaluated as ordinary new-Tower placement, such
+  as an incomplete, out-of-Map, occupied, or otherwise unavailable footprint.
+
+Only the second outcome establishes route blocking. An unavailable candidate
+or invalid runtime binding is not evidence that the Tower blocks the route.
+Tower Placement System owns candidate eligibility and preview-state selection;
+Monster System owns pathfinding execution and the ordered route result.
+
+Candidate queries do not change Base Walkable, Runtime Occupied, Tile or
+Feature presentation, live Monster routes, lane targets, positions, or gameplay
+state. Preview and final placement preserve the same route-selection rules.
+Final deployment independently validates the current topology; preview data
+does not authorize commit. If topology and footprint are unchanged and
+placement succeeds, its authoritative new main route matches the valid preview.
+
+The dashed-line path displays the main route through Grid centers, with exact
+Spawn and Target centers as endpoints. It does not depict per-instance lane
+offsets, Monster-specific connector routes, or forced-relocation predictions.
+Living Monsters continue or rejoin the main route under Section 6.2; their
+complete physical trajectories may therefore differ from the displayed line.
+
+Tower Placement System owns which formal, candidate, or retained route is
+requested for display. Battle HUD UI System owns dashed-line presentation.
+The line does not become a second pathfinding or Monster movement authority.
+
 ---
 
 # 7. Hit Reference Contract
@@ -480,6 +524,7 @@ Current scope includes:
 - Initial-Draft-gated start of the first Wave Delay
 - Normal spawning-completion and post-resolution alive-Monster facts
 - A* pathfinding and dynamic recalculation
+- Formal and read-only candidate main-route data for Monster dashed-line path feedback
 - Active-segment movement state and deterministic per-instance lane targets
 - Placement-time authoritative new Route, reachable Grid rejoin, and nearest-eligible forced relocation
 - Health, death, arrival, and exactly-once resolution

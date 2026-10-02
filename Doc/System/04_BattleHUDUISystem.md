@@ -16,6 +16,7 @@ It presents:
 - Free Re-roll control, remaining count, and Draft-local Toast feedback
 - Selected but unconsumed Draft items
 - Drag, placement, and Tower-target feedback
+- World-space Monster dashed-line path presentation
 
 It observes gameplay state and forwards player intent. It does not own Player state, Draft generation or reward ownership, Draft-driven simulation pause, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
 
@@ -178,6 +179,43 @@ The UI may distinguish:
 
 Tower Placement System owns the result.
 
+### Monster Dashed-Line Path Presentation
+
+Battle HUD UI System renders one static dashed line for the ordered main route
+requested by Tower Placement System. The line begins at the Spawn Grid center,
+ends at the Target Grid center, and follows the intervening Grid centers in
+Map space. Its world-space presentation is independent of the screen-space
+Pending item layout and does not require the line to share a UI canvas.
+
+| Requested State | Color | Opacity |
+|---|---|---|
+| Solid | White | Fully opaque; Alpha = 1, Transparency = 0 |
+| Valid Preview | White | Semi-transparent; default Alpha = 0.5 |
+| Blocked Preview | Red | The same semi-transparent opacity as Valid Preview |
+
+Blocked Preview changes the tint and opacity of the retained route, with no
+path-geometry update. The display layer never substitutes a new route, selects
+a shortest path, or infers deployability from color. Monster System owns route
+data; Tower Placement System owns the complete state transitions described in
+`09_TowerPlacementSystem.md`, Section 7.5.
+
+Presentation configuration controls positive line width, dash length, and gap
+length, a semi-transparent preview opacity, and a surface-relative height
+suitable for readable placement on the current Map. Grid alignment and visual
+height respect the Map's coordinate frame. The line remains readable against
+Map surfaces without changing Grid identity or node-center topology data.
+Exact material, shader, and geometry-generation techniques are implementation
+choices. The first version uses static dashes without flowing animation,
+directional arrows, or smoothed route curves.
+
+The line has no collision or input authority and cannot intercept Tower drag,
+Camera pan, or modal Draft input. Opening or closing a Draft Window does not
+itself change the underlying line's route or requested state. The modal window
+continues to own input, and the current line remains beneath its presentation.
+Simulation pause does not clear the current line. Battle end or Stage release
+clears the display and retained presentation data; late outgoing requests
+cannot restore the line for that Battle or overwrite a newer Battle's line.
+
 ## 6.2 Tower Target Feedback
 
 While a Tower-related Draft item is dragged, the UI may present eligible, ineligible, or neutral Tower targets.
@@ -304,6 +342,10 @@ Battle UI authoring validation should report at minimum:
 - Drag-visual root introducing an unintended raycast-blocking surface
 - Invalid pending-item presentation or interaction references
 - Missing interaction feedback references required by current content
+- Missing or unusable Monster dashed-line path presentation
+- Non-positive dashed-line width, dash length, or gap length; preview opacity outside the semi-transparent range
+- Dashed-line presentation that blocks input, shows incorrect state tint/opacity, or replaces retained geometry during Blocked Preview
+- A dashed line that remains visible after Battle end or can be restored by an outgoing Battle request
 - Missing Monster status or damage-number presentation required by the authored composition
 - Modal Draft input passing through to Camera or battlefield interaction
 - Camera pan competing with an active held-item drag
@@ -320,7 +362,8 @@ Validation must not create gameplay state or silently replace authored UI.
 Current scope includes player information, pause-independent Draft presentation,
 free Re-roll controls and balance display, Draft-local Toasts, reusable Position,
 Scale, and Fade animation, held Draft items, atomic pending-item registration,
-drag cancellation, placement feedback, and Tower target feedback.
+drag cancellation, placement feedback, Tower target feedback, and static
+world-space Monster dashed-line path presentation.
 
 Game Flow System owns battle-result and Stage-transition presentation, including distinct Victory and Defeat interactions. Those surfaces are outside Battle HUD UI System rather than deferred Battle HUD features.
 

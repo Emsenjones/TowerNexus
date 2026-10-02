@@ -150,6 +150,27 @@ Domain owners remain responsible for their own technical cleanup.
 
 Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next or into a retry. StageDefinition authors the positive maximum-health value and ordered Player progress requirements for the selected Stage. Player System owns their applied runtime snapshots, current state, threshold consumption, and transition rules; Stage composition supplies the authored values and establishes a fresh full-health, Level 1 runtime before the prepared Stage may begin. A retry reloads the same Stage-authored requirements into new runtime state, while a next Stage supplies its own sequence.
 
+## 3.1 Monster Dashed-Line Path Lifetime
+
+Stage preparation and optional Stage Introduction do not display the Monster
+dashed-line path. When Game Flow permits the prepared Stage to enter Battle,
+its domain owners establish the current formal Spawn-to-Target main route and
+present it in Solid, independently of Initial Draft completion, Wave timing,
+or the presence of a spawned Monster. The Initial Draft Window may cover this
+underlying battlefield presentation without changing its route state.
+
+Battle end removes the line and ends any drag preview. Stage stop/release,
+preparation rollback, and Map replacement discard outgoing formal, candidate,
+and retained line data. Each initial Stage, next Stage, and retry establishes
+fresh route and presentation state for its exact Battle and Active Map; no
+previous red state, hypothetical footprint, or retained path carries forward.
+Late or repeated outgoing cleanup or display requests cannot clear or restore
+a newer Battle's line.
+
+Stage System coordinates this lifetime without choosing paths or display
+states. Monster System supplies route data, Tower Placement System selects the
+drag-dependent route and state, and Battle HUD UI System owns line rendering.
+
 ---
 
 # 4. Ownership Boundaries
@@ -218,6 +239,7 @@ Current scope includes:
 - A prepared Stage boundary controlled by Game Flow
 - Fresh battle-local Player state for each composed Stage
 - Fresh default Camera framing for every initial Stage, next Stage, and retry
+- Battle-local Monster dashed-line path establishment and cleanup without inherited preview state
 
 Game Flow System owns the approved Demo Stage ordering, introduction, victory, defeat, next-Stage, retry, and return-to-main-menu rules.
 

@@ -286,6 +286,15 @@ World-position lookup resolves through NodesRoot local space. Public queries mai
 
 Monster System chooses and executes the pathfinding algorithm. Tower Placement System chooses when to simulate or commit occupancy.
 
+Monster dashed-line path consumers use the active Map's Grid centers, ordered
+neighbor topology, endpoints, and effective walkability. Candidate routes
+account for the Tower's complete proposed footprint rather than its center
+alone. Line width and surface-relative visual height do not alter Grid centers,
+physical-cell membership, or gameplay topology. Candidate line updates do not
+modify Runtime Occupied state, Tile connections, or authored Feature visuals.
+Map System supplies these spatial and topology facts; it does not select the
+line's route, color, opacity, or drag state.
+
 ---
 
 # 10. Stage Boundary
@@ -323,6 +332,16 @@ Maps; release removes owner references. A committed occupancy change invalidates
 dependent previews synchronously before post-commit observation. Candidate
 blockers remain read-only. Presentation-only changes do not alter topology
 revisions. Full authoring validation still inspects the actual hierarchy.
+
+Formal and candidate dashed-line route data must reflect the current Map and
+topology. A changed complete candidate footprint, structural or walkability
+change, or Map/pathfinding binding replacement invalidates the applicable
+candidate result. An outgoing Map's displayed or retained candidate route
+cannot be reused for its replacement. Presentation-only Map refresh does not
+by itself change the selected gameplay route. Invalidating a candidate query
+result does not replace the geometry retained for Blocked Preview while the
+Map topology remains unchanged; Tower Placement System owns that display
+selection under `09_TowerPlacementSystem.md`, Section 7.5.
 
 ---
 

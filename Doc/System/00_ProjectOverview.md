@@ -10,6 +10,15 @@ Tower Nexus is a tower-defense roguelite in which towers are both combat units a
 
 The player builds a temporary strategy through Draft choices while tower placement changes monster movement routes. Each playable Stage combines one authored Map, one Monster Wave configuration, and the Tower and Tower Upgrade content available during that battle.
 
+A Monster dashed-line path makes placement's route consequences visible.
+During Battle it shows the formal Spawn-to-Target main route in opaque white.
+Dragging a Tower previews the hypothetical post-placement main route in
+semi-transparent white; a route-blocking candidate changes the last displayed
+valid route to semi-transparent red without updating its geometry. The line
+represents the common Grid main route rather than each Monster's full physical
+trajectory. Detailed route, state, presentation, and lifetime contracts belong
+to Monster, Tower Placement, Battle HUD UI, and Stage System respectively.
+
 The project is designed around four connected decisions:
 
 - Which Tower or Tower Upgrade to select
@@ -205,7 +214,7 @@ It does not own Draft generation, UI presentation, Monster lifecycle, or Stage f
 
 ## 4.4 Battle HUD UI System
 
-Owns presentation and interaction for battle information, Draft choices, free Re-roll controls and balance display, Draft-local Toast feedback, held Draft items, drag feedback, and placement feedback. Reusable UI animation supports presentation that continues while battle simulation is paused.
+Owns presentation and interaction for battle information, Draft choices, free Re-roll controls and balance display, Draft-local Toast feedback, held Draft items, drag feedback, placement feedback, and world-space Monster dashed-line path rendering. Reusable UI animation supports presentation that continues while battle simulation is paused.
 
 It observes or forwards domain intent but does not own player state, Draft rules or Held reward ownership, Draft-driven simulation pause, placement validation, combat outcomes, or Game Flow presentation.
 
@@ -223,7 +232,7 @@ It consumes Map framing data, one authored 3D movement boundary, and battle-inte
 
 ## 4.7 Monster System
 
-Owns Wave execution, Monster spawning, normal spawning-completion reporting, health, movement, pathfinding, runtime state, death, Target arrival, exactly-once resolution reporting, post-resolution alive-Monster state, and Monster-local presentation state.
+Owns Wave execution, Monster spawning, normal spawning-completion reporting, health, movement, pathfinding, runtime state, death, Target arrival, exactly-once resolution reporting, post-resolution alive-Monster state, Monster-local presentation state, and formal/read-only candidate main-route data for dashed-line feedback.
 
 It consumes Map data and Stage-selected Wave configuration without owning them. It supplies battle-completion facts without deciding Victory or Defeat.
 
@@ -243,7 +252,7 @@ inside the Upgrade category without permitting duplicate display identities.
 
 ## 4.9 Tower Placement System
 
-Owns drag placement intent, Grid alignment, placement preview, placement validation, Tower target intent, occupancy commit, and the resulting Map topology update request.
+Owns drag placement intent, Grid alignment, placement preview, placement validation, Tower target intent, occupancy commit, the resulting Map topology update request, and dashed-line route/state selection during Tower Draft drag.
 
 It does not own Tower combat, Tower Upgrade eligibility, Map data, or pathfinding execution.
 
