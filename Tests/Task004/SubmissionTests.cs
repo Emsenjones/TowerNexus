@@ -34,6 +34,40 @@ class SubmissionTests
             int n=f.Path.Searches;f.Path.Blocked=true;var e=f.Grant(DraftResult.CreateTowerDraft(f.Definition));
             NoDeployment(f,e,f.Submission.SubmitDeployment(e,f.Candidate(2)));Check(f.Path.Searches>n,"fresh final path");
         });
+        Run("preview remains cross-frame but production final Candidate does not",()=>{
+            var f=new SubmissionFixture(false);var p=f.Preview(2,2);var preview=f.Validator.QueryRoutePreview(p);
+            Check(ReferenceEquals(preview,f.Validator.QueryRoutePreview(p)),"preview cache hit");
+            Check(TowerPlacementCandidate.TryCapture(f.Validator,p,out var candidate,out _),"production capture");
+            Time.frameCount++;
+            Check(preview.IsCurrentFor(f.Validator,candidate.Footprint)&&ReferenceEquals(preview,f.Validator.QueryRoutePreview(p)),
+                "unchanged preview valid across frames");
+            Check(!candidate.IsCurrent(f.Validator),"production Candidate frame freshness");
+            var e=f.Grant(DraftResult.CreateTowerDraft(f.Definition));NoDeployment(f,e,f.Submission.SubmitDeployment(e,candidate));
+        });
+        Run("cached rich preview never bypasses production Candidate revisions",()=>{
+            foreach(string mutation in new[]{"walkability","structure","validator","path"})
+            {
+                var f=new SubmissionFixture(false);var p=f.Preview(2,2);var preview=f.Validator.QueryRoutePreview(p);
+                Check(ReferenceEquals(preview,f.Validator.QueryRoutePreview(p)),"rich cache hit before capture");
+                Check(TowerPlacementCandidate.TryCapture(f.Validator,p,out var candidate,out _),"capture");
+                if(mutation=="walkability")f.Map.WalkabilityRevision++;
+                if(mutation=="structure")f.Map.StructureRevision++;
+                if(mutation=="validator")f.Validator.Initialize(f.Map,f.Path);
+                if(mutation=="path")f.Path.BindingRevision++;
+                Check(!candidate.IsCurrent(f.Validator)&&!preview.IsCurrentFor(f.Validator,candidate.Footprint),"both results invalidated");
+                var e=f.Grant(DraftResult.CreateTowerDraft(f.Definition));NoDeployment(f,e,f.Submission.SubmitDeployment(e,candidate));
+            }
+        });
+        Run("cached route agrees with fresh final production Candidate plan",()=>{
+            var f=new SubmissionFixture(false);var p=f.Preview(2,2);var preview=f.Validator.QueryRoutePreview(p);
+            Check(ReferenceEquals(preview,f.Validator.QueryRoutePreview(p)),"rich cache hit");
+            Check(TowerPlacementCandidate.TryCapture(f.Validator,p,out var candidate,out _),"production capture");
+            int searches=f.Path.Searches;
+            Check(f.Validator.TryCreateTopologyPlan(candidate,out var plan,out _,out _,out _)&&f.Path.Searches==searches+1,
+                "fresh final topology evaluation despite cached route");
+            Check(plan.AuthoritativeRoute.Count==preview.MainRoute.Route.Count,"same path count");
+            for(int i=0;i<plan.AuthoritativeRoute.Count;i++)Check(plan.AuthoritativeRoute[i]==preview.MainRoute.Route[i],"same ordered route");
+        });
         Run("empty, mismatched definition and old-frame candidates reject",()=>{
             var f=new SubmissionFixture(false);var e=f.Grant(DraftResult.CreateTowerDraft(new TowerDefinition()));
             NoDeployment(f,e,f.Submission.SubmitDeployment(e,f.Candidate(2)));
@@ -130,6 +164,26 @@ class SubmissionTests
             }
         });
         Run("production release routing preserves deferred Stage cancellation",ReleaseRoutingHarness.TestRouting);
+        Run("display snapshot construction failure preserves committed notifications",()=>{
+            var f=new SubmissionFixture(false);var display=new MonsterDashedPathSession{ThrowCapture=true};f.Battle.DashedPathSession=display;
+            int deployed=0,routes=0;f.Submission.OnTowerDeploymentCommitted+=t=>deployed++;f.Submission.OnPlacementRouteRevisionCommitted+=(t,p,b)=>routes++;
+            var e=f.Grant(DraftResult.CreateTowerDraft(f.Definition));
+            Check(f.Submission.SubmitDeployment(e,f.Candidate(2)).IsCommitted&&f.Owner.Held.Count==0,"commit lost");
+            Check(display.Captures==1&&deployed==1&&routes==1&&f.EvidenceCount==1&&f.NotificationCount==1,"notifications skipped");
+        });
+        Run("display publication failure preserves committed notifications",()=>{
+            var f=new SubmissionFixture(false);f.Battle.DashedPathSession=new MonsterDashedPathSession{ThrowPublish=true};
+            int deployed=0;f.Submission.OnTowerDeploymentCommitted+=t=>deployed++;
+            Check(f.Submission.SubmitDeployment(f.Grant(DraftResult.CreateTowerDraft(f.Definition)),f.Candidate(2)).IsCommitted&&deployed==1&&f.EvidenceCount==1&&f.NotificationCount==1,"publication fault");
+        });
+        Run("display observer retains originating session across rebind",()=>{
+            var f=new SubmissionFixture(false);var next=new MonsterDashedPathSession();var old=new MonsterDashedPathSession();f.Battle.DashedPathSession=old;
+            old.OnCapture=()=>f.Battle.DashedPathSession=next;
+            Check(f.Submission.SubmitDeployment(f.Grant(DraftResult.CreateTowerDraft(f.Definition)),f.Candidate(2)).IsCommitted,"commit");
+            Check(old.Publications==1&&next.Publications==0,"old commit adopted new session");
+        });
+        Run("production placement modal freezes input and cancels deferred release",()=>InteractionHarness.TestModal());
+        Run("production earliest revocation closes display before cleanup",()=>RevocationHarness.TestRevocation());
         Console.WriteLine(count+" complete Submission managed contracts passed.");
     }
 }

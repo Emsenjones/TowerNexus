@@ -99,6 +99,48 @@ public class AStarPathfindingService : MonoBehaviour
         mapGenerator = null;
     }
 
+    internal bool TryQueryFormalMainRoute(out MonsterMainRouteSnapshot snapshot,
+        out string failureReason)
+    {
+        snapshot = null;
+        MapGeneratorBehaviour map = mapGenerator;
+        if (map == null)
+        {
+            failureReason = "A* has no Active Map binding.";
+            return false;
+        }
+        if (!map.TryEnsureNodeIndex())
+        {
+            failureReason = "The Active Map node index is unavailable: " + map.NodeIndexFailureReason;
+            return false;
+        }
+        GridNodeBehaviour spawn = map.GetSpawnNode();
+        GridNodeBehaviour target = map.GetTargetNode();
+        if (spawn == null || target == null || !spawn.IsWalkable || !target.IsWalkable ||
+            map.GetNode(spawn.GridPosition) != spawn || map.GetNode(target.GridPosition) != target)
+        {
+            failureReason = "The Active Map must provide unique, owned, walkable Spawn and Target nodes.";
+            return false;
+        }
+
+        ulong binding = BindingRevision, structure = map.StructureRevision, walkability = map.WalkabilityRevision;
+        List<GridNodeBehaviour> route = FindPath(spawn, target);
+        if (mapGenerator != map || BindingRevision != binding || !map.TryEnsureNodeIndex() ||
+            map.StructureRevision != structure || map.WalkabilityRevision != walkability)
+        {
+            failureReason = "The Active Map binding or topology changed during formal route evaluation.";
+            return false;
+        }
+        if (route == null || route.Count == 0)
+        {
+            failureReason = "The committed Active Map topology has no Spawn-to-Target route.";
+            return false;
+        }
+        snapshot = new MonsterMainRouteSnapshot(map, this, route);
+        failureReason = string.Empty;
+        return true;
+    }
+
     public List<GridNodeBehaviour> FindPath(
         GridNodeBehaviour startNode,
         GridNodeBehaviour targetNode)

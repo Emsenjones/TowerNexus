@@ -64,9 +64,11 @@ internal sealed class TowerPlacementSubmission
         internal readonly TowerInstance Target;
         internal readonly TowerUpgradeDefinition Upgrade;
         internal readonly bool Debug;
+        internal readonly MonsterDashedPathSession PathSession;
         internal Operation(TowerPlacementSubmission owner, PendingDraftEntry entry,
             TowerInstance target, TowerUpgradeDefinition upgrade, bool debug)
         {
+            PathSession = owner.battle.DashedPathSession;
             Revision = owner.bindingRevision; Entry = entry; Target = target; Upgrade = upgrade; Debug = debug;
             ValidatorRevision = owner.placementValidator.BindingRevision;
             StructureRevision = owner.mapGenerator.StructureRevision;
@@ -138,8 +140,10 @@ internal sealed class TowerPlacementSubmission
 #endif
                 if (!IsCurrent(current) || !draft.PendingOwner.TryCommitConsumption(consumption))
                     return TowerSubmissionResult.Reject("Deployment authority expired before commit.");
-                CommitPreparedPlacement(plan, batch, preparedTower, combat);
+                CommitPreparedPlacement(plan, batch, preparedTower, combat, current.PathSession, out var committedRoute);
                 committed = true;
+                try { current.PathSession?.AcceptCommittedRoute(committedRoute); }
+                catch (Exception exception) { Debug.LogException(exception, battle); }
 #if UNITY_EDITOR
                 if (CombatDiagnosticScope.Enabled(battle.DiagnosticIdentity))
                     batch.CombatOwnershipFingerprintAfter = CombatDiagnosticScope.Capture(
@@ -440,8 +444,10 @@ internal sealed class TowerPlacementSubmission
         TowerPlacementTopologyPlan topologyPlan,
         MonsterRouteRevisionBatch revisionBatch,
         TowerBehaviour preparedTower,
-        TowerCombatBehaviour preparedCombat)
+        TowerCombatBehaviour preparedCombat, MonsterDashedPathSession pathSession,
+        out MonsterMainRouteSnapshot committedRoute)
     {
+        committedRoute = null;
         for (int i = 0; i < topologyPlan.Footprint.Count; i++)
         {
             topologyPlan.Footprint[i].SetRuntimeOccupied(true);
@@ -449,6 +455,10 @@ internal sealed class TowerPlacementSubmission
 
         monsterManager.ApplyPreparedMovementRevisionBatch(revisionBatch);
         members.CommitAdd(preparedTower);
+        // Capture after topology commit, before activation/observers can release or rebind Battle.
+        // Snapshot construction is display-only: failure cannot skip existing committed notifications.
+        try { committedRoute = pathSession?.CaptureCommittedRoute(topologyPlan); }
+        catch (Exception exception) { Debug.LogException(exception, battle); }
         preparedCombat.ActivatePreparedBattleRuntime();
     }
 

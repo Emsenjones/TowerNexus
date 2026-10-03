@@ -84,7 +84,13 @@ def execute(folder, baseline, fixtures):
     map_path='Assets/Scripts/Map/MapGeneratorBehaviour.cs'
     target=folder/(mode+'Map.cs')
     target.write_text(generate_map(old(map_path) if baseline else (root/map_path).read_text(),baseline));sources.append(target)
-    if not baseline:sources.append(root/'Assets/Scripts/Map/MapRuntimeNodeIndex.cs')
+    if not baseline:
+        sources += [root/p for p in (
+            'Assets/Scripts/Map/MapRuntimeNodeIndex.cs',
+            'Assets/Scripts/Pathfinding/MonsterMainRouteSnapshot.cs',
+            'Assets/Scripts/TowerDeployment/TowerPlacementRoutePreviewResult.cs',
+            'Tests/MonsterDashedPath/RouteQueryTests.cs')]
+
     query_source=(root/'Tests/Task002/QueryTests.cs').read_text()
     if not baseline:
         for variable in ['preview','stationary']:

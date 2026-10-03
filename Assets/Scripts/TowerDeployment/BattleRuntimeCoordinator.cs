@@ -12,6 +12,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         TechnicalFailure = 3
     }
 
+    [SerializeField] private GameObject monsterDashedPathPrefab;
+    private GameObject pathPresentationRoot;
+    internal MonsterDashedPathSession DashedPathSession { get; private set; }
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterSpawner monsterSpawner;
@@ -430,6 +433,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             towerPlacementController.BeginBattle();
             draftSystem.BeginBattle();
             Submission.BeginBattle();
+            BeginDashedPath();
             monsterSpawner.BeginBattle();
 
             if (!AreConsumerGatesOpen())
@@ -487,8 +491,53 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         catch (Exception exception) { Debug.LogException(exception, this); }
     }
 
+    private void BeginDashedPath()
+    {
+        ReleaseDashedPath();
+        MapGeneratorBehaviour map = towerPlacementController.ActiveMap;
+        if (monsterDashedPathPrefab == null || map == null)
+        {
+            Debug.LogWarning("Battle dashed path requires an assigned Presenter Prefab and Active Map.", this);
+            return;
+        }
+        try
+        {
+            pathPresentationRoot = new GameObject("Monster Path Presentation");
+            pathPresentationRoot.transform.SetParent(map.transform, false);
+            GameObject instance = Instantiate(monsterDashedPathPrefab, pathPresentationRoot.transform);
+            if (!instance.TryGetComponent(out MonsterDashedPathPresenter presenter))
+            {
+                Debug.LogWarning("Monster Dashed Path Prefab requires a MonsterDashedPathPresenter on its root.", this);
+                ReleaseDashedPath();
+                return;
+            }
+            instance.SetActive(true);
+            DashedPathSession = new MonsterDashedPathSession(map, pathfindingService,
+                towerPlacementController.PathPreviewValidator, presenter,
+                reason => Debug.LogWarning("Monster dashed path: " + reason, this));
+            towerPlacementController.BindPathSession(DashedPathSession);
+            DashedPathSession.Tick();
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            ReleaseDashedPath();
+        }
+    }
+
+    private void ReleaseDashedPath()
+    {
+        MonsterDashedPathSession outgoing = DashedPathSession;
+        DashedPathSession = null;
+        towerPlacementController?.BindPathSession(null);
+        RunCleanupSafely(() => outgoing?.Close());
+        if (pathPresentationRoot != null) Destroy(pathPresentationRoot);
+        pathPresentationRoot = null;
+    }
+
     private void RevokeCombatAuthority()
     {
+        RunCleanupSafely(() => DashedPathSession?.Close());
         combatBinding?.Close();
         Submission.CloseBattleGate();
     }
@@ -570,6 +619,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 monsterSpawner?.ClearStageBinding();
                 draftSystem?.ClearStagePools();
                 towerUpgradeSystem?.ClearStageLevelRules();
+                ReleaseDashedPath();
                 towerPlacementController?.ClearActiveMap();
                 pathfindingService?.ClearActiveMap();
                 ResetResultTracking();

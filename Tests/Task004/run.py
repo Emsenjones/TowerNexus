@@ -19,7 +19,7 @@ with tempfile.TemporaryDirectory(prefix='towernexus-task004-') as folder:
  a=source.index('    public bool CanStartDraftInteraction');predicate=source[a:source.index(';',a)+1]
  generated=Path(folder)/'InteractionHarness.cs'
  generated.write_text('using System; using UnityEngine;\npartial class InteractionHarness {\n'+predicate+'\n'+
-     method(source,'CompletePlacement')+'\n'+method(source,'CompletePlacementCore')+'\n}')
+     method(source,'Update')+'\n'+method(source,'CompletePlacement')+'\n'+method(source,'CompletePlacementCore')+'\n}')
  recorder=(root/'Assets/Scripts/Diagnostics/CombatBalance/CombatRecordingSession.cs').read_text()
  bindings=Path(folder)/'RecorderBindings.cs'
  bindings.write_text('partial class RecorderBindingHarness { void Subscribe() { '+
@@ -27,4 +27,5 @@ with tempfile.TemporaryDirectory(prefix='towernexus-task004-') as folder:
      '} void Unsubscribe() { '+block(recorder,'        if (subscribedSubmission != null)')+'} }')
  runtime=(root/'Assets/Scripts/TowerDeployment/BattleRuntimeCoordinator.cs').read_text()
  generated.write_text(generated.read_text()+'\npartial class ReleaseRoutingHarness {\n'+method(runtime,'ReleasePreparedBattleRuntime')+'\n}')
+ generated.write_text(generated.read_text()+'\npartial class RevocationHarness {\n'+method(runtime,'RevokeCombatAuthority')+'\n}')
  build(folder,[root/'Tests/Task004/SubmissionTests.cs' ,root/'Tests/Task004/InteractionTests.cs',generated,bindings],'SubmissionTests')

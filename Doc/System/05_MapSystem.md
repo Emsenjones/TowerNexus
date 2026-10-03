@@ -339,7 +339,7 @@ change, or Map/pathfinding binding replacement invalidates the applicable
 candidate result. An outgoing Map's displayed or retained candidate route
 cannot be reused for its replacement. Presentation-only Map refresh does not
 by itself change the selected gameplay route. Invalidating a candidate query
-result does not replace the geometry retained for Blocked Preview while the
+result does not replace the geometry retained for Blocked while the
 Map topology remains unchanged; Tower Placement System owns that display
 selection under `09_TowerPlacementSystem.md`, Section 7.5.
 

@@ -278,49 +278,63 @@ This feedback indicates target eligibility only. It does not simulate package-sp
 
 ## 7.5 Monster Dashed-Line Path State
 
-During an active Battle, the Monster dashed-line path has three display states.
+During an active Battle, the Monster dashed-line path has two display states.
 Monster System supplies ordered main-route data; Tower Placement System selects
 the state and route; Battle HUD UI System renders the requested presentation.
 
 | State | Trigger And Route Selection | Presentation |
 |---|---|---|
-| Solid | No active Tower Draft drag; display the current formal main route | White and fully opaque |
-| Valid Preview | Active Tower Draft drag; display the candidate main route when its complete footprint is valid and a route survives, otherwise the formal main route for the fallback cases below | White and semi-transparent |
-| Blocked Preview | A complete otherwise valid new-Tower footprint blocks the Spawn-to-Target route; retain the displayed route from immediately before the blocking result | Red and semi-transparent |
+| Normal | No active drag: formal main route. Active Tower Draft drag: valid candidate main route, or formal main route for fallback cases below | Configured Normal Color, including Alpha; default white at Alpha 0.5 |
+| Blocked | A complete otherwise valid new-Tower footprint blocks the Spawn-to-Target route; retain the displayed route from immediately before the blocking result | Configured Blocked Color, including Alpha; default red at Alpha 0.5 |
 
-Beginning a Tower Draft drag immediately enters Valid Preview with the current
+These are presentation states. Formal and hypothetical route selection remain
+separate gameplay responsibilities even though both use Normal appearance.
+
+Beginning a Tower Draft drag immediately displays Normal with the current
 formal main route, even before the Tower enters the Map. During ordinary
 new-Tower placement, resolve the complete snapped footprint before requesting
 its hypothetical main route. Refresh the preview when that footprint or its
 Map topology changes. Pointer movement that leaves both unchanged does not
 require a different route result.
 
-The formal main route is shown in Valid Preview when the Tower is still in the
+The formal main route is shown in Normal when the Tower is still in the
 Pending area, leaves the Map, has a footprint partially outside the Map, overlaps
 unavailable or occupied nodes, or enters existing-Tower level-up targeting.
 Existing-Tower targeting leaves occupancy unchanged, including an ineligible
-level-up target. White path feedback means no route-blocking warning is active;
+level-up target. Normal path feedback means no route-blocking warning is active;
 it does not assert that the Tower is deployable. Tower-local invalid feedback
 and final acceptance remain authoritative for other placement constraints.
 
-Route blocking immediately enters Blocked Preview during drag, before input
+Route blocking immediately enters Blocked during drag, before input
 release. Only color and opacity change: the retained path geometry is not
 updated. Continuous movement across multiple blocking candidates preserves the
 same retained geometry. Each new drag seeds its retained route from the formal
 main route, so blocking before any valid candidate also has a route to retain.
 
 Returning to a valid candidate immediately replaces the route and restores
-Valid Preview. Entering a fallback case immediately restores the formal route
-in Valid Preview. The next blocking result retains whichever valid-preview
+Normal. Entering a fallback case immediately restores the formal route
+in Normal. The next blocking result retains whichever valid-preview
 route was displayed immediately before it. Retained candidate geometry belongs
 only to the current drag and current Battle/Map topology; it cannot survive a
 new drag, topology replacement, or Battle replacement as current preview data.
 
 Successful deployment finishes the drag and displays the committed formal
-main route in Solid. Failed release, return-to-Pending cancellation, or other
+main route in Normal. Failed release, return-to-Pending cancellation, or other
 drag cancellation finishes the drag and displays the unchanged formal main
-route in Solid. A red preview never persists after the drag ends. Battle end
+route in Normal. Blocked appearance never persists after the drag ends. Battle end
 or Stage release instead removes the line under the Stage lifecycle contract.
+
+While a Draft modal owns input, retain the route/state but suspend battlefield
+movement and deployment input. If the player releases or cancels the held drag
+inside the modal, finish it as cancellation when battlefield input returns;
+closing the window cannot deploy through that release. A continuously held drag
+may resume. Battle cleanup and topology invalidation remain authoritative.
+
+Technical route/presentation failure hides the line and reports a diagnostic,
+without being classified as route blocking. Recovery on the same topology may
+restore the still-valid retained route, including for a blocked result. A changed
+Battle/Map binding or topology instead requires a new formal baseline. Repeated
+identical failures do not continuously repeat diagnostics.
 
 The line does not modify placement validity, consume a Draft, commit occupancy,
 refresh Tiles, or redirect Monsters. Final placement validation remains fresh
@@ -340,7 +354,7 @@ Cancellation:
 - Hides all drag-time attack range presentation
 - Clears all Tower target feedback
 - Clears placement and target state
-- Clears retained dashed-line candidate data and restores the formal route in Solid while Battle remains active
+- Clears retained dashed-line candidate data and restores the formal route in Normal while Battle remains active
 - Does not invoke placement, level-up, or upgrade application
 
 The same cleanup occurs after accepted or rejected release, with item consumption determined only by the gameplay result.
@@ -378,7 +392,7 @@ Placement authoring and runtime validation should report or reject at minimum:
 - Candidate nodes that are unwalkable or already occupied
 - Candidate occupancy that blocks a required route
 - A dashed-line state that treats a non-route placement failure as route blocking
-- Blocked Preview that updates retained path geometry or survives drag completion
+- Blocked that updates retained path geometry or survives drag completion
 - Valid candidate preview that disagrees with the authoritative new main route under unchanged topology and footprint
 - Retained dashed-line data reused across a new drag, topology replacement, or Battle/Map replacement
 - Placement preflight that mutates occupancy or Monster state
@@ -415,7 +429,7 @@ Current scope includes:
 - Atomic occupancy, all-living-Monster route revision, and held-Draft consumption commit
 - Runtime occupancy and Tile-only topology refresh
 - New-Tower, level-up, attack-range, and eligible-target feedback
-- Solid, Valid Preview, and Blocked Preview state selection for the Monster dashed-line path
+- Normal and Blocked state selection for the Monster dashed-line path
 - General return-to-area drag cancellation
 
 Deferred topics include Tower recycling, redeployment inventory, Tower rotation, dynamic footprint changes, multiplayer synchronization, traps, and temporary non-Tower blockers.

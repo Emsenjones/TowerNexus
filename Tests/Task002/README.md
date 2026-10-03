@@ -40,3 +40,11 @@ The doubles cannot establish those runtime outcomes or replace their acceptance.
 Task004 adaptation: final-query fixtures provide resolved candidate snapshots to the
 production validator. Baseline source still uses Preview. Actual candidate capture,
 owner/Map checks and prepared geometry execute in Task004's integration suite.
+
+Monster dashed-line path Task001 additionally executes
+`Tests/MonsterDashedPath/RouteQueryTests.cs` in the current-code build. Its 29
+cases cover formal route data, all four candidate outcomes, readonly results,
+complete-footprint cache matching, negative-result provenance, and release /
+rebind / topology invalidation. These are separate from the historical Task002
+numbering. Campaign available-preview paths are compared node-for-node with
+fresh final plans; production Candidate frame checks remain in Task004.

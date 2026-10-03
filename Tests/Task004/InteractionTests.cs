@@ -7,15 +7,26 @@ class PendingDraftUIItem
 }
 class BattleHUDUI
 {
+    public bool IsDraftOpen;
     public DraftSystem DraftOwner;
     public Action OnRelease;
     public bool IsCurrentPendingView(PendingDraftUIItem item)=>item!=null&&DraftOwner.PendingOwner.CanConsume(item.Entry);
     public bool IsScreenPositionInsideDraftItemInteractionArea(Vector3 p)=>false;
     public void ReleaseConsumedPendingDraftView(PendingDraftUIItem item){if(item?.Entry.IsConsumed==true)OnRelease?.Invoke();}
 }
-namespace UnityEngine { public static class Input {public static Vector3 mousePosition;} }
+namespace UnityEngine { public static class Input {
+    public static Vector3 mousePosition;public static bool LeftHeld=true,LeftUp,RightDown;
+    public static bool GetMouseButton(int button)=>LeftHeld;
+    public static bool GetMouseButtonUp(int button)=>LeftUp;
+    public static bool GetMouseButtonDown(int button)=>RightDown;
+} }
 partial class InteractionHarness : MonoBehaviour
 {
+    bool modalReleasePending;
+    bool isDragging;
+    MonsterDashedPathSession pathSession;
+    int previewMoves;
+    private void UpdatePreviewPosition(Vector3 p){previewMoves++;}
     private TowerPlacementSubmission submission;
     private TowerUpgradeSystem towerUpgradeSystem;
     private BattleHUDUI battleHUDUI;
@@ -27,7 +38,24 @@ partial class InteractionHarness : MonoBehaviour
     private bool isBattleActive=true,isCompletingPlacement,isTowerTargetCandidateActive,isLevelUpPreviewActive;
     private Action OnCancel;
     private bool IsTowerUpgradeDraftDrag()=>true;
-    private void CancelPlacement(){OnCancel?.Invoke();}
+    private void CancelPlacement(){isDragging=false;modalReleasePending=false;OnCancel?.Invoke();}
+    internal static void TestModal()
+    {
+        var f=new SubmissionFixture();var h=new InteractionHarness{submission=f.Submission,towerUpgradeSystem=f.System,
+            battleHUDUI=new BattleHUDUI{DraftOwner=f.Draft,IsDraftOpen=true},currentDraftEntry=new PendingDraftUIItem{Entry=f.Item},
+            currentDraftResult=f.Item.DraftResult,currentUpgradeTarget=f.Behaviour,isDragging=true};
+        Input.LeftHeld=true;Input.LeftUp=false;Input.RightDown=false;
+        h.Update();h.CompletePlacement();
+        if(h.previewMoves!=0||f.Item.IsConsumed||!h.isDragging)throw new Exception("modal movement/submit leak");
+        Input.LeftHeld=false;Input.LeftUp=true;h.Update();
+        if(!h.modalReleasePending||h.CanStartDraftInteraction||!h.isDragging)throw new Exception("modal release state");
+        h.battleHUDUI.IsDraftOpen=false;Input.LeftUp=false;h.Update();
+        if(h.isDragging||h.modalReleasePending||f.Item.IsConsumed||h.previewMoves!=0)throw new Exception("release deployed on modal close");
+        h.isDragging=true;h.battleHUDUI.IsDraftOpen=true;Input.LeftHeld=true;h.Update();
+        h.battleHUDUI.IsDraftOpen=false;h.Update();
+        if(!h.isDragging||h.previewMoves!=1)throw new Exception("held drag failed to resume");
+    }
+
     public static void TestCleanup()
     {
         foreach(bool throws in new[]{false,true})
@@ -91,5 +119,19 @@ partial class ReleaseRoutingHarness
         if(!h.releaseRequested||h.calls!=0)throw new Exception("release must cancel incoming Stage without recursive cleanup");
         h=new ReleaseRoutingHarness{isReleasing=true};h.ReleasePreparedBattleRuntime();
         if(h.releaseRequested||h.calls!=0)throw new Exception("ordinary release reentry must be idempotent");
+    }
+}
+
+partial class RevocationHarness
+{
+    private MonsterDashedPathSession DashedPathSession=new MonsterDashedPathSession();
+    private CombatBindingDouble combatBinding=new CombatBindingDouble();
+    private TowerPlacementSubmission Submission=new TowerPlacementSubmission();
+    private class CombatBindingDouble {internal bool Closed;internal void Close(){Closed=true;}}
+    private void RunCleanupSafely(Action action){action();}
+    internal static void TestRevocation()
+    {
+        var h=new RevocationHarness();h.RevokeCombatAuthority();
+        if(!h.DashedPathSession.Closed||!h.combatBinding.Closed)throw new Exception("path not revoked at earliest boundary");
     }
 }

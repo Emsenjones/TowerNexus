@@ -92,7 +92,13 @@ public class MapGeneratorBehaviour : UnityEngine.MonoBehaviour
 }
 public class AStarPathfindingService
 {
-    public MapGeneratorBehaviour ActiveMap;public ulong BindingRevision;public bool Blocked;public int Searches;
+    public MapGeneratorBehaviour ActiveMap;public ulong BindingRevision;public bool Blocked,FormalBlocked;public int Searches;
+    internal bool TryQueryFormalMainRoute(out MonsterMainRouteSnapshot route,out string reason)
+    {
+        Searches++;route=null;reason="fixture formal route unavailable";
+        if(ActiveMap==null||FormalBlocked)return false;
+        route=new MonsterMainRouteSnapshot(ActiveMap,this,new[]{ActiveMap.Spawn,ActiveMap.Target});reason="";return true;
+    }
     public List<GridNodeBehaviour> FindPath(GridNodeBehaviour from,GridNodeBehaviour to,IReadOnlyList<GridNodeBehaviour> nodes)
     {Searches++;return Blocked?null:new List<GridNodeBehaviour>{from,to};}
 }
@@ -182,6 +188,7 @@ public partial class DraftSystem : UnityEngine.MonoBehaviour
 }
 public class BattleRuntimeCoordinator : UnityEngine.MonoBehaviour
 {
+    internal MonsterDashedPathSession DashedPathSession;
     internal object DiagnosticIdentity => this;
     public bool IsBattleActive=true;public int FailureCount;public Action OnFailure;
     internal readonly TowerPlacementSubmission Submission=new TowerPlacementSubmission();
@@ -190,3 +197,19 @@ public class BattleRuntimeCoordinator : UnityEngine.MonoBehaviour
 }
 
 internal static class CombatDiagnosticScope { internal struct Scope : IDisposable { public void Dispose() {} } internal static Scope Enter(object identity) => default; internal static bool Enabled(object identity) => false; internal static T Capture<T>(object identity,Func<T> capture) => capture(); }
+
+// Controlled display boundary used to fault-inject snapshot construction/publication
+// while the actual Submission code and committed notification ordering execute.
+internal class MonsterDashedPathSession
+{
+    internal bool ThrowCapture, ThrowPublish;
+    internal bool Closed;
+    internal void Tick() { }
+    internal void Close() { Closed=true; }
+    internal Action OnCapture, OnPublish;
+    internal int Captures, Publications;
+    internal MonsterMainRouteSnapshot CaptureCommittedRoute(TowerPlacementTopologyPlan plan)
+    { Captures++; OnCapture?.Invoke(); if(ThrowCapture) throw new Exception("snapshot construction fault"); return null; }
+    internal void AcceptCommittedRoute(MonsterMainRouteSnapshot route)
+    { Publications++; OnPublish?.Invoke(); if(ThrowPublish) throw new Exception("snapshot publication fault"); }
+}

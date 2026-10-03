@@ -18,6 +18,12 @@ public class TowerPlacementController : MonoBehaviour
     private MapGeneratorBehaviour mapGenerator;
     private TowerPlacementPreview currentPreview;
     private TowerPlacementSubmission submission;
+    private MonsterDashedPathSession pathSession;
+    private object pathDrag;
+    private bool modalReleasePending;
+    internal TowerPlacementValidator PathPreviewValidator => placementValidator;
+    internal void BindPathSession(MonsterDashedPathSession session) { pathSession = session; pathDrag = null; }
+    private void ShowPathFallback() => pathSession?.Preview(pathDrag, null, true);
     private static readonly IReadOnlyList<TowerBehaviour> NoTowers = System.Array.Empty<TowerBehaviour>();
     private IReadOnlyList<TowerBehaviour> deployedTowers => submission != null ? submission.DeployedTowers : NoTowers;
     internal void BindSubmission(TowerPlacementSubmission owner) { submission = owner; }
@@ -36,7 +42,7 @@ public class TowerPlacementController : MonoBehaviour
     private PendingDraftUIItem currentDraftEntry;
     private bool isDragging;
     private bool isCompletingPlacement;
-    public bool CanStartDraftInteraction => !isCompletingPlacement &&
+    public bool CanStartDraftInteraction => !isCompletingPlacement && !modalReleasePending &&
         submission != null && !submission.IsBusy &&
         (battleHUDUI == null || battleHUDUI.DraftOwner == null || !battleHUDUI.DraftOwner.IsPendingMutationBusy) &&
         (towerUpgradeSystem == null || !towerUpgradeSystem.IsApplyingUpgrade);
@@ -72,6 +78,19 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
+        pathSession?.Tick();
+        if (battleHUDUI != null && battleHUDUI.IsDraftOpen)
+        {
+            if (isDragging && (Input.GetMouseButtonUp(0) || Input.GetMouseButtonDown(1) ||
+                !Input.GetMouseButton(0))) modalReleasePending = true;
+            return;
+        }
+        if (modalReleasePending)
+        {
+            modalReleasePending = false;
+            CancelPlacement();
+            return;
+        }
         if (!isDragging)
         {
             return;
@@ -102,7 +121,7 @@ public class TowerPlacementController : MonoBehaviour
     {
         if (battleHUDUI == null || !battleHUDUI.IsCurrentPendingView(draftedDraftEntry) ||
             draftedDraftEntry.DraftResult != draftResult) return;
-        if (!CanStartDraftInteraction) return;
+        if (!CanStartDraftInteraction || (battleHUDUI != null && battleHUDUI.IsDraftOpen)) return;
         if (!isBattleActive)
         {
             draftedDraftEntry?.RestorePendingPosition();
@@ -175,6 +194,7 @@ public class TowerPlacementController : MonoBehaviour
         currentTargetNode = null;
         isDragging = true;
 
+        pathDrag = pathSession?.BeginDrag();
         ShowAttackRangePreviewsForCurrentDrag();
         UpdatePreviewPosition(Input.mousePosition);
     }
@@ -206,6 +226,12 @@ public class TowerPlacementController : MonoBehaviour
 
     public void CancelPlacement()
     {
+        var outgoingSession = pathSession;
+        object outgoingDrag = pathDrag;
+        pathDrag = null;
+        modalReleasePending = false;
+        try { outgoingSession?.EndDrag(outgoingDrag); }
+        catch (System.Exception exception) { Debug.LogException(exception, this); }
         placementValidator?.InvalidatePreviewCache();
         try
         {
@@ -347,7 +373,8 @@ public class TowerPlacementController : MonoBehaviour
 
     private void CompletePlacement()
     {
-        if (!CanStartDraftInteraction || !submission.TryBeginInteraction(out var lease)) return;
+        if ((battleHUDUI != null && battleHUDUI.IsDraftOpen) ||
+            !CanStartDraftInteraction || !submission.TryBeginInteraction(out var lease)) return;
         var view = currentDraftEntry;
         isCompletingPlacement = true;
         try
@@ -372,7 +399,7 @@ public class TowerPlacementController : MonoBehaviour
 
     private TowerSubmissionResult CompletePlacementCore(TowerPlacementSubmission.Interaction lease)
     {
-        if (!isBattleActive || battleHUDUI == null || !battleHUDUI.IsCurrentPendingView(currentDraftEntry) ||
+        if (!isBattleActive || battleHUDUI == null || battleHUDUI.IsDraftOpen || !battleHUDUI.IsCurrentPendingView(currentDraftEntry) ||
             currentDraftEntry.DraftResult != currentDraftResult)
             return TowerSubmissionResult.Reject("The current Pending view or Battle is unavailable.");
         if (battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
@@ -405,6 +432,7 @@ public class TowerPlacementController : MonoBehaviour
 
         if (!TryGetWorldPosition(screenPosition, out Vector3 worldPosition))
         {
+            ShowPathFallback();
             currentTargetNode = null;
             ClearLevelUpPreviewState(true);
             currentPreview.SetPlacementState(false);
@@ -413,6 +441,7 @@ public class TowerPlacementController : MonoBehaviour
 
         if (mapGenerator == null)
         {
+            ShowPathFallback();
             if (!missingMapGeneratorWarningLogged)
             {
                 Debug.LogWarning("Tower placement controller cannot snap preview: map generator is not assigned.", this);
@@ -433,16 +462,19 @@ public class TowerPlacementController : MonoBehaviour
 
             if (TryUpdateLevelUpPreview(targetNode))
             {
+                ShowPathFallback();
                 return;
             }
 
-            currentPreview.SetPlacementState(
-                placementValidator != null &&
-                placementValidator.CanPlaceTower(currentPreview)
-            );
+            TowerPlacementRoutePreviewResult result = placementValidator?.QueryRoutePreview(currentPreview);
+            currentPreview.SetPlacementState(result != null && result.CanPlace);
+            bool pendingArea = battleHUDUI != null &&
+                battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(screenPosition);
+            pathSession?.Preview(pathDrag, result, pendingArea);
             return;
         }
 
+        ShowPathFallback();
         currentTargetNode = null;
         ClearLevelUpPreviewState(true);
         currentPreview.SetWorldPosition(worldPosition);

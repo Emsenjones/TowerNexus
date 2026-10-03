@@ -12,7 +12,7 @@ directories. The production sources compiled by `build.py` include complete
 Submission, collection, candidate capture, final validator, Pending, Upgrade core,
 Tower instance/state and immutable investment observation.
 
-The 23 Task004 cases cover full Deployment/Level Up/Upgrade acceptance and rejection,
+The 31 Task004 cases cover full Deployment/Level Up/Upgrade acceptance and rejection,
 read-only membership, truthful technical failure, final path evaluation after preview,
 geometry/owner/Map/frame invalidation, multi-cell offset/rotation/scale fixtures,
 readiness failure or Stop/rebind, authorized vs nested submission, standalone Stop,
@@ -36,3 +36,16 @@ Task001's 30 Upgrade fault/regression cases now run through the same complete Su
 entry using these shared boundaries. Task003 retains 14 Pending/orchestration checks
 and 300 baseline Draft traces; its former post-preflight investment segments have been
 replaced by the stronger complete-entry lifecycle tests here.
+
+Monster dashed-line path Task001 adds three submission cases for rich-preview
+cache reuse across frames, production Candidate invalidation on revision/frame
+changes, and fresh final topology evaluation after a preview cache hit. Formal
+route queries in this suite are a controlled boundary double; actual formal
+A* behavior is covered by `Tests/Task002/run.py` and its feature query cases.
+
+
+Dashed-path additions execute protected post-commit snapshot capture/publication
+with a throwing display double and source-session replacement. Production modal
+Update/completion and earliest revocation code execute with controlled input/UI
+and display boundaries. These checks establish exception/authority ordering;
+actual Prefab lifecycle, Draft interaction and visuals require Unity acceptance.

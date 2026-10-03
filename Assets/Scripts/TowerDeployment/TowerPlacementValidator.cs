@@ -38,47 +38,22 @@ internal sealed class TowerPlacementTopologyPlan
 
 internal sealed class TowerPlacementPreviewQueryCache
 {
-    private MapGeneratorBehaviour map;
-    private AStarPathfindingService pathfinding;
-    private ulong structureRevision, walkabilityRevision, bindingRevision;
-    private readonly List<GridNodeBehaviour> footprint = new List<GridNodeBehaviour>();
-    private bool hasResult, result;
+    private TowerPlacementRoutePreviewResult result;
 
-    internal void Clear()
-    {
-        hasResult = false;
-        map = null;
-        pathfinding = null;
-        footprint.Clear();
-    }
+    internal void Clear() => result = null;
 
-    internal bool TryGet(MapGeneratorBehaviour currentMap, AStarPathfindingService service,
-        IReadOnlyList<GridNodeBehaviour> nodes, out bool canPlace)
+    internal bool TryGet(TowerPlacementValidator validator,
+        IReadOnlyList<GridNodeBehaviour> nodes, out TowerPlacementRoutePreviewResult preview)
     {
-        canPlace = false;
-        if (!hasResult || map != currentMap || pathfinding != service ||
-            structureRevision != currentMap.StructureRevision ||
-            walkabilityRevision != currentMap.WalkabilityRevision ||
-            bindingRevision != service.BindingRevision || footprint.Count != nodes.Count) return false;
-        // Resolved footprints are unique. Compare full identities, independent of anchor order.
-        for (int i = 0; i < nodes.Count; i++)
-            if (!footprint.Contains(nodes[i])) return false;
-        canPlace = result;
+        preview = null;
+        if (result == null || !result.IsCurrentFor(validator, nodes)) return false;
+        preview = result;
         return true;
     }
 
-    internal void Store(MapGeneratorBehaviour currentMap, AStarPathfindingService service,
-        IReadOnlyList<GridNodeBehaviour> nodes, bool canPlace)
+    internal void Store(TowerPlacementRoutePreviewResult preview)
     {
-        map = currentMap;
-        pathfinding = service;
-        structureRevision = map.StructureRevision;
-        walkabilityRevision = map.WalkabilityRevision;
-        bindingRevision = service.BindingRevision;
-        footprint.Clear();
-        for (int i = 0; i < nodes.Count; i++) footprint.Add(nodes[i]);
-        result = canPlace;
-        hasResult = true;
+        result = preview.CanCache ? preview : null;
     }
 }
 
@@ -93,6 +68,7 @@ public class TowerPlacementValidator : MonoBehaviour
     public int PreviewCacheHitCount { get; private set; }
 #endif
     internal MapGeneratorBehaviour ActiveMap => mapGenerator;
+    internal AStarPathfindingService ActivePathfinding => pathfindingService;
     internal ulong BindingRevision { get; private set; }
     internal ulong PathBindingRevision => pathfindingService != null ? pathfindingService.BindingRevision : 0;
     public void InvalidatePreviewCache() => previewCache.Clear();
@@ -162,13 +138,21 @@ public class TowerPlacementValidator : MonoBehaviour
 
     public bool CanPlaceTower(TowerPlacementPreview preview)
     {
+        return QueryRoutePreview(preview).CanPlace;
+    }
+
+    internal TowerPlacementRoutePreviewResult QueryRoutePreview(TowerPlacementPreview preview)
+    {
         if (!TryResolveQueryEndpoints(out GridNodeBehaviour spawn, out GridNodeBehaviour target,
-                out _) || !TryGetOccupiedNodes(preview, out List<GridNodeBehaviour> nodes))
-        {
-            previewCache.Clear();
-            return false;
-        }
-        if (previewCache.TryGet(mapGenerator, pathfindingService, nodes, out bool cachedResult))
+                out string failureReason))
+            return UncachedPreview(TowerPlacementRoutePreviewOutcome.TechnicalFailure, failureReason);
+        if (!spawn.IsWalkable || !target.IsWalkable)
+            return UncachedPreview(TowerPlacementRoutePreviewOutcome.TechnicalFailure,
+                "The committed Spawn and Target nodes must be walkable.");
+        if (!TryGetOccupiedNodes(preview, out List<GridNodeBehaviour> nodes))
+            return UncachedPreview(TowerPlacementRoutePreviewOutcome.CandidateUnavailable,
+                "The complete candidate footprint cannot be resolved on the Active Map.");
+        if (previewCache.TryGet(this, nodes, out TowerPlacementRoutePreviewResult cachedResult))
         {
 #if UNITY_EDITOR
             PreviewCacheHitCount++;
@@ -178,9 +162,37 @@ public class TowerPlacementValidator : MonoBehaviour
 #if UNITY_EDITOR
         PreviewTopologyQueryCount++;
 #endif
-        bool result = TryEvaluateTopology(nodes, spawn, target, out _, out _, out _);
-        previewCache.Store(mapGenerator, pathfindingService, nodes, result);
+        ulong validatorBinding = BindingRevision, pathBinding = pathfindingService.BindingRevision,
+            structure = mapGenerator.StructureRevision, walkability = mapGenerator.WalkabilityRevision;
+        MapGeneratorBehaviour map = mapGenerator;
+        AStarPathfindingService paths = pathfindingService;
+        bool canPlace = TryEvaluateTopology(nodes, spawn, target, out List<GridNodeBehaviour> route,
+            out bool? routeExists, out failureReason);
+        var outcome = canPlace ? TowerPlacementRoutePreviewOutcome.RouteAvailable :
+            routeExists == false ? TowerPlacementRoutePreviewOutcome.RouteBlocked :
+            TowerPlacementRoutePreviewOutcome.CandidateUnavailable;
+        // Empty candidate search only proves blocking when the committed topology
+        // still has a formal route. Never turn a broken runtime Map into a red preview.
+        if (outcome == TowerPlacementRoutePreviewOutcome.RouteBlocked &&
+            !paths.TryQueryFormalMainRoute(out _, out string formalFailure))
+            return UncachedPreview(TowerPlacementRoutePreviewOutcome.TechnicalFailure, formalFailure);
+        if (mapGenerator != map || pathfindingService != paths || BindingRevision != validatorBinding ||
+            paths.ActiveMap != map || paths.BindingRevision != pathBinding || !map.TryEnsureNodeIndex() ||
+            map.StructureRevision != structure || map.WalkabilityRevision != walkability)
+            return UncachedPreview(TowerPlacementRoutePreviewOutcome.TechnicalFailure,
+                "The candidate query binding or topology changed during evaluation.");
+
+        MonsterMainRouteSnapshot mainRoute = canPlace ? new MonsterMainRouteSnapshot(map, paths, route) : null;
+        var result = new TowerPlacementRoutePreviewResult(this, outcome, nodes, mainRoute, failureReason);
+        previewCache.Store(result);
         return result;
+    }
+
+    private TowerPlacementRoutePreviewResult UncachedPreview(TowerPlacementRoutePreviewOutcome outcome,
+        string failureReason)
+    {
+        previewCache.Clear();
+        return new TowerPlacementRoutePreviewResult(this, outcome, null, null, failureReason);
     }
 
     private bool TryResolveQueryEndpoints(out GridNodeBehaviour spawn,

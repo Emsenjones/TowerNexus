@@ -6,6 +6,8 @@ sources=[root/p for p in (
 'Assets/Scripts/TowerDeployment/DeployedTowerCollection.cs',
 'Assets/Scripts/TowerDeployment/TowerPlacementCandidate.cs',
 'Assets/Scripts/TowerDeployment/TowerPlacementValidator.cs',
+'Assets/Scripts/Pathfinding/MonsterMainRouteSnapshot.cs',
+'Assets/Scripts/TowerDeployment/TowerPlacementRoutePreviewResult.cs',
 'Assets/Scripts/TowerDeployment/TowerSubmissionResult.cs',
 'Assets/Scripts/TowerDeployment/TowerInvestmentCommitObservation.cs',
 'Assets/Scripts/TowerDeployment/PendingDraftCollection.cs',

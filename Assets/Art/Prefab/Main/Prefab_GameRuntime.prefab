@@ -3940,6 +3940,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b480659f85749f29f09473c6571d528, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleRuntimeCoordinator
+  monsterDashedPathPrefab: {fileID: 4621712501367467509, guid: 7ff97d83ff9f34ca8a41caee75811aca, type: 3}
   playerSystem: {fileID: 8439368486033747447}
   pathfindingService: {fileID: 4731439007408284308}
   monsterSpawner: {fileID: 5655621056079093700}
@@ -6442,7 +6443,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameFlowController
   demoStages:
+  - {fileID: 11400000, guid: 3cbcb494b08af4efb85765bfa4fdfd7e, type: 2}
+  - {fileID: 11400000, guid: c6a7dbddf59aa485fae8889106a20b2e, type: 2}
+  - {fileID: 11400000, guid: d2cf34bed2baf405683600a978d3350a, type: 2}
   - {fileID: 11400000, guid: aacc73e739bfe4ef59c5e22c120d3fd4, type: 2}
+  - {fileID: 11400000, guid: 4ca53bc93834148b0927ff523d21d19e, type: 2}
+  - {fileID: 11400000, guid: 6c71501ca7ca042bb9e46e493851ce3b, type: 2}
   stageCompositionController: {fileID: 4707264216546559258}
 --- !u!1 &9015606273351229035
 GameObject:

@@ -1,7 +1,7 @@
 # Task001 - Monster Path Route Queries
 
 Document Set: Task
-Status: Planned; implementation and runtime acceptance have not begun.
+Status: Implemented for the route-query scope; static compilation and managed fixtures passed. Native Unity acceptance remains pending.
 Dependencies: None in this task set.
 Next: [Task002 - Monster Dashed Path Presentation](Task002_MonsterDashedPathPresentation.md).
 
@@ -127,7 +127,33 @@ unless explicitly delegated.
 
 ## 10. Review And Status
 
-Planned contract only. Before coding, present the concrete affected-code plan
-and settle the minimal result shape and consumer boundary in review. Completion
-requires the acceptance evidence above; document generation is not evidence of
-implemented route queries.
+The reviewed plan was approved and implemented on 2026-10-02. All cacheable
+outcomes independently carry Map/service/Validator identity and revisions,
+including outcomes without a route. Complete footprint resolution precedes
+cache lookup; occupancy eligibility follows it. Parsing or technical failures
+clear the cache and are not cached. Preview freshness remains distinct from
+production final-Candidate frame freshness and Task003 drag authority.
+
+Recorded validation:
+
+- Runtime assembly compilation passed with 0 warnings and 0 errors. The
+  generated Unity project had not listed the two new source files, so a
+  temporary MSBuild import included them only for Assembly-CSharp; no Unity
+  import, project regeneration, or Inspector changes were performed.
+- `python3 Tests/Task002/run.py`: 29 new Monster path route-query cases passed;
+  32,192 baseline/current campaign observations matched exactly across the
+  current Stage1 and Stage4 fixtures. Available stationary preview queries
+  performed one search across 100 repeats; a cold blocking query performed
+  candidate and formal confirmation searches, then reused its negative result.
+- `python3 Tests/Task004/run.py`: 26 submission contracts passed, including
+  production Candidate revision/frame rejection and fresh final evaluation
+  after a rich-preview cache hit.
+- Changed-file whitespace and new-file reference checks passed.
+
+See `Tests/MonsterDashedPath/README.md` for commands and evidence limitations.
+Unity Editor/import and Play Mode checks were not executed and remain
+user-owned unless delegated. Task002 presentation and Task003 live integration
+are not implemented by this task. Query fixtures use actual A*/index/Validator
+code with Unity doubles; submission fixtures use production Candidate and
+submission code with Map/pathfinding/native-runtime boundary doubles. Neither
+suite establishes native Unity transform or end-to-end visual acceptance.

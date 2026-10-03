@@ -181,38 +181,52 @@ Tower Placement System owns the result.
 
 ### Monster Dashed-Line Path Presentation
 
-Battle HUD UI System renders one static dashed line for the ordered main route
+Battle HUD UI System renders one dashed line for the ordered main route
 requested by Tower Placement System. The line begins at the Spawn Grid center,
 ends at the Target Grid center, and follows the intervening Grid centers in
 Map space. Its world-space presentation is independent of the screen-space
-Pending item layout and does not require the line to share a UI canvas.
+Pending item layout and uses a separate Map-space presentation object. Battle
+HUD ownership describes presentation responsibility, not screen-space layout.
+Camera pan changes the view of the line and Map together; it does not change
+the route or require screen-coordinate synchronization.
 
 | Requested State | Color | Opacity |
 |---|---|---|
-| Solid | White | Fully opaque; Alpha = 1, Transparency = 0 |
-| Valid Preview | White | Semi-transparent; default Alpha = 0.5 |
-| Blocked Preview | Red | The same semi-transparent opacity as Valid Preview |
+| Normal | Configured Normal RGB; default white | Configured Normal Alpha; default 0.5 |
+| Blocked | Configured Blocked RGB; default red | Configured Blocked Alpha; default 0.5 |
 
-Blocked Preview changes the tint and opacity of the retained route, with no
+Blocked changes the tint and opacity of the retained route, with no
 path-geometry update. The display layer never substitutes a new route, selects
 a shortest path, or infers deployability from color. Monster System owns route
 data; Tower Placement System owns the complete state transitions described in
 `09_TowerPlacementSystem.md`, Section 7.5.
 
-Presentation configuration controls positive line width, dash length, and gap
-length, a semi-transparent preview opacity, and a surface-relative height
-suitable for readable placement on the current Map. Grid alignment and visual
-height respect the Map's coordinate frame. The line remains readable against
-Map surfaces without changing Grid identity or node-center topology data.
-Exact material, shader, and geometry-generation techniques are implementation
-choices. The first version uses static dashes without flowing animation,
-directional arrows, or smoothed route curves.
+Reusable line authoring controls width; Material/Texture authoring controls
+opaque dash versus transparent gap shape and repetition density. The presenter
+owns independently configurable Normal and Blocked colors, including each
+color's Alpha, plus surface-relative height. Normal has the same appearance
+for formal and valid candidate routes. No separate preview opacity or authored
+line color gradient overrides these state colors. Alpha ranges from 0
+(transparent) to 1 (opaque); both colors default to Alpha 0.5. Grid
+alignment and height respect the Map coordinate frame. The line remains
+readable against Map surfaces without changing Grid identity or topology.
+Route length changes do not stretch the authored pattern.
+
+The pattern flows from Spawn toward Target in both display states without
+moving route geometry. Material authoring controls a finite nonnegative speed;
+zero disables motion. Flow advances with battle simulation time, freezes with
+Draft-induced simulation pause, and resumes from the retained phase. State and
+route replacement preserve the phase; clear or a new Battle resets it. Shared
+visual assets are not modified by an individual runtime's motion. The first
+version has no directional arrows or smoothed route curves. Exact material,
+shader, and geometry-generation techniques remain implementation choices.
 
 The line has no collision or input authority and cannot intercept Tower drag,
 Camera pan, or modal Draft input. Opening or closing a Draft Window does not
 itself change the underlying line's route or requested state. The modal window
 continues to own input, and the current line remains beneath its presentation.
-Simulation pause does not clear the current line. Battle end or Stage release
+Simulation pause does not clear the current line, change its state, or reset
+its flow phase; it freezes flow until simulation resumes. Battle end or Stage release
 clears the display and retained presentation data; late outgoing requests
 cannot restore the line for that Battle or overwrite a newer Battle's line.
 
@@ -343,8 +357,9 @@ Battle UI authoring validation should report at minimum:
 - Invalid pending-item presentation or interaction references
 - Missing interaction feedback references required by current content
 - Missing or unusable Monster dashed-line path presentation
-- Non-positive dashed-line width, dash length, or gap length; preview opacity outside the semi-transparent range
-- Dashed-line presentation that blocks input, shows incorrect state tint/opacity, or replaces retained geometry during Blocked Preview
+- Unusable authored dashed-line width/pattern, missing transparent gaps or invalid repetition density; non-finite state colors or state Alpha outside [0, 1]
+- Invalid dashed-line flow speed, flow continuing while simulation is paused, or phase reset on an ordinary route/state update
+- Dashed-line presentation that blocks input, shows incorrect state tint/opacity, or replaces retained geometry during Blocked
 - A dashed line that remains visible after Battle end or can be restored by an outgoing Battle request
 - Missing Monster status or damage-number presentation required by the authored composition
 - Modal Draft input passing through to Camera or battlefield interaction
@@ -362,7 +377,7 @@ Validation must not create gameplay state or silently replace authored UI.
 Current scope includes player information, pause-independent Draft presentation,
 free Re-roll controls and balance display, Draft-local Toasts, reusable Position,
 Scale, and Fade animation, held Draft items, atomic pending-item registration,
-drag cancellation, placement feedback, Tower target feedback, and static
+drag cancellation, placement feedback, Tower target feedback, and flowing
 world-space Monster dashed-line path presentation.
 
 Game Flow System owns battle-result and Stage-transition presentation, including distinct Victory and Defeat interactions. Those surfaces are outside Battle HUD UI System rather than deferred Battle HUD features.

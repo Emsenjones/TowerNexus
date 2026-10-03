@@ -155,7 +155,7 @@ Player level progress, health, and defeat state are independent for each Stage b
 Stage preparation and optional Stage Introduction do not display the Monster
 dashed-line path. When Game Flow permits the prepared Stage to enter Battle,
 its domain owners establish the current formal Spawn-to-Target main route and
-present it in Solid, independently of Initial Draft completion, Wave timing,
+present it in Normal, independently of Initial Draft completion, Wave timing,
 or the presence of a spawned Monster. The Initial Draft Window may cover this
 underlying battlefield presentation without changing its route state.
 

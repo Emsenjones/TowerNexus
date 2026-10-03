@@ -15,6 +15,9 @@ class QueryTests
     static string PathText(IReadOnlyList<GridNodeBehaviour> nodes) => string.Join(";",nodes.Select(n=>n.GridPosition.ToString()));
     static void Main(string[] args)
     {
+#if !BASELINE
+        MonsterPathRouteQueryTests.Run();
+#endif
         foreach(string file in args)
         {
             string[] lines=File.ReadAllLines(file);string[] size=lines[0].Split(' ');
@@ -31,6 +34,10 @@ class QueryTests
             var validator=new TowerPlacementValidator();validator.Initialize(map,astar);
             var spawn=map.GetSpawnNode();var target=map.GetTargetNode();
             Check(spawn!=null && target!=null,"authored endpoints");
+#if !BASELINE
+            Check(astar.TryQueryFormalMainRoute(out var formal,out _) &&
+                PathText(formal.Route)==PathText(astar.FindPath(spawn,target)),"campaign formal route matches actual A*");
+#endif
             var ordered=nodes.OrderBy(n=>n.GridPosition.x).ThenBy(n=>n.GridPosition.y).ToArray();
             for(int i=0;i<ordered.Length;i++)
             {
@@ -41,6 +48,12 @@ class QueryTests
                 var route=astar.FindPath(spawn,target,footprint);
                 Console.WriteLine("CASE|"+width+"|"+i+"|"+valid+"|"+final+"|"+PathText(route));
                 Check(valid==final,"preview and final agree");
+#if !BASELINE
+                var result=validator.QueryRoutePreview(preview);
+                Check(result.CanPlace==valid,"rich query agrees with compatibility bool");
+                if(valid) Check(PathText(result.MainRoute.Route)==PathText(plan.AuthoritativeRoute),
+                    "campaign preview matches fresh final plan node-for-node");
+#endif
                 if (route.Count > 1)
                 {
                     bool connected = astar.TryBuildRouteConnectivityMap(route, footprint, out var connectivity);
