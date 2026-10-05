@@ -19,6 +19,7 @@ It owns:
 - Placement anchors and footprint structure
 - Tower level-model and Attack Origin contracts
 - Tower-local visual ownership
+- Deployed-Tower level status presentation
 
 It does not own placement workflow, placed-Tower combat execution, Projectile behavior, Upgrade eligibility, Draft generation, Effect execution, or Buff runtime.
 
@@ -61,7 +62,7 @@ The approved authored hierarchy is:
 Tower Root
 ├── VisualRoot
 │   ├── TowerBaseVisualRoot
-│   └── TowerPrefabSpawnPoint
+│   └── TowerModelRoot
 ├── TowerAnchorSet
 │   ├── CenterAnchor
 │   └── OccupiedAnchors
@@ -75,7 +76,7 @@ Equivalent engine structures must preserve the same ownership:
 
 - `VisualRoot` contains Tower-local presentation.
 - `TowerBaseVisualRoot` is the permanent base and survives level-model replacement.
-- `TowerPrefabSpawnPoint` owns the current level-model instance.
+- `TowerModelRoot` owns the current level-model instance. Models are mounted at its local origin; the root survives level-model replacement and supplies the world-position reference for Tower status UI. It is not a model bounds center or a guaranteed Tower-top position.
 - `TowerAnchorSet` defines placement geometry.
 - `AttackRangePreview` is presentation only and has authored radius one at scale one.
 - Success-feedback anchors provide optional Tower-local presentation positions.
@@ -150,6 +151,52 @@ It owns:
 Gameplay systems decide when a result or feedback state is valid and request the presentation. They do not directly alter Tower visual internals, model children, authored appearance resources, or feedback instances.
 
 The visual owner never decides placement validity, Tower level, Upgrade eligibility, attack range values, attack timing, or Draft item consumption.
+
+
+## 6.1 Deployed Tower Level Status
+
+Tower Framework owns per-Tower status presentation. The shared Battle UI layer
+provides its display surface; it does not acquire Tower state or lifecycle ownership.
+Tower Upgrade remains authoritative for accepted level changes, and Tower Placement
+remains authoritative for deployed membership.
+
+The authored status item contains a display group with separate fixed `Level.`
+text and dynamic numeric level text. Only the numeric text is updated from Tower
+state. The group supplies the shared UI-space offset, typography, and spacing;
+layout accommodates multi-digit levels without overlapping the fixed prefix.
+No health, Buff, Upgrade, or combat statistics are displayed in this scope.
+
+Rules:
+
+- Create status only for successfully committed deployments, never for previews,
+  prepared-but-uncommitted Towers, or rejected placement. One deployed Tower has
+  at most one status item; repeated creation requests do not duplicate it.
+- Initial binding immediately displays the current authoritative level. Accepted
+  level changes update the same item; model replacement does not recreate it.
+- Project the stable `TowerModelRoot` world position through the battlefield
+  camera into the status container's UI coordinate space. Screen pixels and UI
+  layout coordinates are not assumed interchangeable. Camera movement and
+  viewport/resolution changes preserve alignment.
+- The display group's offset is authored in UI layout units and follows UI
+  scaling, not world-camera zoom. Status does not promise alignment to model
+  bounds or the top of every level model.
+- Position tracking continues independently of battle-simulation time. Draft
+  pause preserves status; status neither blocks input nor owns pause.
+- Hide the display while its Tower is inactive or the anchor is behind the camera
+  or outside the viewport. Restore it when visible again; do not clamp it to a
+  screen edge. A temporarily unavailable camera hides the display safely.
+- Remove a Tower's item and binding when that Tower is removed. Runtime release,
+  retry, and Stage replacement clear all outgoing items and tracking records.
+  Repeated cleanup is safe, and stale outgoing requests cannot recreate them.
+- Battle stop/result presentation may retain deployed Towers; retain their status
+  for that lifetime. Stop alone is not runtime release.
+- Missing required presentation references produce actionable diagnostics and no
+  unbound visible item. Presentation failure never reverses committed deployment
+  or level state. Clearing status never removes Towers or changes their levels.
+
+Per-item presentation owns its Tower binding and display updates. A battle-local
+status collection owns item creation, removal, and clear. Individual removal and
+collection cleanup must agree so no stale records or state observers remain.
 
 ---
 
@@ -342,7 +389,7 @@ Tower authoring validation should report at minimum:
 - Missing Tower runtime template
 - Missing or mismatched TowerFamily archetype identity
 - Missing or duplicate Tower levels
-- Missing required level model
+- Missing stable TowerModelRoot or required level model
 - Missing or non-positive Level-authored BasicDamage
 - Missing Center Anchor or invalid Occupied Anchors
 - Missing required Attack Entity configuration
@@ -350,13 +397,21 @@ Tower authoring validation should report at minimum:
 - Missing model Attack Origin, using fallback as a reported authoring error
 - Invalid entity orientation or required internal anchor where detectable
 
+Tower status validation also covers missing item templates, numeric-text references,
+UI containers or positioning references; duplicate items; stale bindings after
+release; alignment across viewport sizes; multi-digit readability; and unintended
+input blocking.
+
 Validation reports the source content and does not silently replace the authored archetype or footprint.
 
 ---
 
 # 14. Approved Scope And Deferred Topics
 
-Current scope includes four TowerFamilies, four base archetypes, two projectile flight identities, per-level BasicDamage and model data, runtime-template non-damage combat data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, and first-version target selection.
+Current scope includes four TowerFamilies, four base archetypes, two projectile flight identities, per-level BasicDamage and model data, runtime-template non-damage combat data, anchor-defined footprints, level-model replacement, Tower-local presentation ownership, deployed-Tower level status, and first-version target selection.
+
+Status pooling, model-specific status anchors, bounds-derived placement, screen-edge
+indicators, and additional Tower status fields are deferred.
 
 Deferred Tower identities include support, trap, summon, resource, laser, boomerang, missile, and other archetypes that require reviewed behavior rather than expansion of one generic Tower type.
 

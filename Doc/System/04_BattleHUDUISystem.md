@@ -31,13 +31,13 @@ permitted. Terminal reward snapshots precede destructive Stage cleanup.
 
 # 2. Battle UI Composition
 
-One authored Battle UI layer may group the battle HUD, Monster status presentation, and damage-number presentation.
+One authored Battle UI layer may group the battle HUD, Monster status presentation, Tower level status presentation, and damage-number presentation.
 
 The layer is a composition boundary, not a runtime owner or gameplay service locator. Gameplay systems communicate only with the presentation capability they require.
 
 The Draft Window remains an authored part of the battle UI while closed. Opening a Draft creates transient choice items; closing it removes those items and any Draft-owned Toast, resets press feedback, and returns the window to its closed state. Closing presentation does not itself reset the gameplay-owned Re-roll balance.
 
-Monster status displays and damage numbers remain owned by Monster System even when rendered on the same UI surface.
+Monster status displays and damage numbers remain owned by Monster System even when rendered on the same UI surface. Tower level status remains owned by Tower Framework System, using a dedicated status container in the Battle UI layer. Its items do not intercept battlefield input; their fixed prefix and numeric level share an authored UI-space offset. See Tower Framework Section 6.1 for display and lifecycle rules.
 
 Main menu, Stage Introduction, Stage Victory, and Stage Defeat presentation belong to Game Flow System. Sharing one visual canvas or screen with battle-local UI does not make those surfaces part of Battle HUD UI System.
 
@@ -361,7 +361,7 @@ Battle UI authoring validation should report at minimum:
 - Invalid dashed-line flow speed, flow continuing while simulation is paused, or phase reset on an ordinary route/state update
 - Dashed-line presentation that blocks input, shows incorrect state tint/opacity, or replaces retained geometry during Blocked
 - A dashed line that remains visible after Battle end or can be restored by an outgoing Battle request
-- Missing Monster status or damage-number presentation required by the authored composition
+- Missing Monster status, Tower level status, or damage-number presentation required by the authored composition
 - Modal Draft input passing through to Camera or battlefield interaction
 - Camera pan competing with an active held-item drag
 - Draft presentation unable to remain interactive while battle simulation is paused

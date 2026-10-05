@@ -97,7 +97,7 @@
 16. *Value judgement + Replace LingerOribt;
 16. Tower state UI;
 17. Level display window;
-18. Monster route display;
+18. *Monster route display;
 19. Modify time scale when the DraftWindow is popping up or the player is dragging DraftPendingItem;
 20. players can remove Tower pending items;
 21. Camera focuses on the tower which the player taped and pop up TowerInfoWindow;

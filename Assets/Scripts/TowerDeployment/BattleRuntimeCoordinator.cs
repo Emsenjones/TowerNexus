@@ -22,6 +22,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     [SerializeField] private DraftSystem draftSystem;
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private TowerUpgradeSystem towerUpgradeSystem;
+    [SerializeField] private TowerStateUIManager towerStateUIManager;
 
     internal TowerPlacementSubmission Submission { get; } = new TowerPlacementSubmission();
     private bool hasFreshPlayerState;
@@ -433,6 +434,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             towerPlacementController.BeginBattle();
             draftSystem.BeginBattle();
             Submission.BeginBattle();
+            BeginTowerStateUI();
             BeginDashedPath();
             monsterSpawner.BeginBattle();
 
@@ -489,6 +491,26 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     {
         try { cleanup(); }
         catch (Exception exception) { Debug.LogException(exception, this); }
+    }
+
+    private void BeginTowerStateUI()
+    {
+        if (towerStateUIManager == null)
+        {
+            Debug.LogWarning("Tower state UI Manager is not assigned; Tower level labels are unavailable.", this);
+            return;
+        }
+
+        try
+        {
+            towerStateUIManager.Bind(Submission, towerPlacementController.PlacementCamera);
+        }
+        catch (Exception exception)
+        {
+            Debug.LogException(exception, this);
+            // Presentation must not abort battle startup or prevent the Initial Draft.
+            RunCleanupSafely(() => towerStateUIManager.Clear());
+        }
     }
 
     private void BeginDashedPath()
@@ -615,6 +637,10 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 CloseBattleAuthorityAndGates();
                 RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
                 RunCleanupSafely(() => draftSystem?.ClearStageUi());
+                RunCleanupSafely(() =>
+                {
+                    if (towerStateUIManager != null) towerStateUIManager.Clear();
+                });
                 Submission.DestroyTrackedTowers();
                 monsterSpawner?.ClearStageBinding();
                 draftSystem?.ClearStagePools();
