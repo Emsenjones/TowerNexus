@@ -10,7 +10,8 @@ public class TowerVisualController : MonoBehaviour
     [TitleGroup("Core Visual References")]
     [SerializeField] private Transform towerBaseVisualRoot;
     [TitleGroup("Core Visual References")]
-    [SerializeField] private Transform towerPrefabSpawnPoint;
+    [FormerlySerializedAs("towerPrefabSpawnPoint")]
+    [SerializeField] private Transform towerModelRoot;
     [FormerlySerializedAs("attackRangePreviewRoot")]
     [TitleGroup("Core Visual References")]
     [SerializeField] private AttackRangePreviewMotion attackRangePreviewMotion;
@@ -48,7 +49,7 @@ public class TowerVisualController : MonoBehaviour
 
     public Transform VisualRoot => visualRoot;
     public Transform TowerBaseVisualRoot => towerBaseVisualRoot;
-    public Transform TowerPrefabSpawnPoint => towerPrefabSpawnPoint;
+    public Transform TowerModelRoot => towerModelRoot;
     public Transform AttackRangePreviewMotion => attackRangePreviewMotion.transform;
     public Transform AttackOriginFallback => attackOriginFallback;
     public Transform TowerSpawnRefreshVfxAnchor => towerSpawnRefreshVfxAnchor;
@@ -99,14 +100,14 @@ public class TowerVisualController : MonoBehaviour
             return false;
         }
 
-        if (towerPrefabSpawnPoint == null)
+        if (towerModelRoot == null)
         {
-            Debug.LogWarning("Tower visual controller cannot set tower visual: TowerPrefabSpawnPoint is missing.", this);
+            Debug.LogWarning("Tower visual controller cannot set tower visual: TowerModelRoot is missing.", this);
             ResolveCurrentAttackOrigin();
             return false;
         }
 
-        currentTowerModelInstance = Instantiate(towerModelPrefab, towerPrefabSpawnPoint);
+        currentTowerModelInstance = Instantiate(towerModelPrefab, towerModelRoot);
 
         if (currentTowerModelInstance == null)
         {
@@ -252,9 +253,9 @@ public class TowerVisualController : MonoBehaviour
             towerBaseVisualRoot = visualRoot.Find("TowerBaseVisualRoot");
         }
 
-        if (towerPrefabSpawnPoint == null && visualRoot != null)
+        if (towerModelRoot == null && visualRoot != null)
         {
-            towerPrefabSpawnPoint = visualRoot.Find("TowerPrefabSpawnPoint");
+            towerModelRoot = visualRoot.Find("TowerModelRoot");
         }
 
         if (attackRangePreviewMotion == null)
@@ -455,9 +456,9 @@ public class TowerVisualController : MonoBehaviour
             return towerSpawnRefreshVfxAnchor;
         }
 
-        if (towerPrefabSpawnPoint != null)
+        if (towerModelRoot != null)
         {
-            return towerPrefabSpawnPoint;
+            return towerModelRoot;
         }
 
         if (visualRoot != null)
@@ -622,9 +623,9 @@ public class TowerVisualController : MonoBehaviour
             Debug.LogWarning("Tower visual controller is missing VisualRoot.", this);
         }
 
-        if (towerPrefabSpawnPoint == null)
+        if (towerModelRoot == null)
         {
-            Debug.LogWarning("Tower visual controller is missing TowerPrefabSpawnPoint.", this);
+            Debug.LogWarning("Tower visual controller is missing TowerModelRoot.", this);
         }
 
         if (attackOriginFallback == null)

@@ -258,7 +258,7 @@ It does not own Tower combat, Tower Upgrade eligibility, Map data, or pathfindin
 
 ## 4.10 Tower Framework System
 
-Owns shared Tower identity, per-level BasicDamage and model data, authored non-damage base combat data, attack archetype identity, targeting categories, Tower template structure, anchors, and visual ownership contracts.
+Owns shared Tower identity, per-level BasicDamage and model data, authored non-damage base combat data, attack archetype identity, targeting categories, Tower template structure, anchors, visual ownership contracts, and deployed-Tower level status presentation. The stable TowerModelRoot hosts level models and supplies the status position reference; the shared Battle UI surface only hosts the display.
 
 It defines what a Tower is, not how a placed Tower executes combat.
 

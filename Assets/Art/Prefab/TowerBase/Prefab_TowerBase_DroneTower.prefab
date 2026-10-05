@@ -669,7 +669,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TowerVisualController
   visualRoot: {fileID: 6297186690041710253}
   towerBaseVisualRoot: {fileID: 8888906177757372122}
-  towerPrefabSpawnPoint: {fileID: 3977874666773507100}
+  towerModelRoot: {fileID: 3977874666773507100}
   attackRangePreviewMotion: {fileID: 1062568196933651006}
   attackOriginFallback: {fileID: 6617525378691214913}
   towerSpawnRefreshVfxAnchor: {fileID: 8718468317004484059}
@@ -689,7 +689,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3977874666773507100}
   m_Layer: 0
-  m_Name: TowerPrefabSpawnPoint
+  m_Name: TowerModelRoot
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

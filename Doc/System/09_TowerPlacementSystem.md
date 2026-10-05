@@ -112,7 +112,7 @@ An accepted placement performs one transaction:
 
 If any required step before commit fails, any temporary Tower is removed and no occupancy, Monster state, Tower registration, combat activation, or held-item state is consumed. After readiness succeeds, gameplay-commit steps are synchronous prevalidated state writes without ordinary failure results. Prepared Monster application performs no pathfinding, join selection, relocation search, classification, or new validation during commit.
 
-Tile refresh and success feedback are post-commit presentation. Their failure is diagnosed as an accepted result with a presentation warning; it does not roll back an otherwise accepted Tower, occupancy state, Monster revision, registration, combat activation, or Draft consumption.
+Tile refresh, Tower level status creation, and success feedback are post-commit presentation. Their failure is diagnosed as an accepted result with a presentation warning; it does not roll back an otherwise accepted Tower, occupancy state, Monster revision, registration, combat activation, or Draft consumption.
 
 ---
 

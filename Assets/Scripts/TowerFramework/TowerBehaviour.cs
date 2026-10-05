@@ -74,10 +74,10 @@ public class TowerBehaviour : MonoBehaviour
         }
 
         if (visualController == null ||
-            visualController.TowerPrefabSpawnPoint == null)
+            visualController.TowerModelRoot == null)
         {
             failureReason =
-                "TowerVisualController or TowerPrefabSpawnPoint is missing.";
+                "TowerVisualController or TowerModelRoot is missing.";
             return false;
         }
 
