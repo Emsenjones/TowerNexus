@@ -64,7 +64,7 @@ The first version permits Camera pan only during the Battle Game Flow state. Sta
 The gesture is rejected when:
 
 - The current Game Flow state does not permit battle-local Camera input
-- A modal Draft or Game Flow surface is active
+- A modal Draft, TowerInfoWindow, or Game Flow surface is active
 - The pointer begins over an interactive UI surface
 - A held Draft item or Tower placement operation owns the pointer
 - Another Camera pan gesture is already active
@@ -73,6 +73,16 @@ The gesture is rejected when:
 Gesture ownership is decided when the press begins and remains stable until release or cancellation. Crossing between battlefield and UI regions does not transfer an active gesture between Camera, UI, Draft-item drag, or Tower Placement owners.
 
 The accepted mouse or touch identity owns the gesture through movement, release, or cancellation. Other mouse or touch inputs are ignored while it owns Camera Pan. UI rejection is evaluated for that exact pressing pointer identity.
+
+A battlefield press is initially eligible for tap-versus-pan classification.
+Movement within the click threshold does not pan; crossing it admits Camera pan
+and cancels Tower inspection for the remainder of that gesture. Release within
+the threshold may inspect the originally pressed deployed Tower under Battle HUD
+Section 4.2. One gesture never both pans and opens TowerInfoWindow. Modal admission
+or Battle/Map invalidation cancels the gesture rather than replaying it on close.
+
+TowerInfoWindow preserves the current Camera view throughout opening and closing.
+Its modal lifetime blocks player pan; no automatic focus movement is performed.
 
 ---
 
@@ -173,6 +183,7 @@ Deferred topics include:
 - Inertial movement
 - Edge scrolling
 - Camera follow targets
+- TowerInfoWindow target focus, configurable focus speed, and return framing
 - Cinematic paths
 - Camera shake
 - Minimap-driven navigation

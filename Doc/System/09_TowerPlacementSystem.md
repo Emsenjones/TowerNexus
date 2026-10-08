@@ -43,6 +43,13 @@ Tower Placement System receives drag intent from Battle HUD UI System and valida
 
 Only one drag operation and one active Tower placement preview may exist at a time.
 
+An open Draft Window or TowerInfoWindow rejects held-item drag and placement,
+level-up, or Upgrade submission through this interaction path. The modal mask is
+not the sole guard: runtime admission also checks current modal ownership.
+Tower inspection cannot open while a placement gesture or its protected acceptance
+and outer cleanup is active. Tapping a deployed Tower for inspection does not
+create a placement intent or consume a held item.
+
 The held item is consumed only after the receiving gameplay system accepts the requested result. Semantic consumption removes the exact entry from Draft ownership and records it as consumed in the same non-failing commit, so every pointer and drag handler rejects it immediately. Destruction of the consumed view is later presentation cleanup. Rejection or cancellation preserves the item.
 
 An accepted Draft-item drag owns its pointer gesture until release or cancellation. Camera System must not begin or continue a pan from that gesture, including after the pointer moves from the UI into the battlefield.

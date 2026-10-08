@@ -117,7 +117,10 @@ acceptable cross-Wave overlap. It may reduce unintended catch-up or create
 deliberate accumulated pressure, but it does not guarantee that only one Wave
 can be alive at a time.
 
-Wave timing, spawning, Monster movement, and Monster-driven gameplay output do not advance while an Initial or Player level-up Draft Window holds the approved battle-simulation pause. Draft presentation remains interactive outside Monster System. The pause is released before Initial Draft completion authorizes the first Wave Delay.
+Wave timing, spawning, Monster movement, and Monster-driven gameplay output do
+not advance while a Draft or TowerInfoWindow holds the approved Battle modal
+pause. UI presentation remains interactive outside Monster System. The pause is
+released before Initial Draft completion authorizes the first Wave Delay.
 
 Monster System reports normal spawning completion only after every configured Monster instance has been created through the complete ordered Wave sequence. Stopping, cancelling, disabling, or aborting invalid Wave execution does not report normal completion.
 
@@ -494,7 +497,7 @@ Monster and Wave authoring validation should report at minimum:
 - Negative move speed, Wave Delay, or Spawn Interval
 - Empty or invalid Wave content
 - Wave execution or the first Wave Delay beginning before the Initial Tower Draft is accepted
-- Wave timing, spawning, or Monster movement advancing while a Draft Window holds the battle-simulation pause
+- Wave timing, spawning, or Monster movement advancing while Draft or TowerInfoWindow holds the battle-simulation pause
 - Normal spawning completion reported after cancellation, stop, or invalid Wave execution
 - Post-resolution alive-Monster state reported before Player resolution completes
 - Missing active Spawn or Target node

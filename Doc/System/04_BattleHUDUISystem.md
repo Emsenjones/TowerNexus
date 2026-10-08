@@ -17,8 +17,14 @@ It presents:
 - Selected but unconsumed Draft items
 - Drag, placement, and Tower-target feedback
 - World-space Monster dashed-line path presentation
+- TowerInfoWindow for inspecting one deployed Tower's current information and acquired Upgrades
 
 It observes gameplay state and forwards player intent. It does not own Player state, Draft generation or reward ownership, Draft-driven simulation pause, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
+
+The Tower inspection session owns its target, presentation, and request/release
+of its Battle-owned modal pause. It never writes the simulation rate directly.
+The shared pause contract is defined in Stage System Section 3.2; Draft retains
+ownership of its own session and pause request.
 
 An ordinary Upgrade commits the exact held reward consumption together with its
 accepted Upgrade state before optional callbacks or presentation. Required combat
@@ -36,6 +42,11 @@ One authored Battle UI layer may group the battle HUD, Monster status presentati
 The layer is a composition boundary, not a runtime owner or gameplay service locator. Gameplay systems communicate only with the presentation capability they require.
 
 The Draft Window remains an authored part of the battle UI while closed. Opening a Draft creates transient choice items; closing it removes those items and any Draft-owned Toast, resets press feedback, and returns the window to its closed state. Closing presentation does not itself reset the gameplay-owned Re-roll balance.
+
+TowerInfoWindow is another authored, initially hidden window under the UI Canvas.
+Its stable presentation references are assigned explicitly by the content author;
+opening populates and activates the existing window rather than creating a new
+window. Section 4.2 defines its content and interaction contract.
 
 Monster status displays and damage numbers remain owned by Monster System even when rendered on the same UI surface. Tower level status remains owned by Tower Framework System, using a dedicated status container in the Battle UI layer. Its items do not intercept battlefield input; their fixed prefix and numeric level share an authored UI-space offset. See Tower Framework Section 6.1 for display and lifecycle rules.
 
@@ -89,7 +100,11 @@ The Initial Draft is complete only after one valid selection has been returned a
 
 While the Draft Window is open, it owns the active interaction surface. Pointer input must not pass through it to Camera pan, Tower placement, or other battlefield interaction.
 
-Draft System owns the battle-simulation pause associated with an open Draft Window. Battle HUD UI System remains interactive while simulation is paused and must not acquire, restore, or infer pause ownership from visibility alone. Presentation timing required for Draft interaction must continue independently from paused battle simulation.
+Draft System owns the pause request associated with its exact active session,
+using the shared Battle pause authority. Draft presentation remains interactive
+while simulation is paused and must not acquire, restore, or infer pause ownership
+from visibility alone. Presentation timing required for Draft interaction must
+continue independently from paused battle simulation.
 
 A held Draft item enters the pending-item collection only after its presentation and interaction references have been validated and initialization has completed. Failed or partial creation leaves the collection unchanged and does not report a committed Draft result.
 
@@ -128,6 +143,80 @@ exit restores resting feedback; cancellation, disabling, window closure, or
 battle termination clears the press state. Offsets do not accumulate.
 Finishing the last Re-roll switches to the exhausted control while leaving the
 new cards selectable.
+
+---
+
+## 4.2 TowerInfoWindow
+
+TowerInfoWindow lets the player inspect current deployed-Tower information and
+acquired Upgrades while considering later investment decisions. It is read-only
+and does not consume rewards or change Tower state.
+
+### Opening And Pointer Admission
+
+- Accept one primary mouse click or touch tap only during an active Battle.
+- The target must still be a formally committed deployed Tower owned by that
+  Battle. Previews, prepared-but-uncommitted Towers, and outgoing Towers are invalid.
+- Confirm the tap on release after a press on that target, with movement within
+  the click threshold and the same target still eligible under the pointer.
+  Crossing the movement threshold commits the gesture to Camera pan and permanently
+  cancels Tower inspection for that gesture, even if the pointer later returns.
+- A press over UI, an active Draft, a held-item drag or placement transaction,
+  another modal surface, or an already open TowerInfoWindow prevents opening.
+  Release rechecks eligibility; cancellation and Battle replacement clear the gesture.
+- Prepare current target data and valid presentation, acquire the exclusive modal
+  pause, then expose the populated window. Failed opening leaves no visible partial
+  window, generated items, retained target, or owned pause.
+
+### Authored Content And Data
+
+The author explicitly supplies a fixed Title, a Basic Stats parent with individual
+text/image references, an Upgrade Info parent with Grid Layout, one upgrade-icon
+UI template containing an Image, a Close button, and a full-screen semitransparent
+black mask below the window content. The mask blocks raycasts and covers underlying
+battle HUD controls as well as the Map. Window content remains interactive above it.
+
+| Display | Authoritative Source And Meaning |
+|---|---|
+| Title | Fixed authored window name |
+| DisplayName | Target TowerDefinition.DisplayName |
+| Description | Target TowerDefinition.Description |
+| Icon | Target TowerDefinition.Icon |
+| Level | Target TowerInstance.CurrentLevel |
+| AttackRange | Current resolved Attack Range supplied by Tower Runtime Combat, including applied Upgrade changes |
+| Attack | Current resolved BasicDamage supplied by Tower Runtime Combat: current level BasicDamage plus applied Basic Damage Bonus deltas |
+
+Attack is the current Tower attack baseline. Individual attack and Effect results
+apply their own DamageScale at the damage boundary; the display is not a DPS or
+aggregate damage estimate. UI reads the resolved value without recalculating combat
+rules or accessing mutable combat-cache internals.
+
+Every opening reads a coherent snapshot of the target's latest committed level,
+resolved values, and acquired Upgrades. Gameplay cannot mutate these through the
+window while paused, so continuous per-frame data polling is unnecessary.
+
+Generate one icon item for each entry in TowerInstance.AppliedUpgrades, in
+acquisition order, assigning the corresponding TowerUpgradeDefinition.Icon.
+The Grid Layout controls positioning. No acquired Upgrades means an empty container.
+Remove previous generated items before binding another target. Icons are display-only;
+unacquired upgrades, upgrade details, and secondary popups are outside this scope.
+
+### Modal Lifetime And Closing
+
+While open, only the window's own UI accepts player interaction. Camera pan,
+pending-item interaction, placement, level-up/Upgrade submission, and tapping another
+Tower are blocked both by the mask and by runtime admission checks. Draft and Tower
+inspection cannot overlap. Seeing another Tower requires closing the current window.
+
+Close is the sole normal player dismissal. Clicking the mask does nothing. Closing
+hides the window, removes generated icons, clears the target, and releases exactly
+that inspection session's pause, restoring the previously captured simulation rate.
+Opening and closing perform no Camera movement, zoom, or framing restoration.
+
+Battle end/stop, release, retry, Stage replacement, target removal, and external
+window disable also cancel inspection and clean its content and pause ownership.
+Cleanup is idempotent and cannot change a newer session's state, restart a stopped
+Battle, or manufacture a Battle result. Visibility alone is never pause authority.
 
 ---
 
@@ -330,6 +419,13 @@ Drag Tower Upgrade Draft
 Battle UI authoring validation should report at minimum:
 
 - Missing player information presentation
+- Missing TowerInfoWindow content references, Close button, icon template, or full-screen blocking mask
+- Inspection of a preview, uncommitted, removed, or outgoing Tower
+- A drag also opening TowerInfoWindow, or a stale pointer release opening it after a modal/lifecycle change
+- Tower information disagreeing with current committed level, resolved combat values, or acquired Upgrade order
+- Failed opening or repeated cleanup leaving generated icons, target bindings, or a pause behind
+- TowerInfoWindow input leaking to Camera, pending items, placement, or another Tower
+- Draft and TowerInfoWindow active together, or a stale close releasing another session's pause
 - Missing Draft Window or Draft choice container
 - Missing or non-blocking modal Draft interaction surface
 - Invalid Draft choice-item presentation or interaction references
@@ -378,14 +474,16 @@ Current scope includes player information, pause-independent Draft presentation,
 free Re-roll controls and balance display, Draft-local Toasts, reusable Position,
 Scale, and Fade animation, held Draft items, atomic pending-item registration,
 drag cancellation, placement feedback, Tower target feedback, and flowing
-world-space Monster dashed-line path presentation.
+world-space Monster dashed-line path presentation, and modal TowerInfoWindow
+inspection with current resolved stats and acquired Upgrade icons.
 
 Game Flow System owns battle-result and Stage-transition presentation, including distinct Victory and Defeat interactions. Those surfaces are outside Battle HUD UI System rather than deferred Battle HUD features.
 
 Deferred Battle HUD topics include:
 
 - Wave and boss warnings
-- Pause flow
+- General player pause menu and nested modal windows
+- Tower inspection Camera focus and upgrade-icon detail presentation
 - Minimap
 - Player skills
 - Multiplayer status

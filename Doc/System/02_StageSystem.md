@@ -173,6 +173,35 @@ drag-dependent route and state, and Battle HUD UI System owns line rendering.
 
 ---
 
+## 3.2 Battle Modal Pause Lifetime
+
+One Battle-scoped pause authority controls the simulation rate for Draft and
+TowerInfoWindow. Each requesting domain owns its session and an exact pause handle;
+the shared authority owns rate capture and restoration. Only one modal owner may
+hold a pause at a time. An overlapping request is rejected without replacing the
+owner, changing the saved rate, or queuing another window.
+
+Acquisition captures the current simulation rate and pauses battle simulation.
+UI interaction and required UI presentation remain responsive. Wave timing,
+Monster movement, Tower attack scheduling, released attack entities, Effects,
+Buff timing, and other simulation-driven scene behavior must not advance.
+Camera pan is separately blocked by modal interaction ownership.
+
+Release by the exact current Battle/session owner restores the captured rate,
+not an assumed default. Duplicate or stale releases do nothing. Draft and
+TowerInfoWindow never independently write or restore that rate; unrelated rate
+writers cannot bypass active modal ownership. Nested pauses, slow-motion policy,
+and a general player pause menu are outside this contract.
+
+Terminal acceptance, stop, release, retry, replacement, and preparation rollback
+revoke outgoing interaction authority before cleaning modal sessions and releasing
+their pause. Physical release may be deferred, but outgoing input is rejected
+immediately. Restoring the captured rate during cleanup does not reactivate stopped
+gameplay. All outgoing pause state is cleared before a fresh Battle can acquire
+ownership; late callbacks cannot change the new Battle's rate or window.
+
+---
+
 # 4. Ownership Boundaries
 
 | System | Receives From Stage | Continues To Own |

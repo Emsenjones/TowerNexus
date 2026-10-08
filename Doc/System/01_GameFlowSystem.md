@@ -77,6 +77,12 @@ Stage Defeat
 
 An interaction intent is accepted only when it is valid for the current state. Repeated or late intents cannot prepare, start, complete, or release the same Stage twice.
 
+TowerInfoWindow is a Battle-local modal interaction, not a new Game Flow state.
+Opening it leaves the flow in Battle while the shared Battle pause authority
+suspends simulation. Terminal transitions and Stage cleanup cancel inspection
+before outgoing content is released; closing the window cannot start a Battle
+or authorize a result transition.
+
 ---
 
 # 3. Demo Stage Sequence
@@ -327,7 +333,7 @@ Deferred topics include:
 - Chapters, branching paths, and alternate Stage sequences
 - Scene-transition strategy
 - Asynchronous or streamed loading
-- Pause and resume flow
+- General player pause-menu and resume flow beyond Draft/TowerInfoWindow modal pause
 - Meta progression
 
 These topics require separate design review before expanding the current Game Flow ownership boundary.

@@ -43,14 +43,20 @@ This directory separates durable runtime contracts from iterative balance design
 - [System Documents](System/00_ProjectOverview.md)
 - [Stage Design Blueprint](Balance/00_StageDesignBlueprint.md)
 - [Tower Growth And Upgrade Identity](Balance/01_TowerGrowthAndUpgradeIdentity.md)
-- Task workspace: Monster dashed-line path planned contracts — [Task001: Route Queries](Task/Task001_MonsterPathRouteQueries.md), [Task002: Presentation](Task/Task002_MonsterDashedPathPresentation.md), and [Task003: Integration](Task/Task003_MonsterDashedPathIntegration.md). Earlier retired contracts remain in Git.
-- [ArchitectureRefactor Historical Evidence](History/ArchitectureRefactor_Closeout.md)
-- [CombatMathV2 Historical Evidence](History/CombatMathV2_Closeout.md)
+- [TowerInfoWindow Design](System/04_BattleHUDUISystem.md#42-towerinfowindow)
+- [Battle Modal Pause Contract](System/02_StageSystem.md#32-battle-modal-pause-lifetime)
+- TowerInfoWindow Task workspace (implementation order):
+  [Task001: Battle Modal Pause](Task/Task001_BattleModalPause.md),
+  [Task002: Presentation](Task/Task002_TowerInfoWindowPresentation.md), and
+  [Task003: Interaction Integration](Task/Task003_TowerInfoWindowInteractionIntegration.md).
+  Task contracts are generated; implementation plans, reviews, implementation,
+  and acceptance remain pending. Retired earlier contracts remain in Git history.
+- ArchitectureRefactor and CombatMathV2 historical evidence remains in Git history.
 
 ## Re-roll System Demo Closeout
 
 Reusable UI animation, Toast, Stage-local Re-rolls, and the bounded Demo
-calibration are complete for the approved scope. See the
-[Re-roll milestone](History/ReRollSystem_Closeout.md) for per-Stage decisions,
+calibration are complete for the approved scope. The retired
+`History/ReRollSystem_Closeout.md` in Git history preserves per-Stage decisions,
 named reports, user-confirmed native checks, and deferred balance requirements.
 Task documents are retired after preserving their final state in Git.

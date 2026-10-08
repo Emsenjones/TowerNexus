@@ -86,6 +86,13 @@ Core flow and battle rules:
 - Each fresh Stage battle initializes a Stage-authored free Re-roll budget shared by Initial and Level-Up Drafts. Re-roll replaces the current choices within the same paused Draft and does not grant an additional reward; unused budget does not carry across Stages or retries.
 - The first Wave Delay begins only after the Initial Tower Draft selection is accepted; Tower deployment itself may occur during that delay.
 - Every Initial or Player level-up Draft pauses battle simulation while its Draft Window is open. Draft presentation and selection remain interactive, and the prior simulation rate is restored before gameplay resumes.
+- Tapping a committed deployed Tower opens TowerInfoWindow with its current
+  level, resolved Attack Range and Attack, identity information, and acquired
+  Upgrade icons. The modal window pauses simulation, blocks underlying interaction,
+  and restores the prior rate on Close. It does not move the Camera.
+- Draft and TowerInfoWindow use one exclusive Battle-scoped pause authority.
+  They cannot overlap; outgoing lifecycle cleanup releases pause ownership without
+  reactivating stopped gameplay or affecting a newer Battle.
 - Monsters enter from the Map's Spawn node and attempt to reach its Target node.
 - A Monster that dies or reaches the Target is resolved exactly once.
 - Every accepted Monster resolution advances player level progress by one.
@@ -215,6 +222,11 @@ It does not own Draft generation, UI presentation, Monster lifecycle, or Stage f
 ## 4.4 Battle HUD UI System
 
 Owns presentation and interaction for battle information, Draft choices, free Re-roll controls and balance display, Draft-local Toast feedback, held Draft items, drag feedback, placement feedback, and world-space Monster dashed-line path rendering. Reusable UI animation supports presentation that continues while battle simulation is paused.
+
+It also owns TowerInfoWindow inspection sessions and their read-only presentation
+of current Tower data and acquired Upgrade icons. Inspection requests and releases
+its own modal pause through the shared Battle authority defined in Stage System;
+the window does not directly control the simulation rate.
 
 It observes or forwards domain intent but does not own player state, Draft rules or Held reward ownership, Draft-driven simulation pause, placement validation, combat outcomes, or Game Flow presentation.
 

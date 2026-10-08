@@ -96,11 +96,11 @@
 15. *6 Stage Map Prefabs;
 16. *Value judgement + Replace LingerOribt;
 16. *Tower state UI;
-17. Tower info display window;
+17. TowerInfoWindow: approved design in System/04_BattleHUDUISystem.md Section 4.2; implementation pending;
 18. *Monster route display;
 19. Modify time scale when the DraftWindow is popping up or the player is dragging DraftPendingItem;
 20. players can remove Tower pending items;
-21. Camera focuses on the tower which the player taped and pop up TowerInfoWindow;
+21. Deferred: Camera focus on an inspected Tower; outside the initial TowerInfoWindow scope;
 22. Develop Monster & Projectile object pool;
 23. Differet damage should has its own damage color;
 25. Design Monsters appearing performance;

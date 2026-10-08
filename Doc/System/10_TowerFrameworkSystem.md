@@ -200,6 +200,22 @@ collection cleanup must agree so no stale records or state observers remain.
 
 ---
 
+## 6.2 Tower Inspection Data
+
+TowerInstance supplies its TowerDefinition identity, current committed level,
+and acquired Upgrade definitions in acquisition order to TowerInfoWindow.
+TowerDefinition supplies display name, description, and icon; each acquired
+Upgrade definition supplies its icon. Current resolved Attack Range and Attack
+come from Tower Runtime Combat rather than duplicate fields in TowerInstance.
+
+Battle HUD UI owns the inspection window and target binding (Section 4.2).
+Inspection requires membership in the current Battle's committed deployed-Tower
+collection; the mere existence of a TowerInstance is insufficient. Removing the
+target invalidates inspection. Battle stop closes inspection even when deployed
+Towers and their noninteractive level-status items remain for result presentation.
+
+---
+
 # 7. Attack Archetypes And Attack Entities
 
 A Tower orchestrates attacks. An Attack Entity executes released attack behavior.

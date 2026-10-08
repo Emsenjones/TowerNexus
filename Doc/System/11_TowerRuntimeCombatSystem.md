@@ -70,6 +70,13 @@ Common per-Tower runtime state includes:
 
 None of this state belongs in reusable definitions or authored templates.
 
+TowerInfoWindow receives a read-only view of the target's current committed
+resolved Attack Range and resolved BasicDamage. The latter includes current level
+BasicDamage and applied Basic Damage Bonus deltas, before a damage source's own
+DamageScale. Reading for presentation cannot rebuild gameplay state, refresh
+entities, or mutate the combat baseline. Unavailable or invalid target data is
+reported to the inspection owner rather than displayed as a fabricated zero.
+
 The shared attack state is conceptually:
 
 | State | Meaning |

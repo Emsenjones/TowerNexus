@@ -136,9 +136,12 @@ Every successfully opened Initial or Player level-up Draft Window pauses battle 
 
 Pause rules are:
 
-- Draft System owns acquisition and release for the exact active Draft session.
+- Draft System owns the pause request and release for the exact active Draft
+  session through the shared Battle pause authority (Stage System Section 3.2).
 - The simulation rate that existed before the Draft opened is restored rather than replaced with an assumed default.
-- While the Draft-owned pause is active, Draft System is the only permitted writer of the simulation rate; another pause or slow-motion owner must not change it before release.
+- The shared Battle pause authority is the only modal simulation-rate writer.
+  Draft and TowerInfoWindow are mutually exclusive; neither can overwrite or
+  release the other's ownership. An overlapping opening request is rejected.
 - Draft presentation and selection remain interactive while battle simulation is paused.
 - Successful selection first enters Committing Selection, then commits the held item, closes presentation, releases pause, and only then publishes completion.
 - Synchronous opening failure acquires no pause and returns failure directly.
@@ -151,7 +154,9 @@ Pausing prevents ordinary later Monster resolution and Player progress while a D
 
 Slow motion while dragging a held Draft item is a separate future behavior. It does not share the Draft Window pause lifetime.
 
-The attempt identity prevents another Draft from releasing the active pause; it cannot arbitrate an unrelated simulation-rate writer. If another runtime time owner is introduced, direct Draft ownership must be replaced by a shared pause or time-control service.
+The Draft attempt identity and Battle identity jointly scope its pause handle.
+TowerInfoWindow uses the same exclusive authority with its own inspection session.
+Presentation visibility is not a substitute for either owner's valid handle.
 
 ## 3.4 Free Re-roll
 
