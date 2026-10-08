@@ -170,6 +170,11 @@ and does not consume rewards or change Tower state.
 
 ### Authored Content And Data
 
+One initially hidden common root contains both the full-screen mask and window
+content; hiding, disabling, or destroying this root ends their shared visibility.
+The authored TowerInfoWindow view lives on that root; the continuously active
+Battle HUD owns inspection sessions, target binding, and the pause handle.
+
 The author explicitly supplies a fixed Title, a Basic Stats parent with individual
 text/image references, an Upgrade Info parent with Grid Layout, one upgrade-icon
 UI template containing an Image, a Close button, and a full-screen semitransparent
@@ -194,6 +199,11 @@ rules or accessing mutable combat-cache internals.
 Every opening reads a coherent snapshot of the target's latest committed level,
 resolved values, and acquired Upgrades. Gameplay cannot mutate these through the
 window while paused, so continuous per-frame data polling is unnecessary.
+Preparation and activation may invoke authored code: before pause acquisition and
+after activation, compare level, committed combat-baseline revision, and ordered
+Upgrade identities/icons with the captured snapshot. A changed snapshot cancels
+that opening without automatic retries. Presentation-frame lifecycle checks remain
+permitted while paused; they do not refresh displayed stats.
 
 Generate one icon item for each entry in TowerInstance.AppliedUpgrades, in
 acquisition order, assigning the corresponding TowerUpgradeDefinition.Icon.

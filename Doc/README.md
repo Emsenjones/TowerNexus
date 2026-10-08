@@ -49,8 +49,9 @@ This directory separates durable runtime contracts from iterative balance design
   [Task001: Battle Modal Pause](Task/Task001_BattleModalPause.md),
   [Task002: Presentation](Task/Task002_TowerInfoWindowPresentation.md), and
   [Task003: Interaction Integration](Task/Task003_TowerInfoWindowInteractionIntegration.md).
-  Task001 is implemented with managed/build evidence; native acceptance remains
-  pending. Task002/Task003 plans, reviews, and implementation remain pending.
+  Task001 and Task002 are implemented with managed/build evidence; native acceptance
+  and Task002 manual UI assembly remain pending. Task003 plan/review and implementation
+  remain pending.
   Retired earlier contracts remain in Git history.
 - ArchitectureRefactor and CombatMathV2 historical evidence remains in Git history.
 

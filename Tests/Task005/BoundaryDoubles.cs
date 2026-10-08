@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 namespace UnityEngine {
+ public static class Time { public static float timeScale=1; }
  public class Object { public static T Instantiate<T>(T original,Vector3 p,Quaternion q) where T:class { Instantiated++; return original; } public static int Instantiated; public static void Destroy(object x){} }
  public class GameObject:Object { public WindVortexBehaviour Vortex; public bool TryGetComponent(out WindVortexBehaviour b){b=Vortex;return b!=null;} }
  public class Transform { public Vector3 position; }
@@ -40,6 +41,8 @@ public static class TowerRuntimeStatResolver {public static int Published;public
 public class WindVortexBehaviour {public bool IsValid()=>true;public BattleCombatBinding Binding;public bool IsInitialized; public void Initialize(BattleCombatBinding b,TowerInstance t,TowerUpgradeDefinition u){Binding=b;IsInitialized=b.IsUsable;}}
 
 partial class LifecycleHarness {
+ internal BattleModalPauseAuthority ModalPause=new BattleModalPauseAuthority();
+ private PathSessionStub DashedPathSession=new PathSessionStub();
  public BattleCombatBinding combatBinding;
  public MonsterManager monsterManager;
  public bool isReleasing=false,isLifecycleOperationInProgress,releaseRequested;
@@ -51,3 +54,4 @@ partial class LifecycleHarness {
  private void ReleasePreparedBattleRuntimeCore(){CaptureBeforeCleanup();}
 }
 class SubmissionStub {public bool Closed;public void CloseBattleGate(){Closed=true;}public void StopTrackedTowerCombat(){}}
+class PathSessionStub {public void Close(){}}

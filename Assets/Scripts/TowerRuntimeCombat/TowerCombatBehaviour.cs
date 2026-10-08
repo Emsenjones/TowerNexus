@@ -57,6 +57,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     private TowerBehaviour towerBehaviour;
     private TowerDefinition towerDefinition;
     private ResolvedTowerCombatStats cachedResolvedStats;
+    private ulong resolvedBaselineRevision;
     private MonsterBehaviour currentTarget;
     private float attackCycleTimer;
     private TowerAttackState attackState = TowerAttackState.Idle;
@@ -83,6 +84,30 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     public float BaseAttackRange => attackRange;
     public float BaseAttackCycleDuration => attackCycleDuration;
     public float CurrentResolvedAttackRange => ResolveCombatStats().AttackRange;
+
+    internal bool IsInspectionRuntimeAvailable(TowerInstance expectedTower, BattleCombatBinding expectedBattle) =>
+        expectedTower != null && ReferenceEquals(towerInstance, expectedTower) &&
+        ReferenceEquals(battleBinding, expectedBattle) && expectedBattle != null && expectedBattle.IsOpenForRead &&
+        isActiveAndEnabled && expectedTower.isActiveAndEnabled && isBattleActive && isRuntimeSessionActive &&
+        hasExplicitInitialization && hasResolvedStatsCache && towerDefinition != null && expectedTower.TowerDefinition == towerDefinition;
+
+    internal bool TryGetInspectionStats(TowerInstance expectedTower, BattleCombatBinding expectedBattle,
+        out ResolvedTowerCombatStats stats, out ulong revision, out string reason)
+    {
+        stats = default;
+        revision = 0;
+        reason = "The target has no current committed combat baseline.";
+        if (!IsInspectionRuntimeAvailable(expectedTower, expectedBattle) || towerDefinition.TowerFamily != SupportedTowerFamily ||
+            expectedTower.CurrentLevelConfig == null ||
+            cachedResolvedStats.LevelBasicDamage != expectedTower.CurrentLevelConfig.BasicDamage ||
+            !IsFiniteNonNegative(cachedResolvedStats.AttackRange) ||
+            !IsFiniteNonNegative(cachedResolvedStats.ResolvedBasicDamage) || cachedResolvedStats.ResolvedBasicDamage <= 0f)
+            return false;
+        stats = cachedResolvedStats;
+        revision = resolvedBaselineRevision;
+        reason = string.Empty;
+        return true;
+    }
 
     protected TowerInstance TowerInstance => towerInstance;
     protected TowerDefinition TowerDefinition => towerDefinition;
@@ -235,6 +260,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
         PreparedTowerCombatLevelRevision preparedRevision)
     {
         cachedResolvedStats = preparedRevision.ResolvedStats;
+        resolvedBaselineRevision++;
         hasResolvedStatsCache = true;
     }
 
@@ -1119,6 +1145,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     private void EstablishResolvedBaseline()
     {
         cachedResolvedStats = TowerRuntimeStatResolver.Resolve(towerInstance, CreateBaseStats());
+        resolvedBaselineRevision++;
         hasResolvedStatsCache = true;
         OnResolvedBaselineEstablished(cachedResolvedStats);
     }
@@ -1158,6 +1185,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     internal void CommitPreparedUpgradeBaseline(PreparedTowerCombatUpgradeRevision revision)
     {
         cachedResolvedStats = revision.Current;
+        resolvedBaselineRevision++;
         hasResolvedStatsCache = true;
     }
 

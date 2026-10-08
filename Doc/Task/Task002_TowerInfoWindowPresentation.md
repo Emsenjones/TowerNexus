@@ -2,7 +2,7 @@
 
 Document Set: Task
 
-Status: Task contract generated; implementation plan and review pending.
+Status: Implemented with managed/build evidence; manual UI assembly and native acceptance pending.
 
 ## 1. Objective And Authority
 
@@ -31,8 +31,9 @@ disable, target binding, and generated-content cleanup.
 - A documented UI assembly checklist for the user's manual layout and binding.
 
 Map hit detection and tap-versus-pan classification belong to Task003. Camera
-focus, zoom, upgrade details, unacquired icons, secondary popups, per-frame polling,
+focus, zoom, upgrade details, unacquired icons, secondary popups, per-frame display-data polling,
 Tower editing, and a generic window framework are outside this task.
+Presentation-frame lifecycle checks are in scope and remain active during pause.
 
 ## 3. Data Contract
 
@@ -71,10 +72,13 @@ presentation behavior without dropping an acquired Upgrade or reusing another ic
 
 The user creates and positions the UI and assigns references manually:
 
-- Existing UI Canvas, initially inactive TowerInfoWindow content root.
+- Existing UI Canvas, initially inactive full-screen common TowerInfoWindow root
+  containing both mask and content. TowerInfoWindow is attached to this common root;
+  the existing BattleHUDUI manages the active session.
 - Fixed Title text and Basic Stats parent containing individual text/Image rows.
 - References for DisplayName, Description, Icon, Level, AttackRange, and Attack.
-- Upgrade Info parent using Grid Layout and an icon UI prefab containing an Image.
+- Upgrade Info parent using Grid Layout and a directly assigned Image component
+  on the icon Prefab root. No additional upgrade-icon script is required.
 - Close button.
 - Full-screen semitransparent black Image mask below window content, above underlying
   HUD surfaces, with Raycast Target enabled.
@@ -136,3 +140,97 @@ Task003 verifies production input blocking and lifecycle end to end.
 Record automated/build evidence separately from Play Mode/device and user-confirmed
 layout acceptance. Completion requires the data/view/session capabilities and
 assembly checklist; pending manual assembly is reported explicitly, not marked passed.
+
+## 8. Implemented Interfaces And Reviewed Boundaries
+
+`BattleHUDUI.TowerInspection.cs` is part of the existing partial BattleHUDUI
+component. It adds one serialized TowerInfoWindow reference, manages Opening/Open/
+Closing and an outer operation guard, and uses Task001's actual BattleCombatBinding
+identity. No additional Controller scene component is introduced.
+
+| Interface | Meaning |
+|---|---|
+| `BindTowerInspection(battle, members, pause, out reason)` | Explicit bind while idle; rejects active sessions/outer operations. Finish Cancel/Clear before replacing a binding |
+| `TryOpenTowerInfo(target, out reason)` | Validate deployment, operation availability, view references and snapshot; prepare hidden content, acquire pause, activate, revalidate |
+| `CloseTowerInfo()` / `CancelTowerInspection()` | End the current session; retain the current Battle dependencies |
+| `ClearTowerInspectionBinding()` | Revoke opening permission, cancel session, detach view listeners and clear dependencies |
+| `IsTowerInfoOpen` | True after successful activation and freshness checks |
+| `IsTowerInspectionBusy` | Includes Opening, Open, Closing and outer operation cleanup |
+
+Task003 must pass the exact coordinator combat binding, `Submission`, and
+`ModalPause`, bind before player inspection becomes available, and clear before
+outgoing Stage replacement. Production map-input and Coordinator binding wiring
+remain Task003 work. Inspector assignment alone does not introduce a click entry.
+
+`TowerCombatBehaviour.TryGetInspectionStats` reads an established committed cache
+without recomputing it. Each accepted level/Upgrade baseline and initial baseline
+establishment increments a revision. `TowerInspectionSnapshot` captures level,
+revision, identity text/icon, and an independent ordered Upgrade/icon sequence;
+preparation and activation must preserve them. Stale snapshots roll back without retry.
+`BattleCombatBinding.IsOpenForRead` is side-effect-free, unlike failure-reporting
+`IsUsable`. Open-window frame checks inspect lifecycle, not displayed combat values.
+
+The view owns one PreparedContent record per opening. Disposal hides/detaches only
+generated icon instances before deferred destruction. Missing Sprites leave empty
+Image slots with diagnostics. Level is integer text; range/Attack use invariant
+`0.##` formatting. Title is neither referenced nor overwritten by the script.
+
+Both mask and content are children of the same root. External root/component
+disable notifies HUD; loss of content/mask validity is detected on a presentation
+frame. Close disarms callbacks before hide. CanvasGroup suppresses visibility and
+raycasts before root deactivation; cleanup always releases the exact pause in finally.
+A failed modal hide reports failure through the exact live Battle identity. HUD
+disable isolates inspection, subscription, placement, and Draft cleanup exceptions.
+
+## 9. Manual UI Assembly
+
+Create this hierarchy under the existing full-screen Battle UI Canvas:
+
+```text
+Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
+  Mask (Image; full stretch; semitransparent black; Raycast Target enabled)
+  Content (RectTransform; active locally)
+    Title (fixed authored text)
+    BasicStats (active parent)
+      DisplayName / Description / Level / AttackRange / Attack (TMP_Text)
+      Icon (Image)
+    UpgradeGrid (active parent; GridLayoutGroup)
+    Close (Button)
+```
+
+1. Stretch the common root to a full-screen UI parent with zero offsets. Stretch
+   Mask to that root with zero offsets; put Mask before Content in sibling order.
+   Keep child objects active locally; only the common root starts inactive.
+2. Assign Content Root, Basic Stats Container, all five text references, Tower Icon,
+   Upgrade Container, Close Button and Background Mask on TowerInfoWindow.
+3. Save the separate upgrade-icon UI object as a Prefab with Image on its root.
+   Drag that Project Prefab into Upgrade Icon Prefab; Unity stores its Image reference.
+   The script instantiates that component's complete GameObject and assigns its Sprite.
+4. Assign TowerInfoWindow on the existing BattleHUDUI component. Do not disable the
+   HUD with the window. No Controller or upgrade-icon component needs to be added.
+5. Configure Grid size/spacing and content layout manually. Do not add a background
+   dismissal action. CanvasGroup is acquired/created on the common root at binding;
+   avoid other scripts competing for its visibility or modal raycasts.
+6. After Task003 binding/entry is connected, run the native checks below. Temporary
+   test dependencies do not substitute for the production Battle binding.
+
+## 10. Verification Evidence And Pending Acceptance
+
+- 72 managed assertions execute the whole production View, HUD inspection partial,
+  Snapshot, Battle binding and pause authority, plus exact production combat query
+  and baseline-commit methods. Native activation/graphics and membership are doubles.
+- Cases include latest level/resolved stats, ordered/empty/missing icons, Title,
+  preserving authored children, immediate reopen, membership rejection, invalid
+  baseline/reference, halfway generation failure, preparation/activation mutations,
+  reentrant cancellation, Draft overlap, target destruction, pause revocation,
+  old callbacks, listener preservation, HUD exceptions, mask loss, and hide failure.
+- Existing Draft/Re-roll passed 552 Editor / 501 player assertions, DraftUI 24,
+  real-card UI 27; modal pause 81 plus five attack/five spawning boundary cases;
+  Effect/binding 27 and Submission 31 cases passed. Assertions were preserved.
+- Editor build and complete non-Editor runtime compilation passed.
+
+Pending: user UI assembly, native text/Image/Grid and mask ordering, deferred
+destruction, Close interaction during actual pause, no Camera movement, mouse/touch
+entry and complete Battle lifecycle via Task003. These checks have not run and are
+not inferred from managed doubles or builds. Task001's scene pause acceptance remains
+separately pending until native evidence is recorded.

@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-public class BattleHUDUI : MonoBehaviour
+public partial class BattleHUDUI : MonoBehaviour
 {
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private DraftUI draftUI;
@@ -36,10 +36,16 @@ public class BattleHUDUI : MonoBehaviour
 
     private void OnDisable()
     {
-        draftUI?.NotifyPresentationLost();
-        UnsubscribeFromPlayerSystem();
-        if (towerPlacementController != null && towerPlacementController.CanStartDraftInteraction)
-            towerPlacementController.CancelPlacement();
+        // Each cleanup is independent; a Draft/placement error cannot retain inspection pause.
+        TryHudCleanup(ClearTowerInspectionBinding);
+        TryHudCleanup(UnsubscribeFromPlayerSystem);
+        TryHudCleanup(() =>
+        {
+            if (towerPlacementController != null && towerPlacementController.CanStartDraftInteraction)
+                towerPlacementController.CancelPlacement();
+        });
+        // May synchronously release Stage runtime; notify after other local cleanup.
+        TryHudCleanup(() => draftUI?.NotifyPresentationLost());
     }
 
     public void UpdateLevel(int level)

@@ -20,6 +20,16 @@ public sealed class BattleCombatBinding
 
     internal void Open() { if (!closed) opened = true; }
     internal void Close() { closed = true; }
+    // Presentation queries must not report failure or mutate this binding.
+    internal bool IsOpenForRead => opened && !closed && manager != null && manager.isActiveAndEnabled &&
+        ReferenceEquals(manager.CombatBinding, this) && manager.IsBattleActive;
+
+    internal void ReportPresentationFailure(string reason)
+    {
+        if (!IsOpenForRead || reportedFailure) return;
+        reportedFailure = true;
+        reportFailure?.Invoke(reason);
+    }
     public bool IsUsable
     {
         get
