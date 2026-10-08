@@ -625,7 +625,10 @@ public class MonsterBehaviour : MonoBehaviour
             return;
         }
 
+        if (Time.timeScale == 0f) return;
         buffRuntime?.Tick(Time.deltaTime);
+
+        if (Time.timeScale == 0f || isResolved || isCleaningUp) return;
 
         if (isMoving)
         {

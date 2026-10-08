@@ -34,5 +34,5 @@ with tempfile.TemporaryDirectory(prefix='tower-state-ui-') as folder:
                              'ReleasePreparedBattleRuntimeCore', 'StopBattle')) + '\n}')
     integration = Path(folder) / 'Coordinator.exe'
     subprocess.run(['csc', '-nologo', '-nowarn:0649', '-langversion:8.0', f'-out:{integration}',
-                    str(root / 'Tests/TowerStateUI/CoordinatorTests.cs'), str(extracted)], check=True)
+                    str(root / 'Tests/TowerStateUI/CoordinatorTests.cs'), str(root / 'Assets/Scripts/TowerDeployment/BattleModalPauseAuthority.cs'), str(extracted)], check=True)
     subprocess.run(['mono', str(integration)], check=True)

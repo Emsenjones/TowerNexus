@@ -23,6 +23,7 @@ namespace UnityEngine
         public bool activeSelf=true,Destroyed; public bool activeInHierarchy=>activeSelf&&(transform.parent==null||transform.parent.gameObject.activeInHierarchy);public Transform transform;
         public List<MonoBehaviour> members=new List<MonoBehaviour>();
         public GameObject(string name=""){transform=new Transform{gameObject=this};}
+        public T AddComponent<T>() where T:MonoBehaviour,new(){var c=new T();c.gameObject.members.Remove(c);c.gameObject=this;members.Add(c);return c;}
         public T GetComponent<T>() where T:class=>members.Find(x=>x is T) as T;
         public T[] GetComponents<T>()=>members.FindAll(x=>x is T).ConvertAll(x=>(T)(object)x).ToArray();
         public T[] GetComponentsInChildren<T>(bool all)=>GetComponents<T>();
@@ -118,6 +119,20 @@ class UITests
         Check(instance.Cancels==1&&instance.gameObject.Destroyed,"close cancels and removes toast");
         ui.BeginBattle();ui.TryOpenDraft(choices,x=>{},out _);ui.TryPrepareChoices(choices,x=>{},out prepared,out _);
         ui.CommitChoiceOwnership(prepared);ui.StopBattle();Check(ui.PresentChoices(prepared,out _)==DraftRerollPresentation.Cancelled&&!ui.IsOpen,"cancellation during commit cannot reopen");prepared.Dispose();
+        ui.BeginBattle();int cancellations=0;
+        ui.BindCancellation(()=>cancellations++);ui.TryOpenDraft(choices,x=>{},out _);
+        root.SetActive(false);Check(cancellations==1,"root disable notifies exact presentation once");
+        ui.NotifyPresentationLost();Check(cancellations==1,"duplicate disable ignored");
+        ui.BindCancellation(()=>cancellations++);ui.TryOpenDraft(choices,x=>{},out _);ui.CloseDraft();
+        Check(cancellations==1,"normal close disarms disable callback");
+        root.SetActive(true);
+        var child=new UnityEngine.GameObject();child.transform.SetParent(ui.transform,false);
+        child.members.Add(new UnityEngine.UI.Graphic());Set(ui,"rootObject",child);
+        ui.BindCancellation(()=>cancellations++);ui.TryOpenDraft(choices,x=>{},out _);
+        child.SetActive(false);Check(cancellations==2,"child-root lifetime cancels while owner remains enabled");
+        ui.BindCancellation(()=>cancellations++);ui.TryOpenDraft(choices,x=>{},out _);
+        ui.NotifyPresentationLost();Check(cancellations==3,"HUD/component presentation cancellation");
+        ui.CloseDraft();
         Console.WriteLine("PASS actual DraftUI with native boundaries: "+checks+" assertions");
     }
 }

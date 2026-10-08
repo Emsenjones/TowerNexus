@@ -144,11 +144,21 @@ Pause rules are:
   release the other's ownership. An overlapping opening request is rejected.
 - Draft presentation and selection remain interactive while battle simulation is paused.
 - Successful selection first enters Committing Selection, then commits the held item, closes presentation, releases pause, and only then publishes completion.
-- Synchronous opening failure acquires no pause and returns failure directly.
+- Synchronous opening failure returns failure directly with no retained pause;
+  acquisition before presentation is rolled back if presentation cannot open.
 - Asynchronous technical failure releases pause before reporting failure.
-- Stop, release, session replacement, retry, and disable cancel the session and release its pause without publishing completion or technical failure.
+- Stop, release, session replacement, retry, and normal lifecycle disable cancel
+  the session and release its pause without publishing completion or technical failure.
 - Re-roll keeps the same session-owned pause continuously; it neither resumes battle simulation nor acquires another pause.
 - Nested or stale callbacks cannot release another session's pause.
+
+Unexpected presentation loss during Opening rolls back synchronously and returns
+opening failure. After successful opening, unexpected root/component/HUD disable
+in a still-authorized Battle cancels the exact session, releases pause, and reports
+result-neutral Battle technical failure through a validated failure identity.
+Normal programmatic close, Battle stop/revocation, and Stage release only cancel;
+they do not manufacture another failure. Presentation loss cannot complete Initial
+Draft or leave a live Battle permanently waiting for it.
 
 Pausing prevents ordinary later Monster resolution and Player progress while a Draft is open. Same-frame reentrant level-up or selection callbacks are still rejected by session identity and exactly-once guards.
 

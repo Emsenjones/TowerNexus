@@ -3,6 +3,7 @@ import subprocess
 root=Path(__file__).resolve().parents[2]
 sources=[root/p for p in (
 'Assets/Scripts/TowerDeployment/TowerPlacementSubmission.cs',
+'Assets/Scripts/TowerDeployment/BattleModalPauseAuthority.cs',
 'Assets/Scripts/TowerDeployment/DeployedTowerCollection.cs',
 'Assets/Scripts/TowerDeployment/TowerPlacementCandidate.cs',
 'Assets/Scripts/TowerDeployment/TowerPlacementValidator.cs',

@@ -29,6 +29,7 @@ public class ProjectileBehaviour : MonoBehaviour
     private Vector3 launchDirection;
     private Vector3 startPosition;
     private readonly List<MonsterBehaviour> piercedMonsters = new List<MonsterBehaviour>();
+    private readonly List<Collider> deferredContacts = new List<Collider>();
     private readonly List<MonsterBehaviour> resolvedExplosiveArrowTargets = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> resolvedExplosiveShellTargets = new List<MonsterBehaviour>();
     private readonly List<MonsterBehaviour> resolvedBlastRoundsTargets = new List<MonsterBehaviour>();
@@ -376,6 +377,14 @@ public class ProjectileBehaviour : MonoBehaviour
                 return;
             }
 
+            if (Time.timeScale == 0f) return;
+            while (deferredContacts.Count > 0 && isInitialized && !hasImpacted && Time.timeScale != 0f)
+            {
+                var contact = deferredContacts[0];
+                deferredContacts.RemoveAt(0);
+                TryHandleMonsterCollision(contact);
+            }
+            if (!isInitialized || hasImpacted || Time.timeScale == 0f) return;
             elapsedLifetime += Time.deltaTime;
 
             if (elapsedLifetime >= maxLifetime)
@@ -583,6 +592,13 @@ public class ProjectileBehaviour : MonoBehaviour
             hasImpacted ||
             hitCollider == null)
         {
+            return;
+        }
+
+        if (battleBinding == null || !battleBinding.IsUsable) return;
+        if (Time.timeScale == 0f)
+        {
+            if (!deferredContacts.Contains(hitCollider)) deferredContacts.Add(hitCollider);
             return;
         }
 
@@ -1416,6 +1432,7 @@ public class ProjectileBehaviour : MonoBehaviour
 
     private void EndProjectile()
     {
+        deferredContacts.Clear();
         if (hasEnded)
         {
             return;

@@ -25,6 +25,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     [SerializeField] private TowerStateUIManager towerStateUIManager;
 
     internal TowerPlacementSubmission Submission { get; } = new TowerPlacementSubmission();
+    internal BattleModalPauseAuthority ModalPause { get; } = new BattleModalPauseAuthority();
     private bool hasFreshPlayerState;
     private bool isBattlePrepared;
     private bool hasNormalSpawningCompleted;
@@ -247,6 +248,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     {
         ReleasePreparedBattleRuntimeCore();
         combatBinding = new BattleCombatBinding(monsterManager, TryFailBattleRuntime);
+        ModalPause.BindBattle(combatBinding);
+        draftSystem.BindModalPause(ModalPause, combatBinding);
         monsterManager.CombatBinding = combatBinding;
         towerPlacementController.BindBattleDependencies(monsterManager, pathfindingService);
 
@@ -428,6 +431,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             }
 
             IsBattleActive = true;
+            ModalPause.OpenBattle(combatBinding);
             playerSystem.BeginBattle();
             monsterManager.BeginBattle();
             combatBinding.Open();
@@ -559,6 +563,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void RevokeCombatAuthority()
     {
+        ModalPause.RevokeBattle(combatBinding);
         RunCleanupSafely(() => DashedPathSession?.Close());
         combatBinding?.Close();
         Submission.CloseBattleGate();
@@ -587,6 +592,30 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         RunCleanupSafely(() => monsterManager?.CloseBattleGate());
         RunCleanupSafely(() => towerPlacementController?.CloseBattleGate());
         RunCleanupSafely(() => draftSystem?.StopBattle());
+        RunCleanupSafely(() => ModalPause.CancelBattle(combatBinding));
+    }
+
+    internal void CancelLostDraftPresentation(DraftSystem owner, DraftAttemptToken token, Action cleanup)
+    {
+        if (owner != draftSystem || !IsBattleActive || battleTerminalState != BattleTerminalState.None ||
+            !owner.OwnsDraftSession(token)) return;
+        var identity = combatBinding;
+        try { cleanup(); }
+        finally
+        {
+            if (ReferenceEquals(identity, combatBinding) && IsBattleActive &&
+                battleTerminalState == BattleTerminalState.None && ModalPause.IsBattleOpen(identity))
+                TryFailBattleRuntime($"Draft {token} unexpectedly lost its presentation.");
+        }
+    }
+
+    internal void FailDraftCleanup(DraftSystem owner, BattleModalPauseHandle handle, string reason)
+    {
+        if (owner != draftSystem || handle == null || handle.Kind != BattleModalKind.Draft ||
+            !ReferenceEquals(handle.Authority, ModalPause) || !ReferenceEquals(handle.Battle, combatBinding) ||
+            !IsBattleActive || battleTerminalState != BattleTerminalState.None ||
+            !ModalPause.IsBattleOpen(combatBinding)) return;
+        TryFailBattleRuntime(reason);
     }
 
     public void StopBattle()

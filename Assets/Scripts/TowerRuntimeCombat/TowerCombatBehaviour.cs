@@ -60,6 +60,9 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     private MonsterBehaviour currentTarget;
     private float attackCycleTimer;
     private TowerAttackState attackState = TowerAttackState.Idle;
+    private ulong attackRevision;
+    private ulong deferredReleaseRevision;
+    private bool hasDeferredRelease;
     private bool hasExplicitInitialization;
     private bool hasCompletedSubtypeInitialization;
     private bool hasResolvedStatsCache;
@@ -270,6 +273,13 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
                 return;
             }
 
+            if (Time.timeScale == 0f)
+            {
+                hasDeferredRelease = true;
+                deferredReleaseRevision = attackRevision;
+                return;
+            }
+            hasDeferredRelease = false;
             OnAnimationRelease();
 
         }
@@ -287,7 +297,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
         if (!SetAttackAnimatorTrigger())
         {
-            OnAnimationRelease();
+            OnAttackAnimationRelease();
         }
     }
 
@@ -344,10 +354,21 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
                 return;
             }
 
+            if (Time.timeScale == 0f) return;
+            if (hasDeferredRelease)
+            {
+                bool matches = deferredReleaseRevision == attackRevision && IsWaitingForAnimationRelease;
+                hasDeferredRelease = false;
+                if (matches) OnAttackAnimationRelease();
+                // A release callback may synchronously stop or pause this Battle.
+                if (!isRuntimeSessionActive || !isBattleActive || battleBinding == null ||
+                    !battleBinding.IsUsable || Time.timeScale == 0f) return;
+            }
+
             UpdateAttackCycle();
             OnOwnedRuntimeUpdate();
 
-            if (!CanScheduleCombat())
+            if (Time.timeScale == 0f || !CanScheduleCombat())
             {
                 return;
             }
@@ -404,11 +425,14 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     protected void SetWaitingForAnimationRelease()
     {
+        attackRevision++;
+        hasDeferredRelease = false;
         attackState = TowerAttackState.WaitingForAnimationRelease;
     }
 
     protected void SetIdle()
     {
+        hasDeferredRelease = false;
         attackState = TowerAttackState.Idle;
     }
 
@@ -1178,6 +1202,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
 
     private void DeactivateRuntimeSession(bool clearExplicitOwner)
     {
+        hasDeferredRelease = false;
         if (isRuntimeSessionActive || hasResolvedStatsCache)
         {
             CleanupOwnedCombatRuntime();

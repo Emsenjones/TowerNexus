@@ -2,7 +2,7 @@
 
 Document Set: Task
 
-Status: Task contract generated; implementation plan and review pending.
+Status: Implemented with managed/build verification; native Unity/device acceptance pending.
 
 ## 1. Objective And Authority
 
@@ -119,3 +119,65 @@ work after migration. Do not infer native behavior from a managed harness alone.
 Record build/static, automated, Unity Play Mode, and device evidence separately;
 unexecuted checks remain pending. Completion requires the shared pause contract and
 Draft migration to pass, with implementation APIs documented for dependent tasks.
+
+## 8. Implementation Evidence And Handoff
+
+The implementation follows the reviewed chat plan, including retained attack
+release facts, shared permission checks before reward commit, phase-specific
+presentation-loss routing, and corrected Draft System pause contracts.
+The implementation plan remains in the conversation rather than this document.
+
+Implemented capabilities:
+
+- Coordinator-owned `BattleModalPauseAuthority`, bound to the fresh combat-binding
+  identity, opened at Battle start, revoked before evidence, and cancelled after
+  outgoing gameplay gates and modal cleanup close.
+- Immutable acquisition handle, exclusive modal kind/session ownership, exact
+  rate capture/restoration, invalid-rate rejection, and no reopening a revoked Battle.
+- Draft pause acquisition before UI activation, exact-attempt ownership checks,
+  finally-based restoration, failed-opening rollback, and continuous Re-roll pause.
+- Explicit root/component/HUD presentation-loss cancellation. Opening loss returns
+  synchronous failure; live session loss cleans up before validated Battle failure;
+  normal close and outgoing lifecycle cancellation do not report another failure.
+- Failed committed presentation close restores pause and terminates the exact
+  live Battle instead of stranding Initial completion.
+- Paused simulation entry guards, retained attack release and projectile contact
+  facts, and zero-delay spawning guards. Cleanup remains permitted during pause.
+
+Task002/Task003 internal API handoff:
+
+| Capability | Usage |
+|---|---|
+| `BattleRuntimeCoordinator.ModalPause` | Explicit shared authority supplied by runtime binding |
+| `TryAcquire(battle, kind, session, out handle, out reason)` | Tower inspection uses `TowerInspection` and its own unique session identity |
+| `Owns(handle)` | Interactive ownership; false immediately after Battle revocation |
+| `Release(handle)` | Exact retained-owner restoration, including cleanup after revocation |
+| `HasRetainedPause` | True while an outgoing modal still holds pause awaiting cleanup |
+| `CanAcquire` | True only for a live binding without a retained owner |
+| `CurrentKind` | Retained modal kind, even when interactive ownership has been revoked |
+| `IsBattleOpen(battle)` | Validate exact active Battle identity at reentrant boundaries |
+
+Do not infer availability from `Owns == false` or view visibility. No window or
+Tower tap implementation is included in Task001. The authored Draft root receives
+a runtime-bound `DraftPresentationLifetime`; no Canvas layout or prefab reauthoring
+is required by this task.
+
+Verification performed:
+
+- Actual pause authority: 81 managed assertions, including both overlap directions,
+  non-default/zero/invalid rates, revoked ownership, stale release, and fresh binding.
+- Exact production attack and spawning method boundaries: five cases each, including
+  paused one-shot release/resume/Stop and same-frame zero-delay spawning cancellation.
+- Whole production DraftSystem: 552 Editor and 501 player assertions, including
+  shared revocation during Pending preparation, Opening loss, live presentation loss,
+  and throwing committed view close. External UI and terminal/native boundaries are doubled.
+- Whole production DraftUI: 24 native-boundary assertions; with real card code: 27.
+- Existing Submission: 31 contracts; Pending/sampler: 14 cases with 300 baseline traces;
+  TowerStateUI: 14 cases plus five extracted coordinator cases; dashed-path integration: 18 cases.
+- Editor build and complete non-Editor runtime compilation passed. Managed tests and
+  method extraction do not establish native physics, Animator, hierarchy, or coroutine behavior.
+
+Pending native acceptance: Play Mode/device pause/resume at ordinary and non-default
+rates, root/component/HUD disable, retained attack/contact recovery, Wave freeze,
+Monster/projectile/Orb/Drone/field/Buff behavior, responsive UI, and retry/Stage
+transitions. Record these results separately before feature acceptance/merge.

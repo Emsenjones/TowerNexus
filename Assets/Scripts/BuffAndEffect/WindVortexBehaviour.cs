@@ -92,6 +92,7 @@ public class WindVortexBehaviour : MonoBehaviour
                 return;
             }
 
+            if (Time.timeScale == 0f) return;
             float deltaTime = Time.deltaTime;
             remainingLifetime -= deltaTime;
 
@@ -265,7 +266,7 @@ public class WindVortexBehaviour : MonoBehaviour
     {
         damageTickTimer += deltaTime;
 
-        while (damageTickTimer >= tickInterval)
+        while (Time.timeScale != 0f && damageTickTimer >= tickInterval)
         {
             damageTickTimer -= tickInterval;
             ExecuteDamageTick();

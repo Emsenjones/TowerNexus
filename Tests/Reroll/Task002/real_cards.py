@@ -54,5 +54,5 @@ namespace UnityEngine.EventSystems
 with tempfile.TemporaryDirectory(prefix='towernexus-real-draft-card-') as folder:
     source=Path(folder)/'Boundary.cs';source.write_text(s);exe=Path(folder)/'Cards.exe'
     subprocess.run(['csc','-nologo','-langversion:8.0','-nowarn:0649',f'-out:{exe}',str(source),
-                    str(root/'Assets/Scripts/TowerDeployment/DraftUI.cs'),str(root/'Assets/Scripts/TowerDeployment/TowerContentUIItem.cs')],check=True)
+                    str(root/'Assets/Scripts/TowerDeployment/DraftUI.cs'),str(root/'Assets/Scripts/TowerDeployment/DraftPresentationLifetime.cs'),str(root/'Assets/Scripts/TowerDeployment/TowerContentUIItem.cs')],check=True)
     subprocess.run(['mono',str(exe)],check=True)

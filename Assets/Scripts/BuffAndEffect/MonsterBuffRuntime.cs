@@ -461,6 +461,7 @@ public class MonsterBuffRuntime
 #endif
         {
             if (owner == null || owner.CombatBinding == null || !owner.CombatBinding.IsUsable) return;
+            if (Time.timeScale == 0f) return;
             BeginStateMutation();
 
             try

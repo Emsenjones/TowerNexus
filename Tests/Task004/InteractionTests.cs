@@ -124,6 +124,8 @@ partial class ReleaseRoutingHarness
 
 partial class RevocationHarness
 {
+    private BattleModalPauseAuthority ModalPause = new BattleModalPauseAuthority();
+    internal RevocationHarness() { ModalPause.BindBattle(combatBinding); ModalPause.OpenBattle(combatBinding); }
     private MonsterDashedPathSession DashedPathSession=new MonsterDashedPathSession();
     private CombatBindingDouble combatBinding=new CombatBindingDouble();
     private TowerPlacementSubmission Submission=new TowerPlacementSubmission();
@@ -132,6 +134,7 @@ partial class RevocationHarness
     internal static void TestRevocation()
     {
         var h=new RevocationHarness();h.RevokeCombatAuthority();
+        if(h.ModalPause.CanAcquire)throw new Exception("pause acquisition survives revocation");
         if(!h.DashedPathSession.Closed||!h.combatBinding.Closed)throw new Exception("path not revoked at earliest boundary");
     }
 }

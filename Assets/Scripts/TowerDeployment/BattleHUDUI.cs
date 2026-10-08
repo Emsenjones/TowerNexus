@@ -36,6 +36,7 @@ public class BattleHUDUI : MonoBehaviour
 
     private void OnDisable()
     {
+        draftUI?.NotifyPresentationLost();
         UnsubscribeFromPlayerSystem();
         if (towerPlacementController != null && towerPlacementController.CanStartDraftInteraction)
             towerPlacementController.CancelPlacement();
@@ -329,6 +330,8 @@ public class BattleHUDUI : MonoBehaviour
             onSelected,
             out failureReason);
     }
+
+    public void BindDraftCancellation(Action callback) => draftUI?.BindCancellation(callback);
 
     public void BindReroll(int remaining, bool allowed, Action callback) =>
         draftUI?.BindReroll(remaining, allowed, callback);

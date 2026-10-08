@@ -25,6 +25,21 @@ public class DraftUI : MonoBehaviour
     private List<TowerContentUIItem> draftItems =
         new List<TowerContentUIItem>();
     private bool isBattleActive;
+    private Action presentationCancelled;
+    private DraftPresentationLifetime lifetime;
+    private bool ownsPresentation;
+
+    public void BindCancellation(Action callback) { presentationCancelled = callback; }
+
+    public void NotifyPresentationLost()
+    {
+        if (!ownsPresentation) return;
+        ownsPresentation = false;
+        lifetime?.Disarm();
+        var callback = presentationCancelled;
+        presentationCancelled = null;
+        callback?.Invoke();
+    }
 
     public bool IsOpen => isActiveAndEnabled && rootObject != null && rootObject.activeInHierarchy;
 
@@ -219,6 +234,10 @@ public class DraftUI : MonoBehaviour
                 out failureReason);
         }
 
+        lifetime = rootObject.GetComponent<DraftPresentationLifetime>();
+        if (lifetime == null) lifetime = rootObject.AddComponent<DraftPresentationLifetime>();
+        ownsPresentation = true;
+        lifetime.Arm(NotifyPresentationLost);
         rootObject.SetActive(true);
         failureReason = string.Empty;
         return true;
@@ -226,6 +245,9 @@ public class DraftUI : MonoBehaviour
 
     public void CloseDraft()
     {
+        ownsPresentation = false;
+        presentationCancelled = null;
+        lifetime?.Disarm();
         presentationEpoch++;
         onReroll = null;
         if (rerollActiveButton != null)
@@ -295,6 +317,8 @@ public class DraftUI : MonoBehaviour
     {
         presentationEpoch++;
         ClearToast();
+        // Cancellation may synchronously release Stage runtime; publish last.
+        NotifyPresentationLost();
     }
 
     public bool TryPrepareChoices(IReadOnlyList<DraftResult> choices,

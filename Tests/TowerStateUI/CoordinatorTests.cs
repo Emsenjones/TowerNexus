@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 namespace UnityEngine
 {
+    public static class Time { public static float timeScale=1; }
     static class Debug
     {
         public static void LogException(Exception exception, object context) { }
@@ -40,6 +41,8 @@ class TowerStateUIManager
 }
 partial class CoordinatorHarness
 {
+    internal BattleModalPauseAuthority ModalPause = new BattleModalPauseAuthority();
+    internal CoordinatorHarness() { ModalPause.BindBattle(combatBinding); }
     public TowerStateUIManager towerStateUIManager;
     public Consumer Submission=new Consumer(), playerSystem=new Consumer(), monsterManager=new Consumer(),
         combatBinding=new Consumer(), towerPlacementController=new Consumer(), draftSystem=new Consumer(),

@@ -254,10 +254,13 @@ public class MonsterSpawner : MonoBehaviour
                 yield break;
             }
 
+            while (isBattleActive && Time.timeScale == 0f) yield return null;
+            if (!isBattleActive) { CancelSpawnExecution(); yield break; }
             OnWaveSpawningStarted?.Invoke(waveIndex, wave);
 
             for (int countIndex = 0; countIndex < wave.Count; countIndex++)
             {
+                while (isBattleActive && Time.timeScale == 0f) yield return null;
                 if (!isBattleActive)
                 {
                     CancelSpawnExecution();
@@ -294,9 +297,13 @@ public class MonsterSpawner : MonoBehaviour
                 }
             }
 
+            while (isBattleActive && Time.timeScale == 0f) yield return null;
+            if (!isBattleActive) { CancelSpawnExecution(); yield break; }
             OnWaveSpawningCompleted?.Invoke(waveIndex, wave);
         }
 
+        while (isBattleActive && Time.timeScale == 0f) yield return null;
+        if (!isBattleActive) { CancelSpawnExecution(); yield break; }
         CompleteSpawnExecution();
     }
 

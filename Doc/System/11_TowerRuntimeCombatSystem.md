@@ -24,6 +24,12 @@ It does not own Tower placement, Tower Upgrade eligibility, Projectile flight, M
 
 Tower Runtime Combat decides when an Attack Entity is released. After release, the entity's runtime domain decides how it moves, hits, and completes.
 
+Battle modal pause suspends scheduling, detection, and released-entity simulation
+without discarding current attack state. A one-shot release fact received during
+pause is retained for the same pending attack and revalidated on resume, then
+executed at most once. Battle/runtime revocation or attack replacement discards
+that outgoing fact. Presentation replacement follows the same release rule.
+
 Upgrade-driven combat refresh is called explicitly by the acceptance owner and
 is not owned by optional Upgrade notifications. Candidate Basic values are
 resolved without changing accepted Tower state. The prepared baseline is committed

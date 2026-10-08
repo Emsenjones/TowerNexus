@@ -354,6 +354,7 @@ internal sealed class MagicOrbGroupRuntime
                 return;
             }
 
+            if (Time.timeScale == 0f) return;
             elapsedLifetime += Mathf.Max(0f, deltaTime);
 
             if (elapsedLifetime >= maxLifetime)
@@ -483,6 +484,7 @@ internal sealed class MagicOrbGroupRuntime
 
             for (int monsterIndex = 0; monsterIndex < aliveMonsters.Count; monsterIndex++)
             {
+                if (Time.timeScale == 0f || !IsActive || !battleBinding.IsUsable) return;
                 MonsterBehaviour monster = aliveMonsters[monsterIndex];
 
                 if (!IsCandidateContact(member, monster))

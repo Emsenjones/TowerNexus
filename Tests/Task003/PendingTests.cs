@@ -57,9 +57,12 @@ public partial class DraftSystem : UnityEngine.MonoBehaviour
     private Action<DraftAttemptToken> OnInitialDraftCompleted;
     private Action<DraftAttemptToken,string> OnInitialDraftFailed;
     public DraftSystem()
-    { battleHUDUI.DraftOwner = this; PendingOwner.BeginBattle(1); OnInitialDraftCompleted = t => Completed++; OnInitialDraftFailed = (t,s) => Failed++; }
+    { modalPause=new BattleModalPauseAuthority();modalPause.BindBattle(modalBattle);modalPause.OpenBattle(modalBattle);battleHUDUI.DraftOwner = this; PendingOwner.BeginBattle(1); OnInitialDraftCompleted = t => Completed++; OnInitialDraftFailed = (t,s) => Failed++; }
     private bool IsCommittingSelection(DraftAttemptToken token) => isBattleActive && activeToken == token && sessionPhase == DraftSessionPhase.CommittingSelection;
     private void InvalidateActiveAuthority() { activeToken = default; }
+    private BattleModalPauseAuthority modalPause;
+    private object modalBattle=new object();
+    private void ClosePresentationAndRelease(DraftAttemptToken token) { battleHUDUI.CloseDraft();ReleasePause(token); }
     private bool OwnsPause(DraftAttemptToken token) => token == activeToken;
     private void ReleasePause(DraftAttemptToken token) { PauseReleases++; }
     public void EnterGameplay() { sessionPhase = DraftSessionPhase.Completed; }

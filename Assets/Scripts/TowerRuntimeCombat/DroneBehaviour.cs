@@ -473,6 +473,7 @@ public class DroneBehaviour : MonoBehaviour
                 return;
             }
 
+            if (Time.timeScale == 0f) return;
             switch (State)
             {
                 case DroneRuntimeState.Launching:

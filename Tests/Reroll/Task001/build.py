@@ -10,6 +10,10 @@ with tempfile.TemporaryDirectory(prefix='towernexus-animation-build-') as folder
 <ItemGroup Condition="'$(MSBuildProjectName)' == 'Assembly-CSharp'">
 <Compile Remove="Assets/Scripts/Monster/DamageNumberAnimationStep.cs" />
 <Compile Remove="Assets/Scripts/UI/*.cs" />
+<Compile Remove="Assets/Scripts/TowerDeployment/BattleModalPauseAuthority.cs" />
+<Compile Remove="Assets/Scripts/TowerDeployment/DraftPresentationLifetime.cs" />
+<Compile Include="'''+escape(str(root/'Assets/Scripts/TowerDeployment/BattleModalPauseAuthority.cs'))+'''" />
+<Compile Include="'''+escape(str(root/'Assets/Scripts/TowerDeployment/DraftPresentationLifetime.cs'))+'''" />
 <Compile Include="'''+escape(str(root/'Assets/Scripts/UI/*.cs'))+'''" />
 </ItemGroup></Target></Project>''')
     subprocess.run(['dotnet','build','Assembly-CSharp-Editor.csproj','--no-restore',

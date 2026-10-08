@@ -11,7 +11,7 @@ refs=[p.text.replace('\\','/') for p in project.findall('.//m:Reference/m:HintPa
 refs.append(str(root/'Temp/Bin/Debug/Assembly-CSharp-firstpass/Assembly-CSharp-firstpass.dll'))
 sources=[root/p.attrib['Include'].replace('\\','/') for p in project.findall('.//m:Compile',ns)]
 sources=[p for p in sources if p.exists()]
-sources=sorted(set(sources)|set((root/'Assets/Scripts/UI').glob('*.cs')))
+sources=sorted(set(sources)|set((root/'Assets/Scripts/UI').glob('*.cs'))|{root/'Assets/Scripts/TowerDeployment/BattleModalPauseAuthority.cs',root/'Assets/Scripts/TowerDeployment/DraftPresentationLifetime.cs'})
 with tempfile.TemporaryDirectory(prefix='towernexus-reroll-player-') as folder:
     subprocess.run(['csc','-nologo','-langversion:8.0','-target:library','-nowarn:0649,0169',
                     '-out:'+str(Path(folder)/'Player.dll'),*['-r:'+r for r in refs],*map(str,sources)],cwd=root,check=True)

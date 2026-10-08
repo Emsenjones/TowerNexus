@@ -49,7 +49,7 @@ namespace UnityEngine
         public static void LogError(string s,Object context=null){}
         public static void Log(string s,Object context=null){}
     }
-    public static class Time {public static int frameCount;}
+    public static class Time {public static int frameCount; public static float timeScale=1;}
     public static class Mathf
     {public static int Max(int a,int b)=>Math.Max(a,b);public static int Min(params int[] v)=>Math.Min(v[0],Math.Min(v[1],v[2]));}
 }

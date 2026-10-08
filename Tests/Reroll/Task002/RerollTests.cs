@@ -21,10 +21,13 @@ public partial class BattleHUDUI
     public bool TryValidateBattleReferences(out string reason){reason="";return true;}
     public void ClearStageRuntime(){Views.Clear();CloseDraft();}
     public void BindDraftOwner(DraftSystem d){DraftOwner=d;}
+    public void BindDraftCancellation(Action callback){ Cancellation=callback; }
+    public Action Cancellation, DuringOpen;
+    public bool FailOpen, ThrowClose;
     public void BeginBattle(){isBattleActive=true;}
     public void StopBattle(){isBattleActive=false;CloseDraft();}
     public bool TryOpenDraft(IReadOnlyList<DraftResult> choices,Action<DraftResult> select,out string reason)
-    {reason="";Choices=new List<DraftResult>(choices);Selection=select;IsDraftOpen=true;return true;}
+    {reason="";DuringOpen?.Invoke();if(FailOpen)return false;Choices=new List<DraftResult>(choices);Selection=select;IsDraftOpen=true;return true;}
     public void BindReroll(int remaining,bool allowed,Action callback){Remaining=remaining;Allowed=allowed;Reroll=callback;}
     public void ShowNoOtherDraftChoices(){Toasts++;}
     public bool TryPrepareDraftChoices(IReadOnlyList<DraftResult> choices,Action<DraftResult> select,
@@ -53,6 +56,19 @@ class RerollTests
     static void Set(object target,string field,object value)=>target.GetType().GetField(field,BindingFlags.Instance|BindingFlags.NonPublic).SetValue(target,value);
     static T Get<T>(object target,string field)=>(T)target.GetType().GetField(field,BindingFlags.Instance|BindingFlags.NonPublic).GetValue(target);
     static void Call(object target,string method,params object[] args)=>target.GetType().GetMethod(method,BindingFlags.Instance|BindingFlags.NonPublic).Invoke(target,args);
+    static BattleModalPauseAuthority Start(DraftSystem draft)
+    {
+        var authority = new BattleModalPauseAuthority();
+        var coordinator = Get<BattleRuntimeCoordinator>(draft,"coordinator");
+        var identity = coordinator.DiagnosticIdentity;
+        coordinator.ModalPause=authority;
+        // Real Draft cancellation releases the old handle before fresh binding.
+        draft.StopBattle();
+        authority.BindBattle(identity); authority.OpenBattle(identity);
+        draft.BindModalPause(authority, identity);
+        draft.BeginBattle();
+        return authority;
+    }
     class Fixture
     {
         public DraftSystem D=new DraftSystem();public BattleHUDUI H=new BattleHUDUI();public DraftAttemptToken Token;
@@ -62,6 +78,7 @@ class RerollTests
 #endif
         public Fixture(int budget=3,int pool=5,int seed=3)
         {
+            Time.timeScale=1f;
             D.BindCoordinator(Coordinator);Coordinator.Draft=D;
             Set(D,"playerSystem",new PlayerSystem());Set(D,"towerUpgradeSystem",new TowerUpgradeSystem());
             Set(D,"towerPlacementController",new TowerPlacementController());Set(D,"battleHUDUI",H);
@@ -71,7 +88,7 @@ class RerollTests
             Recorder=new RecorderHarness(D,budget,Coordinator.DiagnosticIdentity);
             Coordinator.BeforeDraftFailureCleanup=Recorder.CaptureTerminal;
 #endif
-            D.BeginBattle();Set(D,"draftRandom",new System.Random(seed));
+            Start(D);Set(D,"draftRandom",new System.Random(seed));
             Check(D.TryOpenInitialTowerDraft(out Token,out var reason),"open "+reason);
         }
         public DraftRerollResult Roll()=>D.TryReroll(Token,D.ChoiceSetRevision);
@@ -79,6 +96,29 @@ class RerollTests
     static string Trace(IReadOnlyList<DraftResult> choices){string s="";foreach(var c in choices)s+=c.Identity.name+",";return s;}
     static void Main()
     {
+        var pauseCase=new Fixture();
+        var pauseAuthority=pauseCase.Coordinator.ModalPause;
+        int completions=0;pauseCase.D.OnInitialDraftCompleted+=t=>completions++;
+        pauseCase.H.OnPrepare=()=>pauseAuthority.RevokeBattle(pauseCase.Coordinator.DiagnosticIdentity);
+        pauseCase.H.Selection(pauseCase.H.Choices[0]);
+        Check(pauseCase.D.PendingDrafts.Count==0&&completions==0,"revocation during pending view preparation blocks semantic grant");
+        Check(pauseAuthority.HasRetainedPause&&!pauseAuthority.CanAcquire&&pauseAuthority.CurrentKind==BattleModalKind.Draft,"revoked pause remains retained/modal during deferred cleanup");
+        pauseCase.D.StopBattle();Check(Time.timeScale==1&&!pauseAuthority.HasRetainedPause,"outgoing cleanup restores once after revoke");
+        pauseCase=new Fixture();pauseCase.H.Cancellation();
+        Check(pauseCase.Coordinator.FailureCount==1&&!pauseCase.H.IsDraftOpen&&Time.timeScale==1,"live presentation loss cleans and fails exact Battle");
+        pauseCase.H.Cancellation?.Invoke();Check(pauseCase.Coordinator.FailureCount==1,"duplicate presentation loss no duplicate failure");
+        pauseCase=new Fixture();pauseCase.D.StopBattle();var opening=Start(pauseCase.D);
+        pauseCase.H.DuringOpen=()=>{Check(Time.timeScale==0&&opening.HasRetainedPause,"pause precedes presentation");pauseCase.H.Cancellation();};
+        Check(!pauseCase.D.TryOpenInitialTowerDraft(out _,out _)&&!opening.HasRetainedPause&&Time.timeScale==1&&pauseCase.Coordinator.FailureCount==0,"Opening loss rolls back synchronously without asynchronous failure");
+        pauseCase.H.DuringOpen=null;pauseCase.H.FailOpen=true;
+        Check(!pauseCase.D.TryOpenInitialTowerDraft(out _,out _)&&!opening.HasRetainedPause&&Time.timeScale==1,"failed presentation releases acquired pause");
+
+        pauseCase=new Fixture();pauseCase.H.ThrowClose=true;
+        pauseCase.H.Selection(pauseCase.H.Choices[0]);
+        Check(Time.timeScale==1&&!pauseCase.Coordinator.ModalPause.HasRetainedPause&&pauseCase.Coordinator.FailureCount==1,
+            "throwing committed view close releases pause and cannot strand Initial Battle");
+        pauseCase.H.ThrowClose=false;
+
         var f=new Fixture(1);var old=f.H.Selection;var oldChoices=f.H.Choices;var oldReroll=f.H.Reroll;
         Check(f.Roll()==DraftRerollResult.Success,"last reroll succeeds");
         Check(f.D.FreeRerollsRemaining==0&&f.H.Remaining==0&&f.D.ChoiceSetRevision==2,"one atomic spend");
@@ -90,7 +130,7 @@ class RerollTests
         Check(f.Roll()==DraftRerollResult.NoBudget,"zero budget");
         f.H.Selection(f.H.Choices[0]);Check(f.D.PendingDrafts.Count==1&&!f.H.IsDraftOpen,"new set grants one reward");
         Check(f.D.TryConfirmCommittedInitialDraft(f.Token,out _),"initial completion authorization");
-        f.D.StopBattle();f.D.BeginBattle();Check(f.D.FreeRerollsRemaining==1,"retry resets configured budget");
+        f.D.StopBattle();Start(f.D);Check(f.D.FreeRerollsRemaining==1,"retry resets configured budget");
         for(int pool=1;pool<=3;pool++)
         {
             f=new Fixture(2,pool);string before=Trace(f.H.Choices);
@@ -98,7 +138,7 @@ class RerollTests
             Check(f.D.FreeRerollsRemaining==2&&Trace(f.H.Choices)==before&&f.H.Toasts==1,"no-spend toast");
             f.Roll();Check(f.H.Toasts==2,"repeated toast request");
         }
-        f=new Fixture();var expired=f.Token;f.D.StopBattle();f.D.BeginBattle();
+        f=new Fixture();var expired=f.Token;f.D.StopBattle();Start(f.D);
         f.D.TryOpenInitialTowerDraft(out f.Token,out _);Call(f.D,"RollBackOpening",expired);
         Check(f.D.IsAwaitingDraft(f.Token)&&Time.timeScale==0,"expired opening rollback cannot close a new session");
         f=new Fixture(0);Check(f.Roll()==DraftRerollResult.NoBudget&&f.H.IsDraftOpen,"zero authored budget still permits selection");
@@ -133,7 +173,7 @@ class RerollTests
         Check(f.Roll()==DraftRerollResult.Success&&nested==DraftRerollResult.Unavailable&&f.D.PendingDrafts.Count==0,"nested request and selection blocked");
         f=new Fixture();f.H.DuringDraftPreparation=f.D.StopBattle;
         Check(f.Roll()==DraftRerollResult.Cancelled&&!f.H.IsDraftOpen&&f.D.FreeRerollsRemaining==3,"cancelled preparation no spend or reopen");
-        f=new Fixture();f.H.DuringDraftPreparation=()=>{f.D.StopBattle();f.D.BeginBattle();};
+        f=new Fixture();f.H.DuringDraftPreparation=()=>{f.D.StopBattle();Start(f.D);};
         Check(f.Roll()==DraftRerollResult.Cancelled&&f.D.FreeRerollsRemaining==3&&!f.H.IsDraftOpen,"new battle protected");
         f=new Fixture();f.Roll();var hiddenSelection=f.H.Selection;var hiddenChoice=f.H.Choices[0];f.H.CloseDraft();hiddenSelection(hiddenChoice);
         Check(f.D.PendingDrafts.Count==0,"closed view cannot select even current set");
@@ -197,7 +237,7 @@ class RerollTests
         f=new Fixture();f.H.Selection(f.H.Choices[0]);Call(f.D,"HandleLevelUp",2);f.Token=Get<DraftAttemptToken>(f.D,"activeToken");f.H.FailPresentation=true;
         Check(f.Roll()==DraftRerollResult.Success&&f.Coordinator.FailureCount==1&&!f.D.IsBattleActive,"Level-Up presentation failure uses same terminal route");
         f=new Fixture();var oldToken=f.Token;f.H.FailPresentation=true;
-        f.H.DuringDraftCommit=()=>{f.D.StopBattle();f.D.BeginBattle();f.D.TryOpenInitialTowerDraft(out f.Token,out _);};
+        f.H.DuringDraftCommit=()=>{f.D.StopBattle();Start(f.D);f.D.TryOpenInitialTowerDraft(out f.Token,out _);};
         Check(f.D.TryReroll(oldToken,1)==DraftRerollResult.Success&&f.Coordinator.FailureCount==0&&f.D.IsAwaitingDraft(f.Token),"old presentation failure never terminates replacement battle");
         f.Coordinator.FailDraftPresentation(f.D,oldToken,"late failure");
         Check(f.Coordinator.FailureCount==0,"production failure route rejects stale token");
@@ -232,7 +272,7 @@ class RerollTests
             using(CombatDiagnosticScope.Enter(f.Coordinator.DiagnosticIdentity))
             {
                 f.Recorder=new RecorderHarness(f.D,3,f.Coordinator.DiagnosticIdentity);
-                f.D.BeginBattle();f.D.TryOpenInitialTowerDraft(out f.Token,out _);
+                Start(f.D);f.D.TryOpenInitialTowerDraft(out f.Token,out _);
             }
         };
         f.D.TryReroll(outgoingToken,1);

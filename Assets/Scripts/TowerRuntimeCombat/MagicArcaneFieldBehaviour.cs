@@ -106,9 +106,10 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                 return;
             }
 
+            if (Time.timeScale == 0f) return;
             tickTimer += Time.deltaTime;
 
-            while (isInitialized && tickTimer >= tickInterval)
+            while (isInitialized && Time.timeScale != 0f && tickTimer >= tickInterval)
             {
                 tickTimer -= tickInterval;
                 ExecuteTick();

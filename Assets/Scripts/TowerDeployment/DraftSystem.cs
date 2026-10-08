@@ -328,7 +328,7 @@ public class DraftSystem : MonoBehaviour
 #endif
     private BattleRuntimeCoordinator coordinator;
     internal void BindCoordinator(BattleRuntimeCoordinator owner) { coordinator = owner; }
-    internal bool OwnsDraftSession(DraftAttemptToken token) => isBattleActive && activeToken == token;
+    internal bool OwnsDraftSession(DraftAttemptToken token) => isBattleActive && activeToken == token && OwnsPause(token);
 
     private IReadOnlyList<TowerDefinition> towerDefinitions;
     private IReadOnlyList<TowerUpgradeDefinition> upgradeDefinitions;
@@ -361,9 +361,16 @@ public class DraftSystem : MonoBehaviour
     private DraftSessionKind sessionKind;
     private DraftSessionPhase sessionPhase;
 
-    private bool hasPauseLease;
+    private BattleModalPauseAuthority modalPause;
+    private object modalBattle;
+    private BattleModalPauseHandle pauseHandle;
     private DraftAttemptToken pauseOwnerToken;
-    private float capturedTimeScale;
+    internal void BindModalPause(BattleModalPauseAuthority authority, object battle)
+    {
+        if (pauseHandle != null) throw new InvalidOperationException("Draft retained an outgoing pause.");
+        modalPause = authority;
+        modalBattle = battle;
+    }
 
     private DraftAttemptToken completedInitialToken;
     private PendingDraftEntry committedInitialHeldItem;
@@ -703,38 +710,33 @@ public class DraftSystem : MonoBehaviour
             }
 
             currentChoiceSet = initialSet;
-            if (!battleHUDUI.TryOpenDraft(
-                    currentChoiceSet.draftChoices,
-                    selectedResult =>
-                        HandleDraftSelected(
-                            provisionalToken,
-                            1, selectedResult),
+            if (!TryAcquirePause(provisionalToken, out failureReason))
+            {
+                RollBackOpening(provisionalToken);
+                return false;
+            }
+            battleHUDUI.BindDraftCancellation(() => NotifyPresentationLost(provisionalToken));
+            if (!battleHUDUI.TryOpenDraft(currentChoiceSet.draftChoices,
+                    selectedResult => HandleDraftSelected(provisionalToken, 1, selectedResult),
                     out failureReason))
             {
                 RollBackOpening(provisionalToken);
                 return false;
             }
-
-            if (!TryAcquirePause(
-                    provisionalToken,
-                    out failureReason))
-            {
-                RollBackOpening(provisionalToken);
-                return false;
-            }
-
-            if (!isBattleActive || activeToken != provisionalToken)
+            if (!OwnsDraftSession(provisionalToken))
             {
                 failureReason = "Draft opening was cancelled.";
+                RollBackOpening(provisionalToken);
                 return false;
             }
             BindRerollPresentation(provisionalToken);
 #if UNITY_EDITOR
             PublishDraftChoicesOpened(provisionalToken, requestedKind);
 #endif
-            if (!isBattleActive || activeToken != provisionalToken)
+            if (!OwnsDraftSession(provisionalToken))
             {
                 failureReason = "Draft opening was cancelled.";
+                RollBackOpening(provisionalToken);
                 return false;
             }
         }
@@ -836,7 +838,9 @@ public class DraftSystem : MonoBehaviour
 #if UNITY_EDITOR
                 PublishDraftChoicesOpened(token, kind, true, requestId);
 #endif
-                presentation = hud.PresentDraftChoices(prepared, out reason);
+                presentation = OwnsDraftSession(token)
+                    ? hud.PresentDraftChoices(prepared, out reason)
+                    : DraftRerollPresentation.Cancelled;
                 if (!OwnsDraftSession(token)) presentation = DraftRerollPresentation.Cancelled;
                 else if (presentation == DraftRerollPresentation.Cancelled)
                 {
@@ -898,7 +902,7 @@ public class DraftSystem : MonoBehaviour
 
 
     private bool IsRefreshing(DraftAttemptToken token, int revision) => isBattleActive &&
-        activeToken == token && choiceSetRevision == revision && sessionPhase == DraftSessionPhase.Refreshing;
+        activeToken == token && choiceSetRevision == revision && sessionPhase == DraftSessionPhase.Refreshing && OwnsPause(token);
 
     private DraftChoiceSet GatherDraftCandidates(DraftSessionKind kind)
     {
@@ -1302,8 +1306,7 @@ public class DraftSystem : MonoBehaviour
             if (!IsCommittingSelection(callbackToken)) return;
             sessionPhase = DraftSessionPhase.Failed;
             InvalidateActiveAuthority();
-            battleHUDUI.CloseDraft();
-            ReleasePause(callbackToken);
+            ClosePresentationAndRelease(callbackToken);
 
             if (committingKind == DraftSessionKind.Initial)
             {
@@ -1337,8 +1340,7 @@ public class DraftSystem : MonoBehaviour
         if (!IsCommittingSelection(callbackToken)) return;
         sessionPhase = DraftSessionPhase.Completed;
         InvalidateActiveAuthority();
-        battleHUDUI.CloseDraft();
-        ReleasePause(callbackToken);
+        ClosePresentationAndRelease(callbackToken);
 
         if (committingKind == DraftSessionKind.Initial && isBattleActive &&
             completedInitialToken == callbackToken && PendingOwner.IsCurrent(committedInitialHeldItem))
@@ -1348,7 +1350,7 @@ public class DraftSystem : MonoBehaviour
     }
 
     private bool IsCommittingSelection(DraftAttemptToken token) => isBattleActive &&
-        activeToken == token && sessionPhase == DraftSessionPhase.CommittingSelection;
+        activeToken == token && sessionPhase == DraftSessionPhase.CommittingSelection && OwnsPause(token);
 
     private bool TryGrantPendingBatch(IReadOnlyList<DraftResult> results,
         IReadOnlyList<DraftAttemptToken> sources, DraftAttemptToken selectionToken,
@@ -1370,6 +1372,7 @@ public class DraftSystem : MonoBehaviour
                 views.Add(item);
             }
             failureReason = "Pending registration authority expired during view preparation.";
+            if (modalPause == null || !modalPause.IsBattleOpen(modalBattle)) return false;
             if (selectionToken.IsValid && !IsCommittingSelection(selectionToken)) return false;
             if (battleHUDUI == null || !battleHUDUI.ArePreparedViewsUsable(views) || !PendingOwner.TryCommitGrant(grant)) return false;
             // Both lists have reserved capacity; registration contains no callbacks.
@@ -1441,86 +1444,65 @@ public class DraftSystem : MonoBehaviour
         }
     }
 
-    private bool TryAcquirePause(
-        DraftAttemptToken attemptToken,
-        out string failureReason)
+    private bool TryAcquirePause(DraftAttemptToken attemptToken, out string failureReason)
     {
-        if (!attemptToken.IsValid || activeToken != attemptToken)
-        {
-            failureReason =
-                "the Draft attempt lost active authority before pause acquisition.";
+        failureReason = "Draft modal Battle/session binding is unavailable.";
+        if (!attemptToken.IsValid || activeToken != attemptToken || pauseHandle != null || modalPause == null)
             return false;
-        }
-
-        if (hasPauseLease)
-        {
-            failureReason =
-                $"Draft attempt {pauseOwnerToken} already owns the pause lease.";
-            return false;
-        }
-
-        capturedTimeScale = Time.timeScale;
+        if (!modalPause.TryAcquire(modalBattle, BattleModalKind.Draft, attemptToken,
+                out var acquired, out failureReason)) return false;
+        pauseHandle = acquired;
         pauseOwnerToken = attemptToken;
-        hasPauseLease = true;
-        Time.timeScale = 0f;
-        failureReason = string.Empty;
         return true;
     }
 
-    private bool OwnsPause(DraftAttemptToken attemptToken)
-    {
-        return hasPauseLease &&
-               pauseOwnerToken == attemptToken;
-    }
+    private bool OwnsPause(DraftAttemptToken token) => token.IsValid && pauseOwnerToken == token &&
+        modalPause != null && modalPause.Owns(pauseHandle);
 
-    private void ReleasePause(DraftAttemptToken attemptToken)
+    private void ReleasePause(DraftAttemptToken token)
     {
-        if (!OwnsPause(attemptToken))
-        {
-            return;
-        }
-
-        float timeScaleToRestore = capturedTimeScale;
-        hasPauseLease = false;
+        if (pauseOwnerToken != token) return;
+        var outgoing = pauseHandle;
+        pauseHandle = null;
         pauseOwnerToken = default;
-        capturedTimeScale = 0f;
-        Time.timeScale = timeScaleToRestore;
+        outgoing?.Authority.Release(outgoing);
     }
 
-    private void RollBackOpening(DraftAttemptToken attemptToken)
+    private void ClosePresentationAndRelease(DraftAttemptToken token, bool reportFailure = true)
     {
-        if (activeToken != attemptToken)
-        {
-            ReleasePause(attemptToken);
-            return;
-        }
+        // Detach the old handle before UI callbacks; reentry cannot release a new attempt.
+        var outgoing = pauseOwnerToken == token ? pauseHandle : null;
+        if (outgoing != null) { pauseHandle = null; pauseOwnerToken = default; }
+        Exception closeFailure = null;
+        try { battleHUDUI?.CloseDraft(); }
+        catch (Exception error) { closeFailure = error; Debug.LogException(error, this); }
+        finally { outgoing?.Authority.Release(outgoing); }
+        if (reportFailure && closeFailure != null)
+            coordinator?.FailDraftCleanup(this, outgoing, $"Draft {token} close failed: {closeFailure.Message}");
+    }
 
+    private void NotifyPresentationLost(DraftAttemptToken token)
+    {
+        if (!OwnsDraftSession(token)) return;
+        if (sessionPhase == DraftSessionPhase.Opening) { RollBackOpening(token); return; }
+        // Coordinator validates the live identity before cleanup and retains that proof afterward.
+        coordinator?.CancelLostDraftPresentation(this, token, CancelActiveSession);
+    }
+
+    private void RollBackOpening(DraftAttemptToken token)
+    {
+        if (activeToken != token) { ReleasePause(token); return; }
         InvalidateActiveAuthority();
         sessionPhase = DraftSessionPhase.None;
-        battleHUDUI?.CloseDraft();
-        ReleasePause(attemptToken);
+        ClosePresentationAndRelease(token, reportFailure: false);
     }
 
     private void CancelActiveSession()
     {
-        DraftAttemptToken tokenToCancel = activeToken;
-
-        if (tokenToCancel.IsValid)
-        {
-            sessionPhase = DraftSessionPhase.Cancelled;
-            InvalidateActiveAuthority();
-        }
-
-        battleHUDUI?.CloseDraft();
-
-        if (tokenToCancel.IsValid)
-        {
-            ReleasePause(tokenToCancel);
-        }
-        else if (hasPauseLease)
-        {
-            ReleasePause(pauseOwnerToken);
-        }
+        var token = pauseHandle != null ? pauseOwnerToken : activeToken;
+        sessionPhase = DraftSessionPhase.Cancelled;
+        InvalidateActiveAuthority();
+        ClosePresentationAndRelease(token, reportFailure: false);
     }
 
     private void InvalidateActiveAuthority()
