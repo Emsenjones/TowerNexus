@@ -95,8 +95,8 @@
 14. *Simplify monster wave config;
 15. *6 Stage Map Prefabs;
 16. *Value judgement + Replace LingerOribt;
-16. Tower state UI;
-17. Level display window;
+16. *Tower state UI;
+17. Tower info display window;
 18. *Monster route display;
 19. Modify time scale when the DraftWindow is popping up or the player is dragging DraftPendingItem;
 20. players can remove Tower pending items;
@@ -107,4 +107,4 @@
 26. Text floating issue；
 28. Input manager issue;
 29. Create fast movement monsters;
-30. Offer player reroll opportunity;
+30. *Offer player reroll opportunity;
