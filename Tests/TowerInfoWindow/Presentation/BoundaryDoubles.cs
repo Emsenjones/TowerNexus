@@ -163,6 +163,7 @@ internal sealed class TowerPlacementSubmission
 public class TowerPlacementController
 {
     public bool IsDragging, CanStartDraftInteraction=true, ThrowCancel;
+    internal bool IsAvailableForInspection=>!IsDragging&&CanStartDraftInteraction;
     public void CancelPlacement(){if(ThrowCancel)throw new Exception("placement cleanup");}
 }
 public class DraftWindow
@@ -175,6 +176,7 @@ public partial class BattleHUDUI:UnityEngine.MonoBehaviour
     private TowerPlacementController towerPlacementController=new TowerPlacementController();
     private DraftWindow draftWindow=new DraftWindow();
     public bool IsDraftOpen;
+    internal bool IsDraftSessionBusy=>IsDraftOpen;
     public bool ThrowUnsubscribe;
     private void UnsubscribeFromPlayerSystem(){if(ThrowUnsubscribe)throw new Exception("subscription cleanup");}
 }

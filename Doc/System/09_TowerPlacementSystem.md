@@ -2,6 +2,13 @@
 
 Document Set: System
 
+Tower inspection blocks new held-item gestures and all deployment, level-up and
+Upgrade submissions, including debug paths. Final investment authority is rechecked
+after preparation; rejection preserves rewards, occupancy and Tower state.
+Inspection's own readiness check includes protected placement completion/release
+cleanup, independently from the extra player-input modal restriction. Stable Tower
+selection hit geometry remains separate from placement geometry/query semantics.
+
 ---
 
 # 1. Purpose And Ownership

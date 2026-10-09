@@ -24,6 +24,7 @@ public partial class BattleHUDUI : MonoBehaviour
 
     public DraftSystem DraftOwner { get; private set; }
     internal void BindDraftOwner(DraftSystem owner) { DraftOwner = owner; }
+    internal bool IsDraftSessionBusy => IsDraftOpen || (DraftOwner != null && DraftOwner.IsModalSessionBusy);
     public bool IsDraftOpen => draftWindow != null && draftWindow.IsOpen;
 
     private void OnEnable()
@@ -253,7 +254,7 @@ public partial class BattleHUDUI : MonoBehaviour
     }
 
     internal bool IsCurrentPendingView(PendingDraftUIItem item) => isBattleActive && isActiveAndEnabled &&
-        item != null && item.isActiveAndEnabled && pendingDraftItems.Contains(item) && DraftOwner != null &&
+        item != null && item.isActiveAndEnabled && !IsTowerInspectionBusy && !IsDraftSessionBusy && pendingDraftItems.Contains(item) && DraftOwner != null &&
         !DraftOwner.IsPendingMutationBusy &&
         DraftOwner.PendingOwner.CanConsume(item.Entry);
 

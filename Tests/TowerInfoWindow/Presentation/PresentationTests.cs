@@ -87,6 +87,10 @@ class PresentationTests
         fresh=new Fixture();captured=fresh;UnityEngine.Object.BeforeInstantiate=()=>captured.Target.AppliedUpgrades[0].UpgradeLayer=TowerUpgradeLayer.Elemental;
         Check(!fresh.Open()&&!fresh.Pause.HasRetainedPause,"upgrade layer freshness");fresh.End();
         Check(typeof(TowerInfoWindow).GetField("descriptionText",BindingFlags.NonPublic|BindingFlags.Instance)==null,"description binding removed");
+        fresh=new Fixture();int invalidations=0;fresh.Hud.OnBattlefieldInputInvalidated+=()=>invalidations++;Set(fresh.View,"attackText",null);
+        Check(!fresh.Open()&&invalidations==1,"failed Opening synchronously invalidates input before preparation");fresh.End();
+        fresh=new Fixture();fresh.Combat.Bind(fresh.Target,fresh.Battle);var placement=new TowerPlacementController{CanStartDraftInteraction=false};Set(fresh.Hud,"towerPlacementController",placement);
+        Check(!fresh.Open()&&!fresh.Pause.HasRetainedPause,"not dragging but protected placement cleanup still rejects inspection");fresh.End();
         var f=new Fixture();var authored=Child(f.Grid,"authored");
         Check(f.Open()&&f.Hud.IsTowerInfoOpen&&f.Hud.IsTowerInspectionBusy&&Time.timeScale==0,"open hidden root and own pause");
         Check(f.View.gameObject.activeSelf&&f.Grid.children.Count==3,"generate one Image per acquired upgrade");

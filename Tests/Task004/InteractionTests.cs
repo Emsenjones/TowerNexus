@@ -7,7 +7,8 @@ class PendingDraftUIItem
 }
 class BattleHUDUI
 {
-    public bool IsDraftOpen;
+    public bool IsDraftOpen,IsTowerInspectionBusy;
+    internal bool IsDraftSessionBusy=>IsDraftOpen;
     public DraftSystem DraftOwner;
     public Action OnRelease;
     public bool IsCurrentPendingView(PendingDraftUIItem item)=>item!=null&&DraftOwner.PendingOwner.CanConsume(item.Entry);
@@ -22,6 +23,7 @@ namespace UnityEngine { public static class Input {
 } }
 partial class InteractionHarness : MonoBehaviour
 {
+    private CameraInputStub battlefieldInput;
     bool modalReleasePending;
     bool isDragging;
     MonsterDashedPathSession pathSession;
@@ -39,6 +41,16 @@ partial class InteractionHarness : MonoBehaviour
     private Action OnCancel;
     private bool IsTowerUpgradeDraftDrag()=>true;
     private void CancelPlacement(){isDragging=false;modalReleasePending=false;OnCancel?.Invoke();}
+    internal static void TestInspectionAvailability()
+    {
+        var f=new SubmissionFixture();var h=new InteractionHarness{submission=f.Submission,towerUpgradeSystem=f.System,battleHUDUI=new BattleHUDUI{DraftOwner=f.Draft}};
+        h.isCompletingPlacement=true;
+        if(h.IsAvailableForInspection)throw new Exception("outer completion admitted inspection");
+        h.isCompletingPlacement=false;h.modalReleasePending=true;
+        if(h.IsAvailableForInspection)throw new Exception("pending release admitted inspection");
+        h.modalReleasePending=false;h.battleHUDUI.IsTowerInspectionBusy=true;
+        if(!h.IsAvailableForInspection||h.CanStartDraftInteraction)throw new Exception("inspection own preparation and gameplay permissions not separated");
+    }
     internal static void TestModal()
     {
         var f=new SubmissionFixture();var h=new InteractionHarness{submission=f.Submission,towerUpgradeSystem=f.System,
@@ -124,6 +136,7 @@ partial class ReleaseRoutingHarness
 
 partial class RevocationHarness
 {
+    private CameraInputStub cameraPanController=new CameraInputStub();
     private BattleModalPauseAuthority ModalPause = new BattleModalPauseAuthority();
     internal RevocationHarness() { ModalPause.BindBattle(combatBinding); ModalPause.OpenBattle(combatBinding); }
     private MonsterDashedPathSession DashedPathSession=new MonsterDashedPathSession();
@@ -138,3 +151,5 @@ partial class RevocationHarness
         if(!h.DashedPathSession.Closed||!h.combatBinding.Closed)throw new Exception("path not revoked at earliest boundary");
     }
 }
+
+class CameraInputStub {public bool IsPointerGestureOwned;public void ClearInspectionBinding(){}}

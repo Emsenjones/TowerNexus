@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6e2a9d04e6d54bfd89dd86e2f9f299d1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TowerUpgradeInfoItem
-  iconImage: {fileID: 3009790870169537730}
+  iconImage: {fileID: 2368450536932732990}
   backgroundImage: {fileID: 3009790870169537730}
   nameText: {fileID: 5192064089140909614}
   basicUpgradeIconBackground: {fileID: 21300000, guid: 93e49e8ed4ce36449bf40e67cb7d07e8, type: 3}

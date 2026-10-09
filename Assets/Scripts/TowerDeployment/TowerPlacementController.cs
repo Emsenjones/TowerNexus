@@ -42,10 +42,16 @@ public class TowerPlacementController : MonoBehaviour
     private PendingDraftUIItem currentDraftEntry;
     private bool isDragging;
     private bool isCompletingPlacement;
-    public bool CanStartDraftInteraction => !isCompletingPlacement && !modalReleasePending &&
+    private CameraPanController battlefieldInput;
+    internal void BindBattlefieldInput(CameraPanController input) { battlefieldInput = input; }
+    internal bool IsAvailableForInspection => !isDragging && IsPlacementPreparationAvailable;
+    private bool IsPlacementPreparationAvailable => !isCompletingPlacement && !modalReleasePending &&
         submission != null && !submission.IsBusy &&
         (battleHUDUI == null || battleHUDUI.DraftOwner == null || !battleHUDUI.DraftOwner.IsPendingMutationBusy) &&
         (towerUpgradeSystem == null || !towerUpgradeSystem.IsApplyingUpgrade);
+    public bool CanStartDraftInteraction => IsPlacementPreparationAvailable &&
+        (battleHUDUI == null || (!battleHUDUI.IsTowerInspectionBusy && !battleHUDUI.IsDraftSessionBusy)) &&
+        (battlefieldInput == null || !battlefieldInput.IsPointerGestureOwned);
 
     private bool isTowerTargetCandidateActive;
     private bool isLevelUpPreviewActive;
@@ -79,7 +85,7 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         pathSession?.Tick();
-        if (battleHUDUI != null && battleHUDUI.IsDraftOpen)
+        if (battleHUDUI != null && (battleHUDUI.IsDraftSessionBusy || battleHUDUI.IsTowerInspectionBusy))
         {
             if (isDragging && (Input.GetMouseButtonUp(0) || Input.GetMouseButtonDown(1) ||
                 !Input.GetMouseButton(0))) modalReleasePending = true;
@@ -121,7 +127,7 @@ public class TowerPlacementController : MonoBehaviour
     {
         if (battleHUDUI == null || !battleHUDUI.IsCurrentPendingView(draftedDraftEntry) ||
             draftedDraftEntry.DraftResult != draftResult) return;
-        if (!CanStartDraftInteraction || (battleHUDUI != null && battleHUDUI.IsDraftOpen)) return;
+        if (!CanStartDraftInteraction || (battleHUDUI != null && (battleHUDUI.IsDraftSessionBusy || battleHUDUI.IsTowerInspectionBusy))) return;
         if (!isBattleActive)
         {
             draftedDraftEntry?.RestorePendingPosition();
@@ -373,7 +379,7 @@ public class TowerPlacementController : MonoBehaviour
 
     private void CompletePlacement()
     {
-        if ((battleHUDUI != null && battleHUDUI.IsDraftOpen) ||
+        if ((battleHUDUI != null && (battleHUDUI.IsDraftSessionBusy || battleHUDUI.IsTowerInspectionBusy)) ||
             !CanStartDraftInteraction || !submission.TryBeginInteraction(out var lease)) return;
         var view = currentDraftEntry;
         isCompletingPlacement = true;
@@ -399,7 +405,7 @@ public class TowerPlacementController : MonoBehaviour
 
     private TowerSubmissionResult CompletePlacementCore(TowerPlacementSubmission.Interaction lease)
     {
-        if (!isBattleActive || battleHUDUI == null || battleHUDUI.IsDraftOpen || !battleHUDUI.IsCurrentPendingView(currentDraftEntry) ||
+        if (!isBattleActive || battleHUDUI == null || (battleHUDUI.IsDraftSessionBusy || battleHUDUI.IsTowerInspectionBusy) || !battleHUDUI.IsCurrentPendingView(currentDraftEntry) ||
             currentDraftEntry.DraftResult != currentDraftResult)
             return TowerSubmissionResult.Reject("The current Pending view or Battle is unavailable.");
         if (battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))

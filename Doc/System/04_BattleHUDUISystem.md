@@ -167,6 +167,10 @@ and does not consume rewards or change Tower state.
 - Prepare current target data and valid presentation, acquire the exclusive modal
   pause, then expose the populated window. Failed opening leaves no visible partial
   window, generated items, retained target, or owned pause.
+- Modal Opening synchronously invalidates battlefield gestures even if preparation
+  fails. Draft preparation and inspection preparation are mutually exclusive before
+  either presentation becomes visible. Inspection admission includes deployment's
+  protected completion/release cleanup without rejecting its own Opening state.
 
 ### Authored Content And Data
 

@@ -17,6 +17,8 @@ def block(source,start):
 with tempfile.TemporaryDirectory(prefix='towernexus-task004-') as folder:
  source=(root/'Assets/Scripts/TowerDeployment/TowerPlacementController.cs').read_text()
  a=source.index('    public bool CanStartDraftInteraction');predicate=source[a:source.index(';',a)+1]
+ a=source.index('    private bool IsPlacementPreparationAvailable');predicate=source[a:source.index(';',a)+1]+'\n'+predicate
+ a=source.index('    internal bool IsAvailableForInspection');predicate=source[a:source.index(';',a)+1]+'\n'+predicate
  generated=Path(folder)/'InteractionHarness.cs'
  generated.write_text('using System; using UnityEngine;\npartial class InteractionHarness {\n'+predicate+'\n'+
      method(source,'Update')+'\n'+method(source,'CompletePlacement')+'\n'+method(source,'CompletePlacementCore')+'\n}')

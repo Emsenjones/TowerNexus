@@ -51,10 +51,11 @@ internal sealed class TowerPlacementSubmission
         internal Interaction(TowerPlacementSubmission owner) { Owner = owner; }
         public void Dispose() { if (ReferenceEquals(Owner.interaction, this)) Owner.interaction = null; }
     }
+    private bool IsGameplayModalBlocked => battle != null && battle.IsGameplayModalBlocked;
     internal bool TryBeginInteraction(out Interaction lease)
     {
         lease = null;
-        if (!CanStartOperation) return false;
+        if (!CanStartOperation || IsGameplayModalBlocked) return false;
         interaction = lease = new Interaction(this); return true;
     }
     internal sealed class Operation
@@ -80,7 +81,7 @@ internal sealed class TowerPlacementSubmission
         bool debug, Interaction lease, out Operation current)
     {
         current = null;
-        if (!active || battle == null || !battle.IsBattleActive || operation != null ||
+        if (!active || battle == null || !battle.IsBattleActive || IsGameplayModalBlocked || operation != null ||
             draft == null || draft.IsPendingMutationBusy || mapGenerator == null || placementValidator == null ||
             towerUpgradeSystem == null || towerUpgradeSystem.IsApplyingUpgrade ||
             (interaction != null && (!ReferenceEquals(interaction, lease) || lease.Submitted)) ||
@@ -91,7 +92,7 @@ internal sealed class TowerPlacementSubmission
         return true;
     }
     internal bool IsCurrent(Operation current) => current != null && ReferenceEquals(current, operation) &&
-        active && battle != null && battle.IsBattleActive && current.Revision == bindingRevision &&
+        active && battle != null && battle.IsBattleActive && !IsGameplayModalBlocked && current.Revision == bindingRevision &&
         mapGenerator != null && placementValidator != null && placementValidator.ActiveMap == mapGenerator &&
         current.ValidatorRevision == placementValidator.BindingRevision &&
         current.StructureRevision == mapGenerator.StructureRevision &&

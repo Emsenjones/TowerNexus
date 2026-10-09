@@ -2,7 +2,8 @@
 
 Document Set: Task
 
-Status: Task contract generated; implementation plan and review pending.
+Status: Implemented after chat plan review; managed/compilation evidence recorded;
+native Unity/device and end-to-end acceptance pending.
 
 ## 1. Objective And Authority
 
@@ -153,3 +154,68 @@ Managed tests/build and static inspection do not replace Unity/device checks.
 Record actual device and user layout acceptance explicitly; leave unexecuted cases
 pending. Feature completion requires Task001, Task002, Task002-1 and Task003 acceptance evidence and all
 required manual UI references to be assembled and verified before merge to main.
+
+## 9. Implemented Integration And Review Handoff
+
+- CameraPanController owns both tap candidate and pan. Threshold is authored in
+  screen pixels (default 10), finite and nonnegative. Exactly the threshold remains
+  a tap; exceeding it permanently cancels tap and establishes the current Map-point
+  baseline without moving that sample. Later pan samples preserve existing bounds
+  and rendered Camera reconciliation; IsPanning means actual pan, while
+  IsPointerGestureOwned includes the pending candidate.
+- Touch ownership is exact; extra touches are ignored, emulated mouse is suppressed
+  until released, and missing/cancelled pointer or focus/input loss ends the gesture.
+  Press and release reject GraphicRaycaster UI results for the current EventSystem;
+  physics selection hits are not classified as UI. Final release revalidates exact
+  Battle/Map, Tower runtime identity and gesture revision after hit/UI queries.
+- Selection uses the existing output Camera, TowerSelection layer 13, 500-unit
+  authored distance and QueryTriggerInteraction.Collide. Hits sort by distance then
+  Collider identity; the nearest current committed deployed Tower wins, ignoring
+  uncommitted/foreign hits. Four TowerBase Prefabs have a stable root-child trigger
+  proxy (0.8 x 1.5 x 0.8, center height 0.75), retained through model replacement.
+  Placement retains Ignore trigger queries. Actual click coverage needs native review.
+- Coordinator explicitly binds HUD/Camera to its combat binding, Submission,
+  ModalPause and candidate Map. Camera accepts staged Map during preparation;
+  commit checks the same candidate, and Battle begin requires committed Map identity.
+  Failed preparation/Camera commit runs existing Stage rollback and clears bindings.
+  Coordinator references must match Camera's HUD/Placement and Draft's HUD.
+- HUD input revision/event synchronously cancels Camera candidates at inspection
+  Opening, Draft Opening and HUD binding revocation, including failed-opening
+  rollback. A modal opening and closing between input frames cannot restore a tap.
+- Placement exposes IsAvailableForInspection, based on dragging, protected completion,
+  modal release pending, Submission and existing preparation guards without checking
+  inspection's own busy state. Player interaction adds modal/gesture exclusion.
+  Submission retains non-modal CanStartOperation for inspection preparation, but
+  rejects gameplay modal entry in TryBeginInteraction/TryEnter and rechecks IsCurrent
+  before investment commit, covering direct/debug Upgrade paths. Draft Opening is
+  mutually exclusive with inspection Opening before either acquires pause.
+- Earliest RevokeCombatAuthority clears Camera binding/gesture and revokes shared
+  pause/combat/Submission authority. Existing terminal evidence precedes gate/modal
+  cleanup; HUD Clear runs after outgoing gates close and before final pause cleanup.
+  Deferred physical release cannot retain incoming permission. Camera/HUD disable,
+  Map clear and Game Flow exit cancel their appropriate gesture/session ownership;
+  result-screen retained Towers cannot open inspection.
+- User's HUD and separate Icon/Background assignments are preserved. Coordinator
+  HUD/Camera references are assigned on GameRuntime; Attack Cycle Duration text is
+  corrected to its existing separate value component instead of sharing Range text.
+
+## 10. Verification Evidence And Pending Acceptance
+
+- Whole production Camera: 102 assertions with native input, UI, Physics,
+  Cinemachine/Map and HUD endpoints doubled; includes staged/committed distinction,
+  commit failure rollback, threshold/pan reversal and synchronous modal cancellation.
+- Serialized assets: 25 static checks of IDs/references, selection proxies/layer,
+  and retained placement trigger exclusion. These do not establish Unity import.
+- Production HUD/View/Item/Snapshot/pause: 109 assertions; includes placement outer
+  cleanup rejection and synchronous failed-Opening input invalidation.
+- Submission: 34 managed contracts; Effect/binding/hit: 27 checks;
+  whole Draft: 556 Editor / 505 player assertions; shared pause: 81 assertions plus
+  five attack and five spawning cases; content refinement: 33 assertions.
+- Complete 139-source runtime compiles against installed Unity/TMP references in
+  player and UNITY_EDITOR modes. No native player build or Play Mode is inferred.
+
+Pending native acceptance: actual mouse/touch taps, all Tower families/level-model
+proxy coverage, UI mask interception, Grid/text/layout and Close, real pause/resume,
+map bounds/reversal, rejected Pending/investment operations, repeated inspection,
+target loss/disable and terminal/deferred release/Retry/Stage transitions. Record
+user/device results explicitly before merge; static assembly fixes are not acceptance.

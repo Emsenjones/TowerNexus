@@ -384,6 +384,8 @@ public class DraftSystem : MonoBehaviour
     private TowerPlacementSubmission submission;
     internal void BindSubmission(TowerPlacementSubmission owner) { submission = owner; }
 
+    internal BattleHUDUI PresentationHUD => battleHUDUI;
+    internal bool IsModalSessionBusy => activeToken.IsValid;
     public bool IsBattleActive => isBattleActive;
     public bool HasStagePools =>
         hasStageDraftConfiguration &&
@@ -682,6 +684,8 @@ public class DraftSystem : MonoBehaviour
             return false;
         }
 
+        if (battleHUDUI != null && battleHUDUI.IsTowerInspectionBusy)
+        { failureReason = "Tower inspection owns modal admission."; return false; }
         if (activeToken.IsValid)
         {
             failureReason =
@@ -696,6 +700,7 @@ public class DraftSystem : MonoBehaviour
         activeToken = provisionalToken;
         sessionKind = requestedKind;
         sessionPhase = DraftSessionPhase.Opening;
+        battleHUDUI?.InvalidateBattlefieldInput();
         choiceSetRevision = 1;
 
         try

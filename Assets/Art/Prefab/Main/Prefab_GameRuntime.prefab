@@ -1323,7 +1323,7 @@ MonoBehaviour:
   levelText: {fileID: 5847726669558782856}
   attackRangeText: {fileID: 8193812598089884410}
   attackText: {fileID: 8277165805769659567}
-  attackCycleDurationText: {fileID: 8193812598089884410}
+  attackCycleDurationText: {fileID: 2935845214622435819}
   killCountText: {fileID: 3505798968228085557}
   upgradeContainer: {fileID: 899656292279558234}
   upgradeItemPrefab: {fileID: 8684762702520746998, guid: b8c6f4778d8e34441879eec1a999afc6, type: 3}
@@ -2019,6 +2019,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42695df69f784899ac51097d26c0abe9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraPanController
+  tapMovementThresholdPixels: 10
+  towerSelectionMask:
+    serializedVersion: 2
+    m_Bits: 8192
+  towerSelectionDistance: 500
   outputCamera: {fileID: 143754331630301944}
   cinemachineBrain: {fileID: 1178485205469431212}
   cinemachineGameplayCamera: {fileID: 518148201222302592}
@@ -2961,7 +2966,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39e48d23299542c89a6459ba4d208c3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleHUDUI
-  towerInfoWindow: {fileID: 0}
+  towerInfoWindow: {fileID: 7833152137912921819}
   playerSystem: {fileID: 8439368486033747447}
   draftWindow: {fileID: 6668126777542329585}
   towerPlacementController: {fileID: 5527772070008687998}
@@ -5694,6 +5699,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7b480659f85749f29f09473c6571d528, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BattleRuntimeCoordinator
+  battleHUDUI: {fileID: 4430054556091105857}
+  cameraPanController: {fileID: 232661449897972293}
   monsterDashedPathPrefab: {fileID: 4621712501367467509, guid: 7ff97d83ff9f34ca8a41caee75811aca, type: 3}
   playerSystem: {fileID: 8439368486033747447}
   pathfindingService: {fileID: 4731439007408284308}

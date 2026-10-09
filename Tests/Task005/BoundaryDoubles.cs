@@ -41,7 +41,9 @@ public struct TowerOwnedDamageResolution {public int FinalDamage;public TowerIns
 public static class TowerRuntimeStatResolver {public static int Published;public static bool TryResolveTowerOwnedDamage(TowerInstance t,TowerDamageSourceIdentity id,float scale,out TowerOwnedDamageResolution d){d=new TowerOwnedDamageResolution{SourceTower=t,FinalDamage=10};return t!=null;} public static void PublishTowerOwnedDamageApplication(TowerOwnedDamageResolution r,int n){Published+=n;}public static void PublishTowerOwnedTargetDamage(TowerOwnedDamageResolution r,MonsterBehaviour t,int n,bool kill){} }
 public class WindVortexBehaviour {public bool IsValid()=>true;public BattleCombatBinding Binding;public bool IsInitialized; public void Initialize(BattleCombatBinding b,TowerInstance t,TowerUpgradeDefinition u,TowerKillSource? killSource=null){Binding=b;IsInitialized=b.IsUsable;}}
 
+class CameraInputStub {public void ClearInspectionBinding(){}}
 partial class LifecycleHarness {
+ private CameraInputStub cameraPanController=new CameraInputStub();
  internal BattleModalPauseAuthority ModalPause=new BattleModalPauseAuthority();
  private PathSessionStub DashedPathSession=new PathSessionStub();
  public BattleCombatBinding combatBinding;

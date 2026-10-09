@@ -232,9 +232,12 @@ Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
 ## 10. Verification Evidence And Pending Acceptance
 
 The following is historical evidence for Task002 and its reference simplification;
-Task002-1 records its new 105 presentation assertions and 33 damage/provenance
+Task002-1 records its 105 presentation assertions and 33 damage/provenance
 assertions separately. Native Kill count and named/layer-styled item acceptance
 remains pending.
+Task003 extends presentation verification to 109 assertions for synchronous input
+invalidation and protected placement-cleanup admission; production binding and tap
+entry are implemented with separate native acceptance still pending.
 
 - 74 managed assertions execute the whole production View, HUD inspection partial,
   Snapshot, Battle binding and pause authority, plus exact production combat query

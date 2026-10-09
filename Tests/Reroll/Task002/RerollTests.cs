@@ -12,7 +12,8 @@ public sealed class DraftViewPreparation : IDisposable
 }
 public partial class BattleHUDUI
 {
-    public bool IsDraftOpen; public bool FailDraftPreparation;
+    public bool IsDraftOpen,IsTowerInspectionBusy;public int InputInvalidations;public void InvalidateBattlefieldInput(){InputInvalidations++;}
+    public bool FailDraftPreparation;
     public Action DuringDraftPreparation, DuringDraftCommit, Reroll;
     public Action<DraftResult> Selection;
     public List<DraftResult> Choices;
@@ -96,6 +97,12 @@ class RerollTests
     static string Trace(IReadOnlyList<DraftResult> choices){string s="";foreach(var c in choices)s+=c.Identity.name+",";return s;}
     static void Main()
     {
+        var modalCase=new Fixture();modalCase.D.StopBattle();Start(modalCase.D);modalCase.H.IsTowerInspectionBusy=true;
+        int revision=modalCase.H.InputInvalidations;
+        Check(!modalCase.D.TryOpenInitialTowerDraft(out _,out _)&&modalCase.H.InputInvalidations==revision,"inspection Opening blocks Draft before it mutates gesture revision");
+        modalCase.H.IsTowerInspectionBusy=false;
+        Check(modalCase.D.TryOpenInitialTowerDraft(out _,out _)&&modalCase.H.InputInvalidations==revision+1,"accepted Draft Opening synchronously invalidates battlefield input");
+        modalCase.D.StopBattle();
         var pauseCase=new Fixture();
         var pauseAuthority=pauseCase.Coordinator.ModalPause;
         int completions=0;pauseCase.D.OnInitialDraftCompleted+=t=>completions++;

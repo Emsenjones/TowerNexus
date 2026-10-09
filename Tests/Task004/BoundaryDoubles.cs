@@ -192,6 +192,7 @@ public class BattleRuntimeCoordinator : UnityEngine.MonoBehaviour
 {
     internal MonsterDashedPathSession DashedPathSession;
     internal object DiagnosticIdentity => this;
+    internal bool IsGameplayModalBlocked;
     public bool IsBattleActive=true;public int FailureCount;public Action OnFailure;
     internal readonly TowerPlacementSubmission Submission=new TowerPlacementSubmission();
     internal void FailCommittedUpgrade(TowerUpgradeSystem owner,string reason)

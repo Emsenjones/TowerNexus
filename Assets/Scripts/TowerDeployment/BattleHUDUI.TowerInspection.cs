@@ -24,6 +24,18 @@ public partial class BattleHUDUI
         internal InspectionSession(BattleCombatBinding battle, TowerInfoWindow view) { Battle = battle; View = view; }
     }
 
+    internal bool HasTowerInspectionBinding(BattleCombatBinding battle, TowerPlacementSubmission members, BattleModalPauseAuthority pause) =>
+        isActiveAndEnabled && !inspectionClearing && battle != null && members != null && pause != null && ReferenceEquals(inspectionBattle, battle) &&
+        ReferenceEquals(inspectionMembers, members) && ReferenceEquals(inspectionPause, pause);
+    internal ulong BattlefieldInputRevision { get; private set; }
+    internal event System.Action OnBattlefieldInputInvalidated;
+    internal void InvalidateBattlefieldInput()
+    {
+        BattlefieldInputRevision++;
+        foreach (var callback in OnBattlefieldInputInvalidated?.GetInvocationList() ?? System.Array.Empty<System.Delegate>())
+        { try { ((System.Action)callback)(); } catch (System.Exception error) { UnityEngine.Debug.LogException(error, this); } }
+    }
+
     public bool IsTowerInfoOpen => inspectionPhase == TowerInspectionPhase.Open;
     public bool IsTowerInspectionBusy => inspectionPhase != TowerInspectionPhase.Idle || inspectionOperation;
 
@@ -61,6 +73,7 @@ public partial class BattleHUDUI
         var session = new InspectionSession(inspectionBattle, towerInfoWindow);
         inspectionSession = session;
         inspectionPhase = TowerInspectionPhase.Opening;
+        InvalidateBattlefieldInput();
         inspectionOperation = true;
         bool succeeded = false;
         try
@@ -89,10 +102,10 @@ public partial class BattleHUDUI
         }
     }
 
-    private bool CanOpenInspection() => isActiveAndEnabled && towerInfoWindow != null && !IsDraftOpen &&
+    private bool CanOpenInspection() => isActiveAndEnabled && towerInfoWindow != null && !IsDraftSessionBusy &&
         inspectionBattle != null && inspectionBattle.IsOpenForRead && inspectionMembers != null &&
         !inspectionMembers.IsBusy && inspectionMembers.CanStartOperation &&
-        (towerPlacementController == null || !towerPlacementController.IsDragging) &&
+        (towerPlacementController == null || towerPlacementController.IsAvailableForInspection) &&
         inspectionPause != null && inspectionPause.IsBattleOpen(inspectionBattle) && inspectionPause.CanAcquire;
 
     private bool IsCurrent(InspectionSession session) => ReferenceEquals(session, inspectionSession) &&
@@ -101,7 +114,7 @@ public partial class BattleHUDUI
         inspectionPause != null && inspectionPause.IsBattleOpen(session.Battle) &&
         inspectionMembers != null && !inspectionMembers.IsBusy &&
         (session.Pause != null || inspectionMembers.CanStartOperation) &&
-        (towerPlacementController == null || !towerPlacementController.IsDragging) && !IsDraftOpen;
+        (towerPlacementController == null || towerPlacementController.IsAvailableForInspection) && !IsDraftSessionBusy;
 
     public void CloseTowerInfo() { CancelTowerInspection(); }
     internal void CancelTowerInspection() { CloseInspectionSession(inspectionSession); }
@@ -110,6 +123,7 @@ public partial class BattleHUDUI
     {
         if (inspectionClearing) return;
         inspectionClearing = true;
+        InvalidateBattlefieldInput();
         bool outerOperation = inspectionOperation;
         inspectionOperation = true;
         try

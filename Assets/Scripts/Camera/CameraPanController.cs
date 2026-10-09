@@ -34,6 +34,11 @@ public sealed class CameraPanController : MonoBehaviour
     private const int MousePointerId = -1;
     private const float PositionReconcileTolerance = 0.0001f;
 
+    [Header("Tower Inspection")]
+    [SerializeField] private float tapMovementThresholdPixels = 10f;
+    [SerializeField] private LayerMask towerSelectionMask = 1 << 13;
+    [SerializeField] private float towerSelectionDistance = 500f;
+    [Header("Camera Dependencies")]
     [SerializeField] private Camera outputCamera;
     [SerializeField] private CinemachineBrain cinemachineBrain;
     [SerializeField] private CinemachineCamera cinemachineGameplayCamera;
@@ -45,6 +50,49 @@ public sealed class CameraPanController : MonoBehaviour
 
     private readonly List<RaycastResult> uiRaycastResults =
         new List<RaycastResult>();
+
+    private BattleCombatBinding inspectionBattle;
+    private MapGeneratorBehaviour inspectionMap;
+    private TowerPlacementSubmission inspectionMembers;
+    private BattleModalPauseAuthority inspectionPause;
+    private bool isPanning;
+    private Vector2 pressPosition;
+    private TowerInstance pressedTower;
+    private object pressedTowerIdentity;
+    private ulong pressInputRevision;
+    private bool suppressMouseUntilReleased;
+
+    internal bool HasInspectionDependencies(BattleHUDUI hud, TowerPlacementController placement) =>
+        ReferenceEquals(battleHUDUI, hud) && ReferenceEquals(towerPlacementController, placement);
+    internal bool TryBindInspection(BattleCombatBinding battle, MapGeneratorBehaviour map,
+        TowerPlacementSubmission members, BattleModalPauseAuthority pause, out string reason)
+    {
+        ClearInspectionBinding();
+        reason = "Inspection binding requires the exact staged or committed Map and active Camera references.";
+        if (!TryValidateStableReferences(out reason) || battle == null || map == null || members == null || pause == null ||
+            (!ReferenceEquals(stagedMap, map) && !ReferenceEquals(activeMap, map)) ||
+            !battleHUDUI.HasTowerInspectionBinding(battle, members, pause)) return false;
+        inspectionBattle = battle; inspectionMap = map; inspectionMembers = members; inspectionPause = pause;
+        battleHUDUI.OnBattlefieldInputInvalidated += CancelPointerGesture;
+        towerPlacementController.BindBattlefieldInput(this);
+        reason = string.Empty; return true;
+    }
+    internal bool IsInspectionBindingReady(BattleCombatBinding battle, bool requireCommitted) =>
+        isActiveAndEnabled && ReferenceEquals(inspectionBattle, battle) && inspectionMap != null &&
+        battleHUDUI != null && battleHUDUI.HasTowerInspectionBinding(battle, inspectionMembers, inspectionPause) &&
+        (requireCommitted ? ReferenceEquals(activeMap, inspectionMap) :
+            (ReferenceEquals(activeMap, inspectionMap) || ReferenceEquals(stagedMap, inspectionMap)));
+    private bool OwnsInspectionBinding => inspectionBattle != null && battleHUDUI != null &&
+        battleHUDUI.HasTowerInspectionBinding(inspectionBattle, inspectionMembers, inspectionPause);
+    internal void ClearInspectionBinding()
+    {
+        CancelPointerGesture();
+        if (battleHUDUI != null) battleHUDUI.OnBattlefieldInputInvalidated -= CancelPointerGesture;
+        inspectionBattle = null; inspectionMap = null; inspectionMembers = null; inspectionPause = null;
+    }
+    internal void CancelPointerGesture() { EndPanGesture(PointerPhase.Cancelled); }
+    private void OnApplicationFocus(bool focused) { if (!focused) CancelPointerGesture(); }
+    private void OnApplicationPause(bool paused) { if (paused) CancelPointerGesture(); }
 
     private MapGeneratorBehaviour stagedMap;
     private MapCameraBoundary stagedBoundary;
@@ -60,7 +108,8 @@ public sealed class CameraPanController : MonoBehaviour
     public MapGeneratorBehaviour ActiveMap => activeMap;
     public MapCameraBoundary ActiveBoundary => activeBoundary;
     public Transform ActiveDefaultPose => activeDefaultPose;
-    public bool IsPanning => primaryPointer.IsActive;
+    public bool IsPanning => isPanning;
+    internal bool IsPointerGestureOwned => primaryPointer.IsActive;
 
     private void OnEnable()
     {
@@ -83,6 +132,9 @@ public sealed class CameraPanController : MonoBehaviour
             gameFlowController.OnStateChanged -= HandleGameFlowStateChanged;
         }
 
+        bool ownsWindow = OwnsInspectionBinding;
+        ClearInspectionBinding();
+        if (ownsWindow) battleHUDUI.CancelTowerInspection();
         ForceClearBindings();
     }
 
@@ -99,6 +151,9 @@ public sealed class CameraPanController : MonoBehaviour
 
     public bool TryValidateStableReferences(out string failureReason)
     {
+        if (float.IsNaN(tapMovementThresholdPixels) || float.IsInfinity(tapMovementThresholdPixels) || tapMovementThresholdPixels < 0f ||
+            float.IsNaN(towerSelectionDistance) || float.IsInfinity(towerSelectionDistance) || towerSelectionDistance <= 0f || towerSelectionMask.value == 0)
+        { failureReason = "Invalid Tower inspection threshold, distance or layer mask."; return false; }
         if (!isActiveAndEnabled)
         {
             failureReason = "Camera Pan Controller is disabled.";
@@ -335,6 +390,8 @@ public sealed class CameraPanController : MonoBehaviour
             return false;
         }
 
+        if (inspectionBattle == null || !ReferenceEquals(inspectionMap, candidateMap))
+        { failureReason = "Camera commit has no matching prepared inspection Battle/Map."; return false; }
         EndPanGesture(PointerPhase.Cancelled);
         cinemachineGameplayCamera.ForceCameraPosition(
             candidateDefaultPose.position,
@@ -400,6 +457,12 @@ public sealed class CameraPanController : MonoBehaviour
             stagedDefaultPose = null;
         }
 
+        if ((clearsActive || clearsStaged) && ReferenceEquals(inspectionMap, mapOwner))
+        {
+            bool ownsWindow = OwnsInspectionBinding;
+            ClearInspectionBinding();
+            if (ownsWindow) battleHUDUI.ClearTowerInspectionBinding();
+        }
         if (clearsActive)
         {
             EndPanGesture(PointerPhase.Cancelled);
@@ -428,6 +491,7 @@ public sealed class CameraPanController : MonoBehaviour
 
             if (touch.phase == TouchPhase.Began)
             {
+                suppressMouseUntilReleased = true;
                 TryBeginPan(
                     PointerKind.Touch,
                     touch.fingerId,
@@ -436,6 +500,9 @@ public sealed class CameraPanController : MonoBehaviour
             }
         }
 
+        if (Input.touchCount > 0) { suppressMouseUntilReleased = true; return; }
+        if (suppressMouseUntilReleased)
+        { if (!Input.GetMouseButton(0)) suppressMouseUntilReleased = false; return; }
         if (Input.GetMouseButtonDown(0))
         {
             TryBeginPan(
@@ -464,6 +531,11 @@ public sealed class CameraPanController : MonoBehaviour
             ScreenPosition = screenPosition,
             Phase = PointerPhase.Pressed
         };
+        pressPosition = screenPosition;
+        pressInputRevision = battleHUDUI.BattlefieldInputRevision;
+        pressedTower = FindTower(screenPosition);
+        pressedTowerIdentity = pressedTower != null ? pressedTower.RuntimeIdentity : null;
+        isPanning = false;
         previousPointerMapPoint = mapPoint;
         hasPointerMapBaseline = true;
     }
@@ -480,7 +552,7 @@ public sealed class CameraPanController : MonoBehaviour
         {
             if (Input.GetMouseButtonUp(0))
             {
-                EndPanGesture(PointerPhase.Released);
+                ReleasePointer(Input.mousePosition);
                 return;
             }
 
@@ -490,7 +562,7 @@ public sealed class CameraPanController : MonoBehaviour
                 return;
             }
 
-            MovePan(Input.mousePosition);
+            MovePointer(Input.mousePosition);
             return;
         }
 
@@ -505,7 +577,7 @@ public sealed class CameraPanController : MonoBehaviour
 
             if (touch.phase == TouchPhase.Ended)
             {
-                EndPanGesture(PointerPhase.Released);
+                ReleasePointer(touch.position);
                 return;
             }
 
@@ -515,11 +587,56 @@ public sealed class CameraPanController : MonoBehaviour
                 return;
             }
 
-            MovePan(touch.position);
+            MovePointer(touch.position);
             return;
         }
 
         EndPanGesture(PointerPhase.Cancelled);
+    }
+
+    private TowerInstance FindTower(Vector2 screenPosition)
+    {
+        var hits = Physics.RaycastAll(outputCamera.ScreenPointToRay(screenPosition), towerSelectionDistance,
+            towerSelectionMask, QueryTriggerInteraction.Collide);
+        System.Array.Sort(hits, (a, b) => a.distance != b.distance ? a.distance.CompareTo(b.distance) :
+            a.collider.GetInstanceID().CompareTo(b.collider.GetInstanceID()));
+        foreach (var hit in hits)
+        {
+            var tower = hit.collider.GetComponentInParent<TowerInstance>();
+            if (tower != null && tower.isActiveAndEnabled && inspectionMembers.OwnsDeployedTower(tower)) return tower;
+        }
+        return null;
+    }
+    private void ReleasePointer(Vector2 position)
+    {
+        bool tap = !isPanning && (position - pressPosition).sqrMagnitude <= tapMovementThresholdPixels * tapMovementThresholdPixels;
+        var target = pressedTower;
+        var identity = pressedTowerIdentity;
+        var battle = inspectionBattle;
+        var map = inspectionMap;
+        var revision = pressInputRevision;
+        bool eligible = tap && CanPanNow() && pressInputRevision == battleHUDUI.BattlefieldInputRevision &&
+            !IsPointerOverRaycastableUI(primaryPointer.Id, position) && target != null &&
+            ReferenceEquals(target.RuntimeIdentity, pressedTowerIdentity) && FindTower(position) == target;
+        eligible = eligible && revision == battleHUDUI.BattlefieldInputRevision && CanPanNow() &&
+            ReferenceEquals(battle, inspectionBattle) && ReferenceEquals(map, inspectionMap) &&
+            ReferenceEquals(target.RuntimeIdentity, identity);
+        EndPanGesture(PointerPhase.Released);
+        if (eligible && !battleHUDUI.TryOpenTowerInfo(target, out string reason))
+            Debug.LogWarning("Tower inspection opening was rejected: " + reason, this);
+    }
+    private void MovePointer(Vector2 position)
+    {
+        if (pressInputRevision != battleHUDUI.BattlefieldInputRevision) { CancelPointerGesture(); return; }
+        if (!isPanning)
+        {
+            primaryPointer.ScreenPosition = position;
+            if ((position - pressPosition).sqrMagnitude <= tapMovementThresholdPixels * tapMovementThresholdPixels) return;
+            isPanning = true; pressedTower = null; pressedTowerIdentity = null;
+            hasPointerMapBaseline = TryGetPointerMapPoint(position, out previousPointerMapPoint);
+            return;
+        }
+        MovePan(position);
     }
 
     private void MovePan(Vector2 screenPosition)
@@ -551,7 +668,8 @@ public sealed class CameraPanController : MonoBehaviour
 
     private bool CanPanNow()
     {
-        return activeMap != null &&
+        return outputCamera != null && cinemachineBrain != null && cinemachineGameplayCamera != null &&
+               cinemachineBrain.OutputCamera == outputCamera && activeMap != null &&
                activeBoundary != null &&
                activeDefaultPose != null &&
                cinemachineConfiner != null &&
@@ -561,10 +679,14 @@ public sealed class CameraPanController : MonoBehaviour
                cinemachineConfiner.IsValid &&
                gameFlowController != null &&
                gameFlowController.CurrentState == GameFlowState.Battle &&
-               battleHUDUI != null &&
-               !battleHUDUI.IsDraftOpen &&
+               battleHUDUI != null && battleHUDUI.isActiveAndEnabled &&
+               !battleHUDUI.IsDraftSessionBusy && !battleHUDUI.IsTowerInspectionBusy &&
+               inspectionBattle != null && inspectionBattle.IsOpenForRead &&
+               battleHUDUI.HasTowerInspectionBinding(inspectionBattle, inspectionMembers, inspectionPause) &&
+               ReferenceEquals(inspectionMap, activeMap) && inspectionMembers != null && inspectionMembers.CanStartOperation &&
+               inspectionPause != null && inspectionPause.CanAcquire &&
                towerPlacementController != null &&
-               !towerPlacementController.IsDragging &&
+               towerPlacementController.IsAvailableForInspection &&
                eventSystem != null &&
                EventSystem.current == eventSystem;
     }
@@ -587,7 +709,7 @@ public sealed class CameraPanController : MonoBehaviour
 
         uiRaycastResults.Clear();
         eventSystem.RaycastAll(pointerEventData, uiRaycastResults);
-        bool blocked = uiRaycastResults.Count > 0;
+        bool blocked = uiRaycastResults.Exists(result => result.module is UnityEngine.UI.GraphicRaycaster);
         uiRaycastResults.Clear();
         return blocked;
     }
@@ -656,6 +778,7 @@ public sealed class CameraPanController : MonoBehaviour
     {
         if (state != GameFlowState.Battle)
         {
+            if (OwnsInspectionBinding) battleHUDUI.CancelTowerInspection();
             EndPanGesture(PointerPhase.Cancelled);
         }
     }
@@ -671,6 +794,7 @@ public sealed class CameraPanController : MonoBehaviour
         };
         previousPointerMapPoint = default;
         hasPointerMapBaseline = false;
+        isPanning = false; pressedTower = null; pressedTowerIdentity = null;
     }
 
     private void ForceClearBindings()

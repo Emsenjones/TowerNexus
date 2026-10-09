@@ -9,6 +9,17 @@ class SubmissionTests
     {Check(!r.IsCommitted&&!entry.IsConsumed&&f.Submission.DeployedTowerInstances.Count==0&&f.Map.GetNode(new Vector2Int(x,0)).IsWalkable&&f.Monsters.Applied==0,"no partial deployment: "+r.FailureReason);}
     static void Main()
     {
+        Run("inspection availability covers outer cleanup without self-rejection",()=>InteractionHarness.TestInspectionAvailability());
+        Run("inspection blocks direct level, Upgrade and Debug requests without consumption",()=>{
+            var f=new SubmissionFixture();var level=f.Grant(DraftResult.CreateTowerDraft(f.Definition));f.Battle.IsGameplayModalBlocked=true;
+            Check(!f.Submission.SubmitLevelUp(level,f.Tower).IsCommitted&&!level.IsConsumed,"blocked level preserves reward");
+            Check(!f.Submission.SubmitUpgrade(f.Item,f.Tower).IsCommitted&&!f.Item.IsConsumed,"blocked Upgrade preserves reward");
+            Check(!f.System.ApplyDebugUpgrade(f.Tower,new TowerUpgradeDefinition()).IsCommitted&&!f.Submission.TryBeginInteraction(out _),"debug and gesture entry blocked");
+        });
+        Run("modal appearing during preparation rejects final investment authorization",()=>{
+            var f=new SubmissionFixture();f.Combat.OnPrepare=()=>f.Battle.IsGameplayModalBlocked=true;
+            Check(!f.Submission.SubmitUpgrade(f.Item,f.Tower).IsCommitted&&!f.Item.IsConsumed&&f.EvidenceCount==0,"no commit after modal starts");
+        });
         Run("complete deployment and stable ordered read-only queries",()=>{
             var f=new SubmissionFixture(false);var view=f.Submission.DeployedTowerInstances;
             for(int x=0;x<2;x++){var e=f.Grant(DraftResult.CreateTowerDraft(f.Definition));Check(f.Submission.SubmitDeployment(e,f.Candidate(x)).IsCommitted&&e.IsConsumed,"deploy");}

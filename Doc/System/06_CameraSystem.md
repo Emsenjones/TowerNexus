@@ -82,6 +82,15 @@ Section 4.2. One gesture never both pans and opens TowerInfoWindow. Modal admiss
 or Battle/Map invalidation cancels the gesture rather than replaying it on close.
 
 TowerInfoWindow preserves the current Camera view throughout opening and closing.
+Tap admission uses an authored finite nonnegative screen-pixel threshold. Crossing
+it establishes the current map-point baseline without a transition jump. Modal
+Opening and binding revocation synchronously retire the candidate, including an
+opening that fails or a modal that closes before the next input sample.
+Preparation may bind inspection to the candidate staged Map; input admission
+requires that exact Map to become committed and its Battle to become active.
+Selection uses stable Tower-owned hit geometry and authoritative deployed membership;
+preview/result/outgoing objects cannot qualify. Selection geometry must not change
+placement collision/query semantics or disappear with a level-model replacement.
 Its modal lifetime blocks player pan; no automatic focus movement is performed.
 
 ---

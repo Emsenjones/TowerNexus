@@ -15,6 +15,13 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     [SerializeField] private GameObject monsterDashedPathPrefab;
     private GameObject pathPresentationRoot;
     internal MonsterDashedPathSession DashedPathSession { get; private set; }
+    [Header("Tower Inspection")]
+    [SerializeField] private BattleHUDUI battleHUDUI;
+    [SerializeField] private CameraPanController cameraPanController;
+    internal bool IsGameplayModalBlocked =>
+        (battleHUDUI != null && battleHUDUI.IsTowerInspectionBusy) ||
+        (draftSystem != null && draftSystem.IsModalSessionBusy) || ModalPause.HasRetainedPause;
+    [Header("Battle Dependencies")]
     [SerializeField] private PlayerSystem playerSystem;
     [SerializeField] private AStarPathfindingService pathfindingService;
     [SerializeField] private MonsterSpawner monsterSpawner;
@@ -322,6 +329,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         }
 
         towerPlacementController.ConfigureSubmission(this, draftSystem);
+        if (!battleHUDUI.BindTowerInspection(combatBinding, Submission, ModalPause, out var inspectionReason) ||
+            !cameraPanController.TryBindInspection(combatBinding, activeMap, Submission, ModalPause, out inspectionReason))
+            return FailPreparation("Tower inspection binding failed: " + inspectionReason);
         isBattlePrepared = true;
 
         if (!CanBeginPreparedBattle(out string failureReason))
@@ -430,6 +440,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 return false;
             }
 
+            if (!cameraPanController.IsInspectionBindingReady(combatBinding, true))
+                return FailPreparation("Tower inspection requires the exact committed Camera Map before Battle begin.");
             IsBattleActive = true;
             ModalPause.OpenBattle(combatBinding);
             playerSystem.BeginBattle();
@@ -564,6 +576,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private void RevokeCombatAuthority()
     {
         ModalPause.RevokeBattle(combatBinding);
+        RunCleanupSafely(() => cameraPanController?.ClearInspectionBinding());
         RunCleanupSafely(() => DashedPathSession?.Close());
         combatBinding?.Close();
         Submission.CloseBattleGate();
@@ -591,6 +604,11 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         RunCleanupSafely(() => playerSystem?.StopBattle());
         RunCleanupSafely(() => monsterManager?.CloseBattleGate());
         RunCleanupSafely(() => towerPlacementController?.CloseBattleGate());
+        RunCleanupSafely(() =>
+        {
+            if (battleHUDUI != null && battleHUDUI.HasTowerInspectionBinding(combatBinding, Submission, ModalPause))
+                battleHUDUI.ClearTowerInspectionBinding();
+        });
         RunCleanupSafely(() => draftSystem?.StopBattle());
         RunCleanupSafely(() => ModalPause.CancelBattle(combatBinding));
     }
@@ -734,6 +752,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
+        if (!cameraPanController.IsInspectionBindingReady(combatBinding, false))
+        { failureReason = "Camera inspection staged/committed identity is unavailable."; return false; }
         if (!AreConsumerGatesClosed())
         {
             failureReason =
@@ -747,6 +767,10 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private bool HasStableReferences(out string failureReason)
     {
+        if (battleHUDUI == null || cameraPanController == null || draftSystem == null ||
+            !ReferenceEquals(draftSystem.PresentationHUD, battleHUDUI) ||
+            !cameraPanController.HasInspectionDependencies(battleHUDUI, towerPlacementController))
+        { failureReason = "Tower inspection HUD/Camera/Draft/Placement dependencies are missing or inconsistent."; return false; }
         if (playerSystem == null)
         {
             failureReason = "Player System is not assigned.";
