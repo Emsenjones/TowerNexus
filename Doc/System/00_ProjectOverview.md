@@ -87,8 +87,9 @@ Core flow and battle rules:
 - The first Wave Delay begins only after the Initial Tower Draft selection is accepted; Tower deployment itself may occur during that delay.
 - Every Initial or Player level-up Draft pauses battle simulation while its Draft Window is open. Draft presentation and selection remain interactive, and the prior simulation rate is restored before gameplay resumes.
 - Tapping a committed deployed Tower opens TowerInfoWindow with its current
-  level, resolved Attack Range and Attack, identity information, and acquired
-  Upgrade icons. The modal window pauses simulation, blocks underlying interaction,
+  level, resolved Attack Range and Attack, name/icon, cumulative Kill count and
+  acquired Upgrade names/icons/layer backgrounds. Description is omitted.
+  The modal window pauses simulation, blocks underlying interaction,
   and restores the prior rate on Close. It does not move the Camera.
 - Draft and TowerInfoWindow use one exclusive Battle-scoped pause authority.
   They cannot overlap; outgoing lifecycle cleanup releases pause ownership without

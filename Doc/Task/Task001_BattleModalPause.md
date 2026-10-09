@@ -17,7 +17,9 @@ Authoritative contracts:
 - [Battle HUD TowerInfoWindow](../System/04_BattleHUDUISystem.md#42-towerinfowindow)
 - [Game Flow System](../System/01_GameFlowSystem.md)
 
-Implementation order: first. Task002 consumes its owner/handle contract; Task003
+Implementation order: Task001 -> Task002 ->
+[Task002-1](Task002-1_TaskInfoWindowContentRefinment.md) -> Task003.
+Task002 and Task002-1 consume its owner/handle contract; Task003
 uses its modal availability and lifecycle guarantees.
 
 ## 2. Scope And Deliverables

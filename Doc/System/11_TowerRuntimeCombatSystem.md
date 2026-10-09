@@ -76,6 +76,13 @@ Common per-Tower runtime state includes:
 
 None of this state belongs in reusable definitions or authored templates.
 
+TowerInstance separately owns cumulative KillCount. Damage producers transport
+their exact Battle identity and nullable source Tower into lethal attribution;
+Monster death resolution commits credit once. Preserve the original source on
+released entities and nested Effects, without reconstructing it from targeting
+state. Combat cache/model replacement does not reset the counter. Diagnostics
+and their subscribers are not the authoritative gameplay counting mechanism.
+
 TowerInfoWindow receives a read-only view of the target's current committed
 resolved Attack Range and resolved BasicDamage. The latter includes current level
 BasicDamage and applied Basic Damage Bonus deltas, before a damage source's own

@@ -176,8 +176,9 @@ The authored TowerInfoWindow view lives on that root; the continuously active
 Battle HUD owns inspection sessions, target binding, and the pause handle.
 
 The author explicitly supplies a fixed Title, a Basic Stats parent with individual
-text/image references, an Upgrade Info parent with Grid Layout, one upgrade-icon
-UI template containing an Image, a Close button, and a full-screen semitransparent
+text/image references, an Upgrade Info parent with Grid Layout, one Upgrade item
+UI template containing name text, icon and background Images plus authored Basic,
+Behaviour and Elemental background Sprites, a Close button, and a full-screen semitransparent
 black mask below the window content. The mask blocks raycasts and covers underlying
 battle HUD controls as well as the Map. Window content remains interactive above it.
 
@@ -185,11 +186,15 @@ battle HUD controls as well as the Map. Window content remains interactive above
 |---|---|
 | Title | Fixed authored window name |
 | DisplayName | Target TowerDefinition.DisplayName |
-| Description | Target TowerDefinition.Description |
 | Icon | Target TowerDefinition.Icon |
 | Level | Target TowerInstance.CurrentLevel |
 | AttackRange | Current resolved Attack Range supplied by Tower Runtime Combat, including applied Upgrade changes |
 | Attack | Current resolved BasicDamage supplied by Tower Runtime Combat: current level BasicDamage plus applied Basic Damage Bonus deltas |
+| Kill count | Target TowerInstance.KillCount: cumulative attributed enemy deaths for this runtime Tower |
+
+Description is omitted from this compact window; TowerDefinition.Description
+remains available elsewhere. The Basic Stats parent is layout organization and
+the mask is manually authored; neither requires a dedicated view-script reference.
 
 Attack is the current Tower attack baseline. Individual attack and Effect results
 apply their own DamageScale at the damage boundary; the display is not a DPS or
@@ -201,12 +206,16 @@ resolved values, and acquired Upgrades. Gameplay cannot mutate these through the
 window while paused, so continuous per-frame data polling is unnecessary.
 Preparation and activation may invoke authored code: before pause acquisition and
 after activation, compare level, committed combat-baseline revision, and ordered
-Upgrade identities/icons with the captured snapshot. A changed snapshot cancels
+Upgrade identities/names/icons/layers and Kill count with the captured snapshot. A changed snapshot cancels
 that opening without automatic retries. Presentation-frame lifecycle checks remain
 permitted while paused; they do not refresh displayed stats.
 
-Generate one icon item for each entry in TowerInstance.AppliedUpgrades, in
-acquisition order, assigning the corresponding TowerUpgradeDefinition.Icon.
+Generate one display-only item for each entry in TowerInstance.AppliedUpgrades, in
+acquisition order, assigning its display name, Icon and TowerUpgradeLayer.
+Each item selects the corresponding authored Basic, Behaviour or Elemental
+background; its presentation owns no Draft or investment behavior. Missing icons
+retain slots with diagnostics. Invalid required item/background configuration
+rejects hidden preparation rather than substituting another layer's background.
 The Grid Layout controls positioning. No acquired Upgrades means an empty container.
 Remove previous generated items before binding another target. Icons are display-only;
 unacquired upgrades, upgrade details, and secondary popups are outside this scope.

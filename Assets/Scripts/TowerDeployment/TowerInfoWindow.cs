@@ -9,7 +9,6 @@ using UnityEngine.UI;
 public sealed class TowerInfoWindow : MonoBehaviour
 {
     [SerializeField] private RectTransform contentRoot;
-    [SerializeField] private RectTransform basicStatsContainer;
     [SerializeField] private TMP_Text displayNameText;
     [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private Image towerIcon;
@@ -19,7 +18,6 @@ public sealed class TowerInfoWindow : MonoBehaviour
     [SerializeField] private RectTransform upgradeContainer;
     [SerializeField] private Image upgradeIconPrefab;
     [SerializeField] private Button closeButton;
-    [SerializeField] private Image backgroundMask;
 
     private CanvasGroup visibility;
     private Action closeRequested, cancelled;
@@ -41,34 +39,26 @@ public sealed class TowerInfoWindow : MonoBehaviour
 
     internal bool TryValidateReferences(out string reason)
     {
-        reason = "TowerInfoWindow requires its common RectTransform root, content, stats, Grid, text/Image references, Close button, and mask.";
+        reason = "TowerInfoWindow requires its common RectTransform root, content, Grid, text/Image references, and Close button.";
         var root = transform as RectTransform;
         if (root == null || root.anchorMin != Vector2.zero || root.anchorMax != Vector2.one ||
             root.offsetMin != Vector2.zero || root.offsetMax != Vector2.zero)
         { reason = "TowerInfoWindow common root must stretch to its full-screen UI parent with zero offsets."; return false; }
         if (!enabled || root == null || contentRoot == null || contentRoot == root ||
-            contentRoot.parent != root || backgroundMask == null || backgroundMask.transform.parent != root ||
-            !backgroundMask.enabled || !backgroundMask.raycastTarget ||
-            backgroundMask.transform.GetSiblingIndex() >= contentRoot.GetSiblingIndex() ||
-            basicStatsContainer == null || !basicStatsContainer.IsChildOf(contentRoot) ||
+            contentRoot.parent != root ||
             upgradeContainer == null || !upgradeContainer.IsChildOf(contentRoot) ||
             upgradeContainer.GetComponent<GridLayoutGroup>() == null ||
-            !InStats(displayNameText) || !InStats(descriptionText) || !InStats(towerIcon) ||
-            !InStats(levelText) || !InStats(attackRangeText) || !InStats(attackText) ||
+            !InContent(displayNameText) || !InContent(descriptionText) || !InContent(towerIcon) ||
+            !InContent(levelText) || !InContent(attackRangeText) || !InContent(attackText) ||
             closeButton == null || !closeButton.transform.IsChildOf(contentRoot) || !closeButton.interactable ||
             upgradeIconPrefab == null || upgradeIconPrefab.transform.parent != null ||
-            !contentRoot.gameObject.activeSelf || !backgroundMask.gameObject.activeSelf ||
-            !upgradeContainer.gameObject.activeSelf || !basicStatsContainer.gameObject.activeSelf)
+            !contentRoot.gameObject.activeSelf || !upgradeContainer.gameObject.activeSelf)
             return false;
-        var maskRect = backgroundMask.transform as RectTransform;
-        if (maskRect == null || maskRect.anchorMin != Vector2.zero || maskRect.anchorMax != Vector2.one ||
-            maskRect.offsetMin != Vector2.zero || maskRect.offsetMax != Vector2.zero)
-        { reason = "TowerInfoWindow mask must stretch to the common root with zero offsets."; return false; }
         reason = string.Empty;
         return true;
     }
 
-    private bool InStats(Component component) => component != null && component.transform.IsChildOf(basicStatsContainer);
+    private bool InContent(Component component) => component != null && component.transform.IsChildOf(contentRoot);
 
     internal void Attach()
     {
@@ -143,8 +133,7 @@ public sealed class TowerInfoWindow : MonoBehaviour
     }
 
     internal bool IsVisible => isActiveAndEnabled && visibility != null && visibility.alpha > 0f &&
-        visibility.interactable && visibility.blocksRaycasts && backgroundMask != null && backgroundMask.enabled &&
-        backgroundMask.raycastTarget && backgroundMask.gameObject.activeInHierarchy && contentRoot != null && contentRoot.gameObject.activeInHierarchy;
+        visibility.interactable && visibility.blocksRaycasts && contentRoot != null && contentRoot.gameObject.activeInHierarchy;
     internal void Detach()
     {
         if (boundCloseButton != null) boundCloseButton.onClick.RemoveListener(HandleClose);

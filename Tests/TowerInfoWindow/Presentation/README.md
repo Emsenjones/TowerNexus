@@ -13,7 +13,7 @@ python3 Tests/Task005/run.py
 python3 Tests/Task004/run.py
 ```
 
-Presentation runs 72 assertions against the whole production TowerInfoWindow,
+Presentation runs 74 assertions against the whole production TowerInfoWindow,
 BattleHUDUI inspection partial, TowerInspectionSnapshot, BattleCombatBinding and
 BattleModalPauseAuthority. Exact production Combat query and level/Upgrade baseline
 commit methods and HUD OnDisable execute against explicit external boundaries.

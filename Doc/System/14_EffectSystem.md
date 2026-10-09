@@ -81,6 +81,13 @@ When a caller requests the resolved-target output, Effect execution clears that 
 
 ## 5. EffectDefinition Actions
 
+DealDamage transports the execution's exact Battle identity and nullable source
+Tower for lethal kill attribution independently of damage authority. TowerScaled
+uses its explicit source Tower; FixedBuff remains authored FixedDamage and may
+execute without a Tower, in which case it earns no Tower kill credit. Each actual
+target death is credited once by Monster resolution, including nested Effects.
+Kill-credit metadata never changes damage formulas or elemental eligibility.
+
 The action names below are stable authoring identities, not required programming-language method names.
 
 | Action | Responsibility |

@@ -4,6 +4,12 @@ Document Set: Task
 
 Status: Implemented with managed/build evidence; manual UI assembly and native acceptance pending.
 
+Content amendment: [Task002-1](Task002-1_TaskInfoWindowContentRefinment.md) is
+approved for planning and must complete before Task003. The current implementation
+still contains Description and bare Image upgrade items; the final content and
+assembly contract below includes the pending amendment. Historical evidence in
+Sections 8 and 10 does not establish acceptance of that amendment.
+
 ## 1. Objective And Authority
 
 Present the latest committed information for one deployed Tower in the authored
@@ -20,6 +26,7 @@ Authoritative contracts:
 Dependency: [Task001](Task001_BattleModalPause.md). Task003 integrates player entry
 and production Battle lifecycle. This task owns local opening rollback, close,
 disable, target binding, and generated-content cleanup.
+Execution order: Task001 -> Task002 -> Task002-1 -> Task003.
 
 ## 2. Scope And Deliverables
 
@@ -41,12 +48,12 @@ Presentation-frame lifecycle checks are in scope and remain active during pause.
 |---|---|
 | Title | Fixed author-edited text; opening does not overwrite it |
 | DisplayName | `TowerInstance.TowerDefinition.DisplayName` |
-| Description | `TowerInstance.TowerDefinition.Description` |
 | Icon | `TowerInstance.TowerDefinition.Icon` |
 | Level | `TowerInstance.CurrentLevel` |
 | AttackRange | Current committed resolved Attack Range from `TowerCombatBehaviour` |
 | Attack | Current committed `ResolvedBasicDamage` from `TowerCombatBehaviour` |
-| Upgrade icons | `TowerInstance.AppliedUpgrades`, each `TowerUpgradeDefinition.Icon` |
+| Kill count | `TowerInstance.KillCount`, added by Task002-1 |
+| Upgrade items | Acquired Upgrade display name, Icon and TowerUpgradeLayer |
 
 Attack includes level BasicDamage and applied Basic Damage Bonus deltas, before
 source-specific DamageScale. Do not substitute `LevelBasicDamage`, final damage
@@ -76,9 +83,9 @@ The user creates and positions the UI and assigns references manually:
   containing both mask and content. TowerInfoWindow is attached to this common root;
   the existing BattleHUDUI manages the active session.
 - Fixed Title text and Basic Stats parent containing individual text/Image rows.
-- References for DisplayName, Description, Icon, Level, AttackRange, and Attack.
-- Upgrade Info parent using Grid Layout and a directly assigned Image component
-  on the icon Prefab root. No additional upgrade-icon script is required.
+- References for DisplayName, Icon, Level, AttackRange, Attack and Kill count.
+- Upgrade Info parent using Grid Layout and a TowerUpgradeInfoItem Prefab with
+  name text, icon Image, background Image and three layer-background Sprites.
 - Close button.
 - Full-screen semitransparent black Image mask below window content, above underlying
   HUD surfaces, with Raycast Target enabled.
@@ -88,7 +95,7 @@ bound active session owner. Do not require the hidden view's Update or OnEnable 
 discover dependencies or accept the opening request. Bind Close once and avoid
 duplicate listeners across activation cycles.
 
-Generate one icon per acquired Upgrade, in acquisition order. Empty upgrades leave
+Generate one named, layer-styled item per acquired Upgrade, in acquisition order. Empty upgrades leave
 an empty container. Own and remove only generated icon instances, preserving authored
 children/templates. Deferred destruction must not leave old items visible or counted
 by layout during immediate close/reopen. Icons provide no click action.
@@ -143,6 +150,9 @@ assembly checklist; pending manual assembly is reported explicitly, not marked p
 
 ## 8. Implemented Interfaces And Reviewed Boundaries
 
+This section records the original implementation; Task002-1 extends its snapshot
+and item preparation without changing the HUD session/pause interfaces.
+
 `BattleHUDUI.TowerInspection.cs` is part of the existing partial BattleHUDUI
 component. It adds one serialized TowerInfoWindow reference, manages Opening/Open/
 Closing and an outer operation guard, and uses Task001's actual BattleCombatBinding
@@ -176,7 +186,7 @@ Image slots with diagnostics. Level is integer text; range/Attack use invariant
 `0.##` formatting. Title is neither referenced nor overwritten by the script.
 
 Both mask and content are children of the same root. External root/component
-disable notifies HUD; loss of content/mask validity is detected on a presentation
+disable notifies HUD; loss of content validity is detected on a presentation
 frame. Close disarms callbacks before hide. CanvasGroup suppresses visibility and
 raycasts before root deactivation; cleanup always releases the exact pause in finally.
 A failed modal hide reports failure through the exact live Battle identity. HUD
@@ -192,7 +202,7 @@ Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
   Content (RectTransform; active locally)
     Title (fixed authored text)
     BasicStats (active parent)
-      DisplayName / Description / Level / AttackRange / Attack (TMP_Text)
+      DisplayName / Level / AttackRange / Attack / KillCount (TMP_Text)
       Icon (Image)
     UpgradeGrid (active parent; GridLayoutGroup)
     Close (Button)
@@ -201,13 +211,16 @@ Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
 1. Stretch the common root to a full-screen UI parent with zero offsets. Stretch
    Mask to that root with zero offsets; put Mask before Content in sibling order.
    Keep child objects active locally; only the common root starts inactive.
-2. Assign Content Root, Basic Stats Container, all five text references, Tower Icon,
-   Upgrade Container, Close Button and Background Mask on TowerInfoWindow.
-3. Save the separate upgrade-icon UI object as a Prefab with Image on its root.
-   Drag that Project Prefab into Upgrade Icon Prefab; Unity stores its Image reference.
-   The script instantiates that component's complete GameObject and assigns its Sprite.
+2. Assign Content Root, all five text references including Kill count, Tower Icon, Upgrade Container,
+   and Close Button on TowerInfoWindow. BasicStats is optional layout organization;
+   no container reference is required. Mask has no script reference: manually
+   verify full-screen coverage, sibling order, active state and Raycast Target.
+3. After Task002-1, save the upgrade UI object as a Prefab with TowerUpgradeInfoItem.
+   Assign its icon/background Images, name text and Basic/Behaviour/Elemental
+   background Sprites, then assign the typed Prefab reference on TowerInfoWindow.
+   Remove the Description row and its obsolete binding; add and bind Kill count.
 4. Assign TowerInfoWindow on the existing BattleHUDUI component. Do not disable the
-   HUD with the window. No Controller or upgrade-icon component needs to be added.
+   HUD with the window. No separate Controller component is required.
 5. Configure Grid size/spacing and content layout manually. Do not add a background
    dismissal action. CanvasGroup is acquired/created on the common root at binding;
    avoid other scripts competing for its visibility or modal raycasts.
@@ -216,14 +229,17 @@ Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
 
 ## 10. Verification Evidence And Pending Acceptance
 
-- 72 managed assertions execute the whole production View, HUD inspection partial,
+The following is historical evidence for Task002 and its reference simplification;
+Task002-1 Kill count and named/layer-styled item acceptance is separately pending.
+
+- 74 managed assertions execute the whole production View, HUD inspection partial,
   Snapshot, Battle binding and pause authority, plus exact production combat query
   and baseline-commit methods. Native activation/graphics and membership are doubles.
 - Cases include latest level/resolved stats, ordered/empty/missing icons, Title,
   preserving authored children, immediate reopen, membership rejection, invalid
   baseline/reference, halfway generation failure, preparation/activation mutations,
   reentrant cancellation, Draft overlap, target destruction, pause revocation,
-  old callbacks, listener preservation, HUD exceptions, mask loss, and hide failure.
+  old callbacks, listener preservation, HUD exceptions, content loss, and hide failure.
 - Existing Draft/Re-roll passed 552 Editor / 501 player assertions, DraftUI 24,
   real-card UI 27; modal pause 81 plus five attack/five spawning boundary cases;
   Effect/binding 27 and Submission 31 cases passed. Assertions were preserved.

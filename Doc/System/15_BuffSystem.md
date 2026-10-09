@@ -262,6 +262,15 @@ Deferred topics include multiple simultaneous speed modifiers, haste, Buff repla
 
 ## Battle Dependency Lifetime
 
+For Tower kill attribution, lifecycle and shared-state damage carries the nullable
+SourceTower already captured in that execution context. Shared Buff lifecycle
+uses its existing latest successful source; later reapplication does not rewrite
+an in-flight execution or recorded lethal source. A triggering Tower-owned hit
+does not silently replace the shared Buff's source. A source-less or invalid-source
+FixedBuff execution may still deal otherwise-valid damage but earns no Tower kill
+credit. This metadata does not make FixedBuff damage TowerScaled, split shared
+stacks by contributor, or award every contributor a kill.
+
 Buff lifecycle execution retains the owner's Battle identity independently of its
 nullable source Tower. FixedBuff behavior continues without a source Tower while
 that Battle and owner remain valid; TowerScaled source requirements are unchanged.

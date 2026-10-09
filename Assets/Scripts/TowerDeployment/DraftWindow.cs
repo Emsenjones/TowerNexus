@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-public class DraftUI : MonoBehaviour
+public class DraftWindow : MonoBehaviour
 {
     [SerializeField] private GameObject rootObject;
     [SerializeField] private Transform draftItemContainer;
@@ -435,7 +435,7 @@ public class DraftUI : MonoBehaviour
 // HUD-owned, single-use preparation. Gameplay does not know concrete card components.
 public sealed class DraftViewPreparation : IDisposable
 {
-    internal DraftUI Owner;
+    internal DraftWindow Owner;
     internal int Epoch;
     internal GameObject StagingRoot;
     internal List<TowerContentUIItem> Items = new List<TowerContentUIItem>();

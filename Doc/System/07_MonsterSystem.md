@@ -227,6 +227,17 @@ Victory requires normal spawning completion and no alive unresolved Monsters, wh
 
 ---
 
+## Tower Kill Attribution
+
+The first damage application that changes a living Monster to lethal health
+records its exact Battle and nullable source Tower. Actual death resolution
+commits at most one KillCount credit to that valid runtime Tower before external
+death/resolution notifications can reenter Battle stop or release. Nested damage
+and deferred death preserve this lethal source and cannot credit outer callers
+again. Arrival, cleanup, already-resolved targets and source-less damage award no
+Tower credit. Foreign/outgoing Battle sources cannot affect a fresh Tower counter.
+This counting contract does not change existing Monster rewards or player progress.
+
 # 6. Pathfinding And Movement
 
 Monster System owns runtime pathfinding and movement. Map System owns the graph data: Grid Nodes, effective walkability, neighbor queries, Spawn identity, and Target identity.

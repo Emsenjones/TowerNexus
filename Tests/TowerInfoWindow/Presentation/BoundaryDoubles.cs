@@ -151,7 +151,7 @@ public class TowerPlacementController
     public bool IsDragging, CanStartDraftInteraction=true, ThrowCancel;
     public void CancelPlacement(){if(ThrowCancel)throw new Exception("placement cleanup");}
 }
-public class DraftUI
+public class DraftWindow
 {
     public bool ThrowNotify;
     public void NotifyPresentationLost(){if(ThrowNotify)throw new Exception("Draft cleanup");}
@@ -159,7 +159,7 @@ public class DraftUI
 public partial class BattleHUDUI:UnityEngine.MonoBehaviour
 {
     private TowerPlacementController towerPlacementController=new TowerPlacementController();
-    private DraftUI draftUI=new DraftUI();
+    private DraftWindow draftWindow=new DraftWindow();
     public bool IsDraftOpen;
     public bool ThrowUnsubscribe;
     private void UnsubscribeFromPlayerSystem(){if(ThrowUnsubscribe)throw new Exception("subscription cleanup");}

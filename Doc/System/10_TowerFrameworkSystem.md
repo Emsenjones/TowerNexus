@@ -203,10 +203,18 @@ collection cleanup must agree so no stale records or state observers remain.
 ## 6.2 Tower Inspection Data
 
 TowerInstance supplies its TowerDefinition identity, current committed level,
-and acquired Upgrade definitions in acquisition order to TowerInfoWindow.
-TowerDefinition supplies display name, description, and icon; each acquired
-Upgrade definition supplies its icon. Current resolved Attack Range and Attack
+Kill count and acquired Upgrade definitions in acquisition order to TowerInfoWindow.
+TowerDefinition supplies display name and icon; Description remains available
+for other consumers. Each acquired Upgrade definition supplies its display name,
+icon and layer. Current resolved Attack Range and Attack
 come from Tower Runtime Combat rather than duplicate fields in TowerInstance.
+
+TowerInstance owns cumulative nonnegative KillCount for its runtime lifetime.
+Initialization starts at zero; level/Upgrade changes, combat-model replacement,
+pause, combat rebinding and retained result-screen presentation preserve it.
+Fresh Stage/retry instances start at zero. Monster death resolution commits one
+credit to the valid Tower that owns the lethal damage application, before external
+resolution callbacks. Arrival, cleanup and source-less deaths award no Tower credit.
 
 Battle HUD UI owns the inspection window and target binding (Section 4.2).
 Inspection requires membership in the current Battle's committed deployed-Tower

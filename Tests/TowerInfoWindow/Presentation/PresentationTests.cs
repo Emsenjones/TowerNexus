@@ -40,12 +40,12 @@ class PresentationTests
             var basic=Child(content,"basic").transform;
             Grid=Child(content,"grid").transform;Grid.gameObject.AddComponent<GridLayoutGroup>();
             Title=Child(content,"title").AddComponent<TMP_Text>();Title.text="Tower Info";
-            Set(View,"contentRoot",content);Set(View,"basicStatsContainer",basic);
+            Set(View,"contentRoot",content);
             foreach(string field in new[]{"displayNameText","descriptionText","levelText","attackRangeText","attackText"})
                 Set(View,field,Child(basic,field).AddComponent<TMP_Text>());
             Set(View,"towerIcon",Child(basic,"icon").AddComponent<Image>());
             Set(View,"upgradeContainer",Grid);Set(View,"upgradeIconPrefab",new GameObject("prefab").AddComponent<Image>());
-            Close=Child(content,"close").AddComponent<Button>();Set(View,"closeButton",Close);Set(View,"backgroundMask",mask);
+            Close=Child(content,"close").AddComponent<Button>();Set(View,"closeButton",Close);
             root.SetActive(false);Set(Hud,"towerInfoWindow",View);
             Check(Hud.BindTowerInspection(Battle,Members,Pause,out var reason),"bind: "+reason);
         }
@@ -107,7 +107,7 @@ class PresentationTests
         Check(f.Pause.HasRetainedPause&&!f.Pause.CanAcquire,"revoked modal is not idle");Frame(f.Hud);
         Check(!f.Pause.HasRetainedPause&&Time.timeScale==0.65f,"revoked handle remains releasable by cleanup");f.End();
 
-        f=new Fixture();Check(f.Open(),"HUD disable setup");Get<DraftUI>(f.Hud,"draftUI").ThrowNotify=true;
+        f=new Fixture();Check(f.Open(),"HUD disable setup");Get<DraftWindow>(f.Hud,"draftWindow").ThrowNotify=true;
         Get<TowerPlacementController>(f.Hud,"towerPlacementController").ThrowCancel=true;f.Hud.ThrowUnsubscribe=true;
         f.Hud.gameObject.SetActive(false);Check(!f.Pause.HasRetainedPause&&Time.timeScale==0.65f&&!f.View.gameObject.activeSelf,"HUD disable cleanup exceptions cannot retain inspection pause");f.End();
 
@@ -139,8 +139,10 @@ class PresentationTests
         Check(!f.Pause.HasRetainedPause&&Time.timeScale==0.65f&&visibility.alpha==0&&!visibility.blocksRaycasts&&f.Failures==1,
             "hide failure releases pause, removes blocking surface, and reports exact Battle failure");
         GameObject.BeforeDeactivate=null;f.End();
-        f=new Fixture();Check(f.Open(),"mask validity setup");Get<Image>(f.View,"backgroundMask").enabled=false;Frame(f.Hud);
-        Check(!f.Hud.IsTowerInfoOpen&&!f.Pause.HasRetainedPause,"loss of blocking mask cancels on presentation frame");f.End();
+        f=new Fixture();Check(f.Open(),"content validity setup");Get<RectTransform>(f.View,"contentRoot").gameObject.SetActive(false);Frame(f.Hud);
+        Check(!f.Hud.IsTowerInfoOpen&&!f.Pause.HasRetainedPause,"loss of content cancels on presentation frame");f.End();
+        f=new Fixture();Get<TMP_Text>(f.View,"displayNameText").transform.SetParent(Get<RectTransform>(f.View,"contentRoot"),false);
+        Check(f.Open(),"stats references may be anywhere within Content without a required BasicStats parent");f.End();
         Console.WriteLine("PASS production TowerInfoWindow/HUD/Snapshot/Binding/Pause: "+checks+" assertions (native and membership boundaries doubled)");
     }
 }

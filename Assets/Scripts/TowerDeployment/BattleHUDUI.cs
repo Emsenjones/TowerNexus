@@ -8,7 +8,8 @@ using UnityEngine.UI;
 public partial class BattleHUDUI : MonoBehaviour
 {
     [SerializeField] private PlayerSystem playerSystem;
-    [SerializeField] private DraftUI draftUI;
+    [FormerlySerializedAs("draftUI")]
+    [SerializeField] private DraftWindow draftWindow;
     [SerializeField] private TowerPlacementController towerPlacementController;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text hpText;
@@ -23,13 +24,13 @@ public partial class BattleHUDUI : MonoBehaviour
 
     public DraftSystem DraftOwner { get; private set; }
     internal void BindDraftOwner(DraftSystem owner) { DraftOwner = owner; }
-    public bool IsDraftOpen => draftUI != null && draftUI.IsOpen;
+    public bool IsDraftOpen => draftWindow != null && draftWindow.IsOpen;
 
     private void OnEnable()
     {
         SubscribeToPlayerSystem();
         InitializeFromPlayerSystem();
-        if (DraftOwner == null || !DraftOwner.IsBattleActive) draftUI?.CloseDraft();
+        if (DraftOwner == null || !DraftOwner.IsBattleActive) draftWindow?.CloseDraft();
         if (DraftOwner != null && DraftOwner.IsBattleActive)
             foreach (var item in pendingDraftItems) item?.BeginBattle();
     }
@@ -45,7 +46,7 @@ public partial class BattleHUDUI : MonoBehaviour
                 towerPlacementController.CancelPlacement();
         });
         // May synchronously release Stage runtime; notify after other local cleanup.
-        TryHudCleanup(() => draftUI?.NotifyPresentationLost());
+        TryHudCleanup(() => draftWindow?.NotifyPresentationLost());
     }
 
     public void UpdateLevel(int level)
@@ -100,13 +101,13 @@ public partial class BattleHUDUI : MonoBehaviour
             return false;
         }
 
-        if (draftUI == null)
+        if (draftWindow == null)
         {
             failureReason = "Draft UI is not assigned.";
             return false;
         }
 
-        if (!draftUI.TryValidateReferences(
+        if (!draftWindow.TryValidateReferences(
                 out string draftUiFailureReason))
         {
             failureReason = $"Draft UI is invalid: {draftUiFailureReason}";
@@ -325,55 +326,55 @@ public partial class BattleHUDUI : MonoBehaviour
             return false;
         }
 
-        if (draftUI == null)
+        if (draftWindow == null)
         {
             failureReason = "Draft UI is not assigned.";
             return false;
         }
 
-        return draftUI.TryOpenDraft(
+        return draftWindow.TryOpenDraft(
             draftResults,
             onSelected,
             out failureReason);
     }
 
-    public void BindDraftCancellation(Action callback) => draftUI?.BindCancellation(callback);
+    public void BindDraftCancellation(Action callback) => draftWindow?.BindCancellation(callback);
 
     public void BindReroll(int remaining, bool allowed, Action callback) =>
-        draftUI?.BindReroll(remaining, allowed, callback);
+        draftWindow?.BindReroll(remaining, allowed, callback);
 
-    public void ShowNoOtherDraftChoices() => draftUI?.ShowNoOtherChoices();
+    public void ShowNoOtherDraftChoices() => draftWindow?.ShowNoOtherChoices();
 
     public bool TryPrepareDraftChoices(IReadOnlyList<DraftResult> choices,
         Action<DraftResult> selection, out DraftViewPreparation prepared, out string reason)
     {
         prepared = null;
         reason = "Battle HUD is unavailable.";
-        return isBattleActive && draftUI != null &&
-            draftUI.TryPrepareChoices(choices, selection, out prepared, out reason);
+        return isBattleActive && draftWindow != null &&
+            draftWindow.TryPrepareChoices(choices, selection, out prepared, out reason);
     }
 
     public bool CanCommitDraftChoices(DraftViewPreparation prepared) =>
-        isBattleActive && draftUI != null && draftUI.CanCommitChoices(prepared);
+        isBattleActive && draftWindow != null && draftWindow.CanCommitChoices(prepared);
 
-    public void CommitDraftChoiceOwnership(DraftViewPreparation prepared) => draftUI.CommitChoiceOwnership(prepared);
+    public void CommitDraftChoiceOwnership(DraftViewPreparation prepared) => draftWindow.CommitChoiceOwnership(prepared);
 
     public DraftRerollPresentation PresentDraftChoices(DraftViewPreparation prepared, out string reason)
     {
         reason = string.Empty;
-        if (!isBattleActive || draftUI == null) return DraftRerollPresentation.Cancelled;
-        return draftUI.PresentChoices(prepared, out reason);
+        if (!isBattleActive || draftWindow == null) return DraftRerollPresentation.Cancelled;
+        return draftWindow.PresentChoices(prepared, out reason);
     }
 
     public void CloseDraft()
     {
-        draftUI?.CloseDraft();
+        draftWindow?.CloseDraft();
     }
 
     public void BeginBattle()
     {
         isBattleActive = true;
-        draftUI?.BeginBattle();
+        draftWindow?.BeginBattle();
 
         for (int i = pendingDraftItems.Count - 1; i >= 0; i--)
         {
@@ -392,7 +393,7 @@ public partial class BattleHUDUI : MonoBehaviour
     public void StopBattle()
     {
         isBattleActive = false;
-        draftUI?.StopBattle();
+        draftWindow?.StopBattle();
 
         for (int i = pendingDraftItems.Count - 1; i >= 0; i--)
         {

@@ -18,8 +18,11 @@ Authoritative contracts:
 - [Battle Modal Pause](../System/02_StageSystem.md#32-battle-modal-pause-lifetime)
 - [Game Flow System](../System/01_GameFlowSystem.md)
 
-Dependencies: [Task001](Task001_BattleModalPause.md) and
-[Task002](Task002_TowerInfoWindowPresentation.md), including their reviewed APIs.
+Dependencies: [Task001](Task001_BattleModalPause.md),
+[Task002](Task002_TowerInfoWindowPresentation.md), and
+[Task002-1](Task002-1_TaskInfoWindowContentRefinment.md), including their reviewed APIs.
+Start implementation only after Task002-1's runtime and presentation changes are
+complete. Execution order: Task001 -> Task002 -> Task002-1 -> Task003.
 
 ## 2. Scope And Deliverables
 
@@ -131,7 +134,9 @@ placement rejection. Verify rejected investment paths preserve rewards and Tower
 
 Native acceptance includes:
 
-- Mouse and actual touch taps open the correct Tower's latest values/icons.
+- Mouse and actual touch taps open the correct Tower's latest values and Kill count,
+  with acquired Upgrade names/icons and the correct layer backgrounds; Description
+  is absent. Verify kills earned through actual direct and Buff/Effect damage.
 - Dragging from a Tower pans without opening; ordinary empty-map pan and bounds work.
 - UI presses, Draft, Pending Item drag, and placement cleanup cannot open inspection.
 - The full-screen mask blocks Camera, pending items, investment, and target switching.
@@ -145,5 +150,5 @@ Native acceptance includes:
 
 Managed tests/build and static inspection do not replace Unity/device checks.
 Record actual device and user layout acceptance explicitly; leave unexecuted cases
-pending. Feature completion requires the three tasks' acceptance evidence and all
+pending. Feature completion requires Task001, Task002, Task002-1 and Task003 acceptance evidence and all
 required manual UI references to be assembled and verified before merge to main.
