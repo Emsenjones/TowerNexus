@@ -19,6 +19,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
     [SerializeField] private EffectDefinition tickEffect;
 
     private TowerInstance sourceTower;
+    private TowerKillSource sourceKillSource;
     private BattleCombatBinding battleBinding;
     private TowerUpgradeDefinition sourceUpgrade;
     private float tickTimer;
@@ -38,6 +39,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
         ClearRuntimeState();
 
         this.sourceTower = sourceTower;
+        sourceKillSource = new TowerKillSource(battleBinding, sourceTower);
         this.battleBinding = battleBinding;
         this.sourceUpgrade = sourceUpgrade;
         tickTimer = 0f;
@@ -178,6 +180,7 @@ public class MagicArcaneFieldBehaviour : MonoBehaviour
                 tickEffect,
                 new EffectTriggerContext(
                     battleBinding: battleBinding,
+                    killSource: sourceKillSource,
                     sourceTower: sourceTower,
                     sourceUpgrade: sourceUpgrade,
                     targetMonster: target,

@@ -154,8 +154,10 @@ internal class MonsterRouteRevisionBatch
     public int LivingMonsterCount,AlreadyOnNewRouteCount,ReachableRouteRejoinCount,ForcedRelocationCount;
     public List<MonsterRouteRevisionEntry> Entries=new List<MonsterRouteRevisionEntry>();
 }
+public class BattleCombatBinding {}
 public class MonsterManager
 {
+    public BattleCombatBinding CombatBinding=new BattleCombatBinding();
     public bool Ready=true;public int Applied;public Action OnPrepare,OnRoute;
     internal bool TryPrepareTopologyRevision(TowerPlacementTopologyPlan p,out MonsterRouteRevisionBatch batch,out string reason)
     {OnPrepare?.Invoke();batch=new MonsterRouteRevisionBatch();reason="monster readiness";return Ready;}

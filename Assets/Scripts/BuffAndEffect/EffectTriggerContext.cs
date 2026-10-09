@@ -95,11 +95,13 @@ public readonly struct EffectTriggerContext
             default,
         ElementalApplicationTransaction elementalApplicationTransaction = null,
         bool requiresCommittedActionForExecutionVfx = false,
-        BuffRemovalPermission removalPermission = null)
+        BuffRemovalPermission removalPermission = null,
+        TowerKillSource? killSource = null)
     {
         BattleBinding = battleBinding;
         RemovalPermission = removalPermission;
         SourceTower = sourceTower;
+        KillSource = killSource ?? new TowerKillSource(battleBinding, sourceTower);
         SourceUpgrade = sourceUpgrade;
         TargetMonster = targetMonster;
         HasTriggerPosition = hasTriggerPosition;
@@ -116,6 +118,7 @@ public readonly struct EffectTriggerContext
     public BattleCombatBinding BattleBinding { get; }
     internal BuffRemovalPermission RemovalPermission { get; }
     public TowerInstance SourceTower { get; }
+    public TowerKillSource KillSource { get; }
     public TowerUpgradeDefinition SourceUpgrade { get; }
     public MonsterBehaviour TargetMonster { get; }
     public bool HasTriggerPosition { get; }

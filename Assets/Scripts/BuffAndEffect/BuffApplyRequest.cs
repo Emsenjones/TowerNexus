@@ -7,14 +7,15 @@ public struct BuffApplyRequest
         TowerInstance sourceTower,
         TowerUpgradeDefinition sourceUpgrade,
         bool hasTriggerPosition,
-        Vector3 triggerPosition)
+        Vector3 triggerPosition,
+        TowerKillSource? killSource = null)
         : this(
             buffDefinition,
             sourceTower,
             sourceUpgrade,
             hasTriggerPosition,
             triggerPosition,
-            1)
+            1, killSource)
     {
     }
 
@@ -24,10 +25,12 @@ public struct BuffApplyRequest
         TowerUpgradeDefinition sourceUpgrade,
         bool hasTriggerPosition,
         Vector3 triggerPosition,
-        int requestedStackUnits)
+        int requestedStackUnits,
+        TowerKillSource? killSource = null)
     {
         BuffDefinition = buffDefinition;
         SourceTower = sourceTower;
+        KillSource = killSource ?? new TowerKillSource(sourceTower != null ? sourceTower.KillBattleBinding : null, sourceTower);
         SourceUpgrade = sourceUpgrade;
         HasTriggerPosition = hasTriggerPosition;
         TriggerPosition = triggerPosition;
@@ -36,6 +39,7 @@ public struct BuffApplyRequest
 
     public BuffDefinition BuffDefinition { get; }
     public TowerInstance SourceTower { get; }
+    public TowerKillSource KillSource { get; }
     public TowerUpgradeDefinition SourceUpgrade { get; }
     public bool HasTriggerPosition { get; }
     public Vector3 TriggerPosition { get; }

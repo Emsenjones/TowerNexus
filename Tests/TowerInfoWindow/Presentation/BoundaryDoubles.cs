@@ -19,7 +19,17 @@ namespace UnityEngine
         {
             BeforeInstantiate?.Invoke();
             var go=new GameObject("icon");go.transform.SetParent(parent,false);
-            var item=go.AddComponent<UnityEngine.UI.Image>(); Created.Add(go);return item as T;
+            var item=go.AddComponent<TowerUpgradeInfoItem>();
+            foreach(var field in typeof(TowerUpgradeInfoItem).GetFields(BindingFlags.NonPublic|BindingFlags.Instance))
+            {
+                var value=field.GetValue(source);
+                if(value is UnityEngine.UI.Image image)
+                {var child=new GameObject();child.transform.SetParent(go.transform,false);value=child.AddComponent<UnityEngine.UI.Image>();}
+                else if(value is TMPro.TMP_Text text)
+                {var child=new GameObject();child.transform.SetParent(go.transform,false);value=child.AddComponent<TMPro.TMP_Text>();}
+                field.SetValue(item,value);
+            }
+            Created.Add(go);return item as T;
         }
         public static void Destroy(Object value)
         {
@@ -86,6 +96,7 @@ namespace UnityEngine
     public class CanvasGroup:MonoBehaviour{public float alpha=1;public bool blocksRaycasts=true,interactable=true;}
     public class Sprite:Object{}
     public class SerializeField:Attribute{}
+    public class HeaderAttribute:Attribute{public HeaderAttribute(string title){}}
     public static class Time {public static float timeScale=1;}
     public static class Debug
     {
@@ -110,7 +121,7 @@ namespace UnityEngine.UI
         }
     }
 }
-namespace TMPro {public class TMP_Text:UnityEngine.MonoBehaviour{public string text;}}
+namespace TMPro {public class TMP_Text:UnityEngine.MonoBehaviour{public string text;public bool raycastTarget=true;}}
 
 public enum TowerFamily{Archer}
 public class EffectDefinition{}
@@ -121,9 +132,12 @@ public class TowerDefinition
     public UnityEngine.Sprite Icon=new UnityEngine.Sprite();
     public TowerFamily TowerFamily;
 }
-public class TowerUpgradeDefinition{public UnityEngine.Sprite Icon=new UnityEngine.Sprite();}
+public enum TowerUpgradeLayer {Basic,Behaviour,Elemental}
+public class TowerUpgradeDefinition{public UnityEngine.Sprite Icon=new UnityEngine.Sprite();public string DisplayName="Upgrade";public TowerUpgradeLayer UpgradeLayer;}
 public class TowerInstance:UnityEngine.MonoBehaviour
 {
+    public int KillCount;
+    internal object RuntimeIdentity=new object();
     public TowerDefinition TowerDefinition=new TowerDefinition();
     public int CurrentLevel=1;
     public TowerLevelConfig CurrentLevelConfig=new TowerLevelConfig();
@@ -187,7 +201,7 @@ public partial class TowerCombatBehaviour:UnityEngine.MonoBehaviour
         towerInstance=tower;towerDefinition=tower.TowerDefinition;battleBinding=battle;
         cachedResolvedStats=new ResolvedTowerCombatStats(3.25f,1,10,15.5f,5,0,0);resolvedBaselineRevision=1;
     }
-    internal void UpgradeBaseline(){CommitPreparedUpgradeBaseline(new PreparedTowerCombatUpgradeRevision{Current=new ResolvedTowerCombatStats(4.5f,1,10,20.5f,10,0,0)});}
+    internal void UpgradeBaseline(){CommitPreparedUpgradeBaseline(new PreparedTowerCombatUpgradeRevision{Current=new ResolvedTowerCombatStats(4.5f,0.75f,10,20.5f,10,0,0)});}
     internal void LevelBaseline(){towerInstance.CurrentLevel++;towerInstance.CurrentLevelConfig.BasicDamage=20;ApplyPreparedLevelDamageRevision(new PreparedTowerCombatLevelRevision(new ResolvedTowerCombatStats(3.25f,1,20,25.5f,5,0,0)));}
     internal void InvalidateCache(){hasResolvedStatsCache=false;}
 }

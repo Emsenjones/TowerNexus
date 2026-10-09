@@ -151,7 +151,8 @@ public static class TowerOwnedHitTransaction
         Vector3 hitPosition,
         ElementalOpportunityDiagnosticContext diagnostics,
         bool allowsElementalApplication,
-        bool publishDamageApplication = true)
+        bool publishDamageApplication = true,
+        TowerKillSource? killSource = null)
     {
 #if UNITY_EDITOR
         using (CombatDiagnosticScope.Enter(battleBinding))
@@ -169,17 +170,20 @@ public static class TowerOwnedHitTransaction
 #endif
             ElementalApplicationTransaction applicationTransaction = null;
             bool damageApplied = false;
+            int committedDamage = 0;
             int healthBeforeDamage = target.CurrentHealth;
             int healthAfterDirectDamage = healthBeforeDamage;
-            target.BeginTowerOwnedHitTransaction();
+            var source = killSource ?? new TowerKillSource(battleBinding, damageResolution.SourceTower);
+            object targetIdentity = target.RuntimeIdentity;
+            var hitTransaction = target.BeginTowerOwnedHitTransaction();
 
             try
             {
-                target.TakeDamage(damageResolution.FinalDamage);
-                damageApplied = true;
-                healthAfterDirectDamage = target.CurrentHealth;
+                target.TakeDamage(damageResolution.FinalDamage, source, out committedDamage);
+                damageApplied = committedDamage > 0;
+                healthAfterDirectDamage = healthBeforeDamage - committedDamage;
 
-                if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 &&
+                if (ReferenceEquals(targetIdentity, target.RuntimeIdentity) && battleBinding.CanTarget(target) && target.CurrentHealth > 0 &&
                     target.IsGameplayTargetable &&
                     allowsElementalApplication)
                 {
@@ -189,15 +193,15 @@ public static class TowerOwnedHitTransaction
                             damageResolution.SourceTower,
                             target,
                             hitPosition,
-                            diagnostics);
+                            diagnostics, source);
                 }
 
-                if (battleBinding.CanTarget(target) && target.CurrentHealth > 0 && target.IsGameplayTargetable)
+                if (ReferenceEquals(targetIdentity, target.RuntimeIdentity) && battleBinding.CanTarget(target) && target.CurrentHealth > 0 && target.IsGameplayTargetable)
                 {
                     target.ResolveElementalHitReactions(
                         damageResolution.SourceTower,
                         damageResolution.DamageSourceIdentity,
-                        diagnostics);
+                        diagnostics, source);
                 }
 
                 applicationTransaction?.FinalizePendingOverloads();
@@ -205,15 +209,15 @@ public static class TowerOwnedHitTransaction
             finally
             {
                 // TakeDamage can commit health before a user/native callback throws.
-                if (!damageApplied && target.CurrentHealth < healthBeforeDamage)
+                if (committedDamage > 0)
                 {
                     damageApplied = true;
-                    healthAfterDirectDamage = target.CurrentHealth;
+                    healthAfterDirectDamage = healthBeforeDamage - committedDamage;
                 }
                 try { applicationTransaction?.FinalizePendingOverloads(); }
                 finally
                 {
-                    try { target.EndTowerOwnedHitTransaction(); }
+                    try { target.EndTowerOwnedHitTransaction(hitTransaction); }
                     finally
                     {
                         if (damageApplied && publishDamageApplication)
@@ -226,7 +230,9 @@ public static class TowerOwnedHitTransaction
                         int appliedDamage = Mathf.Max(
                             0,
                             healthBeforeDamage - healthAfterDirectDamage);
-                        TowerRuntimeStatResolver.PublishTowerOwnedTargetDamage(
+                        // A reset callback may reuse the same Monster object. Never label its new life with old damage.
+                        if (ReferenceEquals(targetIdentity, target.RuntimeIdentity))
+                            TowerRuntimeStatResolver.PublishTowerOwnedTargetDamage(
                             damageResolution,
                             target,
                             appliedDamage,
@@ -254,7 +260,8 @@ public static class ElementalApplication
         TowerInstance sourceTower,
         MonsterBehaviour targetMonster,
         Vector3 applicationPosition,
-        ElementalOpportunityDiagnosticContext diagnostics)
+        ElementalOpportunityDiagnosticContext diagnostics,
+        TowerKillSource? killSource = null)
     {
         if (battleBinding == null || !battleBinding.CanTarget(targetMonster) || sourceTower == null)
         {
@@ -285,7 +292,8 @@ public static class ElementalApplication
                 requestedStackUnits:
                     elementalUpgradeDefinition.ElementalStackContribution,
                 elementalOpportunityDiagnostics: diagnostics,
-                elementalApplicationTransaction: applicationTransaction));
+                elementalApplicationTransaction: applicationTransaction,
+                killSource: killSource));
         return applicationTransaction;
     }
 

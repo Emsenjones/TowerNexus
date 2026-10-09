@@ -8,15 +8,23 @@ using UnityEngine.UI;
 // This component lives on the common, initially hidden mask/content root.
 public sealed class TowerInfoWindow : MonoBehaviour
 {
+    [Header("Window Layout")]
     [SerializeField] private RectTransform contentRoot;
+
+    [Header("Basic Stats")]
     [SerializeField] private TMP_Text displayNameText;
-    [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private Image towerIcon;
     [SerializeField] private TMP_Text levelText;
     [SerializeField] private TMP_Text attackRangeText;
     [SerializeField] private TMP_Text attackText;
+    [SerializeField] private TMP_Text attackCycleDurationText;
+    [SerializeField] private TMP_Text killCountText;
+
+    [Header("Acquired Upgrades")]
     [SerializeField] private RectTransform upgradeContainer;
-    [SerializeField] private Image upgradeIconPrefab;
+    [SerializeField] private TowerUpgradeInfoItem upgradeItemPrefab;
+
+    [Header("Controls")]
     [SerializeField] private Button closeButton;
 
     private CanvasGroup visibility;
@@ -25,14 +33,14 @@ public sealed class TowerInfoWindow : MonoBehaviour
 
     internal sealed class PreparedContent : IDisposable
     {
-        internal readonly List<Image> Icons = new List<Image>();
+        internal readonly List<TowerUpgradeInfoItem> Items = new List<TowerUpgradeInfoItem>();
         internal bool Disposed;
         public void Dispose()
         {
             if (Disposed) return;
             Disposed = true;
-            var outgoing = Icons.ToArray();
-            Icons.Clear();
+            var outgoing = Items.ToArray();
+            Items.Clear();
             foreach (var icon in outgoing) Retire(icon);
         }
     }
@@ -48,12 +56,14 @@ public sealed class TowerInfoWindow : MonoBehaviour
             contentRoot.parent != root ||
             upgradeContainer == null || !upgradeContainer.IsChildOf(contentRoot) ||
             upgradeContainer.GetComponent<GridLayoutGroup>() == null ||
-            !InContent(displayNameText) || !InContent(descriptionText) || !InContent(towerIcon) ||
+            !InContent(displayNameText) || !InContent(killCountText) || !InContent(towerIcon) ||
             !InContent(levelText) || !InContent(attackRangeText) || !InContent(attackText) ||
+            !InContent(attackCycleDurationText) ||
             closeButton == null || !closeButton.transform.IsChildOf(contentRoot) || !closeButton.interactable ||
-            upgradeIconPrefab == null || upgradeIconPrefab.transform.parent != null ||
+            upgradeItemPrefab == null || upgradeItemPrefab.transform.parent != null ||
             !contentRoot.gameObject.activeSelf || !upgradeContainer.gameObject.activeSelf)
             return false;
+        if (!upgradeItemPrefab.TryValidateReferences(out reason)) return false;
         reason = string.Empty;
         return true;
     }
@@ -80,22 +90,23 @@ public sealed class TowerInfoWindow : MonoBehaviour
     {
         reason = "TowerInfoWindow preparation was cancelled.";
         displayNameText.text = snapshot.DisplayName ?? string.Empty;
-        descriptionText.text = snapshot.Description ?? string.Empty;
+        killCountText.text = snapshot.KillCount.ToString(CultureInfo.InvariantCulture);
         levelText.text = snapshot.Level.ToString(CultureInfo.InvariantCulture);
         attackRangeText.text = snapshot.Stats.AttackRange.ToString("0.##", CultureInfo.InvariantCulture);
         attackText.text = snapshot.Stats.ResolvedBasicDamage.ToString("0.##", CultureInfo.InvariantCulture);
+        attackCycleDurationText.text = snapshot.Stats.AttackCycleDuration.ToString("0.##", CultureInfo.InvariantCulture) + " s";
         SetIcon(towerIcon, snapshot.Icon);
         for (int i = 0; i < snapshot.UpgradeIcons.Length; i++)
         {
             if (content.Disposed) return false;
-            var icon = Instantiate(upgradeIconPrefab, upgradeContainer);
+            var icon = Instantiate(upgradeItemPrefab, upgradeContainer);
             // Instantiate can call authored lifecycle code before returning.
             if (content.Disposed) { Retire(icon); return false; }
             if (icon == null) { reason = "Upgrade icon creation failed."; return false; }
-            content.Icons.Add(icon);
+            content.Items.Add(icon);
+            if (!icon.TryInitialize(snapshot.UpgradeNames[i], snapshot.UpgradeIcons[i], snapshot.UpgradeLayers[i], out reason)) return false;
+            if (content.Disposed) return false;
             icon.gameObject.SetActive(true);
-            icon.raycastTarget = false;
-            SetIcon(icon, snapshot.UpgradeIcons[i]);
         }
         if (content.Disposed) return false;
         reason = string.Empty;
@@ -156,7 +167,7 @@ public sealed class TowerInfoWindow : MonoBehaviour
         callback?.Invoke();
     }
 
-    private static void Retire(Image icon)
+    private static void Retire(TowerUpgradeInfoItem icon)
     {
         if (icon == null) return;
         try { icon.gameObject.SetActive(false); }

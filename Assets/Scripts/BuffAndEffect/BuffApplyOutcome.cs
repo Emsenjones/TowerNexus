@@ -40,7 +40,8 @@ internal sealed class PendingBuffOverload
         TowerInstance sourceTower,
         TowerUpgradeDefinition sourceUpgrade,
         UnityEngine.Vector3 triggerPosition,
-        bool wasExistingBuff)
+        bool wasExistingBuff,
+        TowerKillSource killSource = default)
     {
         Runtime = runtime;
         BuffInstance = buffInstance;
@@ -54,6 +55,7 @@ internal sealed class PendingBuffOverload
             ? buffInstance.StackingCycleIdentity
             : 0;
         SourceTower = sourceTower;
+        KillSource = killSource;
         SourceUpgrade = sourceUpgrade;
         TriggerPosition = triggerPosition;
         WasExistingBuff = wasExistingBuff;
@@ -65,6 +67,7 @@ internal sealed class PendingBuffOverload
     internal EffectDefinition OverloadEffect { get; }
     internal int StackingCycleIdentity { get; }
     internal TowerInstance SourceTower { get; }
+    internal TowerKillSource KillSource { get; }
     internal TowerUpgradeDefinition SourceUpgrade { get; }
     internal UnityEngine.Vector3 TriggerPosition { get; }
     internal bool WasExistingBuff { get; }

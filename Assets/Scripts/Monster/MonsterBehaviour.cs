@@ -165,12 +165,23 @@ public class MonsterBehaviour : MonoBehaviour
             return false;
         }
 
+        // Revoke old target identity before removal callbacks can emit damage.
+        RuntimeIdentity = new object();
+        towerOwnedHitTransactionDepth = 0;
+        lethalSource = default;
+        lethalTargetIdentity = null;
+        isCleaningUp = true;
         laneIdentity = GetInstanceID();
         currentHealth = maxHealth;
         ClearMovementControls();
         EnsureBuffRuntime();
-        buffRuntime.Clear(BuffRemovalReason.RuntimeReset);
-        RuntimeIdentity = new object();
+        var outgoingBuffs = buffRuntime;
+        outgoingBuffs.OnStateChanged -= HandleBuffStateChanged;
+        outgoingBuffs.OnRuntimeObserved -= HandleBuffRuntimeObserved;
+        outgoingBuffs.OnElementalHitReactionObserved -= HandleElementalHitReactionObserved;
+        buffRuntime = null;
+        EnsureBuffRuntime();
+        outgoingBuffs.Clear(BuffRemovalReason.RuntimeReset);
         CombatBinding = null;
         CacheBuffVisualController();
         isDead = false;
@@ -502,21 +513,42 @@ public class MonsterBehaviour : MonoBehaviour
         RefreshEffectiveMoveSpeed();
     }
 
-    public void TakeDamage(int damage)
+    private TowerKillSource lethalSource;
+    private object lethalTargetIdentity;
+
+    public void TakeDamage(int damage) => TakeDamage(damage, default);
+
+    internal void TakeDamage(int damage, TowerKillSource source) => TakeDamage(damage, source, out _);
+
+    internal void TakeDamage(int damage, TowerKillSource source, out int committedDamage)
     {
+        committedDamage = 0;
         if (damage <= 0 || isResolved || isCleaningUp)
         {
             return;
         }
 
+        object identity = RuntimeIdentity;
+        int before = currentHealth;
         currentHealth = Mathf.Max(0, currentHealth - damage);
-        NotifyHealthChanged();
-        hitFeedback?.PlayHitFeedback();
-        ShowDamageNumber(damage);
-
-        if (currentHealth <= 0 && towerOwnedHitTransactionDepth == 0)
+        committedDamage = before - currentHealth;
+        if (before > 0 && currentHealth == 0)
         {
-            Die();
+            lethalSource = source;
+            lethalTargetIdentity = identity;
+        }
+        try
+        {
+            NotifyHealthChanged();
+            if (!ReferenceEquals(identity, RuntimeIdentity) || isCleaningUp) return;
+            hitFeedback?.PlayHitFeedback();
+            if (!ReferenceEquals(identity, RuntimeIdentity) || isCleaningUp) return;
+            ShowDamageNumber(damage);
+        }
+        finally
+        {
+            if (ReferenceEquals(identity, RuntimeIdentity) && currentHealth <= 0 &&
+                towerOwnedHitTransactionDepth == 0 && !isResolved && !isCleaningUp) Die();
         }
     }
 
@@ -560,43 +592,46 @@ public class MonsterBehaviour : MonoBehaviour
         return buffRuntime.ApplyBuffWithOutcome(request, deferOverload);
     }
 
-    internal void BeginTowerOwnedHitTransaction()
+    internal sealed class HitTransaction
+    {
+        internal object Identity;
+        internal MonsterBuffRuntime Buffs;
+        internal bool Ended;
+    }
+
+    internal HitTransaction BeginTowerOwnedHitTransaction()
     {
         EnsureBuffRuntime();
+        var scope = new HitTransaction { Identity = RuntimeIdentity, Buffs = buffRuntime };
         towerOwnedHitTransactionDepth++;
-        buffRuntime.BeginExternalMutation();
+        scope.Buffs.BeginExternalMutation();
+        return scope;
     }
 
     internal void ResolveElementalHitReactions(
         TowerInstance triggeringTower,
         TowerDamageSourceIdentity damageSourceIdentity,
-        ElementalOpportunityDiagnosticContext diagnostics)
+        ElementalOpportunityDiagnosticContext diagnostics,
+        TowerKillSource? killSource = null)
     {
         EnsureBuffRuntime();
         buffRuntime.ResolveElementalHitReactions(
             triggeringTower,
             damageSourceIdentity,
-            diagnostics);
+            diagnostics, killSource);
     }
 
-    internal void EndTowerOwnedHitTransaction()
+    internal void EndTowerOwnedHitTransaction(HitTransaction scope)
     {
-        if (towerOwnedHitTransactionDepth <= 0)
+        if (scope == null || scope.Ended) return;
+        scope.Ended = true;
+        try
         {
-            return;
+            if (!ReferenceEquals(scope.Identity, RuntimeIdentity)) return;
+            if (towerOwnedHitTransactionDepth > 0) towerOwnedHitTransactionDepth--;
+            if (towerOwnedHitTransactionDepth == 0 && currentHealth <= 0 && !isResolved && !isCleaningUp) Die();
         }
-
-        towerOwnedHitTransactionDepth--;
-
-        if (towerOwnedHitTransactionDepth == 0 &&
-            currentHealth <= 0 &&
-            !isResolved &&
-            !isCleaningUp)
-        {
-            Die();
-        }
-
-        buffRuntime.EndExternalMutation();
+        finally { scope.Buffs.EndExternalMutation(); }
     }
 
     public bool RemoveBuff(BuffDefinition buffDefinition)
@@ -1177,6 +1212,8 @@ public class MonsterBehaviour : MonoBehaviour
             }
 
             isCleaningUp = true;
+            lethalSource = default;
+            lethalTargetIdentity = null;
             isResolved = true;
             PublishPlacementResolutionBeforeJoin(
                 MonsterPlacementRouteResolutionReason.TechnicalCleanup);
@@ -1198,27 +1235,51 @@ public class MonsterBehaviour : MonoBehaviour
                 return;
             }
 
+            object resolutionIdentity = RuntimeIdentity;
             isResolved = true;
             isDead = !reachedTarget;
-            PublishPlacementResolutionBeforeJoin(
+            var source = lethalSource;
+            var targetIdentity = lethalTargetIdentity;
+            lethalSource = default;
+            lethalTargetIdentity = null;
+            if (!reachedTarget && ReferenceEquals(targetIdentity, RuntimeIdentity)) source.Commit(CombatBinding);
+            try { PublishPlacementResolutionBeforeJoin(
                 reachedTarget
                     ? MonsterPlacementRouteResolutionReason.Leaked
-                    : MonsterPlacementRouteResolutionReason.Killed);
-            StopGameplayState(
+                    : MonsterPlacementRouteResolutionReason.Killed); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+            if (!ReferenceEquals(resolutionIdentity, RuntimeIdentity)) return;
+            try { StopGameplayState(
                 reachedTarget
                     ? BuffRemovalReason.MonsterLeaked
-                    : BuffRemovalReason.MonsterKilled);
-
-            OnResolved?.Invoke(this, reachedTarget);
+                    : BuffRemovalReason.MonsterKilled); }
+            catch (Exception exception) { Debug.LogException(exception, this); }
+            if (!ReferenceEquals(resolutionIdentity, RuntimeIdentity)) return;
+            foreach (var callback in OnResolved?.GetInvocationList() ?? Array.Empty<Delegate>())
+            {
+                try { ((Action<MonsterBehaviour, bool>)callback)(this, reachedTarget); }
+                catch (Exception exception) { Debug.LogException(exception, this); }
+                if (!ReferenceEquals(resolutionIdentity, RuntimeIdentity)) return;
+            }
 
             if (reachedTarget)
             {
-                OnTargetReached?.Invoke(this);
+                foreach (var callback in OnTargetReached?.GetInvocationList() ?? Array.Empty<Delegate>())
+                {
+                    try { ((Action<MonsterBehaviour>)callback)(this); }
+                    catch (Exception exception) { Debug.LogException(exception, this); }
+                    if (!ReferenceEquals(resolutionIdentity, RuntimeIdentity)) return;
+                }
                 Destroy(gameObject);
                 return;
             }
 
-            OnDied?.Invoke(this);
+            foreach (var callback in OnDied?.GetInvocationList() ?? Array.Empty<Delegate>())
+            {
+                try { ((Action<MonsterBehaviour>)callback)(this); }
+                catch (Exception exception) { Debug.LogException(exception, this); }
+                if (!ReferenceEquals(resolutionIdentity, RuntimeIdentity)) return;
+            }
             PlayDeathAnimation();
             Destroy(gameObject, GetDeathDelay());
 
@@ -1227,13 +1288,20 @@ public class MonsterBehaviour : MonoBehaviour
 
     private void StopGameplayState(BuffRemovalReason buffRemovalReason)
     {
-        buffRuntime?.Clear(buffRemovalReason);
-        StopMovement();
-        ClearMovementControls();
-        currentPath.Clear();
-        requiresExactTargetApproach = false;
-        ClearPlacementRouteState();
-        hitFeedback?.StopFeedback();
+        object identity = RuntimeIdentity;
+        try { buffRuntime?.Clear(buffRemovalReason); }
+        finally
+        {
+            if (ReferenceEquals(identity, RuntimeIdentity))
+            {
+                StopMovement();
+                ClearMovementControls();
+                currentPath.Clear();
+                requiresExactTargetApproach = false;
+                ClearPlacementRouteState();
+                hitFeedback?.StopFeedback();
+            }
+        }
     }
 
     private void PublishPlacementResolutionBeforeJoin(

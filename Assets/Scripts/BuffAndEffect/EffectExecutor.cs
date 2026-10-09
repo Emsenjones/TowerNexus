@@ -271,14 +271,15 @@ public static class EffectExecutor
                         GetMonsterHitPosition(target),
                         triggerContext.ElementalOpportunityDiagnostics,
                         allowsElementalApplication: false,
-                        publishDamageApplication: false))
+                        publishDamageApplication: false,
+                        killSource: triggerContext.KillSource))
                 {
                     continue;
                 }
             }
             else
             {
-                target.TakeDamage(damage);
+                target.TakeDamage(damage, triggerContext.KillSource);
             }
 
             successfulApplicationCount++;
@@ -378,13 +379,15 @@ public static class EffectExecutor
                     triggerContext.SourceUpgrade,
                     triggerContext.HasTriggerPosition,
                     triggerContext.TriggerPosition,
-                    triggerContext.RequestedStackUnits)
+                    triggerContext.RequestedStackUnits,
+                    killSource: triggerContext.KillSource)
                 : new BuffApplyRequest(
                     buffDefinition,
                     triggerContext.SourceTower,
                     triggerContext.SourceUpgrade,
                     triggerContext.HasTriggerPosition,
-                    triggerContext.TriggerPosition);
+                    triggerContext.TriggerPosition,
+                    killSource: triggerContext.KillSource);
             bool deferOverload =
                 triggerContext.ElementalApplicationTransaction != null;
             BuffApplyOutcome outcome = target.ApplyBuffWithOutcome(
@@ -528,7 +531,8 @@ public static class EffectExecutor
                     triggerPosition: GetMonsterHitPosition(target),
                     allowsElementalApplication: false,
                     requiresCommittedActionForExecutionVfx:
-                        triggerContext.RequiresCommittedActionForExecutionVfx),
+                        triggerContext.RequiresCommittedActionForExecutionVfx,
+                    killSource: triggerContext.KillSource),
                 childResolvedTargets);
 
             executedAnyEffect |= childExecution.ExecutedAnyAction;
@@ -572,7 +576,8 @@ public static class EffectExecutor
         windVortexBehaviour.Initialize(
             monsterManager,
             triggerContext.SourceTower,
-            triggerContext.SourceUpgrade);
+            triggerContext.SourceUpgrade,
+            killSource: triggerContext.KillSource);
 
         return windVortexBehaviour.IsInitialized;
     }

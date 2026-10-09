@@ -40,7 +40,8 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     [TitleGroup("Core")]
     [MinValue(0f)]
     [FormerlySerializedAs("attackInterval")]
-    [SerializeField] private float attackCycleDuration = 1f;
+    [FormerlySerializedAs("attackCycleDuration")]
+    [SerializeField] private float baseAttackCycleDuration = 1f;
     [TitleGroup("Core")]
     [SerializeField] private TargetSelectionType targetSelectionType;
     [TitleGroup("Attack VFX")]
@@ -82,7 +83,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
     public bool IsAttacking => attackState != TowerAttackState.Idle;
     public bool IsBattleActive => isBattleActive;
     public float BaseAttackRange => attackRange;
-    public float BaseAttackCycleDuration => attackCycleDuration;
+    public float BaseAttackCycleDuration => baseAttackCycleDuration;
     public float CurrentResolvedAttackRange => ResolveCombatStats().AttackRange;
 
     internal bool IsInspectionRuntimeAvailable(TowerInstance expectedTower, BattleCombatBinding expectedBattle) =>
@@ -101,6 +102,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             expectedTower.CurrentLevelConfig == null ||
             cachedResolvedStats.LevelBasicDamage != expectedTower.CurrentLevelConfig.BasicDamage ||
             !IsFiniteNonNegative(cachedResolvedStats.AttackRange) ||
+            !IsFiniteNonNegative(cachedResolvedStats.AttackCycleDuration) ||
             !IsFiniteNonNegative(cachedResolvedStats.ResolvedBasicDamage) || cachedResolvedStats.ResolvedBasicDamage <= 0f)
             return false;
         stats = cachedResolvedStats;
@@ -335,7 +337,7 @@ public abstract class TowerCombatBehaviour : MonoBehaviour
             return false;
         }
 
-        if (attackCycleDuration < 0f)
+        if (baseAttackCycleDuration < 0f)
         {
             Debug.LogWarning(
                 $"{GetType().Name} on '{name}' is invalid: attack cycle duration cannot be negative.",

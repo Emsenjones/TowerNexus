@@ -227,6 +227,7 @@ internal sealed class MagicOrbGroupRuntime
         new List<MonsterBehaviour>();
 
     private readonly TowerInstance sourceTower;
+    private readonly TowerKillSource sourceKillSource;
     private readonly BattleCombatBinding battleBinding;
     private readonly Vector3 orbitCenterPosition;
     private readonly float orbitRadius;
@@ -256,6 +257,7 @@ internal sealed class MagicOrbGroupRuntime
     {
         ReleaseGroupId = releaseGroupId;
         this.sourceTower = sourceTower;
+        sourceKillSource = new TowerKillSource(battleBinding, sourceTower);
         this.battleBinding = battleBinding;
         this.orbitCenterPosition = orbitCenterPosition;
         rotationSpeed = resolvedStats.MagicOrbRotationSpeed;
@@ -563,7 +565,8 @@ internal sealed class MagicOrbGroupRuntime
             damageResolution,
             hitPosition,
             contactDiagnostics,
-            allowsElementalApplication: isPrimaryMember);
+            allowsElementalApplication: isPrimaryMember,
+                killSource: sourceKillSource);
         member.RecordContact(monster, Time.time + sameTargetHitCooldown);
 
         return true;
@@ -642,7 +645,8 @@ internal sealed class MagicOrbGroupRuntime
                             ElementalOpportunityResultRole.CompletionResult,
                             i,
                             topologyAuthorized: false,
-                            observeResolvedTargetsAsCandidates: true)),
+                            observeResolvedTargetsAsCandidates: true),
+                    killSource: sourceKillSource),
                 resolvedArcaneDetonationTargets);
         }
     }

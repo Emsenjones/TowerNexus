@@ -266,6 +266,7 @@ public class DroneBehaviour : MonoBehaviour
     private readonly List<MonsterBehaviour> resolvedFinalDiveExplosionTargets = new List<MonsterBehaviour>();
 
     private TowerInstance sourceTower;
+    private TowerKillSource sourceKillSource;
     private BattleCombatBinding battleBinding;
     private DroneReleaseData releaseData;
     private TowerUpgradeDefinition blastRoundsSourceUpgrade;
@@ -338,6 +339,7 @@ public class DroneBehaviour : MonoBehaviour
         MonsterBehaviour initialTarget)
     {
         this.sourceTower = sourceTower;
+        sourceKillSource = new TowerKillSource(battleBinding, sourceTower);
         this.battleBinding = battleBinding;
         this.releaseData = releaseData;
         blastRoundsSourceUpgrade = runtimeOptions.BlastRoundsSourceUpgrade;
@@ -859,7 +861,8 @@ public class DroneBehaviour : MonoBehaviour
                     ElementalOpportunityResultRole.FinalDiveDirect,
                     0,
                     topologyAuthorized: false),
-                allowsElementalApplication: false);
+                allowsElementalApplication: false,
+                killSource: sourceKillSource);
         }
 
         EffectExecutor.ExecuteWithResolvedTargets(
@@ -881,7 +884,8 @@ public class DroneBehaviour : MonoBehaviour
                         ElementalOpportunityResultRole.FinalDiveExplosion,
                         0,
                         topologyAuthorized: false,
-                        observeResolvedTargetsAsCandidates: true)),
+                        observeResolvedTargetsAsCandidates: true),
+                    killSource: sourceKillSource),
             resolvedFinalDiveExplosionTargets);
 
 #if UNITY_EDITOR
@@ -1104,7 +1108,8 @@ public class DroneBehaviour : MonoBehaviour
                     ? ElementalOpportunityMemberIdentity.Additional
                     : ElementalOpportunityMemberIdentity.Primary,
                 elementalResultOrdinal: shotOrdinal)
-        );
+        ,
+            killSource: sourceKillSource);
 
         if (!projectileBehaviour.IsInitialized)
         {

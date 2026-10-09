@@ -35,6 +35,7 @@ public class WindVortexBehaviour : MonoBehaviour
 
     private BattleCombatBinding battleBinding;
     private TowerInstance sourceTower;
+    private TowerKillSource sourceKillSource;
     private TowerUpgradeDefinition sourceUpgrade;
     private MonsterBehaviour currentTarget;
     private MonsterBehaviour lastReachedTarget;
@@ -50,10 +51,12 @@ public class WindVortexBehaviour : MonoBehaviour
     public void Initialize(
         BattleCombatBinding battleBinding,
         TowerInstance sourceTower,
-        TowerUpgradeDefinition sourceUpgrade)
+        TowerUpgradeDefinition sourceUpgrade,
+        TowerKillSource? killSource = null)
     {
         this.battleBinding = battleBinding;
         this.sourceTower = sourceTower;
+        sourceKillSource = killSource ?? new TowerKillSource(battleBinding, sourceTower);
         this.sourceUpgrade = sourceUpgrade;
         currentTarget = null;
         lastReachedTarget = null;
@@ -300,7 +303,8 @@ public class WindVortexBehaviour : MonoBehaviour
                     targetMonster: target,
                     hasTriggerPosition: true,
                     triggerPosition: transform.position,
-                    allowsElementalApplication: false));
+                    allowsElementalApplication: false,
+                    killSource: sourceKillSource));
         }
     }
 

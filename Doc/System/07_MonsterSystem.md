@@ -237,6 +237,10 @@ and deferred death preserve this lethal source and cannot credit outer callers
 again. Arrival, cleanup, already-resolved targets and source-less damage award no
 Tower credit. Foreign/outgoing Battle sources cannot affect a fresh Tower counter.
 This counting contract does not change existing Monster rewards or player progress.
+Credit validation uses pure Battle/source ownership reads independently of target
+attack eligibility. Callback exceptions cannot duplicate credit or skip paired
+hit/Buff mutation cleanup. A target reset revokes old identity before cleanup;
+old damage/transaction/death continuations cannot resolve or destroy its new life.
 
 # 6. Pathfinding And Movement
 

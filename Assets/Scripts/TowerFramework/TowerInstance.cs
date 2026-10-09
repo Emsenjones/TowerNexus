@@ -5,6 +5,23 @@ using UnityEngine;
 public class TowerInstance : MonoBehaviour
 {
     private const int DefaultLevel = 1;
+    private int killCount;
+    internal object RuntimeIdentity { get; private set; } = new object();
+    internal BattleCombatBinding KillBattleBinding { get; private set; }
+    private TowerPlacementSubmission killMembers;
+    public int KillCount => killCount;
+
+    internal void BindKillOwnership(BattleCombatBinding battle, TowerPlacementSubmission members)
+    { KillBattleBinding = battle; killMembers = members; }
+
+    internal bool CanReceiveKill(BattleCombatBinding battle, object identity) =>
+        ReferenceEquals(RuntimeIdentity, identity) && ReferenceEquals(KillBattleBinding, battle) &&
+        isActiveAndEnabled && killMembers != null && killMembers.OwnsDeployedTower(this);
+
+    internal void RecordKill(object identity)
+    {
+        if (ReferenceEquals(RuntimeIdentity, identity) && killCount < int.MaxValue) killCount++;
+    }
 
     private TowerDefinition towerDefinition;
     private int currentLevel = DefaultLevel;
@@ -23,6 +40,10 @@ public class TowerInstance : MonoBehaviour
 
     public void Initialize(TowerDefinition towerDefinition, List<GridNodeBehaviour> occupiedNodes)
     {
+        RuntimeIdentity = new object();
+        killCount = 0;
+        KillBattleBinding = null;
+        killMembers = null;
         this.towerDefinition = towerDefinition;
         currentLevel = DefaultLevel;
         upgradeState.Reset();

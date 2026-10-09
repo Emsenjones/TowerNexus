@@ -455,6 +455,7 @@ internal sealed class TowerPlacementSubmission
 
         monsterManager.ApplyPreparedMovementRevisionBatch(revisionBatch);
         members.CommitAdd(preparedTower);
+        preparedTower.TowerInstance.BindKillOwnership(monsterManager.CombatBinding, this);
         // Capture after topology commit, before activation/observers can release or rebind Battle.
         // Snapshot construction is display-only: failure cannot skip existing committed notifications.
         try { committedRoute = pathSession?.CaptureCommittedRoute(topologyPlan); }

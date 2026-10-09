@@ -29,6 +29,7 @@ public class MonsterBuffInstance
         BattleBinding = owner != null ? owner.CombatBinding : null;
         OwnerRuntimeIdentity = owner != null ? owner.RuntimeIdentity : null;
         sourceTower = request.SourceTower;
+        KillSource = request.KillSource;
         sourceUpgrade = request.SourceUpgrade;
         remainingPhaseDuration = definition.ActiveDuration;
         periodicTickTimer = 0f;
@@ -45,6 +46,7 @@ public class MonsterBuffInstance
     public BuffDefinition Definition => definition;
     public MonsterBehaviour Owner => owner;
     public TowerInstance SourceTower => sourceTower;
+    public TowerKillSource KillSource { get; private set; }
     public TowerUpgradeDefinition SourceUpgrade => sourceUpgrade;
     public float RemainingPhaseDuration => remainingPhaseDuration;
     public float PeriodicTickTimer => periodicTickTimer;
@@ -146,6 +148,7 @@ public class MonsterBuffInstance
         }
 
         sourceTower = request.SourceTower;
+        KillSource = request.KillSource;
         sourceUpgrade = request.SourceUpgrade;
         remainingPhaseDuration = definition.ActiveDuration;
         RecordSourceApplyCooldown(request.SourceTower);

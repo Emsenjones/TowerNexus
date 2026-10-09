@@ -21,6 +21,7 @@ public class ProjectileBehaviour : MonoBehaviour
     [SerializeField] private GameObject impactVfxPrefab;
 
     private TowerInstance sourceTower;
+    private TowerKillSource sourceKillSource;
     private BattleCombatBinding battleBinding;
     private ProjectileBehaviour projectileTemplate;
     private ProjectileFlightType flightType;
@@ -155,9 +156,11 @@ public class ProjectileBehaviour : MonoBehaviour
         float initialArcHeight = 0f,
         ProjectileRuntimeOptions runtimeOptions = default,
         IReadOnlyCollection<MonsterBehaviour> inheritedBounceHitHistory = null,
-        ArcherProjectileReleaseIdentity archerReleaseIdentity = default)
+        ArcherProjectileReleaseIdentity archerReleaseIdentity = default,
+        TowerKillSource? killSource = null)
     {
         this.sourceTower = sourceTower;
+        sourceKillSource = killSource ?? new TowerKillSource(battleBinding, sourceTower);
         this.battleBinding = battleBinding;
         this.projectileTemplate = projectileTemplate;
         this.flightType = flightType;
@@ -683,7 +686,8 @@ public class ProjectileBehaviour : MonoBehaviour
             damageResolution,
             impactPosition,
             directDiagnostics,
-            directDiagnostics.TopologyAuthorized);
+            directDiagnostics.TopologyAuthorized,
+                killSource: sourceKillSource);
 #if UNITY_EDITOR
         PublishDroneBurstObservation(
             DroneBurstRuntimeObservationType.ProjectileDirectHit,
@@ -724,7 +728,8 @@ public class ProjectileBehaviour : MonoBehaviour
                         ElementalOpportunityResultRole.AreaResult,
                         directDiagnostics.ResultOrdinal,
                         topologyAuthorized: false,
-                        observeResolvedTargetsAsCandidates: true)),
+                        observeResolvedTargetsAsCandidates: true),
+                    killSource: sourceKillSource),
             resolvedExplosiveArrowTargets);
     }
 
@@ -752,7 +757,8 @@ public class ProjectileBehaviour : MonoBehaviour
                         ElementalOpportunityResultRole.BlastArea,
                         elementalResultOrdinal,
                         topologyAuthorized: false,
-                        observeResolvedTargetsAsCandidates: true)),
+                        observeResolvedTargetsAsCandidates: true),
+                    killSource: sourceKillSource),
             resolvedBlastRoundsTargets);
     }
 
@@ -817,7 +823,8 @@ public class ProjectileBehaviour : MonoBehaviour
                 damageResolution,
                 impactPosition,
                 directDiagnostics,
-                directDiagnostics.TopologyAuthorized);
+                directDiagnostics.TopologyAuthorized,
+                killSource: sourceKillSource);
         }
 
         RaiseImpact(hitMonster, impactPosition, damageResolution);
@@ -868,7 +875,8 @@ public class ProjectileBehaviour : MonoBehaviour
                         ElementalOpportunityResultRole.AreaResult,
                         elementalResultOrdinal,
                         topologyAuthorized: false,
-                        observeResolvedTargetsAsCandidates: true)),
+                        observeResolvedTargetsAsCandidates: true),
+                    killSource: sourceKillSource),
             resolvedExplosiveShellTargets);
     }
 
@@ -1014,7 +1022,8 @@ public class ProjectileBehaviour : MonoBehaviour
             flightType: ProjectileFlightType.Arc,
             initialArcHeight: bounceArcHeight,
             runtimeOptions: CreateBounceChildRuntimeOptions(),
-            inheritedBounceHitHistory: bounceHitHistory);
+            inheritedBounceHitHistory: bounceHitHistory,
+            killSource: sourceKillSource);
 
         if (!childProjectile.IsInitialized)
         {
@@ -1149,7 +1158,8 @@ public class ProjectileBehaviour : MonoBehaviour
             hasTriggerPosition: true,
             triggerPosition: triggerPosition,
             allowsElementalApplication: false
-        );
+        ,
+                    killSource: sourceKillSource);
     }
 
     private void PlayImpactVfx(Vector3 impactPosition)

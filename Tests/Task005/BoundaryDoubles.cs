@@ -15,13 +15,14 @@ public class MonsterManager { public void ForceCleanupAllMonsters(){} public boo
 public class MonsterBehaviour {
  public BattleCombatBinding CombatBinding; public object RuntimeIdentity=new object(); public int CurrentHealth=100; public bool IsGameplayTargetable=true; public UnityEngine.Transform transform=new UnityEngine.Transform(); public UnityEngine.Transform HitAnchor=>transform;
  public Action OnHealthChanged; public int Transactions,Reactions,Applications; public bool Locked; public float Slow=1;
- public void TakeDamage(int n){CurrentHealth-=n;OnHealthChanged?.Invoke();}
- public void BeginTowerOwnedHitTransaction(){Transactions++;} public void EndTowerOwnedHitTransaction(){Transactions--;}
- public void ResolveElementalHitReactions(TowerInstance s,TowerDamageSourceIdentity d,ElementalOpportunityDiagnosticContext c){Reactions++;}
+ public void TakeDamage(int n,TowerKillSource source=default){TakeDamage(n,source,out _);}
+ public void TakeDamage(int n,TowerKillSource source,out int committedDamage){committedDamage=n;CurrentHealth-=n;OnHealthChanged?.Invoke();}
+ public object BeginTowerOwnedHitTransaction(){Transactions++;return RuntimeIdentity;} public void EndTowerOwnedHitTransaction(object scope){Transactions--;}
+ public void ResolveElementalHitReactions(TowerInstance s,TowerDamageSourceIdentity d,ElementalOpportunityDiagnosticContext c,TowerKillSource? source=null){Reactions++;}
  public BuffApplyOutcome ApplyBuffWithOutcome(BuffApplyRequest r,bool defer){Applications++;return new BuffApplyOutcome{Result=BuffApplyResult.Applied};}
  public bool SetMoveSpeedMultiplier(float v){Slow=v;return true;} public void ClearMoveSpeedMultiplier(){Slow=1;} public void SetMovementLock(bool v){Locked=v;}
 }
-public class TowerInstance { public TowerUpgradeDefinition Upgrade; public bool TryGetElementalUpgrade(out TowerUpgradeDefinition u){u=Upgrade;return u!=null;} }
+public class TowerInstance { internal object RuntimeIdentity=new object();internal bool CanReceiveKill(BattleCombatBinding b,object id)=>ReferenceEquals(RuntimeIdentity,id);internal void RecordKill(object id){}  public TowerUpgradeDefinition Upgrade; public bool TryGetElementalUpgrade(out TowerUpgradeDefinition u){u=Upgrade;return u!=null;} }
 public class TowerUpgradeDefinition {public EffectDefinition ElementalApplyEffect;public int ElementalStackContribution=1;}
 public class MonsterBuffInstance{}
 public class MonsterBuffRuntime {public int Finalized; public void FinalizePendingOverload(PendingBuffOverload p){Finalized++;}}
@@ -30,7 +31,7 @@ public struct BuffApplyOutcome {public PendingBuffOverload PendingOverload; publ
 public enum BuffApplyResult {Applied,Refreshed,Stacked,Invalid}
 public enum ElementType {None,Fire}
 public class BuffDefinition {public ElementType ElementType;}
-public class BuffApplyRequest {public BuffApplyRequest(BuffDefinition b,TowerInstance t,TowerUpgradeDefinition u,bool h,UnityEngine.Vector3 p,int n=0){}}
+public class BuffApplyRequest {public BuffApplyRequest(BuffDefinition b,TowerInstance t,TowerUpgradeDefinition u,bool h,UnityEngine.Vector3 p,int n=0,TowerKillSource? killSource=null){}}
 public enum EffectActionType {DealDamage,ApplyBuff,SetMoveSpeedMultiplier,ClearMoveSpeedMultiplier,SetMovementLock,ExecuteMultiTargetEffect,SpawnWindVortex}
 public enum EffectDamageMode {None,TowerScaled,FixedBuff}
 public class EffectAction {public EffectActionType ActionType;public EffectDamageMode DamageMode=EffectDamageMode.FixedBuff; public int FixedDamage=10; public float DamageScale=1,MoveSpeedMultiplier=.5f;public BuffDefinition BuffDefinition;public bool IsMovementLocked,ExcludeTriggerContextTarget;public EffectDefinition MultiTargetEffectDefinition;public int TargetCount=1;public UnityEngine.GameObject WindVortexPrefab;}
@@ -38,7 +39,7 @@ public class EffectDefinition {public float Radius;public UnityEngine.GameObject
 public struct TowerDamageSourceIdentity {public static TowerDamageSourceIdentity BehaviourEffect(EffectDefinition e,int n)=>default;}
 public struct TowerOwnedDamageResolution {public int FinalDamage;public TowerInstance SourceTower;public TowerDamageSourceIdentity DamageSourceIdentity;}
 public static class TowerRuntimeStatResolver {public static int Published;public static bool TryResolveTowerOwnedDamage(TowerInstance t,TowerDamageSourceIdentity id,float scale,out TowerOwnedDamageResolution d){d=new TowerOwnedDamageResolution{SourceTower=t,FinalDamage=10};return t!=null;} public static void PublishTowerOwnedDamageApplication(TowerOwnedDamageResolution r,int n){Published+=n;}public static void PublishTowerOwnedTargetDamage(TowerOwnedDamageResolution r,MonsterBehaviour t,int n,bool kill){} }
-public class WindVortexBehaviour {public bool IsValid()=>true;public BattleCombatBinding Binding;public bool IsInitialized; public void Initialize(BattleCombatBinding b,TowerInstance t,TowerUpgradeDefinition u){Binding=b;IsInitialized=b.IsUsable;}}
+public class WindVortexBehaviour {public bool IsValid()=>true;public BattleCombatBinding Binding;public bool IsInitialized; public void Initialize(BattleCombatBinding b,TowerInstance t,TowerUpgradeDefinition u,TowerKillSource? killSource=null){Binding=b;IsInitialized=b.IsUsable;}}
 
 partial class LifecycleHarness {
  internal BattleModalPauseAuthority ModalPause=new BattleModalPauseAuthority();

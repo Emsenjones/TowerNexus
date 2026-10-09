@@ -312,8 +312,10 @@ public class MonsterBuffRuntime
     internal void ResolveElementalHitReactions(
         TowerInstance triggeringTower,
         TowerDamageSourceIdentity damageSourceIdentity,
-        ElementalOpportunityDiagnosticContext diagnostics)
+        ElementalOpportunityDiagnosticContext diagnostics,
+        TowerKillSource? killSource = null)
     {
+        var reactionSource = killSource ?? new TowerKillSource(owner != null ? owner.CombatBinding : null, triggeringTower);
         BeginStateMutation();
 
         try
@@ -400,6 +402,7 @@ public class MonsterBuffRuntime
                     buffInstance,
                     BuffEventType.TowerHitReceived,
                     sourceTowerOverride: triggeringTower,
+                    killSourceOverride: reactionSource,
                     sourceUpgradeOverride:
                         ResolveTriggeringElementalUpgrade(triggeringTower),
                     hasSourceContextOverride: true,
@@ -607,7 +610,8 @@ public class MonsterBuffRuntime
         Vector3? triggerPositionOverride = null,
         bool requiresCommittedActionForExecutionVfx = false,
         EffectDefinition effectDefinitionOverride = null,
-        bool queueObservationOnCommittedActionOnly = false)
+        bool queueObservationOnCommittedActionOnly = false,
+        TowerKillSource? killSourceOverride = null)
     {
         if (!queueObservationOnCommittedActionOnly)
         {
@@ -661,7 +665,8 @@ public class MonsterBuffRuntime
                         (eventType == BuffEventType.Overload &&
                          buffOwner.CurrentHealth <= 0),
                     requiresCommittedActionForExecutionVfx:
-                        requiresCommittedActionForExecutionVfx)
+                        requiresCommittedActionForExecutionVfx,
+                    killSource: hasSourceContextOverride ? (killSourceOverride ?? default(TowerKillSource)) : buffInstance.KillSource)
             );
         }
         finally { removalPermission?.Close(); }
@@ -750,7 +755,7 @@ public class MonsterBuffRuntime
             request.SourceTower,
             request.SourceUpgrade,
             triggerPosition,
-            wasExistingBuff);
+            wasExistingBuff, request.KillSource);
     }
 
     internal bool FinalizePendingOverload(
@@ -783,6 +788,7 @@ public class MonsterBuffRuntime
                     buffInstance,
                     BuffEventType.Overload,
                     sourceTowerOverride: pendingOverload.SourceTower,
+                    killSourceOverride: pendingOverload.KillSource,
                     sourceUpgradeOverride: pendingOverload.SourceUpgrade,
                     hasSourceContextOverride: true,
                     triggerPositionOverride: pendingOverload.TriggerPosition,

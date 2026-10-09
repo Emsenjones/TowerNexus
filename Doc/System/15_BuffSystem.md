@@ -266,10 +266,19 @@ For Tower kill attribution, lifecycle and shared-state damage carries the nullab
 SourceTower already captured in that execution context. Shared Buff lifecycle
 uses its existing latest successful source; later reapplication does not rewrite
 an in-flight execution or recorded lethal source. A triggering Tower-owned hit
-does not silently replace the shared Buff's source. A source-less or invalid-source
+does not silently replace the shared Buff's source. TowerHitReceived reaction
+execution explicitly uses the triggering Tower's captured source while leaving
+the Buff's stored lifecycle source unchanged. For example, a Buff saved from A
+reacts to B's hit: a lethal reaction credits B; subsequent lifecycle ticks still
+use A until a new successful application updates the stored source.
+A source-less or invalid-source
 FixedBuff execution may still deal otherwise-valid damage but earns no Tower kill
 credit. This metadata does not make FixedBuff damage TowerScaled, split shared
 stacks by contributor, or award every contributor a kill.
+
+Successful applications retain the original Tower runtime identity, as do pending
+Overload and subsequent captured execution contexts. Reinitializing the same Tower
+object does not make old Buff damage eligible for that new lifecycle's kill count.
 
 Buff lifecycle execution retains the owner's Battle identity independently of its
 nullable source Tower. FixedBuff behavior continues without a source Tower while

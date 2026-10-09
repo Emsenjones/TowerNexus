@@ -12,6 +12,15 @@ class PresentationTests
     static T Get<T>(object target,string field)=>(T)target.GetType().GetField(field,BindingFlags.NonPublic|BindingFlags.Instance).GetValue(target);
     static void Frame(object target)=>target.GetType().GetMethod("LateUpdate",BindingFlags.NonPublic|BindingFlags.Instance).Invoke(target,null);
     static GameObject Child(Transform parent,string name){var go=new GameObject(name);go.transform.SetParent(parent,false);return go;}
+    static TowerUpgradeInfoItem CreateItem()
+    {
+        var item=new GameObject("prefab").AddComponent<TowerUpgradeInfoItem>();
+        Set(item,"iconImage",Child(item.transform,"icon").AddComponent<Image>());
+        Set(item,"backgroundImage",Child(item.transform,"background").AddComponent<Image>());
+        Set(item,"nameText",Child(item.transform,"name").AddComponent<TMP_Text>());
+        foreach(var field in new[]{"basicUpgradeIconBackground","behaviourUpgradeIconBackground","elementalUpgradeIconBackground"}) Set(item,field,new Sprite());
+        return item;
+    }
     class Fixture
     {
         internal BattleHUDUI Hud;
@@ -41,10 +50,10 @@ class PresentationTests
             Grid=Child(content,"grid").transform;Grid.gameObject.AddComponent<GridLayoutGroup>();
             Title=Child(content,"title").AddComponent<TMP_Text>();Title.text="Tower Info";
             Set(View,"contentRoot",content);
-            foreach(string field in new[]{"displayNameText","descriptionText","levelText","attackRangeText","attackText"})
+            foreach(string field in new[]{"displayNameText","killCountText","levelText","attackRangeText","attackText","attackCycleDurationText"})
                 Set(View,field,Child(basic,field).AddComponent<TMP_Text>());
             Set(View,"towerIcon",Child(basic,"icon").AddComponent<Image>());
-            Set(View,"upgradeContainer",Grid);Set(View,"upgradeIconPrefab",new GameObject("prefab").AddComponent<Image>());
+            Set(View,"upgradeContainer",Grid);Set(View,"upgradeItemPrefab",CreateItem());
             Close=Child(content,"close").AddComponent<Button>();Set(View,"closeButton",Close);
             root.SetActive(false);Set(Hud,"towerInfoWindow",View);
             Check(Hud.BindTowerInspection(Battle,Members,Pause,out var reason),"bind: "+reason);
@@ -54,24 +63,48 @@ class PresentationTests
     }
     static void Main()
     {
+        var item=CreateItem();
+        foreach(var layer in new[]{TowerUpgradeLayer.Basic,TowerUpgradeLayer.Behaviour,TowerUpgradeLayer.Elemental})
+        {
+            var sprite=new Sprite();item.Initialize("Name "+layer,sprite,layer);
+            string field=layer==TowerUpgradeLayer.Basic?"basicUpgradeIconBackground":layer==TowerUpgradeLayer.Behaviour?"behaviourUpgradeIconBackground":"elementalUpgradeIconBackground";
+            Check(Get<Image>(item,"backgroundImage").sprite==Get<Sprite>(item,field)&&Get<TMP_Text>(item,"nameText").text=="Name "+layer&&Get<Image>(item,"iconImage").sprite==sprite,"layer background, captured name and icon");
+        }
+        Check(!item.TryInitialize("",null,(TowerUpgradeLayer)99,out _),"unsupported layer rejected");
+        Set(item,"basicUpgradeIconBackground",null);Check(!item.TryValidateReferences(out _),"missing layer background rejected");
+        var fresh=new Fixture();Check(fresh.Open()&&Get<TMP_Text>(fresh.View,"killCountText").text=="0","zero count is displayed");fresh.Hud.CloseTowerInfo();fresh.Target.KillCount=7;
+        Check(fresh.Open()&&Get<TMP_Text>(fresh.View,"killCountText").text=="7","latest count on reopen");fresh.End();
+        fresh=new Fixture();var captured=fresh;UnityEngine.Object.BeforeInstantiate=()=>captured.Target.KillCount++;
+        Check(!fresh.Open()&&!fresh.Pause.HasRetainedPause&&fresh.Grid.children.Count==0,"count changed during preparation rolls back");fresh.End();
+        fresh=new Fixture();captured=fresh;GameObject.Activated=go=>{if(go==captured.View.gameObject)captured.Target.RuntimeIdentity=new object();};
+        Check(!fresh.Open()&&!fresh.Pause.HasRetainedPause,"same Tower object reinitialized during activation rejected");fresh.End();
+        fresh=new Fixture();captured=fresh;UnityEngine.Object.BeforeInstantiate=()=>captured.Target.AppliedUpgrades[0].DisplayName="changed";
+        Check(!fresh.Open()&&!fresh.Pause.HasRetainedPause,"upgrade name freshness");fresh.End();
+        fresh=new Fixture();fresh.Target.AppliedUpgrades[0].UpgradeLayer=(TowerUpgradeLayer)99;
+        Check(!fresh.Open()&&fresh.Grid.children.Count==0&&!fresh.Pause.HasRetainedPause,"invalid item generation is completely retired");fresh.End();
+        fresh=new Fixture();captured=fresh;GameObject.Activated=go=>{if(go==captured.View.gameObject)captured.Target.KillCount++;};
+        Check(!fresh.Open()&&!fresh.Pause.HasRetainedPause&&fresh.Grid.children.Count==0,"activation-time count freshness");fresh.End();
+        fresh=new Fixture();captured=fresh;UnityEngine.Object.BeforeInstantiate=()=>captured.Target.AppliedUpgrades[0].UpgradeLayer=TowerUpgradeLayer.Elemental;
+        Check(!fresh.Open()&&!fresh.Pause.HasRetainedPause,"upgrade layer freshness");fresh.End();
+        Check(typeof(TowerInfoWindow).GetField("descriptionText",BindingFlags.NonPublic|BindingFlags.Instance)==null,"description binding removed");
         var f=new Fixture();var authored=Child(f.Grid,"authored");
         Check(f.Open()&&f.Hud.IsTowerInfoOpen&&f.Hud.IsTowerInspectionBusy&&Time.timeScale==0,"open hidden root and own pause");
         Check(f.View.gameObject.activeSelf&&f.Grid.children.Count==3,"generate one Image per acquired upgrade");
-        Check(Get<TMP_Text>(f.View,"attackText").text=="15.5"&&Get<TMP_Text>(f.View,"attackRangeText").text=="3.25"&&f.Title.text=="Tower Info","resolved stats and fixed Title");
-        Check(f.Grid.children[1].gameObject.GetComponent<Image>().sprite==f.Target.AppliedUpgrades[0].Icon&&
-            !f.Grid.children[1].gameObject.GetComponent<Image>().raycastTarget,"acquisition order and display-only icons");
+        Check(Get<TMP_Text>(f.View,"attackText").text=="15.5"&&Get<TMP_Text>(f.View,"attackRangeText").text=="3.25"&&Get<TMP_Text>(f.View,"attackCycleDurationText").text=="1 s"&&f.Title.text=="Tower Info","resolved stats and fixed Title");
+        Check(Get<Image>(f.Grid.children[1].gameObject.GetComponent<TowerUpgradeInfoItem>(),"iconImage").sprite==f.Target.AppliedUpgrades[0].Icon&&
+            !Get<Image>(f.Grid.children[1].gameObject.GetComponent<TowerUpgradeInfoItem>(),"iconImage").raycastTarget,"acquisition order and display-only icons");
         Check(!f.Open(),"second open cannot replace current target");
         f.Close.onClick.Invoke();
         Check(!f.Hud.IsTowerInspectionBusy&&!f.View.gameObject.activeSelf&&Time.timeScale==0.65f&&f.Grid.children.Count==1&&authored!=null,"close preserves authored child, clears generated items and restores rate");
         f.Combat.UpgradeBaseline();f.Target.AppliedUpgrades.Add(new TowerUpgradeDefinition());
-        Check(f.Open()&&Get<TMP_Text>(f.View,"attackText").text=="20.5"&&f.Grid.children.Count==4,"reopen reads fresh stats and upgrade list without old layout items");
+        Check(f.Open()&&Get<TMP_Text>(f.View,"attackText").text=="20.5"&&f.Grid.children.Count==4&&Get<TMP_Text>(f.View,"attackCycleDurationText").text=="0.75 s","reopen reads fresh stats and upgrade list without old layout items");
         f.Hud.CloseTowerInfo();f.Hud.CloseTowerInfo();Check(Time.timeScale==0.65f,"duplicate close does not change rate");f.End();
 
         f=new Fixture(0);Check(f.Open()&&f.Grid.children.Count==0,"empty acquired upgrades");f.Hud.CloseTowerInfo();
         f.Combat.LevelBaseline();Check(f.Open()&&Get<TMP_Text>(f.View,"levelText").text=="2"&&Get<TMP_Text>(f.View,"attackText").text=="25.5","new committed level baseline");f.End();
 
         f=new Fixture();f.Target.TowerDefinition.Icon=null;f.Target.AppliedUpgrades[0].Icon=null;
-        Check(f.Open()&&!Get<Image>(f.View,"towerIcon").enabled&&f.Grid.children.Count==2&&!f.Grid.children[0].gameObject.GetComponent<Image>().enabled,"missing icons retain empty slots and never reuse old sprite");f.End();
+        Check(f.Open()&&!Get<Image>(f.View,"towerIcon").enabled&&f.Grid.children.Count==2&&!Get<Image>(f.Grid.children[0].gameObject.GetComponent<TowerUpgradeInfoItem>(),"iconImage").enabled,"missing icons retain empty slots and never reuse old sprite");f.End();
 
         f=new Fixture();var foreign=new GameObject().AddComponent<TowerInstance>();
         Check(!f.Hud.TryOpenTowerInfo(foreign,out _)&&!f.Pause.HasRetainedPause,"uncommitted target rejected");
@@ -131,6 +164,15 @@ class PresentationTests
             f=new Fixture();Set(f.Combat,"cachedResolvedStats",new ResolvedTowerCombatStats(invalid,1,10,15.5f,5,0,0));
             Check(!f.Open()&&!f.Pause.HasRetainedPause&&f.Failures==0,"invalid range query rejects without Battle side effects");f.End();
         }
+        foreach(float invalid in new[]{float.NaN,float.PositiveInfinity,-1f})
+        {
+            f=new Fixture();Set(f.Combat,"cachedResolvedStats",new ResolvedTowerCombatStats(3,invalid,10,15.5f,5,0,0));
+            Check(!f.Open()&&!f.Pause.HasRetainedPause&&f.Failures==0,"invalid cycle query rejects without Battle side effects");f.End();
+        }
+        f=new Fixture();Set(f.Combat,"cachedResolvedStats",new ResolvedTowerCombatStats(3,0,10,15.5f,5,0,0));
+        Check(f.Open()&&Get<TMP_Text>(f.View,"attackCycleDurationText").text=="0 s","zero cycle is valid and shown in seconds");f.End();
+        f=new Fixture();Set(f.View,"attackCycleDurationText",null);
+        Check(!f.Open()&&!f.Pause.HasRetainedPause&&f.Grid.children.Count==0,"cycle text required");f.End();
         f=new Fixture();Set(f.Combat,"cachedResolvedStats",new ResolvedTowerCombatStats(3,1,10,0,0,0,0));
         Check(!f.Open()&&!f.Pause.HasRetainedPause,"nonpositive Attack rejected");f.End();
         f=new Fixture();Check(f.Open(),"throwing close setup");changed=f;

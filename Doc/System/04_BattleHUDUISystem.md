@@ -190,6 +190,7 @@ battle HUD controls as well as the Map. Window content remains interactive above
 | Level | Target TowerInstance.CurrentLevel |
 | AttackRange | Current resolved Attack Range supplied by Tower Runtime Combat, including applied Upgrade changes |
 | Attack | Current resolved BasicDamage supplied by Tower Runtime Combat: current level BasicDamage plus applied Basic Damage Bonus deltas |
+| AttackCycleDuration | Current committed resolved attack cycle duration, including applied Upgrade changes; shown in seconds |
 | Kill count | Target TowerInstance.KillCount: cumulative attributed enemy deaths for this runtime Tower |
 
 Description is omitted from this compact window; TowerDefinition.Description
@@ -200,6 +201,9 @@ Attack is the current Tower attack baseline. Individual attack and Effect result
 apply their own DamageScale at the damage boundary; the display is not a DPS or
 aggregate damage estimate. UI reads the resolved value without recalculating combat
 rules or accessing mutable combat-cache internals.
+AttackCycleDuration is the complete current attack-cycle duration, not the
+remaining cycle timer or attacks per second. Read it from the same committed
+snapshot as Attack and Range; zero is valid, non-finite/negative values reject opening.
 
 Every opening reads a coherent snapshot of the target's latest committed level,
 resolved values, and acquired Upgrades. Gameplay cannot mutate these through the

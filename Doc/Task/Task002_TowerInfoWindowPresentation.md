@@ -5,9 +5,9 @@ Document Set: Task
 Status: Implemented with managed/build evidence; manual UI assembly and native acceptance pending.
 
 Content amendment: [Task002-1](Task002-1_TaskInfoWindowContentRefinment.md) is
-approved for planning and must complete before Task003. The current implementation
-still contains Description and bare Image upgrade items; the final content and
-assembly contract below includes the pending amendment. Historical evidence in
+implemented with separate managed/compilation evidence before Task003. The current
+implementation removes Description, displays Kill count and uses named/layer-styled
+Upgrade items; the final content and assembly contract below includes that amendment. Historical evidence in
 Sections 8 and 10 does not establish acceptance of that amendment.
 
 ## 1. Objective And Authority
@@ -52,6 +52,7 @@ Presentation-frame lifecycle checks are in scope and remain active during pause.
 | Level | `TowerInstance.CurrentLevel` |
 | AttackRange | Current committed resolved Attack Range from `TowerCombatBehaviour` |
 | Attack | Current committed `ResolvedBasicDamage` from `TowerCombatBehaviour` |
+| AttackCycleDuration | Current committed `AttackCycleDuration` from `TowerCombatBehaviour`, including Upgrade changes, in seconds |
 | Kill count | `TowerInstance.KillCount`, added by Task002-1 |
 | Upgrade items | Acquired Upgrade display name, Icon and TowerUpgradeLayer |
 
@@ -83,7 +84,7 @@ The user creates and positions the UI and assigns references manually:
   containing both mask and content. TowerInfoWindow is attached to this common root;
   the existing BattleHUDUI manages the active session.
 - Fixed Title text and Basic Stats parent containing individual text/Image rows.
-- References for DisplayName, Icon, Level, AttackRange, Attack and Kill count.
+- References for DisplayName, Icon, Level, AttackRange, Attack, AttackCycleDuration and Kill count.
 - Upgrade Info parent using Grid Layout and a TowerUpgradeInfoItem Prefab with
   name text, icon Image, background Image and three layer-background Sprites.
 - Close button.
@@ -202,7 +203,7 @@ Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
   Content (RectTransform; active locally)
     Title (fixed authored text)
     BasicStats (active parent)
-      DisplayName / Level / AttackRange / Attack / KillCount (TMP_Text)
+      DisplayName / Level / AttackRange / Attack / AttackCycleDuration / KillCount (TMP_Text)
       Icon (Image)
     UpgradeGrid (active parent; GridLayoutGroup)
     Close (Button)
@@ -211,14 +212,15 @@ Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
 1. Stretch the common root to a full-screen UI parent with zero offsets. Stretch
    Mask to that root with zero offsets; put Mask before Content in sibling order.
    Keep child objects active locally; only the common root starts inactive.
-2. Assign Content Root, all five text references including Kill count, Tower Icon, Upgrade Container,
+2. Assign Content Root, all six text references including Attack Cycle Duration and Kill count, Tower Icon, Upgrade Container,
    and Close Button on TowerInfoWindow. BasicStats is optional layout organization;
    no container reference is required. Mask has no script reference: manually
    verify full-screen coverage, sibling order, active state and Raycast Target.
 3. After Task002-1, save the upgrade UI object as a Prefab with TowerUpgradeInfoItem.
    Assign its icon/background Images, name text and Basic/Behaviour/Elemental
    background Sprites, then assign the typed Prefab reference on TowerInfoWindow.
-   Remove the Description row and its obsolete binding; add and bind Kill count.
+   Remove the Description row and its obsolete binding; add and bind Kill count
+   and Attack Cycle Duration text. Cycle duration uses invariant `0.##` plus ` s`.
 4. Assign TowerInfoWindow on the existing BattleHUDUI component. Do not disable the
    HUD with the window. No separate Controller component is required.
 5. Configure Grid size/spacing and content layout manually. Do not add a background
@@ -230,7 +232,9 @@ Window_TowerInfo (inactive; RectTransform; TowerInfoWindow)
 ## 10. Verification Evidence And Pending Acceptance
 
 The following is historical evidence for Task002 and its reference simplification;
-Task002-1 Kill count and named/layer-styled item acceptance is separately pending.
+Task002-1 records its new 105 presentation assertions and 33 damage/provenance
+assertions separately. Native Kill count and named/layer-styled item acceptance
+remains pending.
 
 - 74 managed assertions execute the whole production View, HUD inspection partial,
   Snapshot, Battle binding and pause authority, plus exact production combat query

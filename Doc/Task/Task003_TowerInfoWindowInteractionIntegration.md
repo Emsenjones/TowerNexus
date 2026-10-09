@@ -135,6 +135,7 @@ placement rejection. Verify rejected investment paths preserve rewards and Tower
 Native acceptance includes:
 
 - Mouse and actual touch taps open the correct Tower's latest values and Kill count,
+  including current resolved Attack Cycle Duration displayed in seconds,
   with acquired Upgrade names/icons and the correct layer backgrounds; Description
   is absent. Verify kills earned through actual direct and Buff/Effect damage.
 - Dragging from a Tower pans without opening; ordinary empty-map pan and bounds work.

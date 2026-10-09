@@ -2,7 +2,8 @@
 
 Document Set: Task
 
-Status: Task contract generated; implementation plan and review pending.
+Status: Implemented after chat plan review; managed/compilation evidence recorded;
+manual UI assembly and native Unity/device acceptance pending.
 
 ## 1. Objective And Authority
 
@@ -67,7 +68,9 @@ distance, current target selection, Upgrade identity or a new Tower registry.
 FixedBuff damage remains source-independent for damage calculation. Its existing
 execution context's nullable SourceTower may supply kill-credit metadata. Shared
 Buff lifecycle execution uses the existing latest successful source context;
-individual triggering attacks do not silently replace it. Reapplication does not
+individual triggering attacks do not silently replace it. TowerHitReceived is an
+explicit existing exception: that reaction execution uses the triggering Tower's
+captured source without rewriting the Buff's stored lifecycle source. Reapplication does not
 retroactively change an already captured execution or lethal source. If no valid
 source exists, execute otherwise-valid FixedBuff damage without Tower kill credit.
 Do not split a shared Buff into per-Tower stacks or award every contributor a kill.
@@ -80,7 +83,11 @@ player progress, resolution ordering and outgoing Battle evidence semantics.
 
 ## 4. Presentation And Authoring Contract
 
-Basic information is DisplayName, Icon, Level, AttackRange, Attack and Kill count.
+Basic information is DisplayName, Icon, Level, AttackRange, Attack,
+AttackCycleDuration and Kill count. AttackCycleDuration uses the current committed
+resolved value including Upgrades, formatted with invariant `0.##` plus ` s`.
+It is a full cycle duration, not the remaining timer; zero is valid and invalid
+non-finite/negative values reject opening through the read-only stats query.
 Title remains fixed authored text. Kill count is integer text, including zero.
 Every opening captures the latest committed count and independently copies the
 acquired Upgrade presentation sequence. Compare count, Upgrade identity, name,
@@ -144,3 +151,68 @@ Grid Layout and Close responsiveness during pause. Task003 verifies actual
 mouse/touch entry, modal input and full Battle lifecycle with this final content.
 Record managed/build, Play Mode/device and user layout evidence separately;
 unexecuted acceptance remains pending. Document generation is not implementation.
+
+## 7. Implemented Interfaces And Review Resolution
+
+- `TowerInstance.KillCount` is read-only; initialization resets the counter and
+  runtime identity. Internal counting saturates at int.MaxValue. Formal deployment
+  commit binds kill ownership to the existing Submission membership and exact Battle,
+  before combat activation. Model changes and combat rebinding do not reset it.
+- `TowerKillSource` is immutable Battle/Tower/runtime provenance. Projectile,
+  Drone, Orb group and persistent Field capture it at release/initialization;
+  child Projectiles, WindVortex, Effect contexts, Buff requests/instances and
+  pending Overload forward the original stamp instead of recapturing at impact.
+- Monster records the first lethal source before health feedback. Death consumes
+  it once before path/Buff/death/resolution notifications. Credit checks exact
+  runtime identity, existing deployed membership and pure Battle IsOpenForRead;
+  it does not require the now-dead Monster to satisfy CanTarget.
+- Damage commit facts are returned before callback-capable feedback so a reset or
+  throwing callback cannot erase committed application evidence. Old target-life
+  damage observations are not published against a newly initialized Monster.
+- Hit transactions retain Monster identity and their original Buff runtime.
+  End is single-use; Buff mutation End runs in finally even when death throws.
+  Monster reset revokes identity before old Buff cleanup, detaches outgoing
+  observers and establishes a separate Buff runtime. Old finally cannot decrement
+  new-life depths or kill/destroy that new life. Death notifications isolate
+  subscriber exceptions while preserving publication order and progress delivery.
+- `TowerUpgradeInfoItem.Initialize(name, icon, layer)` is presentation only.
+  Required local references and all three layer backgrounds are validated; an
+  unsupported layer rejects hidden preparation. The View references the typed
+  Prefab and owns each returned item before initialization/explicit activation.
+- Snapshot captures runtime identity, Kill count and independent Upgrade
+  name/icon/layer arrays; existing pre-pause/post-activation freshness checks apply.
+  Description is removed. HUD session/pause interfaces remain unchanged.
+- The View requires attackCycleDurationText and reads the existing snapshot's
+  Stats.AttackCycleDuration. The authored base field is renamed to
+  baseAttackCycleDuration; FormerlySerializedAs preserves both attackCycleDuration
+  and older attackInterval serialized values. BaseAttackCycleDuration remains the
+  public base-value API. upgradeContainer is retained as the generated-item Parent.
+
+## 8. Verification Evidence And Manual Handoff
+
+- ContentRefinement/run.py: 33 managed assertions using exact production health,
+  death, hit-transaction, Tower initialization/counter and Buff lifecycle execution
+  methods, whole provenance/context/request/BuffInstance/pending Overload classes.
+  Native feedback, Buff mutation boundary and Effect damage execution are doubled.
+  Includes A/B reaction/lifecycle attribution, reapplication, delayed Overload,
+  source-less damage, identity reuse, nested death, exception/reset and progress.
+- Presentation/run.py: 105 assertions using the production View, Item, Snapshot,
+  HUD session, Battle binding and pause authority. Native rendering/instantiation
+  and deployment membership are doubled; these do not establish Unity visuals.
+- Existing Effect/binding/hit regression: 27 checks; Submission: 31 contracts;
+  modal pause: 81 assertions plus five attack and five spawning boundary cases.
+- ContentRefinement/build.py compiles the complete 139-source runtime against
+  actual installed Unity/TMP references in player and UNITY_EDITOR modes. This is
+  compilation evidence, not a Unity player build or Play Mode acceptance.
+
+Manual migration: remove Description row; create/assign Kill count and Attack
+Cycle Duration TMP_Text references;
+replace the old bare Image template with a TowerUpgradeInfoItem Prefab; assign
+icon/background/name and Basic/Behaviour/Elemental backgrounds. The old Image
+reference is not automatically convertible and must be reassigned. Keep the
+existing Canvas, common root, Grid, Close and full-screen raycast mask.
+
+Pending: native real-combat kill attribution (including released entities and
+Buff/Effect deaths), model-change preservation, actual hierarchy/Prefab references,
+names/backgrounds/layout and deferred destruction. Production mouse/touch entry
+and full Battle lifecycle remain Task003. No native checks are marked passed.

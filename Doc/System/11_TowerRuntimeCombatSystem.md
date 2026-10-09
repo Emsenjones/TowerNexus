@@ -82,11 +82,15 @@ Monster death resolution commits credit once. Preserve the original source on
 released entities and nested Effects, without reconstructing it from targeting
 state. Combat cache/model replacement does not reset the counter. Diagnostics
 and their subscribers are not the authoritative gameplay counting mechanism.
+Capture source runtime provenance at entity release or successful Buff application
+and forward it through children and delayed execution. Do not recapture it at impact.
 
 TowerInfoWindow receives a read-only view of the target's current committed
-resolved Attack Range and resolved BasicDamage. The latter includes current level
+resolved Attack Range, Attack Cycle Duration and resolved BasicDamage. The latter includes current level
 BasicDamage and applied Basic Damage Bonus deltas, before a damage source's own
-DamageScale. Reading for presentation cannot rebuild gameplay state, refresh
+DamageScale. Attack Cycle Duration includes applied
+Upgrade changes and is the complete cycle duration in seconds, not its remaining timer.
+Reading for presentation cannot rebuild gameplay state, refresh
 entities, or mutate the combat baseline. Unavailable or invalid target data is
 reported to the inspection owner rather than displayed as a fabricated zero.
 

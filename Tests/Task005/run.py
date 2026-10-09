@@ -8,7 +8,7 @@ def method(source,name):
   depth+=(source[i]=="{")-(source[i]=="}");i+=1
  return source[match.start():i]
 root=Path(__file__).resolve().parents[2]
-sources=['TowerDeployment/BattleCombatBinding.cs','TowerDeployment/BattleModalPauseAuthority.cs','BuffAndEffect/BuffRemovalPermission.cs','BuffAndEffect/EffectTriggerContext.cs','BuffAndEffect/EffectTargetResolver.cs','BuffAndEffect/EffectExecutor.cs','BuffAndEffect/ElementalApplication.cs']
+sources=['TowerFramework/TowerKillSource.cs','TowerDeployment/BattleCombatBinding.cs','TowerDeployment/BattleModalPauseAuthority.cs','BuffAndEffect/BuffRemovalPermission.cs','BuffAndEffect/EffectTriggerContext.cs','BuffAndEffect/EffectTargetResolver.cs','BuffAndEffect/EffectExecutor.cs','BuffAndEffect/ElementalApplication.cs']
 with tempfile.TemporaryDirectory(prefix='towernexus-task005-') as folder:
  exe=Path(folder)/'Contracts.exe'
  lifecycle=Path(folder)/'Lifecycle.cs'

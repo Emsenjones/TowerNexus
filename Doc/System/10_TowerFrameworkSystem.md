@@ -206,7 +206,7 @@ TowerInstance supplies its TowerDefinition identity, current committed level,
 Kill count and acquired Upgrade definitions in acquisition order to TowerInfoWindow.
 TowerDefinition supplies display name and icon; Description remains available
 for other consumers. Each acquired Upgrade definition supplies its display name,
-icon and layer. Current resolved Attack Range and Attack
+icon and layer. Current resolved Attack Range, Attack and Attack Cycle Duration
 come from Tower Runtime Combat rather than duplicate fields in TowerInstance.
 
 TowerInstance owns cumulative nonnegative KillCount for its runtime lifetime.
