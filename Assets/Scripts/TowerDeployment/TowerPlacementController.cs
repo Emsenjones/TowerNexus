@@ -1,6 +1,10 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
+using UnityEngine.InputSystem.UI;
 
 public class TowerPlacementController : MonoBehaviour
 {
@@ -21,6 +25,62 @@ public class TowerPlacementController : MonoBehaviour
     private MonsterDashedPathSession pathSession;
     private object pathDrag;
     private bool modalReleasePending;
+    private Mouse dragMouse;
+    private TouchControl dragTouch;
+    private int dragTouchId;
+    private Vector3 dragScreenPosition;
+
+    // Keep the UI's initiating device/contact for the entire placement gesture.
+    private bool CaptureDragPointer(PointerEventData eventData)
+    {
+        dragMouse = null;
+        dragTouch = null;
+        if (eventData is ExtendedPointerEventData extended)
+        {
+            if (extended.device is Touchscreen screen)
+            {
+                foreach (var touch in screen.touches)
+                    if (touch.touchId.ReadValue() == extended.touchId)
+                    { dragTouch = touch; break; }
+            }
+            else dragMouse = extended.device as Mouse;
+        }
+        else
+        {
+            var screen = Touchscreen.current;
+            if (screen != null && screen.primaryTouch.press.isPressed)
+            {
+                int id = screen.primaryTouch.touchId.ReadValue();
+                foreach (var touch in screen.touches)
+                    if (touch.touchId.ReadValue() == id) { dragTouch = touch; break; }
+            }
+            else dragMouse = Mouse.current;
+        }
+        dragTouchId = dragTouch != null ? dragTouch.touchId.ReadValue() : 0;
+        if (!ReadDragPointer(out _, out _, out bool cancelled) || cancelled) return false;
+        return true;
+    }
+
+    private bool ReadDragPointer(out bool held, out bool released, out bool cancelled)
+    {
+        held = released = cancelled = false;
+        if (dragTouch != null)
+        {
+            if (!dragTouch.device.added || dragTouch.touchId.ReadValue() != dragTouchId) return false;
+            dragScreenPosition = dragTouch.position.ReadValue();
+            var phase = dragTouch.phase.ReadValue();
+            held = dragTouch.press.isPressed;
+            released = phase == UnityEngine.InputSystem.TouchPhase.Ended;
+            cancelled = phase == UnityEngine.InputSystem.TouchPhase.Canceled;
+            return true;
+        }
+        if (dragMouse == null || !dragMouse.added) return false;
+        dragScreenPosition = dragMouse.position.ReadValue();
+        held = dragMouse.leftButton.isPressed;
+        released = dragMouse.leftButton.wasReleasedThisFrame;
+        cancelled = dragMouse.rightButton.wasPressedThisFrame;
+        return true;
+    }
     internal TowerPlacementValidator PathPreviewValidator => placementValidator;
     internal void BindPathSession(MonsterDashedPathSession session) { pathSession = session; pathDrag = null; }
     private void ShowPathFallback() => pathSession?.Preview(pathDrag, null, true);
@@ -72,6 +132,9 @@ public class TowerPlacementController : MonoBehaviour
         EnsureStableRuntimeDependencies();
     }
 
+    private void OnApplicationFocus(bool focused) { if (!focused && isDragging) CancelPlacement(); }
+    private void OnApplicationPause(bool paused) { if (paused && isDragging) CancelPlacement(); }
+
     private void Update()
     {
         if (!isBattleActive)
@@ -85,10 +148,10 @@ public class TowerPlacementController : MonoBehaviour
         }
 
         pathSession?.Tick();
+        bool pointerAvailable = ReadDragPointer(out bool held, out bool released, out bool cancelled);
         if (battleHUDUI != null && (battleHUDUI.IsDraftSessionBusy || battleHUDUI.IsTowerInspectionBusy))
         {
-            if (isDragging && (Input.GetMouseButtonUp(0) || Input.GetMouseButtonDown(1) ||
-                !Input.GetMouseButton(0))) modalReleasePending = true;
+            if (isDragging && (!pointerAvailable || released || cancelled || !held)) modalReleasePending = true;
             return;
         }
         if (modalReleasePending)
@@ -102,15 +165,15 @@ public class TowerPlacementController : MonoBehaviour
             return;
         }
 
-        if (Input.GetMouseButtonDown(1))
+        if (!pointerAvailable || cancelled || (!held && !released))
         {
             CancelPlacement();
             return;
         }
 
-        UpdatePreviewPosition(Input.mousePosition);
+        UpdatePreviewPosition(dragScreenPosition);
 
-        if (Input.GetMouseButtonUp(0))
+        if (released)
         {
             CompletePlacement();
         }
@@ -123,8 +186,9 @@ public class TowerPlacementController : MonoBehaviour
         BeginDraftDrag(draftedDraftEntry.DraftResult, draftedDraftEntry);
     }
 
-    public void BeginDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
+    public void BeginDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry, PointerEventData eventData = null)
     {
+        if (isDragging) return;
         if (battleHUDUI == null || !battleHUDUI.IsCurrentPendingView(draftedDraftEntry) ||
             draftedDraftEntry.DraftResult != draftResult) return;
         if (!CanStartDraftInteraction || (battleHUDUI != null && (battleHUDUI.IsDraftSessionBusy || battleHUDUI.IsTowerInspectionBusy))) return;
@@ -143,10 +207,10 @@ public class TowerPlacementController : MonoBehaviour
         switch (draftResult.ResultType)
         {
             case DraftResultType.TowerDraft:
-                BeginTowerDraftDrag(draftResult, draftedDraftEntry);
+                BeginTowerDraftDrag(draftResult, draftedDraftEntry, eventData);
                 break;
             case DraftResultType.TowerUpgradeDraft:
-                BeginTowerUpgradeDrag(draftResult, draftedDraftEntry);
+                BeginTowerUpgradeDrag(draftResult, draftedDraftEntry, eventData);
                 break;
             default:
                 Debug.LogWarning($"Tower placement controller cannot begin draft drag: unsupported draft result type '{draftResult.ResultType}'.", this);
@@ -154,9 +218,10 @@ public class TowerPlacementController : MonoBehaviour
         }
     }
 
-    private void BeginTowerDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
+    private void BeginTowerDraftDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry, PointerEventData eventData)
     {
         CancelPlacement();
+        if (!CaptureDragPointer(eventData)) return;
         EnsureStableRuntimeDependencies();
 
         TowerDefinition towerDefinition = draftResult != null ? draftResult.TowerDefinition : null;
@@ -202,12 +267,13 @@ public class TowerPlacementController : MonoBehaviour
 
         pathDrag = pathSession?.BeginDrag();
         ShowAttackRangePreviewsForCurrentDrag();
-        UpdatePreviewPosition(Input.mousePosition);
+        UpdatePreviewPosition(dragScreenPosition);
     }
 
-    private void BeginTowerUpgradeDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry)
+    private void BeginTowerUpgradeDrag(DraftResult draftResult, PendingDraftUIItem draftedDraftEntry, PointerEventData eventData)
     {
         CancelPlacement();
+        if (!CaptureDragPointer(eventData)) return;
         EnsureStableRuntimeDependencies();
 
         TowerUpgradeDefinition upgradeDefinition = draftResult != null ? draftResult.TowerUpgradeDefinition : null;
@@ -227,7 +293,7 @@ public class TowerPlacementController : MonoBehaviour
         isDragging = true;
 
         RefreshUpgradeTargetHighlights();
-        UpdatePreviewPosition(Input.mousePosition);
+        UpdatePreviewPosition(dragScreenPosition);
     }
 
     public void CancelPlacement()
@@ -265,6 +331,8 @@ public class TowerPlacementController : MonoBehaviour
             currentUpgradeTarget = null;
             currentDraftEntry = null;
             isDragging = false;
+            dragMouse = null;
+            dragTouch = null;
             isTowerTargetCandidateActive = false;
             isLevelUpPreviewActive = false;
         }
@@ -408,7 +476,7 @@ public class TowerPlacementController : MonoBehaviour
         if (!isBattleActive || battleHUDUI == null || (battleHUDUI.IsDraftSessionBusy || battleHUDUI.IsTowerInspectionBusy) || !battleHUDUI.IsCurrentPendingView(currentDraftEntry) ||
             currentDraftEntry.DraftResult != currentDraftResult)
             return TowerSubmissionResult.Reject("The current Pending view or Battle is unavailable.");
-        if (battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(Input.mousePosition))
+        if (battleHUDUI.IsScreenPositionInsideDraftItemInteractionArea(dragScreenPosition))
             return TowerSubmissionResult.Reject(string.Empty);
         var entry = currentDraftEntry.Entry;
         if (IsTowerUpgradeDraftDrag())
