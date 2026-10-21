@@ -96,7 +96,7 @@
 15. *6 Stage Map Prefabs;
 16. *Value judgement + Replace LingerOribt;
 16. *Tower state UI;
-17. TowerInfoWindow: approved design in System/04_BattleHUDUISystem.md Section 4.2; implementation pending;
+17. *TowerInfoWindow: approved design in System/04_BattleHUDUISystem.md Section 4.2; implementation pending;
 18. *Monster route display;
 19. Modify time scale when the DraftWindow is popping up or the player is dragging DraftPendingItem;
 20. players can remove Tower pending items;

@@ -29,6 +29,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
     private bool originalParentUsesLayoutGroup;
     private bool hasStoredPendingPosition;
     private bool isDragVisualActive;
+    private int? dragPointerId;
     private bool isBattleActive;
     private bool isConsumed => Entry == null || Entry.IsConsumed;
 
@@ -207,21 +208,25 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
             return;
         }
 
+        if (placementController.IsDragging) return;
+
         if (ShouldShowDragVisual())
         {
             BeginDragVisual(eventData.position, eventData.pressEventCamera);
         }
 
-        placementController.BeginDraftDrag(draftResult, this);
+        placementController.BeginDraftDrag(draftResult, this, eventData);
 
         if (!placementController.IsDragging)
         {
             RestorePendingPosition();
         }
+        else dragPointerId = eventData.pointerId;
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
+        if (eventData == null || dragPointerId != eventData.pointerId) return;
         if (!CanInteract())
         {
             return;
@@ -242,6 +247,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnDrag(PointerEventData eventData)
     {
+        if (eventData == null || dragPointerId != eventData.pointerId) return;
         if (!CanInteract())
         {
             return;
@@ -262,6 +268,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void OnEndDrag(PointerEventData eventData)
     {
+        if (eventData == null || dragPointerId != eventData.pointerId) return;
         if (!CanInteract())
         {
             return;
@@ -272,6 +279,7 @@ public class PendingDraftUIItem : MonoBehaviour, IPointerDownHandler, IBeginDrag
 
     public void RestorePendingPosition()
     {
+        dragPointerId = null;
         if (isConsumed)
         {
             return;

@@ -61,6 +61,11 @@ The held item is consumed only after the receiving gameplay system accepts the r
 
 An accepted Draft-item drag owns its pointer gesture until release or cancellation. Camera System must not begin or continue a pan from that gesture, including after the pointer moves from the UI into the battlefield.
 
+The initiating mouse or touch contact remains the input owner; additional contacts
+cannot replace it. Pointer cancellation, loss, or application focus loss cancels
+the operation without consuming the Held entry. A release during modal ownership
+is retired as cancellation when the modal closes, never replayed as a submission.
+
 ---
 
 ## 2.1 Preview Query Reuse

@@ -2,6 +2,10 @@ using System.Collections.Generic;
 using Unity.Cinemachine;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
+using Touch = UnityEngine.InputSystem.EnhancedTouch.Touch;
+using TouchPhase = UnityEngine.InputSystem.TouchPhase;
 
 public sealed class CameraPanController : MonoBehaviour
 {
@@ -61,6 +65,7 @@ public sealed class CameraPanController : MonoBehaviour
     private object pressedTowerIdentity;
     private ulong pressInputRevision;
     private bool suppressMouseUntilReleased;
+    private Mouse gestureMouse;
 
     internal bool HasInspectionDependencies(BattleHUDUI hud, TowerPlacementController placement) =>
         ReferenceEquals(battleHUDUI, hud) && ReferenceEquals(towerPlacementController, placement);
@@ -113,6 +118,7 @@ public sealed class CameraPanController : MonoBehaviour
 
     private void OnEnable()
     {
+        EnhancedTouchSupport.Enable();
         CinemachineCore.CameraUpdatedEvent.AddListener(
             HandleCinemachineCameraUpdated);
 
@@ -124,6 +130,7 @@ public sealed class CameraPanController : MonoBehaviour
 
     private void OnDisable()
     {
+        EnhancedTouchSupport.Disable();
         CinemachineCore.CameraUpdatedEvent.RemoveListener(
             HandleCinemachineCameraUpdated);
 
@@ -485,30 +492,33 @@ public sealed class CameraPanController : MonoBehaviour
 
     private void TryBeginPrimaryPointerGesture()
     {
-        for (int i = 0; i < Input.touchCount; i++)
+        var touches = Touch.activeTouches;
+        for (int i = 0; i < touches.Count; i++)
         {
-            Touch touch = Input.GetTouch(i);
+            Touch touch = touches[i];
 
             if (touch.phase == TouchPhase.Began)
             {
                 suppressMouseUntilReleased = true;
                 TryBeginPan(
                     PointerKind.Touch,
-                    touch.fingerId,
-                    touch.position);
+                    touch.touchId,
+                    touch.screenPosition);
                 return;
             }
         }
 
-        if (Input.touchCount > 0) { suppressMouseUntilReleased = true; return; }
+        var mouse = Mouse.current;
+        if (touches.Count > 0) { suppressMouseUntilReleased = true; return; }
         if (suppressMouseUntilReleased)
-        { if (!Input.GetMouseButton(0)) suppressMouseUntilReleased = false; return; }
-        if (Input.GetMouseButtonDown(0))
+        { if (mouse == null || !mouse.leftButton.isPressed) suppressMouseUntilReleased = false; return; }
+        if (mouse != null && mouse.leftButton.wasPressedThisFrame)
         {
             TryBeginPan(
                 PointerKind.Mouse,
                 MousePointerId,
-                Input.mousePosition);
+                mouse.position.ReadValue());
+            if (primaryPointer.IsActive) gestureMouse = mouse;
         }
     }
 
@@ -550,34 +560,40 @@ public sealed class CameraPanController : MonoBehaviour
 
         if (primaryPointer.Kind == PointerKind.Mouse)
         {
-            if (Input.GetMouseButtonUp(0))
+            if (gestureMouse == null || !gestureMouse.added)
             {
-                ReleasePointer(Input.mousePosition);
+                EndPanGesture(PointerPhase.Cancelled);
+                return;
+            }
+            if (gestureMouse.leftButton.wasReleasedThisFrame)
+            {
+                ReleasePointer(gestureMouse.position.ReadValue());
                 return;
             }
 
-            if (!Input.GetMouseButton(0))
+            if (!gestureMouse.leftButton.isPressed)
             {
                 EndPanGesture(PointerPhase.Cancelled);
                 return;
             }
 
-            MovePointer(Input.mousePosition);
+            MovePointer(gestureMouse.position.ReadValue());
             return;
         }
 
-        for (int i = 0; i < Input.touchCount; i++)
+        var touches = Touch.activeTouches;
+        for (int i = 0; i < touches.Count; i++)
         {
-            Touch touch = Input.GetTouch(i);
+            Touch touch = touches[i];
 
-            if (touch.fingerId != primaryPointer.Id)
+            if (touch.touchId != primaryPointer.Id)
             {
                 continue;
             }
 
             if (touch.phase == TouchPhase.Ended)
             {
-                ReleasePointer(touch.position);
+                ReleasePointer(touch.screenPosition);
                 return;
             }
 
@@ -587,7 +603,7 @@ public sealed class CameraPanController : MonoBehaviour
                 return;
             }
 
-            MovePointer(touch.position);
+            MovePointer(touch.screenPosition);
             return;
         }
 
@@ -785,6 +801,7 @@ public sealed class CameraPanController : MonoBehaviour
 
     private void EndPanGesture(PointerPhase terminalPhase)
     {
+        gestureMouse = null;
         primaryPointer = new PrimaryPointerState
         {
             Kind = PointerKind.None,
