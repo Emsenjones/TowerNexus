@@ -140,8 +140,9 @@ Pause rules are:
   session through the shared Battle pause authority (Stage System Section 3.2).
 - The simulation rate that existed before the Draft opened is restored rather than replaced with an assumed default.
 - The shared Battle pause authority is the only modal simulation-rate writer.
-  Draft and TowerInfoWindow are mutually exclusive; neither can overwrite or
-  release the other's ownership. An overlapping opening request is rejected.
+  Draft, TowerInfoWindow, and ConfirmExitStageWindow are mutually exclusive;
+  none can overwrite or release another session's ownership. An overlapping
+  opening request is rejected.
 - Draft presentation and selection remain interactive while battle simulation is paused.
 - Successful selection first enters Committing Selection, then commits the held item, closes presentation, releases pause, and only then publishes completion.
 - Synchronous opening failure returns failure directly with no retained pause;

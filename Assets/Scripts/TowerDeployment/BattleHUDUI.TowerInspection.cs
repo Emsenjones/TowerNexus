@@ -102,19 +102,24 @@ public partial class BattleHUDUI
         }
     }
 
-    private bool CanOpenInspection() => isActiveAndEnabled && towerInfoWindow != null && !IsDraftSessionBusy &&
+    private bool CanOpenInspection() => isActiveAndEnabled && IsHUDInputReady && towerInfoWindow != null && !IsDraftSessionBusy && !IsExitConfirmationBusy &&
         inspectionBattle != null && inspectionBattle.IsOpenForRead && inspectionMembers != null &&
         !inspectionMembers.IsBusy && inspectionMembers.CanStartOperation &&
         (towerPlacementController == null || towerPlacementController.IsAvailableForInspection) &&
         inspectionPause != null && inspectionPause.IsBattleOpen(inspectionBattle) && inspectionPause.CanAcquire;
 
     private bool IsCurrent(InspectionSession session) => ReferenceEquals(session, inspectionSession) &&
-        ReferenceEquals(session.Battle, inspectionBattle) && isActiveAndEnabled &&
+        ReferenceEquals(session.Battle, inspectionBattle) && isActiveAndEnabled && IsHUDInputReady &&
         inspectionPhase == TowerInspectionPhase.Opening && !session.Content.Disposed &&
         inspectionPause != null && inspectionPause.IsBattleOpen(session.Battle) &&
         inspectionMembers != null && !inspectionMembers.IsBusy &&
         (session.Pause != null || inspectionMembers.CanStartOperation) &&
-        (towerPlacementController == null || towerPlacementController.IsAvailableForInspection) && !IsDraftSessionBusy;
+        (towerPlacementController == null || towerPlacementController.IsAvailableForInspection) && !IsDraftSessionBusy && !IsExitConfirmationBusy;
+
+    internal bool OwnsTowerInspectionBinding(BattleCombatBinding battle) => battle != null &&
+        (ReferenceEquals(inspectionBattle, battle) || ReferenceEquals(inspectionSession?.Battle, battle));
+    internal void ClearTowerInspectionBinding(BattleCombatBinding battle)
+    { if (OwnsTowerInspectionBinding(battle)) ClearTowerInspectionBinding(); }
 
     public void CloseTowerInfo() { CancelTowerInspection(); }
     internal void CancelTowerInspection() { CloseInspectionSession(inspectionSession); }
@@ -167,6 +172,13 @@ public partial class BattleHUDUI
 
     private void LateUpdate()
     {
+        TryHudCleanup(CheckTowerInspectionLifetime);
+        TryHudCleanup(CheckExitConfirmationLifetime);
+        TryHudCleanup(RefreshExitEntry);
+    }
+
+    private void CheckTowerInspectionLifetime()
+    {
         var session = inspectionSession;
         if (inspectionPhase != TowerInspectionPhase.Open || session == null) return;
         // Lifecycle checks remain responsive at timeScale zero; display values are not polled.
@@ -175,7 +187,12 @@ public partial class BattleHUDUI
             CloseInspectionSession(session);
     }
 
-    private void OnDestroy() { TryHudCleanup(ClearTowerInspectionBinding); }
+    private void OnDestroy()
+    {
+        TryHudCleanup(ClearExitConfirmationBinding);
+        TryHudCleanup(DisableExitEntry);
+        TryHudCleanup(ClearTowerInspectionBinding);
+    }
     private void TryHudCleanup(Action cleanup)
     {
         try { cleanup(); }

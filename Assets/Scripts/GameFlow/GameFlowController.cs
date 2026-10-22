@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameFlowController : MonoBehaviour
+public partial class GameFlowController : MonoBehaviour
 {
     private const int InactiveStageIndex = -1;
     private const int DemoStageTargetCount = 5;
@@ -38,6 +38,13 @@ public class GameFlowController : MonoBehaviour
 
     private void OnEnable()
     {
+        if (exitTransitionWork != null)
+        {
+            SubscribeToBattleResults();
+            MarkExitRecovery();
+            ContinueExitStageTransition();
+            return;
+        }
         cleanupRequested = false;
         SubscribeToBattleResults();
         isTransitionInProgress = true;
@@ -68,6 +75,12 @@ public class GameFlowController : MonoBehaviour
     {
         UnsubscribeFromBattleResults();
         cleanupRequested = true;
+        if (exitTransitionWork != null)
+        {
+            MarkExitRecovery();
+            ContinueExitStageTransition();
+            return;
+        }
         stageCompositionController?.ReleaseStage();
 
         if (!isTransitionInProgress)
@@ -734,6 +747,7 @@ public class GameFlowController : MonoBehaviour
     private bool FailTransitionToMainMenu(string failureReason)
     {
         Debug.LogError(failureReason, this);
+        if (exitTransitionWork != null) { MarkExitRecovery(); return false; }
         EnterMainMenuCore();
         return false;
     }

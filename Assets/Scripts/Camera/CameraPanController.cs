@@ -95,6 +95,8 @@ public sealed class CameraPanController : MonoBehaviour
         if (battleHUDUI != null) battleHUDUI.OnBattlefieldInputInvalidated -= CancelPointerGesture;
         inspectionBattle = null; inspectionMap = null; inspectionMembers = null; inspectionPause = null;
     }
+    internal void ClearInspectionBinding(BattleCombatBinding battle)
+    { if (battle != null && ReferenceEquals(inspectionBattle, battle)) ClearInspectionBinding(); }
     internal void CancelPointerGesture() { EndPanGesture(PointerPhase.Cancelled); }
     private void OnApplicationFocus(bool focused) { if (!focused) CancelPointerGesture(); }
     private void OnApplicationPause(bool paused) { if (paused) CancelPointerGesture(); }
@@ -696,7 +698,7 @@ public sealed class CameraPanController : MonoBehaviour
                gameFlowController != null &&
                gameFlowController.CurrentState == GameFlowState.Battle &&
                battleHUDUI != null && battleHUDUI.isActiveAndEnabled &&
-               !battleHUDUI.IsDraftSessionBusy && !battleHUDUI.IsTowerInspectionBusy &&
+               !battleHUDUI.IsBattleModalBusy &&
                inspectionBattle != null && inspectionBattle.IsOpenForRead &&
                battleHUDUI.HasTowerInspectionBinding(inspectionBattle, inspectionMembers, inspectionPause) &&
                ReferenceEquals(inspectionMap, activeMap) && inspectionMembers != null && inspectionMembers.CanStartOperation &&

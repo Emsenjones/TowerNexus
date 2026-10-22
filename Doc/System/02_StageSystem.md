@@ -148,6 +148,14 @@ Every successfully composed initial Stage, next Stage, and retry establishes fre
 
 Domain owners remain responsible for their own technical cleanup.
 
+Lifecycle availability and runtime retirement are separate facts. A Stage cannot
+admit a flow transition during preparation, Battle start, release, or pending
+release. Clearing readiness or the begun flag at release entry does not mean the
+runtime is retired. Retirement requires completed Battle cleanup, no retained
+modal pause, withdrawn bindings, and inactive/detached outgoing Map objects.
+Deferred engine destruction may finish later. Reentrant release is idempotent;
+preparation cannot enter while release callbacks or deferred Battle cleanup remain.
+
 Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next or into a retry. StageDefinition authors the positive maximum-health value and ordered Player progress requirements for the selected Stage. Player System owns their applied runtime snapshots, current state, threshold consumption, and transition rules; Stage composition supplies the authored values and establishes a fresh full-health, Level 1 runtime before the prepared Stage may begin. A retry reloads the same Stage-authored requirements into new runtime state, while a next Stage supplies its own sequence.
 
 ## 3.1 Monster Dashed-Line Path Lifetime
@@ -175,8 +183,8 @@ drag-dependent route and state, and Battle HUD UI System owns line rendering.
 
 ## 3.2 Battle Modal Pause Lifetime
 
-One Battle-scoped pause authority controls the simulation rate for Draft and
-TowerInfoWindow. Each requesting domain owns its session and an exact pause handle;
+One Battle-scoped pause authority controls the simulation rate for Draft,
+TowerInfoWindow, and ConfirmExitStageWindow. Each requesting domain owns its session and an exact pause handle;
 the shared authority owns rate capture and restoration. Only one modal owner may
 hold a pause at a time. An overlapping request is rejected without replacing the
 owner, changing the saved rate, or queuing another window.
@@ -188,10 +196,16 @@ Buff timing, and other simulation-driven scene behavior must not advance.
 Camera pan is separately blocked by modal interaction ownership.
 
 Release by the exact current Battle/session owner restores the captured rate,
-not an assumed default. Duplicate or stale releases do nothing. Draft and
-TowerInfoWindow never independently write or restore that rate; unrelated rate
+not an assumed default. Duplicate or stale releases do nothing. Draft,
+TowerInfoWindow, and ConfirmExitStageWindow never independently write or restore that rate; unrelated rate
 writers cannot bypass active modal ownership. Nested pauses, slow-motion policy,
-and a general player pause menu are outside this contract.
+and general pause-menu features beyond exit confirmation are outside this contract.
+
+Exit confirmation retains the current Battle while awaiting a decision. Cancel
+releases only its own pause and preserves the current runtime. Accepted Restart or
+Main Menu revokes outgoing gameplay authority before pause restoration and Stage
+cleanup, without briefly resuming the abandoned Battle. Battle HUD owns the
+confirmation session; Game Flow alone accepts and executes its Stage transition.
 
 Terminal acceptance, stop, release, retry, replacement, and preparation rollback
 revoke outgoing interaction authority before cleaning modal sessions and releasing
@@ -199,6 +213,12 @@ their pause. Physical release may be deferred, but outgoing input is rejected
 immediately. Restoring the captured rate during cleanup does not reactivate stopped
 gameplay. All outgoing pause state is cleared before a fresh Battle can acquire
 ownership; late callbacks cannot change the new Battle's rate or window.
+
+Inspection, Camera interaction, and exit confirmation bind as one input-readiness
+group during preparation or explicit HUD re-enable. Group readiness is distinct
+from modal opening availability. The protected-operation query used to validate
+an existing modal remains independent from the guard on starting another player
+operation, so an open modal cannot reject its own continued ownership.
 
 ---
 

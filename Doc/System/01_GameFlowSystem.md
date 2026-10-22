@@ -18,6 +18,7 @@ It owns:
 - Response to one authoritative battle result
 - Response to one result-neutral asynchronous Battle runtime failure
 - Next-Stage, retry-current-Stage, and return-to-main-menu decisions
+- Acceptance of current-Battle retry and main-menu intents from Battle HUD exit confirmation
 - Visibility and interaction intent for Game Flow presentation surfaces
 
 It coordinates Stage and battle runtime owners without absorbing their domain rules. It does not compose Maps, execute Waves, mutate Player health directly, resolve Monsters, generate Drafts, validate Tower placement, or own combat behavior.
@@ -65,6 +66,8 @@ Battle
     -> Stage Victory
     -> Stage Defeat
     -> Main Menu After Result-Neutral Runtime Failure
+    -> Stage Preparing At Current Stage After Confirmed Retry
+    -> Main Menu After Confirmed Exit
 
 Stage Victory
     -> Stage Preparing At Next Stage
@@ -83,6 +86,11 @@ suspends simulation. Terminal transitions and Stage cleanup cancel inspection
 before outgoing content is released; closing the window cannot start a Battle
 or authorize a result transition.
 
+ConfirmExitStageWindow is also a Battle-local modal interaction. Opening and
+cancelling it leave Game Flow in Battle and retain the current Stage runtime.
+Its Restart and Main Menu actions request guarded Game Flow transitions; Battle HUD
+does not release or prepare Stages itself. No additional Game Flow state is required.
+
 ---
 
 # 3. Demo Stage Sequence
@@ -93,7 +101,7 @@ Sequence rules:
 
 - A new run begins at index zero.
 - Advancing after victory selects the next index.
-- Retrying after defeat keeps the current index.
+- Retrying after defeat or from an active Battle's exit confirmation keeps the current index.
 - Victory on the final configured Stage returns to the main menu.
 - Returning to the main menu ends the current run.
 - Starting again from the main menu creates a new run at index zero.
@@ -198,6 +206,13 @@ Claim Victory Or Defeat From The Shared Terminal State
 
 A technical stop remains distinct from a semantic result. Releasing a Stage, returning to the main menu, disabling runtime owners, or rolling back failed preparation must not manufacture Victory or Defeat.
 
+The terminal claim and callback-free permission closure precede observation or
+presentation cleanup. Terminal observation protects the old evidence through
+capture, evidence publication, and stop. Reentrant stop does not recapture that
+observation; a release requested by an observer is drained after evidence and stop,
+before final publication. Final result/failure publication remains the last
+coordinator operation and cannot be repeated by a competing observer callback.
+
 ## 6.4 Result-Neutral Runtime Failure
 
 A technical failure discovered before Battle start succeeds follows the existing failed-transition rollback and never enters Battle.
@@ -224,6 +239,8 @@ The failure does not publish Victory or Defeat and does not enter a result prese
 
 # 7. Result Transitions
 
+## 7.1 Transitions After A Result
+
 Stage Victory offers one forward action:
 
 - If another Stage exists, advance to that Stage and enter Stage Preparing.
@@ -239,6 +256,53 @@ Next-Stage and retry transitions both release the previous Stage runtime before 
 A valid result-neutral runtime failure transitions directly from the active Battle to Main Menu after releasing the failed Stage. No retry, victory, defeat, or technical-error window is implied.
 
 The final-Stage check is derived from the current position in the configured sequence. It is not stored as a separate flag on StageDefinition.
+
+## 7.2 Player-Requested Retry And Exit During Battle
+
+An eligible current-Battle exit-confirmation session offers `CANCEL`, `RESTART`,
+and `MAIN MENU`. The exit window uses Restart wording for the existing
+retry-current-Stage operation; result presentation retains its Retry wording.
+Cancel only dismisses that session and restores its captured simulation
+rate; it retains Stage identity, Player progress, Camera view, and all current
+Battle state. It does not start or prepare a Battle.
+
+Restart releases the outgoing Stage and enters the complete preparation flow at
+the same Stage index, including the configured Stage Introduction. The fresh
+Battle resets all state listed in Section 7.1. Main Menu releases the outgoing
+Stage, clears the run, and presents the existing main menu.
+
+Game Flow accepts these intents only from the exact live confirmation session
+of the current active Battle, with no terminal result or competing transition.
+Duplicate, stale, or replaced-session requests do nothing. Before destructive
+cleanup or pause restoration, accepted transitions lock further confirmation
+actions and revoke outgoing gameplay authority. They must not dismiss through
+the ordinary Cancel/resume path before switching Stages.
+
+Request acceptance transfers transition ownership; it does not report whether
+subsequent preparation succeeds. Rejection means no ownership was taken and no
+outgoing Stage release began. The acceptor revokes outgoing gameplay authority
+before returning from the request, even when physical cleanup is deferred.
+Preparation failure after acceptance remains Game Flow-owned rollback and must
+never restore the old confirmation session. Exceptions likewise cannot be treated
+as rejection after ownership has transferred.
+
+Acceptance first closes active-Battle admission, combat, investment, and modal
+authority without invoking external cleanup callbacks. Camera, path, window, and
+other cleanup follows those changes; reentrant reports cannot claim an outgoing
+result. Game Flow retains transition protection through runtime retirement,
+preparation or failure recovery, and the resulting state notification. Main Menu
+notification cannot start another run until that protection ends.
+
+When release is deferred, its lifecycle owner completes cleanup while Game Flow
+waits for the explicit retirement fact; waiting does not repeatedly request release
+or begin a replacement Battle. Failed incoming preparation is retired before Main
+Menu is presented. A persistent cleanup failure remains diagnosed and blocks new
+gameplay rather than falsely declaring retirement or looping on cleanup requests.
+
+Voluntary retry and exit are lifecycle cancellation. They do not claim or publish
+Victory, Defeat, or Technical Failure, nor show a result window. An already
+accepted terminal transition invalidates the confirmation session. Preparation
+failure during retry follows the existing safe return-to-main-menu contract.
 
 ---
 
@@ -263,6 +327,12 @@ Only the presentation valid for the current Game Flow state accepts interaction.
 
 Battle HUD UI remains a separate battle-local presentation system. Sharing one visual canvas or screen does not transfer Game Flow ownership to Battle HUD UI.
 
+ConfirmExitStageWindow belongs to Battle HUD UI; its authored surface is
+`Window_ConfirmExitStage`. It uses a separate window and view from
+StageResultWindowView. The result view retains its existing
+Victory/Defeat role under Game Flow presentation. Similar layout does not require
+a shared window instance, result mode, or general-purpose modal framework.
+
 ---
 
 # 9. Ownership Boundaries
@@ -274,7 +344,7 @@ Battle HUD UI remains a separate battle-local presentation system. Sharing one v
 | Player System | Authoritative defeat state | Runtime level, progress, health, and defeat mutation |
 | Monster System | Normal spawning completion and post-resolution alive-Monster state | Wave execution, Monster lifecycle, and exactly-once resolution |
 | Battle runtime coordination | One claimed terminal fact: Victory, Defeat, or result-neutral Technical Failure, after gameplay authority closes | Shared terminal claim, Battle gates, and technical runtime cleanup |
-| Battle HUD UI System | No Game Flow decision | Battle-local information, Draft interaction, and placement feedback |
+| Battle HUD UI System | Retry or Main Menu intent from the exact current exit-confirmation session | Battle-local information, Draft/inspection/exit-confirmation sessions, pause requests, and placement feedback |
 
 Game Flow consumes semantic outcomes and readiness facts. It does not infer them from presentation state, object destruction timing, or visible UI contents.
 
@@ -306,6 +376,11 @@ Game Flow validation should report at minimum:
 - A result-neutral runtime failure retained in Battle or routed through a result window
 - Duplicate next, retry, confirmation, or return transitions
 - Previous Stage runtime state retained by next Stage or retry
+- Voluntary exit or retry incorrectly publishing a battle result
+- Cancel changing Stage identity, Player progress, or Camera framing
+- A stale exit-confirmation session requesting a transition in a replacement Battle
+- Exit confirmation restoring gameplay before accepted retry/main-menu cleanup
+- Mid-Battle retry skipping fresh preparation or the configured introduction
 
 Validation reports invalid authoring or transition state without silently selecting another Stage, repairing content, or bypassing the required preparation flow.
 
@@ -324,6 +399,7 @@ Current scope includes:
 - Result-neutral asynchronous Battle failure return to Main Menu
 - Next Stage, retry, and return-to-main-menu flow
 - Distinct main-menu, introduction, victory, and defeat presentation capabilities
+- Mid-Battle retry and return to Main Menu through separate Battle HUD exit confirmation
 
 Deferred topics include:
 
@@ -333,7 +409,7 @@ Deferred topics include:
 - Chapters, branching paths, and alternate Stage sequences
 - Scene-transition strategy
 - Asynchronous or streamed loading
-- General player pause-menu and resume flow beyond Draft/TowerInfoWindow modal pause
+- General player pause-menu features beyond Draft, TowerInfoWindow, and the approved Cancel/Restart/Main Menu exit confirmation
 - Meta progression
 
 These topics require separate design review before expanding the current Game Flow ownership boundary.

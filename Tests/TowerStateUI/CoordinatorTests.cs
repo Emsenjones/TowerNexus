@@ -16,6 +16,7 @@ struct DraftAttemptToken { }
 class Consumer
 {
     public object PlacementCamera = new object();
+    public bool IsInspectionBindingReady(object battle, bool active) => true;
     public int InitialDrafts;
     public Action OnBegin, OnDraft, OnDestroy;
     public void BeginBattle() => OnBegin?.Invoke();
@@ -47,11 +48,13 @@ partial class CoordinatorHarness
     public Consumer Submission=new Consumer(), playerSystem=new Consumer(), monsterManager=new Consumer(),
         combatBinding=new Consumer(), towerPlacementController=new Consumer(), draftSystem=new Consumer(),
         monsterSpawner=new Consumer(), towerUpgradeSystem=new Consumer(), pathfindingService=new Consumer();
-    public bool IsBattleActive, hasFreshPlayerState, isBattlePrepared, isReleasing;
+    public Consumer cameraPanController = new Consumer();
+    public bool IsBattleActive, hasFreshPlayerState, isBattlePrepared, isReleasing, runtimeRetired, terminalObservationInProgress;
     public int preparedPlayerMaxHealth;
     public List<int> preparedPlayerProgressRequirements=new List<int>();
     public DraftAttemptToken expectedInitialDraftToken;
     bool CanBeginPreparedBattle(out string reason) { reason=null;return true; }
+    bool FailPreparation(string reason) => false;
     bool AreConsumerGatesOpen() => true;
     bool CanContinueLifecycleOperation() => true;
     void BeginDashedPath() { }

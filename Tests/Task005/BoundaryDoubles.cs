@@ -48,7 +48,7 @@ partial class LifecycleHarness {
  private PathSessionStub DashedPathSession=new PathSessionStub();
  public BattleCombatBinding combatBinding;
  public MonsterManager monsterManager;
- public bool isReleasing=false,isLifecycleOperationInProgress,releaseRequested;
+ public bool isReleasing=false,isLifecycleOperationInProgress,releaseRequested,terminalObservationInProgress;
  public Action BeforeCleanup;
  public SubmissionStub Submission=new SubmissionStub();
  public void CloseBattleAuthorityAndGates() { RevokeCombatAuthority(); }

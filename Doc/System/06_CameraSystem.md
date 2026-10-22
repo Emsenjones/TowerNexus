@@ -64,7 +64,7 @@ The first version permits Camera pan only during the Battle Game Flow state. Sta
 The gesture is rejected when:
 
 - The current Game Flow state does not permit battle-local Camera input
-- A modal Draft, TowerInfoWindow, or Game Flow surface is active
+- A modal Draft, TowerInfoWindow, ConfirmExitStageWindow, or Game Flow surface is active
 - The pointer begins over an interactive UI surface
 - A held Draft item or Tower placement operation owns the pointer
 - Another Camera pan gesture is already active

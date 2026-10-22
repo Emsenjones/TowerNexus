@@ -34,11 +34,15 @@ public partial class BattleHUDUI : MonoBehaviour
         if (DraftOwner == null || !DraftOwner.IsBattleActive) draftWindow?.CloseDraft();
         if (DraftOwner != null && DraftOwner.IsBattleActive)
             foreach (var item in pendingDraftItems) item?.BeginBattle();
+        EnableExitEntry();
     }
 
     private void OnDisable()
     {
-        // Each cleanup is independent; a Draft/placement error cannot retain inspection pause.
+        // Each modal cleanup is independent of Draft/placement and the other modal.
+        InvalidateHUDConsumerBinding();
+        TryHudCleanup(DisableExitEntry);
+        TryHudCleanup(ClearExitConfirmationBinding);
         TryHudCleanup(ClearTowerInspectionBinding);
         TryHudCleanup(UnsubscribeFromPlayerSystem);
         TryHudCleanup(() =>
@@ -96,6 +100,7 @@ public partial class BattleHUDUI : MonoBehaviour
 
     public bool TryValidateBattleReferences(out string failureReason)
     {
+        if (!TryValidateExitReferences(out failureReason)) return false;
         if (playerSystem == null)
         {
             failureReason = "Player System is not assigned.";
@@ -254,7 +259,7 @@ public partial class BattleHUDUI : MonoBehaviour
     }
 
     internal bool IsCurrentPendingView(PendingDraftUIItem item) => isBattleActive && isActiveAndEnabled &&
-        item != null && item.isActiveAndEnabled && !IsTowerInspectionBusy && !IsDraftSessionBusy && pendingDraftItems.Contains(item) && DraftOwner != null &&
+        item != null && item.isActiveAndEnabled && !IsBattleModalBusy && pendingDraftItems.Contains(item) && DraftOwner != null &&
         !DraftOwner.IsPendingMutationBusy &&
         DraftOwner.PendingOwner.CanConsume(item.Entry);
 

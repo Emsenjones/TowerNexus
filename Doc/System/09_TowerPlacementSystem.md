@@ -50,7 +50,7 @@ Tower Placement System receives drag intent from Battle HUD UI System and valida
 
 Only one drag operation and one active Tower placement preview may exist at a time.
 
-An open Draft Window or TowerInfoWindow rejects held-item drag and placement,
+An open Draft Window, TowerInfoWindow, or ConfirmExitStageWindow rejects held-item drag and placement,
 level-up, or Upgrade submission through this interaction path. The modal mask is
 not the sole guard: runtime admission also checks current modal ownership.
 Tower inspection cannot open while a placement gesture or its protected acceptance

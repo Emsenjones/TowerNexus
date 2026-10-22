@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BattleRuntimeCoordinator : MonoBehaviour
+public partial class BattleRuntimeCoordinator : MonoBehaviour
 {
     private enum BattleTerminalState
     {
@@ -19,7 +19,9 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     [SerializeField] private BattleHUDUI battleHUDUI;
     [SerializeField] private CameraPanController cameraPanController;
     internal bool IsGameplayModalBlocked =>
+        hudBindingOperation ||
         (battleHUDUI != null && battleHUDUI.IsTowerInspectionBusy) ||
+        (battleHUDUI != null && battleHUDUI.IsExitConfirmationBusy) ||
         (draftSystem != null && draftSystem.IsModalSessionBusy) || ModalPause.HasRetainedPause;
     [Header("Battle Dependencies")]
     [SerializeField] private PlayerSystem playerSystem;
@@ -47,8 +49,29 @@ public class BattleRuntimeCoordinator : MonoBehaviour
     private bool isLifecycleOperationInProgress;
     private bool releaseRequested;
     private bool isReleasing;
+    private bool runtimeRetired = true;
+    private bool terminalObservationInProgress;
+    internal bool IsLifecycleBusy => isLifecycleOperationInProgress || isReleasing || releaseRequested || terminalObservationInProgress;
+    internal bool IsRuntimeRetired => runtimeRetired && !IsLifecycleBusy && !IsBattleActive &&
+        !isBattlePrepared && !ModalPause.HasRetainedPause;
     public bool IsBattleActive { get; private set; }
     public bool IsBattlePrepared => isBattlePrepared;
+
+    internal bool CanAcceptExitStageRequest(ExitStageTransitionRequest request) =>
+        isActiveAndEnabled && !IsLifecycleBusy && IsBattleActive &&
+        battleTerminalState == BattleTerminalState.None && request != null &&
+        ReferenceEquals(request.Battle, combatBinding) && battleHUDUI != null &&
+        ReferenceEquals(request.Source, battleHUDUI) && battleHUDUI.IsCurrentExitStageRequest(request);
+
+    internal bool TryAcceptExitStageTransition(ExitStageTransitionRequest request)
+    {
+        if (!CanAcceptExitStageRequest(request) || !battleHUDUI.TryAcceptExitStageRequest(request)) return false;
+        // No callback-capable cleanup between acceptance and closing all admission.
+        IsBattleActive = false;
+        RevokeBattlePermissions();
+        InvalidateBattleHUDReadiness();
+        return true;
+    }
 
     public event Action<BattleResult> OnBattleResultPublished;
     public event Action<string> OnBattleRuntimeFailed;
@@ -85,6 +108,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void OnEnable()
     {
+        SubscribeBattleHUD();
         towerPlacementController?.BindSubmission(Submission);
         draftSystem?.BindSubmission(Submission);
         draftSystem?.BindCoordinator(this);
@@ -118,6 +142,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void OnDisable()
     {
+        UnsubscribeBattleHUD();
         if (playerSystem != null)
         {
             playerSystem.OnPlayerDefeated -= HandlePlayerDefeated;
@@ -233,7 +258,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        if (isLifecycleOperationInProgress || isReleasing)
+        if (IsLifecycleBusy)
         {
             failureReason =
                 "another Battle runtime lifecycle operation is already in progress.";
@@ -254,6 +279,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         int freeRerollCount)
     {
         ReleasePreparedBattleRuntimeCore();
+        if (!runtimeRetired) return false;
+        runtimeRetired = false;
         combatBinding = new BattleCombatBinding(monsterManager, TryFailBattleRuntime);
         ModalPause.BindBattle(combatBinding);
         draftSystem.BindModalPause(ModalPause, combatBinding);
@@ -329,9 +356,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         }
 
         towerPlacementController.ConfigureSubmission(this, draftSystem);
-        if (!battleHUDUI.BindTowerInspection(combatBinding, Submission, ModalPause, out var inspectionReason) ||
-            !cameraPanController.TryBindInspection(combatBinding, activeMap, Submission, ModalPause, out inspectionReason))
-            return FailPreparation("Tower inspection binding failed: " + inspectionReason);
+        if (!TryBindBattleHUDConsumers(activeMap, out var inspectionReason))
+            return FailPreparation("Battle HUD binding failed: " + inspectionReason);
         isBattlePrepared = true;
 
         if (!CanBeginPreparedBattle(out string failureReason))
@@ -390,7 +416,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public bool BeginPreparedBattle()
     {
-        if (isLifecycleOperationInProgress || isReleasing)
+        if (IsLifecycleBusy)
         {
             Debug.LogError(
                 "Battle runtime coordinator rejected a reentrant Battle begin request.",
@@ -575,9 +601,15 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private void RevokeCombatAuthority()
     {
-        ModalPause.RevokeBattle(combatBinding);
+        RevokeBattlePermissions();
+        InvalidateBattleHUDReadiness();
         RunCleanupSafely(() => cameraPanController?.ClearInspectionBinding());
         RunCleanupSafely(() => DashedPathSession?.Close());
+    }
+
+    private void RevokeBattlePermissions()
+    {
+        ModalPause.RevokeBattle(combatBinding);
         combatBinding?.Close();
         Submission.CloseBattleGate();
     }
@@ -604,11 +636,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
         RunCleanupSafely(() => playerSystem?.StopBattle());
         RunCleanupSafely(() => monsterManager?.CloseBattleGate());
         RunCleanupSafely(() => towerPlacementController?.CloseBattleGate());
-        RunCleanupSafely(() =>
-        {
-            if (battleHUDUI != null && battleHUDUI.HasTowerInspectionBinding(combatBinding, Submission, ModalPause))
-                battleHUDUI.ClearTowerInspectionBinding();
-        });
+        ClearBattleHUDConsumers(combatBinding);
         RunCleanupSafely(() => draftSystem?.StopBattle());
         RunCleanupSafely(() => ModalPause.CancelBattle(combatBinding));
     }
@@ -638,12 +666,18 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public void StopBattle()
     {
+        StopBattleCore(true);
+    }
+
+    private void StopBattleCore(bool captureObservation)
+    {
 #if UNITY_EDITOR
         using (CombatDiagnosticScope.Enter(combatBinding))
 #endif
         {
+            if (terminalObservationInProgress && captureObservation) return;
             RevokeCombatAuthority();
-            CaptureBeforeCleanup();
+            if (captureObservation) CaptureBeforeCleanup();
             CloseBattleAuthorityAndGates();
             RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
             RunCleanupSafely(() => Submission.StopTrackedTowerCombat());
@@ -653,6 +687,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     public void ReleasePreparedBattleRuntime()
     {
+        if (terminalObservationInProgress) { releaseRequested = true; return; }
         RevokeCombatAuthority();
         if (isReleasing)
         {
@@ -676,10 +711,11 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 #endif
         {
             if (isReleasing) return;
-            RevokeCombatAuthority();
             isReleasing = true;
+            runtimeRetired = false;
             try
             {
+                RevokeCombatAuthority();
                 CaptureBeforeCleanup();
                 CloseBattleAuthorityAndGates();
                 RunCleanupSafely(() => monsterManager?.ForceCleanupAllMonsters());
@@ -696,6 +732,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 towerPlacementController?.ClearActiveMap();
                 pathfindingService?.ClearActiveMap();
                 ResetResultTracking();
+                runtimeRetired = true;
             }
             finally { isReleasing = false; }
 
@@ -752,8 +789,8 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        if (!cameraPanController.IsInspectionBindingReady(combatBinding, false))
-        { failureReason = "Camera inspection staged/committed identity is unavailable."; return false; }
+        if (!AreBattleHUDConsumersReady())
+        { failureReason = "Battle HUD inspection/Camera/exit bindings are incomplete."; return false; }
         if (!AreConsumerGatesClosed())
         {
             failureReason =
@@ -767,6 +804,7 @@ public class BattleRuntimeCoordinator : MonoBehaviour
 
     private bool HasStableReferences(out string failureReason)
     {
+        if (!TryValidateExitIntegration(out failureReason)) return false;
         if (battleHUDUI == null || cameraPanController == null || draftSystem == null ||
             !ReferenceEquals(draftSystem.PresentationHUD, battleHUDUI) ||
             !cameraPanController.HasInspectionDependencies(battleHUDUI, towerPlacementController))
@@ -975,9 +1013,13 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 return;
             }
 
-            CaptureBeforeCleanup();
-            PublishSafely(OnBattleResultEvidence, result);
-            StopBattle();
+            try
+            {
+                CaptureBeforeCleanup();
+                PublishSafely(OnBattleResultEvidence, result);
+                StopBattleCore(false);
+            }
+            finally { CompleteTerminalObservation(); }
             PublishSafely(OnBattleResultPublished, result);
 
         }
@@ -1092,8 +1134,10 @@ public class BattleRuntimeCoordinator : MonoBehaviour
             return false;
         }
 
-        RevokeCombatAuthority();
         battleTerminalState = requestedState;
+        terminalObservationInProgress = true;
+        RevokeBattlePermissions();
+        InvalidateBattleHUDReadiness();
         return true;
     }
 
@@ -1118,11 +1162,25 @@ public class BattleRuntimeCoordinator : MonoBehaviour
                 $"{concreteReason}",
                 this);
 
-            CaptureBeforeCleanup();
-            PublishSafely(OnBattleFailureEvidence, concreteReason);
-            StopBattle();
+            try
+            {
+                CaptureBeforeCleanup();
+                PublishSafely(OnBattleFailureEvidence, concreteReason);
+                StopBattleCore(false);
+            }
+            finally { CompleteTerminalObservation(); }
             PublishSafely(OnBattleRuntimeFailed, concreteReason);
 
+        }
+    }
+
+    private void CompleteTerminalObservation()
+    {
+        terminalObservationInProgress = false;
+        if (releaseRequested && !isLifecycleOperationInProgress)
+        {
+            releaseRequested = false;
+            ReleasePreparedBattleRuntimeCore();
         }
     }
 }

@@ -684,8 +684,8 @@ public class DraftSystem : MonoBehaviour
             return false;
         }
 
-        if (battleHUDUI != null && battleHUDUI.IsTowerInspectionBusy)
-        { failureReason = "Tower inspection owns modal admission."; return false; }
+        if (battleHUDUI != null && (!battleHUDUI.IsHUDInputReady || battleHUDUI.IsTowerInspectionBusy || battleHUDUI.IsExitConfirmationBusy))
+        { failureReason = "Another Battle HUD modal owns admission."; return false; }
         if (activeToken.IsValid)
         {
             failureReason =

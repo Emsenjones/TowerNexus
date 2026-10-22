@@ -18,6 +18,17 @@ public class StageCompositionController : MonoBehaviour
     private bool isLifecycleOperationInProgress;
     private bool isPreparationInProgress;
     private bool releaseRequested;
+    private bool isReleasingStage;
+    private bool stageReleaseComplete = true;
+    private GameObject retiringMapObject, retiringCandidateMapObject;
+
+    internal bool CanStartFlowTransition => isActiveAndEnabled &&
+        !isLifecycleOperationInProgress && !isReleasingStage && !releaseRequested &&
+        battleRuntimeCoordinator != null && !battleRuntimeCoordinator.IsLifecycleBusy;
+    internal bool IsRuntimeRetired => !isLifecycleOperationInProgress && !isReleasingStage &&
+        !releaseRequested && stageReleaseComplete && activeMapObject == null && candidateMapObject == null &&
+        retiringMapObject == null && retiringCandidateMapObject == null && ActiveMap == null && ActiveStage == null &&
+        battleRuntimeCoordinator != null && battleRuntimeCoordinator.IsRuntimeRetired;
 
     public StageDefinition ActiveStage { get; private set; }
     public MapGeneratorBehaviour ActiveMap { get; private set; }
@@ -38,7 +49,7 @@ public class StageCompositionController : MonoBehaviour
 
     public bool TryPrepareStage(StageDefinition selectedStage)
     {
-        if (isLifecycleOperationInProgress)
+        if (isLifecycleOperationInProgress || isReleasingStage)
         {
             Debug.LogError(
                 "Stage composition controller rejected a reentrant Stage " +
@@ -58,6 +69,8 @@ public class StageCompositionController : MonoBehaviour
             {
                 commitStarted = true;
                 ReleaseStageRuntimeCore();
+                if (!stageReleaseComplete || !battleRuntimeCoordinator.IsRuntimeRetired) return false;
+                stageReleaseComplete = false;
 
                 if (CanContinueLifecycleOperation() &&
                     TryCreateCandidateMap(selectedStage) &&
@@ -138,7 +151,7 @@ public class StageCompositionController : MonoBehaviour
 
     public bool TryBeginPreparedStage()
     {
-        if (isLifecycleOperationInProgress)
+        if (isLifecycleOperationInProgress || isReleasingStage)
         {
             Debug.LogError(
                 "Stage composition controller rejected a reentrant Stage begin request.",
@@ -244,6 +257,7 @@ public class StageCompositionController : MonoBehaviour
 
     public void ReleaseStage()
     {
+        if (isReleasingStage) return; // The current release already owns these resources.
         if (isLifecycleOperationInProgress)
         {
             releaseRequested = true;
@@ -430,40 +444,49 @@ public class StageCompositionController : MonoBehaviour
 
     private void ReleaseStageRuntimeCore()
     {
-        IsCompositionReady = false;
-        HasBattleBegun = false;
-
-        cameraPanController?.ClearMapBinding(
-            candidateMap,
-            candidateCameraBoundary,
-            candidateCameraDefaultPose);
-        cameraPanController?.ClearMapBinding(
-            ActiveMap,
-            activeCameraBoundary,
-            activeCameraDefaultPose);
-
-        battleRuntimeCoordinator?.ReleasePreparedBattleRuntime();
-
-        GameObject committedMapObjectToDestroy = activeMapObject;
-        GameObject candidateMapObjectToDestroy = candidateMapObject;
-
-        activeMapObject = null;
-        candidateMapObject = null;
-        candidateMap = null;
-        candidateCameraBoundary = null;
-        candidateCameraDefaultPose = null;
-        candidateStage = null;
-        ActiveMap = null;
-        activeCameraBoundary = null;
-        activeCameraDefaultPose = null;
-        ActiveStage = null;
-
-        DestroyOwnedMapObject(candidateMapObjectToDestroy);
-
-        if (committedMapObjectToDestroy != candidateMapObjectToDestroy)
+        if (isReleasingStage) return;
+        isReleasingStage = true;
+        stageReleaseComplete = false;
+        try
         {
-            DestroyOwnedMapObject(committedMapObjectToDestroy);
+            IsCompositionReady = false;
+            HasBattleBegun = false;
+
+            cameraPanController?.ClearMapBinding(
+                candidateMap,
+                candidateCameraBoundary,
+                candidateCameraDefaultPose);
+            cameraPanController?.ClearMapBinding(
+                ActiveMap,
+                activeCameraBoundary,
+                activeCameraDefaultPose);
+
+            battleRuntimeCoordinator?.ReleasePreparedBattleRuntime();
+
+            if (activeMapObject != null) retiringMapObject = activeMapObject;
+            if (candidateMapObject != null) retiringCandidateMapObject = candidateMapObject;
+
+            activeMapObject = null;
+            candidateMapObject = null;
+            candidateMap = null;
+            candidateCameraBoundary = null;
+            candidateCameraDefaultPose = null;
+            candidateStage = null;
+            ActiveMap = null;
+            activeCameraBoundary = null;
+            activeCameraDefaultPose = null;
+            ActiveStage = null;
+
+            DestroyOwnedMapObject(retiringCandidateMapObject);
+
+            if (retiringMapObject != retiringCandidateMapObject)
+            {
+                DestroyOwnedMapObject(retiringMapObject);
+            }
+            retiringMapObject = retiringCandidateMapObject = null;
+            stageReleaseComplete = true;
         }
+        finally { isReleasingStage = false; }
     }
 
     private void DestroyOwnedMapObject(GameObject mapObject)
