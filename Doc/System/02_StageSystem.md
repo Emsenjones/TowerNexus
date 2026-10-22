@@ -175,8 +175,8 @@ drag-dependent route and state, and Battle HUD UI System owns line rendering.
 
 ## 3.2 Battle Modal Pause Lifetime
 
-One Battle-scoped pause authority controls the simulation rate for Draft and
-TowerInfoWindow. Each requesting domain owns its session and an exact pause handle;
+One Battle-scoped pause authority controls the simulation rate for Draft,
+TowerInfoWindow, and ConfirmExitStageWindow. Each requesting domain owns its session and an exact pause handle;
 the shared authority owns rate capture and restoration. Only one modal owner may
 hold a pause at a time. An overlapping request is rejected without replacing the
 owner, changing the saved rate, or queuing another window.
@@ -188,10 +188,16 @@ Buff timing, and other simulation-driven scene behavior must not advance.
 Camera pan is separately blocked by modal interaction ownership.
 
 Release by the exact current Battle/session owner restores the captured rate,
-not an assumed default. Duplicate or stale releases do nothing. Draft and
-TowerInfoWindow never independently write or restore that rate; unrelated rate
+not an assumed default. Duplicate or stale releases do nothing. Draft,
+TowerInfoWindow, and ConfirmExitStageWindow never independently write or restore that rate; unrelated rate
 writers cannot bypass active modal ownership. Nested pauses, slow-motion policy,
-and a general player pause menu are outside this contract.
+and general pause-menu features beyond exit confirmation are outside this contract.
+
+Exit confirmation retains the current Battle while awaiting a decision. Cancel
+releases only its own pause and preserves the current runtime. Accepted Retry or
+Main Menu revokes outgoing gameplay authority before pause restoration and Stage
+cleanup, without briefly resuming the abandoned Battle. Battle HUD owns the
+confirmation session; Game Flow alone accepts and executes its Stage transition.
 
 Terminal acceptance, stop, release, retry, replacement, and preparation rollback
 revoke outgoing interaction authority before cleaning modal sessions and releasing
