@@ -51,7 +51,7 @@ opening populates and activates the existing window rather than creating a new
 window. Section 4.2 defines its content and interaction contract.
 
 ConfirmExitStageWindow is the Battle-local exit-confirmation capability. Its
-authored surface is named `Window_ExitStageConfirm` under BattleHUDUI, alongside
+authored surface is named `Window_ConfirmExitStage` under BattleHUDUI, alongside
 the HUD's Exit entry. Runtime initializes the window hidden and non-interactive
 before player input is admitted. It has its own view and window instance, separate
 from Game Flow's StageResultWindowView. Section 4.3 defines its contract.
@@ -279,6 +279,13 @@ The common window root includes a full-screen blocking background; a separate
 child mask object is not required. The window remains responsive while simulation
 is paused.
 
+Battle HUD explicitly authors the Exit entry and confirmation view. Preparation
+validates their references and binds the current Battle, modal authority, and
+Game Flow request capability while the window remains hidden. Binding readiness
+does not require an active window, a started Battle, or Game Flow's Battle state.
+Opening eligibility separately requires live Battle interaction. The Exit entry
+is hidden outside that flow and disabled during conflicting modal or protected work.
+
 Battle HUD owns the active confirmation session, its view, and its exact pause
 handle. The view presents content and forwards intents; Game Flow accepts and
 executes restart/main-menu transitions. No window directly releases a Stage,
@@ -329,6 +336,15 @@ not an implicit Restart, Main Menu, or battle result. Cleanup is idempotent and
 scoped to the exact outgoing Battle/session; late callbacks cannot close a new
 window, change a new Battle's rate, or request another transition. Revoked gameplay
 remains stopped even if restoring the captured simulation rate precedes physical cleanup.
+
+HUD re-enable requests rebinding from its explicitly subscribed Battle coordinator.
+Only the same still-prepared or live Battle without a terminal/transition/release
+owner may reconnect inspection, Camera, and exit consumers. The group admits no
+input until every binding succeeds; partial failure rolls back the group. Active
+failure takes the existing result-neutral technical-failure path; prepared failure
+returns safely to Main Menu. Rebinding does not reset Stage, Player, or Draft state,
+restore an old window, or queue a modal. Cleanup matches retained Battle identity
+even if the HUD/view or Flow owner is no longer available.
 
 ---
 

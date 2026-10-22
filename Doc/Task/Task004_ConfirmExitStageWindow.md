@@ -3,7 +3,7 @@
 Document Set: Task
 
 Status: Implemented after chat plan review and feedback; managed/runtime-compilation
-evidence recorded below. Production wiring and native acceptance remain pending.
+evidence recorded below. Production wiring is implemented in Task006; see its device evidence and remaining native checks.
 
 ## 1. Objective And Authority
 
@@ -44,7 +44,7 @@ No result-window abstraction, nested modal, or additional dismissal is included.
 ## 3. Authored Content And Observed Drift
 
 Inspected asset: `Assets/Art/Prefab/Main/Prefab_GameRuntime.prefab`.
-Existing root: `Canvas/BattleUIRoot/BattleHUDUI/Window_ExitStageConfirm`.
+Existing root: `Canvas/BattleUIRoot/BattleHUDUI/Window_ConfirmExitStage`.
 
 | Existing element under the root | Observed value | Required behavior |
 |---|---|---|
@@ -170,3 +170,10 @@ Stage transition or Task006 end-to-end gameplay behavior is claimed.
 Unity layout/raycast behavior, Play Mode, iPad touch, real Stage cleanup and
 user-confirmed visual acceptance remain pending. Runtime compilation and managed
 assertions do not establish those results.
+
+## Cross-Task Device Evidence
+
+Task006 records the 2026-10-22 user-reported iPad mini 6 smoke test with no issues
+observed after Unity iOS export and Xcode deployment. Earlier pending-native
+statements above describe this Task's isolated verification boundary. They do not
+negate the later assembled-feature smoke test or establish unreported per-case results.

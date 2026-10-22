@@ -13,6 +13,6 @@ with tempfile.TemporaryDirectory(prefix='towernexus-task005-') as folder:
  exe=Path(folder)/'Contracts.exe'
  lifecycle=Path(folder)/'Lifecycle.cs'
  source=(root/'Assets/Scripts/TowerDeployment/BattleRuntimeCoordinator.cs').read_text()
- lifecycle.write_text('partial class LifecycleHarness {\n'+'\n'.join(method(source,n) for n in ['RevokeCombatAuthority','StopBattle','ReleasePreparedBattleRuntime'])+'\n}')
+ lifecycle.write_text('partial class LifecycleHarness {\n'+'\n'.join(method(source,n) for n in ['RevokeCombatAuthority','RevokeBattlePermissions','StopBattle','StopBattleCore','ReleasePreparedBattleRuntime'])+'\nprivate void InvalidateBattleHUDReadiness() {}\n}')
  subprocess.run(['csc','-nologo','-langversion:8.0',f'-out:{exe}',*[str(root/'Assets/Scripts'/s) for s in sources],str(root/'Tests/Task005/BoundaryDoubles.cs'),str(root/'Tests/Task005/BindingTests.cs'),str(lifecycle)],check=True)
  subprocess.run(['mono',str(exe)],check=True)

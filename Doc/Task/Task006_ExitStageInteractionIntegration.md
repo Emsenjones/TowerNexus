@@ -2,8 +2,9 @@
 
 Document Set: Task
 
-Status: Awaiting individual task review and chat implementation-plan review;
-not implemented. Authoring integration and end-to-end acceptance pending.
+Status: Implemented after chat plan review and feedback, including production
+binding and authored Prefab wiring. Managed/compilation/static evidence recorded;
+User-reported iPad mini 6 smoke testing passed; detailed native checks remain bounded below.
 
 ## 1. Objective And Authority
 
@@ -24,13 +25,20 @@ Dependencies: [Task004](Task004_ConfirmExitStageWindow.md) and
 interfaces. Order: Task004 -> Task005 -> Task006. Review this task and discuss its
 chat implementation plan before authorizing integration.
 
+Task005 handoff is implemented with managed/compilation evidence. Inject the single
+HUD request delegate into `GameFlowController.RequestExitStageTransition(coordinator,
+request)` using the explicitly bound coordinator. Preserve Task005's acceptance,
+callback-free revocation, retirement wait, and protected recovery/notification.
+Task005 tests explicitly assemble bind/clear callbacks; add real production lifecycle
+bindings here rather than assuming those test hooks exist in the game.
+
 ## 2. Scope And Deliverables
 
 - Eligible-Battle Exit button entry under BattleHUDUI.
 - Explicit production Battle/session/pause/request binding and validation.
 - All-direction modal, pointer, pending-item, and investment input exclusion.
 - Immediate outgoing authority revocation and reliable lifecycle cleanup.
-- Preserve/wire user-authored Window_ExitStageConfirm and establish hidden/locked
+- Preserve/wire user-authored Window_ConfirmExitStage and establish hidden/locked
   startup behavior. The user has corrected the Restart label.
 - Integration regressions, native acceptance procedure, and evidence report.
 
@@ -118,3 +126,78 @@ Native Unity and iPad mini 6 acceptance includes:
 Record static/build, automated, Play Mode, device, and user visual evidence
 separately. Unexecuted native checks remain pending. Local Task004/Task005 success
 does not establish assembled-feature acceptance or imply merge/push authorization.
+
+## 8. Implemented Integration And Review Handoff
+
+`BattleHUDUI.ExitEntry` owns the author-assigned Exit Button, startup hide/lock,
+idempotent button listener, live entry refresh, and `PresentationEnabled` notification.
+Root `Window_ConfirmExitStage` and existing content/buttons/text/icon layout are
+retained. Prefab assigns HUD Exit Button and coordinator Game Flow owner, keeps
+the window initially inactive, and starts the Exit Button non-interactive. Title
+and Description remain static text objects without view bindings.
+
+`BattleRuntimeCoordinator.ExitStageIntegration` subscribes/unsubscribes the explicit
+HUD on coordinator enable/disable. `TryBindBattleHUDConsumers` binds inspection,
+Camera, and exit as one protected group during preparation. The single exit delegate
+captures exact Flow/coordinator/Battle ownership and calls Task005's request entry.
+`HasExitConfirmationBinding` validates a hidden prepared binding; opening uses
+separate live-flow and operation admission. Group readiness opens only after all
+bindings succeed, with identity/revision checks and complete partial rollback.
+
+HUD OnEnable reports through the production notification. A same-Battle, non-busy
+owner may atomically rebind consumers without reinitializing gameplay or reopening
+the old window. Active failure follows result-neutral failure; prepared failure
+uses Game Flow's protected retirement/menu recovery. A terminal callback during
+rebind invalidates the operation and cannot run stale recovery against its result.
+
+`OwnsExitConfirmationBinding` / `OwnsTowerInspectionBinding` and identity-scoped
+clear overloads retain cleanup ownership independently of UI readiness, owner
+availability, or destroyed view objects. Stop/release clears both modal bindings
+after gameplay revocation and before final pause cancellation. Late cleanup cannot
+clear a replacement Battle's bindings.
+
+Shared modal guards cover Exit Opening/Open/AwaitingTransition/Closing plus group
+binding. Camera, pending views, placement entry/drag/release, Draft admission, and
+Submission/debug investment gates reject conflicting interaction. The existing
+`CanStartOperation` and `IsAvailableForInspection` protected-operation queries
+remain independent from these new-player-operation restrictions, avoiding self-rejection.
+
+Callback-free permission closure precedes Camera/path cleanup. Terminal state is
+claimed before callback work, and observation protection preserves capture ->
+evidence -> stop -> final publication. Reentrant release is deferred until evidence
+and stop complete; reentrant stop cannot recapture the observation. The public
+parameterless StopBattle API is preserved through its private cleanup core.
+
+## 9. Verification Evidence And Native Acceptance
+
+See `Tests/ExitStageConfirmation/Integration/README.md` for commands and boundaries.
+
+- Production entry/bind/rebind/clear/Flow integration: 76 assertions. Tests use the
+  real entry/session/inspection/Flow/Stage and coordinator integration partial,
+  plus exact production acceptance, terminal, failure, and cleanup method bodies.
+  They do not replace production bind/clear with test callbacks.
+- Static Prefab validation passes for exact Flow/Stage/coordinator/HUD/window/entry
+  references, initial visibility/lock, distinct controls, no persistent actions, and copy.
+- Task004 local view/session: 138 assertions; Task005 transitions: 156 assertions.
+- Existing inspection presentation: 109; whole Camera input: 138; Draft: 560 Editor /
+  509 player; Submission/placement: 34 contracts; Effect/binding: 27; Tower-state UI:
+  14 cases plus five coordinator cases; pause: 81 plus five spawning/five attack cases.
+- Complete runtime Editor/player compilation passes with installed Unity references.
+
+On 2026-10-22, the user reported a successful Unity iOS export, followed by
+TowerNexus testing on iPad mini 6 through Xcode, with no issues observed. The saved
+project version is 1.0.4. This is user-reported device smoke-test evidence; no
+per-case checklist, device logs, or screenshots were supplied. It does not establish
+individual acceptance of every case in section 7.
+
+Pre-commit static validation found the saved confirmation root active. It was
+restored to the agreed inactive default; runtime Awake already hides it. The
+device report predates this authoring correction; the corrected default was
+verified statically and has not been retested on device.
+
+Detailed native lifecycle, Camera/physics, raycast routing, scene freeze/reset,
+Initial Draft/Wave sequencing, multi-touch, and layout checks remain unconfirmed
+individually. Managed tests explicitly double those boundaries. Production
+OnEnable subscription is present in source; integration directly enables the real
+subscription helper and exercises the actual HUD OnEnable notification and binder.
+Git submission and merge authorization are tracked separately from validation evidence.

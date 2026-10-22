@@ -11,7 +11,8 @@ class PendingDraftUIItem
 }
 class BattleHUDUI
 {
-    public bool IsDraftOpen,IsTowerInspectionBusy;
+    public bool IsDraftOpen,IsTowerInspectionBusy,IsExitConfirmationBusy;
+    internal bool IsBattleModalBusy=>IsDraftOpen||IsTowerInspectionBusy||IsExitConfirmationBusy;
     internal bool IsDraftSessionBusy=>IsDraftOpen;
     public DraftSystem DraftOwner;
     public Action OnRelease;
@@ -53,6 +54,8 @@ partial class InteractionHarness : MonoBehaviour
         if(h.IsAvailableForInspection)throw new Exception("pending release admitted inspection");
         h.modalReleasePending=false;h.battleHUDUI.IsTowerInspectionBusy=true;
         if(!h.IsAvailableForInspection||h.CanStartDraftInteraction)throw new Exception("inspection own preparation and gameplay permissions not separated");
+        h.battleHUDUI.IsTowerInspectionBusy=false;h.battleHUDUI.IsExitConfirmationBusy=true;
+        if(!h.IsAvailableForInspection||h.CanStartDraftInteraction)throw new Exception("exit session own validation must remain separate from new gameplay admission");
     }
     internal static void TestPointerMigration()
     {
@@ -162,7 +165,7 @@ partial class ReleaseRoutingHarness
 {
     private void RevokeCombatAuthority() { }
 
-    private bool isReleasing,isLifecycleOperationInProgress,releaseRequested;
+    private bool isReleasing,isLifecycleOperationInProgress,releaseRequested,terminalObservationInProgress;
     private int calls;
     private void ReleasePreparedBattleRuntimeCore(){calls++;}
     internal static void TestRouting()

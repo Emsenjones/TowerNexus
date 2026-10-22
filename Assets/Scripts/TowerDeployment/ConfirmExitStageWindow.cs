@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-// Authored on Window_ExitStageConfirm, the common background/content root.
+// Authored on Window_ConfirmExitStage, the common background/content root.
 public sealed class ConfirmExitStageWindow : MonoBehaviour
 {
     [SerializeField] private RectTransform contentRoot;

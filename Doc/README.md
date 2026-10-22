@@ -50,9 +50,11 @@ This directory separates durable runtime contracts from iterative balance design
   [Task004: Presentation And Session](Task/Task004_ConfirmExitStageWindow.md) ->
   [Task005: Game Flow Transitions](Task/Task005_ExitStageGameFlowTransitions.md) ->
   [Task006: Interaction And Lifecycle Integration](Task/Task006_ExitStageInteractionIntegration.md).
-  Task004 local view/session is implemented with managed/compilation evidence;
-  Task005/Task006 await individual review and chat implementation-plan review.
-  Production wiring and native acceptance remain pending.
+  Task004 local view/session, Task005 transitions, and Task006 production integration
+  and Prefab wiring are implemented with managed/compilation/static evidence.
+  User-reported iPad mini 6 smoke testing passed on 2026-10-22 with no issues
+  observed. Task006 records this evidence; detailed native cases remain individually
+  unconfirmed.
 - TowerInfoWindow Task workspace (implementation order):
   [Task001: Battle Modal Pause](Task/Task001_BattleModalPause.md),
   [Task002: Presentation](Task/Task002_TowerInfoWindowPresentation.md), and

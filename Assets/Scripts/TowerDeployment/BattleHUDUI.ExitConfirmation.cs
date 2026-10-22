@@ -32,6 +32,7 @@ public partial class BattleHUDUI
     private BattleModalPauseAuthority exitPause;
     private ConfirmExitStageWindow boundExitView;
     private Func<ExitStageTransitionRequest, ExitStageRequestDisposition> exitTransition;
+    private Func<bool> exitOwnerAvailable, exitOpeningAllowed;
     private ExitConfirmationSession exitSession;
 
     private sealed class ExitConfirmationSession
@@ -52,7 +53,7 @@ public partial class BattleHUDUI
 
     internal bool BindExitConfirmation(BattleCombatBinding battle, TowerPlacementSubmission members,
         BattleModalPauseAuthority pause, Func<ExitStageTransitionRequest, ExitStageRequestDisposition> transition,
-        out string reason)
+        out string reason, Func<bool> ownerAvailable = null, Func<bool> openingAllowed = null)
     {
         reason = "Exit confirmation cannot bind during a session or protected operation.";
         if (IsExitConfirmationBusy) return false;
@@ -74,6 +75,8 @@ public partial class BattleHUDUI
             exitPause = pause;
             boundExitView = view;
             exitTransition = transition;
+            exitOwnerAvailable = ownerAvailable;
+            exitOpeningAllowed = openingAllowed;
             attached = true;
             reason = string.Empty;
             return true;
@@ -89,7 +92,8 @@ public partial class BattleHUDUI
     internal bool TryOpenExitConfirmation(out string reason)
     {
         reason = "Exit confirmation is busy or Battle/modal/placement authority is unavailable.";
-        if (IsExitConfirmationBusy || !ExitBattleAvailable() || !exitPause.CanAcquire) return false;
+        if (IsExitConfirmationBusy || (exitOpeningAllowed != null && !exitOpeningAllowed()) ||
+            !ExitBattleAvailable() || !exitPause.CanAcquire) return false;
         var session = new ExitConfirmationSession(exitBattle, boundExitView, exitPause, exitBindingRevision);
         exitSession = session;
         exitPhase = ExitConfirmationPhase.Opening;
@@ -121,7 +125,8 @@ public partial class BattleHUDUI
         }
     }
 
-    private bool ExitBattleAvailable() => isActiveAndEnabled && !exitClearing && boundExitView != null &&
+    private bool ExitBattleAvailable() => isActiveAndEnabled && IsHUDInputReady && !exitClearing && boundExitView != null &&
+        (exitOwnerAvailable == null || exitOwnerAvailable()) &&
         exitBattle != null && exitBattle.IsOpenForRead && exitMembers != null && !exitMembers.IsBusy &&
         exitMembers.CanStartOperation && !IsDraftSessionBusy && !IsTowerInspectionBusy &&
         (towerPlacementController == null || towerPlacementController.IsAvailableForInspection) &&
@@ -231,6 +236,7 @@ public partial class BattleHUDUI
             exitPause = null;
             boundExitView = null;
             exitTransition = null;
+            exitOwnerAvailable = exitOpeningAllowed = null;
             try { if (view != null) TryHudCleanup(view.Detach); }
             finally { exitOperation = outerOperation; exitClearing = false; }
         }

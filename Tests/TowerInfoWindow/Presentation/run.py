@@ -22,7 +22,7 @@ def production_sources(folder):
     hud.write_text('using System;\npartial class BattleHUDUI {\n'+method((root/'Assets/Scripts/TowerDeployment/BattleHUDUI.cs').read_text(),'OnDisable')+'\n}')
     paths=[root/'Assets/Scripts/TowerDeployment'/n for n in ('BattleModalPauseAuthority.cs','BattleCombatBinding.cs',
         'TowerInspectionSnapshot.cs','TowerInfoWindow.cs','TowerUpgradeInfoItem.cs','BattleHUDUI.TowerInspection.cs',
-        'ConfirmExitStageWindow.cs','BattleHUDUI.ExitConfirmation.cs')]
+        'ConfirmExitStageWindow.cs','BattleHUDUI.ExitConfirmation.cs','BattleHUDUI.ExitEntry.cs')]
     paths+=[root/'Assets/Scripts/TowerRuntimeCombat/ResolvedTowerCombatStats.cs',query,hud,
             Path(__file__).with_name('BoundaryDoubles.cs')]
     return paths

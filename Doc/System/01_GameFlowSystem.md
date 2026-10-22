@@ -206,6 +206,13 @@ Claim Victory Or Defeat From The Shared Terminal State
 
 A technical stop remains distinct from a semantic result. Releasing a Stage, returning to the main menu, disabling runtime owners, or rolling back failed preparation must not manufacture Victory or Defeat.
 
+The terminal claim and callback-free permission closure precede observation or
+presentation cleanup. Terminal observation protects the old evidence through
+capture, evidence publication, and stop. Reentrant stop does not recapture that
+observation; a release requested by an observer is drained after evidence and stop,
+before final publication. Final result/failure publication remains the last
+coordinator operation and cannot be repeated by a competing observer callback.
+
 ## 6.4 Result-Neutral Runtime Failure
 
 A technical failure discovered before Battle start succeeds follows the existing failed-transition rollback and never enters Battle.
@@ -279,6 +286,19 @@ Preparation failure after acceptance remains Game Flow-owned rollback and must
 never restore the old confirmation session. Exceptions likewise cannot be treated
 as rejection after ownership has transferred.
 
+Acceptance first closes active-Battle admission, combat, investment, and modal
+authority without invoking external cleanup callbacks. Camera, path, window, and
+other cleanup follows those changes; reentrant reports cannot claim an outgoing
+result. Game Flow retains transition protection through runtime retirement,
+preparation or failure recovery, and the resulting state notification. Main Menu
+notification cannot start another run until that protection ends.
+
+When release is deferred, its lifecycle owner completes cleanup while Game Flow
+waits for the explicit retirement fact; waiting does not repeatedly request release
+or begin a replacement Battle. Failed incoming preparation is retired before Main
+Menu is presented. A persistent cleanup failure remains diagnosed and blocks new
+gameplay rather than falsely declaring retirement or looping on cleanup requests.
+
 Voluntary retry and exit are lifecycle cancellation. They do not claim or publish
 Victory, Defeat, or Technical Failure, nor show a result window. An already
 accepted terminal transition invalidates the confirmation session. Preparation
@@ -308,7 +328,7 @@ Only the presentation valid for the current Game Flow state accepts interaction.
 Battle HUD UI remains a separate battle-local presentation system. Sharing one visual canvas or screen does not transfer Game Flow ownership to Battle HUD UI.
 
 ConfirmExitStageWindow belongs to Battle HUD UI; its authored surface is
-`Window_ExitStageConfirm`. It uses a separate window and view from
+`Window_ConfirmExitStage`. It uses a separate window and view from
 StageResultWindowView. The result view retains its existing
 Victory/Defeat role under Game Flow presentation. Similar layout does not require
 a shared window instance, result mode, or general-purpose modal framework.

@@ -29,5 +29,5 @@ with tempfile.TemporaryDirectory(prefix='towernexus-task004-') as folder:
      '} void Unsubscribe() { '+block(recorder,'        if (subscribedSubmission != null)')+'} }')
  runtime=(root/'Assets/Scripts/TowerDeployment/BattleRuntimeCoordinator.cs').read_text()
  generated.write_text(generated.read_text()+'\npartial class ReleaseRoutingHarness {\n'+method(runtime,'ReleasePreparedBattleRuntime')+'\n}')
- generated.write_text(generated.read_text()+'\npartial class RevocationHarness {\n'+method(runtime,'RevokeCombatAuthority')+'\n}')
+ generated.write_text(generated.read_text()+'\npartial class RevocationHarness {\n'+method(runtime,'RevokeCombatAuthority')+'\n'+method(runtime,'RevokeBattlePermissions')+'\nprivate void InvalidateBattleHUDReadiness() {}'+'\n}')
  build(folder,[root/'Tests/Task004/SubmissionTests.cs' ,root/'Tests/Task004/InteractionTests.cs',root/'Tests/InputSystem/InputDoubles.cs',generated,bindings],'SubmissionTests')

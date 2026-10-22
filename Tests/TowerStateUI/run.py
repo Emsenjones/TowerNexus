@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory(prefix='tower-state-ui-') as folder:
     extracted.write_text('using System; using UnityEngine;\npartial class CoordinatorHarness {\n' +
                          '\n'.join(method(coordinator, name) for name in (
                              'BeginPreparedBattleCore', 'BeginTowerStateUI', 'RunCleanupSafely',
-                             'ReleasePreparedBattleRuntimeCore', 'StopBattle')) + '\n}')
+                             'ReleasePreparedBattleRuntimeCore', 'StopBattle', 'StopBattleCore')) + '\n}')
     integration = Path(folder) / 'Coordinator.exe'
     subprocess.run(['csc', '-nologo', '-nowarn:0649', '-langversion:8.0', f'-out:{integration}',
                     str(root / 'Tests/TowerStateUI/CoordinatorTests.cs'), str(root / 'Assets/Scripts/TowerDeployment/BattleModalPauseAuthority.cs'), str(extracted)], check=True)

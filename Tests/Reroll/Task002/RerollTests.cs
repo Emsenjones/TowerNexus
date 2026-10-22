@@ -12,7 +12,7 @@ public sealed class DraftViewPreparation : IDisposable
 }
 public partial class BattleHUDUI
 {
-    public bool IsDraftOpen,IsTowerInspectionBusy;public int InputInvalidations;public void InvalidateBattlefieldInput(){InputInvalidations++;}
+    public bool IsDraftOpen,IsTowerInspectionBusy,IsExitConfirmationBusy; public bool IsHUDInputReady=true;public int InputInvalidations;public void InvalidateBattlefieldInput(){InputInvalidations++;}
     public bool FailDraftPreparation;
     public Action DuringDraftPreparation, DuringDraftCommit, Reroll;
     public Action<DraftResult> Selection;
@@ -102,6 +102,13 @@ class RerollTests
         Check(!modalCase.D.TryOpenInitialTowerDraft(out _,out _)&&modalCase.H.InputInvalidations==revision,"inspection Opening blocks Draft before it mutates gesture revision");
         modalCase.H.IsTowerInspectionBusy=false;
         Check(modalCase.D.TryOpenInitialTowerDraft(out _,out _)&&modalCase.H.InputInvalidations==revision+1,"accepted Draft Opening synchronously invalidates battlefield input");
+        modalCase.D.StopBattle();
+        modalCase=new Fixture();modalCase.D.StopBattle();Start(modalCase.D);modalCase.H.IsExitConfirmationBusy=true;
+        revision=modalCase.H.InputInvalidations;
+        Check(!modalCase.D.TryOpenInitialTowerDraft(out _,out _)&&modalCase.H.InputInvalidations==revision,
+            "exit Opening blocks Draft before pause acquisition or choice mutation");
+        modalCase.H.IsExitConfirmationBusy=false;modalCase.H.IsHUDInputReady=false;
+        Check(!modalCase.D.TryOpenInitialTowerDraft(out _,out _),"partial HUD group binding blocks Draft");
         modalCase.D.StopBattle();
         var pauseCase=new Fixture();
         var pauseAuthority=pauseCase.Coordinator.ModalPause;

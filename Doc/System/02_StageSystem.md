@@ -148,6 +148,14 @@ Every successfully composed initial Stage, next Stage, and retry establishes fre
 
 Domain owners remain responsible for their own technical cleanup.
 
+Lifecycle availability and runtime retirement are separate facts. A Stage cannot
+admit a flow transition during preparation, Battle start, release, or pending
+release. Clearing readiness or the begun flag at release entry does not mean the
+runtime is retired. Retirement requires completed Battle cleanup, no retained
+modal pause, withdrawn bindings, and inactive/detached outgoing Map objects.
+Deferred engine destruction may finish later. Reentrant release is idempotent;
+preparation cannot enter while release callbacks or deferred Battle cleanup remain.
+
 Player level progress, health, and defeat state are independent for each Stage battle. They do not carry from one Stage battle into the next or into a retry. StageDefinition authors the positive maximum-health value and ordered Player progress requirements for the selected Stage. Player System owns their applied runtime snapshots, current state, threshold consumption, and transition rules; Stage composition supplies the authored values and establishes a fresh full-health, Level 1 runtime before the prepared Stage may begin. A retry reloads the same Stage-authored requirements into new runtime state, while a next Stage supplies its own sequence.
 
 ## 3.1 Monster Dashed-Line Path Lifetime
@@ -205,6 +213,12 @@ their pause. Physical release may be deferred, but outgoing input is rejected
 immediately. Restoring the captured rate during cleanup does not reactivate stopped
 gameplay. All outgoing pause state is cleared before a fresh Battle can acquire
 ownership; late callbacks cannot change the new Battle's rate or window.
+
+Inspection, Camera interaction, and exit confirmation bind as one input-readiness
+group during preparation or explicit HUD re-enable. Group readiness is distinct
+from modal opening availability. The protected-operation query used to validate
+an existing modal remains independent from the guard on starting another player
+operation, so an open modal cannot reject its own continued ownership.
 
 ---
 
