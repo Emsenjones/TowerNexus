@@ -194,7 +194,7 @@ writers cannot bypass active modal ownership. Nested pauses, slow-motion policy,
 and general pause-menu features beyond exit confirmation are outside this contract.
 
 Exit confirmation retains the current Battle while awaiting a decision. Cancel
-releases only its own pause and preserves the current runtime. Accepted Retry or
+releases only its own pause and preserves the current runtime. Accepted Restart or
 Main Menu revokes outgoing gameplay authority before pause restoration and Stage
 cleanup, without briefly resuming the abandoned Battle. Battle HUD owns the
 confirmation session; Game Flow alone accepts and executes its Stage transition.

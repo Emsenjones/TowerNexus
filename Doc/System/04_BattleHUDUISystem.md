@@ -18,7 +18,7 @@ It presents:
 - Drag, placement, and Tower-target feedback
 - World-space Monster dashed-line path presentation
 - TowerInfoWindow for inspecting one deployed Tower's current information and acquired Upgrades
-- An Exit entry and ConfirmExitStageWindow with Cancel, Retry, and Main Menu actions
+- An Exit entry and ConfirmExitStageWindow with Cancel, Restart, and Main Menu actions
 
 It observes gameplay state and forwards player intent. It does not own Player state, Draft generation or reward ownership, Draft-driven simulation pause, placement validation, Tower Upgrade rules, Map topology, Monster runtime, combat results, or Game Flow transitions.
 
@@ -50,9 +50,11 @@ Its stable presentation references are assigned explicitly by the content author
 opening populates and activates the existing window rather than creating a new
 window. Section 4.2 defines its content and interaction contract.
 
-ConfirmExitStageWindow is an authored, initially hidden child of BattleHUDUI,
-alongside an Exit button in that HUD. It has its own view and window instance,
-separate from Game Flow's StageResultWindowView. Section 4.3 defines its contract.
+ConfirmExitStageWindow is the Battle-local exit-confirmation capability. Its
+authored surface is named `Window_ExitStageConfirm` under BattleHUDUI, alongside
+the HUD's Exit entry. Runtime initializes the window hidden and non-interactive
+before player input is admitted. It has its own view and window instance, separate
+from Game Flow's StageResultWindowView. Section 4.3 defines its contract.
 
 Monster status displays and damage numbers remain owned by Monster System even when rendered on the same UI surface. Tower level status remains owned by Tower Framework System, using a dedicated status container in the Battle UI layer. Its items do not intercept battlefield input; their fixed prefix and numeric level share an authored UI-space offset. See Tower Framework Section 6.1 for display and lifecycle rules.
 
@@ -257,15 +259,29 @@ Battle, or manufacture a Battle result. Visibility alone is never pause authorit
 
 ### Content And Ownership
 
-The authored window contains a title, explanatory content, and three distinct
-buttons: CANCEL, RETRY, and MAIN MENU. Suggested copy is `EXIT STAGE?` and
-`Restart this stage or return to the main menu? Your current stage progress will be lost.`
-The warning applies to accepted Retry/Main Menu, not Cancel. The window includes
-a full-screen blocking mask and remains responsive while simulation is paused.
+The authored window contains the following fixed, author-edited presentation:
+
+| Element | Player-Facing Content | Meaning |
+|---|---|---|
+| Title | `EXIT STAGE` | Identifies the exit-confirmation surface |
+| Content | `Restart or return to the main menu?` | Presents the available departure choices |
+| Cancel button | `CANCEL` | Dismiss and continue the current Battle |
+| Restart button | `RESTART` | Fully restart the current Stage |
+| Main Menu button | `MAIN MENU` | Leave the Stage and return to the existing main menu |
+
+Opening preserves this authored copy; it does not substitute result text or add
+a progress-loss sentence. Title, description, and button labels remain static
+Prefab content with no script text bindings or runtime text-reference validation;
+authoring and visual acceptance verify their copy and layout.
+`RESTART` is the exit-window label for Game Flow's
+retry-current-Stage behavior. The result window retains its existing `RETRY` label.
+The common window root includes a full-screen blocking background; a separate
+child mask object is not required. The window remains responsive while simulation
+is paused.
 
 Battle HUD owns the active confirmation session, its view, and its exact pause
 handle. The view presents content and forwards intents; Game Flow accepts and
-executes retry/main-menu transitions. No window directly releases a Stage,
+executes restart/main-menu transitions. No window directly releases a Stage,
 reloads a scene, or mutates Player progress. Layout may be copied from the result
 window during authoring without sharing its view component or runtime instance.
 
@@ -290,19 +306,26 @@ window during authoring without sharing its view component or runtime instance.
 | Action | Contract |
 |---|---|
 | CANCEL | Close this session and release its pause, preserving the current Stage, progress, and Camera view |
-| RETRY | Request Game Flow's guarded same-Stage full release/preparation path, including configured Introduction |
+| RESTART | Request Game Flow's guarded same-Stage full release/preparation path, including configured Introduction |
 | MAIN MENU | Request Game Flow's guarded Stage release and run reset, then show the existing main menu |
 
 Only CANCEL dismisses normally. Background taps do not close the window; no
-additional Escape/back or close shortcut is introduced. Retry and Main Menu do
+additional Escape/back or close shortcut is introduced. Restart and Main Menu do
 not first invoke Cancel. Accepted transitions lock the session and revoke outgoing
 gameplay before restoring its pause during cleanup. Rejected intents leave a
 still-current session usable; stale sessions cannot regain interaction.
 
+While opening or awaiting a transition decision, the window remains visible and
+blocks input with its action buttons locked. Button locking is not presentation
+loss. A new request originates only from an open session; acceptance validates
+that exact currently submitting request, including source, Battle, session, and
+action. Acceptance transfers transition ownership independently from eventual
+transition success; later failure or exception cannot resume the old session.
+
 Battle stop, terminal acceptance, technical failure, Stage release/replacement,
 retry, and relevant HUD/window disable cancel the session and clean its pause.
 External presentation loss during an otherwise live Battle behaves as cancellation,
-not an implicit Retry, Main Menu, or battle result. Cleanup is idempotent and
+not an implicit Restart, Main Menu, or battle result. Cleanup is idempotent and
 scoped to the exact outgoing Battle/session; late callbacks cannot close a new
 window, change a new Battle's rate, or request another transition. Revoked gameplay
 remains stopped even if restoring the captured simulation rate precedes physical cleanup.
@@ -513,7 +536,8 @@ Battle UI authoring validation should report at minimum:
 - Confirmation input leaking to Camera, Draft, pending items, placement, or Tower inspection
 - Cancel losing current Battle progress or restoring an assumed default simulation rate
 - Failed opening, disable, stop, or Stage switching leaving confirmation or pause ownership behind
-- Duplicate/stale confirmation actions or Retry/Main Menu resuming the outgoing Battle before cleanup
+- Incorrect exit-window title/content/button copy or copied result-window actions
+- Duplicate/stale confirmation actions or Restart/Main Menu resuming the outgoing Battle before cleanup
 - Missing TowerInfoWindow content references, Close button, icon template, or full-screen blocking mask
 - Inspection of a preview, uncommitted, removed, or outgoing Tower
 - A drag also opening TowerInfoWindow, or a stale pointer release opening it after a modal/lifecycle change
@@ -571,7 +595,7 @@ Scale, and Fade animation, held Draft items, atomic pending-item registration,
 drag cancellation, placement feedback, Tower target feedback, and flowing
 world-space Monster dashed-line path presentation, and modal TowerInfoWindow
 inspection with current resolved stats and acquired Upgrade icons, and separate
-Battle-local exit confirmation with Cancel, Retry, and Main Menu.
+Battle-local exit confirmation with Cancel, Restart, and Main Menu.
 
 Game Flow System owns battle-result and Stage-transition presentation, including distinct Victory and Defeat interactions. Those surfaces are outside Battle HUD UI System rather than deferred Battle HUD features.
 

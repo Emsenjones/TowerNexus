@@ -38,7 +38,8 @@ public partial class BattleHUDUI : MonoBehaviour
 
     private void OnDisable()
     {
-        // Each cleanup is independent; a Draft/placement error cannot retain inspection pause.
+        // Each modal cleanup is independent of Draft/placement and the other modal.
+        TryHudCleanup(ClearExitConfirmationBinding);
         TryHudCleanup(ClearTowerInspectionBinding);
         TryHudCleanup(UnsubscribeFromPlayerSystem);
         TryHudCleanup(() =>

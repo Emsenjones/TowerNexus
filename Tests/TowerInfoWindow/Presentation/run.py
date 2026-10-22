@@ -12,8 +12,7 @@ def method(source,name):
 def expression(source,name):
     match=re.search(r'^    (?:private|internal) [^\n]*\b'+name+r'\(',source,re.M)
     return source[match.start():source.index(';',match.end())+1]
-with tempfile.TemporaryDirectory(prefix='towernexus-inspection-') as folder:
-    folder=Path(folder)
+def production_sources(folder):
     combat=(root/'Assets/Scripts/TowerRuntimeCombat/TowerCombatBehaviour.cs').read_text()
     query=folder/'Query.cs'
     query.write_text('using UnityEngine;using System;\npartial class TowerCombatBehaviour {\n'+
@@ -22,9 +21,19 @@ with tempfile.TemporaryDirectory(prefix='towernexus-inspection-') as folder:
     hud=folder/'HUDLifecycle.cs'
     hud.write_text('using System;\npartial class BattleHUDUI {\n'+method((root/'Assets/Scripts/TowerDeployment/BattleHUDUI.cs').read_text(),'OnDisable')+'\n}')
     paths=[root/'Assets/Scripts/TowerDeployment'/n for n in ('BattleModalPauseAuthority.cs','BattleCombatBinding.cs',
-        'TowerInspectionSnapshot.cs','TowerInfoWindow.cs','TowerUpgradeInfoItem.cs','BattleHUDUI.TowerInspection.cs')]
+        'TowerInspectionSnapshot.cs','TowerInfoWindow.cs','TowerUpgradeInfoItem.cs','BattleHUDUI.TowerInspection.cs',
+        'ConfirmExitStageWindow.cs','BattleHUDUI.ExitConfirmation.cs')]
     paths+=[root/'Assets/Scripts/TowerRuntimeCombat/ResolvedTowerCombatStats.cs',query,hud,
-            Path(__file__).with_name('BoundaryDoubles.cs'),Path(__file__).with_name('PresentationTests.cs')]
+            Path(__file__).with_name('BoundaryDoubles.cs')]
+    return paths
+
+def main():
+  with tempfile.TemporaryDirectory(prefix='towernexus-inspection-') as folder:
+    folder=Path(folder)
+    paths=production_sources(folder)+[Path(__file__).with_name('PresentationTests.cs')]
     exe=folder/'Presentation.exe'
     subprocess.run(['csc','-nologo','-langversion:8.0','-nowarn:0649',f'-out:{exe}',*map(str,paths)],check=True,cwd=root)
     subprocess.run(['mono',str(exe)],check=True,cwd=root)
+
+if __name__ == '__main__':
+    main()

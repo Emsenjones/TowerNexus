@@ -167,6 +167,12 @@ public partial class BattleHUDUI
 
     private void LateUpdate()
     {
+        TryHudCleanup(CheckTowerInspectionLifetime);
+        TryHudCleanup(CheckExitConfirmationLifetime);
+    }
+
+    private void CheckTowerInspectionLifetime()
+    {
         var session = inspectionSession;
         if (inspectionPhase != TowerInspectionPhase.Open || session == null) return;
         // Lifecycle checks remain responsive at timeScale zero; display values are not polled.
@@ -175,7 +181,11 @@ public partial class BattleHUDUI
             CloseInspectionSession(session);
     }
 
-    private void OnDestroy() { TryHudCleanup(ClearTowerInspectionBinding); }
+    private void OnDestroy()
+    {
+        TryHudCleanup(ClearExitConfirmationBinding);
+        TryHudCleanup(ClearTowerInspectionBinding);
+    }
     private void TryHudCleanup(Action cleanup)
     {
         try { cleanup(); }

@@ -88,7 +88,7 @@ or authorize a result transition.
 
 ConfirmExitStageWindow is also a Battle-local modal interaction. Opening and
 cancelling it leave Game Flow in Battle and retain the current Stage runtime.
-Its Retry and Main Menu actions request guarded Game Flow transitions; Battle HUD
+Its Restart and Main Menu actions request guarded Game Flow transitions; Battle HUD
 does not release or prepare Stages itself. No additional Game Flow state is required.
 
 ---
@@ -252,12 +252,14 @@ The final-Stage check is derived from the current position in the configured seq
 
 ## 7.2 Player-Requested Retry And Exit During Battle
 
-An eligible current-Battle exit-confirmation session offers Cancel, Retry, and
-Main Menu. Cancel only dismisses that session and restores its captured simulation
+An eligible current-Battle exit-confirmation session offers `CANCEL`, `RESTART`,
+and `MAIN MENU`. The exit window uses Restart wording for the existing
+retry-current-Stage operation; result presentation retains its Retry wording.
+Cancel only dismisses that session and restores its captured simulation
 rate; it retains Stage identity, Player progress, Camera view, and all current
 Battle state. It does not start or prepare a Battle.
 
-Retry releases the outgoing Stage and enters the complete preparation flow at
+Restart releases the outgoing Stage and enters the complete preparation flow at
 the same Stage index, including the configured Stage Introduction. The fresh
 Battle resets all state listed in Section 7.1. Main Menu releases the outgoing
 Stage, clears the run, and presents the existing main menu.
@@ -268,6 +270,14 @@ Duplicate, stale, or replaced-session requests do nothing. Before destructive
 cleanup or pause restoration, accepted transitions lock further confirmation
 actions and revoke outgoing gameplay authority. They must not dismiss through
 the ordinary Cancel/resume path before switching Stages.
+
+Request acceptance transfers transition ownership; it does not report whether
+subsequent preparation succeeds. Rejection means no ownership was taken and no
+outgoing Stage release began. The acceptor revokes outgoing gameplay authority
+before returning from the request, even when physical cleanup is deferred.
+Preparation failure after acceptance remains Game Flow-owned rollback and must
+never restore the old confirmation session. Exceptions likewise cannot be treated
+as rejection after ownership has transferred.
 
 Voluntary retry and exit are lifecycle cancellation. They do not claim or publish
 Victory, Defeat, or Technical Failure, nor show a result window. An already
@@ -297,8 +307,9 @@ Only the presentation valid for the current Game Flow state accepts interaction.
 
 Battle HUD UI remains a separate battle-local presentation system. Sharing one visual canvas or screen does not transfer Game Flow ownership to Battle HUD UI.
 
-ConfirmExitStageWindow belongs to Battle HUD UI and uses a separate authored
-window and view from StageResultWindowView. The result view retains its existing
+ConfirmExitStageWindow belongs to Battle HUD UI; its authored surface is
+`Window_ExitStageConfirm`. It uses a separate window and view from
+StageResultWindowView. The result view retains its existing
 Victory/Defeat role under Game Flow presentation. Similar layout does not require
 a shared window instance, result mode, or general-purpose modal framework.
 
@@ -378,7 +389,7 @@ Deferred topics include:
 - Chapters, branching paths, and alternate Stage sequences
 - Scene-transition strategy
 - Asynchronous or streamed loading
-- General player pause-menu features beyond Draft, TowerInfoWindow, and the approved Cancel/Retry/Main Menu exit confirmation
+- General player pause-menu features beyond Draft, TowerInfoWindow, and the approved Cancel/Restart/Main Menu exit confirmation
 - Meta progression
 
 These topics require separate design review before expanding the current Game Flow ownership boundary.

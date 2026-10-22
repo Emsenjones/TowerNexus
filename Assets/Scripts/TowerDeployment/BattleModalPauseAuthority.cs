@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-internal enum BattleModalKind { Draft, TowerInspection }
+internal enum BattleModalKind { Draft, TowerInspection, ExitConfirmation }
 
 internal sealed class BattleModalPauseHandle
 {
@@ -57,7 +57,8 @@ internal sealed class BattleModalPauseAuthority
         handle = null;
         reason = "Modal Battle/session is unavailable or another modal owns pause.";
         if (identity == null || session == null || !IsBattleOpen(identity) || retained != null ||
-            (kind != BattleModalKind.Draft && kind != BattleModalKind.TowerInspection)) return false;
+            (kind != BattleModalKind.Draft && kind != BattleModalKind.TowerInspection &&
+             kind != BattleModalKind.ExitConfirmation)) return false;
         float rate = readRate();
         if (float.IsNaN(rate) || float.IsInfinity(rate) || rate < 0f)
         { reason = "The current simulation rate is invalid."; return false; }
