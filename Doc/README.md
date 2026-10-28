@@ -8,6 +8,7 @@ This directory separates durable runtime contracts from iterative balance design
 |---|---|---|
 | `System/` | Stable gameplay rules, ownership, authoring contracts, and runtime invariants | Source of truth for how the game works |
 | `Balance/` | Cross-Stage growth experience, campaign learning goals, and Reference Builds | Source of truth for approved balance and Stage design intent |
+| `Art/` | Visual references, concept prompts, and stabilized asset-authoring guidance | Visual direction and approved art workflow |
 | `Task/` | Bounded implementation contracts | Temporary execution guidance |
 | `CombatReports/` | Generated combat diagnostic JSON reports | Runtime evidence, not design authority |
 | `History/` | Milestone references and acceptance limits | Historical evidence index, not current design authority |
@@ -46,23 +47,19 @@ This directory separates durable runtime contracts from iterative balance design
 - [TowerInfoWindow Design](System/04_BattleHUDUISystem.md#42-towerinfowindow)
 - [Battle Modal Pause Contract](System/02_StageSystem.md#32-battle-modal-pause-lifetime)
 - [Exit Stage Confirmation Design](System/04_BattleHUDUISystem.md#43-confirmexitstagewindow)
-- Exit Stage Confirmation Task workspace (execution order):
-  [Task004: Presentation And Session](Task/Task004_ConfirmExitStageWindow.md) ->
-  [Task005: Game Flow Transitions](Task/Task005_ExitStageGameFlowTransitions.md) ->
-  [Task006: Interaction And Lifecycle Integration](Task/Task006_ExitStageInteractionIntegration.md).
-  Task004 local view/session, Task005 transitions, and Task006 production integration
-  and Prefab wiring are implemented with managed/compilation/static evidence.
-  User-reported iPad mini 6 smoke testing passed on 2026-10-22 with no issues
-  observed. Task006 records this evidence; detailed native cases remain individually
-  unconfirmed.
-- TowerInfoWindow Task workspace (implementation order):
-  [Task001: Battle Modal Pause](Task/Task001_BattleModalPause.md),
-  [Task002: Presentation](Task/Task002_TowerInfoWindowPresentation.md), and
-  [Task003: Interaction Integration](Task/Task003_TowerInfoWindowInteractionIntegration.md).
-  Task001 and Task002 are implemented with managed/build evidence; native acceptance
-  and Task002 manual UI assembly remain pending. Task003 plan/review and implementation
-  remain pending.
-  Retired earlier contracts remain in Git history.
+- [Art Concept Prompt](Art/00_SableInspiredConceptPrompts.md)
+- [Current Task Workspace: Toon Rendering](Task/README.md):
+  [Task001: Two-Tone Shader](Task/Task001_ToonShaderFoundation.md) ->
+  [Task002: Dynamic Outline](Task/Task002_ToonOutline.md) ->
+  [Task003: Asset Integration And Validation](Task/Task003_ToonAssetIntegration.md).
+  These are bounded task contracts; implementation and validation are pending.
+- Vertical Slice Start Checkpoint: the prior Battle Modal Pause, TowerInfoWindow,
+  and Exit Stage task documents are preserved under `Doc/Task/` in Git commit
+  `f54e8a17`. The user declared that work complete and requested task retirement
+  on 2026-10-28. Their detailed evidence and remaining per-case validation limits
+  remain in that historical version. Exit Stage had a user-reported iPad mini 6
+  smoke-test pass on 2026-10-22; retirement does not convert unrecorded native
+  cases into verified results. Current Task001-Task003 refer to the new Toon work.
 - ArchitectureRefactor and CombatMathV2 historical evidence remains in Git history.
 
 ## Re-roll System Demo Closeout
