@@ -6,67 +6,76 @@ Status: Ready for implementation-plan discussion; depends on Task001.
 
 ## 1. Objective And Authority
 
-在 [Task001](Task001_ToonShaderFoundation.md) 的两档明暗基线上加入细而稳定的动态轮廓，
-让塔在正交游戏镜头中清楚可读，并保持大块平涂表面。
-共同视觉约定见 [Task Index](README.md)。
+Add thin, stable dynamic outlines to the two-tone baseline from
+[Task001](Task001_ToonShaderFoundation.md), keeping towers readable through the
+orthographic gameplay camera while preserving broad flat-color surfaces.
+Shared visual contracts are defined in the [Task Index](README.md).
 
-静态雕刻、砖缝和装饰线继续来自基础贴图。
-本任务优先保证可见外轮廓及前后物体接触处的可读性，不要求自动绘制全部内部转折或三角网格边。
+Static engravings, brick seams, and decorative lines remain in the base texture.
+Prioritize visible silhouettes and readable boundaries between overlapping objects.
+Automatic rendering of every internal crease or triangle edge is not required.
 
 ## 2. Scope And Deliverables
 
-- 一种满足原型要求的描边实现，以及必要的 Shader Pass、材质或 Renderer Feature。
-- 轮廓颜色、宽度、启用范围的配置方式；明确宽度使用屏幕单位还是世界单位。
-- 在 Task001 场景中增加多部件、硬边、UV 接缝、薄片、交叠物体和缩放测试样本。
-- 记录适用模型要求、局限、渲染成本和与 Task003 的接入方法。
+- One outline implementation that meets the prototype requirements, with any necessary Shader Passes, materials, or Renderer Features.
+- Configuration for outline color, width, and participation; specify whether width uses screen or world units.
+- Add samples for multiple parts, hard edges, UV seams, thin surfaces, overlapping objects, and scaling to the Task001 scene.
+- Document model requirements, limitations, rendering cost, and the integration procedure for Task003.
 
-选择一种主方案即可，不需要为第一版建设可切换多种算法的框架。
-倒壳描边与深度/法线屏幕描边都可以评估；以实际相机效果、资产整理成本及设备成本决定。
-本任务不把任一种方式提前声明为最终方案。
+Choose one primary approach; the first version does not need a framework for
+switching between multiple algorithms. Both inverted-hull outlines and screen-space
+depth/normal outlines may be evaluated. Decide based on the actual camera view,
+asset-cleanup effort, and device rendering cost. This task does not designate either
+approach as the final solution in advance.
 
 ## 3. Required Behavior
 
-| 情况 | 要求 |
+| Situation | Requirement |
 |---|---|
-| 外轮廓 | 主要形体连续可读；线宽不过度吞掉细部 |
-| 遮挡 | 被其他物体遮住的轮廓不能穿透显示；前后关系正确 |
-| 多材质/多部件 | 材质分界不自动变成粗黑边；避免同一轮廓多次叠加 |
-| 装饰线 | 贴图线条继续存在，不被当作法线/深度边缘重复放大 |
-| 物体移动 | 移动或旋转时轮廓更新，不留下历史残影或错位 |
-| 镜头与分辨率 | 在实际正交尺度、相机平移及目标分辨率下保持稳定；可用尺度范围明确记录 |
-| 光照与投影 | 描边不改变 Task001 的亮暗分档；描边壳体不会意外扩大物体投影 |
-| 生效范围 | 能让指定 3D 模型参与；不把 HUD、文字、路径虚线与无关特效统一描边 |
+| Silhouette | Major forms remain continuous and readable; line width does not excessively obscure detail |
+| Occlusion | Outlines hidden behind other objects do not show through; front-to-back relationships remain correct |
+| Multiple Materials/Parts | Material boundaries do not automatically become thick black edges; avoid drawing the same outline repeatedly |
+| Decorative Lines | Texture lines remain visible without being amplified again as normal/depth edges |
+| Object Motion | Outlines update during movement and rotation without lingering trails or misalignment |
+| Camera And Resolution | Remain stable at the actual orthographic scale, during camera panning, and at the target resolution; document the supported scale range |
+| Lighting And Shadows | Outlines do not change Task001's tone classification; outline hulls do not unintentionally enlarge cast shadows |
+| Participation | Allow designated 3D models to participate without applying outlines indiscriminately to HUD, text, dashed paths, or unrelated effects |
 
-如果倒壳方案需要额外平滑法线数据，应与用于两档光照的 Mesh 法线区分，
-不能为了修复轮廓接缝而破坏主体的硬边光照。
-如果屏幕方案需要深度/法线输入，应确认自定义 Toon Shader 实际写入相关数据，
-并在项目生效的 URP Renderer 和 Render Graph/Compatibility 模式中验证。
+If the inverted-hull approach requires additional smoothed-normal data, keep it
+separate from the Mesh normals used for two-tone lighting. Fixing outline seams
+must not damage hard-edge lighting on the main surface.
+If the screen-space approach requires depth/normal inputs, confirm that the custom
+Toon Shader actually writes the required data. Validate it with the project's
+effective URP Renderer and Render Graph/Compatibility mode.
 
 ## 4. Implementation Plan Must Resolve
 
-1. 主方案及取舍：轮廓覆盖范围、硬边与接缝、正交线宽、渲染成本。
-2. 它如何接入 Task001 的 Shader、材质槽、深度及法线；需要补充的最小内容。
-3. 启用/排除规则；深度遮挡、剔除和绘制顺序；是否涉及额外 Renderer 配置。
-4. 配置资产的作用域。若需要专用 Renderer，应记录挂载与恢复方式。
-5. 导入模型的法线、缩放和部件限制；不能支持的情况给出明确处理方法。
+1. The primary approach and its tradeoffs: outline coverage, hard edges and seams, orthographic line width, and rendering cost.
+2. Integration with Task001's Shader, material slots, depth, and normals, including the minimum required additions.
+3. Inclusion/exclusion rules, depth occlusion, culling, drawing order, and any additional Renderer configuration.
+4. The scope of configuration assets. If a dedicated Renderer is needed, document how to assign it and restore the previous configuration.
+5. Constraints on imported-model normals, scale, and parts, with explicit handling for unsupported cases.
 
-透明物体、蒙皮动画、全场景结构线提取与选择高亮系统不在本任务第一版交付内。
-美术轮廓不能替代或改变现有游戏选择、升级目标提示的业务语义。
+Transparent objects, skinned animation, scene-wide structural-line extraction, and
+selection-highlight systems are outside this task's first-version deliverables.
+Artistic outlines must not replace or change the gameplay semantics of existing
+selection and upgrade-target feedback.
 
 ## 5. Acceptance
 
-- [ ] Task001 两档颜色与阴影行为保持成立，关闭描边后可回到原基线。
-- [ ] 硬边、平滑曲面和 UV 接缝没有明显开裂或异常尖刺。
-- [ ] 多材质、多部件样本没有成片双线、黑块或非预期内部边。
-- [ ] 前后交叠时没有透视轮廓；物体投影没有因描边错误膨胀。
-- [ ] 实际游戏相机的静止、平移及约定显示尺度下轮廓稳定。
-- [ ] 目标分辨率下细部仍可辨；远处或小尺寸物体不会被描边吞没。
-- [ ] HUD、路径虚线和无关对象不受影响，启用范围可复现。
-- [ ] 在同场景同设置下记录开启/关闭描边的渲染开销，给出采用该方案的依据。
+- [ ] Task001's two-tone colors and shadow behavior remain valid; disabling outlines restores the original baseline.
+- [ ] Hard edges, smooth surfaces, and UV seams show no obvious cracks or abnormal spikes.
+- [ ] Samples with multiple materials or parts show no widespread double lines, black patches, or unintended internal edges.
+- [ ] Outlines do not show through overlapping objects, and cast shadows are not incorrectly enlarged by outlines.
+- [ ] Outlines remain stable with the actual gameplay camera at rest, during panning, and at the agreed display scales.
+- [ ] Detail remains readable at the target resolution; outlines do not swallow distant or small objects.
+- [ ] HUD, dashed paths, and unrelated objects remain unaffected, and participation settings are reproducible.
+- [ ] Record rendering cost with outlines enabled and disabled in the same scene under the same settings, and explain the choice of approach.
 
 ## 6. Evidence And Handoff
 
-当前所有验收项均未执行。
-记录具体实现、资产引用、实际 Pipeline/Renderer、线宽配置、接缝处理要求，
-提供静止与移动视角证据以及已知失败样本。
-仅靠编辑器截图不能证明时间稳定性或设备性能；最终设备复核由 Task003 汇总。
+All acceptance checks are currently unexecuted. Record the implementation, asset
+references, effective Pipeline/Renderer, line-width settings, and seam-handling
+requirements. Provide evidence from static and moving views, plus known failing samples.
+Editor screenshots alone do not establish temporal stability or device performance;
+Task003 consolidates final device verification.

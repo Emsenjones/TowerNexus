@@ -6,83 +6,91 @@ Status: Ready for implementation-plan discussion; depends on Task001, Task002 an
 
 ## 1. Objective And Authority
 
-把一座基于 Concept Reference 制作的真实塔接入 Unity，结合已完成的两档 Shader、
-动态描边和场景配置，验证可重复的 Tripo → Unity 制作流程。
+Integrate an actual tower created from a Concept Reference into Unity. Combine it
+with the completed two-tone Shader, dynamic outlines, and scene configuration to
+validate a repeatable Tripo → Unity production workflow.
 
-依赖 [Task001](Task001_ToonShaderFoundation.md)、[Task002](Task002_ToonOutline.md)，
-视觉与业务边界见 [Task Index](README.md)。
-交付范围是一座代表性塔、地面和最小游戏接入，不是整批美术替换或整个 Vertical Slice 验收。
+This task depends on [Task001](Task001_ToonShaderFoundation.md) and
+[Task002](Task002_ToonOutline.md). See the [Task Index](README.md) for visual and
+gameplay boundaries. Deliver one representative tower, ground, and minimal gameplay
+integration; bulk art replacement and acceptance of the entire Vertical Slice are out of scope.
 
 ## 2. Asset Input Contract
 
-| 输入 | 要求 |
+| Input | Requirement |
 |---|---|
-| 参考 | 指明本次选用的 Concept Reference；记录最重要的轮廓、主色和线条特征 |
-| 模型 | FBX 和对应纹理可访问；轮廓与主要转折面足够清楚；法线无明显错误 |
-| UV / 贴图 | UV 与基础贴图匹配；尽量去除固定方向的阴影、反射与高光；静态装饰线可保留 |
-| 材质区域 | 塔身、金属、晶体等需要独立配色的区域有独立材质槽或部件 |
-| 尺寸与层级 | 明确尺寸、朝向和 Pivot；需要旋转的部件有可用层级；不以缩放模型改变游戏占地定义 |
-| 类型 | 首个验收对象为静态、不透明 MeshRenderer 资产；不要求 Normal Map 或双套明暗贴图 |
+| Reference | Identify the selected Concept Reference and record its most important silhouette, dominant colors, and line characteristics |
+| Model | The FBX and associated textures are accessible; the silhouette and major form-defining planes are clear, with no obvious normal errors |
+| UV / Textures | UVs match the base texture; remove fixed-direction shadows, reflections, and highlights as far as practical; static decorative lines may remain |
+| Material Regions | Regions requiring independent palettes, such as the body, metal, and crystals, have separate material slots or parts |
+| Size And Hierarchy | Define size, orientation, and Pivot; rotating parts have a usable hierarchy; scaling the model does not redefine its gameplay footprint |
+| Type | The first acceptance asset is a static, opaque MeshRenderer asset; Normal Maps and separate lit/shadow texture sets are not required |
 
-若 Tripo 只输出一个材质槽，需要按实际配色需求整理模型；不临时改为 RGB 遮罩路线。
-先确认 FBX 对纹理的嵌入/外部引用是否在 Unity 中正确解析，再绑定自定义材质。
-若模型仍含大量固定光影，先列出需要重新生成或整理的资产问题。
+If Tripo produces only one material slot, organize the model according to its
+palette requirements; do not switch to RGB masks as an ad hoc workaround.
+Confirm that Unity resolves the FBX's embedded or externally referenced textures
+before assigning custom materials. If substantial fixed lighting remains on the
+model, first list the asset issues requiring regeneration or cleanup.
 
 ## 3. Scope And Deliverables
 
-- 真实塔的 Unity 模型/Prefab、独立材质与纹理引用，保留原始导入资产便于重新导入。
-- 清楚的材质映射表：模型部位 → 材质 → Base Texture → 两档颜色与描边参数。
-- 可重开的视觉验证场景，使用一块地面、一个方向光和实际正交观察条件。
-- 一次遵守既有 Tower Framework 的代表性游戏接入与回归检查。
-- 资产导入、材质设置、灯光设置和常见问题的复现说明。
-- 参考图与 Unity 截图、用户视觉反馈，以及真实目标设备上的表现记录。
+- The actual tower's Unity model/Prefab, separate materials, and texture references; retain the original imported assets for reimporting.
+- A clear mapping table: model part → material → Base Texture → two-tone colors and outline parameters.
+- A visual validation scene that can be reopened, using one ground surface, one directional light, and the actual orthographic viewing conditions.
+- One representative gameplay integration and regression check following the existing Tower Framework.
+- Reproducible instructions for asset import, material setup, lighting setup, and common issues.
+- Reference images, Unity screenshots, user visual feedback, and results from the actual target device.
 
-无真实资产时，可以先准备接入说明和占位测试，但真实资产及最终视觉验收保持 Pending。
+Without an actual asset, integration instructions and placeholder tests can proceed,
+but actual-asset and final visual acceptance remain Pending.
 
 ## 4. Integration Requirements
 
-1. 将材质绑定到正确的 Renderer/材质槽，使用同一个 Toon Shader，避免为每座塔复制 Shader。
-2. 确认基础颜色贴图的色彩空间、过滤和 Mipmap 设置在实际游戏尺寸下保留装饰线，
-   不以近距离预览代替远距离辨识度检查。
-3. 基于参考调整形体、贴图、亮暗配色、线宽和主光；记录问题属于资产还是渲染。
-4. 与既有 `TowerModelRoot`、永久底座、Attack Origin 和状态 UI 约定兼容，
-   不更改放置 Anchor、碰撞/命中语义或战斗数值。
-5. 检查现有 `TowerVisualController` 的预览着色、升级目标提示及模型替换行为，
-   包括按材质槽的 MaterialPropertyBlock 覆盖及恢复；不能污染其他塔的共享材质。
-6. 若预览需要透明度，明确沿用现有预览材质还是增加有限的预览支持。
-   不透明 Toon Shader 的 Alpha 属性不足以证明预览透明度可用；
-   实现计划应确认实际需求和最小接入方案，不能静默丢掉原有反馈。
-7. 只对选定样本和必要的呈现接入做修改，保留路径虚线、范围预览、HUD 与现有输入行为。
+1. Bind materials to the correct Renderer/material slots and share one Toon Shader instead of copying the Shader for each tower.
+2. Confirm that the base-color texture's color space, filtering, and Mipmap settings preserve decorative lines at actual gameplay sizes.
+   Close-up previews do not replace readability checks at a distance.
+3. Adjust geometry, textures, lit/shadow colors, line width, and the main light against the reference; record whether each issue belongs to the asset or rendering.
+4. Preserve existing `TowerModelRoot`, permanent-base, Attack Origin, and status-UI contracts.
+   Do not change placement Anchors, collision/hit semantics, or combat values.
+5. Check the existing `TowerVisualController` preview tinting, upgrade-target feedback, and model-replacement behavior,
+   including per-material-slot MaterialPropertyBlock overrides and restoration. Do not contaminate materials shared by other towers.
+6. If previews require transparency, explicitly choose between retaining existing preview materials and adding limited preview support.
+   An Alpha property on the opaque Toon Shader does not establish working preview transparency.
+   The implementation plan must confirm the actual requirement and minimum integration approach without silently dropping existing feedback.
+7. Limit changes to the selected sample and necessary presentation integration; preserve dashed paths, range previews, HUD, and existing input behavior.
 
-上述接入涉及的文件与 Prefab 应在实现计划中列出。
-发现既有功能问题时记录其来源；不把未相关的修复混入视觉验收结果。
+List the files and Prefabs involved in this integration in the implementation plan.
+Record the origin of any existing functional issues found; keep unrelated fixes
+separate from visual acceptance results.
 
 ## 5. Acceptance
 
-- [ ] 导入资产、纹理、材质和 Prefab 引用完整，重新导入或重新打开场景后结果一致。
-- [ ] 原始基础贴图可辨，亮暗两档由实时光照变化；装饰线没有因调色完全消失。
-- [ ] 实际游戏视角下，塔、地面与阴影层次清楚，主色数量受控，动态轮廓与贴图线协调。
-- [ ] 模型旋转、主光变化及前后遮挡时没有明显固定光影冲突、描边裂缝或投影异常。
-- [ ] 代表性塔放置、有效/无效预览、升级目标提示及反馈结束后的恢复正常。
-- [ ] 模型替换/销毁后引用和材质状态正常；状态 UI、Attack Origin 与玩法行为保持原约定。
-- [ ] 对比同场景中启用/关闭新渲染的结果，记录 CPU/GPU 帧时间、Draw Call/Batch 及材质数量。
-- [ ] 在项目目标设备上进行 Player 验证；记录设备型号、图形 API、分辨率、Quality、可见对象数和测试时长。
-- [ ] 性能目标与测试密度在最终验收前明确；单塔编辑器帧率不作为战斗性能通过依据。
-- [ ] 用户确认代表性塔的视觉方向；未达到参考的差异和延后项有明确记录。
+- [ ] Imported assets, textures, materials, and Prefab references are complete, and results remain consistent after reimporting or reopening the scene.
+- [ ] The original base texture remains readable, real-time lighting drives the two tones, and tinting does not erase decorative lines.
+- [ ] From the actual gameplay view, the tower, ground, and shadows are clearly distinguishable, dominant colors remain restrained, and dynamic outlines work with texture lines.
+- [ ] Model rotation, main-light changes, and overlapping objects produce no obvious fixed-lighting conflicts, outline cracks, or shadow artifacts.
+- [ ] Representative tower placement, valid/invalid previews, upgrade-target feedback, and restoration after feedback all work correctly.
+- [ ] References and material state remain correct after model replacement/destruction; status UI, Attack Origin, and gameplay behavior preserve their existing contracts.
+- [ ] Compare the new rendering enabled and disabled in the same scene; record CPU/GPU frame times, draw calls/batches, and material counts.
+- [ ] Validate a Player build on the project's target device; record device model, graphics API, resolution, Quality, visible-object count, and test duration.
+- [ ] Define performance targets and test density before final acceptance; a single tower's Editor frame rate does not establish combat-performance acceptance.
+- [ ] The user confirms the representative tower's visual direction; differences from the reference and deferred items are explicitly recorded.
 
 ## 6. Result Record
 
-开发时填写以下内容，当前均为 Pending：
+Complete the following records during development; all are currently Pending:
 
-| 证据项 | 应记录内容 |
+| Evidence Category | Required Record |
 |---|---|
-| 资产 | FBX、纹理、Prefab、材质路径，部位映射，模型整理步骤 |
-| 渲染环境 | Unity/URP 版本、Pipeline/Renderer、Quality、相机、主光与阴影设置 |
-| 参数 | 基础贴图调色、两档色、阈值、边界过渡、描边颜色与宽度 |
-| 静态 / 导入 | 引用检查、Shader 编译、重新导入结果 |
-| Play Mode | 明暗、遮挡、轮廓稳定性、游戏接入和状态恢复 |
-| Player / 设备 | 实际构建与运行结果、性能采样条件及结果；未做则明确标注 |
-| 用户视觉确认 | 日期、参考图、实际截图、接受的差异与未解决问题 |
+| Assets | FBX, texture, Prefab, and material paths; part mappings; model-cleanup steps |
+| Rendering Environment | Unity/URP versions, Pipeline/Renderer, Quality, camera, main-light and shadow settings |
+| Parameters | Base-texture tint, two-tone colors, threshold, boundary transition, outline color and width |
+| Static / Import | Reference checks, Shader compilation, and reimport results |
+| Play Mode | Lighting, occlusion, outline stability, gameplay integration, and state restoration |
+| Player / Device | Actual build and runtime results, performance-sampling conditions and results; explicitly mark anything not performed |
+| User Visual Acceptance | Date, reference images, actual screenshots, accepted differences, and unresolved issues |
 
-完成后将已经稳定的资产制作和调参约定同步到 `Doc/Art/`，并更新任务状态。
-后续新增怪物、动画、透明效果或新的材质类别，应补充样本验收，不能直接沿用本任务的通过结论。
+On completion, synchronize stable asset-production and tuning contracts into
+`Doc/Art/` and update the task status. Later additions of monsters, animations,
+transparent effects, or new material categories require further sample acceptance;
+this task's passing result does not automatically cover them.

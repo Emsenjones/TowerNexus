@@ -6,81 +6,93 @@ Status: Ready for implementation-plan discussion; not implemented.
 
 ## 1. Objective And Authority
 
-建立共用的 TowerNexus Toon Shader，让同一个模型与同一套 UV/Base Texture，
-在实时光照下形成清楚、可调的受光与阴影两档，并保留贴图中的装饰线和基本配色。
+Create a shared TowerNexus Toon Shader that uses one model and one UV/Base Texture
+set to produce clear, adjustable lit and shadow tones under real-time lighting,
+while preserving the texture's decorative lines and base colors.
 
-范围和视觉约定以 [Task Index](README.md) 为本轮依据。
-本任务交付材质与光照基线；动态描边由 [Task002](Task002_ToonOutline.md) 完成，
-真实资产与游戏接入由 [Task003](Task003_ToonAssetIntegration.md) 完成。
+The [Task Index](README.md) defines this round's scope and visual contracts.
+This task delivers the material and lighting baseline. [Task002](Task002_ToonOutline.md)
+owns dynamic outlines, and [Task003](Task003_ToonAssetIntegration.md) owns actual-asset
+and gameplay integration.
 
 ## 2. Inputs And Deliverables
 
-输入可以是带 UV、正确 Mesh 法线的占位模型，不需要等待 Tripo 资产。
+Inputs may be placeholder models with UVs and correct Mesh normals; Tripo assets
+are not a prerequisite.
 
-交付物：
+Deliverables:
 
-- 与项目 URP 版本兼容的共用 Toon Shader，或实现相同功能的 Shader Graph。
-- 少量示例材质，展示塔身、金属、晶体各自的两档配色；材质使用同一个 Shader。
-- 独立验证场景：正交相机、方向光、地面、平面/曲面/硬边样本与遮挡测试物。
-- 参数含义、默认值、调节顺序、所需 Renderer 设置及已知限制的简短说明。
-- Unity 生成的必要 `.meta` 和显式资产引用；重新打开项目后能复现。
+- A shared Toon Shader, or equivalent Shader Graph, compatible with the project's URP version.
+- A small set of sample materials demonstrating separate two-tone palettes for the tower body, metal, and crystals; all use the same Shader.
+- A dedicated validation scene with an orthographic camera, directional light, ground, planar/curved/hard-edge samples, and occlusion test objects.
+- Brief instructions covering parameter meanings, defaults, adjustment order, required Renderer settings, and known limitations.
+- Required Unity-generated `.meta` files and explicit asset references so the result is reproducible after reopening the project.
 
-优先在独立验证场景工作。此任务不替换主关卡、运行时 Prefab 或现有全部材质。
+Work primarily in the dedicated validation scene. This task does not replace the
+main level, runtime Prefab, or all existing materials.
 
 ## 3. Required Material Behavior
 
-| 项目 | 要求 |
+| Item | Requirement |
 |---|---|
-| 基础贴图 | 使用一张 Base Texture；缺省为白色。亮、暗部分共用同一套 UV，不制作两套光照贴图 |
-| 两档配色 | 每个材质独立控制受光与阴影颜色；基础颜色变化和静态装饰线在两档中均应可辨 |
-| 明暗判定 | 使用正确空间中的表面法线、主光方向及实时阴影遮挡；不只使用表面朝向 |
-| 分界控制 | 可调明暗阈值及受控的窄过渡；大面积区域保持两档平涂效果 |
-| 投影 | 测试物能投影到地面，也能接收其他测试物的阴影；避免重复变暗 |
-| 共享代码 | 不同材质和不同模型复用 Shader；更改一个材质配色不影响其他材质 |
-| 运行时调色 | 提供与现有 `_BaseColor` 路径兼容的整体调色能力，同时作用于亮、暗部分；默认中性值不改色 |
-| 法线 | 第一版不采样 Normal Map；保留 Mesh 的主要硬边与合理平滑关系 |
+| Base Texture | Use one Base Texture, defaulting to white. Lit and shadowed regions share one UV set; do not author separate lit and shadow textures |
+| Two-Tone Palette | Each material independently controls its lit and shadow colors; base-color variation and static decorative lines remain readable in both tones |
+| Lighting Classification | Use surface normals and the main-light direction in the correct coordinate space, together with real-time shadow occlusion; surface orientation alone is insufficient |
+| Boundary Control | Provide an adjustable lighting threshold and a controlled narrow transition; broad regions retain flat two-tone shading |
+| Cast Shadows | Test objects cast shadows onto the ground and receive shadows from other test objects; avoid applying darkening twice |
+| Shared Code | Different materials and models reuse the Shader; changing one material's palette does not affect other materials |
+| Runtime Tint | Provide overall tinting compatible with the existing `_BaseColor` path, affecting both lit and shadowed regions; the neutral default leaves colors unchanged |
+| Normals | Do not sample a Normal Map in the first version; preserve the Mesh's major hard edges and appropriate smoothing |
 
-基础贴图与两档颜色的组合方式必须写清楚。例如采用乘色时，参数应明确为调色系数，
-不能声称它能把任意复杂贴图精确替换为目标色板。
-优先用干净贴图验证；贴图中已经画死的明暗应记录为资产问题。
+Document exactly how the base texture combines with the two-tone colors. For example,
+if using multiplication, identify the parameters as tint multipliers; do not claim
+that they can precisely remap any complex texture to a target palette.
+Validate with clean textures first. Record lighting already painted into textures
+as an asset issue.
 
-现有颜色控制还会写入 Alpha。基础不透明 Shader 不因暴露 Alpha 就自动获得透明能力；
-预览透明度的接入边界需在 Task003 明确处理，不能默认为兼容。
+Existing color controls also write Alpha. Exposing Alpha does not automatically
+make the base opaque Shader support transparency. Task003 must explicitly address
+preview transparency rather than assume compatibility.
 
 ## 4. Scope Boundaries
 
-第一版采用一个主要方向光。明确环境光、光源颜色和后处理对最终配色的影响，
-避免默认 PBR 高光、环境反射或重复照明破坏两档效果。
-具体控制策略在实现计划中确定，并写入调参说明。
+The first version uses one main directional light. Define how ambient light,
+light color, and post-processing affect the final palette. Prevent default PBR
+highlights, environment reflections, or duplicate lighting from disrupting the
+two-tone result. Determine the control strategy in the implementation plan and
+include it in the tuning instructions.
 
-暂不实现动态描边、第三档高光、PBR 金属反射、透明晶体、额外光源混合、
-烘焙光照、Normal Map 或 RGB 材质区域遮罩。
-不修改现有路径虚线、UI、粒子或其他第三方 Shader。
+Defer dynamic outlines, a third highlight tone, PBR metallic reflections,
+transparent crystals, additional-light blending, baked lighting, Normal Maps,
+and RGB material-region masks. Do not modify existing dashed-path, UI, particle,
+or other third-party Shaders.
 
 ## 5. Implementation Plan Must Resolve
 
-1. 使用 HLSL 还是 Shader Graph，以及主光、阴影和 Player Shader Variant 的接入方式。
-2. Base Texture、两档配色、`_BaseColor` 的明确组合语义及默认值。
-3. 阴影遮挡与朝向分档的组合、阈值边界和无有效主光时的明确行为。
-4. 与当前 URP 相匹配的可见面、投影、深度等必要 Pass；不预先承诺某个固定文件结构。
-5. 原型场景的 Pipeline/Renderer 配置和影响范围，避免意外改动所有 Quality 档位。
-6. 为 Task002 提供什么深度/法线能力，为 Task003 留下什么材质与运行时调色约定。
+1. HLSL versus Shader Graph, and the integration of the main light, shadows, and Player Shader variants.
+2. Explicit combination semantics and defaults for the Base Texture, two-tone palette, and `_BaseColor`.
+3. How shadow occlusion combines with orientation-based tone selection, including threshold behavior and the fallback when no valid main light exists.
+4. Required visible-surface, shadow-casting, depth, and other Passes for the current URP version; do not commit to a fixed file structure in advance.
+5. The prototype scene's Pipeline/Renderer configuration and its scope of effect, avoiding unintended changes across all Quality levels.
+6. Depth/normal capabilities supplied to Task002, and material/runtime-tint contracts handed to Task003.
 
 ## 6. Acceptance
 
-- [ ] Unity 导入、Shader 编译无相关错误；场景重新打开后材质引用有效。
-- [ ] 无贴图、纯色贴图、带装饰线贴图均可正常显示。
-- [ ] 转动主光后，同一表面在亮暗两档间合理变化；转动模型后法线响应正确。
-- [ ] 平面不会被高频纹理打碎为大量光照斑块；曲面与硬边模型均具有可读体积。
-- [ ] 遮挡物移动时阴影更新；面向光源但被挡住的位置能进入阴影色。
-- [ ] 物体能正确投影到地面；阴影不会重复叠暗到不可读。
-- [ ] 同一模型的两个材质槽能独立配色，且贴图中的线条在两档内保持可辨。
-- [ ] `_BaseColor` 中性值、着色值及按材质槽的覆盖行为符合约定。
-- [ ] 默认参数形成两档效果，不出现未声明的镜面亮点或大范围渐变。
+- [ ] Unity import and Shader compilation produce no related errors; material references remain valid after reopening the scene.
+- [ ] Missing textures, solid-color textures, and textures with decorative lines all render correctly.
+- [ ] Rotating the main light moves the same surface appropriately between the two tones; rotating the model produces the correct normal response.
+- [ ] High-frequency texture detail does not fragment planar surfaces into numerous lighting patches; curved and hard-edge models retain readable volume.
+- [ ] Shadows update when occluders move; surfaces facing the light can enter the shadow tone when occluded.
+- [ ] Objects cast correct shadows onto the ground; repeated darkening does not make shadows unreadable.
+- [ ] Two material slots on one model support independent palettes, and texture lines remain readable in both tones.
+- [ ] Neutral and colored `_BaseColor` values, including per-material-slot overrides, follow the contract.
+- [ ] Default parameters produce two-tone shading without undeclared specular highlights or broad gradients.
 
 ## 7. Evidence And Handoff
 
-当前所有验收项均未执行。
-完成时记录实际 Shader/材质/场景路径、Renderer 配置、参数截图、主光旋转前后截图，
-并分别填写静态检查、Unity 编译、Play Mode 和 Player 验证结果。
-Player/设备最终验证由 Task003 汇总；本任务通过不代表最终视觉或设备验收完成。
+All acceptance checks are currently unexecuted. On completion, record the actual
+Shader/material/scene paths, Renderer configuration, parameter screenshots, and
+screenshots before and after rotating the main light. Record static checks,
+Unity compilation, Play Mode, and Player validation separately.
+Task003 consolidates final Player/device validation. Passing this task does not
+establish final visual or device acceptance.
