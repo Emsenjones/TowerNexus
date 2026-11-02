@@ -47,7 +47,7 @@ This directory separates durable runtime contracts from iterative balance design
 - [TowerInfoWindow Design](System/04_BattleHUDUISystem.md#42-towerinfowindow)
 - [Battle Modal Pause Contract](System/02_StageSystem.md#32-battle-modal-pause-lifetime)
 - [Exit Stage Confirmation Design](System/04_BattleHUDUISystem.md#43-confirmexitstagewindow)
-- [Art Concept Prompt](Art/00_SableInspiredConceptPrompts.md)
+- [Retro Science-Fiction Concept Prompts](Art/00_RetroSciFiConceptPrompts.md)
 - [Current Task Workspace: Toon Rendering](Task/README.md):
   [Task001: Two-Tone Shader](Task/Task001_ToonShaderFoundation.md) ->
   [Task002: Dynamic Outline](Task/Task002_ToonOutline.md) ->

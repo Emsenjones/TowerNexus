@@ -39,8 +39,9 @@ features remains bounded by the evidence recorded in that historical version.
 
 ## 3. References And Ownership
 
-- [Concept Prompt](../Art/00_SableInspiredConceptPrompts.md)
-- [Reference 1](../Art/00_SableInspiredConceptPrompt_Ref1.png), [Reference 2](../Art/00_SableInspiredConceptPrompt_Ref2.png), [Reference 3](../Art/00_SableInspiredConceptPrompt_Ref3.png), [Reference 4](../Art/00_SableInspiredConceptPrompt_Ref4.png)
+- [Current Concept Prompts](../Art/00_RetroSciFiConceptPrompts.md)
+- [Selected Space-Station Reference](../Art/00_RetroSciFiConcept_Ref.png)
+- Earlier Sable studies: [Reference 1](../Art/00_SableInspiredConceptPrompt_Ref1.png), [Reference 2](../Art/00_SableInspiredConceptPrompt_Ref2.png), [Reference 3](../Art/00_SableInspiredConceptPrompt_Ref3.png), [Reference 4](../Art/00_SableInspiredConceptPrompt_Ref4.png). These remain earlier studies, not the current subject and palette target.
 - [Tower Framework](../System/10_TowerFrameworkSystem.md): existing contracts for model mounting, level-model replacement, Anchors, and Tower status presentation.
 - [Camera System](../System/06_CameraSystem.md): gameplay camera and input behavior.
 - [Tower Placement](../System/09_TowerPlacementSystem.md): placement previews, footprints, and interaction semantics.
