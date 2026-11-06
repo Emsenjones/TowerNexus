@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.tripo3d.unitybridge": "file:/Users/yiming/Desktop/Tripo3d_Unity_Bridge",
     "com.unity.adaptiveperformance.google.android": "6.0.0",
     "com.unity.cinemachine": "3.1.7",
     "com.unity.device-simulator.devices": "1.0.1",
@@ -8,6 +9,7 @@
     "com.unity.ide.rider": "3.0.40",
     "com.unity.inputsystem": "1.19.0",
     "com.unity.multiplayer.center": "1.0.1",
+    "com.unity.pipeline": "0.9.1-exp.1",
     "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualscripting": "1.9.11",
@@ -44,7 +46,6 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0",
-    "com.unity.pipeline": "0.9.1-exp.1"
+    "com.unity.modules.xr": "1.0.0"
   }
 }

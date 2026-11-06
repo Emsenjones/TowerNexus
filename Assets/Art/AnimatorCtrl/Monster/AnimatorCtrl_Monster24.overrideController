@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!221 &22100000
+AnimatorOverrideController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: AnimatorCtrl_Monster24
+  m_Controller: {fileID: 9100000, guid: 6b580f23a1e64431293f775c2ab32a17, type: 2}
+  m_Clips:
+  - m_OriginalClip: {fileID: 7400000, guid: 1316c3833648f405988005a49bb69661, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 4df35c9af6f85407699f9108d2389e64, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 4d9e1fd6081de4207a54f39d2c43b9c1, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 6f65e6f77727549e891e60b42759c0ed, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 017301ceab3ba4590a9e3d28184dee77, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: 366aac87331424048822b2ea4c344d98, type: 2}
+  - m_OriginalClip: {fileID: 7400000, guid: 45554bfbec2594134a8038aa1a0f4335, type: 2}
+    m_OverrideClip: {fileID: 7400000, guid: f1fd8b4912fd445fd9762233b4329f64, type: 2}
